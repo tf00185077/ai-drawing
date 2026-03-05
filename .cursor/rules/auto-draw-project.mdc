@@ -43,5 +43,5 @@ alwaysApply: true
 ## 編碼慣例
 
 - **後端**: FastAPI 結構，Python 型別註解
-- **前端**: React 函數元件，Tailwind CSS
+- **前端**: React 函數元件、**檔名使用 .tsx**、Tailwind CSS
 - **資料庫**: 欄位含圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間

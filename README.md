@@ -112,13 +112,13 @@ auto-draw/
 ├── frontend/                   # React + Tailwind + Vite
 │   ├── src/
 │   │   ├── pages/             # Dashboard、Generate、Gallery、LoraDocs、LoraTrain
-│   │   └── App.jsx
+│   │   └── App.tsx
 │   ├── package.json
 │   └── Dockerfile
 ├── docker-compose.yml
 ├── .env.example
 ├── AGENTS.md           # Agent 專用上下文（架構、檔案對應、實作指引）
-├── roadmap.jsx
+├── roadmap.tsx
 └── README.md
 ```
 
@@ -152,4 +152,4 @@ cd frontend && npm run test
 
 ## 專案狀態
 
-本專案依據 `roadmap.jsx` 定義的規格進行開發，實際進度可在 UI 中追蹤。
+本專案依據 `roadmap.tsx` 定義的規格進行開發，實際進度可在 UI 中追蹤。

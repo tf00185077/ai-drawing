@@ -23,7 +23,7 @@ export default function Generate() {
   );
 }
 
-function Field({ label, type = "text", textarea = false }) {
+function Field({ label, type = "text", textarea = false }: { label: string; type?: string; textarea?: boolean }) {
   const Input = textarea ? "textarea" : "input";
   return (
     <div>

@@ -205,16 +205,16 @@ const techStack = [
 ];
 
 export default function Roadmap() {
-  const [taskState, setTaskState] = useState(() => {
-    const init = {};
+  const [taskState, setTaskState] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
     phases.forEach((p) => p.tasks.forEach((t) => (init[t.id] = false)));
     return init;
   });
-  const [activePhase, setActivePhase] = useState(null);
+  const [activePhase, setActivePhase] = useState<number | null>(null);
 
-  const toggle = (id) => setTaskState((s) => ({ ...s, [id]: !s[id] }));
+  const toggle = (id: string) => setTaskState((s) => ({ ...s, [id]: !s[id] }));
 
-  const phaseProgress = (phase) => {
+  const phaseProgress = (phase: (typeof phases)[0]) => {
     const total = phase.tasks.length;
     const done = phase.tasks.filter((t) => taskState[t.id]).length;
     return { done, total, pct: Math.round((done / total) * 100) };

@@ -19,7 +19,7 @@ export default function Dashboard() {
   );
 }
 
-function ModuleCard({ title, desc, to }) {
+function ModuleCard({ title, desc, to }: { title: string; desc: string; to: string }) {
   return (
     <Link
       to={to}

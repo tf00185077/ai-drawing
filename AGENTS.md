@@ -11,7 +11,7 @@
 | 專案名稱 | AI 自動化出圖系統 |
 | 核心流程 | 資料夾監聽 → .txt 產生 → LoRA 訓練 → ComfyUI 產圖 → 參數記錄 |
 | 架構 | Monorepo：`backend/` (FastAPI) + `frontend/` (React) |
-| 規格來源 | `roadmap.jsx`（唯一規格來源） |
+| 規格來源 | `roadmap.tsx`（唯一規格來源） |
 
 ---
 
@@ -42,7 +42,7 @@
 | ComfyUI 串接 | `backend/app/core/comfyui.py` | stub |
 | Workflow 模板 | `backend/app/core/workflow.py` | stub |
 | 批次排程 | `backend/app/core/queue.py` | stub |
-| 前端參數面板 | `frontend/src/pages/Generate.jsx` | stub |
+| 前端參數面板 | `frontend/src/pages/Generate.tsx` | stub |
 | 模板存放 | `backend/workflows/` | 空 |
 
 **API 約定**：`POST /api/generate/` 觸發生圖，`GET /api/generate/queue` 取得佇列狀態。
@@ -54,7 +54,7 @@
 | API 端點 | `backend/app/api/gallery.py` | stub |
 | 自動記錄 | `backend/app/core/recording.py` | stub |
 | DB 模型 | `backend/app/db/models.py` | 已定義 |
-| 前端 Gallery | `frontend/src/pages/Gallery.jsx` | stub |
+| 前端 Gallery | `frontend/src/pages/Gallery.tsx` | stub |
 
 **API 約定**：`GET /api/gallery/`（篩選）、`GET /api/gallery/{id}`（詳情）、`POST /api/gallery/{id}/rerun`、`GET /api/gallery/{id}/export?format=json|csv`。
 
@@ -64,7 +64,7 @@
 |------|----------|------|
 | API 端點 | `backend/app/api/lora_docs.py` | stub |
 | 資料夾監聽 | `backend/app/services/watcher.py` | stub |
-| 前端介面 | `frontend/src/pages/LoraDocs.jsx` | stub |
+| 前端介面 | `frontend/src/pages/LoraDocs.tsx` | stub |
 
 **API 約定**：`POST /api/lora-docs/upload`、`PUT /api/lora-docs/caption/{id}`、`POST /api/lora-docs/batch-prefix`、`GET /api/lora-docs/download-zip?folder=xxx`。
 
@@ -74,7 +74,7 @@
 |------|----------|------|
 | API 端點 | `backend/app/api/lora_train.py` | stub |
 | 訓練執行器 | `backend/app/services/lora_trainer.py` | stub |
-| 前端介面 | `frontend/src/pages/LoraTrain.jsx` | stub |
+| 前端介面 | `frontend/src/pages/LoraTrain.tsx` | stub |
 
 **API 約定**：`POST /api/lora-train/start`、`GET /api/lora-train/status`、`POST /api/lora-train/trigger-check`。
 
@@ -135,20 +135,20 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 | 1a | ComfyUI API 串接 | `core/comfyui.py` |
 | 1b | Workflow JSON 管理 | `core/workflow.py`, `workflows/*.json` |
 | 1c | 批次生圖排程器 | `core/queue.py` |
-| 1d | 基礎 UI 參數面板 | `pages/Generate.jsx` |
+| 1d | 基礎 UI 參數面板 | `pages/Generate.tsx` |
 | 2a | 資料庫設計 | `db/models.py` ✓ |
 | 2b | 自動記錄 Pipeline | `core/recording.py` |
-| 2c | Gallery 瀏覽器 | `pages/Gallery.jsx`, `api/gallery.py` |
+| 2c | Gallery 瀏覽器 | `pages/Gallery.tsx`, `api/gallery.py` |
 | 2d | 一鍵重現 / 匯出 | `api/gallery.py` |
 | 3a | 資料夾監聽 .txt | `services/watcher.py` |
-| 3b | 圖片上傳介面 | `pages/LoraDocs.jsx`, `api/lora_docs.py` |
-| 3c | Caption 編輯器 | `pages/LoraDocs.jsx`, `api/lora_docs.py` |
+| 3b | 圖片上傳介面 | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
+| 3c | Caption 編輯器 | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
 | 3d | 打包下載 | `api/lora_docs.py` |
 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` |
 | 4b | 訓練觸發邏輯 | `services/lora_trainer.py`, watcher |
 | 4c | 訓練完成 → 產圖 Pipeline | `services/lora_trainer.py` → `core/comfyui` + `recording` |
-| 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.jsx` |
-| 5a | 統一儀表板 | `pages/Dashboard.jsx` ✓ |
+| 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` |
+| 5a | 統一儀表板 | `pages/Dashboard.tsx` ✓ |
 | 5b | Prompt 模板庫 | 新建 `core/prompt_templates.py` 等 |
 | 5c | 生成統計分析 | 新建 `api/analytics.py` 等 |
 | 5d | 部署 & 文件 | `Dockerfile`, `docker-compose.yml` ✓ |
@@ -207,6 +207,6 @@ cd frontend && npm run test
 
 ## 10. 關鍵參考
 
-- 規格定義：`roadmap.jsx`
+- 規格定義：`roadmap.tsx`
 - 專案規則：`.cursor/rules/auto-draw-project.mdc`
 - 環境範例：`.env.example`
