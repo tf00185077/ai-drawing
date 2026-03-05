@@ -131,8 +131,21 @@ cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
 # 前端
 cd frontend && npm install && npm run dev
 
+# 初始化 DB
+python backend/scripts/init_db.py
+
 # Docker
 cp .env.example .env && docker-compose up -d
+```
+
+### 測試
+
+```bash
+# 後端 (pytest)
+cd backend && pytest
+
+# 前端 (Vitest)
+cd frontend && npm run test
 ```
 
 ---

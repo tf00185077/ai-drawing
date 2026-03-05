@@ -182,6 +182,17 @@ python backend/scripts/init_db.py
 cp .env.example .env && docker-compose up -d
 ```
 
+### 測試指令
+
+```bash
+# 後端 (pytest)
+cd backend && pytest
+
+# 前端 (Vitest)
+cd frontend && npm run test
+# 監聽模式：npm run test:watch
+```
+
 ---
 
 ## 9. 相依關係（實作順序建議）
