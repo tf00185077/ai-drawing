@@ -1,0 +1,47 @@
+---
+description: AI 自動化出圖系統專案規格與架構指引
+alwaysApply: true
+---
+
+# AI 自動化出圖系統 - Cursor Rule
+
+**Agent 請優先閱讀 `AGENTS.md`**：內含完整架構、檔案對應、資料結構、Roadmap 實作位置與相依關係。
+
+## 專案定位
+
+本專案為整合 ComfyUI、LoRA 訓練與參數記錄的完整自動化圖片生成系統，核心流程為：資料夾監聽自動 .txt → LoRA 訓練 → ComfyUI 產圖 → 參數記錄。
+
+## Tech Stack（固定）
+
+- **後端**: Python + FastAPI
+- **前端**: React + Tailwind
+- **資料庫**: SQLite / PostgreSQL
+- **AI 標註**: WD Tagger / BLIP2
+- **圖片引擎**: ComfyUI API (WebSocket / REST)
+- **LoRA 訓練**: Kohya sd-scripts
+- **資料夾監聽**: watchdog
+- **部署**: Docker
+
+## 四大模組架構
+
+1. **生圖模組**: ComfyUI API、Workflow JSON 模板、批次排程器
+2. **圖庫模組**: 參數與圖片記錄、Gallery 瀏覽、一鍵重現、匯出
+3. **LoRA 文件工具**: 資料夾監聽 .txt、Caption 編輯、打包下載
+4. **LoRA 訓練與產圖串接**: 訓練執行器、觸發邏輯、Pipeline 自動產圖、佇列管理
+
+## 資料流原則
+
+- 生圖後必須自動寫入所有參數至資料庫
+- 圖片必須存至結構化資料夾
+- LoRA 訓練完成後應自動觸發 ComfyUI 產圖，並寫入記錄系統
+- 避免重複觸發：需佇列管理與狀態追蹤
+
+## Workflow 參數
+
+支援動態替換：checkpoint、LoRA、prompt、seed、steps、cfg。
+
+## 編碼慣例
+
+- **後端**: FastAPI 結構，Python 型別註解
+- **前端**: React 函數元件，Tailwind CSS
+- **資料庫**: 欄位含圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間

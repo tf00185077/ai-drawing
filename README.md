@@ -1,0 +1,142 @@
+# AI 自動化出圖系統
+
+> 資料夾監聽自動 .txt · LoRA 訓練觸發 · ComfyUI 產圖 · 參數記錄
+
+整合 ComfyUI、LoRA 訓練與參數記錄的完整自動化圖片生成流水線。
+
+---
+
+## Tech Stack
+
+| 類別 | 技術 |
+|------|------|
+| 後端 | Python + FastAPI |
+| 前端 | React + Tailwind |
+| 資料庫 | SQLite / PostgreSQL |
+| AI 標註 | WD Tagger / BLIP2 |
+| 圖片引擎 | ComfyUI API |
+| LoRA 訓練 | Kohya sd-scripts |
+| 資料夾監聽 | watchdog |
+| 部署 | Docker |
+
+---
+
+## 模組架構
+
+- **生圖**：ComfyUI API 串接、Workflow 模板、批次排程
+- **圖庫**：參數記錄、Gallery 瀏覽、一鍵重現
+- **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
+- **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
+
+---
+
+## Development Roadmap
+
+### Phase 1 · ComfyUI 自動化核心 (Week 1–3)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| ComfyUI API 串接 | 透過 ComfyUI WebSocket / REST API 實現遠端觸發圖片生成 | Python, ComfyUI API |
+| Workflow JSON 管理 | 設計可動態替換參數的 workflow 模板（checkpoint、LoRA、prompt、seed、steps） | JSON, Template Engine |
+| 批次生圖排程器 | 支援佇列式批次生成，可設定並發數量與優先順序 | Queue, Async |
+| 基礎 UI（參數面板） | Checkpoint / LoRA 選單、prompt 輸入、seed / step / cfg 設定欄位 | React, UI |
+
+### Phase 2 · 參數與圖片記錄系統 (Week 4–6)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| 資料庫設計 | 建立 schema：圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間 | SQLite, Schema |
+| 自動記錄 Pipeline | 每次生成後自動寫入所有參數，圖片存至結構化資料夾 | Python, Automation |
+| 圖片 Gallery 瀏覽器 | 可搜尋、篩選（依 checkpoint / LoRA / 日期）的圖庫介面 | React, Filter/Search |
+| 一鍵重現 / 參數匯出 | 從歷史圖片重新載入參數再次生成，或匯出 JSON / CSV | Export, Re-run |
+
+### Phase 3 · LoRA 訓練文件與自動 .txt 產生 (Week 7–9)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| 資料夾監聽與即時 .txt 產生 | 監聽訓練資料夾，新圖一丟入即觸發 WD Tagger / BLIP2 產生同名 .txt | watchdog, File Watcher, WD Tagger |
+| 圖片上傳介面（選用） | 拖曳上傳多張訓練圖片，上傳後自動產生 .txt，支援批次預覽與刪除 | Upload, UI |
+| Caption 編輯器 | 手動編輯每張圖片的 .txt 內容，支援批次加入 trigger word 前綴 | Editor, Batch Edit |
+| 打包下載 | 將圖片 + .txt 按 LoRA 訓練資料夾結構打包成 ZIP 下載 | ZIP, Export |
+
+### Phase 4 · LoRA 訓練執行與產圖串接 (Week 10–12)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| LoRA 訓練執行器 | 整合 Kohya sd-scripts，可指定資料夾、checkpoint、epoch 等參數執行訓練 | sd-scripts, Python, Subprocess |
+| 訓練觸發邏輯 | 條件一：資料夾圖片數達門檻（如 ≥10 張）自動觸發；條件二：UI 手動按鈕或 API 觸發 | Trigger, Config, API |
+| LoRA 訓練完成 → ComfyUI 產圖 Pipeline | 訓練完成後自動選用新 LoRA，觸發 ComfyUI 生圖，參數寫入記錄系統 | Pipeline, ComfyUI, Automation |
+| 訓練狀態與佇列管理 | 顯示訓練進度、失敗重試、產圖佇列狀態，避免重複觸發 | Queue, Status, UI |
+
+### Phase 5 · 整合優化與進階功能 (Week 13–15)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| 統一儀表板 | 四大模組整合進單一介面 | Dashboard, UX |
+| Prompt 模板庫 | 儲存常用 prompt 組合，支援變數替換（人物名稱、風格） | Templates, Prompt |
+| 生成統計分析 | 視覺化參數分佈、最佳 seed、checkpoint / LoRA 使用頻率 | Analytics, Charts |
+| 部署 & 文件 | Docker 容器化部署，撰寫使用說明與 API 文件 | Docker, Docs |
+
+---
+
+## 自動化流水線
+
+```
+[訓練資料夾] → watchdog 監聽 → WD Tagger/BLIP2 → 自動 .txt
+     ↓
+[圖片數 ≥ 門檻] → Kohya sd-scripts → LoRA 訓練
+     ↓
+[訓練完成] → 自動選用新 LoRA → ComfyUI 產圖 → 參數記錄 → Gallery
+```
+
+---
+
+## 專案結構
+
+```
+auto-draw/
+├── backend/                    # Python + FastAPI
+│   ├── app/
+│   │   ├── api/               # 四大模組 API
+│   │   │   ├── generate.py    # 生圖
+│   │   │   ├── gallery.py     # 圖庫
+│   │   │   ├── lora_docs.py   # LoRA 文件
+│   │   │   └── lora_train.py  # LoRA 訓練
+│   │   ├── core/              # ComfyUI、Workflow、Queue、Recording
+│   │   ├── db/                # 資料庫 models、database
+│   │   ├── services/          # watcher、lora_trainer
+│   │   └── schemas/
+│   ├── workflows/             # Workflow JSON 模板
+│   ├── requirements.txt
+│   └── Dockerfile
+├── frontend/                   # React + Tailwind + Vite
+│   ├── src/
+│   │   ├── pages/             # Dashboard、Generate、Gallery、LoraDocs、LoraTrain
+│   │   └── App.jsx
+│   ├── package.json
+│   └── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── AGENTS.md           # Agent 專用上下文（架構、檔案對應、實作指引）
+├── roadmap.jsx
+└── README.md
+```
+
+### 啟動
+
+```bash
+# 後端
+cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
+
+# 前端
+cd frontend && npm install && npm run dev
+
+# Docker
+cp .env.example .env && docker-compose up -d
+```
+
+---
+
+## 專案狀態
+
+本專案依據 `roadmap.jsx` 定義的規格進行開發，實際進度可在 UI 中追蹤。
