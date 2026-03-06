@@ -78,6 +78,25 @@
 
 **API 約定**：`POST /api/lora-train/start`、`GET /api/lora-train/status`、`POST /api/lora-train/trigger-check`。
 
+### 模組 5：MCP 自然語言介面（Phase 6）
+
+| 職責 | 檔案路徑 | 狀態 |
+|------|----------|------|
+| MCP Server 主程式 | `mcp-server/` 或 `backend/mcp_server.py` | 待實作 |
+| Tools 定義 | `mcp-server/tools.py` | 待實作 |
+| Cursor 配置說明 | `docs/mcp-setup.md` | 待實作 |
+
+**MCP Tools 對應**：
+- `lora_train_start` → `POST /api/lora-train/start`
+- `lora_train_status` → `GET /api/lora-train/status`
+- `generate_image` → `POST /api/generate/`
+- `generate_queue_status` → `GET /api/generate/queue`
+- `gallery_list` → `GET /api/gallery/`
+- `gallery_rerun` → `POST /api/gallery/{id}/rerun`
+- `gallery_detail` → `GET /api/gallery/{id}`
+
+**目標**：使用者可對 Cursor / Claude 說「產生 XX 角色、YY 風格的 5 張照片」，AI 透過 MCP Tools 串接訓練與生圖。
+
 ---
 
 ## 4. 資料結構
@@ -130,6 +149,10 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 
 ## 6. Roadmap 對應（任務 → 實作位置）
 
+**Agent 開發規則**：
+1. **按表順序完成功能**：依下表 1a → 1b → … → 6d 的順序實作，遵循 Section 9 相依關係。
+2. **完成後打勾標記**：實作完成後，在本表與 `README.md` 的進度追蹤區塊將該任務改為 ✓ 或 `[x]`。
+
 | Phase | 任務 | 實作檔案 |
 |-------|------|----------|
 | 1a | ComfyUI API 串接 | `core/comfyui.py` |
@@ -152,6 +175,10 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 | 5b | Prompt 模板庫 | 新建 `core/prompt_templates.py` 等 |
 | 5c | 生成統計分析 | 新建 `api/analytics.py` 等 |
 | 5d | 部署 & 文件 | `Dockerfile`, `docker-compose.yml` ✓ |
+| 6a | MCP Server 建置 | `mcp-server/`, Python MCP SDK |
+| 6b | 生圖與訓練 Tools | `mcp-server/tools/` |
+| 6c | 角色與風格語意對應 | `mcp-server/character_style.py` |
+| 6d | MCP 整合文件與 Cursor 配置 | `docs/mcp-setup.md` |
 
 ---
 
@@ -202,6 +229,7 @@ cd frontend && npm run test
 3. `services/watcher` 依賴 `config.watch_dirs`，觸發 WD Tagger/BLIP2
 4. `services/lora_trainer` 依賴 `config.sd_scripts_path`，完成後呼叫 `comfyui` + `recording`
 5. 前端頁面可並行，依 API 約定呼叫後端
+6. `mcp-server` 依賴 Phase 1–4 完成後的 backend APIs（comfyui、lora_trainer、recording 等均已實作）
 
 ---
 

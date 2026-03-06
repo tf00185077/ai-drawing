@@ -22,12 +22,13 @@ alwaysApply: true
 - **資料夾監聽**: watchdog
 - **部署**: Docker
 
-## 四大模組架構
+## 五大模組架構
 
 1. **生圖模組**: ComfyUI API、Workflow JSON 模板、批次排程器
 2. **圖庫模組**: 參數與圖片記錄、Gallery 瀏覽、一鍵重現、匯出
 3. **LoRA 文件工具**: 資料夾監聽 .txt、Caption 編輯、打包下載
 4. **LoRA 訓練與產圖串接**: 訓練執行器、觸發邏輯、Pipeline 自動產圖、佇列管理
+5. **MCP 自然語言介面**: MCP Server 暴露 Tools、角色/風格語意對應、Cursor 整合
 
 ## 資料流原則
 

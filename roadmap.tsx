@@ -191,6 +191,44 @@ const phases = [
       },
     ],
   },
+  {
+    id: 6,
+    title: "Phase 6",
+    subtitle: "MCP 自然語言介面",
+    duration: "Week 16–17",
+    color: "#EC4899",
+    icon: "🤖",
+    tasks: [
+      {
+        id: "6a",
+        title: "MCP Server 建置",
+        desc: "使用 Python MCP SDK 建立 MCP Server，透過 STDIO 或 Streamable HTTP 暴露 tools",
+        tags: ["MCP", "Python", "SDK"],
+        done: false,
+      },
+      {
+        id: "6b",
+        title: "生圖與訓練 Tools",
+        desc: "將 generate、lora-train、gallery 等 API 封裝為 MCP Tools，支援角色與風格參數",
+        tags: ["MCP Tools", "API 封裝"],
+        done: false,
+      },
+      {
+        id: "6c",
+        title: "角色與風格語意對應",
+        desc: "定義角色名、風格 prompt 對應表或 LLM 輔助解析，讓自然語言可對應到生圖參數",
+        tags: ["Prompt", "語意對應"],
+        done: false,
+      },
+      {
+        id: "6d",
+        title: "MCP 整合文件與 Cursor 配置",
+        desc: "撰寫 MCP 安裝、設定、使用教學，並提供 Cursor MCP 配置範例",
+        tags: ["Docs", "Cursor"],
+        done: false,
+      },
+    ],
+  },
 ];
 
 const techStack = [
@@ -202,6 +240,7 @@ const techStack = [
   { label: "LoRA 訓練", value: "Kohya sd-scripts" },
   { label: "資料夾監聽", value: "watchdog" },
   { label: "部署", value: "Docker" },
+  { label: "AI 介面", value: "MCP" },
 ];
 
 export default function Roadmap() {

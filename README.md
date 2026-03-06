@@ -27,6 +27,7 @@
 - **圖庫**：參數記錄、Gallery 瀏覽、一鍵重現
 - **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
 - **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
+- **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合
 
 ---
 
@@ -72,10 +73,19 @@
 
 | 任務 | 說明 | 標籤 |
 |------|------|------|
-| 統一儀表板 | 四大模組整合進單一介面 | Dashboard, UX |
+| 統一儀表板 | 五大模組整合進單一介面 | Dashboard, UX |
 | Prompt 模板庫 | 儲存常用 prompt 組合，支援變數替換（人物名稱、風格） | Templates, Prompt |
 | 生成統計分析 | 視覺化參數分佈、最佳 seed、checkpoint / LoRA 使用頻率 | Analytics, Charts |
 | 部署 & 文件 | Docker 容器化部署，撰寫使用說明與 API 文件 | Docker, Docs |
+
+### Phase 6 · MCP 自然語言介面 (Week 16–17)
+
+| 任務 | 說明 | 標籤 |
+|------|------|------|
+| MCP Server 建置 | 使用 Python MCP SDK 建立 MCP Server | MCP, Python, SDK |
+| 生圖與訓練 Tools | 將 API 封裝為 MCP Tools，支援角色與風格參數 | MCP Tools, API 封裝 |
+| 角色與風格語意對應 | 自然語言對應到生圖參數 | Prompt, 語意對應 |
+| MCP 整合文件與 Cursor 配置 | 安裝、設定、使用教學 | Docs, Cursor |
 
 ---
 
@@ -150,6 +160,57 @@ cd frontend && npm run test
 
 ---
 
-## 專案狀態
+## Agent 進度追蹤
 
-本專案依據 `roadmap.tsx` 定義的規格進行開發，實際進度可在 UI 中追蹤。
+> **給 Agent**：完成任務後請將對應項目改為 `[x]`，並更新「最後更新」時間。  
+> 進度與 `AGENTS.md` Section 6、`roadmap.tsx` 對應，實作檔案見 AGENTS.md。
+
+### Phase 1 · ComfyUI 自動化核心
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 1a | ComfyUI API 串接 | [ ] | `core/comfyui.py` |
+| 1b | Workflow JSON 管理 | [ ] | `core/workflow.py`, `workflows/*.json` |
+| 1c | 批次生圖排程器 | [ ] | `core/queue.py` |
+| 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` |
+
+### Phase 2 · 參數與圖片記錄系統
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 2a | 資料庫設計 | [x] | `db/models.py` |
+| 2b | 自動記錄 Pipeline | [ ] | `core/recording.py` |
+| 2c | Gallery 瀏覽器 | [ ] | `pages/Gallery.tsx`, `api/gallery.py` |
+| 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` |
+
+### Phase 3 · LoRA 訓練文件與 .txt 產生
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 3a | 資料夾監聽 .txt | [ ] | `services/watcher.py` |
+| 3b | 圖片上傳介面 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
+| 3c | Caption 編輯器 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
+| 3d | 打包下載 | [ ] | `api/lora_docs.py` |
+
+### Phase 4 · LoRA 訓練與產圖串接
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 4a | LoRA 訓練執行器 | [ ] | `services/lora_trainer.py` |
+| 4b | 訓練觸發邏輯 | [ ] | `services/lora_trainer.py`, watcher |
+| 4c | 訓練完成 → 產圖 Pipeline | [ ] | `core/comfyui` + `recording` |
+| 4d | 訓練狀態與佇列 | [ ] | `api/lora_train.py`, `pages/LoraTrain.tsx` |
+
+### Phase 5 · 整合優化
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 5a | 統一儀表板 | [x] | `pages/Dashboard.tsx` |
+| 5b | Prompt 模板庫 | [ ] | `core/prompt_templates.py` |
+| 5c | 生成統計分析 | [ ] | `api/analytics.py` |
+| 5d | 部署 & 文件 | [x] | `Dockerfile`, `docker-compose.yml` |
+
+### Phase 6 · MCP 自然語言介面
+| ID | 任務 | 狀態 | 實作檔案 |
+|----|------|------|----------|
+| 6a | MCP Server 建置 | [ ] | `mcp-server/` |
+| 6b | 生圖與訓練 Tools | [ ] | `mcp-server/tools/` |
+| 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` |
+| 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` |
+
+**整體進度**：3 / 24 完成（12%） · 最後更新：2025-03-06
