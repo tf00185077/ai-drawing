@@ -15,7 +15,24 @@
 
 ---
 
-## 2. Tech Stack（固定，勿替換）
+## 2. 安全性原則（最高優先）
+
+**本專案安全性為最高原則。**
+
+凡涉及 **KEY、API Key、Secret、Token、密碼** 等敏感資訊：
+
+| 禁止 | 必須 |
+|------|------|
+| 上傳至 Git（含 commit、PR） | 使用環境變數（`.env`）或 secrets 管理 |
+| 硬編碼於程式碼中 | 透過 `config` 載入，僅在 runtime 讀取 |
+| 寫入 `.env.example` 的範例使用真實值 | `.env.example` 僅放占位符（如 `YOUR_API_KEY=`） |
+
+- `.env` 必須在 `.gitignore` 中，不得提交。
+- 新增需 KEY 的整合（如第三方 API）時，一律透過環境變數注入。
+
+---
+
+## 3. Tech Stack（固定，勿替換）
 
 | 類別 | 技術 | 說明 |
 |------|------|------|
@@ -32,7 +49,7 @@
 
 ---
 
-## 3. 四大模組與檔案對應
+## 4. 四大模組與檔案對應
 
 ### 模組 1：生圖
 
@@ -99,7 +116,7 @@
 
 ---
 
-## 4. 資料結構
+## 5. 資料結構
 
 ### GeneratedImage (資料庫)
 
@@ -126,7 +143,7 @@ sd_scripts_path, watch_dirs
 
 ---
 
-## 5. 資料流與約束
+## 6. 資料流與約束
 
 ### 必須遵守
 
@@ -147,19 +164,19 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 
 ---
 
-## 6. Roadmap 對應（任務 → 實作位置）
+## 7. Roadmap 對應（任務 → 實作位置）
 
 **Agent 開發規則**：
-1. **按表順序完成功能**：依下表 1a → 1b → … → 6d 的順序實作，遵循 Section 9 相依關係。
-2. **完成後打勾標記**：實作完成後，在本表與 `README.md` 的進度追蹤區塊將該任務改為 ✓ 或 `[x]`。
+1. **按表順序完成功能**：依下表 1a → 1b → … → 6d 的順序實作，遵循 Section 10 相依關係。
+2. **完成後打勾標記**：實作完成後，在本表與 `README.md` 的進度追蹤區塊將該任務改為 `[v]`，未完成保持 `[]`。
 
 | Phase | 任務 | 實作檔案 |
 |-------|------|----------|
-| 1a | ComfyUI API 串接 | `core/comfyui.py` |
+| 1a | ComfyUI API 串接 | `core/comfyui.py` [v] |
 | 1b | Workflow JSON 管理 | `core/workflow.py`, `workflows/*.json` |
 | 1c | 批次生圖排程器 | `core/queue.py` |
 | 1d | 基礎 UI 參數面板 | `pages/Generate.tsx` |
-| 2a | 資料庫設計 | `db/models.py` ✓ |
+| 2a | 資料庫設計 | `db/models.py` [v] |
 | 2b | 自動記錄 Pipeline | `core/recording.py` |
 | 2c | Gallery 瀏覽器 | `pages/Gallery.tsx`, `api/gallery.py` |
 | 2d | 一鍵重現 / 匯出 | `api/gallery.py` |
@@ -171,10 +188,10 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 | 4b | 訓練觸發邏輯 | `services/lora_trainer.py`, watcher |
 | 4c | 訓練完成 → 產圖 Pipeline | `services/lora_trainer.py` → `core/comfyui` + `recording` |
 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` |
-| 5a | 統一儀表板 | `pages/Dashboard.tsx` ✓ |
+| 5a | 統一儀表板 | `pages/Dashboard.tsx` [v] |
 | 5b | Prompt 模板庫 | 新建 `core/prompt_templates.py` 等 |
 | 5c | 生成統計分析 | 新建 `api/analytics.py` 等 |
-| 5d | 部署 & 文件 | `Dockerfile`, `docker-compose.yml` ✓ |
+| 5d | 部署 & 文件 | `Dockerfile`, `docker-compose.yml` [v] |
 | 6a | MCP Server 建置 | `mcp-server/`, Python MCP SDK |
 | 6b | 生圖與訓練 Tools | `mcp-server/tools/` |
 | 6c | 角色與風格語意對應 | `mcp-server/character_style.py` |
@@ -182,7 +199,7 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 
 ---
 
-## 7. 編碼慣例
+## 8. 編碼慣例
 
 | 層級 | 慣例 |
 |------|------|
@@ -193,7 +210,7 @@ watch_dirs → watchdog → 新圖 → WD Tagger/BLIP2 → 同名 .txt
 
 ---
 
-## 8. 啟動指令
+## 9. 啟動指令
 
 ```bash
 # 後端
@@ -222,7 +239,7 @@ cd frontend && npm run test
 
 ---
 
-## 9. 相依關係（實作順序建議）
+## 10. 相依關係（實作順序建議）
 
 1. `config` → `db` → `core/comfyui` + `core/workflow` → `core/queue`
 2. `core/recording` 依賴 `db`，生圖完成後呼叫
@@ -233,7 +250,7 @@ cd frontend && npm run test
 
 ---
 
-## 10. 關鍵參考
+## 11. 關鍵參考
 
 - 規格定義：`roadmap.tsx`
 - 專案規則：`.cursor/rules/auto-draw-project.mdc`

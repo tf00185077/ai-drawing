@@ -59,6 +59,7 @@ alwaysApply: true
   | Kohya sd-scripts（CLI 參數、dataset_config TOML） | `kohya-sd-scripts` |
   | WD Tagger（圖片標註、caption 產生、subprocess 整合） | `wd-tagger` |
   | ComfyUI 自訂節點開發 | `comfyui-node-*` 系列 |
+  | Python 後端擴展性審核（API、服務、架構、低耦合） | `python-extensibility-review` |
 
 ## 後端與 ComfyUI 整合規範
 

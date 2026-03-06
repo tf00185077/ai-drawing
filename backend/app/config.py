@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # ComfyUI
     comfyui_base_url: str = "http://127.0.0.1:8188"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
+    comfyui_timeout_submit: float = 60.0
+    comfyui_timeout_fetch: float = 30.0
+    comfyui_timeout_queue: float = 10.0
 
     # 輸出目錄
     output_dir: str = "./outputs"

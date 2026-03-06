@@ -162,13 +162,13 @@ cd frontend && npm run test
 
 ## Agent 進度追蹤
 
-> **給 Agent**：完成任務後請將對應項目改為 `[x]`，並更新「最後更新」時間。  
+> **給 Agent**：完成任務後請將對應項目改為 `[v]`，未完成保持 `[]`，並更新「最後更新」時間。  
 > 進度與 `AGENTS.md` Section 6、`roadmap.tsx` 對應，實作檔案見 AGENTS.md。
 
 ### Phase 1 · ComfyUI 自動化核心
 | ID | 任務 | 狀態 | 實作檔案 |
 |----|------|------|----------|
-| 1a | ComfyUI API 串接 | [ ] | `core/comfyui.py` |
+| 1a | ComfyUI API 串接 | [v] | `core/comfyui.py` |
 | 1b | Workflow JSON 管理 | [ ] | `core/workflow.py`, `workflows/*.json` |
 | 1c | 批次生圖排程器 | [ ] | `core/queue.py` |
 | 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` |
@@ -176,7 +176,7 @@ cd frontend && npm run test
 ### Phase 2 · 參數與圖片記錄系統
 | ID | 任務 | 狀態 | 實作檔案 |
 |----|------|------|----------|
-| 2a | 資料庫設計 | [x] | `db/models.py` |
+| 2a | 資料庫設計 | [v] | `db/models.py` |
 | 2b | 自動記錄 Pipeline | [ ] | `core/recording.py` |
 | 2c | Gallery 瀏覽器 | [ ] | `pages/Gallery.tsx`, `api/gallery.py` |
 | 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` |
@@ -200,10 +200,10 @@ cd frontend && npm run test
 ### Phase 5 · 整合優化
 | ID | 任務 | 狀態 | 實作檔案 |
 |----|------|------|----------|
-| 5a | 統一儀表板 | [x] | `pages/Dashboard.tsx` |
+| 5a | 統一儀表板 | [v] | `pages/Dashboard.tsx` |
 | 5b | Prompt 模板庫 | [ ] | `core/prompt_templates.py` |
 | 5c | 生成統計分析 | [ ] | `api/analytics.py` |
-| 5d | 部署 & 文件 | [x] | `Dockerfile`, `docker-compose.yml` |
+| 5d | 部署 & 文件 | [v] | `Dockerfile`, `docker-compose.yml` |
 
 ### Phase 6 · MCP 自然語言介面
 | ID | 任務 | 狀態 | 實作檔案 |
@@ -213,4 +213,4 @@ cd frontend && npm run test
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` |
 
-**整體進度**：3 / 24 完成（12%） · 最後更新：2025-03-06
+**整體進度**：4 / 24 完成（17%） · 最後更新：2026-03-06
