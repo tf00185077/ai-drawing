@@ -46,3 +46,20 @@ alwaysApply: true
 - **後端**: FastAPI 結構，Python 型別註解
 - **前端**: React 函數元件、**檔名使用 .tsx**、Tailwind CSS
 - **資料庫**: 欄位含圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間
+
+## Skill 優先參考原則
+
+- **若程式碼提及、使用到某領域內容，須優先閱讀並遵循對應 `.cursor/skills/` 下的 SKILL.md**，再開始實作。
+- 實作前先查閱 Skill，避免自行猜測規格或重複造輪。
+- 對應關係：
+  | 領域 | Skill |
+  |------|-------|
+  | ComfyUI（生圖、workflow、佇列、輸出） | `comfyui-api-client` |
+  | LoRA 模組（文件、訓練、lora_trainer、watcher、產圖串接） | `lora-train-docs` |
+  | Kohya sd-scripts（CLI 參數、dataset_config TOML） | `kohya-sd-scripts` |
+  | WD Tagger（圖片標註、caption 產生、subprocess 整合） | `wd-tagger` |
+  | ComfyUI 自訂節點開發 | `comfyui-node-*` 系列 |
+
+## 後端與 ComfyUI 整合規範
+
+- 凡涉及 ComfyUI 的後端實作，必須參考 `comfyui-api-client` skill。
