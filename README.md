@@ -129,7 +129,11 @@ auto-draw/
 ├── .env.example
 ├── AGENTS.md           # Agent 專用上下文（架構、檔案對應、實作指引）
 ├── roadmap.tsx
-└── README.md
+├── README.md
+└── docs/
+    ├── agent-assignment.md   # 代理人 A–F 分工、並行步驟、介面引用
+    ├── api-contract.md       # REST API 契約
+    └── internal-interfaces.md # 後端模組介面
 ```
 
 ### 啟動
@@ -162,55 +166,55 @@ cd frontend && npm run test
 
 ## Agent 進度追蹤
 
-> **給 Agent**：完成任務後請將對應項目改為 `[v]`，未完成保持 `[]`，並更新「最後更新」時間。  
-> 進度與 `AGENTS.md` Section 6、`roadmap.tsx` 對應，實作檔案見 AGENTS.md。
+> **給 Agent**：完成任務後請將對應項目改為 `[v]`，填寫「完成者」與「完成檔案位置」，並更新「最後更新」時間。  
+> 分工對應見 `docs/agent-assignment.md`，介面契約見 `docs/api-contract.md`、`docs/internal-interfaces.md`。
 
 ### Phase 1 · ComfyUI 自動化核心
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 1a | ComfyUI API 串接 | [v] | `core/comfyui.py` |
-| 1b | Workflow JSON 管理 | [ ] | `core/workflow.py`, `workflows/*.json` |
-| 1c | 批次生圖排程器 | [ ] | `core/queue.py` |
-| 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 1a | ComfyUI API 串接 | [v] | `core/comfyui.py` | - | `backend/app/core/comfyui.py` |
+| 1b | Workflow JSON 管理 | [ ] | `core/workflow.py`, `workflows/*.json` | - | - |
+| 1c | 批次生圖排程器 | [ ] | `core/queue.py` | - | - |
+| 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` | - | - |
 
 ### Phase 2 · 參數與圖片記錄系統
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 2a | 資料庫設計 | [v] | `db/models.py` |
-| 2b | 自動記錄 Pipeline | [ ] | `core/recording.py` |
-| 2c | Gallery 瀏覽器 | [ ] | `pages/Gallery.tsx`, `api/gallery.py` |
-| 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 2a | 資料庫設計 | [v] | `db/models.py` | - | `backend/app/db/models.py` |
+| 2b | 自動記錄 Pipeline | [ ] | `core/recording.py` | - | - |
+| 2c | Gallery 瀏覽器 | [ ] | `pages/Gallery.tsx`, `api/gallery.py` | - | - |
+| 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` | - | - |
 
 ### Phase 3 · LoRA 訓練文件與 .txt 產生
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 3a | 資料夾監聽 .txt | [ ] | `services/watcher.py` |
-| 3b | 圖片上傳介面 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
-| 3c | Caption 編輯器 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` |
-| 3d | 打包下載 | [ ] | `api/lora_docs.py` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 3a | 資料夾監聽 .txt | [ ] | `services/watcher.py` | - | - |
+| 3b | 圖片上傳介面 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | - | - |
+| 3c | Caption 編輯器 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | - | - |
+| 3d | 打包下載 | [ ] | `api/lora_docs.py` | - | - |
 
 ### Phase 4 · LoRA 訓練與產圖串接
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 4a | LoRA 訓練執行器 | [ ] | `services/lora_trainer.py` |
-| 4b | 訓練觸發邏輯 | [ ] | `services/lora_trainer.py`, watcher |
-| 4c | 訓練完成 → 產圖 Pipeline | [ ] | `core/comfyui` + `recording` |
-| 4d | 訓練狀態與佇列 | [ ] | `api/lora_train.py`, `pages/LoraTrain.tsx` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 4a | LoRA 訓練執行器 | [ ] | `services/lora_trainer.py` | - | - |
+| 4b | 訓練觸發邏輯 | [ ] | `services/lora_trainer.py`, watcher | - | - |
+| 4c | 訓練完成 → 產圖 Pipeline | [ ] | `core/comfyui` + `recording` | - | - |
+| 4d | 訓練狀態與佇列 | [ ] | `api/lora_train.py`, `pages/LoraTrain.tsx` | - | - |
 
 ### Phase 5 · 整合優化
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 5a | 統一儀表板 | [v] | `pages/Dashboard.tsx` |
-| 5b | Prompt 模板庫 | [ ] | `core/prompt_templates.py` |
-| 5c | 生成統計分析 | [ ] | `api/analytics.py` |
-| 5d | 部署 & 文件 | [v] | `Dockerfile`, `docker-compose.yml` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 5a | 統一儀表板 | [v] | `pages/Dashboard.tsx` | - | `frontend/src/pages/Dashboard.tsx` |
+| 5b | Prompt 模板庫 | [ ] | `core/prompt_templates.py` | - | - |
+| 5c | 生成統計分析 | [ ] | `api/analytics.py` | - | - |
+| 5d | 部署 & 文件 | [v] | `Dockerfile`, `docker-compose.yml` | - | `Dockerfile`, `docker-compose.yml` |
 
 ### Phase 6 · MCP 自然語言介面
-| ID | 任務 | 狀態 | 實作檔案 |
-|----|------|------|----------|
-| 6a | MCP Server 建置 | [ ] | `mcp-server/` |
-| 6b | 生圖與訓練 Tools | [ ] | `mcp-server/tools/` |
-| 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` |
-| 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` |
+| ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
+|----|------|------|----------|--------|--------------|
+| 6a | MCP Server 建置 | [ ] | `mcp-server/` | - | - |
+| 6b | 生圖與訓練 Tools | [ ] | `mcp-server/tools/` | - | - |
+| 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
+| 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：4 / 24 完成（17%） · 最後更新：2026-03-06
+**整體進度**：4 / 24 完成（17%） · 最後更新：2026-03-07

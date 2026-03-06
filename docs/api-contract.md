@@ -1,0 +1,444 @@
+# API 契約文件
+
+> 後端與前端對接的唯一規格來源。各模組實作時須遵循此契約，確保並行開發後順利整合。
+
+**Base URL**: `/api`（前端 proxy 至 `http://localhost:8000/api`）
+
+---
+
+## 1. 生圖模組 `/api/generate`
+
+### POST `/`
+
+觸發圖片生成。
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "checkpoint": "path/to/model.safetensors",
+  "lora": "path/to/lora.safetensors",
+  "prompt": "1girl, solo, ...",
+  "negative_prompt": "lowres, blur",
+  "seed": 12345,
+  "steps": 20,
+  "cfg": 7.0
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| checkpoint | string | 否 | Checkpoint 路徑或檔名 |
+| lora | string | 否 | LoRA 路徑或檔名，可多個（依 workflow 規格） |
+| prompt | string | 是 | 正向 prompt |
+| negative_prompt | string | 否 | 負向 prompt |
+| seed | integer | 否 | 隨機種子，不傳則隨機 |
+| steps | integer | 否 | 採樣步數，預設 20 |
+| cfg | float | 否 | CFG scale，預設 7.0 |
+
+**Response** `201 Created`:
+
+```json
+{
+  "job_id": "uuid-string",
+  "status": "queued",
+  "message": "已加入生圖佇列"
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| job_id | string | 佇列任務 ID，可查詢進度 |
+| status | string | `queued` / `running` |
+| message | string | 可選，提示訊息 |
+
+**Error**:
+- `400`: 參數錯誤
+- `503`: ComfyUI 不可用或佇列已滿
+
+---
+
+### GET `/queue`
+
+取得生圖佇列狀態。
+
+**Response** `200 OK`:
+
+```json
+{
+  "queue_running": [
+    {
+      "job_id": "uuid",
+      "prompt_id": "comfy-prompt-id",
+      "status": "running",
+      "submitted_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "queue_pending": [
+    {
+      "job_id": "uuid",
+      "status": "queued",
+      "submitted_at": "2024-01-15T10:01:00Z"
+    }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| queue_running | array | 執行中的任務 |
+| queue_pending | array | 等候中的任務 |
+
+---
+
+## 2. 圖庫模組 `/api/gallery`
+
+### GET `/`
+
+圖庫列表，支援篩選。
+
+**Query Parameters**:
+
+| 參數 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| checkpoint | string | 否 | 篩選 checkpoint |
+| lora | string | 否 | 篩選 LoRA |
+| from_date | string | 否 | ISO 日期，如 `2024-01-01` |
+| to_date | string | 否 | ISO 日期 |
+| limit | integer | 否 | 每頁筆數，預設 20 |
+| offset | integer | 否 | 分頁偏移，預設 0 |
+
+**Response** `200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "image_path": "/outputs/gallery/2024-01/xxx.png",
+      "checkpoint": "model.safetensors",
+      "lora": "lora.safetensors",
+      "seed": 12345,
+      "steps": 20,
+      "cfg": 7.0,
+      "prompt": "1girl, ...",
+      "negative_prompt": "lowres",
+      "created_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "total": 42
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| items | array | 圖片記錄陣列 |
+| total | integer | 符合篩選條件的總筆數 |
+
+---
+
+### GET `/{image_id}`
+
+取得單張圖片完整參數。
+
+**Path**: `image_id` (integer) - 資料庫 `GeneratedImage.id`
+
+**Response** `200 OK`:
+
+```json
+{
+  "id": 1,
+  "image_path": "/outputs/gallery/2024-01/xxx.png",
+  "checkpoint": "model.safetensors",
+  "lora": "lora.safetensors",
+  "seed": 12345,
+  "steps": 20,
+  "cfg": 7.0,
+  "prompt": "1girl, solo, ...",
+  "negative_prompt": "lowres, blur",
+  "created_at": "2024-01-15T10:00:00Z"
+}
+```
+
+**Error**: `404` - 找不到該 ID
+
+---
+
+### POST `/{image_id}/rerun`
+
+一鍵重現：載入該圖參數再次生成。
+
+**Path**: `image_id` (integer)
+
+**Response** `202 Accepted`:
+
+```json
+{
+  "job_id": "uuid",
+  "status": "queued",
+  "message": "已加入生圖佇列"
+}
+```
+
+**Error**: `404` - 找不到該 ID
+
+---
+
+### GET `/{image_id}/export`
+
+匯出參數為 JSON 或 CSV。
+
+**Path**: `image_id` (integer)
+
+**Query Parameters**:
+
+| 參數 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| format | string | 否 | `json` 或 `csv`，預設 `json` |
+
+**Response** `format=json` `200 OK`:
+- Content-Type: `application/json`
+- Body: 同上 `GET /{image_id}` 的 JSON
+
+**Response** `format=csv` `200 OK`:
+- Content-Type: `text/csv`
+- Body: CSV 內容，欄位為 id, image_path, checkpoint, lora, seed, steps, cfg, prompt, negative_prompt, created_at
+
+**Error**: `404` - 找不到該 ID
+
+---
+
+## 3. LoRA 文件模組 `/api/lora-docs`
+
+### POST `/upload`
+
+上傳訓練圖片，自動產生 .txt caption。
+
+**Request**: `multipart/form-data`
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| files | file[] | 是 | 多個圖片檔案 |
+| folder | string | 否 | 目標資料夾（相對於 lora_train_dir），預設根目錄 |
+
+**Response** `200 OK`:
+
+```json
+{
+  "uploaded": 3,
+  "items": [
+    {
+      "filename": "img1.png",
+      "path": "my_lora/img1.png",
+      "caption_path": "my_lora/img1.txt"
+    }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| uploaded | integer | 成功上傳數量 |
+| items | array | 可選，每張圖的檔名與路徑 |
+
+---
+
+### PUT `/caption/{image_path}`
+
+編輯單張圖片的 .txt 內容。
+
+**Path**: `image_path` (string) - 相對路徑，如 `my_lora/img1.png` 或 `my_lora/img1`
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "content": "1girl, solo, long hair, ..."
+}
+```
+
+**Response** `200 OK`:
+
+```json
+{
+  "path": "my_lora/img1.txt",
+  "updated": true
+}
+```
+
+**Error**: `404` - 找不到該圖片或 .txt
+
+---
+
+### POST `/batch-prefix`
+
+批次加入 trigger word 前綴。
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "images": ["my_lora/img1.png", "my_lora/img2.png"],
+  "prefix": "sks "
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| images | string[] | 是 | 圖片路徑陣列（相對 lora_train_dir） |
+| prefix | string | 是 | 要加在 .txt 最前面的前綴 |
+
+**Response** `200 OK`:
+
+```json
+{
+  "updated": 2,
+  "failed": []
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| updated | integer | 成功更新數量 |
+| failed | string[] | 更新失敗的路徑 |
+
+---
+
+### GET `/download-zip`
+
+打包圖片 + .txt 成 ZIP 下載。
+
+**Query Parameters**:
+
+| 參數 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| folder | string | 是 | 要打包的資料夾（相對 lora_train_dir） |
+
+**Response** `200 OK`:
+- Content-Type: `application/zip`
+- Content-Disposition: `attachment; filename="my_lora.zip"`
+- Body: ZIP 二進位
+
+**Error**: `404` - 資料夾不存在
+
+---
+
+## 4. LoRA 訓練模組 `/api/lora-train`
+
+### POST `/start`
+
+手動觸發 LoRA 訓練。
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "folder": "my_lora",
+  "checkpoint": "path/to/base_model.safetensors",
+  "epochs": 10
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| folder | string | 是 | 訓練資料夾（相對 lora_train_dir） |
+| checkpoint | string | 否 | Base model 路徑，不傳則用 config 預設 |
+| epochs | integer | 否 | 訓練 epoch 數，預設 10 |
+
+**Response** `202 Accepted`:
+
+```json
+{
+  "job_id": "uuid",
+  "status": "queued",
+  "message": "已加入訓練佇列"
+}
+```
+
+**Error**:
+- `400`: 資料夾不存在或圖片數不足
+- `409`: 已有訓練在執行
+
+---
+
+### GET `/status`
+
+訓練進度與佇列狀態。
+
+**Response** `200 OK`:
+
+```json
+{
+  "status": "running",
+  "current_job": {
+    "job_id": "uuid",
+    "folder": "my_lora",
+    "progress": 0.45,
+    "epoch": 5,
+    "total_epochs": 10
+  },
+  "queue": [
+    {
+      "job_id": "uuid2",
+      "folder": "other_lora"
+    }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| status | string | `idle` / `running` / `queued` |
+| current_job | object | 可選，目前執行的任務詳情 |
+| queue | array | 等候中的任務 |
+
+---
+
+### POST `/trigger-check`
+
+檢查是否符合自動觸發條件（圖片數 ≥ 門檻）。
+
+**Response** `200 OK`:
+
+```json
+{
+  "should_trigger": true,
+  "candidates": [
+    {
+      "folder": "my_lora",
+      "image_count": 12
+    }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| should_trigger | boolean | 是否有資料夾達門檻 |
+| candidates | array | 符合條件的資料夾列表 |
+
+---
+
+## 5. 共通錯誤格式
+
+所有 API 錯誤回傳:
+
+```json
+{
+  "detail": "錯誤訊息或欄位說明"
+}
+```
+
+或 FastAPI 預設的 `{"detail": [...]}` 驗證錯誤格式。
+
+---
+
+## 6. 型別對應（Pydantic → 前端）
+
+| 後端型別 | 前端（TypeScript） |
+|----------|---------------------|
+| `GenerateRequest` | `interface GenerateRequest { ... }` |
+| `GalleryItem` | `interface GalleryItem { ... }` |
+| `TrainStartRequest` | `interface TrainStartRequest { ... }` |
+
+建議：在 `frontend/src/types/api.ts` 定義與本契約一致的 TypeScript 介面，並在 API 呼叫時使用。
