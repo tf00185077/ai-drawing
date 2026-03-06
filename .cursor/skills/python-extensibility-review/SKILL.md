@@ -117,6 +117,7 @@ description: Review Python backend code with focus on extensibility, low couplin
 5. **Testability Issues**：可測性問題
 6. **Concrete Refactor Suggestions**：具體重構建議
 7. **Priority Order of Fixes**：修復優先順序
+8. **使用者測試方法與預期結果**：使用者如何驗證、各項測試的預期結果
 
 盡量說明：
 - 目前設計偏向什麼
@@ -200,6 +201,65 @@ class SQLAlchemyImageRepository(ImageRecordRepository):
 - 背景 job 和 HTTP endpoint 需要共用邏輯時，會怎樣？
 
 **若答案是「很多檔案必須一起改」，擴展性就弱。**
+
+---
+
+## 使用者測試方法與預期結果
+
+審核報告或重構完成後，須附上使用者可執行的測試方法及對應的預期結果，供驗證功能正確性。
+
+### 1. 單元測試（無需啟動服務、無需外部依賴）
+
+| 項目 | 說明 |
+|------|------|
+| **指令** | `cd backend && pytest tests/<相關測試檔> -v` |
+| **適用** | 工具函數、服務邏輯、DI 工廠、Protocol 實作 |
+| **預期結果** | 所有測試 PASSED，無 FAILED / ERROR |
+| **範例** | `pytest tests/test_comfyui.py -v` → 6 passed |
+
+### 2. API 端點測試（需啟動後端）
+
+| 項目 | 說明 |
+|------|------|
+| **前置** | `uvicorn app.main:app --reload` |
+| **指令** | `Invoke-RestMethod`、curl、或 Swagger UI `http://localhost:8000/docs` |
+| **適用** | 驗證 DI 注入、路由正確、依賴解析無 500 |
+| **預期結果** | 依 endpoint 設計；若為 stub 則 501 + `{"detail":"TODO: ..."}` 表示 DI 成功 |
+| **注意** | PowerShell `Invoke-RestMethod` 對非 2xx 會拋錯，但回應體已收到，可視為連線成功 |
+
+**範例（生圖 API stub）：**
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/api/generate/" -Method Post -ContentType "application/json" -Body "{}"
+# 預期：PowerShell 拋出，但伺服器日誌顯示 "501 Not Implemented"、回應為 {"detail":"TODO: ComfyUI API 串接"}
+# 若 DI 失敗：會是 500 Internal Server Error
+```
+
+### 3. 設定／環境變數測試
+
+| 項目 | 說明 |
+|------|------|
+| **方式** | 在 `.env` 設定 `COMFYUI_BASE_URL`、`COMFYUI_TIMEOUT_*` 等 |
+| **驗證** | 執行單元測試（mock get_settings）或暫時 `print(settings.xxx)` 確認讀取 |
+| **預期結果** | 程式讀取到 `.env` 中的值，非硬編碼預設 |
+
+### 4. 整合測試（需外部服務）
+
+| 項目 | 說明 |
+|------|------|
+| **前置** | 啟動 ComfyUI、DB 等外部依賴 |
+| **適用** | 真實打 ComfyUI API、寫入 DB、完整流程 |
+| **預期結果** | 依業務需求；例如 ComfyUI 回傳 queue、生圖完成寫入記錄 |
+
+### 5. 報告輸出範本
+
+審核／重構完成時，應附上類似表格：
+
+| 測試類型 | 指令／步驟 | 預期結果 |
+|----------|------------|----------|
+| 單元測試 | `pytest tests/test_comfyui.py -v` | 6 passed |
+| API（DI 驗證） | 起後端 → `POST /api/generate/` | 501 + `{"detail":"TODO: ..."}`，非 500 |
+| 設定 | 設 `.env` 後執行對應 pytest | mock 驗證或 print 確認讀取正確 |
 
 ---
 
