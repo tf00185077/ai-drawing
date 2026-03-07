@@ -3,13 +3,17 @@
 參數與圖片記錄、Gallery 瀏覽、一鍵重現、匯出
 契約：docs/api-contract.md
 """
+import csv
+import io
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.core.queue import QueueFullError, submit
 from app.db.database import get_db
 from app.db.models import GeneratedImage
 from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunResponse
@@ -98,17 +102,58 @@ async def get_image_detail(image_id: int, db: Session = Depends(get_db)):
     return _image_to_item(row)
 
 
-@router.post("/{image_id}/rerun", response_model=RerunResponse)
+@router.post("/{image_id}/rerun", response_model=RerunResponse, status_code=202)
 async def rerun_image(image_id: int, db: Session = Depends(get_db)):
     """一鍵重現：載入參數再次生成"""
-    raise HTTPException(501, "TODO: 實作")
+    row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
+    if not row:
+        raise HTTPException(404, "找不到該圖片")
+    params = {
+        "checkpoint": row.checkpoint,
+        "lora": row.lora,
+        "prompt": row.prompt or "",
+        "negative_prompt": row.negative_prompt,
+        "seed": row.seed,
+        "steps": row.steps,
+        "cfg": row.cfg,
+    }
+    try:
+        job_id = submit(params)
+        return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列")
+    except QueueFullError as e:
+        raise HTTPException(503, str(e))
 
 
 @router.get("/{image_id}/export")
 async def export_params(
     image_id: int,
-    format: str = Query("json"),
+    format: str = Query("json", description="json 或 csv"),
     db: Session = Depends(get_db),
 ):
     """匯出參數（JSON / CSV）"""
-    raise HTTPException(501, "TODO: 實作")
+    row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
+    if not row:
+        raise HTTPException(404, "找不到該圖片")
+
+    fmt = format.lower().strip()
+    if fmt == "csv":
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow([
+            "id", "image_path", "checkpoint", "lora", "seed", "steps", "cfg",
+            "prompt", "negative_prompt", "created_at",
+        ])
+        created = row.created_at.isoformat() if row.created_at else ""
+        writer.writerow([
+            row.id, row.image_path or "", row.checkpoint or "", row.lora or "",
+            row.seed or "", row.steps or "", row.cfg or "",
+            row.prompt or "", row.negative_prompt or "", created,
+        ])
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="gallery_{image_id}.csv"'},
+        )
+
+    item = _image_to_item(row)
+    return item

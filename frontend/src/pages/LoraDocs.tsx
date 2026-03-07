@@ -3,9 +3,14 @@
  * 上傳、Caption 編輯、打包下載
  */
 import { useCallback, useState } from "react";
-import type { UploadResponse } from "../types/api";
+import type { BatchPrefixResponse, UploadResponse } from "../types/api";
 
 const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.webp,.bmp,.gif";
+
+interface FileItem {
+  path: string;
+  caption_path: string;
+}
 
 export default function LoraDocs() {
   const [folder, setFolder] = useState("");
@@ -83,6 +88,128 @@ export default function LoraDocs() {
     setResult(null);
     setError(null);
   }, []);
+
+  const [downloadFolder, setDownloadFolder] = useState("");
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const [browseFolder, setBrowseFolder] = useState("");
+  const [fileList, setFileList] = useState<FileItem[]>([]);
+  const [browseError, setBrowseError] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [captionContent, setCaptionContent] = useState("");
+  const [captionSaving, setCaptionSaving] = useState(false);
+  const [captionError, setCaptionError] = useState<string | null>(null);
+  const [batchPrefix, setBatchPrefix] = useState("");
+  const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
+  const [batchResult, setBatchResult] = useState<BatchPrefixResponse | null>(null);
+
+  const loadFolder = useCallback(async () => {
+    const f = browseFolder.trim();
+    if (!f) return;
+    setBrowseError(null);
+    try {
+      const res = await fetch(`/api/lora-docs/files?folder=${encodeURIComponent(f)}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "載入失敗");
+      }
+      const data = await res.json();
+      setFileList(data.items || []);
+    } catch (err) {
+      setBrowseError(err instanceof Error ? err.message : "載入失敗");
+      setFileList([]);
+    }
+  }, [browseFolder]);
+
+  const loadCaption = useCallback(async (path: string) => {
+    setSelectedPath(path);
+    setCaptionError(null);
+    try {
+      const res = await fetch(`/api/lora-docs/caption/${encodeURIComponent(path)}`);
+      if (!res.ok) throw new Error("載入失敗");
+      const data = await res.json();
+      setCaptionContent(data.content ?? "");
+    } catch (err) {
+      setCaptionError(err instanceof Error ? err.message : "載入失敗");
+      setCaptionContent("");
+    }
+  }, []);
+
+  const saveCaption = useCallback(async () => {
+    if (selectedPath === null) return;
+    setCaptionSaving(true);
+    setCaptionError(null);
+    try {
+      const res = await fetch(`/api/lora-docs/caption/${encodeURIComponent(selectedPath)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: captionContent }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "儲存失敗");
+      }
+    } catch (err) {
+      setCaptionError(err instanceof Error ? err.message : "儲存失敗");
+    } finally {
+      setCaptionSaving(false);
+    }
+  }, [selectedPath, captionContent]);
+
+  const toggleBatchSelect = useCallback((path: string) => {
+    setSelectedForBatch((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  const applyBatchPrefix = useCallback(async () => {
+    const paths = Array.from(selectedForBatch);
+    const prefix = batchPrefix.trim();
+    if (!paths.length || !prefix) return;
+    try {
+      const res = await fetch("/api/lora-docs/batch-prefix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: paths, prefix }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "批次更新失敗");
+      }
+      const data: BatchPrefixResponse = await res.json();
+      setBatchResult(data);
+      if (selectedPath && selectedForBatch.has(selectedPath)) {
+        loadCaption(selectedPath);
+      }
+    } catch (err) {
+      setBrowseError(err instanceof Error ? err.message : "批次更新失敗");
+    }
+  }, [selectedForBatch, batchPrefix, selectedPath, loadCaption]);
+
+  const handleDownload = useCallback(async () => {
+    const folderName = downloadFolder.trim();
+    if (!folderName) return;
+    setDownloadError(null);
+    try {
+      const res = await fetch(`/api/lora-docs/download-zip?folder=${encodeURIComponent(folderName)}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "下載失敗");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${folderName.replace(/[/\\]/g, "_")}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "下載失敗");
+    }
+  }, [downloadFolder]);
 
   return (
     <div>
@@ -183,7 +310,133 @@ export default function LoraDocs() {
           </div>
         )}
 
-        <div className="text-slate-500 text-sm">TODO: Caption 編輯器、打包下載</div>
+        <div className="pt-4 border-t border-slate-700">
+          <h3 className="text-slate-300 font-medium mb-2">打包下載</h3>
+          <p className="text-slate-500 text-sm mb-2">輸入資料夾名稱，下載圖片與 .txt 為 ZIP</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="例如: my_lora"
+              value={downloadFolder}
+              onChange={(e) => {
+                setDownloadFolder(e.target.value);
+                setDownloadError(null);
+              }}
+              className="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500"
+            />
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={!downloadFolder.trim()}
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+            >
+              下載 ZIP
+            </button>
+          </div>
+          {downloadError && (
+            <p className="mt-2 text-sm text-red-400">{downloadError}</p>
+          )}
+        </div>
+
+        <div className="pt-4 border-t border-slate-700">
+          <h3 className="text-slate-300 font-medium mb-2">Caption 編輯器</h3>
+          <p className="text-slate-500 text-sm mb-2">瀏覽資料夾、編輯 .txt、批次加入 trigger word</p>
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              placeholder="資料夾名稱，如 my_lora"
+              value={browseFolder}
+              onChange={(e) => {
+                setBrowseFolder(e.target.value);
+                setBrowseError(null);
+              }}
+              className="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-500"
+            />
+            <button
+              type="button"
+              onClick={loadFolder}
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white"
+            >
+              載入
+            </button>
+          </div>
+          {browseError && <p className="text-sm text-red-400 mb-2">{browseError}</p>}
+          {fileList.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-slate-400 mb-1">選擇圖片（可多選以批次加前綴）</p>
+                <ul className="max-h-48 overflow-y-auto rounded-lg bg-slate-800/50 border border-slate-700 p-2 space-y-1">
+                  {fileList.map((it) => (
+                    <li key={it.path} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedForBatch.has(it.path)}
+                        onChange={() => toggleBatchSelect(it.path)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => loadCaption(it.path)}
+                        className={`text-left truncate flex-1 hover:text-amber-400 ${
+                          selectedPath === it.path ? "text-amber-400" : "text-slate-300"
+                        }`}
+                      >
+                        {it.path}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="前綴，如 sks "
+                    value={batchPrefix}
+                    onChange={(e) => setBatchPrefix(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyBatchPrefix}
+                    disabled={selectedForBatch.size === 0 || !batchPrefix.trim()}
+                    className="px-3 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 rounded-lg text-white text-sm"
+                  >
+                    批次加前綴
+                  </button>
+                </div>
+                {batchResult && (
+                  <p className="mt-2 text-sm text-emerald-400">
+                    已更新 {batchResult.updated} 筆
+                    {batchResult.failed?.length ? `，失敗 ${batchResult.failed.length} 筆` : ""}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 mb-1">編輯 Caption</p>
+                {selectedPath ? (
+                  <>
+                    <textarea
+                      value={captionContent}
+                      onChange={(e) => setCaptionContent(e.target.value)}
+                      rows={8}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white text-sm font-mono"
+                      placeholder="1girl, solo, ..."
+                    />
+                    {captionError && <p className="text-sm text-red-400 mt-1">{captionError}</p>}
+                    <button
+                      type="button"
+                      onClick={saveCaption}
+                      disabled={captionSaving}
+                      className="mt-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded-lg text-white text-sm"
+                    >
+                      {captionSaving ? "儲存中…" : "儲存"}
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-slate-500 text-sm">點選左側圖片開始編輯</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

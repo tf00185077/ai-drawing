@@ -64,11 +64,11 @@
 
 ### 代理人 A · 軌道 A · 生圖模組
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| A1 | 1b | Workflow JSON 管理 | `core/workflow.py`, `workflows/*.json` | 1a ✅ |
-| A2 | 1c | 批次生圖排程器 | `core/queue.py` | 1b |
-| A3 | 1d | 基礎 UI（參數面板） | `pages/Generate.tsx` | API 契約 |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| A1 | 1b | Workflow JSON 管理 | `core/workflow.py`, `workflows/*.json` | 1a ✅ | [v] |
+| A2 | 1c | 批次生圖排程器 | `core/queue.py` | 1b | [v] |
+| A3 | 1d | 基礎 UI（參數面板） | `pages/Generate.tsx` | API 契約 | [v] |
 
 **必讀**：`docs/api-contract.md` 模組 1、`docs/internal-interfaces.md` workflow/queue、`docs/comfyui-di-design.md`、`app/schemas/generate.py`
 
@@ -78,11 +78,11 @@
 
 ### 代理人 B · 軌道 B · 圖庫模組
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| B1 | 2b | 自動記錄 Pipeline | `core/recording.py` | 2a ✅ |
-| B2 | 2c | Gallery 瀏覽器 | `pages/Gallery.tsx`, `api/gallery.py` | 2b |
-| B3 | 2d | 一鍵重現 / 匯出 | `api/gallery.py` | 2b |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| B1 | 2b | 自動記錄 Pipeline | `core/recording.py` | 2a ✅ | [v] |
+| B2 | 2c | Gallery 瀏覽器 | `pages/Gallery.tsx`, `api/gallery.py` | 2b | [v] |
+| B3 | 2d | 一鍵重現 / 匯出 | `api/gallery.py` | 2b | [v] |
 
 **必讀**：`docs/api-contract.md` 模組 2、`docs/internal-interfaces.md` recording、`app/schemas/gallery.py`
 
@@ -92,12 +92,12 @@
 
 ### 代理人 C · 軌道 C · LoRA 文件工具
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| C1 | 3a | 資料夾監聽 .txt | `services/watcher.py` | config |
-| C2 | 3b | 圖片上傳介面 | `pages/LoraDocs.tsx`, `api/lora_docs.py` | API 契約 |
-| C3 | 3c | Caption 編輯器 | `pages/LoraDocs.tsx`, `api/lora_docs.py` | C2 |
-| C4 | 3d | 打包下載 | `api/lora_docs.py` | config |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| C1 | 3a | 資料夾監聽 .txt | `services/watcher.py` | config | [v] |
+| C2 | 3b | 圖片上傳介面 | `pages/LoraDocs.tsx`, `api/lora_docs.py` | API 契約 | [v] |
+| C3 | 3c | Caption 編輯器 | `pages/LoraDocs.tsx`, `api/lora_docs.py` | C2 | [v] |
+| C4 | 3d | 打包下載 | `api/lora_docs.py` | config | [v] |
 
 **必讀**：`docs/api-contract.md` 模組 3、`docs/internal-interfaces.md` watcher、`app/schemas/lora_docs.py`、`.cursor/skills/wd-tagger/SKILL.md`
 
@@ -107,12 +107,12 @@
 
 ### 代理人 D · 軌道 D · LoRA 訓練與產圖串接
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C |
-| D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py`, watcher | 4a, 3a |
-| D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → comfyui + recording | 4a, A, B |
-| D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [ ] |
+| D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py`, watcher | 4a, 3a | [ ] |
+| D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → comfyui + recording | 4a, A, B | [ ] |
+| D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [ ] |
 
 **必讀**：`docs/api-contract.md` 模組 4、`docs/internal-interfaces.md` lora_trainer、`app/schemas/lora_train.py`、`.cursor/skills/lora-train-docs/SKILL.md`、`.cursor/skills/kohya-sd-scripts/SKILL.md`
 
@@ -122,10 +122,10 @@
 
 ### 代理人 E · 軌道 E · 進階功能
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| E1 | 5b | Prompt 模板庫 | `core/prompt_templates.py` | 2a ✅ |
-| E2 | 5c | 生成統計分析 | `api/analytics.py` | 2a ✅, 2c |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| E1 | 5b | Prompt 模板庫 | `core/prompt_templates.py` | 2a ✅ | [ ] |
+| E2 | 5c | 生成統計分析 | `api/analytics.py` | 2a ✅, 2c | [ ] |
 
 **必讀**：`docs/api-contract.md`、`app/schemas/gallery.py`
 
@@ -135,12 +135,12 @@
 
 ### 代理人 F · 軌道 F · MCP 自然語言介面
 
-| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 |
-|------|---------|------|----------|------|
-| F1 | 6a | MCP Server 建置 | `mcp-server/` | Phase 1–4 |
-| F2 | 6b | 生圖與訓練 Tools | `mcp-server/tools/` | 6a |
-| F3 | 6c | 角色與風格語意對應 | `mcp-server/character_style.py` | 6b |
-| F4 | 6d | MCP 整合文件與 Cursor 配置 | `docs/mcp-setup.md` | 6b |
+| 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
+|------|---------|------|----------|------|------|
+| F1 | 6a | MCP Server 建置 | `mcp-server/` | Phase 1–4 | [ ] |
+| F2 | 6b | 生圖與訓練 Tools | `mcp-server/tools/` | 6a | [ ] |
+| F3 | 6c | 角色與風格語意對應 | `mcp-server/character_style.py` | 6b | [ ] |
+| F4 | 6d | MCP 整合文件與 Cursor 配置 | `docs/mcp-setup.md` | 6b | [ ] |
 
 **必讀**：`docs/api-contract.md` 全模組、`docs/handoff-index.md`
 

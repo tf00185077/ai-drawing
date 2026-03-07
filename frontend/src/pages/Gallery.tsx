@@ -188,6 +188,40 @@ function DetailModal({
   onClose: () => void;
   imageUrl: string;
 }) {
+  const [rerunStatus, setRerunStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [rerunMsg, setRerunMsg] = useState("");
+
+  const handleRerun = async () => {
+    setRerunStatus("loading");
+    setRerunMsg("");
+    try {
+      const res = await fetch(`${API}/gallery/${item.id}/rerun`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setRerunStatus("ok");
+        setRerunMsg(`已加入佇列，job_id: ${data.job_id || ""}`);
+      } else {
+        setRerunStatus("err");
+        setRerunMsg(data.detail || `HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setRerunStatus("err");
+      setRerunMsg(e instanceof Error ? e.message : "請求失敗");
+    }
+  };
+
+  const handleExport = async (format: "json" | "csv") => {
+    const res = await fetch(`${API}/gallery/${item.id}/export?format=${format}`);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gallery_${item.id}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
@@ -227,12 +261,40 @@ function DetailModal({
             </div>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="mt-4 px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800"
-        >
-          關閉
-        </button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={handleRerun}
+            disabled={rerunStatus === "loading"}
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white"
+          >
+            {rerunStatus === "loading" ? "處理中..." : "一鍵重現"}
+          </button>
+          <button
+            onClick={() => handleExport("json")}
+            className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800"
+          >
+            匯出 JSON
+          </button>
+          <button
+            onClick={() => handleExport("csv")}
+            className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800"
+          >
+            匯出 CSV
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-800"
+          >
+            關閉
+          </button>
+        </div>
+        {rerunMsg && (
+          <p
+            className={`mt-2 text-sm ${rerunStatus === "ok" ? "text-emerald-400" : "text-amber-500"}`}
+          >
+            {rerunMsg}
+          </p>
+        )}
       </div>
     </div>
   );

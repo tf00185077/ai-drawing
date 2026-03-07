@@ -177,7 +177,7 @@ cd frontend && npm run test
 | 1a | ComfyUI API 串接 | [v] | `core/comfyui.py` | - | `backend/app/core/comfyui.py` |
 | 1b | Workflow JSON 管理 | [v] | `core/workflow.py`, `workflows/*.json` | Agent A | `backend/app/core/workflow.py`, `backend/workflows/default.json` |
 | 1c | 批次生圖排程器 | [v] | `core/queue.py` | Agent A | `backend/app/core/queue.py` |
-| 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` | - | - |
+| 1d | 基礎 UI（參數面板） | [v] | `pages/Generate.tsx` | Agent A | `frontend/src/pages/Generate.tsx` |
 
 ### Phase 2 · 參數與圖片記錄系統
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
@@ -185,15 +185,15 @@ cd frontend && npm run test
 | 2a | 資料庫設計 | [v] | `db/models.py` | - | `backend/app/db/models.py` |
 | 2b | 自動記錄 Pipeline | [v] | `core/recording.py` | Agent B | `backend/app/core/recording.py` |
 | 2c | Gallery 瀏覽器 | [v] | `pages/Gallery.tsx`, `api/gallery.py` | Agent B | `backend/app/api/gallery.py`, `frontend/src/pages/Gallery.tsx` |
-| 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` | - | - |
+| 2d | 一鍵重現 / 匯出 | [v] | `api/gallery.py` | Agent B | `backend/app/api/gallery.py`, `frontend/src/pages/Gallery.tsx` |
 
 ### Phase 3 · LoRA 訓練文件與 .txt 產生
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
 | 3a | 資料夾監聽 .txt | [v] | `services/watcher.py` | Agent C | `backend/app/services/watcher.py` |
 | 3b | 圖片上傳介面 | [v] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py`, `frontend/src/pages/LoraDocs.tsx` |
-| 3c | Caption 編輯器 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | - | - |
-| 3d | 打包下載 | [ ] | `api/lora_docs.py` | - | - |
+| 3c | Caption 編輯器 | [v] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py`, `frontend/src/pages/LoraDocs.tsx` |
+| 3d | 打包下載 | [v] | `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py` |
 
 ### Phase 4 · LoRA 訓練與產圖串接
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
@@ -219,4 +219,4 @@ cd frontend && npm run test
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：10 / 24 完成（42%） · 最後更新：2026-03-07
+**整體進度**：14 / 24 完成（58%） · 最後更新：2026-03-07
