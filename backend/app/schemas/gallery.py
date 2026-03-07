@@ -14,6 +14,7 @@ class GalleryItem(BaseModel):
 
     id: int
     image_path: str
+    image_url: str | None = None  # 前端顯示用，/gallery/ 開頭
     checkpoint: str | None = None
     lora: str | None = None
     seed: int | None = None

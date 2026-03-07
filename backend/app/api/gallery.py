@@ -3,34 +3,99 @@
 參數與圖片記錄、Gallery 瀏覽、一鍵重現、匯出
 契約：docs/api-contract.md
 """
+from datetime import datetime
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db.database import get_db
-from app.schemas.gallery import GalleryListResponse, ImageDetail, RerunResponse
+from app.db.models import GeneratedImage
+from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunResponse
 
 router = APIRouter(prefix="/api/gallery", tags=["圖庫"])
 
 
+def _to_image_url(path: str) -> str:
+    """將 image_path 轉為 /gallery/xxx 格式供前端顯示"""
+    if not path:
+        return ""
+    gallery_dir = Path(get_settings().gallery_dir).resolve()
+    try:
+        p = Path(path)
+        resolved = p.resolve()
+        rel = resolved.relative_to(gallery_dir)
+        return "/gallery/" + str(rel).replace("\\", "/")
+    except (ValueError, OSError):
+        pass
+    if not (path.startswith("/") or (len(path) > 1 and path[1] == ":")):
+        return "/gallery/" + path.replace("\\", "/")
+    return ""
+
+
+def _image_to_item(row: GeneratedImage) -> GalleryItem:
+    """GeneratedImage 轉 GalleryItem"""
+    return GalleryItem(
+        id=row.id,
+        image_path=row.image_path,
+        image_url=_to_image_url(row.image_path) or None,
+        checkpoint=row.checkpoint,
+        lora=row.lora,
+        seed=row.seed,
+        steps=row.steps,
+        cfg=row.cfg,
+        prompt=row.prompt,
+        negative_prompt=row.negative_prompt,
+        created_at=row.created_at,
+    )
+
+
 @router.get("/", response_model=GalleryListResponse)
 async def list_images(
-    checkpoint: str | None = Query(None),
-    lora: str | None = Query(None),
-    from_date: str | None = Query(None),
-    to_date: str | None = Query(None),
+    checkpoint: str | None = Query(None, description="篩選 checkpoint"),
+    lora: str | None = Query(None, description="篩選 LoRA"),
+    from_date: str | None = Query(None, description="ISO 日期起"),
+    to_date: str | None = Query(None, description="ISO 日期迄"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     """圖庫列表，支援篩選"""
-    # TODO: 實作搜尋、篩選
-    return GalleryListResponse(items=[], total=0)
+    q = db.query(GeneratedImage)
+
+    if checkpoint:
+        q = q.filter(GeneratedImage.checkpoint.ilike(f"%{checkpoint}%"))
+    if lora:
+        q = q.filter(GeneratedImage.lora.ilike(f"%{lora}%"))
+    if from_date:
+        try:
+            dt = datetime.fromisoformat(from_date.split("T")[0])
+            q = q.filter(GeneratedImage.created_at >= dt)
+        except ValueError:
+            pass
+    if to_date:
+        try:
+            dt = datetime.fromisoformat(to_date.split("T")[0])
+            dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+            q = q.filter(GeneratedImage.created_at <= dt)
+        except ValueError:
+            pass
+
+    total = q.count()
+    rows = q.order_by(GeneratedImage.created_at.desc()).offset(offset).limit(limit).all()
+
+    items = [_image_to_item(r) for r in rows]
+    return GalleryListResponse(items=items, total=total)
 
 
 @router.get("/{image_id}", response_model=ImageDetail)
 async def get_image_detail(image_id: int, db: Session = Depends(get_db)):
     """取得單張圖片完整參數"""
-    raise HTTPException(501, "TODO: 實作")
+    row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
+    if not row:
+        raise HTTPException(404, "找不到該圖片")
+    return _image_to_item(row)
 
 
 @router.post("/{image_id}/rerun", response_model=RerunResponse)

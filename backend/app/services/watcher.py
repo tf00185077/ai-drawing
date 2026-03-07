@@ -3,7 +3,6 @@
 watchdog 監聽訓練資料夾，新圖觸發 WD Tagger 產生同名 .txt
 """
 import logging
-import subprocess
 from pathlib import Path
 from threading import Lock, Timer
 
@@ -11,6 +10,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from app.config import get_settings
+from app.services.wd_tagger import run_wd_tagger
 
 logger = logging.getLogger(__name__)
 
@@ -22,47 +22,6 @@ DEBOUNCE_SECONDS = 2.0
 _observer: Observer | None = None
 _debounce_timers: dict[Path, Timer] = {}
 _debounce_lock = Lock()
-
-
-def _run_wd_tagger(image_dir: Path) -> None:
-    """對指定目錄執行 WD Tagger，產生 .txt caption"""
-    settings = get_settings()
-    sd_scripts = Path(settings.sd_scripts_path)
-    script = sd_scripts / "finetune" / "tag_images_by_wd14_tagger.py"
-
-    if not script.exists():
-        logger.warning("WD Tagger 腳本不存在: %s，略過標註", script)
-        return
-
-    cmd = [
-        "python",
-        str(script),
-        "--onnx",
-        "--repo_id",
-        "SmilingWolf/wd-swinv2-tagger-v3",
-        "--batch_size",
-        "4",
-        "--thresh",
-        "0.35",
-        "--recursive",
-        str(image_dir.resolve()),
-    ]
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=str(sd_scripts),
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if proc.returncode != 0:
-            logger.error("WD Tagger 執行失敗: %s", proc.stderr or proc.stdout)
-        else:
-            logger.info("WD Tagger 完成: %s", image_dir)
-    except subprocess.TimeoutExpired:
-        logger.error("WD Tagger 逾時: %s", image_dir)
-    except Exception as e:
-        logger.error("WD Tagger 錯誤: %s", e)
 
 
 def on_new_image(image_path: Path) -> None:
@@ -81,7 +40,7 @@ def on_new_image(image_path: Path) -> None:
     parent_dir = path.parent
 
     def _do_tag() -> None:
-        _run_wd_tagger(parent_dir)
+        run_wd_tagger(parent_dir)
         with _debounce_lock:
             _debounce_timers.pop(parent_dir, None)
 

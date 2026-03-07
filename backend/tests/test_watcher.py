@@ -10,15 +10,15 @@ from app.services.watcher import on_new_image, start_watching, stop_watching
 
 def test_on_new_image_ignores_non_image_extensions(tmp_path: Path) -> None:
     """非圖片副檔名不觸發 WD Tagger"""
-    with patch("app.services.watcher._run_wd_tagger") as mock_run:
+    with patch("app.services.watcher.run_wd_tagger") as mock_run:
         on_new_image(tmp_path / "doc.txt")
         on_new_image(tmp_path / "data.json")
         mock_run.assert_not_called()
 
 
 def test_on_new_image_triggers_wd_tagger_for_image(tmp_path: Path) -> None:
-    """圖片副檔名觸發 WD Tagger（防抖後會呼叫 _run_wd_tagger）"""
-    with patch("app.services.watcher._run_wd_tagger") as mock_run, patch(
+    """圖片副檔名觸發 WD Tagger（防抖後會呼叫 run_wd_tagger）"""
+    with patch("app.services.watcher.run_wd_tagger") as mock_run, patch(
         "app.services.watcher.DEBOUNCE_SECONDS", 0.01
     ):
         img = tmp_path / "test.png"

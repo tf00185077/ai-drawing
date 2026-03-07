@@ -38,6 +38,7 @@ export interface QueueStatusResponse {
 export interface GalleryItem {
   id: number;
   image_path: string;
+  image_url?: string | null;
   checkpoint: string | null;
   lora: string | null;
   seed: number | null;

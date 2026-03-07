@@ -9,6 +9,18 @@ description: Review Python backend code with focus on extensibility, low couplin
 
 ---
 
+## 審核前準備
+
+開始審核前，須先釐清專案的預期架構與契約，避免用錯標準：
+
+1. **讀專案介面文件**：如 `internal-interfaces.md`、`api-contract.md`、`AGENTS.md`
+2. **確認契約**：被審核模組應符合的文件、簽名、呼叫時機
+3. **找出參考範例**：識別專案中設計較佳的模組（如已用 DI + Protocol 者），作為對照基準
+
+**目的**：有「預期架構」才能判斷現況是否偏離，也利於與既有好範例做一致性檢視。
+
+---
+
 ## 審核時機
 
 - 新增或修改 API 端點
@@ -71,6 +83,7 @@ description: Review Python backend code with focus on extensibility, low couplin
 - 每個新功能都在同一 service 加 if/elif
 - 行為依賴硬編碼 type check
 - 新功能靠 copy-paste
+- **結構假設耦合**：對外部結構（JSON、API 回應、檔案格式）有隱含假設，結構一變需改多處
 
 ### 4. 介面品質
 
@@ -104,6 +117,19 @@ description: Review Python backend code with focus on extensibility, low couplin
 
 **Flag**：URL、secret、timeout、路徑、上限硬編碼在程式碼。
 
+### 7. CLI / subprocess 整合
+
+呼叫外部 CLI（如 WD Tagger、Kohya scripts）時，檢查：
+
+| 項目 | 偏好 | Flag |
+|------|------|------|
+| 可執行檔路徑 | 從 config 讀取 | 寫死在程式碼 |
+| 參數（repo_id、batch_size、thresh 等） | 可配置或由設定檔控制 | 硬編碼 |
+| timeout、cwd、env | 可調整 | 魔法常數 |
+| 抽象 | Adapter / Protocol 包起來 | 直接 subprocess 嵌在業務邏輯 |
+
+**目的**：未來換工具或加第二種實作時，不需改動呼叫端。
+
 ---
 
 ## 必要輸出格式
@@ -112,12 +138,13 @@ description: Review Python backend code with focus on extensibility, low couplin
 
 1. **Overall Verdict**：整體 verdict（通過 / 有風險 / 需重構）
 2. **Architecture Summary**：架構摘要
-3. **Extensibility Risks**：擴展性風險
-4. **Coupling & Boundary Issues**：耦合與邊界問題
-5. **Testability Issues**：可測性問題
-6. **Concrete Refactor Suggestions**：具體重構建議
-7. **Priority Order of Fixes**：修復優先順序
-8. **使用者測試方法與預期結果**：使用者如何驗證、各項測試的預期結果
+3. **Positive Findings**（做得好的設計）：點出設計較佳處，避免過度重構，並供其他模組參考
+4. **Extensibility Risks**：擴展性風險
+5. **Coupling & Boundary Issues**：耦合與邊界問題
+6. **Testability Issues**：可測性問題
+7. **Concrete Refactor Suggestions**：具體重構建議
+8. **Priority Order of Fixes**：修復優先順序（含 Fix Urgency，見下）
+9. **使用者測試方法與預期結果**：使用者如何驗證、各項測試的預期結果
 
 盡量說明：
 - 目前設計偏向什麼
@@ -133,6 +160,20 @@ description: Review Python backend code with focus on extensibility, low couplin
 | **Critical** | 會明顯阻礙擴展、替換或安全擴充 |
 | **Major** | 能運作，但未來功能會導致重複或脆弱變更 |
 | **Minor** | 建議改進，尚不阻礙成長 |
+
+---
+
+## Fix Urgency（修復時機）
+
+針對每個 finding，標註**何時修**，避免「全部都要立刻改」的過度反應：
+
+| 等級 | 含義 | 範例 |
+|------|------|------|
+| **now** | 阻礙當前開發，需立即處理 | 編譯不過、測試全掛、阻塞其他 Agent |
+| **before-phase-X** | 在該階段前處理，否則後續會吃力 | 要加 BLIP2 前，先抽出 CaptionProvider |
+| **when-touching** | 下次改該模組時順便修，不必特地開工 | 路過 recording 時一併加 Repository |
+
+**若有 roadmap**：依階段判斷「何時會踩到這個問題」，再決定 Fix Urgency。
 
 ---
 
@@ -185,10 +226,11 @@ class SQLAlchemyImageRepository(ImageRecordRepository):
 - Copy-paste feature branching
 - 業務邏輯散落各處的 DB 查詢
 - 第三方整合邏輯硬編碼在 domain
-- 隱藏的共享可變狀態
+- 隱藏的共享可變狀態（模組級變數被 mutate，如 `_observer`、`_debounce_timers`）
 - 持續堆疊無關職責的 utility 模組
 - Request/Response 物件滲入 service 深層
 - 「再加一個 if/elif」的擴展模式
+- **結構假設耦合**：對 JSON、API 回應、檔案格式有隱含假設，結構變更需改多處
 
 ---
 
