@@ -74,7 +74,7 @@
 
 **可與 B、C 並行**：A1 完成後，A2 與 B、C 可並行；A3 可依 stub API 先行開發。
 
-**擴展性審核**：已審核，見 `docs/extensibility-review-agent-a.md`。Verdict：有風險。Phase 4 前建議處理 queue/recording 抽象；`MAX_PENDING`/`WORKFLOW_TEMPLATE` 建議移至 config（when-touching）。
+**擴展性審核**：已審核，見 `docs/reviews/extensibility-review-agent-a.md`。Verdict：有風險。Phase 4 前建議處理 queue/recording 抽象；`MAX_PENDING`/`WORKFLOW_TEMPLATE` 建議移至 config（when-touching）。
 
 ---
 

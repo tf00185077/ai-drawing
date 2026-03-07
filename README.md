@@ -193,7 +193,7 @@ cd frontend && npm run test
 | 1c | 批次生圖排程器 | [v] | `core/queue.py` | Agent A | `backend/app/core/queue.py` |
 | 1d | 基礎 UI（參數面板） | [v] | `pages/Generate.tsx` | Agent A | `frontend/src/pages/Generate.tsx` |
 
-> **擴展性審核（Agent A）**：已審核，見 [`docs/extensibility-review-agent-a.md`](docs/extensibility-review-agent-a.md)。Phase 4 前建議處理 queue/recording 抽象；其餘為 when-touching 項目。
+> **擴展性審核（Agent A）**：已審核，見 [`docs/reviews/extensibility-review-agent-a.md`](docs/reviews/extensibility-review-agent-a.md)。Phase 4 前建議處理 queue/recording 抽象；其餘為 when-touching 項目。
 
 ### Phase 2 · 參數與圖片記錄系統
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
