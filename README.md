@@ -170,6 +170,20 @@ cd frontend && npm run test
 > 分工對應見 `docs/agent-assignment.md`，介面契約見 `docs/api-contract.md`、`docs/internal-interfaces.md`。
 >
 > **擴展性審核**：執行後端 API、服務層或 core 邏輯之實作前，須先檢視 `python-extensibility-review` skill（`.cursor/skills/python-extensibility-review/SKILL.md`）及其 reference（同目錄下 `reference.md`），確保架構符合低耦合、可擴展原則。
+>
+> **擴展性須注意項目（依階段）**：
+> | 需注意階段 | 項目 | 責任模組 |
+> |------------|------|----------|
+> | **Phase 4 前** | queue/recording 抽象／注入 | A, B |
+> | **Phase 4 前** | CaptionProvider Protocol（支援 BLIP2 前先抽象） | C |
+> | **Phase 5 前** | GalleryRepository 抽象（E2 統計分析需更多查詢） | B |
+> | when-touching | MAX_PENDING、WORKFLOW_TEMPLATE 移至 config | A |
+> | when-touching | 每圖一 Session 改為單一 transaction | B |
+> | when-touching | queue 類別化、消除模組級全域狀態 | A |
+> | when-touching | workflow 結構可配置化 | A |
+> | when-touching | `_to_image_url` 參數化、Export formatter 抽出、日期錯誤回傳 400 | B |
+> | when-touching | WD Tagger 參數可配置（repo_id、batch_size、thresh、timeout） | C |
+> | when-touching | IMAGE_EXTENSIONS 共用、watcher 狀態封裝、api-contract 補 GET /files | C |
 
 ### Phase 1 · ComfyUI 自動化核心
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
@@ -179,6 +193,8 @@ cd frontend && npm run test
 | 1c | 批次生圖排程器 | [v] | `core/queue.py` | Agent A | `backend/app/core/queue.py` |
 | 1d | 基礎 UI（參數面板） | [v] | `pages/Generate.tsx` | Agent A | `frontend/src/pages/Generate.tsx` |
 
+> **擴展性審核（Agent A）**：已審核，見 [`docs/extensibility-review-agent-a.md`](docs/extensibility-review-agent-a.md)。Phase 4 前建議處理 queue/recording 抽象；其餘為 when-touching 項目。
+
 ### Phase 2 · 參數與圖片記錄系統
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
@@ -187,6 +203,8 @@ cd frontend && npm run test
 | 2c | Gallery 瀏覽器 | [v] | `pages/Gallery.tsx`, `api/gallery.py` | Agent B | `backend/app/api/gallery.py`, `frontend/src/pages/Gallery.tsx` |
 | 2d | 一鍵重現 / 匯出 | [v] | `api/gallery.py` | Agent B | `backend/app/api/gallery.py`, `frontend/src/pages/Gallery.tsx` |
 
+> **擴展性審核（Agent B）**：已審核，見 [`docs/reviews/agent-b-extensibility-review.md`](docs/reviews/agent-b-extensibility-review.md)。Phase 5 前建議處理 GalleryRepository 抽象；其餘為 when-touching 項目（`_to_image_url` 參數化、Export formatter 抽出、日期錯誤回傳 400）。
+
 ### Phase 3 · LoRA 訓練文件與 .txt 產生
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
@@ -194,6 +212,8 @@ cd frontend && npm run test
 | 3b | 圖片上傳介面 | [v] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py`, `frontend/src/pages/LoraDocs.tsx` |
 | 3c | Caption 編輯器 | [v] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py`, `frontend/src/pages/LoraDocs.tsx` |
 | 3d | 打包下載 | [v] | `api/lora_docs.py` | Agent C | `backend/app/api/lora_docs.py` |
+
+> **擴展性審核（Agent C）**：已審核，見 [`docs/reviews/agent-c-extensibility-review.md`](docs/reviews/agent-c-extensibility-review.md)。Phase 4 前建議抽出 CaptionProvider Protocol；WD Tagger 參數、IMAGE_EXTENSIONS 等為 when-touching 項目。
 
 ### Phase 4 · LoRA 訓練與產圖串接
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |

@@ -74,6 +74,8 @@
 
 **可與 B、C 並行**：A1 完成後，A2 與 B、C 可並行；A3 可依 stub API 先行開發。
 
+**擴展性審核**：已審核，見 `docs/extensibility-review-agent-a.md`。Verdict：有風險。Phase 4 前建議處理 queue/recording 抽象；`MAX_PENDING`/`WORKFLOW_TEMPLATE` 建議移至 config（when-touching）。
+
 ---
 
 ### 代理人 B · 軌道 B · 圖庫模組
@@ -87,6 +89,15 @@
 **必讀**：`docs/api-contract.md` 模組 2、`docs/internal-interfaces.md` recording、`app/schemas/gallery.py`
 
 **可與 A、C 並行**：B1–B3 可同時進行（B2、B3 依 B1）。
+
+**擴展性審核**：已審核，見 `docs/reviews/agent-b-extensibility-review.md`。Verdict：有風險。須注意項目與階段：
+
+| 項目 | 須注意階段 | 說明 |
+|------|------------|------|
+| GalleryRepository 抽象 | **before-phase-5** | E2 生成統計分析需更多查詢 |
+| `_to_image_url` 參數化 | when-touching | 下次改 gallery 時順便 |
+| Export formatter 抽出 | when-touching | 加新 export 格式時再重構 |
+| 日期錯誤回傳 400 | when-touching | 避免靜默忽略無效日期 |
 
 ---
 
@@ -102,6 +113,8 @@
 **必讀**：`docs/api-contract.md` 模組 3、`docs/internal-interfaces.md` watcher、`app/schemas/lora_docs.py`、`.cursor/skills/wd-tagger/SKILL.md`
 
 **可與 A、B 並行**：C1–C4 彼此可並行（C3 依 C2）。
+
+**擴展性審核**：已審核，見 `docs/reviews/agent-c-extensibility-review.md`。Phase 4 前建議抽出 CaptionProvider Protocol；WD Tagger 參數可配置、IMAGE_EXTENSIONS 共用、watcher 狀態封裝、api-contract 補 GET /files 為 when-touching 項目。
 
 ---
 
@@ -148,7 +161,26 @@
 
 ---
 
-## 四、並行時序摘要
+## 四、擴展性須注意項目（依階段）
+
+> 來源：Agent A、B、C 擴展性審核報告。實作或重構時優先處理 Phase 4/5 前項目。
+
+| 需注意階段 | 項目 | 責任代理人 |
+|------------|------|------------|
+| **Phase 4 前** | queue/recording 抽象／注入（lora_trainer 需共用） | A, B |
+| **Phase 4 前** | CaptionProvider Protocol（支援 BLIP2 前先抽象） | C |
+| **Phase 5 前** | GalleryRepository 抽象（E2 分析需更多查詢） | B |
+| when-touching | MAX_PENDING、WORKFLOW_TEMPLATE 移至 config | A |
+| when-touching | 每圖一 Session 改為單一 transaction | B |
+| when-touching | queue 類別化、消除模組級全域狀態 | A |
+| when-touching | workflow 結構可配置化 | A |
+| when-touching | _to_image_url 參數化、Export formatter 抽出、日期錯誤回傳 400 | B |
+| when-touching | WD Tagger 參數可配置（repo_id、batch_size、thresh、timeout） | C |
+| when-touching | IMAGE_EXTENSIONS 共用、watcher 狀態封裝、api-contract 補 GET /files | C |
+
+---
+
+## 五、並行時序摘要
 
 | 階段 | 可同時執行的代理人 | 說明 |
 |------|---------------------|------|
@@ -159,7 +191,7 @@
 
 ---
 
-## 五、完成後註記規範
+## 六、完成後註記規範
 
 完成任一任務後，須在 **README.md** 的「Agent 進度追蹤」區塊更新：
 
@@ -175,7 +207,7 @@
 
 ---
 
-## 六、快速參考：介面文件路徑
+## 七、快速參考：介面文件路徑
 
 ```
 docs/
@@ -183,7 +215,11 @@ docs/
 ├── internal-interfaces.md # 後端模組介面 ← A,B,C,D
 ├── handoff-index.md       # 對接索引
 ├── agent-assignment.md    # 本文件
-└── comfyui-di-design.md   # ComfyUI 設計 ← A,D
+├── comfyui-di-design.md   # ComfyUI 設計 ← A,D
+├── extensibility-review-agent-a.md  # Agent A 生圖模組擴展性審核
+└── reviews/
+    ├── agent-b-extensibility-review.md  # Agent B 圖庫模組擴展性審核
+    └── agent-c-extensibility-review.md  # Agent C LoRA 文件擴展性審核
 
 backend/app/schemas/       # Pydantic 模型 ← A,B,C,D
 frontend/src/types/api.ts  # 前端型別 ← A,B,C,D,E
