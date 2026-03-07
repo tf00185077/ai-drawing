@@ -2,6 +2,19 @@
 
 AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor / Claude 等 AI 透過自然語言觸發生圖、LoRA 訓練、圖庫查詢。
 
+## Tools
+
+| Tool | 說明 |
+|------|------|
+| `mcp_ping` | 檢查 Backend 連線狀態 |
+| `generate_image` | 觸發圖片生成（prompt 必填） |
+| `generate_queue_status` | 取得生圖佇列狀態 |
+| `lora_train_start` | 手動觸發 LoRA 訓練 |
+| `lora_train_status` | 取得 LoRA 訓練進度 |
+| `gallery_list` | 圖庫列表（可篩選） |
+| `gallery_detail` | 單張圖片完整參數 |
+| `gallery_rerun` | 一鍵重現該圖參數 |
+
 ## 安裝
 
 ```bash

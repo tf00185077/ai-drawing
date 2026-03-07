@@ -244,8 +244,8 @@ cd mcp-server && uv run pytest
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
 | 6a | MCP Server 建置 | [v] | `mcp-server/` | Agent F | `mcp-server/` |
-| 6b | 生圖與訓練 Tools | [ ] | `mcp-server/tools/` | - | - |
+| 6b | 生圖與訓練 Tools | [v] | `mcp-server/tools/` | Agent F | `mcp-server/mcp_server/tools/` |
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：20 / 24 完成（83%） · 最後更新：2026-03-07
+**整體進度**：21 / 24 完成（88%） · 最後更新：2026-03-07

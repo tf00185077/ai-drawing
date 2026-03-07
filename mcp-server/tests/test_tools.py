@@ -1,0 +1,71 @@
+"""MCP Tools 單元測試"""
+from unittest.mock import MagicMock, patch
+
+from mcp_server.tools.generate import generate_image, generate_queue_status
+from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun
+from mcp_server.tools.lora_train import lora_train_start, lora_train_status
+
+
+def test_generate_image_returns_success_message() -> None:
+    """generate_image 成功時回傳 job_id"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc-123", "status": "queued"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image(prompt="1girl, solo")
+
+    assert "abc-123" in result
+    assert "error" not in result.lower()
+    mock_client.post.assert_called_once_with("generate/", json={"prompt": "1girl, solo"})
+
+
+def test_generate_image_with_optional_params() -> None:
+    """generate_image 可傳入 checkpoint、lora 等參數"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "x", "status": "queued"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        generate_image(
+            prompt="test",
+            checkpoint="model.safetensors",
+            lora="style.safetensors",
+            steps=25,
+        )
+
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["prompt"] == "test"
+    assert call_json["checkpoint"] == "model.safetensors"
+    assert call_json["lora"] == "style.safetensors"
+    assert call_json["steps"] == 25
+
+
+def test_generate_queue_status_formats_output() -> None:
+    """generate_queue_status 正確格式化佇列資訊"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "queue_running": [{"job_id": "r1", "status": "running"}],
+        "queue_pending": [{"job_id": "p1", "status": "queued"}],
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_queue_status()
+
+    assert "執行中" in result
+    assert "等候中" in result
+    assert "r1" in result
+    assert "p1" in result
+
+
+def test_gallery_list_returns_summary() -> None:
+    """gallery_list 回傳圖庫摘要"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "items": [{"id": 1, "prompt": "test prompt", "created_at": "2024-01-01"}],
+        "total": 1,
+    }
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = gallery_list()
+
+    assert "1" in result
+    assert "test prompt" in result or "1 筆" in result
