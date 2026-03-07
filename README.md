@@ -138,6 +138,8 @@ auto-draw/
 
 ### 啟動
 
+> 完整參數說明與 ComfyUI/Kohya/WD 設定見 [`docs/setup-guide.md`](docs/setup-guide.md)
+
 ```bash
 # 後端
 cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
@@ -160,6 +162,9 @@ cd backend && pytest
 
 # 前端 (Vitest)
 cd frontend && npm run test
+
+# MCP Server (pytest)
+cd mcp-server && uv run pytest
 ```
 
 ---
@@ -238,9 +243,9 @@ cd frontend && npm run test
 ### Phase 6 · MCP 自然語言介面
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
-| 6a | MCP Server 建置 | [ ] | `mcp-server/` | - | - |
+| 6a | MCP Server 建置 | [v] | `mcp-server/` | Agent F | `mcp-server/` |
 | 6b | 生圖與訓練 Tools | [ ] | `mcp-server/tools/` | - | - |
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：19 / 24 完成（79%） · 最後更新：2026-03-07
+**整體進度**：20 / 24 完成（83%） · 最後更新：2026-03-07
