@@ -7,13 +7,15 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | Tool | 說明 |
 |------|------|
 | `mcp_ping` | 檢查 Backend 連線狀態 |
-| `generate_image` | 觸發圖片生成（prompt 必填） |
+| `generate_image` | 觸發圖片生成；支援 character、style 語意（如「初音」「動漫」） |
 | `generate_queue_status` | 取得生圖佇列狀態 |
 | `lora_train_start` | 手動觸發 LoRA 訓練 |
 | `lora_train_status` | 取得 LoRA 訓練進度 |
 | `gallery_list` | 圖庫列表（可篩選） |
 | `gallery_detail` | 單張圖片完整參數 |
 | `gallery_rerun` | 一鍵重現該圖參數 |
+| `list_character_styles` | 列出可用的角色／風格別名 |
+| `resolve_character_style_prompt` | 預覽角色+風格解析後的 prompt |
 
 ## 安裝
 

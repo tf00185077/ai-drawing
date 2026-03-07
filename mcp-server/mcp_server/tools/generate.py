@@ -2,13 +2,17 @@
 生圖 MCP Tools
 
 對應：POST /api/generate/、GET /api/generate/queue
+支援角色與風格語意對應（character_style）。
 """
+from mcp_server.character_style import resolve_to_prompt
 from mcp_server.server import _get_client, mcp
 
 
 @mcp.tool()
 def generate_image(
-    prompt: str,
+    prompt: str = "1girl, solo",
+    character: str | None = None,
+    style: str | None = None,
     checkpoint: str | None = None,
     lora: str | None = None,
     negative_prompt: str | None = None,
@@ -16,14 +20,25 @@ def generate_image(
     steps: int | None = None,
     cfg: float | None = None,
 ) -> str:
-    """觸發圖片生成。prompt 為必填，其他參數可選。回傳 job_id 或錯誤訊息。"""
+    """觸發圖片生成。可用 character、style 自然語言描述（如「初音」「動漫」），或直接給 prompt。回傳 job_id 或錯誤訊息。"""
     try:
         client = _get_client()
-        body = {"prompt": prompt}
+        final_prompt = prompt
+        resolved_lora = lora
+
+        if character or style:
+            base = prompt if prompt else "1girl, solo"
+            final_prompt, style_lora = resolve_to_prompt(
+                character=character, style=style, base_prompt=base
+            )
+            if style_lora and not resolved_lora:
+                resolved_lora = style_lora
+
+        body = {"prompt": final_prompt}
         if checkpoint:
             body["checkpoint"] = checkpoint
-        if lora:
-            body["lora"] = lora
+        if resolved_lora:
+            body["lora"] = resolved_lora
         if negative_prompt is not None:
             body["negative_prompt"] = negative_prompt
         if seed is not None:

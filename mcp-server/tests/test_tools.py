@@ -56,6 +56,20 @@ def test_generate_queue_status_formats_output() -> None:
     assert "p1" in result
 
 
+def test_generate_image_with_character_style_resolves_prompt() -> None:
+    """generate_image 使用 character、style 時會解析為 prompt"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "x", "status": "queued"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        generate_image(character="初音", style="動漫")
+
+    call_json = mock_client.post.call_args[1]["json"]
+    assert "prompt" in call_json
+    # 應包含語意解析後的關鍵字
+    assert "anime" in call_json["prompt"] or "miku" in call_json["prompt"]
+
+
 def test_gallery_list_returns_summary() -> None:
     """gallery_list 回傳圖庫摘要"""
     mock_client = MagicMock()

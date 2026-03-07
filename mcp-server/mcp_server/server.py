@@ -35,7 +35,12 @@ def mcp_ping() -> str:
 
 
 # 註冊 tools 模組（透過 import 觸發 @mcp.tool() 裝飾器）
-from mcp_server.tools import gallery, generate, lora_train  # noqa: E402, F401
+from mcp_server.tools import (  # noqa: E402, F401
+    character_style_tools,
+    gallery,
+    generate,
+    lora_train,
+)
 
 
 def main() -> None:
