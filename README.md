@@ -221,7 +221,9 @@ cd frontend && npm run test
 | 4a | LoRA 訓練執行器 | [v] | `services/lora_trainer.py` | Agent D | `backend/app/services/lora_trainer.py`, `backend/app/api/lora_train.py` |
 | 4b | 訓練觸發邏輯 | [v] | `services/lora_trainer.py` | Agent D | `backend/app/services/lora_trainer.py`, `backend/app/api/lora_train.py` |
 | 4c | 訓練完成 → 產圖 Pipeline | [v] | `app/main.py`, `core/queue.py`, `workflows/default_lora.json` | Agent D | `backend/app/main.py`, `backend/app/core/queue.py`, `backend/workflows/default_lora.json` |
-| 4d | 訓練狀態與佇列 | [ ] | `api/lora_train.py`, `pages/LoraTrain.tsx` | - | - |
+| 4d | 訓練狀態與佇列 | [v] | `api/lora_train.py`, `pages/LoraTrain.tsx` | Agent D | `backend/app/api/lora_train.py`, `frontend/src/pages/LoraTrain.tsx` |
+
+> **Phase 4 注意事項**：訓練需設定 `LORA_DEFAULT_CHECKPOINT`；ComfyUI 產圖需 LoRA 路徑可被 ComfyUI 讀取（見 `default_lora.json`）；擴展性 when-touching 項目見 agent-d-extensibility-review。
 
 ### Phase 5 · 整合優化
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
@@ -241,4 +243,4 @@ cd frontend && npm run test
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：18 / 24 完成（75%） · 最後更新：2026-03-07
+**整體進度**：19 / 24 完成（79%） · 最後更新：2026-03-07

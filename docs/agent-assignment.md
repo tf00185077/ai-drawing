@@ -125,7 +125,9 @@
 | D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [v] |
 | D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py` | 4a, 3a | [v] |
 | D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → queue + recording | 4a, A, B | [v] |
-| D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [ ] |
+| D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [v] |
+
+**D4 完成注意**：LoraTrain.tsx 需後端運行；訓練前須設定 `LORA_DEFAULT_CHECKPOINT`；ComfyUI 產圖時 LoRA 路徑須可被 ComfyUI 讀取；擴展性 when-touching 見 agent-d-extensibility-review。
 
 **必讀**：`docs/api-contract.md` 模組 4、`docs/internal-interfaces.md` lora_trainer、`app/schemas/lora_train.py`、`.cursor/skills/lora-train-docs/SKILL.md`、`.cursor/skills/kohya-sd-scripts/SKILL.md`
 
@@ -182,6 +184,7 @@
 | when-touching | 模板來源可配置（prompt_templates）、analytics 改為 GalleryRepository | E |
 | when-touching | WD Tagger 參數可配置（repo_id、batch_size、thresh、timeout） | C |
 | when-touching | IMAGE_EXTENSIONS 共用、watcher 狀態封裝、api-contract 補 GET /files | C |
+| when-touching | Kohya 訓練參數可配置、lora_trainer 佇列類別化、TrainerProtocol 抽象 | D |
 
 ---
 
