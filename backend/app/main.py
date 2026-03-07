@@ -39,12 +39,13 @@ app.add_middleware(
 )
 
 # 四大模組 API
-from app.api import generate, gallery, lora_docs, lora_train
+from app.api import generate, gallery, lora_docs, lora_train, prompt_templates
 
 app.include_router(generate.router)
 app.include_router(gallery.router)
 app.include_router(lora_docs.router)
 app.include_router(lora_train.router)
+app.include_router(prompt_templates.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)

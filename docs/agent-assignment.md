@@ -122,7 +122,7 @@
 
 | 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
 |------|---------|------|----------|------|------|
-| D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [ ] |
+| D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [v] |
 | D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py`, watcher | 4a, 3a | [ ] |
 | D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → comfyui + recording | 4a, A, B | [ ] |
 | D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [ ] |
@@ -137,7 +137,7 @@
 
 | 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
 |------|---------|------|----------|------|------|
-| E1 | 5b | Prompt 模板庫 | `core/prompt_templates.py` | 2a ✅ | [ ] |
+| E1 | 5b | Prompt 模板庫 | `core/prompt_templates.py` | 2a ✅ | [v] |
 | E2 | 5c | 生成統計分析 | `api/analytics.py` | 2a ✅, 2c | [ ] |
 
 **必讀**：`docs/api-contract.md`、`app/schemas/gallery.py`

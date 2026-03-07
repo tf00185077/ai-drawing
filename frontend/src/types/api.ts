@@ -109,3 +109,25 @@ export interface TriggerCheckResponse {
   should_trigger: boolean;
   candidates: { folder: string; image_count: number }[];
 }
+
+// ---- 進階 / 分析（Prompt 模板、Analytics） ----
+
+export interface PromptTemplateItem {
+  id: string;
+  name: string;
+  template: string;
+  variables: string[];
+}
+
+export interface PromptTemplateListResponse {
+  items: PromptTemplateItem[];
+}
+
+export interface PromptTemplateApplyRequest {
+  template_id: string;
+  variables?: Record<string, string>;
+}
+
+export interface PromptTemplateApplyResponse {
+  prompt: string;
+}

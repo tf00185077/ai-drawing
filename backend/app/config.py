@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # LoRA 訓練
     lora_train_dir: str = "./lora_train"
     lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
+    lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
     sd_scripts_path: str = "./sd-scripts"
 
     # watchdog

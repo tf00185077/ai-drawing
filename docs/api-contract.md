@@ -419,7 +419,71 @@
 
 ---
 
-## 5. 共通錯誤格式
+## 5. Prompt 模板模組 `/api/prompt-templates`
+
+### GET `/`
+
+取得所有 prompt 模板。
+
+**Response** `200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": "portrait",
+      "name": "人像基礎",
+      "template": "1girl, {人物}, {風格}, solo",
+      "variables": ["人物", "風格"]
+    }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| items | array | 模板陣列 |
+| items[].id | string | 模板 ID |
+| items[].name | string | 顯示名稱 |
+| items[].template | string | 模板內容，變數以 `{名稱}` 表示 |
+| items[].variables | string[] | 變數名稱列表 |
+
+---
+
+### POST `/apply`
+
+依 template_id 與 variables 產出最終 prompt。
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "template_id": "portrait",
+  "variables": {
+    "人物": "sks",
+    "風格": "anime"
+  }
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| template_id | string | 是 | 模板 ID |
+| variables | object | 否 | 變數名 → 值的對應，未提供者以空字串取代 |
+
+**Response** `200 OK`:
+
+```json
+{
+  "prompt": "1girl, sks, anime, solo"
+}
+```
+
+**Error**: `404` - 找不到該 template_id
+
+---
+
+## 6. 共通錯誤格式（所有模組適用）
 
 所有 API 錯誤回傳:
 
@@ -433,12 +497,14 @@
 
 ---
 
-## 6. 型別對應（Pydantic → 前端）
+## 7. 型別對應（Pydantic → 前端）
 
 | 後端型別 | 前端（TypeScript） |
 |----------|---------------------|
 | `GenerateRequest` | `interface GenerateRequest { ... }` |
 | `GalleryItem` | `interface GalleryItem { ... }` |
 | `TrainStartRequest` | `interface TrainStartRequest { ... }` |
+| `PromptTemplateItem` | `interface PromptTemplateItem { ... }` |
+| `PromptTemplateApplyRequest` | `interface PromptTemplateApplyRequest { ... }` |
 
 建議：在 `frontend/src/types/api.ts` 定義與本契約一致的 TypeScript 介面，並在 API 呼叫時使用。
