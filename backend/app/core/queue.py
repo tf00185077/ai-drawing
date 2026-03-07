@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 MAX_PENDING = 50
 WORKFLOW_TEMPLATE = "default"
+WORKFLOW_TEMPLATE_LORA = "default_lora"
 
 
 class QueueFullError(Exception):
@@ -145,7 +146,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         _running = job
 
     try:
-        wf = load_template(WORKFLOW_TEMPLATE)
+        template = (
+            WORKFLOW_TEMPLATE_LORA
+            if job.params.get("lora")
+            else WORKFLOW_TEMPLATE
+        )
+        wf = load_template(template)
         prompt = apply_params(
             wf,
             checkpoint=job.params.get("checkpoint"),

@@ -65,3 +65,18 @@ def test_apply_params_seed_random_when_none() -> None:
     seed = result["3"]["inputs"]["seed"]
     assert isinstance(seed, int)
     assert 0 <= seed <= 2**32 - 1
+
+
+def test_load_template_default_lora_has_loraloader() -> None:
+    """default_lora 模板含 LoraLoader，供訓練完成產圖 Pipeline 使用"""
+    wf = load_template("default_lora")
+    assert "10" in wf
+    assert wf["10"]["class_type"] == "LoraLoader"
+    assert "lora_name" in wf["10"]["inputs"]
+
+
+def test_apply_params_replaces_lora_in_default_lora() -> None:
+    """apply_params 在 default_lora 模板中正確替換 LoraLoader.lora_name"""
+    wf = load_template("default_lora")
+    result = apply_params(wf, prompt="test", lora="/path/to/my_lora.safetensors")
+    assert result["10"]["inputs"]["lora_name"] == "/path/to/my_lora.safetensors"

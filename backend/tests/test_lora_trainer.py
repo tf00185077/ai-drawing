@@ -177,3 +177,23 @@ def test_api_trigger_check_returns_candidates(
     assert "should_trigger" in data
     assert "candidates" in data
     assert data["should_trigger"] is True
+
+
+@patch("app.main.queue_submit")
+@patch("app.main.get_settings")
+def test_on_lora_complete_submits_to_queue(
+    mock_settings: MagicMock, mock_queue_submit: MagicMock
+) -> None:
+    """LoRA 訓練完成 callback 會提交產圖至 queue"""
+    mock_settings.return_value.lora_auto_prompt = "1girl"
+    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+
+    from app.main import _on_lora_complete
+
+    _on_lora_complete("/path/to/lora.safetensors", "my_lora")
+
+    mock_queue_submit.assert_called_once()
+    call_args = mock_queue_submit.call_args[0][0]
+    assert call_args["lora"] == "/path/to/lora.safetensors"
+    assert call_args["prompt"] == "1girl"
+    assert call_args["checkpoint"] == "model.ckpt"

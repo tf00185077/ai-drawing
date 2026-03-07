@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     lora_train_dir: str = "./lora_train"
     lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
+    lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = "./sd-scripts"
 
     # watchdog

@@ -124,7 +124,7 @@
 |------|---------|------|----------|------|------|
 | D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [v] |
 | D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py` | 4a, 3a | [v] |
-| D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → comfyui + recording | 4a, A, B | [ ] |
+| D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → queue + recording | 4a, A, B | [v] |
 | D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [ ] |
 
 **必讀**：`docs/api-contract.md` 模組 4、`docs/internal-interfaces.md` lora_trainer、`app/schemas/lora_train.py`、`.cursor/skills/lora-train-docs/SKILL.md`、`.cursor/skills/kohya-sd-scripts/SKILL.md`
