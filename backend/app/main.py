@@ -1,10 +1,24 @@
 """
 AI 自動化出圖系統 - FastAPI 入口
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.services.watcher import start_watching, stop_watching
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """應用生命週期：啟動時開始監聽，關閉時停止"""
+    start_watching()
+    yield
+    stop_watching()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="AI 自動化出圖系統",
     description="ComfyUI 產圖 · LoRA 訓練 · 參數記錄",
     version="0.1.0",

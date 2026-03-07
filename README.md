@@ -168,12 +168,14 @@ cd frontend && npm run test
 
 > **給 Agent**：完成任務後請將對應項目改為 `[v]`，填寫「完成者」與「完成檔案位置」，並更新「最後更新」時間。  
 > 分工對應見 `docs/agent-assignment.md`，介面契約見 `docs/api-contract.md`、`docs/internal-interfaces.md`。
+>
+> **擴展性審核**：執行後端 API、服務層或 core 邏輯之實作前，須先檢視 `python-extensibility-review` skill（`.cursor/skills/python-extensibility-review/SKILL.md`）及其 reference（同目錄下 `reference.md`），確保架構符合低耦合、可擴展原則。
 
 ### Phase 1 · ComfyUI 自動化核心
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
 | 1a | ComfyUI API 串接 | [v] | `core/comfyui.py` | - | `backend/app/core/comfyui.py` |
-| 1b | Workflow JSON 管理 | [ ] | `core/workflow.py`, `workflows/*.json` | - | - |
+| 1b | Workflow JSON 管理 | [v] | `core/workflow.py`, `workflows/*.json` | Agent A | `backend/app/core/workflow.py`, `backend/workflows/default.json` |
 | 1c | 批次生圖排程器 | [ ] | `core/queue.py` | - | - |
 | 1d | 基礎 UI（參數面板） | [ ] | `pages/Generate.tsx` | - | - |
 
@@ -181,14 +183,14 @@ cd frontend && npm run test
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
 | 2a | 資料庫設計 | [v] | `db/models.py` | - | `backend/app/db/models.py` |
-| 2b | 自動記錄 Pipeline | [ ] | `core/recording.py` | - | - |
+| 2b | 自動記錄 Pipeline | [v] | `core/recording.py` | Agent B | `backend/app/core/recording.py` |
 | 2c | Gallery 瀏覽器 | [ ] | `pages/Gallery.tsx`, `api/gallery.py` | - | - |
 | 2d | 一鍵重現 / 匯出 | [ ] | `api/gallery.py` | - | - |
 
 ### Phase 3 · LoRA 訓練文件與 .txt 產生
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
-| 3a | 資料夾監聽 .txt | [ ] | `services/watcher.py` | - | - |
+| 3a | 資料夾監聽 .txt | [v] | `services/watcher.py` | Agent C | `backend/app/services/watcher.py` |
 | 3b | 圖片上傳介面 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | - | - |
 | 3c | Caption 編輯器 | [ ] | `pages/LoraDocs.tsx`, `api/lora_docs.py` | - | - |
 | 3d | 打包下載 | [ ] | `api/lora_docs.py` | - | - |
@@ -217,4 +219,4 @@ cd frontend && npm run test
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：4 / 24 完成（17%） · 最後更新：2026-03-07
+**整體進度**：6 / 24 完成（25%） · 最後更新：2026-03-07
