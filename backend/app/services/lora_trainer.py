@@ -387,3 +387,65 @@ def register_on_complete(callback: OnCompleteCallback) -> None:
     """
     with _lock:
         _on_complete_callbacks.append(callback)
+
+
+def _iter_training_folders(base: Path) -> list[tuple[Path, str]]:
+    """遍歷 base 下所有子資料夾，回傳 (絕對路徑, 相對 folder)，不含 base 本身"""
+    result: list[tuple[Path, str]] = []
+    base_resolved = base.resolve()
+    for p in base_resolved.rglob("*"):
+        if not p.is_dir():
+            continue
+        try:
+            rel = p.relative_to(base_resolved)
+            folder = rel.as_posix()
+        except ValueError:
+            continue
+        if not folder or folder == ".":
+            continue
+        result.append((p, folder))
+    return result
+
+
+def trigger_check() -> dict:
+    """
+    檢查是否符合自動觸發條件（圖片數 ≥ 門檻）。
+    遍歷 lora_train_dir 下各子資料夾，達門檻且未在佇列／執行中者自動 enqueue。
+    Returns: {"should_trigger": bool, "candidates": [{"folder": str, "image_count": int}]}
+    """
+    settings = get_settings()
+    base = Path(settings.lora_train_dir).resolve()
+    threshold = settings.lora_train_threshold
+
+    if not base.exists() or not base.is_dir():
+        return {"should_trigger": False, "candidates": []}
+
+    candidates: list[dict] = []
+    enqueued: list[str] = []
+
+    for image_dir, folder in _iter_training_folders(base):
+        count = _count_trainable_images(image_dir)
+        if count < threshold:
+            continue
+        candidates.append({"folder": folder, "image_count": count})
+
+        with _lock:
+            if any(j.folder == folder for j in _queue):
+                continue
+            if _running and _running.job.folder == folder:
+                continue
+
+        try:
+            enqueue(folder)
+            enqueued.append(folder)
+        except ValueError:
+            # checkpoint 未設定等，略過
+            pass
+
+    if enqueued:
+        logger.info("trigger_check 已 enqueue: %s", enqueued)
+
+    return {
+        "should_trigger": len(candidates) > 0,
+        "candidates": candidates,
+    }

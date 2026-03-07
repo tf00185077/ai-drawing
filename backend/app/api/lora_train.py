@@ -10,6 +10,7 @@ from app.schemas.lora_train import (
     TrainStartRequest,
     TrainStartResponse,
     TrainStatusResponse,
+    TriggerCandidate,
     TriggerCheckResponse,
 )
 from app.services import lora_trainer
@@ -65,5 +66,13 @@ async def get_training_status():
 
 @router.post("/trigger-check", response_model=TriggerCheckResponse)
 async def check_auto_trigger():
-    """檢查是否符合自動觸發條件（圖片數 ≥ 門檻）"""
-    return TriggerCheckResponse(should_trigger=False)
+    """檢查是否符合自動觸發條件（圖片數 ≥ 門檻），符合者自動加入訓練佇列"""
+    result = lora_trainer.trigger_check()
+    candidates = [
+        TriggerCandidate(folder=c["folder"], image_count=c["image_count"])
+        for c in result["candidates"]
+    ]
+    return TriggerCheckResponse(
+        should_trigger=result["should_trigger"],
+        candidates=candidates,
+    )

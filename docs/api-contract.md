@@ -483,6 +483,37 @@
 
 ---
 
+## 5b. 生成統計分析 `/api/analytics`
+
+### GET `/summary`
+
+取得生成統計摘要：參數分佈、checkpoint / LoRA 使用頻率、最常使用的 seed。
+
+**Query Parameters**:
+
+| 參數 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| from_date | string | 否 | ISO 日期起，如 `2024-01-01` |
+| to_date | string | 否 | ISO 日期迄 |
+| limit | integer | 否 | 各類別取前 N 筆，預設 20 |
+
+**Response** `200 OK`:
+
+```json
+{
+  "total_count": 42,
+  "checkpoint_usage": [{"name": "model.safetensors", "count": 20}],
+  "lora_usage": [{"name": "style.safetensors", "count": 15}],
+  "steps_stats": {"min": 20, "max": 30, "avg": 25.5, "count": 40},
+  "cfg_stats": {"min": 7.0, "max": 9.0, "avg": 7.5, "count": 40},
+  "top_seeds": [{"seed": 12345, "count": 3}]
+}
+```
+
+**Error**: `400` - from_date 或 to_date 格式無效
+
+---
+
 ## 6. 共通錯誤格式（所有模組適用）
 
 所有 API 錯誤回傳:
@@ -506,5 +537,6 @@
 | `TrainStartRequest` | `interface TrainStartRequest { ... }` |
 | `PromptTemplateItem` | `interface PromptTemplateItem { ... }` |
 | `PromptTemplateApplyRequest` | `interface PromptTemplateApplyRequest { ... }` |
+| `AnalyticsSummaryResponse` | `interface AnalyticsSummaryResponse { ... }` |
 
 建議：在 `frontend/src/types/api.ts` 定義與本契約一致的 TypeScript 介面，並在 API 呼叫時使用。

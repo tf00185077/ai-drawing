@@ -115,3 +115,65 @@ def test_api_start_returns_202_and_job_id(
     data = res.json()
     assert "job_id" in data
     assert data["status"] == "queued"
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_trigger_check_returns_candidates_when_folder_meets_threshold(
+    mock_settings: MagicMock, valid_train_dir: Path
+) -> None:
+    """trigger_check 達門檻時回傳 candidates 並 enqueue"""
+    base = valid_train_dir / "lora_train"
+    mock_settings.return_value.lora_train_dir = str(base)
+    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+    mock_settings.return_value.lora_train_threshold = 2
+    mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
+
+    result = lora_trainer.trigger_check()
+
+    assert result["should_trigger"] is True
+    assert len(result["candidates"]) >= 1
+    assert any(c["folder"] == "my_lora" for c in result["candidates"])
+    assert any(c["image_count"] >= 2 for c in result["candidates"])
+    st = lora_trainer.get_status()
+    assert st["status"] == "queued"
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_trigger_check_returns_empty_when_below_threshold(
+    mock_settings: MagicMock, tmp_path: Path
+) -> None:
+    """trigger_check 未達門檻時回傳空 candidates"""
+    folder = tmp_path / "lora_train" / "few"
+    folder.mkdir(parents=True)
+    (folder / "a.png").write_bytes(b"x")
+    (folder / "a.txt").write_text("x", encoding="utf-8")
+    mock_settings.return_value.lora_train_dir = str(tmp_path / "lora_train")
+    mock_settings.return_value.lora_train_threshold = 10
+
+    result = lora_trainer.trigger_check()
+
+    assert result["should_trigger"] is False
+    assert result["candidates"] == []
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_api_trigger_check_returns_candidates(
+    mock_settings: MagicMock, valid_train_dir: Path
+) -> None:
+    """POST /api/lora-train/trigger-check 回傳 should_trigger 與 candidates"""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    base = valid_train_dir / "lora_train"
+    mock_settings.return_value.lora_train_dir = str(base)
+    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+    mock_settings.return_value.lora_train_threshold = 2
+
+    client = TestClient(app)
+    res = client.post("/api/lora-train/trigger-check")
+
+    assert res.status_code == 200
+    data = res.json()
+    assert "should_trigger" in data
+    assert "candidates" in data
+    assert data["should_trigger"] is True

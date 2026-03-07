@@ -123,13 +123,15 @@
 | 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
 |------|---------|------|----------|------|------|
 | D1 | 4a | LoRA 訓練執行器 | `services/lora_trainer.py` | A, C | [v] |
-| D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py`, watcher | 4a, 3a | [ ] |
+| D2 | 4b | 訓練觸發邏輯 | `lora_trainer.py` | 4a, 3a | [v] |
 | D3 | 4c | 訓練完成 → 產圖 Pipeline | `lora_trainer` → comfyui + recording | 4a, A, B | [ ] |
 | D4 | 4d | 訓練狀態與佇列 | `api/lora_train.py`, `pages/LoraTrain.tsx` | 4a | [ ] |
 
 **必讀**：`docs/api-contract.md` 模組 4、`docs/internal-interfaces.md` lora_trainer、`app/schemas/lora_train.py`、`.cursor/skills/lora-train-docs/SKILL.md`、`.cursor/skills/kohya-sd-scripts/SKILL.md`
 
 **前置**：軌道 A、B、C 完成後始可進行。
+
+**擴展性審核**：已審核，見 [`docs/reviews/agent-d-extensibility-review.md`](docs/reviews/agent-d-extensibility-review.md)。Kohya 參數可配置、IMAGE_EXTENSIONS 共用為 when-touching 項目。
 
 ---
 
@@ -138,9 +140,11 @@
 | 步驟 | 任務 ID | 說明 | 實作檔案 | 依賴 | 狀態 |
 |------|---------|------|----------|------|------|
 | E1 | 5b | Prompt 模板庫 | `core/prompt_templates.py` | 2a ✅ | [v] |
-| E2 | 5c | 生成統計分析 | `api/analytics.py` | 2a ✅, 2c | [ ] |
+| E2 | 5c | 生成統計分析 | `api/analytics.py` | 2a ✅, 2c | [v] |
 
 **必讀**：`docs/api-contract.md`、`app/schemas/gallery.py`
+
+**擴展性審核**：已審核，見 [`docs/reviews/agent-e-extensibility-review.md`](docs/reviews/agent-e-extensibility-review.md)。Phase 5 擴展性注意已處理。
 
 **可與 A、B、C 並行**：E1 可獨立；E2 需 2c（Gallery）完成後有資料。
 
@@ -175,6 +179,7 @@
 | when-touching | queue 類別化、消除模組級全域狀態 | A |
 | when-touching | workflow 結構可配置化 | A |
 | when-touching | _to_image_url 參數化、Export formatter 抽出、日期錯誤回傳 400 | B |
+| when-touching | 模板來源可配置（prompt_templates）、analytics 改為 GalleryRepository | E |
 | when-touching | WD Tagger 參數可配置（repo_id、batch_size、thresh、timeout） | C |
 | when-touching | IMAGE_EXTENSIONS 共用、watcher 狀態封裝、api-contract 補 GET /files | C |
 
@@ -219,7 +224,8 @@ docs/
 ├── extensibility-review-agent-a.md  # Agent A 生圖模組擴展性審核
 └── reviews/
     ├── agent-b-extensibility-review.md  # Agent B 圖庫模組擴展性審核
-    └── agent-c-extensibility-review.md  # Agent C LoRA 文件擴展性審核
+    ├── agent-c-extensibility-review.md  # Agent C LoRA 文件擴展性審核
+    └── agent-e-extensibility-review.md  # Agent E 進階功能擴展性審核
 
 backend/app/schemas/       # Pydantic 模型 ← A,B,C,D
 frontend/src/types/api.ts  # 前端型別 ← A,B,C,D,E

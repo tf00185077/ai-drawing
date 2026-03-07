@@ -219,7 +219,7 @@ cd frontend && npm run test
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
 |----|------|------|----------|--------|--------------|
 | 4a | LoRA 訓練執行器 | [v] | `services/lora_trainer.py` | Agent D | `backend/app/services/lora_trainer.py`, `backend/app/api/lora_train.py` |
-| 4b | 訓練觸發邏輯 | [ ] | `services/lora_trainer.py`, watcher | - | - |
+| 4b | 訓練觸發邏輯 | [v] | `services/lora_trainer.py` | Agent D | `backend/app/services/lora_trainer.py`, `backend/app/api/lora_train.py` |
 | 4c | 訓練完成 → 產圖 Pipeline | [ ] | `core/comfyui` + `recording` | - | - |
 | 4d | 訓練狀態與佇列 | [ ] | `api/lora_train.py`, `pages/LoraTrain.tsx` | - | - |
 
@@ -228,8 +228,10 @@ cd frontend && npm run test
 |----|------|------|----------|--------|--------------|
 | 5a | 統一儀表板 | [v] | `pages/Dashboard.tsx` | - | `frontend/src/pages/Dashboard.tsx` |
 | 5b | Prompt 模板庫 | [v] | `core/prompt_templates.py` | Agent E | `backend/app/core/prompt_templates.py`, `backend/app/api/prompt_templates.py` |
-| 5c | 生成統計分析 | [ ] | `api/analytics.py` | - | - |
+| 5c | 生成統計分析 | [v] | `api/analytics.py` | Agent E | `backend/app/api/analytics.py`, `backend/app/services/analytics.py` |
 | 5d | 部署 & 文件 | [v] | `Dockerfile`, `docker-compose.yml` | - | `Dockerfile`, `docker-compose.yml` |
+
+> **擴展性審核（Agent E）**：已審核，見 [`docs/reviews/agent-e-extensibility-review.md`](docs/reviews/agent-e-extensibility-review.md)。Verdict：通過。E2 查詢邏輯已與 route 分離；無效日期回傳 400；GalleryRepository 為 when-touching 項目。
 
 ### Phase 6 · MCP 自然語言介面
 | ID | 任務 | 狀態 | 實作檔案 | 完成者 | 完成檔案位置 |
@@ -239,4 +241,4 @@ cd frontend && npm run test
 | 6c | 角色與風格語意對應 | [ ] | `mcp-server/character_style.py` | - | - |
 | 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
 
-**整體進度**：16 / 24 完成（67%） · 最後更新：2026-03-07
+**整體進度**：17 / 24 完成（71%） · 最後更新：2026-03-07

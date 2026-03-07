@@ -131,3 +131,29 @@ export interface PromptTemplateApplyRequest {
 export interface PromptTemplateApplyResponse {
   prompt: string;
 }
+
+export interface UsageItem {
+  name: string;
+  count: number;
+}
+
+export interface NumericStats {
+  min: number | null;
+  max: number | null;
+  avg: number | null;
+  count: number;
+}
+
+export interface SeedUsageItem {
+  seed: number;
+  count: number;
+}
+
+export interface AnalyticsSummaryResponse {
+  total_count: number;
+  checkpoint_usage: UsageItem[];
+  lora_usage: UsageItem[];
+  steps_stats: NumericStats;
+  cfg_stats: NumericStats;
+  top_seeds: SeedUsageItem[];
+}
