@@ -1,7 +1,7 @@
 """Workflow JSON 管理單元測試"""
 import pytest
 
-from app.core.workflow import load_template, apply_params
+from app.core.workflow import apply_params, get_seed_from_workflow, load_template
 
 
 def test_load_template_loads_default() -> None:
@@ -108,3 +108,16 @@ def test_apply_params_keeps_template_values_when_param_none() -> None:
     result = apply_params(wf, prompt="test")
     assert result["5"]["inputs"]["width"] == orig_w
     assert result["5"]["inputs"]["height"] == orig_h
+
+
+def test_get_seed_from_workflow_returns_seed_when_ksampler_present() -> None:
+    """有 KSampler 時回傳其 seed"""
+    wf = load_template("default")
+    result = apply_params(wf, prompt="test", seed=99999)
+    assert get_seed_from_workflow(result) == 99999
+
+
+def test_get_seed_from_workflow_returns_none_when_no_ksampler() -> None:
+    """無 KSampler 時回傳 None"""
+    assert get_seed_from_workflow({}) is None
+    assert get_seed_from_workflow({"1": {"class_type": "OtherNode", "inputs": {}}}) is None

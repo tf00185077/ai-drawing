@@ -134,3 +134,19 @@ def apply_params(
                 inputs["text"] = negative_prompt
 
     return wf
+
+
+def get_seed_from_workflow(workflow: dict) -> int | None:
+    """
+    從 workflow 中提取 KSampler 的 seed。
+    用於 recording 時取得「實際使用」的 seed（含 apply_params 產生的隨機值）。
+
+    Returns:
+        KSampler 的 seed，若無則 None
+    """
+    for node in workflow.values():
+        if isinstance(node, dict) and node.get("class_type") == "KSampler":
+            seed = node.get("inputs", {}).get("seed")
+            if isinstance(seed, int):
+                return seed
+    return None

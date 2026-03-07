@@ -17,7 +17,7 @@ from typing import Any, TypedDict
 from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client, get_output_images
 from app.core.recording import save as recording_save
-from app.core.workflow import apply_params, load_template
+from app.core.workflow import apply_params, get_seed_from_workflow, load_template
 from app.db.database import SessionLocal
 
 logger = logging.getLogger(__name__)
@@ -172,6 +172,11 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             sampler_name=job.params.get("sampler_name"),
             scheduler=job.params.get("scheduler"),
         )
+        # 使用者未提供 seed 時，apply_params 會產生隨機值；擷取實際使用的 seed 供 recording
+        if job.params.get("seed") is None:
+            effective_seed = get_seed_from_workflow(prompt)
+            if effective_seed is not None:
+                job.params["seed"] = effective_seed
         prompt_id = comfy.submit_prompt(prompt)
         with _lock:
             if _running and _running.job_id == job.job_id:
@@ -196,8 +201,11 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
     try:
         queue_data = comfy.get_queue()
         running_items = queue_data.get("queue_running", [])
+        # ComfyUI 格式：每個 item 為 [job_number, prompt_id, workflow_json, output_node_ids, metadata]
         still_running = any(
-            item.get("prompt_id") == job.prompt_id for item in running_items
+            (item[1] if isinstance(item, (list, tuple)) and len(item) > 1 else None)
+            == job.prompt_id
+            for item in running_items
         )
         if still_running:
             return

@@ -1,8 +1,13 @@
 """
 專案配置
 """
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+# 專案根目錄（backend 的上層），.env 在此
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -26,6 +31,7 @@ class Settings(BaseSettings):
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = "./sd-scripts"
+    sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
     # LoRA 訓練參數預設值（API 未帶入時使用）
     lora_resolution: int = 512
     lora_batch_size: int = 4
@@ -39,8 +45,9 @@ class Settings(BaseSettings):
     watch_dirs: str = "./lora_train"  # 逗號分隔
 
     class Config:
-        env_file = ".env"
+        env_file = str(_PROJECT_ROOT / ".env")
         env_file_encoding = "utf-8"
+        extra = "ignore"  # 允許 .env 有未對應欄位（如 MCP_BACKEND_API_URL）
 
 
 @lru_cache

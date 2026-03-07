@@ -4,6 +4,7 @@ WD Tagger 共用服務
 被 watcher 與 lora_docs 共用
 """
 import logging
+import os
 import subprocess
 from pathlib import Path
 
@@ -25,8 +26,10 @@ def run_wd_tagger(image_dir: Path) -> None:
         logger.warning("WD Tagger 腳本不存在: %s，略過標註", script)
         return
 
+    python_exe = (settings.sd_scripts_python or "").strip() or "python"
+
     cmd = [
-        "python",
+        python_exe,
         str(script),
         "--onnx",
         "--repo_id",
@@ -38,10 +41,14 @@ def run_wd_tagger(image_dir: Path) -> None:
         "--recursive",
         str(Path(image_dir).resolve()),
     ]
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(sd_scripts) + os.pathsep + env.get("PYTHONPATH", "")
+
     try:
         proc = subprocess.run(
             cmd,
             cwd=str(sd_scripts),
+            env=env,
             capture_output=True,
             text=True,
             timeout=120,
