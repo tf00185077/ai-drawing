@@ -26,8 +26,10 @@ def _on_lora_complete(output_lora_path: str, folder: str) -> None:
     """LoRA 訓練完成後自動產圖：提交至生圖佇列"""
     settings = get_settings()
     try:
+        # ComfyUI LoraLoader 需檔名，非完整路徑（依 extra_model_paths 解析）
+        lora_name = Path(output_lora_path).name
         params = {
-            "lora": output_lora_path,
+            "lora": lora_name,
             "prompt": settings.lora_auto_prompt,
         }
         if settings.lora_default_checkpoint:
