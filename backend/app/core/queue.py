@@ -39,6 +39,11 @@ class GenerateParams(TypedDict, total=False):
     seed: int
     steps: int
     cfg: float
+    width: int
+    height: int
+    batch_size: int
+    sampler_name: str
+    scheduler: str
 
 
 class _Job:
@@ -161,6 +166,11 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             seed=job.params.get("seed"),
             steps=job.params.get("steps", 20),
             cfg=job.params.get("cfg", 7.0),
+            width=job.params.get("width"),
+            height=job.params.get("height"),
+            batch_size=job.params.get("batch_size"),
+            sampler_name=job.params.get("sampler_name"),
+            scheduler=job.params.get("scheduler"),
         )
         prompt_id = comfy.submit_prompt(prompt)
         with _lock:

@@ -22,7 +22,12 @@
   "negative_prompt": "lowres, blur",
   "seed": 12345,
   "steps": 20,
-  "cfg": 7.0
+  "cfg": 7.0,
+  "width": 768,
+  "height": 768,
+  "batch_size": 2,
+  "sampler_name": "dpmpp_2m",
+  "scheduler": "karras"
 }
 ```
 
@@ -35,6 +40,11 @@
 | seed | integer | 否 | 隨機種子，不傳則隨機 |
 | steps | integer | 否 | 採樣步數，預設 20 |
 | cfg | float | 否 | CFG scale，預設 7.0 |
+| width | integer | 否 | 圖寬 256–2048，不傳用 workflow 預設 |
+| height | integer | 否 | 圖高 |
+| batch_size | integer | 否 | 一次產圖張數 |
+| sampler_name | string | 否 | 採樣器（euler、dpmpp_2m、ddim 等） |
+| scheduler | string | 否 | 調度器（normal、karras、exponential 等） |
 
 **Response** `201 Created`:
 
@@ -335,7 +345,14 @@
 {
   "folder": "my_lora",
   "checkpoint": "path/to/base_model.safetensors",
-  "epochs": 10
+  "epochs": 10,
+  "resolution": 512,
+  "batch_size": 4,
+  "learning_rate": "1e-4",
+  "class_tokens": "sks",
+  "keep_tokens": 1,
+  "num_repeats": 10,
+  "mixed_precision": "fp16"
 }
 ```
 
@@ -344,6 +361,13 @@
 | folder | string | 是 | 訓練資料夾（相對 lora_train_dir） |
 | checkpoint | string | 否 | Base model 路徑，不傳則用 config 預設 |
 | epochs | integer | 否 | 訓練 epoch 數，預設 10 |
+| resolution | integer | 否 | 解析度 256–2048，不傳用 config |
+| batch_size | integer | 否 | 每批圖片數 |
+| learning_rate | string | 否 | 學習率 |
+| class_tokens | string | 否 | 觸發詞 |
+| keep_tokens | integer | 否 | caption 保留 token 數 |
+| num_repeats | integer | 否 | 每張圖重複次數 |
+| mixed_precision | string | 否 | fp16 / bf16 / fp32 |
 
 **Response** `202 Accepted`:
 

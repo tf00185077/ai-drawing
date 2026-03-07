@@ -11,6 +11,14 @@ class TrainStartRequest(BaseModel):
     folder: str = Field(..., min_length=1)
     checkpoint: str | None = None
     epochs: int = Field(default=10, ge=1, le=500)
+    # 以下未帶入時使用 config 預設值
+    resolution: int | None = Field(default=None, ge=256, le=2048)
+    batch_size: int | None = Field(default=None, ge=1, le=32)
+    learning_rate: str | None = None
+    class_tokens: str | None = None
+    keep_tokens: int | None = Field(default=None, ge=0, le=10)
+    num_repeats: int | None = Field(default=None, ge=1, le=100)
+    mixed_precision: str | None = None  # fp16 | bf16 | fp32
 
 
 class TrainStartResponse(BaseModel):

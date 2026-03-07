@@ -26,6 +26,13 @@ async def start_training(body: TrainStartRequest):
             body.folder,
             checkpoint=body.checkpoint,
             epochs=body.epochs,
+            resolution=body.resolution,
+            batch_size=body.batch_size,
+            learning_rate=body.learning_rate,
+            class_tokens=body.class_tokens,
+            keep_tokens=body.keep_tokens,
+            num_repeats=body.num_repeats,
+            mixed_precision=body.mixed_precision,
         )
     except ValueError as e:
         msg = str(e)

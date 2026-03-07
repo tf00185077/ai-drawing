@@ -42,6 +42,13 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
     mock_settings.return_value.lora_train_threshold = 10
     mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     job_id = lora_trainer.enqueue("my_lora", checkpoint="model.ckpt", epochs=5)
 
@@ -61,6 +68,13 @@ def test_enqueue_nonexistent_folder_raises_value_error(
     """enqueue 不存在的資料夾時拋出 ValueError"""
     mock_settings.return_value.lora_train_dir = str(tmp_path / "lora_train")
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     with pytest.raises(ValueError, match="資料夾不存在"):
         lora_trainer.enqueue("not_exists")
@@ -78,6 +92,13 @@ def test_enqueue_folder_without_caption_txt_raises(
 
     mock_settings.return_value.lora_train_dir = str(tmp_path / "lora_train")
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     with pytest.raises(ValueError, match="圖片數不足"):
         lora_trainer.enqueue("no_txt")
@@ -104,6 +125,13 @@ def test_api_start_returns_202_and_job_id(
     mock_settings.return_value.lora_train_dir = str(valid_train_dir / "lora_train")
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
     mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     client = TestClient(app)
     res = client.post(
@@ -127,6 +155,13 @@ def test_trigger_check_returns_candidates_when_folder_meets_threshold(
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
     mock_settings.return_value.lora_train_threshold = 2
     mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     result = lora_trainer.trigger_check()
 
@@ -149,6 +184,13 @@ def test_trigger_check_returns_empty_when_below_threshold(
     (folder / "a.txt").write_text("x", encoding="utf-8")
     mock_settings.return_value.lora_train_dir = str(tmp_path / "lora_train")
     mock_settings.return_value.lora_train_threshold = 10
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     result = lora_trainer.trigger_check()
 
@@ -168,6 +210,13 @@ def test_api_trigger_check_returns_candidates(
     mock_settings.return_value.lora_train_dir = str(base)
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
     mock_settings.return_value.lora_train_threshold = 2
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
 
     client = TestClient(app)
     res = client.post("/api/lora-train/trigger-check")
@@ -194,6 +243,6 @@ def test_on_lora_complete_submits_to_queue(
 
     mock_queue_submit.assert_called_once()
     call_args = mock_queue_submit.call_args[0][0]
-    assert call_args["lora"] == "/path/to/lora.safetensors"
+    assert call_args["lora"] == "lora.safetensors"  # ComfyUI 用檔名，依 extra_model_paths 解析
     assert call_args["prompt"] == "1girl"
     assert call_args["checkpoint"] == "model.ckpt"

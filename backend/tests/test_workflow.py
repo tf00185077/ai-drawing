@@ -80,3 +80,31 @@ def test_apply_params_replaces_lora_in_default_lora() -> None:
     wf = load_template("default_lora")
     result = apply_params(wf, prompt="test", lora="/path/to/my_lora.safetensors")
     assert result["10"]["inputs"]["lora_name"] == "/path/to/my_lora.safetensors"
+
+
+def test_apply_params_replaces_width_height_sampler() -> None:
+    """apply_params 正確替換 EmptyLatentImage 與 KSampler 的 width、height、sampler_name、scheduler"""
+    wf = load_template("default")
+    result = apply_params(
+        wf,
+        prompt="test",
+        width=768,
+        height=768,
+        batch_size=2,
+        sampler_name="dpmpp_2m",
+        scheduler="karras",
+    )
+    assert result["5"]["inputs"]["width"] == 768
+    assert result["5"]["inputs"]["height"] == 768
+    assert result["5"]["inputs"]["batch_size"] == 2
+    assert result["3"]["inputs"]["sampler_name"] == "dpmpp_2m"
+    assert result["3"]["inputs"]["scheduler"] == "karras"
+
+
+def test_apply_params_keeps_template_values_when_param_none() -> None:
+    """width/height/sampler 為 None 時保留模板原有值"""
+    wf = load_template("default")
+    orig_w, orig_h = wf["5"]["inputs"]["width"], wf["5"]["inputs"]["height"]
+    result = apply_params(wf, prompt="test")
+    assert result["5"]["inputs"]["width"] == orig_w
+    assert result["5"]["inputs"]["height"] == orig_h

@@ -50,6 +50,13 @@
 | `LORA_DEFAULT_CHECKPOINT` | *(空)* | **是** | 預設 checkpoint 路徑或檔名 |
 | `LORA_AUTO_PROMPT` | `1girl, solo, high quality` | 否 | 訓練完成後自動產圖的 prompt |
 | `SD_SCRIPTS_PATH` | `./sd-scripts` | **是** | Kohya sd-scripts 目錄的絕對或相對路徑 |
+| `LORA_RESOLUTION` | `512` | 否 | 訓練解析度，API 未帶入時使用 |
+| `LORA_BATCH_SIZE` | `4` | 否 | 訓練 batch size |
+| `LORA_LEARNING_RATE` | `1e-4` | 否 | 學習率 |
+| `LORA_CLASS_TOKENS` | `sks` | 否 | 觸發詞 |
+| `LORA_KEEP_TOKENS` | `1` | 否 | caption 保留 token 數 |
+| `LORA_NUM_REPEATS` | `10` | 否 | 每張圖重複次數 |
+| `LORA_MIXED_PRECISION` | `fp16` | 否 | fp16 / bf16 / fp32 |
 | **watchdog** | | | |
 | `WATCH_DIRS` | `./lora_train` | 否 | 監聽目錄，逗號分隔 |
 
@@ -214,6 +221,25 @@ curl -X POST http://127.0.0.1:8000/api/lora-train/trigger-check
 curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: application/json" -d "{\"folder\": \"my_char\", \"epochs\": 10}"
 ```
 
+**方式 C：自訂訓練參數**（解析度、batch、學習率等）
+
+```powershell
+curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: application/json" -d "{\"folder\": \"my_char\", \"epochs\": 15, \"resolution\": 768, \"batch_size\": 2, \"learning_rate\": \"2e-4\", \"class_tokens\": \"ohwx\", \"num_repeats\": 15, \"mixed_precision\": \"bf16\"}"
+```
+
+| 參數 | 說明 | 範例 |
+|------|------|------|
+| folder | 必填，相對 lora_train 的子資料夾 | my_char |
+| checkpoint | 選填，未填用 .env 預設 | v1-5-pruned-emaonly.safetensors |
+| epochs | 訓練輪數 | 10 |
+| resolution | 解析度 (256–2048) | 512、768 |
+| batch_size | 每批圖片數 | 4 |
+| learning_rate | 學習率 | 1e-4、2e-4 |
+| class_tokens | 觸發詞 | sks、ohwx |
+| keep_tokens | caption 保留 token 數 | 1 |
+| num_repeats | 每張圖重複次數 | 10 |
+| mixed_precision | fp16 / bf16 / fp32 | fp16 |
+
 ### 步驟 5：查看訓練進度
 
 ```powershell
@@ -231,6 +257,31 @@ curl http://127.0.0.1:8000/api/lora-train/status
 ```powershell
 curl http://127.0.0.1:8000/api/generate/queue
 ```
+
+### 生圖 API：自訂解析度、採樣器
+
+`POST /api/generate/` 支援傳入生圖參數：
+
+```powershell
+curl -X POST http://127.0.0.1:8000/api/generate/ -H "Content-Type: application/json" -d "{\"prompt\": \"1girl, solo\", \"width\": 768, \"height\": 768, \"steps\": 30, \"cfg\": 7.5, \"sampler_name\": \"dpmpp_2m\", \"scheduler\": \"karras\"}"
+```
+
+| 參數 | 說明 | 範例 |
+|------|------|------|
+| prompt | 必填，正向 prompt | 1girl, solo |
+| checkpoint | 選填 | v1-5-pruned-emaonly.safetensors |
+| lora | 選填 | my_char.safetensors |
+| negative_prompt | 負向 prompt | lowres, blur |
+| seed | 隨機種子，不傳則隨機 | 12345 |
+| steps | 採樣步數 | 20 |
+| cfg | CFG scale | 7.0 |
+| width | 圖寬 (256–2048) | 768 |
+| height | 圖高 | 768 |
+| batch_size | 一次產圖張數 | 2 |
+| sampler_name | 採樣器 | euler、dpmpp_2m、ddim |
+| scheduler | 調度器 | normal、karras、exponential |
+
+未傳的參數使用 workflow 模板預設值。
 
 ### 流程圖總覽
 
@@ -288,3 +339,49 @@ curl http://127.0.0.1:8000/api/generate/queue
 - [ ] ComfyUI 的 `extra_model_paths.yaml` 已加入 `lora_train/output`（或已處理 LoRA 路徑）
 - [ ] Checkpoint 檔案可被 ComfyUI 讀取
 - [ ] 已執行 `python backend/scripts/init_db.py`
+
+---
+
+## 八、仍硬編碼的參數（備註）
+
+以下參數目前無法透過 API 或 .env 設定，若需修改須改程式碼。
+
+### LoRA 訓練
+
+| 項目 | 寫死值 | 位置 |
+|------|--------|------|
+| network_module | `networks.lora` | `lora_trainer.py` |
+| save_model_as | `safetensors` | `lora_trainer.py` |
+| cache_latents | 固定啟用 | `lora_trainer.py` |
+| gradient_checkpointing | 固定啟用 | `lora_trainer.py` |
+| caption_extension | `.txt` | `lora_trainer.py` (dataset TOML) |
+| LoRA 輸出子目錄 | `output` | `lora_trainer.py`（`{LORA_TRAIN_DIR}/output`） |
+
+### Workflow
+
+| 項目 | 寫死值 | 位置 |
+|------|--------|------|
+| workflow 模板名 | `default`、`default_lora` | `queue.py` |
+| workflows 目錄 | `backend/workflows/` | `workflow.py` |
+
+### 生圖佇列
+
+| 項目 | 寫死值 | 位置 |
+|------|--------|------|
+| MAX_PENDING | 50 | `queue.py` |
+| worker 輪詢間隔 | 2.0 秒 | `queue.py` |
+
+### WD Tagger
+
+| 項目 | 寫死值 | 位置 |
+|------|--------|------|
+| repo_id | `SmilingWolf/wd-swinv2-tagger-v3` | `wd_tagger.py` |
+| batch_size | 4 | `wd_tagger.py` |
+| thresh | 0.35 | `wd_tagger.py` |
+| timeout | 120 秒 | `wd_tagger.py` |
+
+### Watchdog
+
+| 項目 | 寫死值 | 位置 |
+|------|--------|------|
+| DEBOUNCE_SECONDS | 2.0 | `watcher.py` |

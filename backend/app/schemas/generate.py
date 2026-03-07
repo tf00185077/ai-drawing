@@ -15,6 +15,11 @@ class GenerateRequest(BaseModel):
     seed: int | None = None
     steps: int = Field(default=20, ge=1, le=150)
     cfg: float = Field(default=7.0, ge=1.0, le=30.0)
+    width: int | None = Field(default=None, ge=256, le=2048)
+    height: int | None = Field(default=None, ge=256, le=2048)
+    batch_size: int | None = Field(default=None, ge=1, le=8)
+    sampler_name: str | None = None  # e.g. euler, dpmpp_2m, ddim
+    scheduler: str | None = None  # e.g. normal, karras, exponential
 
 
 class GenerateResponse(BaseModel):

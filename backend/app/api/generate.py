@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/generate", tags=["生圖"])
 async def trigger_generate(body: GenerateRequest):
     """觸發圖片生成"""
     try:
-        job_id = submit({
+        params = {
             "checkpoint": body.checkpoint,
             "lora": body.lora,
             "prompt": body.prompt,
@@ -23,7 +23,18 @@ async def trigger_generate(body: GenerateRequest):
             "seed": body.seed,
             "steps": body.steps,
             "cfg": body.cfg,
-        })
+        }
+        if body.width is not None:
+            params["width"] = body.width
+        if body.height is not None:
+            params["height"] = body.height
+        if body.batch_size is not None:
+            params["batch_size"] = body.batch_size
+        if body.sampler_name is not None:
+            params["sampler_name"] = body.sampler_name
+        if body.scheduler is not None:
+            params["scheduler"] = body.scheduler
+        job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,
             status="queued",

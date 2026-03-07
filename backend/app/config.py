@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = "./sd-scripts"
+    # LoRA 訓練參數預設值（API 未帶入時使用）
+    lora_resolution: int = 512
+    lora_batch_size: int = 4
+    lora_learning_rate: str = "1e-4"
+    lora_class_tokens: str = "sks"
+    lora_keep_tokens: int = 1
+    lora_num_repeats: int = 10
+    lora_mixed_precision: str = "fp16"
 
     # watchdog
     watch_dirs: str = "./lora_train"  # 逗號分隔

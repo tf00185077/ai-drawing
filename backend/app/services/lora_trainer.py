@@ -38,6 +38,13 @@ class _TrainJob:
     checkpoint: str
     epochs: int
     submitted_at: str
+    resolution: int
+    batch_size: int
+    learning_rate: str
+    class_tokens: str
+    keep_tokens: int
+    num_repeats: int
+    mixed_precision: str
 
 
 @dataclass
@@ -90,7 +97,11 @@ def _write_dataset_config(
     image_dir: Path,
     output_name: str,
     *,
+    resolution: int = 512,
+    batch_size: int = 4,
     class_tokens: str = "sks",
+    keep_tokens: int = 1,
+    num_repeats: int = 10,
 ) -> Path:
     """產生 dataset_config TOML，image_dir 需為絕對路徑"""
     toml_dir = image_dir.parent
@@ -98,16 +109,16 @@ def _write_dataset_config(
     content = f"""[general]
 shuffle_caption = true
 caption_extension = ".txt"
-keep_tokens = 1
+keep_tokens = {keep_tokens}
 
 [[datasets]]
-resolution = 512
-batch_size = 4
+resolution = {resolution}
+batch_size = {batch_size}
 
   [[datasets.subsets]]
   image_dir = "{image_dir.as_posix()}"
   class_tokens = "{class_tokens}"
-  num_repeats = 10
+  num_repeats = {num_repeats}
 """
     toml_path.write_text(content, encoding="utf-8")
     return toml_path
@@ -134,9 +145,24 @@ def _run_training_subprocess(
     checkpoint: str,
     epochs: int,
     sd_scripts_path: Path,
+    resolution: int = 512,
+    batch_size: int = 4,
+    learning_rate: str = "1e-4",
+    class_tokens: str = "sks",
+    keep_tokens: int = 1,
+    num_repeats: int = 10,
+    mixed_precision: str = "fp16",
 ) -> subprocess.Popen[str]:
     """啟動 Kohya train_network.py subprocess"""
-    toml_path = _write_dataset_config(image_dir, output_name)
+    toml_path = _write_dataset_config(
+        image_dir,
+        output_name,
+        resolution=resolution,
+        batch_size=batch_size,
+        class_tokens=class_tokens,
+        keep_tokens=keep_tokens,
+        num_repeats=num_repeats,
+    )
     cmd = [
         "accelerate",
         "launch",
@@ -156,11 +182,11 @@ def _run_training_subprocess(
         "--max_train_epochs",
         str(epochs),
         "--learning_rate",
-        "1e-4",
+        learning_rate,
         "--save_model_as",
         "safetensors",
         "--mixed_precision",
-        "fp16",
+        mixed_precision,
         "--cache_latents",
         "--gradient_checkpointing",
     ]
@@ -210,6 +236,13 @@ def _worker_loop() -> None:
                 checkpoint=job.checkpoint,
                 epochs=job.epochs,
                 sd_scripts_path=sd_scripts,
+                resolution=job.resolution,
+                batch_size=job.batch_size,
+                learning_rate=job.learning_rate,
+                class_tokens=job.class_tokens,
+                keep_tokens=job.keep_tokens,
+                num_repeats=job.num_repeats,
+                mixed_precision=job.mixed_precision,
             )
         except Exception as e:
             logger.exception("Job %s 啟動失敗: %s", job.job_id, e)
@@ -292,10 +325,18 @@ def enqueue(
     *,
     checkpoint: str | None = None,
     epochs: int = 10,
+    resolution: int | None = None,
+    batch_size: int | None = None,
+    learning_rate: str | None = None,
+    class_tokens: str | None = None,
+    keep_tokens: int | None = None,
+    num_repeats: int | None = None,
+    mixed_precision: str | None = None,
 ) -> str:
     """
     加入訓練佇列。
     folder: 相對 lora_train_dir 的路徑。
+    訓練參數未指定時使用 config 預設值。
     Returns: job_id
     Raises: ValueError 若資料夾不存在或圖片數不足
     """
@@ -321,6 +362,13 @@ def enqueue(
         checkpoint=ckpt,
         epochs=epochs,
         submitted_at=submitted_at,
+        resolution=resolution if resolution is not None else settings.lora_resolution,
+        batch_size=batch_size if batch_size is not None else settings.lora_batch_size,
+        learning_rate=learning_rate or settings.lora_learning_rate,
+        class_tokens=class_tokens or settings.lora_class_tokens,
+        keep_tokens=keep_tokens if keep_tokens is not None else settings.lora_keep_tokens,
+        num_repeats=num_repeats if num_repeats is not None else settings.lora_num_repeats,
+        mixed_precision=mixed_precision or settings.lora_mixed_precision,
     )
 
     with _lock:

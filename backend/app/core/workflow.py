@@ -46,6 +46,11 @@ def apply_params(
     seed: int | None = None,
     steps: int = 20,
     cfg: float = 7.0,
+    width: int | None = None,
+    height: int | None = None,
+    batch_size: int | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
 ) -> dict:
     """
     將參數替換進 workflow，回傳可提交的 prompt dict。
@@ -56,7 +61,8 @@ def apply_params(
     - LoraLoader.lora_name <- lora
     - CLIPTextEncode (接 KSampler.positive).text <- prompt
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
-    - KSampler.seed, steps, cfg <- seed, steps, cfg
+    - KSampler.seed, steps, cfg, sampler_name, scheduler
+    - EmptyLatentImage.width, height, batch_size
 
     Args:
         workflow: 原始 workflow（會複製，不修改原物件）
@@ -108,6 +114,18 @@ def apply_params(
                 inputs["seed"] = random.randint(0, 2**32 - 1)
             inputs["steps"] = steps
             inputs["cfg"] = cfg
+            if sampler_name is not None:
+                inputs["sampler_name"] = sampler_name
+            if scheduler is not None:
+                inputs["scheduler"] = scheduler
+
+        if ct == "EmptyLatentImage":
+            if width is not None:
+                inputs["width"] = width
+            if height is not None:
+                inputs["height"] = height
+            if batch_size is not None:
+                inputs["batch_size"] = batch_size
 
         if ct == "CLIPTextEncode":
             if nid in positive_node_ids:
