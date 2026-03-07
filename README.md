@@ -27,7 +27,7 @@
 - **圖庫**：參數記錄、Gallery 瀏覽、一鍵重現
 - **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
 - **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
-- **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合
+- **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合（設定見 [docs/mcp-setup.md](docs/mcp-setup.md)）
 
 ---
 
@@ -246,6 +246,6 @@ cd mcp-server && uv run pytest
 | 6a | MCP Server 建置 | [v] | `mcp-server/` | Agent F | `mcp-server/` |
 | 6b | 生圖與訓練 Tools | [v] | `mcp-server/tools/` | Agent F | `mcp-server/mcp_server/tools/` |
 | 6c | 角色與風格語意對應 | [v] | `mcp-server/character_style.py` | Agent F | `mcp-server/mcp_server/character_style.py` |
-| 6d | MCP 整合文件與 Cursor 配置 | [ ] | `docs/mcp-setup.md` | - | - |
+| 6d | MCP 整合文件與 Cursor 配置 | [v] | `docs/mcp-setup.md` | Agent F | `docs/mcp-setup.md`, `scripts/run-mcp-server.*`, `.cursor/mcp.json.example` |
 
-**整體進度**：22 / 24 完成（92%） · 最後更新：2026-03-07
+**整體進度**：23 / 24 完成（96%） · 最後更新：2026-03-07

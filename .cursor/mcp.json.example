@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ai-drawing": {
+      "command": "D:/AI/ai-drawing/scripts/run-mcp-server.bat",
+      "args": [],
+      "env": {
+        "MCP_BACKEND_API_URL": "http://127.0.0.1:8000"
+      }
+    }
+  }
+}
