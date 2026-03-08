@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     lora_train_dir: str = "./lora_train"
     lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
+    lora_sdxl: bool = False  # True 時使用 sdxl_train_network.py（SDXL/PDXL 模型）
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = "./sd-scripts"
     sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
@@ -40,6 +41,9 @@ class Settings(BaseSettings):
     lora_keep_tokens: int = 1
     lora_num_repeats: int = 10
     lora_mixed_precision: str = "fp16"
+    lora_network_dim: int = 16
+    lora_network_alpha: int = 16
+    lora_save_every_n_epochs: int = 1  # 每 N epoch 存檔，0=僅最後
 
     # watchdog
     watch_dirs: str = "./lora_train"  # 逗號分隔

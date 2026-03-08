@@ -79,10 +79,29 @@ export interface BatchPrefixResponse {
 
 // ---- LoRA 訓練 ----
 
+export interface FolderItem {
+  folder: string;
+  image_count: number;
+}
+
+export interface TrainFoldersResponse {
+  folders: FolderItem[];
+}
+
 export interface TrainStartRequest {
   folder: string;
   checkpoint?: string;
+  sdxl?: boolean;
   epochs?: number;
+  resolution?: number;
+  batch_size?: number;
+  learning_rate?: string;
+  class_tokens?: string;
+  keep_tokens?: number;
+  num_repeats?: number;
+  mixed_precision?: string;
+  network_dim?: number;
+  network_alpha?: number;
 }
 
 export interface TrainStartResponse {
@@ -99,10 +118,18 @@ export interface TrainJobInfo {
   total_epochs?: number;
 }
 
+export interface TrainLastResult {
+  folder: string;
+  success: boolean;
+  path?: string | null;
+  error?: string | null;
+}
+
 export interface TrainStatusResponse {
   status: "idle" | "running" | "queued";
   current_job?: TrainJobInfo;
   queue: TrainJobInfo[];
+  last_result?: TrainLastResult | null;
 }
 
 export interface TriggerCheckResponse {

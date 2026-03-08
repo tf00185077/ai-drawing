@@ -8,6 +8,7 @@ LoRA 訓練執行器
 from __future__ import annotations
 
 import logging
+import os
 import re
 import subprocess
 import threading
@@ -36,6 +37,7 @@ class _TrainJob:
     job_id: str
     folder: str
     checkpoint: str
+    sdxl: bool
     epochs: int
     submitted_at: str
     resolution: int
@@ -45,6 +47,8 @@ class _TrainJob:
     keep_tokens: int
     num_repeats: int
     mixed_precision: str
+    network_dim: int
+    network_alpha: int
 
 
 @dataclass
@@ -61,6 +65,7 @@ class _RunningJob:
 _lock = threading.Lock()
 _queue: list[_TrainJob] = []
 _running: _RunningJob | None = None
+_last_result: dict | None = None  # {"folder": str, "success": bool, "path": str | None, "error": str | None}
 _on_complete_callbacks: list[OnCompleteCallback] = []
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
@@ -72,6 +77,30 @@ def _reset_for_test() -> None:
     with _lock:
         _queue.clear()
         _running = None
+
+
+def clear_queue() -> int:
+    """
+    清除佇列並停止正在執行的訓練。
+    Returns: 被清除的 job 數量（佇列 + 1 若在執行中）
+    """
+    global _queue, _running
+    with _lock:
+        proc_to_terminate = None
+        if _running and _running.proc:
+            proc_to_terminate = _running.proc
+            _running = None
+        count = len(_queue) + (1 if proc_to_terminate else 0)
+        _queue.clear()
+    if proc_to_terminate:
+        try:
+            proc_to_terminate.terminate()
+            proc_to_terminate.wait(timeout=5)
+        except Exception as e:
+            logger.warning("終止訓練 subprocess 時發生錯誤: %s", e)
+    if count > 0:
+        logger.info("已清除訓練佇列，共 %d 個任務", count)
+    return count
 
 
 def _resolve_image_dir(folder: str) -> Path:
@@ -125,12 +154,19 @@ batch_size = {batch_size}
 
 
 def _parse_progress(line: str) -> tuple[float, int | None, int | None] | None:
-    """從 stdout 解析 epoch 進度，回傳 (progress, epoch, total_epochs)"""
+    """從 stdout 解析進度，回傳 (progress, epoch, total_epochs)"""
+    # epoch 1/10
     m = re.search(r"epoch\s+(\d+)/(\d+)", line, re.I)
     if m:
         e, t = int(m.group(1)), int(m.group(2))
         return (e / t if t else 0.0, e, t)
+    # tqdm: " 50/100 [00:30<..." or "steps: 50/100"
     m = re.search(r"(\d+)\s*/\s*(\d+)\s*\[", line)
+    if m:
+        a, b = int(m.group(1)), int(m.group(2))
+        return (a / b if b else 0.0, None, None)
+    # tqdm 或 step 格式 " 50/100 " 且後接時間 (避免誤匹配 tensor shape)
+    m = re.search(r"(\d+)\s*/\s*(\d+)\s+[\d:]+<\d", line)
     if m:
         a, b = int(m.group(1)), int(m.group(2))
         return (a / b if b else 0.0, None, None)
@@ -145,6 +181,7 @@ def _run_training_subprocess(
     checkpoint: str,
     epochs: int,
     sd_scripts_path: Path,
+    sdxl: bool = False,
     resolution: int = 512,
     batch_size: int = 4,
     learning_rate: str = "1e-4",
@@ -152,6 +189,8 @@ def _run_training_subprocess(
     keep_tokens: int = 1,
     num_repeats: int = 10,
     mixed_precision: str = "fp16",
+    network_dim: int = 16,
+    network_alpha: int = 16,
 ) -> subprocess.Popen[str]:
     """啟動 Kohya train_network.py subprocess"""
     toml_path = _write_dataset_config(
@@ -163,12 +202,25 @@ def _run_training_subprocess(
         keep_tokens=keep_tokens,
         num_repeats=num_repeats,
     )
+    settings = get_settings()
+    python_exe = (settings.sd_scripts_python or "").strip()
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(sd_scripts_path) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONUNBUFFERED"] = "1"
+    venv_dir = Path(python_exe).resolve().parent if python_exe else None
+    acc_path = venv_dir / ("accelerate.exe" if os.name == "nt" else "accelerate") if venv_dir else None
+    if acc_path and acc_path.exists():
+        cmd_head = [str(acc_path), "launch"]
+    elif python_exe:
+        cmd_head = [python_exe, "-m", "accelerate", "launch"]
+    else:
+        cmd_head = ["accelerate", "launch"]
+    train_script = "sdxl_train_network.py" if sdxl else "train_network.py"
     cmd = [
-        "accelerate",
-        "launch",
+        *cmd_head,
         "--num_cpu_threads_per_process",
         "1",
-        str(sd_scripts_path / "train_network.py"),
+        str(sd_scripts_path / train_script),
         "--pretrained_model_name_or_path",
         checkpoint,
         "--dataset_config",
@@ -179,10 +231,18 @@ def _run_training_subprocess(
         output_name,
         "--network_module",
         "networks.lora",
+        "--network_dim",
+        str(network_dim),
+        "--network_alpha",
+        str(network_alpha),
         "--max_train_epochs",
         str(epochs),
         "--learning_rate",
         learning_rate,
+    ]
+    if settings.lora_save_every_n_epochs and settings.lora_save_every_n_epochs >= 1:
+        cmd.extend(["--save_every_n_epochs", str(settings.lora_save_every_n_epochs)])
+    cmd += [
         "--save_model_as",
         "safetensors",
         "--mixed_precision",
@@ -193,6 +253,7 @@ def _run_training_subprocess(
     return subprocess.Popen(
         cmd,
         cwd=str(sd_scripts_path),
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -207,26 +268,46 @@ def _get_output_lora_path(output_dir: Path, output_name: str) -> Path:
 def _worker_loop() -> None:
     """背景 worker：依序執行佇列中的訓練"""
     global _running
-    settings = get_settings()
-    sd_scripts = Path(settings.sd_scripts_path).resolve()
-    lora_base = Path(settings.lora_train_dir).resolve()
-    output_base = lora_base / "output"
+    try:
+        settings = get_settings()
+        sd_scripts = Path(settings.sd_scripts_path).resolve()
+        lora_base = Path(settings.lora_train_dir).resolve()
+        output_base = lora_base / "output"
+    except Exception as e:
+        logger.exception("Worker 初始化失敗: %s", e)
+        return
 
+    _wait_count = 0
     while not _stop_event.is_set():
         with _lock:
             if _running or not _queue:
-                _stop_event.wait(1.0)
-                continue
-            job = _queue.pop(0)
+                job = None
+            else:
+                job = _queue.pop(0)
+
+        if job is None:
+            _wait_count += 1
+            _stop_event.wait(1.0)
+            continue
+        _wait_count = 0
+
+        try:
             image_dir = _resolve_image_dir(job.folder)
             output_dir = output_base
             output_dir.mkdir(parents=True, exist_ok=True)
 
-        if not image_dir.exists():
-            logger.error("Job %s: image_dir 不存在 %s", job.job_id, image_dir)
-            continue
+            if not image_dir.exists():
+                logger.error("Job %s: image_dir 不存在 %s", job.job_id, image_dir)
+                continue
 
-        output_lora = _get_output_lora_path(output_dir, job.folder.replace("/", "_"))
+            output_lora = _get_output_lora_path(output_dir, job.folder.replace("/", "_"))
+
+        except OSError as e:
+            logger.error("Job %s: 路徑或目錄錯誤: %s", job.job_id, e)
+            continue
+        except Exception as e:
+            logger.exception("Job %s: 前置處理失敗: %s", job.job_id, e)
+            continue
 
         try:
             proc = _run_training_subprocess(
@@ -236,6 +317,7 @@ def _worker_loop() -> None:
                 checkpoint=job.checkpoint,
                 epochs=job.epochs,
                 sd_scripts_path=sd_scripts,
+                sdxl=job.sdxl,
                 resolution=job.resolution,
                 batch_size=job.batch_size,
                 learning_rate=job.learning_rate,
@@ -243,6 +325,8 @@ def _worker_loop() -> None:
                 keep_tokens=job.keep_tokens,
                 num_repeats=job.num_repeats,
                 mixed_precision=job.mixed_precision,
+                network_dim=job.network_dim,
+                network_alpha=job.network_alpha,
             )
         except Exception as e:
             logger.exception("Job %s 啟動失敗: %s", job.job_id, e)
@@ -258,14 +342,19 @@ def _worker_loop() -> None:
         with _lock:
             _running = running_job
 
-        logger.info("Job %s 開始訓練: folder=%s", job.job_id, job.folder)
+        logger.info("Job %s 開始訓練: folder=%s（載入模型需數分鐘，請稍候）", job.job_id, job.folder)
 
-        # 讀取 stdout 更新進度
+        # 讀取 stdout 更新進度，並累積輸出供失敗時紀錄
+        output_lines: list[str] = []
         if proc.stdout:
             for line in proc.stdout:
                 if _stop_event.is_set():
                     proc.terminate()
                     break
+                stripped = line.rstrip()
+                output_lines.append(stripped)
+                if stripped:
+                    print(f"[LoRA] {stripped}", flush=True)
                 parsed = _parse_progress(line)
                 if parsed:
                     prog, ep, tot = parsed
@@ -284,7 +373,19 @@ def _worker_loop() -> None:
                 _running = None
 
         if proc.returncode != 0:
-            logger.error("Job %s 訓練失敗, returncode=%s", job.job_id, proc.returncode)
+            tail = "\n".join(output_lines[-50:]) if output_lines else "(無輸出)"
+            err_preview = tail.split("\n")[-3:] if tail else []
+            err_msg = "訓練失敗，請查看 backend 終端機的錯誤輸出" + (
+                f"\n最後幾行: {' '.join(err_preview)[:200]}" if err_preview else ""
+            )
+            with _lock:
+                _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
+            logger.error(
+                "Job %s 訓練失敗, returncode=%s\n--- 最後輸出 ---\n%s",
+                job.job_id,
+                proc.returncode,
+                tail,
+            )
             continue
 
         # 實際輸出路徑可能帶 epoch，先檢查主檔名
@@ -299,6 +400,8 @@ def _worker_loop() -> None:
 
         if found_path:
             output_lora_str = str(found_path.resolve())
+            with _lock:
+                _last_result = {"folder": job.folder, "success": True, "path": output_lora_str, "error": None}
             for cb in _on_complete_callbacks:
                 try:
                     cb(output_lora_str, job.folder)
@@ -306,6 +409,9 @@ def _worker_loop() -> None:
                     logger.exception("on_complete callback 錯誤: %s", e)
             logger.info("Job %s 完成: %s", job.job_id, output_lora_str)
         else:
+            err_msg = f"訓練結束但找不到輸出檔案（請檢查 backend 日誌）"
+            with _lock:
+                _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
             logger.warning("Job %s 完成但找不到輸出檔案: %s", job.job_id, output_dir)
 
 
@@ -320,10 +426,16 @@ def _ensure_worker() -> None:
     logger.info("LoRA 訓練 worker 已啟動")
 
 
+def ensure_worker() -> None:
+    """公開 API：確保 worker 在 app 啟動時即就緒"""
+    _ensure_worker()
+
+
 def enqueue(
     folder: str,
     *,
     checkpoint: str | None = None,
+    sdxl: bool | None = None,
     epochs: int = 10,
     resolution: int | None = None,
     batch_size: int | None = None,
@@ -332,6 +444,8 @@ def enqueue(
     keep_tokens: int | None = None,
     num_repeats: int | None = None,
     mixed_precision: str | None = None,
+    network_dim: int | None = None,
+    network_alpha: int | None = None,
 ) -> str:
     """
     加入訓練佇列。
@@ -354,12 +468,14 @@ def enqueue(
     if not ckpt:
         raise ValueError("未指定 checkpoint 且 config 無 lora_default_checkpoint")
 
+    use_sdxl = sdxl if sdxl is not None else settings.lora_sdxl
     job_id = str(uuid.uuid4())
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     job = _TrainJob(
         job_id=job_id,
         folder=folder,
         checkpoint=ckpt,
+        sdxl=use_sdxl,
         epochs=epochs,
         submitted_at=submitted_at,
         resolution=resolution if resolution is not None else settings.lora_resolution,
@@ -369,6 +485,8 @@ def enqueue(
         keep_tokens=keep_tokens if keep_tokens is not None else settings.lora_keep_tokens,
         num_repeats=num_repeats if num_repeats is not None else settings.lora_num_repeats,
         mixed_precision=mixed_precision or settings.lora_mixed_precision,
+        network_dim=network_dim if network_dim is not None else settings.lora_network_dim,
+        network_alpha=network_alpha if network_alpha is not None else settings.lora_network_alpha,
     )
 
     with _lock:
@@ -420,10 +538,12 @@ def get_status() -> dict:
             current_job = None
             queue_list = []
 
+    last = _last_result
     return {
         "status": status,
         "current_job": current_job,
         "queue": queue_list,
+        "last_result": last,
     }
 
 
@@ -452,6 +572,25 @@ def _iter_training_folders(base: Path) -> list[tuple[Path, str]]:
         if not folder or folder == ".":
             continue
         result.append((p, folder))
+    return result
+
+
+def list_folders() -> list[dict]:
+    """
+    列出 lora_train_dir 下所有含可訓練圖片的子資料夾。
+    Returns: [{"folder": str, "image_count": int}, ...]
+    """
+    settings = get_settings()
+    base = Path(settings.lora_train_dir).resolve()
+
+    if not base.exists() or not base.is_dir():
+        return []
+
+    result: list[dict] = []
+    for image_dir, folder in _iter_training_folders(base):
+        count = _count_trainable_images(image_dir)
+        if count >= _MIN_IMAGES:
+            result.append({"folder": folder, "image_count": count})
     return result
 
 

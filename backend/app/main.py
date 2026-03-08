@@ -44,6 +44,7 @@ def _on_lora_complete(output_lora_path: str, folder: str) -> None:
 async def lifespan(app: FastAPI):
     """應用生命週期：啟動時開始監聽與佇列 worker，關閉時停止"""
     lora_trainer.register_on_complete(_on_lora_complete)
+    lora_trainer.ensure_worker()
     start_watching()
     start_queue_worker()
     yield

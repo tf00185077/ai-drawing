@@ -335,6 +335,29 @@
 
 ## 4. LoRA 訓練模組 `/api/lora-train`
 
+### GET `/folders`
+
+列出可訓練的資料夾（含至少 1 張圖+對應 .txt caption）。
+
+**Response** `200 OK`:
+
+```json
+{
+  "folders": [
+    { "folder": "my_lora", "image_count": 10 },
+    { "folder": "chars/hero", "image_count": 5 }
+  ]
+}
+```
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| folders | array | 可訓練的子資料夾列表 |
+| folders[].folder | string | 相對 lora_train_dir 的路徑 |
+| folders[].image_count | integer | 該資料夾內含 .txt 的圖片數量 |
+
+---
+
 ### POST `/start`
 
 手動觸發 LoRA 訓練。

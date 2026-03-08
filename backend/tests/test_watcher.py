@@ -31,6 +31,27 @@ def test_on_new_image_triggers_wd_tagger_for_image(tmp_path: Path) -> None:
         assert call_dir == tmp_path.resolve()
 
 
+def test_on_new_image_in_nested_folder_triggers_wd_tagger_with_subdir(
+    tmp_path: Path,
+) -> None:
+    """巢狀資料夾內的圖片觸發 WD Tagger 時，應傳入該子資料夾路徑"""
+    nested = tmp_path / "lora_train" / "char_a" / "pose_1"
+    nested.mkdir(parents=True)
+    img = nested / "test.png"
+    img.touch()
+
+    with patch("app.services.watcher.run_wd_tagger") as mock_run, patch(
+        "app.services.watcher.DEBOUNCE_SECONDS", 0.01
+    ):
+        on_new_image(img.resolve())
+        time.sleep(0.05)
+
+        mock_run.assert_called_once()
+        call_dir = mock_run.call_args[0][0]
+        assert call_dir == nested.resolve()
+        assert "pose_1" in str(call_dir)
+
+
 def test_start_watching_with_empty_dirs_does_not_crash() -> None:
     """watch_dirs 為空或路徑不存在時不崩潰"""
     with patch("app.services.watcher.get_settings") as mock_settings:

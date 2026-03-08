@@ -10,6 +10,7 @@ class TrainStartRequest(BaseModel):
 
     folder: str = Field(..., min_length=1)
     checkpoint: str | None = None
+    sdxl: bool | None = None  # True: SDXL 腳本；False: SD1.x；None: 用 config
     epochs: int = Field(default=10, ge=1, le=500)
     # 以下未帶入時使用 config 預設值
     resolution: int | None = Field(default=None, ge=256, le=2048)
@@ -19,6 +20,8 @@ class TrainStartRequest(BaseModel):
     keep_tokens: int | None = Field(default=None, ge=0, le=10)
     num_repeats: int | None = Field(default=None, ge=1, le=100)
     mixed_precision: str | None = None  # fp16 | bf16 | fp32
+    network_dim: int | None = Field(default=None, ge=1, le=128)
+    network_alpha: int | None = Field(default=None, ge=1, le=128)
 
 
 class TrainStartResponse(BaseModel):
@@ -39,12 +42,35 @@ class TrainJobInfo(BaseModel):
     total_epochs: int | None = None
 
 
+class TrainLastResult(BaseModel):
+    """最近一次訓練結果"""
+
+    folder: str
+    success: bool
+    path: str | None = None
+    error: str | None = None
+
+
 class TrainStatusResponse(BaseModel):
     """GET /api/lora-train/status 的 Response"""
 
     status: str = "idle"  # idle | running | queued
     current_job: TrainJobInfo | None = None
     queue: list[TrainJobInfo] = Field(default_factory=list)
+    last_result: TrainLastResult | None = None
+
+
+class FolderItem(BaseModel):
+    """可訓練的資料夾"""
+
+    folder: str
+    image_count: int
+
+
+class TrainFoldersResponse(BaseModel):
+    """GET /api/lora-train/folders 的 Response"""
+
+    folders: list[FolderItem] = Field(default_factory=list)
 
 
 class TriggerCandidate(BaseModel):

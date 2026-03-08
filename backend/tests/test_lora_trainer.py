@@ -49,6 +49,8 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     job_id = lora_trainer.enqueue("my_lora", checkpoint="model.ckpt", epochs=5)
 
@@ -75,6 +77,8 @@ def test_enqueue_nonexistent_folder_raises_value_error(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     with pytest.raises(ValueError, match="資料夾不存在"):
         lora_trainer.enqueue("not_exists")
@@ -99,6 +103,8 @@ def test_enqueue_folder_without_caption_txt_raises(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     with pytest.raises(ValueError, match="圖片數不足"):
         lora_trainer.enqueue("no_txt")
@@ -132,6 +138,8 @@ def test_api_start_returns_202_and_job_id(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     client = TestClient(app)
     res = client.post(
@@ -162,6 +170,8 @@ def test_trigger_check_returns_candidates_when_folder_meets_threshold(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     result = lora_trainer.trigger_check()
 
@@ -191,6 +201,8 @@ def test_trigger_check_returns_empty_when_below_threshold(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     result = lora_trainer.trigger_check()
 
@@ -217,6 +229,8 @@ def test_api_trigger_check_returns_candidates(
     mock_settings.return_value.lora_keep_tokens = 1
     mock_settings.return_value.lora_num_repeats = 10
     mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
 
     client = TestClient(app)
     res = client.post("/api/lora-train/trigger-check")
@@ -226,6 +240,61 @@ def test_api_trigger_check_returns_candidates(
     assert "should_trigger" in data
     assert "candidates" in data
     assert data["should_trigger"] is True
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_list_folders_returns_trainable_folders_with_count(
+    mock_settings: MagicMock, valid_train_dir: Path
+) -> None:
+    """list_folders 回傳含可訓練圖片的資料夾與圖片數"""
+    base = valid_train_dir / "lora_train"
+    (base / "other").mkdir()
+    (base / "other" / "x.png").write_bytes(b"x")
+    (base / "other" / "x.txt").write_text("x", encoding="utf-8")
+    mock_settings.return_value.lora_train_dir = str(base)
+
+    result = lora_trainer.list_folders()
+
+    assert len(result) >= 2  # my_lora, other
+    folders = {r["folder"]: r["image_count"] for r in result}
+    assert "my_lora" in folders
+    assert folders["my_lora"] == 2
+    assert "other" in folders
+    assert folders["other"] == 1
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_list_folders_returns_empty_when_no_valid_folders(
+    mock_settings: MagicMock, tmp_path: Path
+) -> None:
+    """list_folders 無可訓練資料夾時回傳空陣列"""
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    mock_settings.return_value.lora_train_dir = str(empty)
+
+    result = lora_trainer.list_folders()
+
+    assert result == []
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_api_folders_returns_list(mock_settings: MagicMock, valid_train_dir: Path) -> None:
+    """GET /api/lora-train/folders 回傳可訓練資料夾列表"""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    base = valid_train_dir / "lora_train"
+    mock_settings.return_value.lora_train_dir = str(base)
+
+    client = TestClient(app)
+    res = client.get("/api/lora-train/folders")
+
+    assert res.status_code == 200
+    data = res.json()
+    assert "folders" in data
+    assert len(data["folders"]) >= 1
+    assert any(f["folder"] == "my_lora" for f in data["folders"])
+    assert all("image_count" in f for f in data["folders"])
 
 
 @patch("app.main.queue_submit")
