@@ -155,7 +155,22 @@ class ComfyUIClient:
 
         with httpx.Client(timeout=self._timeout_submit) as client:
             r = client.post(self._url("/prompt"), json=payload)
-            r.raise_for_status()
+            if not r.is_success:
+                try:
+                    err_body = r.json()
+                    msg = err_body.get("error", r.text or r.reason_phrase)
+                    node_errors = err_body.get("node_errors", {})
+                    logger.error(
+                        "ComfyUI /prompt %s: %s, node_errors=%s",
+                        r.status_code,
+                        msg,
+                        node_errors,
+                    )
+                    raise ComfyUIError(str(msg), node_errors=node_errors)
+                except ComfyUIError:
+                    raise
+                except Exception:
+                    r.raise_for_status()
             data = r.json()
 
         if "error" in data:

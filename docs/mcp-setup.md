@@ -148,6 +148,9 @@ pip install -e .
 |------|------|----------|
 | `mcp_ping` | 檢查 Backend 連線 | 檢查 ai-drawing 連線 |
 | `generate_image` | 觸發生圖 | 產生初音、動漫風格的圖 |
+| `generate_image_custom_workflow` | 自訂 workflow 生圖 | 用 default 模板產生穿和服的初音 |
+| `list_workflow_templates` | 列出 workflow 模板 | 有哪些 workflow 可選 |
+| `get_workflow_template` | 取得模板 JSON | 取得 default 模板 |
 | `generate_queue_status` | 生圖佇列狀態 | 查生圖佇列 |
 | `lora_train_start` | 手動觸發 LoRA 訓練 | 開始訓練 my_lora 資料夾 |
 | `lora_train_status` | 訓練進度 | 查 LoRA 訓練進度 |
@@ -164,6 +167,7 @@ pip install -e .
 在 Composer 中可直接說：
 
 - **「產生初音、動漫風格的圖」** → 呼叫 `generate_image(character="初音", style="動漫")`
+- **「用 default 模板產生穿和服的初音」** → 呼叫 `list_workflow_templates` → `get_workflow_template("default")` → `generate_image_custom_workflow(workflow=..., character="初音", prompt="1girl, kimono")`
 - **「開始訓練 my_char 資料夾的 LoRA」** → 呼叫 `lora_train_start(folder="my_char")`
 - **「列出最近 5 張圖」** → 呼叫 `gallery_list(limit=5)`
 - **「用第 3 張的參數再產一張」** → 呼叫 `gallery_rerun(image_id=3)`

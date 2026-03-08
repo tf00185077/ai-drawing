@@ -9,6 +9,7 @@ from app.core.queue import (
     get_job_status,
     get_status,
     submit,
+    submit_custom,
 )
 
 
@@ -62,3 +63,24 @@ def test_get_job_status_returns_pending_job() -> None:
     assert job is not None
     assert job["job_id"] == job_id
     assert job["status"] == "queued"
+
+
+def test_submit_custom_requires_workflow() -> None:
+    """submit_custom 缺少 workflow 時拋出 ValueError"""
+    with pytest.raises(ValueError, match="workflow"):
+        submit_custom({"prompt": "test"})
+
+
+def test_submit_custom_returns_job_id() -> None:
+    """submit_custom 含 workflow 時回傳 job_id 並加入 pending"""
+    min_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {"class_type": "KSampler", "inputs": {"positive": ["6", 0], "negative": ["7", 0]}},
+    }
+    job_id = submit_custom({"workflow": min_wf, "prompt": "1girl"})
+    assert isinstance(job_id, str)
+    assert len(job_id) == 36
+    status = get_status()
+    assert any(p["job_id"] == job_id for p in status["queue_pending"])

@@ -1,0 +1,34 @@
+---
+description: AI 根據使用者描述產生 prompt 與 workflow 的指引
+alwaysApply: false
+globs: 
+---
+
+# MCP 自訂 Workflow 生圖指引
+
+當使用者**描述具體畫面**（如「穿和服的初音」「賽璐珞風格的雷姆」）或**指定 workflow 模板**時，應使用自訂 workflow 流程。
+
+## 使用時機
+
+| 情境 | 建議作法 |
+|------|----------|
+| 簡單角色+風格 | `generate_image(character="初音", style="動漫")` |
+| 描述含額外細節（服裝、背景、動作） | 用 `generate_image_custom_workflow` |
+| 使用者指定「用 XX 模板」 | 用 `generate_image_custom_workflow` |
+
+## 標準流程
+
+1. **list_workflow_templates** → 看有哪些模板
+2. **get_workflow_template(name)** → 取得模板 JSON
+3. **resolve_character_style_prompt**（可選）→ 預覽角色/風格對應的 prompt
+4. **generate_image_custom_workflow(workflow=..., prompt=..., character=..., style=...)** → 提交
+
+## 範例
+
+- 使用者：「用 default 模板產生穿和服的初音」
+  - `get_workflow_template("default")` 取得 JSON
+  - `generate_image_custom_workflow(workflow=<JSON>, character="初音", prompt="1girl, solo, kimono, cherry blossom")`
+
+- 使用者：「我要一張水彩風格的艾米莉亞」
+  - `get_workflow_template("default")` 取得 JSON
+  - `generate_image_custom_workflow(workflow=<JSON>, character="艾米莉亞", style="水彩")`

@@ -1,7 +1,13 @@
 """MCP Tools 單元測試"""
 from unittest.mock import MagicMock, patch
 
-from mcp_server.tools.generate import generate_image, generate_queue_status
+from mcp_server.tools.generate import (
+    generate_image,
+    generate_image_custom_workflow,
+    generate_queue_status,
+    get_workflow_template,
+    list_workflow_templates,
+)
 from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
 
@@ -68,6 +74,50 @@ def test_generate_image_with_character_style_resolves_prompt() -> None:
     assert "prompt" in call_json
     # 應包含語意解析後的關鍵字
     assert "anime" in call_json["prompt"] or "miku" in call_json["prompt"]
+
+
+def test_list_workflow_templates_returns_template_names() -> None:
+    """list_workflow_templates 回傳模板名稱列表"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"templates": ["default", "default_lora"]}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = list_workflow_templates()
+
+    assert "default" in result
+    assert "default_lora" in result
+    mock_client.get.assert_called_once_with("generate/workflow-templates")
+
+
+def test_get_workflow_template_returns_json_string() -> None:
+    """get_workflow_template 回傳 workflow 的 JSON 字串"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"4": {"class_type": "CheckpointLoaderSimple"}}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_workflow_template("default")
+
+    assert "CheckpointLoaderSimple" in result
+    assert "4" in result
+    mock_client.get.assert_called_once_with("generate/workflow-templates/default")
+
+
+def test_generate_image_custom_workflow_submits_workflow() -> None:
+    """generate_image_custom_workflow 將 workflow JSON 提交至 custom 端點"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"x.safetensors"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(workflow=wf_json, prompt="1girl")
+
+    assert "abc" in result
+    assert "error" not in result.lower()
+    mock_client.post.assert_called_once()
+    call_json = mock_client.post.call_args[1]["json"]
+    assert "workflow" in call_json
+    assert call_json["workflow"]["4"]["class_type"] == "CheckpointLoaderSimple"
+    assert call_json["prompt"] == "1girl"
 
 
 def test_gallery_list_returns_summary() -> None:

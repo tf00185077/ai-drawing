@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import copy
 import logging
 import threading
 import time
@@ -32,6 +33,7 @@ class QueueFullError(Exception):
 
 
 class GenerateParams(TypedDict, total=False):
+    workflow: dict[str, Any]  # 自訂 workflow，若有則跳過 template 載入
     checkpoint: str
     lora: str
     prompt: str
@@ -90,6 +92,16 @@ def submit(params: GenerateParams) -> str:
         _pending.append(job)
     logger.info("Job %s queued", job_id)
     return job_id
+
+
+def submit_custom(params: GenerateParams) -> str:
+    """
+    提交自訂 workflow 生圖任務至佇列。
+    params 必須包含 "workflow" key，為 ComfyUI API 格式的 workflow dict。
+    """
+    if "workflow" not in params:
+        raise ValueError("submit_custom 需要 params.workflow")
+    return submit(params)
 
 
 def get_status() -> dict[str, Any]:
@@ -151,23 +163,39 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         _running = job
 
     try:
-        template = (
-            WORKFLOW_TEMPLATE_LORA
-            if job.params.get("lora")
-            else WORKFLOW_TEMPLATE
+        settings = get_settings()
+        effective_checkpoint = (
+            job.params.get("checkpoint")
+            or settings.lora_default_checkpoint
+            or None
         )
-        wf = load_template(template)
+        if effective_checkpoint and not job.params.get("checkpoint"):
+            job.params["checkpoint"] = effective_checkpoint
+        width = job.params.get("width")
+        height = job.params.get("height")
+        if width is None and height is None and effective_checkpoint and settings.lora_sdxl:
+            width, height = 1024, 1024
+        custom_wf = job.params.get("workflow")
+        if custom_wf:
+            wf = copy.deepcopy(custom_wf)
+        else:
+            template = (
+                WORKFLOW_TEMPLATE_LORA
+                if job.params.get("lora")
+                else WORKFLOW_TEMPLATE
+            )
+            wf = load_template(template)
         prompt = apply_params(
             wf,
-            checkpoint=job.params.get("checkpoint"),
+            checkpoint=effective_checkpoint,
             lora=job.params.get("lora"),
             prompt=job.params.get("prompt", ""),
             negative_prompt=job.params.get("negative_prompt", ""),
             seed=job.params.get("seed"),
             steps=job.params.get("steps", 20),
             cfg=job.params.get("cfg", 7.0),
-            width=job.params.get("width"),
-            height=job.params.get("height"),
+            width=width,
+            height=height,
             batch_size=job.params.get("batch_size"),
             sampler_name=job.params.get("sampler_name"),
             scheduler=job.params.get("scheduler"),

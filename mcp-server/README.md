@@ -8,6 +8,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 |------|------|
 | `mcp_ping` | 檢查 Backend 連線狀態 |
 | `generate_image` | 觸發圖片生成；支援 character、style 語意（如「初音」「動漫」） |
+| `generate_image_custom_workflow` | 使用自訂 workflow 生圖；AI 可依描述取得模板、修改後提交 |
+| `list_workflow_templates` | 列出可用 workflow 模板（default、default_lora 等） |
+| `get_workflow_template` | 取得指定模板的 workflow JSON |
 | `generate_queue_status` | 取得生圖佇列狀態 |
 | `lora_train_start` | 手動觸發 LoRA 訓練 |
 | `lora_train_status` | 取得 LoRA 訓練進度 |
