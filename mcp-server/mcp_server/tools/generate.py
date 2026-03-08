@@ -98,6 +98,7 @@ def generate_image_custom_workflow(
     cfg: float | None = None,
     width: int | None = None,
     height: int | None = None,
+    image_pose: str | None = None,
 ) -> str:
     """
     使用自訂 workflow 觸發圖片生成。AI 可根據使用者描述：
@@ -105,6 +106,9 @@ def generate_image_custom_workflow(
     2. 呼叫 get_workflow_template(name) 取得 JSON
     3. 可選：修改 workflow JSON（如調整節點、參數）
     4. 傳入此 tool，workflow 為 JSON 字串；prompt/character/style 會套用至 workflow
+
+    image_pose: 姿態參考圖，相對於 gallery_dir（如 2026-03-08/ComfyUI_xxx.png），
+    後端會從 gallery 讀取並上傳至 ComfyUI，再替換 LoadImage。用於 ControlNet pose 等。
     """
     try:
         client = _get_client()
@@ -138,6 +142,8 @@ def generate_image_custom_workflow(
             body["width"] = width
         if height is not None:
             body["height"] = height
+        if image_pose is not None:
+            body["image_pose"] = image_pose
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")

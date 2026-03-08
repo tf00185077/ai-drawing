@@ -62,6 +62,7 @@ REST API 遠端觸發 workflow、取得佇列狀態、取回輸出圖片
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 import httpx
@@ -199,6 +200,39 @@ class ComfyUIClient:
             r = client.get(self._url("/queue"))
             r.raise_for_status()
             return r.json()
+
+    def upload_image(
+        self,
+        file_path: Path,
+        *,
+        overwrite: bool = True,
+        subfolder: str = "",
+        ftype: str = "input",
+    ) -> dict[str, str]:
+        """
+        上傳圖片至 ComfyUI input 資料夾，供 LoadImage 使用。
+        Returns: {"name": filename, "subfolder": subfolder, "type": ftype}
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"Image not found: {file_path}")
+        with httpx.Client(timeout=self._timeout_submit) as client:
+            with file_path.open("rb") as f:
+                files = {"image": (file_path.name, f, "image/png")}
+                data = {
+                    "overwrite": "true" if overwrite else "false",
+                    "type": ftype,
+                }
+                if subfolder:
+                    data["subfolder"] = subfolder
+                r = client.post(self._url("/upload/image"), files=files, data=data)
+        if not r.is_success:
+            raise ComfyUIError(f"Upload failed: {r.text or r.reason_phrase}")
+        result = r.json()
+        return {
+            "name": result.get("name", file_path.name),
+            "subfolder": result.get("subfolder", subfolder),
+            "type": result.get("type", ftype),
+        }
 
     def fetch_image(
         self,

@@ -55,6 +55,7 @@ alwaysApply: true
   | 領域 | Skill |
   |------|-------|
   | ComfyUI（生圖、workflow、佇列、輸出） | `comfyui-api-client` |
+  | Workflow JSON 組裝（ControlNet 新舊版、模型檔名、prompt 替換） | `comfyui-workflow` |
   | LoRA 模組（文件、訓練、lora_trainer、watcher、產圖串接） | `lora-train-docs` |
   | Kohya sd-scripts（CLI 參數、dataset_config TOML） | `kohya-sd-scripts` |
   | WD Tagger（圖片標註、caption 產生、subprocess 整合） | `wd-tagger` |

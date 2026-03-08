@@ -158,3 +158,37 @@ def test_apply_params_image_pose_overrides_second_loadimage() -> None:
     )
     assert result["10"]["inputs"]["image"] == "subject.png"
     assert result["11"]["inputs"]["image"] == "pose_ref.png"
+
+
+def test_apply_params_controlnet_traces_prompt_to_clip_text_encode() -> None:
+    """ControlNet 流程中，prompt/negative_prompt 應正確替換上游 CLIPTextEncode"""
+    wf = load_template("controlnet_pose")
+    result = apply_params(
+        wf,
+        prompt="honoka, 1girl",
+        negative_prompt="blur, bad hands",
+    )
+    assert result["6"]["inputs"]["text"] == "honoka, 1girl"
+    assert result["7"]["inputs"]["text"] == "blur, bad hands"
+
+
+def test_apply_params_controlnet_keeps_original_when_negative_prompt_none() -> None:
+    """negative_prompt 為 None 時保留 workflow 原始負向提示詞"""
+    wf = load_template("controlnet_pose")
+    orig_neg = wf["7"]["inputs"]["text"]
+    result = apply_params(wf, prompt="test", negative_prompt=None)
+    assert result["7"]["inputs"]["text"] == orig_neg
+
+
+def test_apply_params_sets_bbox_detector_on_dwpreprocessor() -> None:
+    """apply_params 預設將 DWPreprocessor.bbox_detector 設為 yolo_nas_s_fp16.onnx"""
+    wf = load_template("controlnet_pose")
+    result = apply_params(wf, prompt="test")
+    assert result["13"]["inputs"]["bbox_detector"] == "yolo_nas_s_fp16.onnx"
+
+
+def test_apply_params_overrides_bbox_detector_when_provided() -> None:
+    """apply_params 可覆寫 bbox_detector"""
+    wf = load_template("honoka_pose_controlnet")
+    result = apply_params(wf, prompt="test", bbox_detector="yolo_nas_s_fp16.onnx")
+    assert result["6"]["inputs"]["bbox_detector"] == "yolo_nas_s_fp16.onnx"

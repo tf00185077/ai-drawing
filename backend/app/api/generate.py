@@ -76,6 +76,8 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["sampler_name"] = body.sampler_name
         if body.scheduler is not None:
             params["scheduler"] = body.scheduler
+        if body.image_pose is not None:
+            params["image_pose"] = body.image_pose
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,

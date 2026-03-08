@@ -278,7 +278,7 @@ curl -X POST http://127.0.0.1:8000/api/generate/ -H "Content-Type: application/j
 | width | 圖寬 (256–2048) | 768 |
 | height | 圖高 | 768 |
 | batch_size | 一次產圖張數 | 2 |
-| sampler_name | 採樣器 | euler、dpmpp_2m、ddim |
+| sampler_name | 採樣器 | 預設 dpmpp_2m；euler、ddim 等 |
 | scheduler | 調度器 | normal、karras、exponential |
 
 未傳的參數使用 workflow 模板預設值。

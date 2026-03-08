@@ -37,6 +37,7 @@ class GenerateParams(TypedDict, total=False):
     checkpoint: str
     lora: str
     prompt: str
+    image_pose: str  # 姿態圖路徑，相對於 gallery_dir，會上傳至 ComfyUI
     negative_prompt: str
     seed: int
     steps: int
@@ -185,12 +186,30 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 else WORKFLOW_TEMPLATE
             )
             wf = load_template(template)
+        # 若提供 image_pose，從 gallery 讀取並上傳至 ComfyUI，取得檔名後替換
+        image_pose_for_wf: str | None = None
+        if job.params.get("image_pose"):
+            gallery_path = Path(settings.gallery_dir).resolve()
+            pose_path = (gallery_path / job.params["image_pose"]).resolve()
+            try:
+                pose_path.relative_to(gallery_path)
+            except ValueError:
+                pose_path = None
+                logger.warning("image_pose path traversal blocked: %s", job.params["image_pose"])
+            if pose_path and pose_path.exists():
+                uploaded = comfy.upload_image(pose_path)
+                image_pose_for_wf = uploaded["name"]
+                if uploaded.get("subfolder"):
+                    image_pose_for_wf = f"{uploaded['subfolder']}/{uploaded['name']}"
+            else:
+                logger.warning("image_pose not found: %s, using workflow default", pose_path)
         prompt = apply_params(
             wf,
             checkpoint=effective_checkpoint,
+            image_pose=image_pose_for_wf,
             lora=job.params.get("lora"),
             prompt=job.params.get("prompt", ""),
-            negative_prompt=job.params.get("negative_prompt", ""),
+            negative_prompt=job.params.get("negative_prompt"),
             seed=job.params.get("seed"),
             steps=job.params.get("steps", 20),
             cfg=job.params.get("cfg", 7.0),
@@ -253,7 +272,7 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
             return
 
         settings = get_settings()
-        gallery_path = Path(settings.gallery_dir)
+        gallery_path = Path(settings.gallery_dir).resolve()
         date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         out_dir = gallery_path / date_str
         out_dir.mkdir(parents=True, exist_ok=True)

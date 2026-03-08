@@ -70,3 +70,7 @@ class GenerateCustomRequest(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, le=8)
     sampler_name: str | None = None
     scheduler: str | None = None
+    image_pose: str | None = Field(
+        default=None,
+        description="姿態參考圖路徑，相對於 gallery_dir（如 2026-03-08/ComfyUI_xxx.png）。會先上傳至 ComfyUI 再替換 LoadImage",
+    )

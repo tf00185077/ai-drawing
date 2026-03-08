@@ -146,6 +146,24 @@ def test_generate_image_custom_workflow_submits_workflow() -> None:
     assert call_json["prompt"] == "1girl"
 
 
+def test_generate_image_custom_workflow_with_image_pose() -> None:
+    """generate_image_custom_workflow 傳入 image_pose 時會帶入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "xyz", "status": "queued"}
+    wf_json = '{"5":{"class_type":"LoadImage","inputs":{"image":"pose.png"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(
+            workflow=wf_json,
+            prompt="1girl",
+            image_pose="2026-03-08/ComfyUI_01305__318631e3_0.png",
+        )
+
+    assert "xyz" in result
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["image_pose"] == "2026-03-08/ComfyUI_01305__318631e3_0.png"
+
+
 def test_gallery_list_returns_summary() -> None:
     """gallery_list 回傳圖庫摘要"""
     mock_client = MagicMock()
