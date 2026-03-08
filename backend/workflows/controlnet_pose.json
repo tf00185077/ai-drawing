@@ -8,7 +8,7 @@
       "model": ["4", 0],
       "negative": ["15", 1],
       "positive": ["15", 0],
-      "sampler_name": "euler",
+      "sampler_name": "dpmpp_2m",
       "scheduler": "normal",
       "seed": 0,
       "steps": 20
@@ -70,6 +70,7 @@
   "13": {
     "class_type": "DWPreprocessor",
     "inputs": {
+      "bbox_detector": "yolo_nas_s_fp16.onnx",
       "image": ["11", 0],
       "resolution": 512
     }
