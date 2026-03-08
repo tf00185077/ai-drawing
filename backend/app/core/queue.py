@@ -64,6 +64,7 @@ _pending: list[_Job] = []
 _running: _Job | None = None
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
+_our_prompt_ids: set[str] = set()  # 本系統提交的 prompt_id，history watcher 略過
 
 
 def _reset_for_test() -> None:
@@ -132,6 +133,12 @@ def get_status() -> dict[str, Any]:
         "queue_running": running_list,
         "queue_pending": pending_list,
     }
+
+
+def get_our_prompt_ids() -> set[str]:
+    """取得本系統已提交的 prompt_id 集合，供 history watcher 略過用"""
+    with _lock:
+        return set(_our_prompt_ids)
 
 
 def get_job_status(job_id: str) -> dict[str, Any] | None:
@@ -228,6 +235,7 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         with _lock:
             if _running and _running.job_id == job.job_id:
                 _running.prompt_id = prompt_id
+            _our_prompt_ids.add(prompt_id)
         logger.info("Job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
     except (ComfyUIError, FileNotFoundError) as e:
         logger.exception("ComfyUI submit failed for job %s: %s", job.job_id, e)

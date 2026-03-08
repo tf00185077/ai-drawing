@@ -17,6 +17,8 @@ from app.core.queue import (
     submit as queue_submit,
 )
 from app.services import lora_trainer
+from app.services.comfyui_history_watcher import start_watcher as start_comfyui_watcher
+from app.services.comfyui_history_watcher import stop_watcher as stop_comfyui_watcher
 from app.services.watcher import start_watching, stop_watching
 
 logger = logging.getLogger(__name__)
@@ -47,7 +49,9 @@ async def lifespan(app: FastAPI):
     lora_trainer.ensure_worker()
     start_watching()
     start_queue_worker()
+    start_comfyui_watcher()
     yield
+    stop_comfyui_watcher()
     stop_queue_worker()
     stop_watching()
 

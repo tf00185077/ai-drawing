@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
     comfyui_timeout_queue: float = 10.0
+    # 監聽 ComfyUI 直接生成：從 UI 產圖時自動記錄至圖庫
+    comfyui_record_external: bool = True
+    comfyui_history_poll_interval: float = 10.0  # 秒
 
     # 輸出目錄
     output_dir: str = "./outputs"

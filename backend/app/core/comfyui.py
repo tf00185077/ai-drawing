@@ -191,6 +191,17 @@ class ComfyUIClient:
             r.raise_for_status()
             return r.json()
 
+    def get_full_history(self) -> dict[str, Any]:
+        """
+        取得 ComfyUI 完整執行歷史（所有已完成的 prompt）。
+        用於監聽從 ComfyUI UI 直接生成的圖片，自動記錄至圖庫。
+        Returns: { prompt_id: { "outputs": {...}, "prompt": [...], "status": {...} }, ... }
+        """
+        with httpx.Client(timeout=self._timeout_fetch) as client:
+            r = client.get(self._url("/history"))
+            r.raise_for_status()
+            return r.json()
+
     def get_queue(self) -> dict[str, Any]:
         """
         取得目前佇列狀態

@@ -212,3 +212,114 @@ def get_seed_from_workflow(workflow: dict) -> int | None:
             if isinstance(seed, int):
                 return seed
     return None
+
+
+def extract_params_from_workflow(workflow: dict) -> dict:
+    """
+    從已執行的 workflow 中提取生圖參數。
+    用於 ComfyUI 直接生成（非本系統提交）時，從 history 的 prompt 推回參數以記錄。
+
+    Returns:
+        {
+            "checkpoint": str | None,
+            "lora": str | None,
+            "prompt": str | None,
+            "negative_prompt": str | None,
+            "seed": int | None,
+            "steps": int | None,
+            "cfg": float | None,
+        }
+    """
+    result: dict = {
+        "checkpoint": None,
+        "lora": None,
+        "prompt": None,
+        "negative_prompt": None,
+        "seed": None,
+        "steps": None,
+        "cfg": None,
+    }
+
+    # ComfyUI history 的 prompt 格式： [index, prompt_id, workflow_dict, extra, output_ids]
+    # workflow 在 index 2
+    wf = workflow
+    if isinstance(workflow, list) and len(workflow) > 2:
+        wf = workflow[2] if isinstance(workflow[2], dict) else {}
+    elif isinstance(workflow, list) and workflow and isinstance(workflow[0], dict):
+        wf = workflow[0]
+    if not isinstance(wf, dict):
+        return result
+
+    positive_node_ids: set[str] = set()
+    negative_node_ids: set[str] = set()
+
+    def _resolve_to_clip(nid: str) -> str | None:
+        node = wf.get(nid) if isinstance(wf, dict) else {}
+        if not isinstance(node, dict):
+            return None
+        ct = node.get("class_type")
+        if ct == "CLIPTextEncode":
+            return nid
+        if ct == "ControlNetApply":
+            pos_in = node.get("inputs", {}).get("positive") or node.get("inputs", {}).get("conditioning")
+            if isinstance(pos_in, list) and len(pos_in) >= 1:
+                return _resolve_to_clip(str(pos_in[0]))
+        return None
+
+    def _resolve_neg_to_clip(nid: str) -> str | None:
+        node = wf.get(nid) if isinstance(wf, dict) else {}
+        if not isinstance(node, dict):
+            return None
+        ct = node.get("class_type")
+        if ct == "CLIPTextEncode":
+            return nid
+        if ct == "ControlNetApply":
+            neg_in = node.get("inputs", {}).get("negative")
+            if isinstance(neg_in, list) and len(neg_in) >= 1:
+                return _resolve_neg_to_clip(str(neg_in[0]))
+        return None
+
+    # 第一遍：從 KSampler 找出 positive/negative 對應的 CLIPTextEncode node id
+    for nid, node in (wf.items() if isinstance(wf, dict) else []):
+        if not isinstance(node, dict):
+            continue
+        if node.get("class_type") != "KSampler":
+            continue
+        inputs = node.get("inputs", {})
+        pos_link = inputs.get("positive")
+        neg_link = inputs.get("negative")
+        if isinstance(pos_link, list) and len(pos_link) >= 1:
+            resolved = _resolve_to_clip(str(pos_link[0]))
+            if resolved:
+                positive_node_ids.add(resolved)
+        if isinstance(neg_link, list) and len(neg_link) >= 1:
+            resolved = _resolve_neg_to_clip(str(neg_link[0]))
+            if resolved:
+                negative_node_ids.add(resolved)
+
+    # 第二遍：提取各節點參數
+    for nid, node in (wf.items() if isinstance(wf, dict) else []):
+        if not isinstance(node, dict):
+            continue
+        ct = node.get("class_type")
+        inputs = node.get("inputs", {})
+
+        if ct == "CheckpointLoaderSimple":
+            result["checkpoint"] = inputs.get("ckpt_name")
+        if ct == "LoraLoader":
+            result["lora"] = inputs.get("lora_name")
+        if ct == "KSampler":
+            seed = inputs.get("seed")
+            if isinstance(seed, int):
+                result["seed"] = seed
+            result["steps"] = inputs.get("steps")
+            result["cfg"] = inputs.get("cfg")
+        if ct == "CLIPTextEncode":
+            text = inputs.get("text")
+            if isinstance(text, str):
+                if nid in positive_node_ids:
+                    result["prompt"] = text
+                if nid in negative_node_ids:
+                    result["negative_prompt"] = text
+
+    return result

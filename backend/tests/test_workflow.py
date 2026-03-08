@@ -1,7 +1,12 @@
 """Workflow JSON 管理單元測試"""
 import pytest
 
-from app.core.workflow import apply_params, get_seed_from_workflow, load_template
+from app.core.workflow import (
+    apply_params,
+    extract_params_from_workflow,
+    get_seed_from_workflow,
+    load_template,
+)
 
 
 def test_load_template_loads_default() -> None:
@@ -192,3 +197,42 @@ def test_apply_params_overrides_bbox_detector_when_provided() -> None:
     wf = load_template("honoka_pose_controlnet")
     result = apply_params(wf, prompt="test", bbox_detector="yolo_nas_s_fp16.onnx")
     assert result["6"]["inputs"]["bbox_detector"] == "yolo_nas_s_fp16.onnx"
+
+
+def test_extract_params_from_workflow_returns_all_params() -> None:
+    """從 workflow 提取 checkpoint、lora、prompt、seed、steps、cfg"""
+    wf = load_template("default_lora")
+    wf = apply_params(
+        wf,
+        checkpoint="model.ckpt",
+        lora="style.safetensors",
+        prompt="1girl, solo",
+        negative_prompt="blur",
+        seed=12345,
+        steps=25,
+        cfg=7.5,
+    )
+    result = extract_params_from_workflow(wf)
+    assert result["checkpoint"] == "model.ckpt"
+    assert result["lora"] == "style.safetensors"
+    assert result["prompt"] == "1girl, solo"
+    assert result["negative_prompt"] == "blur"
+    assert result["seed"] == 12345
+    assert result["steps"] == 25
+    assert result["cfg"] == 7.5
+
+
+def test_extract_params_from_workflow_returns_none_for_empty() -> None:
+    """空 workflow 或無關節點時回傳 None"""
+    assert extract_params_from_workflow({}) == {
+        "checkpoint": None,
+        "lora": None,
+        "prompt": None,
+        "negative_prompt": None,
+        "seed": None,
+        "steps": None,
+        "cfg": None,
+    }
+    assert extract_params_from_workflow({"x": {"class_type": "Other", "inputs": {}}})[
+        "checkpoint"
+    ] is None
