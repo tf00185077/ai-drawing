@@ -1,34 +1,41 @@
 ---
-description: AI 根據使用者描述產生 prompt 與 workflow 的指引
+description: AI 依使用者描述組 workflow 並生圖（由 Cursor AI 直接產生 workflow，不需 OpenAI API）
 alwaysApply: false
 globs: 
 ---
 
-# MCP 自訂 Workflow 生圖指引
+# MCP 依描述生圖指引
 
-當使用者**描述具體畫面**（如「穿和服的初音」「賽璐珞風格的雷姆」）或**指定 workflow 模板**時，應使用自訂 workflow 流程。
+## 設計：由 AI 直接產 workflow
 
-## 使用時機
+Workflow 由 **你（Cursor AI）** 依使用者描述自行組出，無需後端呼叫 OpenAI。
 
-| 情境 | 建議作法 |
-|------|----------|
-| 簡單角色+風格 | `generate_image(character="初音", style="動漫")` |
-| 描述含額外細節（服裝、背景、動作） | 用 `generate_image_custom_workflow` |
-| 使用者指定「用 XX 模板」 | 用 `generate_image_custom_workflow` |
+## 流程
 
-## 標準流程
+| 情境 | 作法 |
+|------|------|
+| 簡單（角色+風格，如初音動漫） | `generate_image_from_description("初音 動漫 1024")` |
+| 需 ControlNet、img2img 等預存模板沒有的 | 你自行組 workflow → `generate_image_custom_workflow(workflow=..., prompt=..., character=...)` |
 
-1. **list_workflow_templates** → 看有哪些模板
-2. **get_workflow_template(name)** → 取得模板 JSON
-3. **resolve_character_style_prompt**（可選）→ 預覽角色/風格對應的 prompt
-4. **generate_image_custom_workflow(workflow=..., prompt=..., character=..., style=...)** → 提交
+## 自行組 workflow 步驟
 
-## 範例
+1. `list_workflow_templates` → 看有哪些模板
+2. `get_workflow_template("default")` 或 `get_workflow_template("default_lora")` → 取得 base JSON
+3. 依描述修改節點（加入 ControlNet、img2img 等），產出完整 workflow
+4. `generate_image_custom_workflow(workflow=<JSON 字串>, prompt=..., character=..., width=..., height=...)` 提交
 
-- 使用者：「用 default 模板產生穿和服的初音」
-  - `get_workflow_template("default")` 取得 JSON
-  - `generate_image_custom_workflow(workflow=<JSON>, character="初音", prompt="1girl, solo, kimono, cherry blossom")`
+## ComfyUI 常見節點
 
-- 使用者：「我要一張水彩風格的艾米莉亞」
-  - `get_workflow_template("default")` 取得 JSON
-  - `generate_image_custom_workflow(workflow=<JSON>, character="艾米莉亞", style="水彩")`
+- **CheckpointLoaderSimple**: ckpt_name
+- **LoraLoader**: lora_name, strength_model, strength_clip, model, clip（連線）
+- **CLIPTextEncode**: text, clip（連線）
+- **EmptyLatentImage**: width, height, batch_size
+- **KSampler**: model, positive, negative, latent_image, seed, steps, cfg, sampler_name, scheduler, denoise
+- **VAEDecode**: samples, vae
+- **SaveImage**: images, filename_prefix
+- **LoadImage**: image（檔名，img2img 用）
+- **VAEEncode**: pixels, vae（img2img  latent）
+- **ControlNetLoader**: control_net_name
+- **ApplyControlNet**: positive, control_net, image
+
+連線格式：`["節點ID", 輸出索引]`，如 `["4", 1]`。

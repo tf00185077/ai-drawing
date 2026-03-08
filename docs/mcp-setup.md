@@ -148,6 +148,8 @@ pip install -e .
 |------|------|----------|
 | `mcp_ping` | 檢查 Backend 連線 | 檢查 ai-drawing 連線 |
 | `generate_image` | 觸發生圖 | 產生初音、動漫風格的圖 |
+| `generate_image_from_description` | **依描述自動選 workflow 生圖** | 穿和服的初音，動漫風格，1024 |
+| `suggest_workflow_from_description` | 預覽描述解析結果 | 穿和服初音會用什麼參數 |
 | `generate_image_custom_workflow` | 自訂 workflow 生圖 | 用 default 模板產生穿和服的初音 |
 | `list_workflow_templates` | 列出 workflow 模板 | 有哪些 workflow 可選 |
 | `get_workflow_template` | 取得模板 JSON | 取得 default 模板 |

@@ -51,6 +51,9 @@ def apply_params(
     batch_size: int | None = None,
     sampler_name: str | None = None,
     scheduler: str | None = None,
+    image: str | None = None,
+    image_pose: str | None = None,
+    denoise: float | None = None,
 ) -> dict:
     """
     將參數替換進 workflow，回傳可提交的 prompt dict。
@@ -61,8 +64,9 @@ def apply_params(
     - LoraLoader.lora_name <- lora
     - CLIPTextEncode (接 KSampler.positive).text <- prompt
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
-    - KSampler.seed, steps, cfg, sampler_name, scheduler
+    - KSampler.seed, steps, cfg, sampler_name, scheduler, denoise
     - EmptyLatentImage.width, height, batch_size
+    - LoadImage.image <- image / image_pose（依節點順序：第一為 subject，第二為 pose）
 
     Args:
         workflow: 原始 workflow（會複製，不修改原物件）
@@ -94,6 +98,12 @@ def apply_params(
             if isinstance(neg_link, list) and len(neg_link) >= 1:
                 negative_node_ids.add(str(neg_link[0]))
 
+    # 1b. 找出 LoadImage 節點（依 node id 排序，第一為 subject、第二為 pose）
+    load_image_ids = sorted(
+        nid for nid, node in wf.items()
+        if isinstance(node, dict) and node.get("class_type") == "LoadImage"
+    )
+
     # 2. 替換各類節點
     for nid, node in wf.items():
         if not isinstance(node, dict):
@@ -118,6 +128,15 @@ def apply_params(
                 inputs["sampler_name"] = sampler_name
             if scheduler is not None:
                 inputs["scheduler"] = scheduler
+            if denoise is not None:
+                inputs["denoise"] = denoise
+
+        if ct == "LoadImage" and (image is not None or image_pose is not None):
+            idx = load_image_ids.index(nid) if nid in load_image_ids else -1
+            if idx == 1 and image_pose is not None:
+                inputs["image"] = image_pose
+            elif image is not None:
+                inputs["image"] = image
 
         if ct == "EmptyLatentImage":
             if width is not None:

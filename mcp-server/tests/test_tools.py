@@ -4,9 +4,11 @@ from unittest.mock import MagicMock, patch
 from mcp_server.tools.generate import (
     generate_image,
     generate_image_custom_workflow,
+    generate_image_from_description,
     generate_queue_status,
     get_workflow_template,
     list_workflow_templates,
+    suggest_workflow_from_description,
 )
 from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
@@ -100,6 +102,30 @@ def test_get_workflow_template_returns_json_string() -> None:
     assert "CheckpointLoaderSimple" in result
     assert "4" in result
     mock_client.get.assert_called_once_with("generate/workflow-templates/default")
+
+
+def test_generate_image_from_description_parses_and_submits() -> None:
+    """generate_image_from_description 解析描述後取模板提交"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"4": {"class_type": "CheckpointLoaderSimple"}}
+    mock_client.post.return_value = {"job_id": "xyz", "status": "queued"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_from_description("初音 動漫 1024")
+
+    assert "xyz" in result
+    assert "初音" in result
+    mock_client.get.assert_called_once_with("generate/workflow-templates/default")
+    assert mock_client.post.call_count == 1
+    assert mock_client.post.call_args[0][0] == "generate/custom"
+
+
+def test_suggest_workflow_from_description_returns_parse_result() -> None:
+    """suggest_workflow_from_description 僅回傳解析結果"""
+    result = suggest_workflow_from_description("初音 動漫")
+    assert "初音" in result
+    assert "動漫" in result
+    assert "template" in result
 
 
 def test_generate_image_custom_workflow_submits_workflow() -> None:

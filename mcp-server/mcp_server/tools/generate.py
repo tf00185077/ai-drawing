@@ -8,6 +8,7 @@
 import json
 
 from mcp_server.character_style import resolve_to_prompt
+from mcp_server.description_parser import parse_description
 from mcp_server.server import _get_client, mcp
 
 
@@ -143,6 +144,69 @@ def generate_image_custom_workflow(
         return f"已加入生圖佇列（自訂 workflow）: job_id={job_id}, status={status}"
     except json.JSONDecodeError as e:
         return f"error: workflow 必須為合法 JSON: {e}"
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
+def generate_image_from_description(description: str) -> str:
+    """
+    依照使用者的自然語言描述生圖（走預存模板）。
+    解析角色、風格、解析度、額外 prompt，選模板後提交。
+    範例：「穿和服的初音，動漫風格，1024」
+    若描述需 ControlNet、img2img 等預存模板沒有的，應由 AI 自行組 workflow 後呼叫 generate_image_custom_workflow。
+    """
+    try:
+        parsed = parse_description(description)
+        client = _get_client()
+        workflow = client.get(f"generate/workflow-templates/{parsed.template}")
+        final_prompt, resolved_lora = resolve_to_prompt(
+            character=parsed.character,
+            style=parsed.style,
+            base_prompt="1girl, solo",
+        )
+        if parsed.extra_prompt:
+            final_prompt = f"{final_prompt}, {parsed.extra_prompt}"
+        body = {"workflow": workflow, "prompt": final_prompt}
+        if resolved_lora:
+            body["lora"] = resolved_lora
+        if parsed.width is not None:
+            body["width"] = parsed.width
+        if parsed.height is not None:
+            body["height"] = parsed.height
+        resp = client.post("generate/custom", json=body)
+        job_id = resp.get("job_id", "unknown")
+        status = resp.get("status", "queued")
+        summary = f"template={parsed.template}, character={parsed.character}, style={parsed.style}"
+        if parsed.width:
+            summary += f", {parsed.width}x{parsed.height}"
+        return f"已加入生圖佇列: job_id={job_id}, status={status}\n{summary}"
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
+def suggest_workflow_from_description(description: str) -> str:
+    """
+    僅解析描述，不回傳 workflow JSON。供預覽或讓 AI 了解會選用什麼參數。
+    """
+    try:
+        parsed = parse_description(description)
+        _, resolved_lora = resolve_to_prompt(
+            character=parsed.character,
+            style=parsed.style,
+            base_prompt="1girl, solo",
+        )
+        lines = [
+            f"character: {parsed.character or '(未辨識)'}",
+            f"style: {parsed.style or '(未辨識)'}",
+            f"extra_prompt: {parsed.extra_prompt or '(無)'}",
+            f"template: {parsed.template}",
+            f"resolution: {parsed.width}x{parsed.height}" if parsed.width else "resolution: (預設)",
+        ]
+        if resolved_lora:
+            lines.append(f"lora: {resolved_lora}")
+        return "\n".join(lines)
     except Exception as e:
         return f"error: {e}"
 

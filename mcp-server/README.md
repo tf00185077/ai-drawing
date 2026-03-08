@@ -8,6 +8,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 |------|------|
 | `mcp_ping` | 檢查 Backend 連線狀態 |
 | `generate_image` | 觸發圖片生成；支援 character、style 語意（如「初音」「動漫」） |
+| `generate_image_from_description` | 依描述生圖（預存模板）；複雜需求由 AI 組 workflow 後呼叫 generate_image_custom_workflow |
+| `suggest_workflow_from_description` | 預覽描述解析結果（不觸發生圖） |
 | `generate_image_custom_workflow` | 使用自訂 workflow 生圖；AI 可依描述取得模板、修改後提交 |
 | `list_workflow_templates` | 列出可用 workflow 模板（default、default_lora 等） |
 | `get_workflow_template` | 取得指定模板的 workflow JSON |

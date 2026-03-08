@@ -121,3 +121,40 @@ def test_get_seed_from_workflow_returns_none_when_no_ksampler() -> None:
     """無 KSampler 時回傳 None"""
     assert get_seed_from_workflow({}) is None
     assert get_seed_from_workflow({"1": {"class_type": "OtherNode", "inputs": {}}}) is None
+
+
+def test_load_template_controlnet_pose() -> None:
+    """controlnet_pose 模板含 LoadImage、DWPreprocessor、ControlNetApply"""
+    wf = load_template("controlnet_pose")
+    assert wf["10"]["class_type"] == "LoadImage"
+    assert wf["11"]["class_type"] == "LoadImage"
+    assert wf["13"]["class_type"] == "DWPreprocessor"
+    assert wf["14"]["class_type"] == "ControlNetLoader"
+    assert wf["15"]["class_type"] == "ControlNetApply"
+
+
+def test_apply_params_replaces_image_and_denoise_in_controlnet_pose() -> None:
+    """apply_params 在 controlnet_pose 中正確替換 LoadImage.image 與 KSampler.denoise"""
+    wf = load_template("controlnet_pose")
+    result = apply_params(
+        wf,
+        prompt="1girl, standing",
+        image="my_photo.png",
+        denoise=0.65,
+    )
+    assert result["10"]["inputs"]["image"] == "my_photo.png"
+    assert result["11"]["inputs"]["image"] == "my_photo.png"
+    assert result["3"]["inputs"]["denoise"] == 0.65
+
+
+def test_apply_params_image_pose_overrides_second_loadimage() -> None:
+    """image_pose 單獨設定時，第二個 LoadImage 使用 pose 圖"""
+    wf = load_template("controlnet_pose")
+    result = apply_params(
+        wf,
+        prompt="test",
+        image="subject.png",
+        image_pose="pose_ref.png",
+    )
+    assert result["10"]["inputs"]["image"] == "subject.png"
+    assert result["11"]["inputs"]["image"] == "pose_ref.png"
