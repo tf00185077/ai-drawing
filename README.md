@@ -28,6 +28,7 @@
 - **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
 - **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
 - **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合（設定見 [docs/mcp-setup.md](docs/mcp-setup.md)）
+- **遠端觸發生圖**：LINE / Google Webhook → Backend → 生圖 API（流程見 [遠端觸發生圖](#遠端觸發生圖-webhook-trigger)）
 
 ---
 
@@ -101,20 +102,87 @@
 
 ---
 
+## 遠端觸發生圖 (Webhook Trigger)
+
+透過 LINE、Google Chat 等服務傳送訊息，遠端觸發本機生圖。架構：**外部服務 → Webhook (HTTP) → Backend → 生圖 API**。
+
+### 整體流程
+
+```
+[User 傳送訊息] → LINE / Google Chat / 其他
+        ↓
+[Webhook POST] → https://你的公開網址/api/webhook/line
+        ↓
+[Backend] 驗證簽章 → 解析訊息 → 組成 prompt
+        ↓
+[queue.submit] → 生圖佇列 → ComfyUI 產圖 → 參數記錄
+        ↓
+[回傳結果] → 回覆 User（圖片連結或佇列狀態）
+```
+
+### 必要條件：對外可連線
+
+| 環境 | 作法 |
+|------|------|
+| 本機開發 | [ngrok](https://ngrok.com/) 或 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)：`ngrok http 8000` 取得 `https://xxx.ngrok.io` |
+| 雲端部署 | Backend 已部署至 VPS / Docker，直接使用 `https://your-domain.com` |
+
+LINE / Google 的 Webhook 必須為 **HTTPS**，ngrok 免費版即可滿足。
+
+### LINE Bot 設定步驟
+
+1. 至 [LINE Developers](https://developers.line.biz/) 建立 **Messaging API** Channel
+2. 取得 `Channel Secret`、`Channel Access Token`，寫入 `.env`
+3. 設定 **Webhook URL**：`https://你的ngrok網址/api/webhook/line`
+4. 關閉「Use webhook」旁的「Auto-reply messages」，避免與自訂邏輯衝突
+5. 啟動 Backend，對 Bot 傳訊息即可觸發
+
+### Google 觸發選項
+
+| 服務 | 作法 |
+|------|------|
+| Google Chat | 建立 Bot，設定 Webhook，`POST` 至 `/api/webhook/google-chat` |
+| Google Assistant + IFTTT | IFTTT 設定「If Google Assistant 說/做... Then Webhook」 |
+| Google Forms | Apps Script 於表單送出時呼叫 Webhook URL |
+
+### 專案內檔案對應
+
+| 職責 | 檔案路徑 | 狀態 |
+|------|----------|------|
+| Webhook 路由 | `backend/app/api/webhook.py` | 待實作 |
+| LINE 事件處理 | `backend/app/services/line_handler.py` | 待實作 |
+| 環境變數 | `.env` 內 `LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN` | 見 `.env.example` |
+
+### 環境變數（.env.example 補充）
+
+```
+# LINE Bot（遠端觸發生圖）
+LINE_CHANNEL_SECRET=
+LINE_CHANNEL_ACCESS_TOKEN=
+```
+
+### 安全規範
+
+- **必須驗證 Webhook 簽章**：LINE 使用 `X-Line-Signature`，用 `Channel Secret` 驗證；未通過則回傳 401
+- 所有 Secret / Token 僅存於 `.env`，不得寫入程式碼或提交 Git
+
+---
+
 ## 專案結構
 
 ```
 auto-draw/
 ├── backend/                    # Python + FastAPI
 │   ├── app/
-│   │   ├── api/               # 四大模組 API
+│   │   ├── api/               # 四大模組 API + Webhook
 │   │   │   ├── generate.py    # 生圖
 │   │   │   ├── gallery.py     # 圖庫
 │   │   │   ├── lora_docs.py   # LoRA 文件
-│   │   │   └── lora_train.py  # LoRA 訓練
+│   │   │   ├── lora_train.py  # LoRA 訓練
+│   │   │   └── webhook.py     # 遠端觸發（LINE、Google 等）
 │   │   ├── core/              # ComfyUI、Workflow、Queue、Recording
 │   │   ├── db/                # 資料庫 models、database
-│   │   ├── services/          # watcher、lora_trainer
+│   │   ├── services/          # watcher、lora_trainer、line_handler
 │   │   └── schemas/
 │   ├── workflows/             # Workflow JSON 模板
 │   ├── requirements.txt
@@ -248,4 +316,12 @@ cd mcp-server && uv run pytest
 | 6c | 角色與風格語意對應 | [v] | `mcp-server/character_style.py` | Agent F | `mcp-server/mcp_server/character_style.py` |
 | 6d | MCP 整合文件與 Cursor 配置 | [v] | `docs/mcp-setup.md` | Agent F | `docs/mcp-setup.md`, `scripts/run-mcp-server.*`, `.cursor/mcp.json.example` |
 
-**整體進度**：23 / 24 完成（96%） · 最後更新：2026-03-07
+### 擴充 · 遠端觸發生圖 (Webhook)
+| ID | 任務 | 狀態 | 實作檔案 | 說明 |
+|----|------|------|----------|------|
+| 7a | LINE Webhook | [ ] | `api/webhook.py`, `services/line_handler.py` | LINE 傳訊觸發生圖，見 [遠端觸發生圖](#遠端觸發生圖-webhook-trigger) |
+| 7b | Google Chat Webhook（選用）| [ ] | `api/webhook.py`, `services/google_chat_handler.py` | 同上架構 |
+
+> **規範**：實作時須遵循 `.cursor/rules/webhook-trigger.mdc`。
+
+**整體進度**：23 / 24 完成（96%） · 最後更新：2026-03-09

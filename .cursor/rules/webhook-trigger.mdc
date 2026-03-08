@@ -1,0 +1,28 @@
+---
+description: 遠端觸發生圖 Webhook 實作規範（LINE、Google 等）
+globs: backend/app/api/webhook*.py, backend/app/services/*_handler.py
+alwaysApply: false
+---
+
+# 遠端觸發生圖 Webhook 規範
+
+## 架構原則
+
+- **單一入口**：`api/webhook.py` 統一處理所有 Webhook 路由（LINE、Google 等），依 path 或 header 分派至對應 handler
+- **Handler 職責**：`services/line_handler.py` 等僅負責「解析事件、驗證、組成生圖參數」，**不直接呼叫 ComfyUI**，改呼叫 `queue.submit()` 或內部 HTTP 至 `/api/generate/`
+
+## 安全
+
+- **必須驗證簽章**：LINE 使用 `X-Line-Signature` + `Channel Secret`；未通過回傳 401，禁止回傳任何業務資料
+- **敏感資訊**：`LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN` 僅從 `config`/環境變數讀取，不得硬編碼
+
+## 資料流
+
+```
+Request → 驗證簽章 → 解析訊息 → 映射 prompt（可結合 character_style）→ queue.submit(params) → 回覆佇列狀態或圖片連結
+```
+
+## 錯誤處理
+
+- 佇列滿（QueueFullError）：回覆 User「生圖佇列已滿，請稍後再試」
+- 解析失敗：回覆「無法理解，請輸入生圖描述」；紀錄 log，不拋出 500 給第三方平台
