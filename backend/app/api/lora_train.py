@@ -40,8 +40,11 @@ async def list_training_folders():
 
 @router.post("/start", response_model=TrainStartResponse, status_code=202)
 async def start_training(body: TrainStartRequest):
-    """手動觸發 LoRA 訓練"""
+    """手動觸發 LoRA 訓練。可附 generate_after：訓練完成後才自動生圖。"""
     try:
+        gen_after = None
+        if body.generate_after:
+            gen_after = body.generate_after.model_dump()
         job_id = lora_trainer.enqueue(
             body.folder,
             checkpoint=body.checkpoint,
@@ -56,6 +59,7 @@ async def start_training(body: TrainStartRequest):
             mixed_precision=body.mixed_precision,
             network_dim=body.network_dim,
             network_alpha=body.network_alpha,
+            generate_after=gen_after,
         )
     except ValueError as e:
         msg = str(e)

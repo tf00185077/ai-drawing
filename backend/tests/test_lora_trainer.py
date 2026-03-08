@@ -7,6 +7,50 @@ import pytest
 from app.services import lora_trainer
 
 
+def test_resolve_checkpoint_path_windows_absolute() -> None:
+    """本機 Windows 路徑應解析為絕對路徑"""
+    result = lora_trainer._resolve_checkpoint_path(
+        r"D:\AI\ComfyUI\models\checkpoints\incursiosMemeDiffusion_v16PDXL.safetensors"
+    )
+    assert "D:" in result or "d:" in result
+    assert "incursiosMemeDiffusion" in result
+    assert result.endswith(".safetensors")
+
+
+def test_resolve_checkpoint_path_huggingface_id_unchanged() -> None:
+    """HuggingFace 模型 ID 應原樣回傳"""
+    hf_id = "stabilityai/stable-diffusion-xl-base-1.0"
+    result = lora_trainer._resolve_checkpoint_path(hf_id)
+    assert result == hf_id
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_resolve_checkpoint_path_pure_filename_prepends_lora_checkpoint_dirs(
+    mock_settings: MagicMock,
+) -> None:
+    """純檔名應與 LORA_CHECKPOINT_DIRS 首個路徑合併為絕對路徑"""
+    mock_settings.return_value.lora_checkpoint_dirs = "D:/AI/ComfyUI/models/checkpoints"
+    result = lora_trainer._resolve_checkpoint_path("model.safetensors")
+    assert "model.safetensors" in result
+    assert "D:" in result or "d:" in result
+    assert "checkpoints" in result
+    assert result.endswith("model.safetensors")
+
+
+def test_set_and_get_pending_generate() -> None:
+    """set_pending_generate 與 get_and_clear_pending_generate 正確存取與清除"""
+    params = {"prompt": "2girls, beach", "count": 10, "batch_size": 8}
+    lora_trainer.set_pending_generate("lovelive", params)
+    got = lora_trainer.get_and_clear_pending_generate("lovelive")
+    assert got == params
+    assert lora_trainer.get_and_clear_pending_generate("lovelive") is None
+
+
+def test_get_pending_generate_nonexistent_returns_none() -> None:
+    """不存在的 folder 呼叫 get_and_clear_pending_generate 回傳 None"""
+    assert lora_trainer.get_and_clear_pending_generate("nonexistent") is None
+
+
 @pytest.fixture(autouse=True)
 def reset_trainer():
     """每個測試前清空佇列"""

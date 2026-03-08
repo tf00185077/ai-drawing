@@ -5,6 +5,16 @@ LoRA 訓練 API 的 Request/Response 結構
 from pydantic import BaseModel, Field
 
 
+class GenerateAfterParams(BaseModel):
+    """訓練完成後自動生圖的參數（僅在訓練成功時執行）"""
+
+    prompt: str = Field(..., min_length=1)
+    count: int = Field(default=1, ge=1, le=64)
+    batch_size: int = Field(default=1, ge=1, le=8)
+    negative_prompt: str | None = None
+    checkpoint: str | None = None
+
+
 class TrainStartRequest(BaseModel):
     """POST /api/lora-train/start 的 Request Body"""
 
@@ -22,6 +32,8 @@ class TrainStartRequest(BaseModel):
     mixed_precision: str | None = None  # fp16 | bf16 | fp32
     network_dim: int | None = Field(default=None, ge=1, le=128)
     network_alpha: int | None = Field(default=None, ge=1, le=128)
+    # 訓練完成後自動生圖，留空則用 lora_auto_prompt 產 1 張
+    generate_after: GenerateAfterParams | None = None
 
 
 class TrainStartResponse(BaseModel):

@@ -450,8 +450,8 @@ export default function LoraTrain() {
               label="Checkpoint（選填）"
               value={checkpoint}
               onChange={setCheckpoint}
-              placeholder="不填則用 config 預設"
-              help="基礎模型路徑（.safetensors / .ckpt）。留空則使用 .env 的 LORA_DEFAULT_CHECKPOINT。"
+              placeholder="incursiosMemeDiffusion_v16PDXL.safetensors"
+              help="基礎模型檔名，會自動加上 .env 的 LORA_CHECKPOINT_DIRS 路徑。留空則使用 LORA_DEFAULT_CHECKPOINT。"
             />
             <div>
               <label className="flex items-center gap-2 cursor-pointer">

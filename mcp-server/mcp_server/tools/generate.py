@@ -23,8 +23,9 @@ def generate_image(
     seed: int | None = None,
     steps: int | None = None,
     cfg: float | None = None,
+    batch_size: int | None = None,
 ) -> str:
-    """觸發圖片生成。可用 character、style 自然語言描述（如「初音」「動漫」），或直接給 prompt。回傳 job_id 或錯誤訊息。"""
+    """觸發圖片生成。可用 character、style 自然語言描述，或直接給 prompt。batch_size 可一次產多張（1～8）。回傳 job_id 或錯誤訊息。"""
     try:
         client = _get_client()
         final_prompt = prompt
@@ -51,6 +52,8 @@ def generate_image(
             body["steps"] = steps
         if cfg is not None:
             body["cfg"] = cfg
+        if batch_size is not None and 1 <= batch_size <= 8:
+            body["batch_size"] = batch_size
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")

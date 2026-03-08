@@ -69,14 +69,29 @@ _last_result: dict | None = None  # {"folder": str, "success": bool, "path": str
 _on_complete_callbacks: list[OnCompleteCallback] = []
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
+# 訓練完成後待執行的生圖參數，key 為 folder
+_pending_generate: dict[str, dict] = {}  # {"prompt": str, "count": int, "batch_size": int?, ...}
 
 
 def _reset_for_test() -> None:
     """僅供測試使用：清空佇列狀態"""
-    global _queue, _running
+    global _queue, _running, _pending_generate
     with _lock:
         _queue.clear()
         _running = None
+        _pending_generate.clear()
+
+
+def set_pending_generate(folder: str, params: dict) -> None:
+    """設定訓練完成後待執行的生圖參數（僅在該 folder 訓練成功時執行）"""
+    with _lock:
+        _pending_generate[folder] = dict(params)
+
+
+def get_and_clear_pending_generate(folder: str) -> dict | None:
+    """取得並清除該 folder 的待生圖參數，訓練失敗時也應呼叫以清除"""
+    with _lock:
+        return _pending_generate.pop(folder, None)
 
 
 def clear_queue() -> int:
@@ -108,6 +123,39 @@ def _resolve_image_dir(folder: str) -> Path:
     settings = get_settings()
     base = Path(settings.lora_train_dir).resolve()
     return (base / folder).resolve()
+
+
+def _resolve_checkpoint_path(checkpoint: str) -> str:
+    """
+    解析 checkpoint 為本機絕對路徑。
+    - 含 \\、Windows 磁碟代號、或以 / 開頭：當作路徑解析
+    - 純檔名：使用 LORA_CHECKPOINT_DIRS 第一個路徑作為前綴，回傳絕對路徑
+    - 否則原樣回傳（如 HuggingFace ID）
+    """
+    s = checkpoint.strip()
+    if not s:
+        return s
+    # 本機路徑：含 \、Windows 磁碟代號 (D:)、或以 / 開頭（排除 //）
+    is_local = (
+        "\\" in s
+        or (len(s) > 2 and s[1] == ":" and s[0].isalpha())
+        or (s.startswith("/") and not s.startswith("//"))
+    )
+    if is_local:
+        try:
+            return str(Path(s).resolve())
+        except (OSError, RuntimeError):
+            return s
+    # 純檔名：用 LORA_CHECKPOINT_DIRS 第一個路徑前綴成絕對路徑
+    if "/" not in s and "\\" not in s:
+        settings = get_settings()
+        dirs_str = getattr(settings, "lora_checkpoint_dirs", None) or ""
+        for d in dirs_str.split(","):
+            d = d.strip()
+            if not d:
+                continue
+            return str((Path(d) / s).resolve())
+    return s
 
 
 def _count_trainable_images(image_dir: Path) -> int:
@@ -373,6 +421,7 @@ def _worker_loop() -> None:
                 _running = None
 
         if proc.returncode != 0:
+            get_and_clear_pending_generate(job.folder)  # 訓練失敗則清除待生圖
             tail = "\n".join(output_lines[-50:]) if output_lines else "(無輸出)"
             err_preview = tail.split("\n")[-3:] if tail else []
             err_msg = "訓練失敗，請查看 backend 終端機的錯誤輸出" + (
@@ -409,6 +458,7 @@ def _worker_loop() -> None:
                     logger.exception("on_complete callback 錯誤: %s", e)
             logger.info("Job %s 完成: %s", job.job_id, output_lora_str)
         else:
+            get_and_clear_pending_generate(job.folder)  # 失敗則清除待生圖
             err_msg = f"訓練結束但找不到輸出檔案（請檢查 backend 日誌）"
             with _lock:
                 _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
@@ -446,6 +496,7 @@ def enqueue(
     mixed_precision: str | None = None,
     network_dim: int | None = None,
     network_alpha: int | None = None,
+    generate_after: dict | None = None,
 ) -> str:
     """
     加入訓練佇列。
@@ -467,6 +518,7 @@ def enqueue(
     ckpt = checkpoint or settings.lora_default_checkpoint
     if not ckpt:
         raise ValueError("未指定 checkpoint 且 config 無 lora_default_checkpoint")
+    ckpt = _resolve_checkpoint_path(ckpt)
 
     use_sdxl = sdxl if sdxl is not None else settings.lora_sdxl
     job_id = str(uuid.uuid4())
@@ -496,6 +548,9 @@ def enqueue(
         if _running and _running.job.folder == folder:
             raise ValueError(f"資料夾訓練中: {folder}")
         _queue.append(job)
+
+    if generate_after:
+        set_pending_generate(folder, generate_after)
 
     _ensure_worker()
     logger.info("Job %s 已加入佇列: folder=%s", job_id, folder)
