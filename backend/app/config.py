@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = "./sd-scripts"
     sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
+    # WD Tagger 後處理
+    wd_tag_limit: int = 15  # caption 最多保留 tag 數
+    wd_trigger_word: str = ""  # 若設，會前綴至 caption（如 class token ohwx）
     # LoRA 訓練參數預設值（API 未帶入時使用）
     lora_resolution: int = 512
     lora_batch_size: int = 4
