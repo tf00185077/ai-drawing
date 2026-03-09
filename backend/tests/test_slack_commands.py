@@ -70,6 +70,12 @@ def test_validate_params_train_lora() -> None:
     assert validate_params("train_lora", {"folder": "my_char"}) is None
 
 
+def test_validate_params_query_gallery() -> None:
+    """validate_params query_gallery 無必填，皆通過"""
+    assert validate_params("query_gallery", {}) is None
+    assert validate_params("query_gallery", {"limit": 5}) is None
+
+
 def test_validate_params_rerun() -> None:
     """validate_params 檢查 rerun 的 image_id 為整數"""
     assert validate_params("rerun", {}) == "缺少必填參數：image_id"

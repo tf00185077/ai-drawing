@@ -104,6 +104,10 @@ _GENERATE_POSE_ALLOWED_KEYS = frozenset(
 _TRAIN_LORA_ALLOWED_KEYS = frozenset(
     {"folder", "checkpoint", "epochs", "resolution", "batch_size", "learning_rate", "class_tokens", "keep_tokens", "num_repeats", "mixed_precision", "generate_after"}
 )
+# query_gallery 白名單
+_QUERY_GALLERY_ALLOWED_KEYS = frozenset(
+    {"limit", "offset", "checkpoint", "lora", "from_date", "to_date"}
+)
 
 
 def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
@@ -298,6 +302,81 @@ def _handle_train_lora_command(say: Any, channel: str, json_str: str | None, use
         _safe_say(say, channel, "訓練服務暫不可用")
 
 
+def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+    """
+    S3.5：!查詢圖片 → GET /api/gallery/
+    回覆簡化摘要：共 {total} 筆，最近：id=1 prompt=...
+    """
+    if json_str is None:
+        _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
+        return
+    data, parse_err = slack_commands.parse_json_safe(json_str)
+    if parse_err:
+        _safe_say(say, channel, f"參數格式錯誤：{parse_err}")
+        return
+    val_err = slack_commands.validate_params("query_gallery", data)
+    if val_err:
+        _safe_say(say, channel, val_err)
+        return
+
+    raw = {k: v for k, v in data.items() if k in _QUERY_GALLERY_ALLOWED_KEYS and v is not None}
+    params: dict[str, Any] = {}
+    for k, v in raw.items():
+        if k == "limit":
+            try:
+                n = int(v) if v is not None else 5
+                params["limit"] = min(max(1, n), 20)
+            except (ValueError, TypeError):
+                params["limit"] = 5
+        elif k == "offset":
+            try:
+                params["offset"] = max(0, int(v))
+            except (ValueError, TypeError):
+                params["offset"] = 0
+        else:
+            params[k] = v
+    if "limit" not in params:
+        params["limit"] = 5
+
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.get(f"{base_url}/api/gallery/", params=params)
+    except Exception as e:
+        logger.exception("Slack query_gallery API call failed: %s", e)
+        _safe_say(say, channel, "圖庫服務暫不可用")
+        return
+
+    if r.status_code != 200:
+        logger.warning("Slack query_gallery API status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "圖庫查詢失敗")
+        return
+
+    try:
+        resp = r.json()
+        total = resp.get("total", 0)
+        items = resp.get("items", [])
+    except Exception as e:
+        logger.exception("Slack query_gallery parse response failed: %s", e)
+        _safe_say(say, channel, "圖庫查詢失敗")
+        return
+
+    if total == 0:
+        _safe_say(say, channel, "共 0 筆")
+        return
+
+    msg = f"共 {total} 筆"
+    if items:
+        lines = []
+        for it in items[:5]:
+            iid = it.get("id", "?")
+            prompt_raw = it.get("prompt") or ""
+            prompt = (prompt_raw[:60] + "...") if len(prompt_raw) > 60 else (prompt_raw or "(無)")
+            lines.append(f"id={iid} prompt={prompt}")
+        msg += "，最近：\n" + "\n".join(lines)
+    _safe_say(say, channel, msg)
+
+
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
     """
     Slack message 事件處理：解析生圖指令、提交佇列、回覆使用者。
@@ -329,6 +408,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
             _handle_generate_pose_command(say, channel, json_str, user, event=event)
         elif cmd_key == "train_lora":
             _handle_train_lora_command(say, channel, json_str, user)
+        elif cmd_key == "query_gallery":
+            _handle_query_gallery_command(say, channel, json_str, user)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return
