@@ -62,6 +62,14 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "example": '!重新生成圖片 {"image_id":123}',
         "desc": "用某張圖參數再產",
     },
+    {
+        "cmd_key": "list_resources",
+        "triggers": ["!查可用資源", "!列出模型", "!查模型"],
+        "required": [],
+        "optional": [],
+        "example": "!查可用資源",
+        "desc": "列出 checkpoint、lora、workflow 清單",
+    },
 ]
 
 
@@ -165,21 +173,23 @@ def _format_params_line(spec: dict[str, Any]) -> str:
 
 def build_help_message() -> str:
     """
-    從 COMMAND_SPECS 產生 help 文案。
+    從 COMMAND_SPECS 產生 help 文案（支援 Slack mrkdwn 排版）。
     唯一資料來源：COMMAND_SPECS
     """
-    lines = ["📋 可用指令：", ""]
+    lines = ["*📋 可用指令*", ""]
     idx = 1
     for spec in COMMAND_SPECS:
         if spec["cmd_key"] == "help":
             continue
         trigger = spec["triggers"][0]
-        lines.append(f"{idx}. {trigger} <JSON>")
-        lines.append(f"   {spec['desc']}。例：{spec['example']}")
-        lines.append(f"   參數：{_format_params_line(spec)}")
+        params_line = _format_params_line(spec)
+        lines.append(f"*{idx}. {trigger}*")
+        lines.append(f"  {spec['desc']}")
+        lines.append(f"  例：`{spec['example']}`")
+        lines.append(f"  參數：{params_line}")
         lines.append("")
         idx += 1
-    lines.append("輸入 !給我可用指令 可隨時查看此清單。")
+    lines.append("_輸入 !給我可用指令 可隨時查看此清單_")
     return "\n".join(lines)
 
 

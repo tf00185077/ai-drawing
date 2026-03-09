@@ -359,6 +359,60 @@ def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, 
     _safe_say(say, channel, msg)
 
 
+def _handle_list_resources_command(say: Any, channel: str) -> None:
+    """
+    !查可用資源 → GET /api/generate/available-resources
+    回覆 checkpoint、lora、workflow 清單。
+    """
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.get(f"{base_url}/api/generate/available-resources")
+    except Exception as e:
+        logger.exception("Slack list_resources API call failed: %s", e)
+        _safe_say(say, channel, "資源查詢服務暫不可用")
+        return
+
+    if r.status_code != 200:
+        logger.warning("Slack list_resources API status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "資源查詢失敗")
+        return
+
+    try:
+        data = r.json()
+    except Exception as e:
+        logger.exception("Slack list_resources parse failed: %s", e)
+        _safe_say(say, channel, "資源查詢失敗")
+        return
+
+    checkpoints = data.get("checkpoints", [])
+    loras = data.get("loras", [])
+    workflows = data.get("workflows", [])
+
+    def _format_list(items: list[str], max_show: int = 15) -> str:
+        if not items:
+            return "（無）"
+        show = items[:max_show] if len(items) > max_show else items
+        body = ",\n".join(show)
+        if len(items) > max_show:
+            body += f"\n... 共 {len(items)} 個"
+        return body
+
+    lines = [
+        "📋 可用資源：",
+        "",
+        "Checkpoints:",
+        _format_list(checkpoints),
+        "",
+        "LoRAs:",
+        _format_list(loras),
+        "",
+        "Workflows:",
+        _format_list(workflows, max_show=20),
+    ]
+    _safe_say(say, channel, "\n".join(lines))
+
+
 def _handle_rerun_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
     """
     S3.6：!重新生成圖片 → POST /api/gallery/{image_id}/rerun
@@ -437,6 +491,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
     if cmd_key is not None:
         if cmd_key == "help":
             _safe_say(say, channel, slack_commands.build_help_message())
+        elif cmd_key == "list_resources":
+            _handle_list_resources_command(say, channel)
         elif cmd_key == "generate":
             _handle_generate_command(say, channel, json_str, user, event=event)
         elif cmd_key == "generate_pose":

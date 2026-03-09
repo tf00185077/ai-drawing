@@ -3,8 +3,11 @@
 ComfyUI API 串接、Workflow 模板、批次排程
 契約：docs/api-contract.md
 """
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 
+from app.config import get_settings
 from app.core.queue import QueueFullError, get_status, submit, submit_custom
 from app.schemas.generate import (
     GenerateCustomRequest,
@@ -98,11 +101,45 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
         raise HTTPException(503, str(e))
 
 
+def _list_model_files(dir_path: Path, exts: tuple[str, ...] = (".safetensors", ".ckpt", ".pth")) -> list[str]:
+    """列出目錄下模型檔名（純檔名）"""
+    if not dir_path.exists() or not dir_path.is_dir():
+        return []
+    names = []
+    for p in dir_path.iterdir():
+        if p.is_file() and p.suffix.lower() in exts:
+            names.append(p.name)
+    return sorted(names)
+
+
+@router.get("/available-resources")
+async def get_available_resources():
+    """
+    列出可用的 checkpoint、lora、workflow 模板。
+    供 Slack !查可用資源 指令使用。
+    """
+    settings = get_settings()
+    checkpoints_dir = Path(settings.comfyui_checkpoints_dir)
+    loras_dir = Path(settings.comfyui_loras_dir)
+
+    checkpoints = _list_model_files(checkpoints_dir)
+    loras = _list_model_files(loras_dir)
+
+    workflows_dir = Path(__file__).resolve().parent.parent.parent / "workflows"
+    templates = []
+    if workflows_dir.exists():
+        templates = sorted(p.stem for p in workflows_dir.glob("*.json"))
+
+    return {
+        "checkpoints": checkpoints,
+        "loras": loras,
+        "workflows": templates,
+    }
+
+
 @router.get("/workflow-templates")
 async def list_workflow_templates():
     """列出可用的 workflow 模板名稱，供 AI 根據描述選擇或組合"""
-    from pathlib import Path
-
     workflows_dir = Path(__file__).resolve().parent.parent.parent / "workflows"
     if not workflows_dir.exists():
         return {"templates": []}
