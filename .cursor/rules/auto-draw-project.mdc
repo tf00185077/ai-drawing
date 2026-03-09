@@ -66,3 +66,10 @@ alwaysApply: true
 ## 後端與 ComfyUI 整合規範
 
 - 凡涉及 ComfyUI 的後端實作，必須參考 `comfyui-api-client` skill。
+
+## 遠端觸發生圖（Slack）
+
+- 凡實作或修改 Slack Socket Mode、`slack_handler` 相關邏輯，須遵循 `.cursor/rules/slack-trigger.mdc`。
+- 該規則定義：架構原則、作法、通用接口、安全、錯誤處理，供所有 Agent 共用。
+- **Slack 指令實作**：依 `docs/slack-command-agent-tracker.md` 依序執行任務、更新進度、檢查依賴。
+

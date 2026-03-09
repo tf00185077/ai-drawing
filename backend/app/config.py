@@ -3,11 +3,16 @@
 """
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
 # 專案根目錄（backend 的上層），.env 在此
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_ENV_PATH = _PROJECT_ROOT / ".env"
+
+# 最早載入 .env 至 os.environ，確保不論從何處啟動都能讀到
+load_dotenv(_ENV_PATH)
 
 
 class Settings(BaseSettings):
@@ -55,8 +60,12 @@ class Settings(BaseSettings):
     # watchdog
     watch_dirs: str = "./lora_train"  # 逗號分隔
 
+    # Slack（遠端觸發生圖，Socket Mode）
+    slack_app_token: str = ""  # xapp-xxx，需 connections:write
+    slack_bot_token: str = ""  # xoxb-xxx，Bot User OAuth Token
+
     class Config:
-        env_file = str(_PROJECT_ROOT / ".env")
+        env_file = str(_ENV_PATH)
         env_file_encoding = "utf-8"
         extra = "ignore"  # 允許 .env 有未對應欄位（如 MCP_BACKEND_API_URL）
 

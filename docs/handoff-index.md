@@ -10,6 +10,7 @@
 | 文件 | 用途 | 讀者 |
 |------|------|------|
 | [agent-assignment.md](./agent-assignment.md) | 代理人 A–F 分工、並行步驟、介面引用 | **全員** |
+| [slack-command-agent-tracker.md](./slack-command-agent-tracker.md) | Slack 指令實作：任務依賴、追蹤、驗證（Agent 專用） | Slack 實作 |
 | [api-contract.md](./api-contract.md) | REST API 完整契約（Request/Response） | 前端、後端、MCP |
 | [internal-interfaces.md](./internal-interfaces.md) | 後端模組間函式簽名與回呼 | 後端各軌道 |
 | [comfyui-di-design.md](./comfyui-di-design.md) | ComfyUI 模組 DI 與 Protocol 設計 | 生圖軌道 |

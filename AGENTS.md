@@ -256,5 +256,6 @@ cd frontend && npm run test
 - 專案規則：`.cursor/rules/auto-draw-project.mdc`
 - 環境範例：`.env.example`
 - **代理人分工**：`docs/agent-assignment.md`（A–F 軌道、並行步驟、介面文件位置）
+- **Slack 指令實作追蹤**：`docs/slack-command-agent-tracker.md`（任務依賴、驗證、進度標記，Agent 專用）
 - **API 契約**：`docs/api-contract.md`
 - **內部介面**：`docs/internal-interfaces.md`

@@ -1,0 +1,133 @@
+---
+description: 遠端觸發生圖 - Slack Socket Mode 實作規範
+globs: backend/app/main.py, backend/app/services/slack_handler.py, backend/app/core/queue.py
+alwaysApply: false
+---
+
+# Slack 遠端觸發生圖規範
+
+> 凡實作或修改 Slack 觸發生圖相關邏輯時，必須遵循此規範。供所有 Agent 共用參考。
+
+---
+
+## 1. 架構原則
+
+### 1.1 連線方式
+
+- **Slack Socket Mode**：後端主動建立 WebSocket 連到 Slack，無需公網 IP、ngrok 或開放 port
+- **單一客戶端**：同一後端進程內只維持一條 Socket Mode 連線
+- **與 FastAPI 共生**：Socket Mode 客戶端在後端啟動時一併啟動，與 HTTP API 同進程
+
+### 1.2 職責分離
+
+| 元件 | 職責 | 禁止 |
+|------|------|------|
+| **slack_handler** | 解析 Slack 事件、驗證、組成生圖參數、回覆 Slack | 不直接呼叫 ComfyUI |
+| **queue** | 接收生圖請求、排程、呼叫 ComfyUI | — |
+| **main.py / lifecycle** | 啟動 Socket Mode 客戶端、註冊 event handler | 不處理業務邏輯 |
+
+**Handler 必須**：呼叫 `queue.submit(params)` 或內部 HTTP `POST /api/generate/`，不得直接操作 ComfyUI。
+
+---
+
+## 2. 作法（實作流程）
+
+### 2.1 啟動流程
+
+1. 後端啟動（`uvicorn` / `lifespan`）
+2. 讀取 `SLACK_APP_TOKEN`、`SLACK_BOT_TOKEN`（若未設定則跳過，不啟動 Slack）
+3. 建立 `slack_bolt.App`（Socket Mode）
+4. 註冊 `message` 事件 handler，指向 `slack_handler.handle_message`
+5. 在背景執行 `app.start()`（非 blocking，避免影響 FastAPI）
+
+### 2.2 事件處理流程
+
+```
+Slack message 事件 → slack_handler.handle_message()
+    → 過濾 bot 自身訊息（避免迴圈）
+    → 解析指令（如 "!generate 初音 5張"）
+    → 映射 prompt（可結合 character_style）
+    → 組成 GenerateParams（與 /api/generate/ 同 schema）
+    → queue.submit(params)
+    → 以 chat.postMessage 回覆 Slack（佇列狀態或錯誤）
+```
+
+### 2.3 指令格式建議
+
+- 建議訂立統一格式，例如：`!generate <描述> [張數]` 或 `生圖 <描述>`
+- 可結合 `mcp-server` 的 `character_style` 做語意對應
+- 未符合格式時回覆：「無法理解，請輸入生圖描述，例如：!generate 初音 5」
+
+---
+
+## 3. 通用接口
+
+### 3.1 Handler 輸入
+
+`slack_handler.handle_message(client, event, logger)` 或同等簽名：
+
+- `client`: Slack Bolt `Say` / `Ack` 等，用於回覆
+- `event`: Slack `message` 事件 payload（含 `text`、`channel`、`user` 等）
+- `logger`: 用於紀錄 log
+
+### 3.2 與生圖佇列的對接
+
+Handler 呼叫下列其一，不得直接操作 ComfyUI：
+
+- **queue.submit(params)**：`params` 為與 `POST /api/generate/` 相同的 `GenerateParams` 結構
+- **內部 HTTP**：`httpx.post("http://localhost:8000/api/generate/", json=params)`（若 queue 以 HTTP 包裝）
+
+### 3.3 回覆 Slack 的資料格式
+
+| 情境 | 回覆內容 |
+|------|----------|
+| 成功加入佇列 | `已加入生圖佇列，job_id: xxx` |
+| 佇列滿 (QueueFullError) | `生圖佇列已滿，請稍後再試` |
+| 解析失敗 | `無法理解，請輸入生圖描述` |
+| ComfyUI 不可用 | `生圖服務暫不可用` |
+
+**禁止**：對 Slack 回傳 500 或未經處理的 exception 訊息；一律回覆友善提示並紀錄 log。
+
+---
+
+## 4. 安全
+
+- **敏感資訊**：`SLACK_APP_TOKEN`、`SLACK_BOT_TOKEN` 僅從 `config` / 環境變數讀取，不得硬編碼
+- **權限**：建議 Bot 僅加入受信任的私有頻道，避免陌生人觸發生圖
+- **簽章**：Socket Mode 由 Slack 推送，連線本身已受 Token 保護；不需額外驗證簽章（與 HTTP Webhook 不同）
+
+---
+
+## 5. 錯誤處理
+
+| 錯誤類型 | 處理方式 |
+|----------|----------|
+| QueueFullError | 回覆 User「生圖佇列已滿，請稍後再試」 |
+| 解析失敗 | 回覆「無法理解，請輸入生圖描述」；紀錄 log |
+| ComfyUI 不可用 | 回覆「生圖服務暫不可用」 |
+| Slack API 錯誤 | 紀錄 log，不拋出 500 給使用者 |
+
+**原則**：對外（Slack User）一律回覆簡短友善訊息；詳細錯誤僅寫入 log。
+
+---
+
+## 6. 檔案對應
+
+| 職責 | 檔案路徑 |
+|------|----------|
+| Socket Mode 啟動 / lifecycle | `backend/app/main.py` 或 `backend/app/core/slack_lifecycle.py` |
+| 訊息解析與觸發 | `backend/app/services/slack_handler.py` |
+| 生圖佇列 | `backend/app/core/queue.py` |
+| 環境變數 | `.env`：`SLACK_APP_TOKEN`、`SLACK_BOT_TOKEN` |
+
+---
+
+## 7. Agent 實作檢查清單
+
+實作或修改時請確認：
+
+- [ ] Handler 僅呼叫 `queue.submit()` 或 `/api/generate/`，不直接呼叫 ComfyUI
+- [ ] Token 從 config 讀取，無硬編碼
+- [ ] 過濾 bot 自身訊息，避免事件迴圈
+- [ ] 佇列滿、解析失敗時回覆友善訊息，不拋 500
+- [ ] 所有異常皆紀錄 log

@@ -28,7 +28,7 @@
 - **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
 - **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
 - **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合（設定見 [docs/mcp-setup.md](docs/mcp-setup.md)）
-- **遠端觸發生圖**：LINE / Google Webhook → Backend → 生圖 API（流程見 [遠端觸發生圖](#遠端觸發生圖-webhook-trigger)）
+- **遠端觸發生圖**：Slack Socket Mode → 本地後端監聽頻道 → 生圖 API（流程見 [遠端觸發生圖](#遠端觸發生圖-slack-trigger)）
 
 ---
 
@@ -102,69 +102,122 @@
 
 ---
 
-## 遠端觸發生圖 (Webhook Trigger)
+## 遠端觸發生圖 (Slack Trigger)
 
-透過 LINE、Google Chat 等服務傳送訊息，遠端觸發本機生圖。架構：**外部服務 → Webhook (HTTP) → Backend → 生圖 API**。
+透過 Slack 頻道傳送訊息，遠端觸發本機生圖。架構：**Slack Socket Mode（出站 WebSocket）→ 本地後端監聽 → 生圖 API**。**無需公網 IP 或 ngrok**，本地電腦連接出到 Slack 即可。
 
-### 整體流程
+### 典型情境
+
+- 家中電腦：後端運行於 port 8080，Slack Socket Mode 連線中
+- 手機：與家中電腦同一個 Slack 頻道
+- 外縣市：在手機發送訊息到頻道 → 家中後端收到 → 觸發生圖
+
+### 架構圖
+
+```mermaid
+flowchart TB
+    subgraph 外縣市
+        Phone[📱 手機 Slack]
+    end
+
+    subgraph 家中電腦["家中電腦 :8080"]
+        Backend[後端 FastAPI]
+        SlackMode[Slack Socket Mode 模組]
+        Handler[slack_handler]
+        Queue[queue.submit]
+        ComfyUI[ComfyUI 產圖]
+        Recording[參數記錄]
+
+        Backend --> SlackMode
+        SlackMode --> Handler
+        Handler --> Queue
+        Queue --> ComfyUI
+        ComfyUI --> Recording
+    end
+
+    subgraph Slack["Slack 伺服器"]
+        Channel[📢 頻道]
+    end
+
+    Phone -->|"發送訊息"| Channel
+    Channel -->|"WebSocket 推送 event"| SlackMode
+    Handler -.->|"chat.postMessage 回覆"| Channel
+```
+
+### 資料流程圖
+
+```mermaid
+flowchart TB
+    A[📱 手機發送訊息] --> B[Slack 頻道]
+    B --> C[Slack 伺服器產生 message 事件]
+    C --> D[透過 WebSocket 推送至本地]
+    D --> E[slack_handler 解析訊息]
+    E --> F[組成 prompt / 結合 character_style]
+    F --> G[queue.submit]
+    G --> H[生圖佇列]
+    H --> I[ComfyUI 產圖]
+    I --> J[參數記錄 → Gallery]
+    J -.->|可選| K[Slack 頻道回覆佇列狀態或圖片連結]
+```
+
+### 簡化流程（文字版）
 
 ```
-[User 傳送訊息] → LINE / Google Chat / 其他
+[手機 Slack] 在頻道發送訊息
         ↓
-[Webhook POST] → https://你的公開網址/api/webhook/line
+[Slack 伺服器] 產生 message 事件
         ↓
-[Backend] 驗證簽章 → 解析訊息 → 組成 prompt
+[WebSocket] 透過已建立的連線推送至本地後端
+        ↓
+[Slack Handler] 解析訊息 → 組成 prompt（可結合 character_style）
         ↓
 [queue.submit] → 生圖佇列 → ComfyUI 產圖 → 參數記錄
         ↓
-[回傳結果] → 回覆 User（圖片連結或佇列狀態）
+[Slack 頻道] 回覆佇列狀態或圖片連結（可選）
 ```
 
-### 必要條件：對外可連線
+### 必要條件
 
-| 環境 | 作法 |
+| 項目 | 說明 |
 |------|------|
-| 本機開發 | [ngrok](https://ngrok.com/) 或 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)：`ngrok http 8000` 取得 `https://xxx.ngrok.io` |
-| 雲端部署 | Backend 已部署至 VPS / Docker，直接使用 `https://your-domain.com` |
+| 連線方式 | **Slack Socket Mode**：後端主動建立 WebSocket 連到 Slack，無需對外開放 port |
+| 電腦與網路 | 家中電腦需開機並連網，WebSocket 中斷時需自動重連 |
+| 頻道 | Bot 需加入目標頻道（`/invite @Bot名稱`），才能收到 `message` 事件 |
 
-LINE / Google 的 Webhook 必須為 **HTTPS**，ngrok 免費版即可滿足。
+### Slack App 設定步驟
 
-### LINE Bot 設定步驟
-
-1. 至 [LINE Developers](https://developers.line.biz/) 建立 **Messaging API** Channel
-2. 取得 `Channel Secret`、`Channel Access Token`，寫入 `.env`
-3. 設定 **Webhook URL**：`https://你的ngrok網址/api/webhook/line`
-4. 關閉「Use webhook」旁的「Auto-reply messages」，避免與自訂邏輯衝突
-5. 啟動 Backend，對 Bot 傳訊息即可觸發
-
-### Google 觸發選項
-
-| 服務 | 作法 |
-|------|------|
-| Google Chat | 建立 Bot，設定 Webhook，`POST` 至 `/api/webhook/google-chat` |
-| Google Assistant + IFTTT | IFTTT 設定「If Google Assistant 說/做... Then Webhook」 |
-| Google Forms | Apps Script 於表單送出時呼叫 Webhook URL |
+1. 至 [api.slack.com/apps](https://api.slack.com/apps) 建立新 App 或選用既有 App
+2. **Socket Mode**：Settings → Socket Mode → Enable
+3. **App-Level Token**：建立 Token，需 `connections:write` 權限
+4. **Bot Token Scopes**（OAuth & Permissions）：
+   - `channels:history`、`channels:read`（公開頻道）
+   - `chat:write`（回覆訊息）
+   - 私密頻道：`groups:history`、`groups:read`
+5. **Event Subscriptions**：啟用，訂閱 `message.channels` 或 `message.groups`
+6. **安裝 App** 到 workspace，取得 Bot User OAuth Token
+7. **邀請 Bot 進頻道**：在頻道輸入 `/invite @你的Bot名稱`
 
 ### 專案內檔案對應
 
 | 職責 | 檔案路徑 | 狀態 |
 |------|----------|------|
-| Webhook 路由 | `backend/app/api/webhook.py` | 待實作 |
-| LINE 事件處理 | `backend/app/services/line_handler.py` | 待實作 |
-| 環境變數 | `.env` 內 `LINE_CHANNEL_SECRET`、`LINE_CHANNEL_ACCESS_TOKEN` | 見 `.env.example` |
+| Slack Socket Mode 啟動 | `backend/app/main.py` 或 lifecycle hook | [v] 已完成 |
+| Slack 訊息處理 | `backend/app/services/slack_handler.py` | [v] 已完成 |
+| 環境變數 | `.env` 內 `SLACK_APP_TOKEN`、`SLACK_BOT_TOKEN` | 見 `.env.example` |
 
 ### 環境變數（.env.example 補充）
 
 ```
-# LINE Bot（遠端觸發生圖）
-LINE_CHANNEL_SECRET=
-LINE_CHANNEL_ACCESS_TOKEN=
+# Slack（遠端觸發生圖，Socket Mode）
+SLACK_APP_TOKEN=xapp-xxx
+SLACK_BOT_TOKEN=xoxb-xxx
 ```
 
 ### 安全規範
 
-- **必須驗證 Webhook 簽章**：LINE 使用 `X-Line-Signature`，用 `Channel Secret` 驗證；未通過則回傳 401
-- 所有 Secret / Token 僅存於 `.env`，不得寫入程式碼或提交 Git
+- 所有 Token 僅從 `config`/環境變數讀取，不得硬編碼
+- `.env` 不得提交 Git；`.env.example` 僅放占位符
+- 建議僅在受信任的私有頻道使用，避免陌生人觸發生圖
 
 ---
 
@@ -174,15 +227,15 @@ LINE_CHANNEL_ACCESS_TOKEN=
 auto-draw/
 ├── backend/                    # Python + FastAPI
 │   ├── app/
-│   │   ├── api/               # 四大模組 API + Webhook
+│   │   ├── api/               # 四大模組 API
 │   │   │   ├── generate.py    # 生圖
 │   │   │   ├── gallery.py     # 圖庫
 │   │   │   ├── lora_docs.py   # LoRA 文件
 │   │   │   ├── lora_train.py  # LoRA 訓練
-│   │   │   └── webhook.py     # 遠端觸發（LINE、Google 等）
+│   │   │   └── (無需 HTTP 路由，Slack 經 Socket Mode 推送)
 │   │   ├── core/              # ComfyUI、Workflow、Queue、Recording
 │   │   ├── db/                # 資料庫 models、database
-│   │   ├── services/          # watcher、lora_trainer、line_handler
+│   │   ├── services/          # watcher、lora_trainer、slack_handler
 │   │   └── schemas/
 │   ├── workflows/             # Workflow JSON 模板
 │   ├── requirements.txt
@@ -316,12 +369,11 @@ cd mcp-server && uv run pytest
 | 6c | 角色與風格語意對應 | [v] | `mcp-server/character_style.py` | Agent F | `mcp-server/mcp_server/character_style.py` |
 | 6d | MCP 整合文件與 Cursor 配置 | [v] | `docs/mcp-setup.md` | Agent F | `docs/mcp-setup.md`, `scripts/run-mcp-server.*`, `.cursor/mcp.json.example` |
 
-### 擴充 · 遠端觸發生圖 (Webhook)
+### 擴充 · 遠端觸發生圖 (Slack)
 | ID | 任務 | 狀態 | 實作檔案 | 說明 |
 |----|------|------|----------|------|
-| 7a | LINE Webhook | [ ] | `api/webhook.py`, `services/line_handler.py` | LINE 傳訊觸發生圖，見 [遠端觸發生圖](#遠端觸發生圖-webhook-trigger) |
-| 7b | Google Chat Webhook（選用）| [ ] | `api/webhook.py`, `services/google_chat_handler.py` | 同上架構 |
+| 7a | Slack Socket Mode 整合 | [ ] | `main.py`, `services/slack_handler.py` | 後端啟動時建立 Socket Mode 連線，見 [遠端觸發生圖](#遠端觸發生圖-slack-trigger) |
+| 7b | 訊息解析與生圖觸發 | [ ] | `services/slack_handler.py` | 解析指令 → 映射 prompt → queue.submit，可結合 character_style |
 
-> **規範**：實作時須遵循 `.cursor/rules/webhook-trigger.mdc`。
+> **規範**：實作時須遵循 `.cursor/rules/slack-trigger.mdc`。
 
-**整體進度**：23 / 24 完成（96%） · 最後更新：2026-03-09

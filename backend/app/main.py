@@ -23,6 +23,8 @@ from app.services.watcher import start_watching, stop_watching
 
 logger = logging.getLogger(__name__)
 
+_slack_handler = None
+
 
 def _on_lora_complete(output_lora_path: str, folder: str) -> None:
     """LoRA 訓練完成後自動產圖：若有 generate_after 則依其參數，否則用預設 prompt"""
@@ -72,12 +74,48 @@ def _on_lora_complete(output_lora_path: str, folder: str) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期：啟動時開始監聽與佇列 worker，關閉時停止"""
+    global _slack_handler
     lora_trainer.register_on_complete(_on_lora_complete)
     lora_trainer.ensure_worker()
     start_watching()
     start_queue_worker()
     start_comfyui_watcher()
+
+    # Slack Socket Mode（遠端觸發生圖）
+    settings = get_settings()
+    has_app = bool(settings.slack_app_token)
+    has_bot = bool(settings.slack_bot_token)
+    if has_app and has_bot:
+        try:
+            from slack_bolt import App
+            from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+            from app.services.slack_handler import handle_message
+
+            slack_app = App(token=settings.slack_bot_token)
+            slack_app.event("message")(handle_message)
+            _slack_handler = SocketModeHandler(slack_app, settings.slack_app_token)
+            _slack_handler.connect()
+            logger.info("Slack Socket Mode connected")
+        except Exception as e:
+            logger.exception("Slack Socket Mode failed to start: %s", e)
+            _slack_handler = None
+    else:
+        logger.info(
+            "Slack tokens not set (app=%s, bot=%s), skipping Socket Mode",
+            has_app,
+            has_bot,
+        )
+
     yield
+
+    if _slack_handler:
+        try:
+            _slack_handler.close()
+            logger.info("Slack Socket Mode stopped")
+        except Exception as e:
+            logger.exception("Slack Socket Mode shutdown error: %s", e)
+        _slack_handler = None
     stop_comfyui_watcher()
     stop_queue_worker()
     stop_watching()
