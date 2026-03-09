@@ -377,6 +377,54 @@ def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, 
     _safe_say(say, channel, msg)
 
 
+def _handle_rerun_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+    """
+    S3.6：!重新生成圖片 → POST /api/gallery/{image_id}/rerun
+    202→已加入生圖佇列；404→找不到該圖片；503→佇列滿
+    """
+    if json_str is None:
+        _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
+        return
+    data, parse_err = slack_commands.parse_json_safe(json_str)
+    if parse_err:
+        _safe_say(say, channel, f"參數格式錯誤：{parse_err}")
+        return
+    val_err = slack_commands.validate_params("rerun", data)
+    if val_err:
+        _safe_say(say, channel, val_err)
+        return
+    try:
+        image_id = int(data["image_id"]) if isinstance(data.get("image_id"), str) else data["image_id"]
+    except (ValueError, TypeError, KeyError):
+        _safe_say(say, channel, "image_id 必須為整數")
+        return
+
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(f"{base_url}/api/gallery/{image_id}/rerun")
+    except Exception as e:
+        logger.exception("Slack rerun API call failed: %s", e)
+        _safe_say(say, channel, "生圖服務暫不可用")
+        return
+
+    if r.status_code == 202:
+        try:
+            resp = r.json()
+            job_id = resp.get("job_id", "unknown")
+            _safe_say(say, channel, f"已加入生圖佇列，job_id: {job_id}")
+        except Exception:
+            _safe_say(say, channel, "已加入生圖佇列")
+    elif r.status_code == 404:
+        _safe_say(say, channel, "找不到該圖片")
+    elif r.status_code == 503:
+        _safe_say(say, channel, "生圖佇列已滿")
+        logger.warning("Slack user %s hit queue full (503) on rerun", user)
+    else:
+        logger.warning("Slack rerun API unexpected status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "生圖服務暫不可用")
+
+
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
     """
     Slack message 事件處理：解析生圖指令、提交佇列、回覆使用者。
@@ -410,6 +458,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
             _handle_train_lora_command(say, channel, json_str, user)
         elif cmd_key == "query_gallery":
             _handle_query_gallery_command(say, channel, json_str, user)
+        elif cmd_key == "rerun":
+            _handle_rerun_command(say, channel, json_str, user)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return

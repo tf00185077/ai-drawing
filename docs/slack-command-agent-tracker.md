@@ -45,7 +45,7 @@ S1.2 ──┘
 | **S3.3** | !用指定動作生圖片 → POST /api/generate/custom | `backend/app/services/slack_handler.py` | S3.2 | 打 `!用指定動作生圖片 {"prompt":"1girl", "image_pose":"2026-03-08/x.png"}` 回覆 job_id | [v] | Agent |
 | **S3.4** | !訓練lora → POST /api/lora-train/start | `backend/app/services/slack_handler.py` | S2.1 | 打 `!訓練lora {"folder":"test"}` 回覆 job_id 或錯誤 | [v] | Agent |
 | **S3.5** | !查詢圖片 → GET /api/gallery/ | `backend/app/services/slack_handler.py` | S2.1 | 打 `!查詢圖片 {"limit":5}` 回覆筆數或列表摘要 | [v] | Agent |
-| **S3.6** | !重新生成圖片 → POST /api/gallery/{id}/rerun | `backend/app/services/slack_handler.py` | S2.1 | 打 `!重新生成圖片 {"image_id":1}` 回覆 job_id 或 404 | [ ] | |
+| **S3.6** | !重新生成圖片 → POST /api/gallery/{id}/rerun | `backend/app/services/slack_handler.py` | S2.1 | 打 `!重新生成圖片 {"image_id":1}` 回覆 job_id 或 404 | [v] | Agent |
 | **S4.1** | 單元測試 | `backend/tests/test_slack_commands.py` | S1.1, S3.6 | `cd backend && pytest tests/test_slack_commands.py -v` 至少 2 條通過 | [ ] | |
 | **S4.2** | 更新 slack-trigger.mdc | `.cursor/rules/slack-trigger.mdc` | S3.6 | 檔內含指令格式表、slack_commands.py 路徑 | [ ] | |
 
