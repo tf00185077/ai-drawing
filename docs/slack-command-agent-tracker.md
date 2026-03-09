@@ -210,7 +210,7 @@ S1.2 ──┘
 | 文件 | 路徑 | 用途 |
 |------|------|------|
 | **規格唯一來源** | `backend/app/services/slack_commands.py`（`COMMAND_SPECS`） | 觸發關鍵字、必填/選填、範例、說明 |
-| 指令方案 | `docs/slack-command-scheme.md` | 架構、資料流、錯誤處理 |
+| 指令方案 | `docs/slack-command-scheme.md` | 架構、資料流、錯誤處理、執行中失敗通知 |
 | API 契約 | `docs/api-contract.md` | Request/Response 規格 |
 | 實作順序（原版） | `docs/slack-command-implementation-order.md` | 詳細步驟說明 |
 | Slack 規範 | `.cursor/rules/slack-trigger.mdc` | 架構、回覆、錯誤處理 |

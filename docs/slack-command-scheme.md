@@ -123,6 +123,14 @@ help 文案由 `COMMAND_SPECS` 動態產生，**不在此文件定義**；修改
 | 佇列已滿 | `生圖佇列已滿，請稍後再試` |
 | ComfyUI 不可用 | `生圖服務暫不可用` |
 
+### 6.1 執行中失敗的 Slack 通知
+
+**使用者透過指令呼叫 Backend 後，若 Backend 執行中發生錯誤（如 ComfyUI 連線失敗），Slack 必須主動發送失敗通知。**
+
+- **觸發時機**：指令已回覆「已加入佇列」，但 queue worker 處理任務時拋出 `httpx.ConnectError`、`httpx.RequestError` 等連線錯誤。
+- **實作方式**：Handler 呼叫 API 時傳入 `slack_channel_id`、`slack_thread_ts`；queue 於 `_process_pending` 捕獲錯誤、標記任務失敗時，呼叫 `slack_notifier.notify_job_failed()` 發送訊息至觸發頻道。
+- **訊息範例**：`生圖任務 {job_id} 執行失敗：ComfyUI 連線失敗，請確認服務已啟動`
+
 ---
 
 ## 七、實作步驟
@@ -148,6 +156,7 @@ help 文案由 `COMMAND_SPECS` 動態產生，**不在此文件定義**；修改
 |------|------|
 | **規格唯一來源**：指令定義、help 文案、參數驗證 | `backend/app/services/slack_commands.py`（`COMMAND_SPECS`） |
 | 訊息處理、路由、API 轉發 | `backend/app/services/slack_handler.py` |
+| 任務失敗通知 | `backend/app/services/slack_notifier.py` |
 | 規範 | `.cursor/rules/slack-trigger.mdc` |
 | 生圖 API | `backend/app/api/generate.py` |
 | LoRA 訓練 API | `backend/app/api/lora_train.py` |

@@ -107,6 +107,7 @@ SLACK_BOT_TOKEN=xoxb-xxx
 | Slack 依賴 | `backend/requirements.txt` | [v] |
 | 設定 | `backend/app/config.py` | [v] |
 | 訊息解析與觸發 | `backend/app/services/slack_handler.py` | [v] |
+| 任務失敗通知 | `backend/app/services/slack_notifier.py` | [v] |
 | Socket Mode 啟動 | `backend/app/main.py` | [v] |
 | 環境變數範例 | `.env.example` | [v] |
 
@@ -120,6 +121,7 @@ SLACK_BOT_TOKEN=xoxb-xxx
 | 佇列滿 (QueueFullError) | `生圖佇列已滿，請稍後再試` |
 | 解析失敗 | `無法理解，請輸入生圖描述，例如：!generate 初音 5` |
 | ComfyUI 不可用 | `生圖服務暫不可用` |
+| **任務執行中失敗** | 主動發送失敗通知：`生圖任務 {job_id} 執行失敗：ComfyUI 連線失敗，請確認服務已啟動`（queue 捕獲錯誤後透過 `slack_notifier` 發送） |
 
 ---
 

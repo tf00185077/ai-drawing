@@ -88,6 +88,15 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 
 **禁止**：對 Slack 回傳 500 或未經處理的 exception 訊息；一律回覆友善提示並紀錄 log。
 
+### 3.4 Backend 執行中錯誤的失敗通知
+
+**使用者透過指令觸發 Backend 後，若 Backend 執行中發生錯誤（例如 ComfyUI 連線失敗、佇列 worker 無法完成任務），必須透過 Slack 主動發送失敗通知。**
+
+- **時機**：指令已回覆「已加入佇列」後，佇列 worker 執行任務時發生錯誤（如 `httpx.ConnectError`、ComfyUI 不可用）。
+- **實作**：任務提交時傳入 `slack_channel_id`、`slack_thread_ts`（來自觸發指令的 event）；queue 於 `_process_pending` 捕獲錯誤、標記任務失敗時，呼叫 `slack_notifier.notify_job_failed()` 發送訊息。
+- **訊息範例**：`生圖任務 {job_id} 執行失敗：ComfyUI 連線失敗，請確認服務已啟動`
+- **檔案**：`backend/app/services/slack_notifier.py`、`backend/app/core/queue.py`
+
 ---
 
 ## 4. 安全
@@ -105,9 +114,10 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 | QueueFullError | 回覆 User「生圖佇列已滿，請稍後再試」 |
 | 解析失敗 | 回覆「無法理解，請輸入生圖描述」；紀錄 log |
 | ComfyUI 不可用 | 回覆「生圖服務暫不可用」 |
+| 任務執行中錯誤（ComfyUI 連線失敗等） | 任務失敗時透過 `slack_notifier` 主動發送 Slack 失敗通知至觸發頻道 |
 | Slack API 錯誤 | 紀錄 log，不拋出 500 給使用者 |
 
-**原則**：對外（Slack User）一律回覆簡短友善訊息；詳細錯誤僅寫入 log。
+**原則**：對外（Slack User）一律回覆簡短友善訊息；詳細錯誤僅寫入 log。若任務在執行中失敗，須主動通知 Slack。
 
 ---
 
@@ -119,6 +129,7 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 | Socket Mode 啟動 / lifecycle | `backend/app/main.py` 或 `backend/app/core/slack_lifecycle.py` |
 | 訊息解析與觸發 | `backend/app/services/slack_handler.py` |
 | 生圖佇列 | `backend/app/core/queue.py` |
+| 任務失敗通知 | `backend/app/services/slack_notifier.py` |
 | 環境變數 | `.env`：`SLACK_APP_TOKEN`、`SLACK_BOT_TOKEN` |
 
 ---
@@ -131,4 +142,5 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 - [ ] Token 從 config 讀取，無硬編碼
 - [ ] 過濾 bot 自身訊息，避免事件迴圈
 - [ ] 佇列滿、解析失敗時回覆友善訊息，不拋 500
+- [ ] 任務執行中錯誤（如 ComfyUI 連線失敗）時，透過 slack_notifier 發送 Slack 失敗通知
 - [ ] 所有異常皆紀錄 log
