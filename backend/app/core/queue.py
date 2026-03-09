@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
 
+import httpx
+
 from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client, get_output_images
 from app.core.recording import save as recording_save
@@ -47,6 +49,9 @@ class GenerateParams(TypedDict, total=False):
     batch_size: int
     sampler_name: str
     scheduler: str
+    # Slack 失敗通知用（內部使用，不傳給 ComfyUI）
+    slack_channel_id: str
+    slack_thread_ts: str
 
 
 class _Job:
@@ -243,6 +248,23 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             if _running and _running.job_id == job.job_id:
                 _running = None
             _pending.insert(0, job)
+    except (httpx.ConnectError, httpx.RequestError) as e:
+        # ComfyUI 連線失敗：任務失敗，不重試；若有 Slack metadata 則通知
+        logger.exception("ComfyUI connection failed for job %s: %s", job.job_id, e)
+        with _lock:
+            if _running and _running.job_id == job.job_id:
+                _running = None
+        ch = job.params.get("slack_channel_id")
+        if ch:
+            from app.services.slack_notifier import notify_job_failed
+
+            err_short = "ComfyUI 連線失敗，請確認服務已啟動"
+            notify_job_failed(
+                channel_id=ch,
+                job_id=job.job_id,
+                error_msg=err_short,
+                thread_ts=job.params.get("slack_thread_ts"),
+            )
 
 
 def _check_running_complete(comfy: ComfyUIClient) -> None:

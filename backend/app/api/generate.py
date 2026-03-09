@@ -39,6 +39,10 @@ async def trigger_generate(body: GenerateRequest):
             params["sampler_name"] = body.sampler_name
         if body.scheduler is not None:
             params["scheduler"] = body.scheduler
+        if body.slack_channel_id:
+            params["slack_channel_id"] = body.slack_channel_id
+        if body.slack_thread_ts:
+            params["slack_thread_ts"] = body.slack_thread_ts
         job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,

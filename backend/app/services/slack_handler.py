@@ -98,7 +98,7 @@ _GENERATE_ALLOWED_KEYS = frozenset(
 )
 
 
-def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
     """
     S3.2：!生圖片 → POST /api/generate/
     201→已加入佇列；503→佇列滿；400→參數錯誤
@@ -118,6 +118,11 @@ def _handle_generate_command(say: Any, channel: str, json_str: str | None, user:
     if "prompt" not in body:
         _safe_say(say, channel, "缺少必填參數：prompt")
         return
+
+    # 傳遞 Slack 頻道資訊，供任務失敗時通知
+    body["slack_channel_id"] = channel
+    if event and (ts := event.get("ts")):
+        body["slack_thread_ts"] = ts
 
     base_url = get_settings().internal_api_base_url.rstrip("/")
     url = f"{base_url}/api/generate/"
@@ -178,7 +183,7 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
         if cmd_key == "help":
             _safe_say(say, channel, slack_commands.build_help_message())
         elif cmd_key == "generate":
-            _handle_generate_command(say, channel, json_str, user)
+            _handle_generate_command(say, channel, json_str, user, event=event)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return
@@ -202,7 +207,10 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
     params: GenerateParams = {
         "prompt": prompt,
         "batch_size": batch_size,
+        "slack_channel_id": channel,
     }
+    if ts := event.get("ts"):
+        params["slack_thread_ts"] = ts
 
     try:
         job_id = submit(params)

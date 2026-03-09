@@ -22,6 +22,9 @@ class GenerateRequest(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, le=8)
     sampler_name: str | None = None  # e.g. euler, dpmpp_2m, ddim
     scheduler: str | None = None  # e.g. normal, karras, exponential
+    # 內部用：Slack 觸發時傳入，任務失敗時通知該頻道
+    slack_channel_id: str | None = None
+    slack_thread_ts: str | None = None
 
 
 class GenerateResponse(BaseModel):
