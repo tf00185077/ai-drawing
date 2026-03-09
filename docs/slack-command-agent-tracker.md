@@ -34,10 +34,10 @@ S1.2 ──┘
 
 | 任務 ID | 說明 | 實作檔案 | 依賴 | 驗證方式 | 狀態 | 完成者 |
 |---------|------|----------|------|----------|------|--------|
-| **S1.1** | 新增 slack_commands.py（指令定義、parse、validate、build_help） | `backend/app/services/slack_commands.py` | 無 | `from app.services.slack_commands import parse_command, build_help_message; parse_command("!生圖片 {}")` 不拋錯；`build_help_message()` 含 6 指令 | [ ] | |
-| **S1.2** | config 擴充 internal_api_base_url | `backend/app/config.py` | 無 | `get_settings().internal_api_base_url` 可讀，預設 `http://127.0.0.1:8000` | [ ] | |
-| **S2.1** | slack_handler 重構（指令路由、parse_command 整合） | `backend/app/services/slack_handler.py` | S1.1 | 打 `!給我可用指令` 可被辨識（可先 stub 回覆「開發中」） | [ ] | |
-| **S3.1** | !給我可用指令 實作 | `backend/app/services/slack_handler.py` | S2.1 | 打 `!給我可用指令` 回覆完整 help 文案 | [ ] | |
+| **S1.1** | 新增 slack_commands.py（指令定義、parse、validate、build_help） | `backend/app/services/slack_commands.py` | 無 | `from app.services.slack_commands import parse_command, build_help_message; parse_command("!生圖片 {}")` 不拋錯；`build_help_message()` 含 6 指令 | [v] | Agent |
+| **S1.2** | config 擴充 internal_api_base_url | `backend/app/config.py` | 無 | `get_settings().internal_api_base_url` 可讀，預設 `http://127.0.0.1:8000` | [v] | Agent |
+| **S2.1** | slack_handler 重構（指令路由、parse_command 整合） | `backend/app/services/slack_handler.py` | S1.1 | 打 `!給我可用指令` 可被辨識（可先 stub 回覆「開發中」） | [v] | Agent |
+| **S3.1** | !給我可用指令 實作 | `backend/app/services/slack_handler.py` | S2.1 | 打 `!給我可用指令` 回覆完整 help 文案 | [v] | Agent |
 | **S3.2** | !生圖片 → POST /api/generate/ | `backend/app/services/slack_handler.py` | S2.1, S1.2 | 打 `!生圖片 {"prompt":"test"}` 回覆 job_id 或佇列滿 | [ ] | |
 | **S3.3** | !用指定動作生圖片 → POST /api/generate/custom | `backend/app/services/slack_handler.py` | S3.2 | 打 `!用指定動作生圖片 {"prompt":"1girl", "image_pose":"2026-03-08/x.png"}` 回覆 job_id | [ ] | |
 | **S3.4** | !訓練lora → POST /api/lora-train/start | `backend/app/services/slack_handler.py` | S2.1 | 打 `!訓練lora {"folder":"test"}` 回覆 job_id 或錯誤 | [ ] | |

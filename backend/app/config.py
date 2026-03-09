@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     # Slack（遠端觸發生圖，Socket Mode）
     slack_app_token: str = ""  # xapp-xxx，需 connections:write
     slack_bot_token: str = ""  # xoxb-xxx，Bot User OAuth Token
+    # Slack handler 呼叫 Backend API 的 base URL（預設本機）
+    internal_api_base_url: str = "http://127.0.0.1:8000"
 
     class Config:
         env_file = str(_ENV_PATH)

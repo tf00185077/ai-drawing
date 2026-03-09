@@ -16,19 +16,36 @@ import httpx
 
 from app.config import get_settings
 from app.core.queue import GenerateParams, QueueFullError, submit
+from app.services import slack_commands
 
 logger = logging.getLogger(__name__)
 
-# 支援指令格式：!generate <描述> [張數] 或 生圖 <描述> [張數]
+# 支援指令格式：!generate <描述> [張數] 或 生圖 <描述> [張數]（legacy）
 _PATTERN_GENERATE = re.compile(
     r"^(?:!generate|生圖)\s+(.+?)(?:\s+(\d+))?\s*張?\s*$",
     re.IGNORECASE | re.DOTALL,
 )
 
 
-def _parse_command(text: str) -> tuple[str, int] | None:
+def _is_slack_command(text: str) -> bool:
     """
-    解析生圖指令，回傳 (prompt, batch_size) 或 None。
+    是否為本 handler 處理的指令（新 JSON 指令或 legacy !generate/生圖）。
+    """
+    stripped = text.strip()
+    if not stripped:
+        return False
+    cmd_key, _ = slack_commands.parse_command(text)
+    if cmd_key is not None:
+        return True
+    return (
+        stripped.lower().startswith("!generate")
+        or stripped.startswith("生圖")
+    )
+
+
+def _parse_legacy_command(text: str) -> tuple[str, int] | None:
+    """
+    解析 legacy 生圖指令，回傳 (prompt, batch_size) 或 None。
 
     支援格式：
     - !generate 初音 5
@@ -60,12 +77,19 @@ def _check_comfyui_available() -> bool:
     settings = get_settings()
     try:
         with httpx.Client(timeout=5.0) as client:
-            # ComfyUI 根路徑或 system_stats 皆可驗證連線
             r = client.get(f"{settings.comfyui_base_url.rstrip('/')}/system_stats")
             return r.status_code == 200
     except Exception as e:
         logger.debug("ComfyUI health check failed: %s", e)
         return False
+
+
+def _safe_say(say: Any, channel: str, text: str) -> None:
+    """安全回覆 Slack，錯誤僅 log"""
+    try:
+        say(channel=channel, text=text)
+    except Exception as e:
+        logger.exception("Slack say failed: %s", e)
 
 
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
@@ -85,33 +109,32 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
     channel = event.get("channel")
     user = event.get("user", "unknown")
 
-    # 僅處理明確的指令前綴，避免對一般對話回覆
-    stripped = text.strip()
-    if not (
-        stripped.lower().startswith("!generate")
-        or stripped.startswith("生圖")
-    ):
+    if not _is_slack_command(text):
         return
 
-    parsed = _parse_command(text)
+    # 新指令（JSON 格式）
+    cmd_key, json_str = slack_commands.parse_command(text)
+    if cmd_key is not None:
+        if cmd_key == "help":
+            _safe_say(say, channel, slack_commands.build_help_message())
+        else:
+            _safe_say(say, channel, "此指令開發中，請稍後再試")
+        return
+
+    # Legacy：!generate / 生圖
+    parsed = _parse_legacy_command(text)
     if not parsed:
-        try:
-            say(
-                channel=channel,
-                text="無法理解，請輸入生圖描述，例如：!generate 初音 5",
-            )
-        except Exception as e:
-            logger.exception("Slack say failed (parse fail reply): %s", e)
+        _safe_say(
+            say,
+            channel,
+            "無法理解，請輸入生圖描述，例如：!generate 初音 5",
+        )
         return
 
     prompt, batch_size = parsed
 
-    # 可選：ComfyUI 可用性檢查
     if not _check_comfyui_available():
-        try:
-            say(channel=channel, text="生圖服務暫不可用")
-        except Exception as e:
-            logger.exception("Slack say failed (ComfyUI unavailable reply): %s", e)
+        _safe_say(say, channel, "生圖服務暫不可用")
         return
 
     params: GenerateParams = {
@@ -121,19 +144,10 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
 
     try:
         job_id = submit(params)
-        try:
-            say(channel=channel, text=f"已加入生圖佇列，job_id: {job_id}")
-        except Exception as e:
-            logger.exception("Slack say failed (success reply): %s", e)
+        _safe_say(say, channel, f"已加入生圖佇列，job_id: {job_id}")
     except QueueFullError:
-        try:
-            say(channel=channel, text="生圖佇列已滿，請稍後再試")
-        except Exception as e:
-            logger.exception("Slack say failed (queue full reply): %s", e)
+        _safe_say(say, channel, "生圖佇列已滿，請稍後再試")
         logger.warning("Slack user %s hit QueueFullError", user)
     except Exception as e:
         logger.exception("Slack handler unexpected error: %s", e)
-        try:
-            say(channel=channel, text="生圖服務暫不可用")
-        except Exception as say_err:
-            logger.exception("Slack say failed (error reply): %s", say_err)
+        _safe_say(say, channel, "生圖服務暫不可用")
