@@ -21,6 +21,9 @@ class Settings(BaseSettings):
 
     # ComfyUI
     comfyui_base_url: str = "http://127.0.0.1:8188"
+    # ComfyUI 模型目錄，用於列出可用 checkpoint / lora（!查可用資源 指令）
+    comfyui_checkpoints_dir: str = "D:/AI/ComfyUI/models/checkpoints"
+    comfyui_loras_dir: str = "D:/AI/ComfyUI/models/loras"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
@@ -46,14 +49,14 @@ class Settings(BaseSettings):
     wd_tag_limit: int = 15  # caption 最多保留 tag 數
     wd_trigger_word: str = ""  # 若設，會前綴至 caption（如 class token ohwx）
     # LoRA 訓練參數預設值（API 未帶入時使用）
-    lora_resolution: int = 512
+    lora_resolution: int = 1024
     lora_batch_size: int = 4
     lora_learning_rate: str = "1e-4"
     lora_class_tokens: str = "sks"
     lora_keep_tokens: int = 1
     lora_num_repeats: int = 10
     lora_mixed_precision: str = "fp16"
-    lora_network_dim: int = 16
+    lora_network_dim: int = 32
     lora_network_alpha: int = 16
     lora_save_every_n_epochs: int = 1  # 每 N epoch 存檔，0=僅最後
 
