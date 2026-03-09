@@ -1,6 +1,6 @@
 ---
 description: 遠端觸發生圖 - Slack Socket Mode 實作規範
-globs: backend/app/main.py, backend/app/services/slack_handler.py, backend/app/core/queue.py
+globs: backend/app/main.py, backend/app/services/slack_handler.py, backend/app/services/slack_commands.py, backend/app/core/queue.py
 alwaysApply: false
 ---
 
@@ -52,11 +52,11 @@ Slack message 事件 → slack_handler.handle_message()
     → 以 chat.postMessage 回覆 Slack（佇列狀態或錯誤）
 ```
 
-### 2.3 指令格式建議
+### 2.3 指令格式
 
-- 建議訂立統一格式，例如：`!generate <描述> [張數]` 或 `生圖 <描述>`
-- 可結合 `mcp-server` 的 `character_style` 做語意對應
-- 未符合格式時回覆：「無法理解，請輸入生圖描述，例如：!generate 初音 5」
+- **規格唯一來源**：`backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`（觸發關鍵字、必填/選填、範例）
+- Handler 透過 `parse_command()`、`validate_params()`、`build_help_message()` 取得指令規格，不得重複定義
+- 未符合格式時回覆：「參數格式錯誤，請用 !給我可用指令 查看」
 
 ---
 
@@ -115,6 +115,7 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 
 | 職責 | 檔案路徑 |
 |------|----------|
+| **指令規格唯一來源** | `backend/app/services/slack_commands.py`（`COMMAND_SPECS`） |
 | Socket Mode 啟動 / lifecycle | `backend/app/main.py` 或 `backend/app/core/slack_lifecycle.py` |
 | 訊息解析與觸發 | `backend/app/services/slack_handler.py` |
 | 生圖佇列 | `backend/app/core/queue.py` |

@@ -2,6 +2,8 @@
 
 > 以 `docs/slack-command-scheme.md` 與 `docs/api-contract.md` 為基底，規劃實作步驟。
 >
+> **規格唯一來源**：觸發關鍵字、必填/選填參數、範例皆以 `backend/app/services/slack_commands.py` 的 `COMMAND_SPECS` 為準。
+>
 > **最終目標**：5 個可用指令 + 1 個列出指令，全部串接對應 API。
 >
 > **Agent 追蹤**：AI Agent 請依 **[docs/slack-command-agent-tracker.md](./slack-command-agent-tracker.md)** 執行任務、更新進度、檢查依賴。
@@ -10,14 +12,16 @@
 
 ## 一、指令與 API 對應表
 
-| # | 指令 | 觸發格式 | 對應 API（api-contract） |
-|---|------|----------|--------------------------|
-| 0 | 列出可用指令 | `!給我可用指令` | 無，純回覆 |
-| 1 | 生圖片 | `!生圖片 {"prompt":"..."}` | `POST /api/generate/` |
-| 2 | 用指定動作生圖片 | `!用指定動作生圖片 {"prompt":"...", "image_pose":"..."}` | `POST /api/generate/custom` |
-| 3 | 進行 LoRA 訓練 | `!訓練lora {"folder":"..."}` | `POST /api/lora-train/start` |
-| 4 | 查詢圖片參數 | `!查詢圖片 {"limit":10}` | `GET /api/gallery/` |
-| 5 | 重新生成指定圖片 | `!重新生成圖片 {"image_id":123}` | `POST /api/gallery/{image_id}/rerun` |
+| # | cmd_key | 對應 API（api-contract） |
+|---|---------|--------------------------|
+| 0 | `help` | 無，純回覆 `build_help_message()` |
+| 1 | `generate` | `POST /api/generate/` |
+| 2 | `generate_pose` | `POST /api/generate/custom` |
+| 3 | `train_lora` | `POST /api/lora-train/start` |
+| 4 | `query_gallery` | `GET /api/gallery/` |
+| 5 | `rerun` | `POST /api/gallery/{image_id}/rerun` |
+
+**觸發格式、範例**：見 `COMMAND_SPECS`。
 
 ---
 
@@ -87,8 +91,8 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 **檔案**：`backend/app/services/slack_handler.py`
 
 **變更**：
-1. 擴充觸發前綴：除了 `!generate`、`生圖`，加入 `!給我可用指令`、`!生圖片`、`!用指定動作生圖片`、`!訓練lora`、`!查詢圖片`、`!重新生成圖片`
-2. 新增 `_is_slack_command(text) -> bool`：若訊息為上述任一指令格式則回傳 True
+1. 觸發辨識：依 `COMMAND_SPECS.triggers`（由 `parse_command` 統一處理，無需硬編碼關鍵字）
+2. 新增 `_is_slack_command(text) -> bool`：若 `parse_command(text)[0]` 非 None 則回傳 True
 3. 重構 `handle_message` 流程：
    - 過濾 bot 自身、子類型（維持原邏輯）
    - 若 `_is_slack_command(text)` 為 False → `return`（不處理）
@@ -111,9 +115,7 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ### Step 3.2：!生圖片 → POST /api/generate/
 
-**JSON 對應 api-contract 1. 生圖模組**：
-- 必填：`prompt`
-- 選填：`checkpoint`, `lora`, `negative_prompt`, `seed`, `steps`, `cfg`, `width`, `height`, `batch_size`, `sampler_name`, `scheduler`
+**JSON**：必填/選填見 `COMMAND_SPECS`（cmd_key: `generate`）。對應 api-contract §1 生圖模組。
 
 **邏輯**：
 1. `validate_params("generate", data)` 檢查 `prompt` 存在
@@ -126,7 +128,7 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ### Step 3.3：!用指定動作生圖片 → POST /api/generate/custom
 
-**JSON**：繼承生圖參數，外加必填 `image_pose`（姿態圖路徑，相對於 gallery_dir）
+**JSON**：必填/選填見 `COMMAND_SPECS`（cmd_key: `generate_pose`）
 
 **邏輯**：
 1. `validate_params("generate_pose", data)` 檢查 `prompt`、`image_pose`
@@ -143,9 +145,7 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ### Step 3.4：!訓練lora → POST /api/lora-train/start
 
-**JSON 對應 api-contract 4. LoRA 訓練**：
-- 必填：`folder`
-- 選填：`checkpoint`, `epochs`, `resolution`, `batch_size`, `learning_rate`, `class_tokens`, `keep_tokens`, `num_repeats`, `mixed_precision`, `generate_after`
+**JSON**：必填/選填見 `COMMAND_SPECS`（cmd_key: `train_lora`）。對應 api-contract §4 LoRA 訓練。
 
 **邏輯**：
 1. `validate_params("train_lora", data)` 檢查 `folder`
@@ -157,8 +157,7 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ### Step 3.5：!查詢圖片 → GET /api/gallery/
 
-**JSON 對應 api-contract 2. 圖庫 GET /**：
-- 選填：`checkpoint`, `lora`, `from_date`, `to_date`, `limit`, `offset`
+**JSON**：必填/選填見 `COMMAND_SPECS`（cmd_key: `query_gallery`）。對應 api-contract §2 圖庫 GET。
 
 **邏輯**：
 1. 將 data 轉為 query string：`?limit=10&offset=0&checkpoint=xxx&...`
@@ -169,7 +168,7 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ### Step 3.6：!重新生成圖片 → POST /api/gallery/{image_id}/rerun
 
-**JSON**：`{"image_id": 123}`
+**JSON**：必填/選填見 `COMMAND_SPECS`（cmd_key: `rerun`），如 `{"image_id": 123}`
 
 **邏輯**：
 1. `validate_params("rerun", data)` 檢查 `image_id` 為整數
@@ -220,42 +219,12 @@ internal_api_base_url: str = "http://127.0.0.1:8000"  # Slack handler 呼叫 Bac
 
 ---
 
-## 五、指令關鍵字對照（供 parse_command 使用）
+## 五、指令關鍵字對照
 
-| cmd_key | 觸發關鍵字（任一匹配） |
-|---------|------------------------|
-| `help` | `!給我可用指令`, `給我可用指令`, `!help` |
-| `generate` | `!生圖片`, `!用文字生圖片` |
-| `generate_pose` | `!用指定動作生圖片`, `!用文字生圖片指定動作` |
-| `train_lora` | `!訓練lora`, `!進行lora訓練` |
-| `query_gallery` | `!查詢圖片`, `!查詢圖片參數` |
-| `rerun` | `!重新生成圖片`, `!重現圖片` |
+**見 `COMMAND_SPECS` 之 `triggers` 欄位**（`slack_commands.py`）。`parse_command()` 依此辨識指令。
 
 ---
 
-## 六、help 回覆精簡版（最終輸出）
+## 六、help 回覆
 
-```
-📋 可用指令：
-
-1. !生圖片 <JSON>
-   依 prompt 生圖。例：!生圖片 {"prompt":"1girl, miku", "batch_size":3}
-   參數：prompt(必填), batch_size, checkpoint, lora, negative_prompt, seed, steps, cfg, width, height
-
-2. !用指定動作生圖片 <JSON>
-   生圖 + 姿態參考圖。例：!用指定動作生圖片 {"prompt":"1girl", "image_pose":"2026-03-08/xxx.png"}
-   參數：prompt(必填), image_pose(必填), batch_size, checkpoint, lora, ...
-
-3. !訓練lora <JSON>
-   手動觸發 LoRA 訓練。例：!訓練lora {"folder":"my_char", "epochs":10}
-   參數：folder(必填), checkpoint, epochs, resolution, batch_size, ...
-
-4. !查詢圖片 <JSON>
-   圖庫列表。例：!查詢圖片 {"limit":10}
-   參數：limit, offset, checkpoint, lora, from_date, to_date
-
-5. !重新生成圖片 <JSON>
-   用某張圖參數再產。例：!重新生成圖片 {"image_id":123}
-
-輸入 !給我可用指令 可隨時查看此清單。
-```
+**見 `slack_commands.build_help_message()` 輸出**。由 `COMMAND_SPECS` 動態產生，不在此重複定義。

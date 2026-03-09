@@ -92,6 +92,66 @@ def _safe_say(say: Any, channel: str, text: str) -> None:
         logger.exception("Slack say failed: %s", e)
 
 
+# 白名單：與 COMMAND_SPECS["generate"] required + optional 對齊
+_GENERATE_ALLOWED_KEYS = frozenset(
+    {"prompt", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height", "sampler_name", "scheduler"}
+)
+
+
+def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+    """
+    S3.2：!生圖片 → POST /api/generate/
+    201→已加入佇列；503→佇列滿；400→參數錯誤
+    """
+    if json_str is None:
+        _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
+        return
+    data, parse_err = slack_commands.parse_json_safe(json_str)
+    if parse_err:
+        _safe_say(say, channel, f"參數格式錯誤：{parse_err}")
+        return
+    val_err = slack_commands.validate_params("generate", data)
+    if val_err:
+        _safe_say(say, channel, val_err)
+        return
+    body = {k: v for k, v in data.items() if k in _GENERATE_ALLOWED_KEYS and v is not None}
+    if "prompt" not in body:
+        _safe_say(say, channel, "缺少必填參數：prompt")
+        return
+
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    url = f"{base_url}/api/generate/"
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            r = client.post(url, json=body)
+    except Exception as e:
+        logger.exception("Slack generate API call failed: %s", e)
+        _safe_say(say, channel, "生圖服務暫不可用")
+        return
+
+    if r.status_code == 201:
+        try:
+            resp = r.json()
+            job_id = resp.get("job_id", "unknown")
+            _safe_say(say, channel, f"已加入生圖佇列，job_id: {job_id}")
+        except Exception:
+            _safe_say(say, channel, "已加入生圖佇列")
+    elif r.status_code == 503:
+        _safe_say(say, channel, "生圖佇列已滿")
+        logger.warning("Slack user %s hit queue full (503)", user)
+    elif r.status_code == 400:
+        try:
+            detail = r.json().get("detail", str(r.text))
+            if isinstance(detail, list):
+                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+        except Exception:
+            detail = str(r.text) or "參數錯誤"
+        _safe_say(say, channel, f"參數錯誤：{detail}")
+    else:
+        logger.warning("Slack generate API unexpected status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "生圖服務暫不可用")
+
+
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
     """
     Slack message 事件處理：解析生圖指令、提交佇列、回覆使用者。
@@ -117,6 +177,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
     if cmd_key is not None:
         if cmd_key == "help":
             _safe_say(say, channel, slack_commands.build_help_message())
+        elif cmd_key == "generate":
+            _handle_generate_command(say, channel, json_str, user)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return

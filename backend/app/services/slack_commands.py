@@ -1,22 +1,24 @@
 """
-Slack 指令定義：COMMAND_SPECS、parse_command、validate_params、build_help_message
+Slack 指令定義：COMMAND_SPECS 為唯一資料來源
 
 供 slack_handler 使用，不直接呼叫 API。
-規範：docs/slack-command-scheme.md、docs/slack-command-agent-tracker.md
+規範：docs/slack-command-scheme.md、docs/api-contract.md
 """
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
-# 指令定義：cmd_key, triggers, required, example, desc
-# 觸發關鍵字依長度由長到短排序，避免「!用指定動作生圖片」被「!用文字生圖片」先匹配
+# =============================================================================
+# 唯一資料來源：所有指令、參數、說明皆由此定義
+# 與 docs/api-contract.md 對應：§1 生圖、§2 圖庫、§4 LoRA 訓練
+# =============================================================================
 COMMAND_SPECS: list[dict[str, Any]] = [
     {
         "cmd_key": "help",
         "triggers": ["!給我可用指令", "給我可用指令", "!help"],
         "required": [],
+        "optional": [],
         "example": "!給我可用指令",
         "desc": "顯示此清單",
     },
@@ -24,6 +26,7 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "generate_pose",
         "triggers": ["!用指定動作生圖片", "!用文字生圖片指定動作"],
         "required": ["prompt", "image_pose"],
+        "optional": ["batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height"],
         "example": '!用指定動作生圖片 {"prompt":"1girl", "image_pose":"2026-03-08/xxx.png"}',
         "desc": "生圖 + 姿態參考圖",
     },
@@ -31,6 +34,7 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "generate",
         "triggers": ["!生圖片", "!用文字生圖片"],
         "required": ["prompt"],
+        "optional": ["batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height", "sampler_name", "scheduler"],
         "example": '!生圖片 {"prompt":"1girl, miku", "batch_size":3}',
         "desc": "依 prompt 生圖",
     },
@@ -38,6 +42,7 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "train_lora",
         "triggers": ["!訓練lora", "!進行lora訓練"],
         "required": ["folder"],
+        "optional": ["checkpoint", "epochs", "resolution", "batch_size", "learning_rate", "class_tokens", "keep_tokens", "num_repeats", "mixed_precision", "generate_after"],
         "example": '!訓練lora {"folder":"my_char", "epochs":10}',
         "desc": "手動觸發 LoRA 訓練",
     },
@@ -45,6 +50,7 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "query_gallery",
         "triggers": ["!查詢圖片", "!查詢圖片參數"],
         "required": [],
+        "optional": ["limit", "offset", "checkpoint", "lora", "from_date", "to_date"],
         "example": '!查詢圖片 {"limit":10}',
         "desc": "圖庫列表",
     },
@@ -52,6 +58,7 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "rerun",
         "triggers": ["!重新生成圖片", "!重現圖片"],
         "required": ["image_id"],
+        "optional": [],
         "example": '!重新生成圖片 {"image_id":123}',
         "desc": "用某張圖參數再產",
     },
@@ -97,7 +104,6 @@ def parse_command(text: str) -> tuple[str | None, str | None]:
     if not rest:
         return (cmd_key, "{}")
 
-    # 預期 rest 為 JSON 物件
     if rest.startswith("{"):
         return (cmd_key, rest)
     return (cmd_key, None)
@@ -106,8 +112,9 @@ def parse_command(text: str) -> tuple[str | None, str | None]:
 def validate_params(cmd_key: str, data: dict[str, Any]) -> str | None:
     """
     檢查必填欄位。缺必填回傳錯誤字串，否則回傳 None。
+    必填欄位來源：COMMAND_SPECS
     """
-    spec = next((s for s in COMMAND_SPECS if s["cmd_key"] == cmd_key), None)
+    spec = _get_spec(cmd_key)
     if not spec:
         return f"未知指令: {cmd_key}"
     required = spec.get("required", [])
@@ -116,7 +123,6 @@ def validate_params(cmd_key: str, data: dict[str, Any]) -> str | None:
         if val is None or (isinstance(val, str) and not val.strip()):
             return f"缺少必填參數：{field}"
 
-    # rerun 的 image_id 必須為整數
     if cmd_key == "rerun" and "image_id" in data:
         try:
             vid = data["image_id"]
@@ -130,32 +136,37 @@ def validate_params(cmd_key: str, data: dict[str, Any]) -> str | None:
     return None
 
 
+def _get_spec(cmd_key: str) -> dict[str, Any] | None:
+    """依 cmd_key 取得 spec"""
+    return next((s for s in COMMAND_SPECS if s["cmd_key"] == cmd_key), None)
+
+
+def _format_params_line(spec: dict[str, Any]) -> str:
+    """從 COMMAND_SPECS 產生參數說明字串"""
+    required = spec.get("required", [])
+    optional = spec.get("optional", [])
+    parts = [f"{r}(必填)" for r in required]
+    parts.extend(optional)
+    return ", ".join(parts) if parts else "—"
+
+
 def build_help_message() -> str:
-    """回傳「給我可用指令」的完整文案。"""
-    lines = [
-        "📋 可用指令：",
-        "",
-        "1. !生圖片 <JSON>",
-        "   依 prompt 生圖。例：!生圖片 {\"prompt\":\"1girl, miku\", \"batch_size\":3}",
-        "   參數：prompt(必填), batch_size, checkpoint, lora, negative_prompt, seed, steps, cfg, width, height",
-        "",
-        "2. !用指定動作生圖片 <JSON>",
-        "   生圖 + 姿態參考圖。例：!用指定動作生圖片 {\"prompt\":\"1girl\", \"image_pose\":\"2026-03-08/xxx.png\"}",
-        "   參數：prompt(必填), image_pose(必填), batch_size, checkpoint, lora, ...",
-        "",
-        "3. !訓練lora <JSON>",
-        "   手動觸發 LoRA 訓練。例：!訓練lora {\"folder\":\"my_char\", \"epochs\":10}",
-        "   參數：folder(必填), checkpoint, epochs, resolution, batch_size, ...",
-        "",
-        "4. !查詢圖片 <JSON>",
-        "   圖庫列表。例：!查詢圖片 {\"limit\":10}",
-        "   參數：limit, offset, checkpoint, lora, from_date, to_date",
-        "",
-        "5. !重新生成圖片 <JSON>",
-        "   用某張圖參數再產。例：!重新生成圖片 {\"image_id\":123}",
-        "",
-        "輸入 !給我可用指令 可隨時查看此清單。",
-    ]
+    """
+    從 COMMAND_SPECS 產生 help 文案。
+    唯一資料來源：COMMAND_SPECS
+    """
+    lines = ["📋 可用指令：", ""]
+    idx = 1
+    for spec in COMMAND_SPECS:
+        if spec["cmd_key"] == "help":
+            continue
+        trigger = spec["triggers"][0]
+        lines.append(f"{idx}. {trigger} <JSON>")
+        lines.append(f"   {spec['desc']}。例：{spec['example']}")
+        lines.append(f"   參數：{_format_params_line(spec)}")
+        lines.append("")
+        idx += 1
+    lines.append("輸入 !給我可用指令 可隨時查看此清單。")
     return "\n".join(lines)
 
 

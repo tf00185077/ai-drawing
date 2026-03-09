@@ -2,7 +2,10 @@
 
 > **AI Agent 專用**：本文件供 Agent 依序執行任務、追蹤進度、檢查依賴。實作完成後請將 `[ ]` 改為 `[v]` 並填寫完成者。
 
-**規格來源**：`docs/slack-command-scheme.md`、`docs/api-contract.md`
+**規格來源**：
+- **指令定義唯一來源**：`backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`（觸發關鍵字、必填/選填、範例、說明）
+- **API 契約**：`docs/api-contract.md` 第 1、2、4 節（生圖、圖庫、LoRA 訓練）
+- **架構與流程**：`docs/slack-command-scheme.md`、`.cursor/rules/slack-trigger.mdc`
 
 ---
 
@@ -10,7 +13,7 @@
 
 ### 0.1 執行前
 
-1. 閱讀 `docs/slack-command-scheme.md`（指令格式、JSON schema）
+1. 閱讀 `backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`（指令規格）
 2. 閱讀 `docs/api-contract.md` 第 1、2、4 節（生圖、圖庫、LoRA 訓練）
 3. 閱讀 `.cursor/rules/slack-trigger.mdc`（架構原則、回覆格式）
 
@@ -38,7 +41,7 @@ S1.2 ──┘
 | **S1.2** | config 擴充 internal_api_base_url | `backend/app/config.py` | 無 | `get_settings().internal_api_base_url` 可讀，預設 `http://127.0.0.1:8000` | [v] | Agent |
 | **S2.1** | slack_handler 重構（指令路由、parse_command 整合） | `backend/app/services/slack_handler.py` | S1.1 | 打 `!給我可用指令` 可被辨識（可先 stub 回覆「開發中」） | [v] | Agent |
 | **S3.1** | !給我可用指令 實作 | `backend/app/services/slack_handler.py` | S2.1 | 打 `!給我可用指令` 回覆完整 help 文案 | [v] | Agent |
-| **S3.2** | !生圖片 → POST /api/generate/ | `backend/app/services/slack_handler.py` | S2.1, S1.2 | 打 `!生圖片 {"prompt":"test"}` 回覆 job_id 或佇列滿 | [ ] | |
+| **S3.2** | !生圖片 → POST /api/generate/ | `backend/app/services/slack_handler.py` | S2.1, S1.2 | 打 `!生圖片 {"prompt":"test"}` 回覆 job_id 或佇列滿 | [v] | Agent |
 | **S3.3** | !用指定動作生圖片 → POST /api/generate/custom | `backend/app/services/slack_handler.py` | S3.2 | 打 `!用指定動作生圖片 {"prompt":"1girl", "image_pose":"2026-03-08/x.png"}` 回覆 job_id | [ ] | |
 | **S3.4** | !訓練lora → POST /api/lora-train/start | `backend/app/services/slack_handler.py` | S2.1 | 打 `!訓練lora {"folder":"test"}` 回覆 job_id 或錯誤 | [ ] | |
 | **S3.5** | !查詢圖片 → GET /api/gallery/ | `backend/app/services/slack_handler.py` | S2.1 | 打 `!查詢圖片 {"limit":5}` 回覆筆數或列表摘要 | [ ] | |
@@ -54,11 +57,8 @@ S1.2 ──┘
 
 | 項目 | 內容 |
 |------|------|
-| **輸出** | `COMMAND_SPECS`、`parse_command(text)->tuple[str, str|None]`、`validate_params(cmd_key, data)->str|None`、`build_help_message()->str` |
-| **COMMAND_SPECS** | 每項含 `cmd_key`、`triggers`（關鍵字 list）、`required`（必填欄位）、`example`、`desc` |
-| **cmd_key** | `help`, `generate`, `generate_pose`, `train_lora`, `query_gallery`, `rerun` |
-| **parse_command** | 正則或關鍵字匹配，回傳 `(cmd_key, json_str)`，無 JSON 時 `json_str` 可為 `"{}"`（help）或 `None`（無效） |
-| **validate_params** | 缺必填回傳錯誤字串，否則回傳 `None` |
+| **輸出** | `COMMAND_SPECS`、`parse_command(text)`、`validate_params(cmd_key, data)`、`build_help_message()` |
+| **規格** | 見 `COMMAND_SPECS` 結構：`cmd_key`, `triggers`, `required`, `optional`, `example`, `desc` |
 
 **依賴**：無
 
@@ -79,9 +79,8 @@ S1.2 ──┘
 
 | 項目 | 內容 |
 |------|------|
-| **變更** | import `slack_commands`；`_is_slack_command(text)` 涵蓋 6 種指令；`handle_message` 先 `parse_command` 再分支 |
-| **觸發前綴** | `!給我可用指令`、`!生圖片`、`!用指定動作生圖片`、`!訓練lora`、`!查詢圖片`、`!重新生成圖片`（及別名，見 slack-command-scheme 五節） |
-| **保留** | 可選保留 `!generate`、`生圖` 簡易格式，或移除改由 `!生圖片` 取代 |
+| **變更** | import `slack_commands`；`_is_slack_command(text)` 以 `parse_command` 辨識；`handle_message` 先 `parse_command` 再分支 |
+| **觸發** | 見 `COMMAND_SPECS.triggers`，不在此重複 |
 
 **依賴**：S1.1
 
@@ -103,8 +102,7 @@ S1.2 ──┘
 | 項目 | 內容 |
 |------|------|
 | **API** | `POST {base}/api/generate/` |
-| **契約** | api-contract §1，Request Body 同 GenerateRequest |
-| **必填** | `prompt` |
+| **契約** | api-contract §1；必填/選填見 `COMMAND_SPECS`（cmd_key: `generate`） |
 | **回覆** | 201→`已加入生圖佇列，job_id: xxx`；503→`生圖佇列已滿`；400→`參數錯誤：{detail}` |
 
 **依賴**：S2.1, S1.2
@@ -116,8 +114,7 @@ S1.2 ──┘
 | 項目 | 內容 |
 |------|------|
 | **API** | 先 `GET {base}/api/generate/workflow-templates/controlnet_pose`（404 則試 `default`），再 `POST {base}/api/generate/custom` |
-| **body** | `workflow`（上 GET 結果）、`prompt`、`image_pose`、其他選填 |
-| **必填** | `prompt`, `image_pose` |
+| **body** | `workflow`（上 GET 結果）+ 參數見 `COMMAND_SPECS`（cmd_key: `generate_pose`） |
 
 **依賴**：S3.2（共用 httpx、base_url 邏輯）
 
@@ -128,8 +125,7 @@ S1.2 ──┘
 | 項目 | 內容 |
 |------|------|
 | **API** | `POST {base}/api/lora-train/start` |
-| **契約** | api-contract §4 POST /start |
-| **必填** | `folder` |
+| **契約** | api-contract §4；必填/選填見 `COMMAND_SPECS`（cmd_key: `train_lora`） |
 | **回覆** | 202→`已加入訓練佇列`；400/409→`操作失敗：{detail}` |
 
 **依賴**：S2.1
@@ -141,7 +137,7 @@ S1.2 ──┘
 | 項目 | 內容 |
 |------|------|
 | **API** | `GET {base}/api/gallery/?limit=10&offset=0&...` |
-| **契約** | api-contract §2 GET / |
+| **契約** | api-contract §2；參數見 `COMMAND_SPECS`（cmd_key: `query_gallery`） |
 | **回覆** | 簡化摘要，如 `共 {total} 筆，最近：id=1 prompt=...` |
 
 **依賴**：S2.1
@@ -153,8 +149,7 @@ S1.2 ──┘
 | 項目 | 內容 |
 |------|------|
 | **API** | `POST {base}/api/gallery/{image_id}/rerun` |
-| **契約** | api-contract §2 POST /{id}/rerun |
-| **必填** | `image_id`（int） |
+| **契約** | api-contract §2；必填見 `COMMAND_SPECS`（cmd_key: `rerun`，含 image_id 型別驗證） |
 | **回覆** | 202→`已加入生圖佇列`；404→`找不到該圖片` |
 
 **依賴**：S2.1
@@ -182,16 +177,9 @@ S1.2 ──┘
 
 ---
 
-## 3. 指令關鍵字對照（parse_command 用）
+## 3. 指令關鍵字對照
 
-| cmd_key | 觸發關鍵字 |
-|---------|------------|
-| `help` | `!給我可用指令`, `給我可用指令`, `!help` |
-| `generate` | `!生圖片`, `!用文字生圖片` |
-| `generate_pose` | `!用指定動作生圖片`, `!用文字生圖片指定動作` |
-| `train_lora` | `!訓練lora`, `!進行lora訓練` |
-| `query_gallery` | `!查詢圖片`, `!查詢圖片參數` |
-| `rerun` | `!重新生成圖片`, `!重現圖片` |
+**見 `COMMAND_SPECS` 之 `triggers` 欄位**（`slack_commands.py`）。`parse_command()` 依此辨識。
 
 ---
 
@@ -221,7 +209,8 @@ S1.2 ──┘
 
 | 文件 | 路徑 | 用途 |
 |------|------|------|
-| 指令方案 | `docs/slack-command-scheme.md` | 指令格式、JSON schema、help 文案 |
+| **規格唯一來源** | `backend/app/services/slack_commands.py`（`COMMAND_SPECS`） | 觸發關鍵字、必填/選填、範例、說明 |
+| 指令方案 | `docs/slack-command-scheme.md` | 架構、資料流、錯誤處理 |
 | API 契約 | `docs/api-contract.md` | Request/Response 規格 |
 | 實作順序（原版） | `docs/slack-command-implementation-order.md` | 詳細步驟說明 |
 | Slack 規範 | `.cursor/rules/slack-trigger.mdc` | 架構、回覆、錯誤處理 |
