@@ -64,6 +64,12 @@ def test_validate_params_generate_pose() -> None:
     assert validate_params("generate_pose", {"prompt": "1girl", "image_pose": "2026-03-08/x.png"}) is None
 
 
+def test_validate_params_train_lora() -> None:
+    """validate_params 檢查 train_lora 必填 folder"""
+    assert validate_params("train_lora", {}) == "缺少必填參數：folder"
+    assert validate_params("train_lora", {"folder": "my_char"}) is None
+
+
 def test_validate_params_rerun() -> None:
     """validate_params 檢查 rerun 的 image_id 為整數"""
     assert validate_params("rerun", {}) == "缺少必填參數：image_id"

@@ -100,6 +100,10 @@ _GENERATE_ALLOWED_KEYS = frozenset(
 _GENERATE_POSE_ALLOWED_KEYS = frozenset(
     {"prompt", "image_pose", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height"}
 )
+# train_lora 白名單（generate_after 為巢狀物件，另處理）
+_TRAIN_LORA_ALLOWED_KEYS = frozenset(
+    {"folder", "checkpoint", "epochs", "resolution", "batch_size", "learning_rate", "class_tokens", "keep_tokens", "num_repeats", "mixed_precision", "generate_after"}
+)
 
 
 def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
@@ -244,6 +248,56 @@ def _handle_generate_pose_command(say: Any, channel: str, json_str: str | None, 
         _safe_say(say, channel, "生圖服務暫不可用")
 
 
+def _handle_train_lora_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+    """
+    S3.4：!訓練lora → POST /api/lora-train/start
+    202→已加入訓練佇列；400/409→操作失敗：{detail}
+    """
+    if json_str is None:
+        _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
+        return
+    data, parse_err = slack_commands.parse_json_safe(json_str)
+    if parse_err:
+        _safe_say(say, channel, f"參數格式錯誤：{parse_err}")
+        return
+    val_err = slack_commands.validate_params("train_lora", data)
+    if val_err:
+        _safe_say(say, channel, val_err)
+        return
+    body: dict[str, Any] = {k: v for k, v in data.items() if k in _TRAIN_LORA_ALLOWED_KEYS and v is not None}
+    if "folder" not in body:
+        _safe_say(say, channel, "缺少必填參數：folder")
+        return
+
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            r = client.post(f"{base_url}/api/lora-train/start", json=body)
+    except Exception as e:
+        logger.exception("Slack train_lora API call failed: %s", e)
+        _safe_say(say, channel, "訓練服務暫不可用")
+        return
+
+    if r.status_code == 202:
+        try:
+            resp = r.json()
+            job_id = resp.get("job_id", "unknown")
+            _safe_say(say, channel, f"已加入訓練佇列，job_id: {job_id}")
+        except Exception:
+            _safe_say(say, channel, "已加入訓練佇列")
+    elif r.status_code in (400, 409):
+        try:
+            detail = r.json().get("detail", str(r.text))
+            if isinstance(detail, list):
+                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+        except Exception:
+            detail = str(r.text) or "操作失敗"
+        _safe_say(say, channel, f"操作失敗：{detail}")
+    else:
+        logger.warning("Slack train_lora API unexpected status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "訓練服務暫不可用")
+
+
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
     """
     Slack message 事件處理：解析生圖指令、提交佇列、回覆使用者。
@@ -273,6 +327,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
             _handle_generate_command(say, channel, json_str, user, event=event)
         elif cmd_key == "generate_pose":
             _handle_generate_pose_command(say, channel, json_str, user, event=event)
+        elif cmd_key == "train_lora":
+            _handle_train_lora_command(say, channel, json_str, user)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return
