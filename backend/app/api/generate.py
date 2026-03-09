@@ -80,6 +80,8 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["sampler_name"] = body.sampler_name
         if body.scheduler is not None:
             params["scheduler"] = body.scheduler
+        if body.image is not None:
+            params["image"] = body.image
         if body.image_pose is not None:
             params["image_pose"] = body.image_pose
         if body.slack_channel_id:

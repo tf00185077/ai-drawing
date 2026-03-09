@@ -39,6 +39,7 @@ class GenerateParams(TypedDict, total=False):
     checkpoint: str
     lora: str
     prompt: str
+    image: str  # 主體圖路徑（img2img），相對於 gallery_dir
     image_pose: str  # 姿態圖路徑，相對於 gallery_dir，會上傳至 ComfyUI
     negative_prompt: str
     seed: int
@@ -198,26 +199,53 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 else WORKFLOW_TEMPLATE
             )
             wf = load_template(template)
-        # 若提供 image_pose，從 gallery 讀取並上傳至 ComfyUI，取得檔名後替換
+        # 若提供 image / image_pose，從 gallery 讀取並上傳至 ComfyUI，取得檔名後替換
+        image_for_wf: str | None = None
         image_pose_for_wf: str | None = None
-        if job.params.get("image_pose"):
-            gallery_path = Path(settings.gallery_dir).resolve()
-            pose_path = (gallery_path / job.params["image_pose"]).resolve()
+        gallery_path = Path(settings.gallery_dir).resolve()
+
+        def _upload_gallery_image(rel_path: str) -> str | None:
+            path = (gallery_path / rel_path).resolve()
             try:
-                pose_path.relative_to(gallery_path)
+                path.relative_to(gallery_path)
             except ValueError:
-                pose_path = None
-                logger.warning("image_pose path traversal blocked: %s", job.params["image_pose"])
-            if pose_path and pose_path.exists():
-                uploaded = comfy.upload_image(pose_path)
-                image_pose_for_wf = uploaded["name"]
+                logger.warning("Path traversal blocked: %s", rel_path)
+                return None
+            if path.exists():
+                uploaded = comfy.upload_image(path)
+                result = uploaded["name"]
                 if uploaded.get("subfolder"):
-                    image_pose_for_wf = f"{uploaded['subfolder']}/{uploaded['name']}"
-            else:
-                logger.warning("image_pose not found: %s, using workflow default", pose_path)
+                    result = f"{uploaded['subfolder']}/{uploaded['name']}"
+                return result
+            logger.warning("Image not found: %s", path)
+            return None
+
+        if job.params.get("image"):
+            image_for_wf = _upload_gallery_image(job.params["image"])
+        if job.params.get("image_pose"):
+            image_pose_for_wf = _upload_gallery_image(job.params["image_pose"])
+        elif settings.controlnet_default_pose_image:
+            # 未指定 image_pose 時，若 workflow 有 ControlNet (DWPreprocessor) 則使用預設姿態圖
+            pose_has_dw = any(
+                n.get("class_type") == "DWPreprocessor"
+                for n in wf.values()
+                if isinstance(n, dict)
+            )
+            if pose_has_dw:
+                proj_root = Path(__file__).resolve().parent.parent.parent
+                default_pose_path = (proj_root / settings.controlnet_default_pose_image).resolve()
+                if default_pose_path.exists():
+                    uploaded = comfy.upload_image(default_pose_path)
+                    image_pose_for_wf = uploaded["name"]
+                    if uploaded.get("subfolder"):
+                        image_pose_for_wf = f"{uploaded['subfolder']}/{uploaded['name']}"
+                else:
+                    logger.warning("ControlNet default pose image not found: %s", default_pose_path)
+
         prompt = apply_params(
             wf,
             checkpoint=effective_checkpoint,
+            image=image_for_wf,
             image_pose=image_pose_for_wf,
             lora=job.params.get("lora"),
             prompt=job.params.get("prompt", ""),
@@ -307,7 +335,7 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         out_dir = gallery_path / date_str
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        saved_paths: list[str] = []
+        saved_infos: list[tuple[str, str, str]] = []  # (full_path, rel_path, out_name)
         for i, img in enumerate(images_info):
             data = comfy.fetch_image(
                 img["filename"],
@@ -320,13 +348,14 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
             out_file = out_dir / out_name
             out_file.write_bytes(data)
             rel_path = str(Path(date_str) / out_name)
-            saved_paths.append(rel_path)
+            saved_infos.append((str(out_file), rel_path, out_name))
 
-        for image_path in saved_paths:
+        records: list[tuple[str, int, str]] = []  # (full_path, db_id, filename)
+        for full_path, rel_path, out_name in saved_infos:
             db = SessionLocal()
             try:
-                recording_save(
-                    image_path,
+                rec = recording_save(
+                    rel_path,
                     checkpoint=job.params.get("checkpoint"),
                     lora=job.params.get("lora"),
                     seed=job.params.get("seed"),
@@ -336,10 +365,21 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
                     negative_prompt=job.params.get("negative_prompt"),
                     db=db,
                 )
+                records.append((full_path, rec.id, out_name))
             finally:
                 db.close()
 
-        logger.info("Job %s completed, saved %d image(s)", job.job_id, len(saved_paths))
+        logger.info("Job %s completed, saved %d image(s)", job.job_id, len(records))
+        ch = job.params.get("slack_channel_id")
+        if ch and records:
+            from app.services.slack_notifier import notify_job_success
+
+            notify_job_success(
+                channel_id=ch,
+                job_id=job.job_id,
+                images=records,
+                thread_ts=job.params.get("slack_thread_ts"),
+            )
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
 

@@ -38,6 +38,13 @@ class ImageDetail(GalleryItem):
     pass
 
 
+class RerunRequest(BaseModel):
+    """POST /api/gallery/{id}/rerun 的 Request Body（選填，Slack 觸發時帶入）"""
+
+    slack_channel_id: str | None = None
+    slack_thread_ts: str | None = None
+
+
 class RerunResponse(BaseModel):
     """POST /api/gallery/{id}/rerun 的 Response"""
 

@@ -5,7 +5,7 @@
       "cfg": 7.0,
       "denoise": 0.75,
       "latent_image": ["12", 0],
-      "model": ["4", 0],
+      "model": ["16", 0],
       "negative": ["7", 0],
       "positive": ["15", 0],
       "sampler_name": "dpmpp_2m",
@@ -44,7 +44,7 @@
   "9": {
     "class_type": "SaveImage",
     "inputs": {
-      "filename_prefix": "ComfyUI_pose",
+      "filename_prefix": "ComfyUI_img2img_pose",
       "images": ["8", 0]
     }
   },
@@ -88,6 +88,16 @@
       "control_net": ["14", 0],
       "image": ["13", 0],
       "strength": 1.0
+    }
+  },
+  "16": {
+    "class_type": "LoraLoader",
+    "inputs": {
+      "clip": ["4", 1],
+      "lora_name": "incurr_maki_4-000007.safetensors",
+      "model": ["4", 0],
+      "strength_clip": 1.0,
+      "strength_model": 1.0
     }
   }
 }

@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     # watchdog
     watch_dirs: str = "./lora_train"  # 逗號分隔
 
+    # ControlNet 預設姿態圖（路徑相對於專案根目錄）
+    controlnet_default_pose_image: str = "backend/lora_train/lovelive/__asaka_karin_love_live_and_1_more_drawn_by_nasuno_nasuno42__sample-363e09661ab550cd5a85bbc226caf34e.jpg"
+
     # Slack（遠端觸發生圖，Socket Mode）
     slack_app_token: str = ""  # xapp-xxx，需 connections:write
     slack_bot_token: str = ""  # xoxb-xxx，Bot User OAuth Token

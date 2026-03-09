@@ -359,10 +359,11 @@ def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, 
     _safe_say(say, channel, msg)
 
 
-def _handle_rerun_command(say: Any, channel: str, json_str: str | None, user: str) -> None:
+def _handle_rerun_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
     """
     S3.6：!重新生成圖片 → POST /api/gallery/{image_id}/rerun
     202→已加入生圖佇列；404→找不到該圖片；503→佇列滿
+    帶入 slack_channel_id、slack_thread_ts 供生圖完成後回傳至 Slack
     """
     if json_str is None:
         _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
@@ -381,10 +382,14 @@ def _handle_rerun_command(say: Any, channel: str, json_str: str | None, user: st
         _safe_say(say, channel, "image_id 必須為整數")
         return
 
+    body: dict[str, str] = {"slack_channel_id": channel}
+    if event and (ts := event.get("ts")):
+        body["slack_thread_ts"] = ts
+
     base_url = get_settings().internal_api_base_url.rstrip("/")
     try:
         with httpx.Client(timeout=15.0) as client:
-            r = client.post(f"{base_url}/api/gallery/{image_id}/rerun")
+            r = client.post(f"{base_url}/api/gallery/{image_id}/rerun", json=body)
     except Exception as e:
         logger.exception("Slack rerun API call failed: %s", e)
         _safe_say(say, channel, "生圖服務暫不可用")
@@ -441,7 +446,7 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
         elif cmd_key == "query_gallery":
             _handle_query_gallery_command(say, channel, json_str, user)
         elif cmd_key == "rerun":
-            _handle_rerun_command(say, channel, json_str, user)
+            _handle_rerun_command(say, channel, json_str, user, event=event)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return

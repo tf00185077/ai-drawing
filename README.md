@@ -192,6 +192,7 @@ flowchart TB
 4. **Bot Token Scopes**（OAuth & Permissions）：
    - `channels:history`、`channels:read`（公開頻道）
    - `chat:write`（回覆訊息）
+   - `files:write`（生圖完成後上傳圖片至頻道）
    - 私密頻道：`groups:history`、`groups:read`
 5. **Event Subscriptions**：啟用，訂閱 `message.channels` 或 `message.groups`
 6. **安裝 App** 到 workspace，取得 Bot User OAuth Token
@@ -261,17 +262,25 @@ auto-draw/
 
 > 完整參數說明與 ComfyUI/Kohya/WD 設定見 [`docs/setup-guide.md`](docs/setup-guide.md)
 
+**建議順序**（前端會 proxy `/api` 至後端，故後端需先啟動）：
+
+| 步驟 | 指令 | 說明 |
+|------|------|------|
+| 0 | `cp .env.example .env` | 首次使用時複製環境變數範例，並編輯 `.env` |
+| 1 | `cd backend && pip install -r requirements.txt` | 安裝後端依賴 |
+| 2 | `python backend/scripts/init_db.py` | 初始化資料庫（首次或 DB 不存在時） |
+| 3 | `cd backend && uvicorn app.main:app --reload` | **先啟動後端**（預設 port 8000） |
+| 4 | `cd frontend && npm install && npm run dev` | **再啟動前端**（新開一個終端機，預設 port 5173） |
+
+啟動完成後：
+
+- 前端：<http://localhost:5173>
+- 後端 API：<http://localhost:8000>
+- API 文件：<http://localhost:8000/docs>
+
+**Docker 一鍵啟動**：
+
 ```bash
-# 後端
-cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
-
-# 前端
-cd frontend && npm install && npm run dev
-
-# 初始化 DB
-python backend/scripts/init_db.py
-
-# Docker
 cp .env.example .env && docker-compose up -d
 ```
 

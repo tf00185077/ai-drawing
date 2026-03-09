@@ -73,6 +73,10 @@ class GenerateCustomRequest(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, le=8)
     sampler_name: str | None = None
     scheduler: str | None = None
+    image: str | None = Field(
+        default=None,
+        description="主體參考圖路徑（img2img），相對於 gallery_dir。會先上傳至 ComfyUI 再替換第一個 LoadImage。與 image_pose 搭配用於 img2img_lora_pose workflow",
+    )
     image_pose: str | None = Field(
         default=None,
         description="姿態參考圖路徑，相對於 gallery_dir（如 2026-03-08/ComfyUI_xxx.png）。會先上傳至 ComfyUI 再替換 LoadImage",

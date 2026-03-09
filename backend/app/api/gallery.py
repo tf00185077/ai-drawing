@@ -8,7 +8,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,7 @@ from app.config import get_settings
 from app.core.queue import QueueFullError, submit
 from app.db.database import get_db
 from app.db.models import GeneratedImage
-from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunResponse
+from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunRequest, RerunResponse
 
 router = APIRouter(prefix="/api/gallery", tags=["圖庫"])
 
@@ -103,12 +103,16 @@ async def get_image_detail(image_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{image_id}/rerun", response_model=RerunResponse, status_code=202)
-async def rerun_image(image_id: int, db: Session = Depends(get_db)):
-    """一鍵重現：載入參數再次生成"""
+async def rerun_image(
+    image_id: int,
+    body: RerunRequest | None = Body(None),
+    db: Session = Depends(get_db),
+):
+    """一鍵重現：載入參數再次生成。body 可帶 slack_channel_id、slack_thread_ts 供 Slack 生圖完成後回傳"""
     row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
     if not row:
         raise HTTPException(404, "找不到該圖片")
-    params = {
+    params: dict = {
         "checkpoint": row.checkpoint,
         "lora": row.lora,
         "prompt": row.prompt or "",
@@ -117,6 +121,11 @@ async def rerun_image(image_id: int, db: Session = Depends(get_db)):
         "steps": row.steps,
         "cfg": row.cfg,
     }
+    if body:
+        if body.slack_channel_id:
+            params["slack_channel_id"] = body.slack_channel_id
+        if body.slack_thread_ts:
+            params["slack_thread_ts"] = body.slack_thread_ts
     try:
         job_id = submit(params)
         return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列")

@@ -180,6 +180,20 @@
 
 **Path**: `image_id` (integer)
 
+**Request Body**（選填，Slack 觸發時帶入，生圖完成後回傳至該頻道）:
+
+```json
+{
+  "slack_channel_id": "C123456",
+  "slack_thread_ts": "1234567890.123456"
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| slack_channel_id | string | 否 | Slack 頻道 ID，生圖完成後上傳圖片至此 |
+| slack_thread_ts | string | 否 | 原訊息 ts，回覆於同一討論串 |
+
 **Response** `202 Accepted`:
 
 ```json
