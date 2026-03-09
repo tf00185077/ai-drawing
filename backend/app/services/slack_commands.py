@@ -141,6 +141,19 @@ def _get_spec(cmd_key: str) -> dict[str, Any] | None:
     return next((s for s in COMMAND_SPECS if s["cmd_key"] == cmd_key), None)
 
 
+def get_allowed_keys(cmd_key: str) -> frozenset[str]:
+    """
+    取得指令允許的參數鍵（required + optional），供 handler 白名單過濾。
+    與 COMMAND_SPECS 對齊，單一來源。
+    """
+    spec = _get_spec(cmd_key)
+    if not spec:
+        return frozenset()
+    required = spec.get("required", [])
+    optional = spec.get("optional", [])
+    return frozenset(required + optional)
+
+
 def _format_params_line(spec: dict[str, Any]) -> str:
     """從 COMMAND_SPECS 產生參數說明字串"""
     required = spec.get("required", [])

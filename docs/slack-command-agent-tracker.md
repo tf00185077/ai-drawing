@@ -47,7 +47,7 @@ S1.2 ──┘
 | **S3.5** | !查詢圖片 → GET /api/gallery/ | `backend/app/services/slack_handler.py` | S2.1 | 打 `!查詢圖片 {"limit":5}` 回覆筆數或列表摘要 | [v] | Agent |
 | **S3.6** | !重新生成圖片 → POST /api/gallery/{id}/rerun | `backend/app/services/slack_handler.py` | S2.1 | 打 `!重新生成圖片 {"image_id":1}` 回覆 job_id 或 404 | [v] | Agent |
 | **S4.1** | 單元測試 | `backend/tests/test_slack_commands.py` | S1.1, S3.6 | `cd backend && pytest tests/test_slack_commands.py -v` 至少 2 條通過 | [v] | Agent |
-| **S4.2** | 更新 slack-trigger.mdc | `.cursor/rules/slack-trigger.mdc` | S3.6 | 檔內含指令格式表、slack_commands.py 路徑 | [ ] | |
+| **S4.2** | 更新 slack-trigger.mdc | `.cursor/rules/slack-trigger.mdc` | S3.6 | 檔內含指令格式表、slack_commands.py 路徑 | [v] | Agent |
 
 ---
 

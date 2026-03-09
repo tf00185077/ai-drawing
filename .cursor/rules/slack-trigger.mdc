@@ -26,7 +26,7 @@ alwaysApply: false
 | **queue** | 接收生圖請求、排程、呼叫 ComfyUI | — |
 | **main.py / lifecycle** | 啟動 Socket Mode 客戶端、註冊 event handler | 不處理業務邏輯 |
 
-**Handler 必須**：呼叫 `queue.submit(params)` 或內部 HTTP `POST /api/generate/`，不得直接操作 ComfyUI。
+**Handler 必須**：透過內部 HTTP 呼叫 Backend API（`/api/generate/`、`/api/generate/custom`、`/api/lora-train/start`、`/api/gallery/` 等），或 legacy 流程呼叫 `queue.submit()`；不得直接操作 ComfyUI。
 
 ---
 
@@ -54,9 +54,23 @@ Slack message 事件 → slack_handler.handle_message()
 
 ### 2.3 指令格式
 
-- **規格唯一來源**：`backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`（觸發關鍵字、必填/選填、範例）
-- Handler 透過 `parse_command()`、`validate_params()`、`build_help_message()` 取得指令規格，不得重複定義
+- **規格唯一來源**：`backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`
+- 觸發關鍵字、必填/選填、範例、說明皆以 COMMAND_SPECS 為準，不得在此重複定義
+- Handler 透過 `parse_command()`、`validate_params()`、`build_help_message()` 取得指令規格
 - 未符合格式時回覆：「參數格式錯誤，請用 !給我可用指令 查看」
+
+### 2.4 指令與 API 對照（引用 COMMAND_SPECS）
+
+| cmd_key | 對應 API | 說明 |
+|---------|----------|------|
+| help | 無 | `build_help_message()` |
+| generate | POST /api/generate/ | 依 prompt 生圖 |
+| generate_pose | GET workflow-templates + POST /api/generate/custom | 生圖 + 姿態參考圖 |
+| train_lora | POST /api/lora-train/start | 手動觸發 LoRA 訓練 |
+| query_gallery | GET /api/gallery/ | 圖庫列表 |
+| rerun | POST /api/gallery/{id}/rerun | 用某張圖參數再產 |
+
+**指令規格（triggers、required、optional、example、desc）**：見 `backend/app/services/slack_commands.py` 的 `COMMAND_SPECS`。
 
 ---
 
@@ -70,21 +84,28 @@ Slack message 事件 → slack_handler.handle_message()
 - `event`: Slack `message` 事件 payload（含 `text`、`channel`、`user` 等）
 - `logger`: 用於紀錄 log
 
-### 3.2 與生圖佇列的對接
+### 3.2 與 Backend API 的對接
 
-Handler 呼叫下列其一，不得直接操作 ComfyUI：
-
-- **queue.submit(params)**：`params` 為與 `POST /api/generate/` 相同的 `GenerateParams` 結構
-- **內部 HTTP**：`httpx.post("http://localhost:8000/api/generate/", json=params)`（若 queue 以 HTTP 包裝）
+Handler 使用 `internal_api_base_url` 透過內部 HTTP 呼叫 Backend API，不得直接操作 ComfyUI。對應關係見 §2.4。
 
 ### 3.3 回覆 Slack 的資料格式
 
-| 情境 | 回覆內容 |
-|------|----------|
-| 成功加入佇列 | `已加入生圖佇列，job_id: xxx` |
-| 佇列滿 (QueueFullError) | `生圖佇列已滿，請稍後再試` |
-| 解析失敗 | `無法理解，請輸入生圖描述` |
-| ComfyUI 不可用 | `生圖服務暫不可用` |
+依 COMMAND_SPECS 對應之 API 回傳 status 決定：
+
+| 指令 | 情境 | 回覆內容 |
+|------|------|----------|
+| help | 成功 | `build_help_message()` 文案 |
+| generate, generate_pose | 201 | `已加入生圖佇列，job_id: xxx` |
+| generate, generate_pose | 503 | `生圖佇列已滿` |
+| generate, generate_pose | 400 | `參數錯誤：{detail}` |
+| train_lora | 202 | `已加入訓練佇列，job_id: xxx` |
+| train_lora | 400/409 | `操作失敗：{detail}` |
+| query_gallery | 200 | `共 {total} 筆，最近：id=1 prompt=...` |
+| rerun | 202 | `已加入生圖佇列，job_id: xxx` |
+| rerun | 404 | `找不到該圖片` |
+| rerun | 503 | `生圖佇列已滿` |
+| 共用 | 解析失敗 | `參數格式錯誤，請用 !給我可用指令 查看` |
+| 共用 | 網路/服務不可用 | `生圖服務暫不可用` / `訓練服務暫不可用` / `圖庫服務暫不可用` |
 
 **禁止**：對 Slack 回傳 500 或未經處理的 exception 訊息；一律回覆友善提示並紀錄 log。
 
@@ -138,7 +159,7 @@ Handler 呼叫下列其一，不得直接操作 ComfyUI：
 
 實作或修改時請確認：
 
-- [ ] Handler 僅呼叫 `queue.submit()` 或 `/api/generate/`，不直接呼叫 ComfyUI
+- [ ] Handler 透過內部 HTTP 呼叫 Backend API（見 §2.4），不直接呼叫 ComfyUI
 - [ ] Token 從 config 讀取，無硬編碼
 - [ ] 過濾 bot 自身訊息，避免事件迴圈
 - [ ] 佇列滿、解析失敗時回覆友善訊息，不拋 500

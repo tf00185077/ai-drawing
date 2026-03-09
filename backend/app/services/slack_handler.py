@@ -92,24 +92,6 @@ def _safe_say(say: Any, channel: str, text: str) -> None:
         logger.exception("Slack say failed: %s", e)
 
 
-# 白名單：與 COMMAND_SPECS["generate"] required + optional 對齊
-_GENERATE_ALLOWED_KEYS = frozenset(
-    {"prompt", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height", "sampler_name", "scheduler"}
-)
-# generate_pose 白名單
-_GENERATE_POSE_ALLOWED_KEYS = frozenset(
-    {"prompt", "image_pose", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height"}
-)
-# train_lora 白名單（generate_after 為巢狀物件，另處理）
-_TRAIN_LORA_ALLOWED_KEYS = frozenset(
-    {"folder", "checkpoint", "epochs", "resolution", "batch_size", "learning_rate", "class_tokens", "keep_tokens", "num_repeats", "mixed_precision", "generate_after"}
-)
-# query_gallery 白名單
-_QUERY_GALLERY_ALLOWED_KEYS = frozenset(
-    {"limit", "offset", "checkpoint", "lora", "from_date", "to_date"}
-)
-
-
 def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
     """
     S3.2：!生圖片 → POST /api/generate/
@@ -126,7 +108,7 @@ def _handle_generate_command(say: Any, channel: str, json_str: str | None, user:
     if val_err:
         _safe_say(say, channel, val_err)
         return
-    body = {k: v for k, v in data.items() if k in _GENERATE_ALLOWED_KEYS and v is not None}
+    body = {k: v for k, v in data.items() if k in slack_commands.get_allowed_keys("generate") and v is not None}
     if "prompt" not in body:
         _safe_say(say, channel, "缺少必填參數：prompt")
         return
@@ -185,7 +167,7 @@ def _handle_generate_pose_command(say: Any, channel: str, json_str: str | None, 
     if val_err:
         _safe_say(say, channel, val_err)
         return
-    body = {k: v for k, v in data.items() if k in _GENERATE_POSE_ALLOWED_KEYS and v is not None}
+    body = {k: v for k, v in data.items() if k in slack_commands.get_allowed_keys("generate_pose") and v is not None}
     if "prompt" not in body or "image_pose" not in body:
         _safe_say(say, channel, "缺少必填參數：prompt、image_pose")
         return
@@ -268,7 +250,7 @@ def _handle_train_lora_command(say: Any, channel: str, json_str: str | None, use
     if val_err:
         _safe_say(say, channel, val_err)
         return
-    body: dict[str, Any] = {k: v for k, v in data.items() if k in _TRAIN_LORA_ALLOWED_KEYS and v is not None}
+    body: dict[str, Any] = {k: v for k, v in data.items() if k in slack_commands.get_allowed_keys("train_lora") and v is not None}
     if "folder" not in body:
         _safe_say(say, channel, "缺少必填參數：folder")
         return
@@ -319,7 +301,7 @@ def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, 
         _safe_say(say, channel, val_err)
         return
 
-    raw = {k: v for k, v in data.items() if k in _QUERY_GALLERY_ALLOWED_KEYS and v is not None}
+    raw = {k: v for k, v in data.items() if k in slack_commands.get_allowed_keys("query_gallery") and v is not None}
     params: dict[str, Any] = {}
     for k, v in raw.items():
         if k == "limit":

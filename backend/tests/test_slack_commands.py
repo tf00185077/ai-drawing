@@ -6,6 +6,7 @@ import pytest
 from app.services.slack_commands import (
     COMMAND_SPECS,
     build_help_message,
+    get_allowed_keys,
     parse_command,
     parse_json_safe,
     validate_params,
@@ -81,6 +82,17 @@ def test_validate_params_rerun() -> None:
     assert validate_params("rerun", {}) == "缺少必填參數：image_id"
     assert validate_params("rerun", {"image_id": 123}) is None
     assert "必須為整數" in (validate_params("rerun", {"image_id": "x"}) or "")
+
+
+def test_get_allowed_keys() -> None:
+    """get_allowed_keys 從 COMMAND_SPECS 取得 required + optional"""
+    keys = get_allowed_keys("generate")
+    assert "prompt" in keys
+    assert "batch_size" in keys
+    assert "sampler_name" in keys
+    keys_pose = get_allowed_keys("generate_pose")
+    assert "prompt" in keys_pose and "image_pose" in keys_pose
+    assert get_allowed_keys("unknown") == frozenset()
 
 
 def test_parse_json_safe() -> None:
