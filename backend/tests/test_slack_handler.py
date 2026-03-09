@@ -2,9 +2,16 @@
 slack_handler 單元測試
 測試指令解析與 handle_message 核心邏輯
 """
+from unittest.mock import MagicMock, patch
+
 import pytest
 
-from app.services.slack_handler import _is_slack_command, _parse_legacy_command
+from app.services.slack_handler import (
+    _handle_generate_command,
+    _handle_rerun_command,
+    _is_slack_command,
+    _parse_legacy_command,
+)
 
 
 def test_parse_command_generate_with_count() -> None:
@@ -63,3 +70,34 @@ def test_is_slack_command_unknown() -> None:
     """非指令不處理"""
     assert _is_slack_command("hello") is False
     assert _is_slack_command("") is False
+
+
+def test_handle_generate_command_success() -> None:
+    """_handle_generate_command 201 時 say 回覆 job_id"""
+    say = MagicMock()
+    with patch("app.services.slack_handler.get_settings") as mock_settings:
+        mock_settings.return_value.internal_api_base_url = "http://test:8000"
+        with patch("httpx.Client") as mock_client:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 201
+            mock_resp.json.return_value = {"job_id": "abc-123"}
+            mock_client.return_value.__enter__.return_value.post.return_value = mock_resp
+            _handle_generate_command(say, "C1", '{"prompt":"test"}', "U1")
+    say.assert_called_once()
+    call_text = say.call_args[1]["text"]
+    assert "abc-123" in call_text
+    assert "已加入生圖佇列" in call_text
+
+
+def test_handle_rerun_command_404() -> None:
+    """_handle_rerun_command 404 時 say 回覆找不到該圖片"""
+    say = MagicMock()
+    with patch("app.services.slack_handler.get_settings") as mock_settings:
+        mock_settings.return_value.internal_api_base_url = "http://test:8000"
+        with patch("httpx.Client") as mock_client:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 404
+            mock_client.return_value.__enter__.return_value.post.return_value = mock_resp
+            _handle_rerun_command(say, "C1", '{"image_id":999}', "U1")
+    say.assert_called_once()
+    assert "找不到該圖片" in say.call_args[1]["text"]
