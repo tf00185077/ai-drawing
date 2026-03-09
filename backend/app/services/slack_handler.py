@@ -96,6 +96,10 @@ def _safe_say(say: Any, channel: str, text: str) -> None:
 _GENERATE_ALLOWED_KEYS = frozenset(
     {"prompt", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height", "sampler_name", "scheduler"}
 )
+# generate_pose 白名單
+_GENERATE_POSE_ALLOWED_KEYS = frozenset(
+    {"prompt", "image_pose", "batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height"}
+)
 
 
 def _handle_generate_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
@@ -157,6 +161,89 @@ def _handle_generate_command(say: Any, channel: str, json_str: str | None, user:
         _safe_say(say, channel, "生圖服務暫不可用")
 
 
+def _handle_generate_pose_command(say: Any, channel: str, json_str: str | None, user: str, event: dict[str, Any] | None = None) -> None:
+    """
+    S3.3：!用指定動作生圖片 → GET workflow-templates/{name} + POST /api/generate/custom
+    201→已加入佇列；503→佇列滿；400→參數錯誤
+    """
+    if json_str is None:
+        _safe_say(say, channel, "參數格式錯誤，請用 !給我可用指令 查看")
+        return
+    data, parse_err = slack_commands.parse_json_safe(json_str)
+    if parse_err:
+        _safe_say(say, channel, f"參數格式錯誤：{parse_err}")
+        return
+    val_err = slack_commands.validate_params("generate_pose", data)
+    if val_err:
+        _safe_say(say, channel, val_err)
+        return
+    body = {k: v for k, v in data.items() if k in _GENERATE_POSE_ALLOWED_KEYS and v is not None}
+    if "prompt" not in body or "image_pose" not in body:
+        _safe_say(say, channel, "缺少必填參數：prompt、image_pose")
+        return
+
+    base_url = get_settings().internal_api_base_url.rstrip("/")
+    # 先取得 workflow 模板：優先 controlnet_pose，404 則試 default
+    wf_name = "controlnet_pose"
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.get(f"{base_url}/api/generate/workflow-templates/{wf_name}")
+            if r.status_code == 404:
+                wf_name = "default"
+                r = client.get(f"{base_url}/api/generate/workflow-templates/{wf_name}")
+            if r.status_code != 200:
+                logger.warning("Workflow template fetch failed: %d %s", r.status_code, r.text)
+                _safe_say(say, channel, "取得 workflow 模板失敗")
+                return
+            workflow = r.json()
+    except Exception as e:
+        logger.exception("Slack generate_pose workflow fetch failed: %s", e)
+        _safe_say(say, channel, "生圖服務暫不可用")
+        return
+
+    payload = {
+        "workflow": workflow,
+        "prompt": body["prompt"],
+        "image_pose": body["image_pose"],
+        "slack_channel_id": channel,
+    }
+    if event and (ts := event.get("ts")):
+        payload["slack_thread_ts"] = ts
+    for k in ("batch_size", "checkpoint", "lora", "negative_prompt", "seed", "steps", "cfg", "width", "height"):
+        if k in body:
+            payload[k] = body[k]
+
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            r = client.post(f"{base_url}/api/generate/custom", json=payload)
+    except Exception as e:
+        logger.exception("Slack generate_pose API call failed: %s", e)
+        _safe_say(say, channel, "生圖服務暫不可用")
+        return
+
+    if r.status_code == 201:
+        try:
+            resp = r.json()
+            job_id = resp.get("job_id", "unknown")
+            _safe_say(say, channel, f"已加入生圖佇列，job_id: {job_id}")
+        except Exception:
+            _safe_say(say, channel, "已加入生圖佇列")
+    elif r.status_code == 503:
+        _safe_say(say, channel, "生圖佇列已滿")
+        logger.warning("Slack user %s hit queue full (503) on generate_pose", user)
+    elif r.status_code == 400:
+        try:
+            detail = r.json().get("detail", str(r.text))
+            if isinstance(detail, list):
+                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+        except Exception:
+            detail = str(r.text) or "參數錯誤"
+        _safe_say(say, channel, f"參數錯誤：{detail}")
+    else:
+        logger.warning("Slack generate_pose API unexpected status %d: %s", r.status_code, r.text)
+        _safe_say(say, channel, "生圖服務暫不可用")
+
+
 def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> None:
     """
     Slack message 事件處理：解析生圖指令、提交佇列、回覆使用者。
@@ -184,6 +271,8 @@ def handle_message(event: dict[str, Any], say: Any, logger_instance: Any) -> Non
             _safe_say(say, channel, slack_commands.build_help_message())
         elif cmd_key == "generate":
             _handle_generate_command(say, channel, json_str, user, event=event)
+        elif cmd_key == "generate_pose":
+            _handle_generate_pose_command(say, channel, json_str, user, event=event)
         else:
             _safe_say(say, channel, "此指令開發中，請稍後再試")
         return

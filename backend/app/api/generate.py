@@ -82,6 +82,10 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["scheduler"] = body.scheduler
         if body.image_pose is not None:
             params["image_pose"] = body.image_pose
+        if body.slack_channel_id:
+            params["slack_channel_id"] = body.slack_channel_id
+        if body.slack_thread_ts:
+            params["slack_thread_ts"] = body.slack_thread_ts
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,

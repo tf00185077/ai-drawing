@@ -57,6 +57,13 @@ def test_validate_params_generate() -> None:
     assert validate_params("generate", {"prompt": "x"}) is None
 
 
+def test_validate_params_generate_pose() -> None:
+    """validate_params 檢查 generate_pose 必填 prompt、image_pose"""
+    assert validate_params("generate_pose", {}) == "缺少必填參數：prompt"
+    assert validate_params("generate_pose", {"prompt": "x"}) == "缺少必填參數：image_pose"
+    assert validate_params("generate_pose", {"prompt": "1girl", "image_pose": "2026-03-08/x.png"}) is None
+
+
 def test_validate_params_rerun() -> None:
     """validate_params 檢查 rerun 的 image_id 為整數"""
     assert validate_params("rerun", {}) == "缺少必填參數：image_id"
