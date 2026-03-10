@@ -138,14 +138,13 @@ def _handle_generate_command(say: Any, channel: str, json_str: str | None, user:
     elif r.status_code == 503:
         _safe_say(say, channel, "生圖佇列已滿")
         logger.warning("Slack user %s hit queue full (503)", user)
-    elif r.status_code == 400:
+    elif r.status_code in (400, 422):
         try:
             detail = r.json().get("detail", str(r.text))
-            if isinstance(detail, list):
-                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+            msg = slack_commands.format_api_param_error(detail, prefix="參數錯誤")
         except Exception:
-            detail = str(r.text) or "參數錯誤"
-        _safe_say(say, channel, f"參數錯誤：{detail}")
+            msg = str(r.text) or "參數錯誤"
+        _safe_say(say, channel, msg)
     else:
         logger.warning("Slack generate API unexpected status %d: %s", r.status_code, r.text)
         _safe_say(say, channel, "生圖服務暫不可用")
@@ -221,14 +220,13 @@ def _handle_generate_pose_command(say: Any, channel: str, json_str: str | None, 
     elif r.status_code == 503:
         _safe_say(say, channel, "生圖佇列已滿")
         logger.warning("Slack user %s hit queue full (503) on generate_pose", user)
-    elif r.status_code == 400:
+    elif r.status_code in (400, 422):
         try:
             detail = r.json().get("detail", str(r.text))
-            if isinstance(detail, list):
-                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+            msg = slack_commands.format_api_param_error(detail, prefix="參數錯誤")
         except Exception:
-            detail = str(r.text) or "參數錯誤"
-        _safe_say(say, channel, f"參數錯誤：{detail}")
+            msg = str(r.text) or "參數錯誤"
+        _safe_say(say, channel, msg)
     else:
         logger.warning("Slack generate_pose API unexpected status %d: %s", r.status_code, r.text)
         _safe_say(say, channel, "生圖服務暫不可用")
@@ -271,14 +269,13 @@ def _handle_train_lora_command(say: Any, channel: str, json_str: str | None, use
             _safe_say(say, channel, f"已加入訓練佇列，job_id: {job_id}")
         except Exception:
             _safe_say(say, channel, "已加入訓練佇列")
-    elif r.status_code in (400, 409):
+    elif r.status_code in (400, 409, 422):
         try:
             detail = r.json().get("detail", str(r.text))
-            if isinstance(detail, list):
-                detail = "; ".join(str(d.get("msg", d)) for d in detail)
+            msg = slack_commands.format_api_param_error(detail, prefix="操作失敗")
         except Exception:
-            detail = str(r.text) or "操作失敗"
-        _safe_say(say, channel, f"操作失敗：{detail}")
+            msg = str(r.text) or "操作失敗"
+        _safe_say(say, channel, msg)
     else:
         logger.warning("Slack train_lora API unexpected status %d: %s", r.status_code, r.text)
         _safe_say(say, channel, "訓練服務暫不可用")
@@ -315,6 +312,11 @@ def _handle_query_gallery_command(say: Any, channel: str, json_str: str | None, 
                 params["offset"] = max(0, int(v))
             except (ValueError, TypeError):
                 params["offset"] = 0
+        elif k == "image_id":
+            params["image_id"] = int(v) if isinstance(v, str) else v
+        elif k == "image_name":
+            if isinstance(v, str) and v.strip():
+                params["image_name"] = v.strip()
         else:
             params[k] = v
     if "limit" not in params:

@@ -50,9 +50,9 @@ COMMAND_SPECS: list[dict[str, Any]] = [
         "cmd_key": "query_gallery",
         "triggers": ["!查詢圖片", "!查詢圖片參數"],
         "required": [],
-        "optional": ["limit", "offset", "checkpoint", "lora", "from_date", "to_date"],
-        "example": '!查詢圖片 {"limit":10}',
-        "desc": "圖庫列表",
+        "optional": ["limit", "offset", "checkpoint", "lora", "from_date", "to_date", "image_id", "image_name"],
+        "example": '!查詢圖片 {"limit":10} 或 {"image_id":123}',
+        "desc": "圖庫列表，可用 image_id 或 image_name 查詢",
     },
     {
         "cmd_key": "rerun",
@@ -131,7 +131,7 @@ def validate_params(cmd_key: str, data: dict[str, Any]) -> str | None:
         if val is None or (isinstance(val, str) and not val.strip()):
             return f"缺少必填參數：{field}"
 
-    if cmd_key == "rerun" and "image_id" in data:
+    if cmd_key in ("rerun", "query_gallery") and "image_id" in data and data["image_id"] is not None:
         try:
             vid = data["image_id"]
             if isinstance(vid, str):
@@ -196,6 +196,7 @@ def build_help_message() -> str:
 def parse_json_safe(raw: str) -> tuple[dict[str, Any] | None, str | None]:
     """
     解析 JSON 字串。成功回傳 (data, None)，失敗回傳 (None, error_msg)。
+    錯誤訊息含解析失敗位置（行、欄）以便定位。
     """
     if not raw or not raw.strip():
         return ({}, None)
@@ -205,4 +206,34 @@ def parse_json_safe(raw: str) -> tuple[dict[str, Any] | None, str | None]:
             return (None, "參數必須為 JSON 物件")
         return (data, None)
     except json.JSONDecodeError as e:
-        return (None, f"JSON 解析失敗: {e}")
+        pos = f"第 {e.lineno} 行第 {e.colno} 欄" if getattr(e, "lineno", None) else "未知位置"
+        return (None, f"JSON 解析失敗（{pos}）：{e.msg}")
+
+
+def format_api_param_error(detail: Any, prefix: str = "參數錯誤") -> str:
+    """
+    解析 Backend API 回傳的驗證錯誤詳情，產出可讀的參數級錯誤訊息。
+    支援 FastAPI/Pydantic 格式：detail 為 list 時，每項含 loc（路徑）、msg。
+    例：detail=[{"loc":["body","batch_size"],"msg":"..."}] → "參數 batch_size 錯誤：..."
+    """
+    if isinstance(detail, str):
+        return f"{prefix}：{detail}"
+    if not isinstance(detail, list):
+        return f"{prefix}：{detail}"
+
+    parts: list[str] = []
+    seen_params: set[str] = set()
+    for item in detail:
+        if not isinstance(item, dict):
+            parts.append(str(item))
+            continue
+        loc = item.get("loc") or []
+        msg = item.get("msg", "")
+        # loc 如 ["body", "batch_size"] 或 ["query", "limit"]，取最後一項為參數名
+        param = loc[-1] if isinstance(loc, (list, tuple)) and len(loc) > 0 else None
+        if param is not None and param not in seen_params:
+            seen_params.add(param)
+            parts.append(f"參數 {param}：{msg}")
+        elif msg:
+            parts.append(msg)
+    return f"{prefix}：{'; '.join(parts)}" if parts else f"{prefix}"

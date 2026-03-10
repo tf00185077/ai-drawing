@@ -8,6 +8,7 @@ import pytest
 
 from app.services.slack_handler import (
     _handle_generate_command,
+    _handle_query_gallery_command,
     _handle_rerun_command,
     _is_slack_command,
     _parse_legacy_command,
@@ -101,3 +102,40 @@ def test_handle_rerun_command_404() -> None:
             _handle_rerun_command(say, "C1", '{"image_id":999}', "U1")
     say.assert_called_once()
     assert "找不到該圖片" in say.call_args[1]["text"]
+
+
+def test_handle_query_gallery_with_image_id() -> None:
+    """_handle_query_gallery_command image_id 時傳遞至 API"""
+    say = MagicMock()
+    with patch("app.services.slack_handler.get_settings") as mock_settings:
+        mock_settings.return_value.internal_api_base_url = "http://test:8000"
+        with patch("httpx.Client") as mock_client:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"total": 1, "items": [{"id": 1, "prompt": "1girl"}]}
+            mock_get = MagicMock(return_value=mock_resp)
+            mock_client.return_value.__enter__.return_value.get = mock_get
+            _handle_query_gallery_command(say, "C1", '{"image_id":1}', "U1")
+    mock_get.assert_called_once()
+    call_kwargs = mock_get.call_args[1]
+    assert call_kwargs.get("params", {}).get("image_id") == 1
+
+
+def test_handle_generate_command_422_param_error() -> None:
+    """_handle_generate_command 422 時解析參數錯誤並回傳參數名"""
+    say = MagicMock()
+    with patch("app.services.slack_handler.get_settings") as mock_settings:
+        mock_settings.return_value.internal_api_base_url = "http://test:8000"
+        with patch("httpx.Client") as mock_client:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 422
+            mock_resp.json.return_value = {
+                "detail": [
+                    {"loc": ["body", "batch_size"], "msg": "Input should be a valid integer"},
+                ]
+            }
+            mock_client.return_value.__enter__.return_value.post.return_value = mock_resp
+            _handle_generate_command(say, "C1", '{"prompt":"test","batch_size":"abc"}', "U1")
+    say.assert_called_once()
+    text = say.call_args[1]["text"]
+    assert "參數 batch_size" in text

@@ -6,6 +6,7 @@ import pytest
 from app.services.slack_commands import (
     COMMAND_SPECS,
     build_help_message,
+    format_api_param_error,
     get_allowed_keys,
     parse_command,
     parse_json_safe,
@@ -41,15 +42,15 @@ def test_parse_command_recognizes_commands() -> None:
 
 
 def test_build_help_message_contains_all() -> None:
-    """build_help_message 回傳包含 6 個指令的文案"""
+    """build_help_message 回傳包含主要指令的文案"""
     msg = build_help_message()
     assert "!生圖片" in msg
     assert "!用指定動作生圖片" in msg
     assert "!訓練lora" in msg
     assert "!查詢圖片" in msg
     assert "!重新生成圖片" in msg
+    assert "!查可用資源" in msg
     assert "!給我可用指令" in msg
-    assert len(COMMAND_SPECS) == 6
 
 
 def test_validate_params_generate() -> None:
@@ -72,9 +73,11 @@ def test_validate_params_train_lora() -> None:
 
 
 def test_validate_params_query_gallery() -> None:
-    """validate_params query_gallery 無必填，皆通過"""
+    """validate_params query_gallery 無必填，image_id 需為整數"""
     assert validate_params("query_gallery", {}) is None
     assert validate_params("query_gallery", {"limit": 5}) is None
+    assert validate_params("query_gallery", {"image_id": 123}) is None
+    assert "必須為整數" in (validate_params("query_gallery", {"image_id": "x"}) or "")
 
 
 def test_validate_params_rerun() -> None:
@@ -103,3 +106,48 @@ def test_parse_json_safe() -> None:
     assert data == {} and err is None
     data, err = parse_json_safe("invalid")
     assert data is None and err is not None
+
+
+def test_parse_json_safe_error_includes_position() -> None:
+    """parse_json_safe JSON 解析失敗時含行/欄位置"""
+    _, err = parse_json_safe('{"a": }')
+    assert err is not None
+    assert "第" in err
+    assert "行" in err
+    assert "欄" in err
+    assert "JSON 解析失敗" in err
+
+
+def test_parse_json_safe_error_invalid_key() -> None:
+    """parse_json_safe 無效 key 時回傳定位錯誤"""
+    _, err = parse_json_safe('{a: 1}')
+    assert err is not None
+    assert "JSON 解析失敗" in err
+
+
+def test_format_api_param_error_pydantic_list() -> None:
+    """format_api_param_error 解析 Pydantic 格式，產出參數級訊息"""
+    detail = [
+        {"loc": ["body", "batch_size"], "msg": "Input should be a valid integer"},
+    ]
+    result = format_api_param_error(detail)
+    assert "參數 batch_size" in result
+    assert "Input should be" in result
+
+
+def test_format_api_param_error_multiple_params() -> None:
+    """format_api_param_error 多參數錯誤時逐一列出"""
+    detail = [
+        {"loc": ["body", "batch_size"], "msg": "應為 1～8"},
+        {"loc": ["body", "steps"], "msg": "應為 1～150"},
+    ]
+    result = format_api_param_error(detail)
+    assert "參數 batch_size" in result
+    assert "參數 steps" in result
+    assert "1～8" in result
+
+
+def test_format_api_param_error_string_detail() -> None:
+    """format_api_param_error 收到字串 detail 時直接使用"""
+    result = format_api_param_error("folder 不存在", prefix="操作失敗")
+    assert result == "操作失敗：folder 不存在"

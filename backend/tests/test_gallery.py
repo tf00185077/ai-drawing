@@ -52,6 +52,25 @@ def test_list_images_returns_items(client) -> None:
     assert len(data["items"]) >= 2
 
 
+def test_list_images_filter_by_image_id(client) -> None:
+    """GET /api/gallery/?image_id=1 回傳該 ID 圖片"""
+    res = client.get("/api/gallery/", params={"image_id": 1})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["id"] == 1
+
+
+def test_list_images_filter_by_image_name(client) -> None:
+    """GET /api/gallery/?image_name=test1 依路徑關鍵字模糊查詢"""
+    res = client.get("/api/gallery/", params={"image_name": "test1"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total"] >= 1
+    assert any("test1" in (it.get("image_path") or "") for it in data["items"])
+
+
 def test_get_image_detail_returns_404_for_invalid_id(client) -> None:
     """GET /api/gallery/99999 回傳 404"""
     res = client.get("/api/gallery/99999")

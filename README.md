@@ -100,6 +100,19 @@
 [訓練完成] → 自動選用新 LoRA → ComfyUI 產圖 → 參數記錄 → Gallery
 ```
 
+### WD Tagger 資料夾類型（依路徑選用 blacklist）
+
+將訓練素材放入對應資料夾，WD Tagger 會自動套用不同的 tag 過濾：
+
+| 資料夾 | 用途 | 過濾重點 |
+|--------|------|----------|
+| `lora_train/character/` | 人物訓練 | 構圖、背景、髮瞳色等噪音 |
+| `lora_train/style/` | 畫風訓練 | 角色名、系列名、品質元資料 |
+| `lora_train/costume/` | 服裝訓練 | 背景、髮瞳色、臉部；保留服裝 tag |
+| `lora_train/background/` | 背景訓練 | 人物、身體、服裝等 |
+
+範例：`lora_train/costume/10_school_uniform/` 內的圖片會使用服裝 blacklist。
+
 ---
 
 ## 遠端觸發生圖 (Slack Trigger)

@@ -61,6 +61,8 @@ async def list_images(
     lora: str | None = Query(None, description="篩選 LoRA"),
     from_date: str | None = Query(None, description="ISO 日期起"),
     to_date: str | None = Query(None, description="ISO 日期迄"),
+    image_id: int | None = Query(None, description="依圖片 ID 精確查詢"),
+    image_name: str | None = Query(None, description="依圖片路徑/檔名關鍵字模糊查詢"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -68,6 +70,10 @@ async def list_images(
     """圖庫列表，支援篩選"""
     q = db.query(GeneratedImage)
 
+    if image_id is not None:
+        q = q.filter(GeneratedImage.id == image_id)
+    if image_name and image_name.strip():
+        q = q.filter(GeneratedImage.image_path.ilike(f"%{image_name.strip()}%"))
     if checkpoint:
         q = q.filter(GeneratedImage.checkpoint.ilike(f"%{checkpoint}%"))
     if lora:

@@ -38,6 +38,11 @@ class Settings(BaseSettings):
 
     # LoRA 訓練
     lora_train_dir: str = "./lora_train"
+    # 建議資料夾結構（WD Tagger 依路徑選用不同 blacklist）：
+    #   lora_train/character/10_角色名/  → 人物訓練
+    #   lora_train/style/10_畫師名/      → 畫風訓練
+    #   lora_train/costume/10_服裝名/    → 服裝訓練
+    #   lora_train/background/10_場景/   → 背景訓練
     lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
     lora_checkpoint_dirs: str = ""  # 逗號分隔，純檔名 checkpoint 在此搜尋
@@ -46,7 +51,7 @@ class Settings(BaseSettings):
     sd_scripts_path: str = "./sd-scripts"
     sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
     # WD Tagger 後處理
-    wd_tag_limit: int = 15  # caption 最多保留 tag 數
+    wd_tag_limit: int = 20  # caption 最多保留 tag 數
     wd_trigger_word: str = ""  # 若設，會前綴至 caption（如 class token ohwx）
     # LoRA 訓練參數預設值（API 未帶入時使用）
     lora_resolution: int = 1024

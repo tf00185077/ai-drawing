@@ -115,6 +115,8 @@
 | lora | string | 否 | 篩選 LoRA |
 | from_date | string | 否 | ISO 日期，如 `2024-01-01` |
 | to_date | string | 否 | ISO 日期 |
+| image_id | integer | 否 | 依圖片 ID 精確查詢 |
+| image_name | string | 否 | 依圖片路徑/檔名關鍵字模糊查詢 |
 | limit | integer | 否 | 每頁筆數，預設 20 |
 | offset | integer | 否 | 分頁偏移，預設 0 |
 
