@@ -42,10 +42,6 @@ async def trigger_generate(body: GenerateRequest):
             params["sampler_name"] = body.sampler_name
         if body.scheduler is not None:
             params["scheduler"] = body.scheduler
-        if body.slack_channel_id:
-            params["slack_channel_id"] = body.slack_channel_id
-        if body.slack_thread_ts:
-            params["slack_thread_ts"] = body.slack_thread_ts
         job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,
@@ -87,10 +83,6 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["image"] = body.image
         if body.image_pose is not None:
             params["image_pose"] = body.image_pose
-        if body.slack_channel_id:
-            params["slack_channel_id"] = body.slack_channel_id
-        if body.slack_thread_ts:
-            params["slack_thread_ts"] = body.slack_thread_ts
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,
@@ -114,10 +106,7 @@ def _list_model_files(dir_path: Path, exts: tuple[str, ...] = (".safetensors", "
 
 @router.get("/available-resources")
 async def get_available_resources():
-    """
-    列出可用的 checkpoint、lora、workflow 模板。
-    供 Slack !查可用資源 指令使用。
-    """
+    """列出可用的 checkpoint、lora、workflow 模板"""
     settings = get_settings()
     checkpoints_dir = Path(settings.comfyui_checkpoints_dir)
     loras_dir = Path(settings.comfyui_loras_dir)
