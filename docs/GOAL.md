@@ -20,7 +20,7 @@
 1. 查詢可用的 checkpoints / LoRA / workflows
 2. 用任意參數生圖（含進階參數：sampler、lora_strength、denoise）
 3. 查詢 job 狀態、取消 job
-4. 觸發 LoRA 訓練（含訓練後自動產圖）
+4. 觸發 LoRA 訓練、查詢訓練狀態（訓練完後由 agent 自行呼叫生圖，backend 不自動串接）
 5. 對圖片呼叫 LLM 自動標注 caption
 
 **不在目前範圍**：
