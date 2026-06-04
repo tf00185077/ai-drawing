@@ -6,12 +6,50 @@ from mcp_server.tools.generate import (
     generate_image_custom_workflow,
     generate_image_from_description,
     generate_queue_status,
+    get_available_resources,
     get_workflow_template,
     list_workflow_templates,
     suggest_workflow_from_description,
 )
 from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
+
+
+def test_get_available_resources_formats_output() -> None:
+    """get_available_resources 正確格式化 checkpoints、loras、workflows 清單"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "checkpoints": ["v1-5-pruned.safetensors", "animagine-xl.safetensors"],
+        "loras": ["my_character.safetensors"],
+        "workflows": ["default", "default_lora", "img2img_lora_pose"],
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_available_resources()
+
+    assert "Checkpoints (2)" in result
+    assert "v1-5-pruned" in result
+    assert "animagine-xl" in result
+    assert "LoRAs (1)" in result
+    assert "my_character" in result
+    assert "Workflows (3)" in result
+    assert "default" in result
+    assert "default_lora" in result
+    mock_client.get.assert_called_once_with("generate/available-resources")
+
+
+def test_get_available_resources_empty_lists() -> None:
+    """get_available_resources 處理空清單"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"checkpoints": [], "loras": [], "workflows": []}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_available_resources()
+
+    assert "Checkpoints (0)" in result
+    assert "LoRAs (0)" in result
+    assert "Workflows (0)" in result
+    assert "(無)" in result
 
 
 def test_generate_image_returns_success_message() -> None:
