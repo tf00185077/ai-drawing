@@ -71,12 +71,6 @@ class Settings(BaseSettings):
     # ControlNet 預設姿態圖（路徑相對於專案根目錄）
     controlnet_default_pose_image: str = "backend/lora_train/lovelive/__asaka_karin_love_live_and_1_more_drawn_by_nasuno_nasuno42__sample-363e09661ab550cd5a85bbc226caf34e.jpg"
 
-    # Slack（遠端觸發生圖，Socket Mode）
-    slack_app_token: str = ""  # xapp-xxx，需 connections:write
-    slack_bot_token: str = ""  # xoxb-xxx，Bot User OAuth Token
-    # Slack handler 呼叫 Backend API 的 base URL（預設本機）
-    internal_api_base_url: str = "http://127.0.0.1:8000"
-
     class Config:
         env_file = str(_ENV_PATH)
         env_file_encoding = "utf-8"

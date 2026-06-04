@@ -93,15 +93,7 @@ def test_rerun_returns_404_for_invalid_id(client) -> None:
     assert res.status_code == 404
 
 
-def test_rerun_accepts_slack_body(client) -> None:
-    """POST /api/gallery/1/rerun 可帶入 slack_channel_id、slack_thread_ts（Slack 回傳用）"""
-    res = client.post(
-        "/api/gallery/1/rerun",
-        json={"slack_channel_id": "C123", "slack_thread_ts": "123.456"},
-    )
-    assert res.status_code == 202
-    data = res.json()
-    assert "job_id" in data
+# Slack 相關測試已移除，因為 Slack 功能已從系統中移除
 
 
 def test_export_json_returns_image_detail(client) -> None:

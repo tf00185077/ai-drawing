@@ -111,10 +111,9 @@ async def get_image_detail(image_id: int, db: Session = Depends(get_db)):
 @router.post("/{image_id}/rerun", response_model=RerunResponse, status_code=202)
 async def rerun_image(
     image_id: int,
-    body: RerunRequest | None = Body(None),
     db: Session = Depends(get_db),
 ):
-    """一鍵重現：載入參數再次生成。body 可帶 slack_channel_id、slack_thread_ts 供 Slack 生圖完成後回傳"""
+    """一鍵重現：載入參數再次生成"""
     row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
     if not row:
         raise HTTPException(404, "找不到該圖片")
@@ -127,11 +126,6 @@ async def rerun_image(
         "steps": row.steps,
         "cfg": row.cfg,
     }
-    if body:
-        if body.slack_channel_id:
-            params["slack_channel_id"] = body.slack_channel_id
-        if body.slack_thread_ts:
-            params["slack_thread_ts"] = body.slack_thread_ts
     try:
         job_id = submit(params)
         return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列")
