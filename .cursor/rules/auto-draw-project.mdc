@@ -5,71 +5,37 @@ alwaysApply: true
 
 # AI 自動化出圖系統 - Cursor Rule
 
-**Agent 請優先閱讀 `AGENTS.md`**：內含完整架構、檔案對應、資料結構、Roadmap 實作位置與相依關係。
+**Agent 必讀順序**：
+1. `AGENTS.md` — 架構、Tech Stack、編碼慣例、Skill 對應
+2. `docs/GOAL.md` — 系統目標與現在聚焦的範圍
+3. `docs/PROGRESS.md` — 現在做到哪、下一步是什麼（唯一進度來源）
+4. `docs/task-specs/phase{N}.md` — 要做的 task 的完整 spec
 
-## 專案定位
+## 核心原則
 
-本專案為整合 ComfyUI、LoRA 訓練與參數記錄的完整自動化圖片生成系統，核心流程為：資料夾監聽自動 .txt → LoRA 訓練 → ComfyUI 產圖 → 參數記錄。
+- **Agent-first**：MCP Tools 的完整性優先於前端 UI
+- **單一來源**：進度只更新 `docs/PROGRESS.md`，不改 README 或 AGENTS.md
+- **驗證明確**：每個 task 都有 verify 指令，見 `docs/task-specs/` 與 `docs/agent-framework.md`
+- **安全第一**：KEY / Token 一律走環境變數，禁止硬編碼
 
-## Tech Stack（固定）
+## Skill 優先參考
 
-- **後端**: Python + FastAPI
-- **前端**: React + Tailwind
-- **資料庫**: SQLite / PostgreSQL
-- **AI 標註**: WD Tagger / BLIP2
-- **圖片引擎**: ComfyUI API (WebSocket / REST)
-- **LoRA 訓練**: Kohya sd-scripts
-- **資料夾監聽**: watchdog
-- **部署**: Docker
+實作前先查閱對應 `.cursor/skills/` 下的 SKILL.md：
 
-## 五大模組架構
+| 領域 | Skill |
+|------|-------|
+| ComfyUI（生圖、workflow、佇列） | `comfyui-api-client` |
+| Workflow JSON 組裝 | `comfyui-workflow` |
+| LoRA 模組 | `lora-train-docs` |
+| Kohya sd-scripts | `kohya-sd-scripts` |
+| WD Tagger | `wd-tagger` |
+| Python 後端擴展性審核 | `python-extensibility-review` |
+| MCP Tools 呼叫 | `mcp-tools-usage` |
 
-1. **生圖模組**: ComfyUI API、Workflow JSON 模板、批次排程器
-2. **圖庫模組**: 參數與圖片記錄、Gallery 瀏覽、一鍵重現、匯出
-3. **LoRA 文件工具**: 資料夾監聽 .txt、Caption 編輯、打包下載
-4. **LoRA 訓練與產圖串接**: 訓練執行器、觸發邏輯、Pipeline 自動產圖、佇列管理
-5. **MCP 自然語言介面**: MCP Server 暴露 Tools、角色/風格語意對應、Cursor 整合
+## Tech Stack（固定，勿替換）
 
-## 資料流原則
-
-- 生圖後必須自動寫入所有參數至資料庫
-- 圖片必須存至結構化資料夾
-- LoRA 訓練完成後應自動觸發 ComfyUI 產圖，並寫入記錄系統
-- 避免重複觸發：需佇列管理與狀態追蹤
-
-## Workflow 參數
-
-支援動態替換：checkpoint、LoRA、prompt、seed、steps、cfg。
-
-## 編碼慣例
-
-- **後端**: FastAPI 結構，Python 型別註解
-- **前端**: React 函數元件、**檔名使用 .tsx**、Tailwind CSS
-- **資料庫**: 欄位含圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間
-
-## Skill 優先參考原則
-
-- **若程式碼提及、使用到某領域內容，須優先閱讀並遵循對應 `.cursor/skills/` 下的 SKILL.md**，再開始實作。
-- 實作前先查閱 Skill，避免自行猜測規格或重複造輪。
-- 對應關係：
-  | 領域 | Skill |
-  |------|-------|
-  | ComfyUI（生圖、workflow、佇列、輸出） | `comfyui-api-client` |
-  | Workflow JSON 組裝（ControlNet 新舊版、模型檔名、prompt 替換） | `comfyui-workflow` |
-  | LoRA 模組（文件、訓練、lora_trainer、watcher、產圖串接） | `lora-train-docs` |
-  | Kohya sd-scripts（CLI 參數、dataset_config TOML） | `kohya-sd-scripts` |
-  | WD Tagger（圖片標註、caption 產生、subprocess 整合） | `wd-tagger` |
-  | ComfyUI 自訂節點開發 | `comfyui-node-*` 系列 |
-  | Python 後端擴展性審核（API、服務、架構、低耦合） | `python-extensibility-review` |
-  | MCP Tools 口語呼叫（生圖、訓練、圖庫，call_mcp_tool） | `mcp-tools-usage` |
-
-## 後端與 ComfyUI 整合規範
-
-- 凡涉及 ComfyUI 的後端實作，必須參考 `comfyui-api-client` skill。
-
-## 遠端觸發生圖（Slack）
-
-- 凡實作或修改 Slack Socket Mode、`slack_handler` 相關邏輯，須遵循 `.cursor/rules/slack-trigger.mdc`。
-- 該規則定義：架構原則、作法、通用接口、安全、錯誤處理，供所有 Agent 共用。
-- **Slack 指令實作**：依 `docs/slack-command-agent-tracker.md` 依序執行任務、更新進度、檢查依賴。
-
+- 後端: Python 3.11 + FastAPI
+- 前端: React 18 + Vite + Tailwind（.tsx）
+- 資料庫: SQLite / PostgreSQL（SQLAlchemy ORM）
+- 圖片引擎: ComfyUI API（WebSocket + REST）
+- MCP: Python MCP SDK（`mcp-server/`）
