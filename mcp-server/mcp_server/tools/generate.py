@@ -57,7 +57,7 @@ def generate_image(
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
-        return f"已加入生圖佇列: job_id={job_id}, status={status}"
+        return f"已加入生圖佇列：job_id={job_id}, status={status}"
     except Exception as e:
         return f"error: {e}"
 
@@ -71,7 +71,7 @@ def list_workflow_templates() -> str:
         templates = resp.get("templates", [])
         if not templates:
             return "目前無 workflow 模板"
-        return "可用模板: " + ", ".join(templates)
+        return "可用模板：" + ", ".join(templates)
     except Exception as e:
         return f"error: {e}"
 
@@ -150,7 +150,7 @@ def generate_image_custom_workflow(
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
-        return f"已加入生圖佇列（自訂 workflow）: job_id={job_id}, status={status}"
+        return f"已加入生圖佇列（自訂 workflow）：job_id={job_id}, status={status}"
     except json.JSONDecodeError as e:
         return f"error: workflow 必須為合法 JSON: {e}"
     except Exception as e:
@@ -189,7 +189,7 @@ def generate_image_from_description(description: str) -> str:
         summary = f"template={parsed.template}, character={parsed.character}, style={parsed.style}"
         if parsed.width:
             summary += f", {parsed.width}x{parsed.height}"
-        return f"已加入生圖佇列: job_id={job_id}, status={status}\n{summary}"
+        return f"已加入生圖佇列：job_id={job_id}, status={status}\n{summary}"
     except Exception as e:
         return f"error: {e}"
 
@@ -229,11 +229,30 @@ def generate_queue_status() -> str:
         running = resp.get("queue_running", [])
         pending = resp.get("queue_pending", [])
         lines = [
-            f"執行中: {len(running)} 筆",
+            f"執行中：{len(running)} 筆",
             *[f"  - {r.get('job_id', '?')}: {r.get('status', '?')}" for r in running],
-            f"等候中: {len(pending)} 筆",
+            f"等候中：{len(pending)} 筆",
             *[f"  - {p.get('job_id', '?')}: {p.get('status', '?')}" for p in pending],
         ]
         return "\n".join(lines) if lines else "佇列為空"
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
+def get_available_resources() -> str:
+    """列出可用的 checkpoints、LoRA 模型、workflow 模板。生圖或訓練前先呼叫確認可用清單。"""
+    try:
+        client = _get_client()
+        resp = client.get("generate/available-resources")
+        checkpoints = resp.get("checkpoints", [])
+        loras = resp.get("loras", [])
+        workflows = resp.get("workflows", [])
+        lines = [
+            f"Checkpoints ({len(checkpoints)}): {', '.join(checkpoints) or '(無)'}",
+            f"LoRAs ({len(loras)}): {', '.join(loras) or '(無)'}",
+            f"Workflows ({len(workflows)}): {', '.join(workflows) or '(無)'}",
+        ]
+        return "\n".join(lines)
     except Exception as e:
         return f"error: {e}"
