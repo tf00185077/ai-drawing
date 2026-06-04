@@ -2,14 +2,12 @@
 AI 自動化出圖系統 - FastAPI 入口
 """
 import logging
-from pathlib import Path
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.config import get_settings
 from app.core.queue import (
     QueueFullError,
     start_worker as start_queue_worker,
@@ -22,8 +20,6 @@ from app.services.comfyui_history_watcher import stop_watcher as stop_comfyui_wa
 from app.services.watcher import start_watching, stop_watching
 
 logger = logging.getLogger(__name__)
-
-_slack_handler = None
 
 
 def _on_lora_complete(output_lora_path: str, folder: str) -> None:
@@ -74,48 +70,14 @@ def _on_lora_complete(output_lora_path: str, folder: str) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """應用生命週期：啟動時開始監聽與佇列 worker，關閉時停止"""
-    global _slack_handler
     lora_trainer.register_on_complete(_on_lora_complete)
     lora_trainer.ensure_worker()
     start_watching()
     start_queue_worker()
     start_comfyui_watcher()
 
-    # Slack Socket Mode（遠端觸發生圖）
-    settings = get_settings()
-    has_app = bool(settings.slack_app_token)
-    has_bot = bool(settings.slack_bot_token)
-    if has_app and has_bot:
-        try:
-            from slack_bolt import App
-            from slack_bolt.adapter.socket_mode import SocketModeHandler
-
-            from app.services.slack_handler import handle_message
-
-            slack_app = App(token=settings.slack_bot_token)
-            slack_app.event("message")(handle_message)
-            _slack_handler = SocketModeHandler(slack_app, settings.slack_app_token)
-            _slack_handler.connect()
-            logger.info("Slack Socket Mode connected")
-        except Exception as e:
-            logger.exception("Slack Socket Mode failed to start: %s", e)
-            _slack_handler = None
-    else:
-        logger.info(
-            "Slack tokens not set (app=%s, bot=%s), skipping Socket Mode",
-            has_app,
-            has_bot,
-        )
-
     yield
 
-    if _slack_handler:
-        try:
-            _slack_handler.close()
-            logger.info("Slack Socket Mode stopped")
-        except Exception as e:
-            logger.exception("Slack Socket Mode shutdown error: %s", e)
-        _slack_handler = None
     stop_comfyui_watcher()
     stop_queue_worker()
     stop_watching()
