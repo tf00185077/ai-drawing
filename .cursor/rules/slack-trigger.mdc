@@ -1,10 +1,12 @@
 ---
-description: 遠端觸發生圖 - Slack Socket Mode 實作規範
-globs: backend/app/main.py, backend/app/services/slack_handler.py, backend/app/services/slack_commands.py, backend/app/core/queue.py
+description: "[ARCHIVED] Slack 整合已移除（PR #1）。此規範僅供歷史參考，不適用於現行系統。"
+globs:
 alwaysApply: false
 ---
 
-# Slack 遠端觸發生圖規範
+> **ARCHIVED**：Slack 整合已於 PR #1 移除。此文件不適用於現行系統，僅保留供歷史參考。
+
+# Slack 遠端觸發生圖規範（已停用）
 
 > 凡實作或修改 Slack 觸發生圖相關邏輯時，必須遵循此規範。供所有 Agent 共用參考。
 
