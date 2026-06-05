@@ -1,13 +1,13 @@
 # 進度追蹤
 
-> **唯一來源**。完成任務後只更新這個文件，不改 README.md 或 AGENTS.md。
+> **唯一來源**。完成的任務要同步修改這個文件（`docs/PROGRESS.md`），且不需同步改 README.md 或 AGENTS.md。
 > 完整 task spec 見 `docs/task-specs/`。
 
 ---
 
 ## 目前聚焦
 
-待開始。F-A 到 F-F 均可獨立進行，建議先做 F-D（最小範圍，純 MCP tool）確認開發流程，再依優先度選擇。
+F-B、F-D 已完成。下一步建議優先 F-C（可與 F-B 的 job 流程銜接），其後依序推進 F-A、F-E、F-F。
 
 ---
 
@@ -25,6 +25,8 @@
 - [x] MCP Server 基礎建置（`mcp-server/`）
 - [x] MCP Tools 初版（generate、lora_train、gallery）
 - [x] Docker 部署
+- [x] F-B Job 狀態查詢（DB job_id + API endpoint + MCP tool）
+- [x] F-D 查詢可用資源（純 MCP tool，API 已有）
 
 ### Phase 0：Slack 清理（PR #1，2026-06-04）
 - [x] 刪除 Slack service 檔案
@@ -48,9 +50,7 @@
 | 任務 | 說明 | 狀態 | Spec |
 |------|------|------|------|
 | F-A | 生圖完整參數（lora_strength、denoise、width/height 等暴露至 MCP） | 待做 | [F-A](task-specs/F-A-generate-params.md) |
-| F-B | Job 狀態查詢（DB job_id + API endpoint + MCP tool） | 待做 | [F-B](task-specs/F-B-job-status.md) |
 | F-C | Job 取消（queue cancel + API endpoint + MCP tool） | 待做 | [F-C](task-specs/F-C-job-cancel.md) |
-| F-D | 查詢可用資源（純 MCP tool，API 已有） | 待做 | [F-D](task-specs/F-D-available-resources.md) |
 | F-E | LoRA 訓練完整參數（移除 generate_after + MCP 補齊參數） | 待做 | [F-E](task-specs/F-E-lora-train-params.md) |
 | F-F | LLM 自動 caption（API + MCP tool） | 待做 | [F-F](task-specs/F-F-llm-caption.md) |
 

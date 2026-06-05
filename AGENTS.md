@@ -15,6 +15,8 @@
 | 模組介面？ | [docs/internal-interfaces.md](docs/internal-interfaces.md) |
 | 如何啟動系統？ | [docs/setup-guide.md](docs/setup-guide.md) |
 
+**執行規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
+
 ---
 
 ## 1. 安全性原則（最高優先）
