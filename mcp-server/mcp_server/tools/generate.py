@@ -240,6 +240,27 @@ def generate_queue_status() -> str:
 
 
 @mcp.tool()
+def get_job_status(job_id: str) -> str:
+    """查詢生圖 job 狀態（queued / running / completed）。completed 時回傳 image_id 可用 gallery_detail 查看結果。"""
+    try:
+        client = _get_client()
+        resp = client.get(f"generate/job/{job_id}")
+        status = resp.get("status", "unknown")
+        if status == "completed":
+            image_id = resp.get("image_id")
+            image_path = resp.get("image_path", "")
+            return f"Job {job_id} 已完成：image_id={image_id}, path={image_path}. 可用 gallery_detail({image_id}) 查看詳細。"
+        elif status in ("queued", "running"):
+            prompt_id = resp.get("prompt_id", "") or "(empty)"
+            submitted_at = resp.get("submitted_at", "") or "(empty)"
+            return f"Job {job_id}: status={status}, prompt_id={prompt_id}, submitted_at={submitted_at}"
+        else:
+            return f"Job {job_id}: status={status}"
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
 def get_available_resources() -> str:
     """列出可用的 checkpoints、LoRA 模型、workflow 模板。生圖或訓練前先呼叫確認可用清單。"""
     try:
