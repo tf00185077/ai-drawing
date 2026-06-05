@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core.queue import QueueFullError, get_job_status as queue_get_job_status, get_status, submit, submit_custom
+from app.core.queue import QueueFullError, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.db.database import get_db
 from app.schemas.generate import (
     GenerateCustomRequest,
@@ -193,3 +193,15 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
 
     # 3. 找不到
     raise HTTPException(404, f"Job not found: {job_id}")
+
+
+@router.delete("/queue/{job_id}", status_code=200)
+async def cancel_job(job_id: str):
+    """取消 pending 中的生圖 job"""
+    try:
+        queue_cancel(job_id)
+        return {"message": "已取消", "job_id": job_id}
+    except ValueError:
+        raise HTTPException(409, "job 正在執行中，無法取消")
+    except Exception:
+        raise HTTPException(404, f"找不到該 job: {job_id}")
