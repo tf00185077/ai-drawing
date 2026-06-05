@@ -342,6 +342,7 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
             try:
                 rec = recording_save(
                     rel_path,
+                    job_id=job.job_id,
                     checkpoint=job.params.get("checkpoint"),
                     lora=job.params.get("lora"),
                     seed=job.params.get("seed"),
