@@ -5,10 +5,12 @@ ComfyUI API 串接、Workflow 模板、批次排程
 """
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core.queue import QueueFullError, get_status, submit, submit_custom
+from app.core.queue import QueueFullError, get_job_status as queue_get_job_status, get_status, submit, submit_custom
+from app.db.database import get_db
 from app.schemas.generate import (
     GenerateCustomRequest,
     GenerateRequest,
@@ -162,3 +164,32 @@ async def get_queue_status():
         queue_running=status["queue_running"],
         queue_pending=status["queue_pending"],
     )
+
+
+@router.get("/job/{job_id}")
+async def get_job_status(job_id: str, db: Session = Depends(get_db)):
+    """查詢單一 job 狀態（queued / running / completed）"""
+    from app.db.models import GeneratedImage
+
+    # 1. 先查 in-memory queue（queued / running）
+    queue_status = queue_get_job_status(job_id)
+    if queue_status:
+        return {
+            "status": queue_status["status"],
+            "job_id": job_id,
+            "prompt_id": queue_status.get("prompt_id"),
+            "submitted_at": queue_status.get("submitted_at"),
+        }
+
+    # 2. 查 DB（completed）
+    image_record = db.query(GeneratedImage).filter_by(job_id=job_id).first()
+    if image_record:
+        return {
+            "status": "completed",
+            "job_id": job_id,
+            "image_id": image_record.id,
+            "image_path": image_record.image_path,
+        }
+
+    # 3. 找不到
+    raise HTTPException(404, f"Job not found: {job_id}")
