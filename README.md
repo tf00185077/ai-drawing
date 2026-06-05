@@ -6,6 +6,8 @@
 
 > **Agent / 新成員入口**：先讀 [AGENTS.md](AGENTS.md)（架構與約束），再看 [docs/GOAL.md](docs/GOAL.md)（目標），再看 [docs/PROGRESS.md](docs/PROGRESS.md)（現在做到哪）。
 
+> **文件同步規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
+
 ---
 
 ## Tech Stack
