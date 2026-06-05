@@ -261,6 +261,17 @@ def get_job_status(job_id: str) -> str:
 
 
 @mcp.tool()
+def cancel_job(job_id: str) -> str:
+    """取消尚未執行的生圖 job（pending 狀態）。執行中的 job 無法取消。"""
+    try:
+        client = _get_client()
+        resp = client.delete(f"generate/queue/{job_id}")
+        return resp.get("message", "已取消")
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
 def get_available_resources() -> str:
     """列出可用的 checkpoints、LoRA 模型、workflow 模板。生圖或訓練前先呼叫確認可用清單。"""
     try:
