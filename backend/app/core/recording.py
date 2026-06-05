@@ -11,6 +11,7 @@ from app.db.models import GeneratedImage
 def save(
     image_path: str,
     *,
+    job_id: str | None = None,
     checkpoint: str | None = None,
     lora: str | None = None,
     seed: int | None = None,
@@ -29,6 +30,7 @@ def save(
     """
     record = GeneratedImage(
         image_path=image_path,
+        job_id=job_id,
         checkpoint=checkpoint,
         lora=lora,
         seed=seed,
