@@ -13,6 +13,7 @@ class GeneratedImage(Base):
     __tablename__ = "generated_images"
 
     id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(String(64), nullable=True, index=True)
     image_path = Column(String(512), nullable=False)
     checkpoint = Column(String(256), nullable=True)
     lora = Column(String(256), nullable=True)
