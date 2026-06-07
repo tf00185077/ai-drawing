@@ -164,6 +164,27 @@ def get_job_status(job_id: str) -> dict[str, Any] | None:
     return None
 
 
+def cancel(job_id: str) -> bool:
+    """
+    取消 pending 中的 job。
+    
+    Returns:
+        True: 取消成功
+        False: 找不到（不在 pending 中）
+    
+    Raises:
+        ValueError: job 正在執行中（running），無法取消
+    """
+    with _lock:
+        if _running and _running.job_id == job_id:
+            raise ValueError(f"Job {job_id} 正在執行中，無法取消")
+        for i, j in enumerate(_pending):
+            if j.job_id == job_id:
+                _pending.pop(i)
+                return True
+    return False
+
+
 def _process_pending(comfy: ComfyUIClient) -> None:
     """從 pending 取一筆提交至 ComfyUI，移入 running"""
     global _running
