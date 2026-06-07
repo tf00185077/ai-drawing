@@ -22,6 +22,8 @@ class GenerateRequest(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, le=8)
     sampler_name: str | None = None  # e.g. euler, dpmpp_2m, ddim
     scheduler: str | None = None  # e.g. normal, karras, exponential
+    lora_strength: float | None = Field(default=None, ge=0.0, le=2.0)
+    denoise: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class GenerateResponse(BaseModel):
@@ -70,6 +72,8 @@ class GenerateCustomRequest(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, le=8)
     sampler_name: str | None = None
     scheduler: str | None = None
+    lora_strength: float | None = Field(default=None, ge=0.0, le=2.0)
+    denoise: float | None = Field(default=None, ge=0.0, le=1.0)
     image: str | None = Field(
         default=None,
         description="主體參考圖路徑（img2img），相對於 gallery_dir。會先上傳至 ComfyUI 再替換第一個 LoadImage。與 image_pose 搭配用於 img2img_lora_pose workflow",

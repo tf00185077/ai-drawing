@@ -12,9 +12,15 @@ def lora_train_start(
     checkpoint: str | None = None,
     epochs: int | None = None,
     class_tokens: str | None = None,
-    generate_after: dict | None = None,
+    resolution: int | None = None,
+    keep_tokens: int | None = None,
+    mixed_precision: str | None = None,   # fp16 | bf16 | fp32
+    network_dim: int | None = None,
+    network_alpha: int | None = None,
+    num_repeats: int | None = None,
+    learning_rate: str | None = None,
 ) -> str:
-    """手動觸發 LoRA 訓練。folder 為必填。訓練完成後才依 generate_after 生圖（含 prompt、count、batch_size）。"""
+    """手動觸發 LoRA 訓練。folder 為必填。訓練完成後請另行呼叫 generate_image 使用新 LoRA。"""
     try:
         client = _get_client()
         body = {"folder": folder}
@@ -24,8 +30,20 @@ def lora_train_start(
             body["epochs"] = epochs
         if class_tokens:
             body["class_tokens"] = class_tokens.strip()
-        if generate_after and isinstance(generate_after, dict):
-            body["generate_after"] = generate_after
+        if resolution is not None:
+            body["resolution"] = resolution
+        if keep_tokens is not None:
+            body["keep_tokens"] = keep_tokens
+        if mixed_precision:
+            body["mixed_precision"] = mixed_precision
+        if network_dim is not None:
+            body["network_dim"] = network_dim
+        if network_alpha is not None:
+            body["network_alpha"] = network_alpha
+        if num_repeats is not None:
+            body["num_repeats"] = num_repeats
+        if learning_rate:
+            body["learning_rate"] = learning_rate
         resp = client.post("lora-train/start", json=body)
         job_id = resp.get("job_id", "unknown")
         return f"已加入訓練佇列: job_id={job_id}"
