@@ -2,12 +2,14 @@
 AI 自動化出圖系統 - FastAPI 入口
 """
 import logging
+from pathlib import Path
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.config import get_settings
 from app.core.queue import (
     QueueFullError,
     start_worker as start_queue_worker,

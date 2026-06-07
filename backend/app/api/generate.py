@@ -199,9 +199,9 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
 async def cancel_job(job_id: str):
     """取消 pending 中的生圖 job"""
     try:
-        queue_cancel(job_id)
-        return {"message": "已取消", "job_id": job_id}
+        found = queue_cancel(job_id)
     except ValueError:
         raise HTTPException(409, "job 正在執行中，無法取消")
-    except Exception:
+    if not found:
         raise HTTPException(404, f"找不到該 job: {job_id}")
+    return {"message": "已取消", "job_id": job_id}
