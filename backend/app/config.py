@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     # ControlNet 預設姿態圖（路徑相對於專案根目錄）
     controlnet_default_pose_image: str = "backend/lora_train/lovelive/__asaka_karin_love_live_and_1_more_drawn_by_nasuno_nasuno42__sample-363e09661ab550cd5a85bbc226caf34e.jpg"
 
+    # LLM Caption
+    llm_caption_url: str | None = None  # 外部 LLM caption API URL（如 BLIP2 service）
+
     class Config:
         env_file = str(_ENV_PATH)
         env_file_encoding = "utf-8"

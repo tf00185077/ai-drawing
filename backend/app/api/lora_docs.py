@@ -219,3 +219,52 @@ async def download_training_pack(folder: str = Query(..., min_length=1)):
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
     )
+
+
+@router.post("/caption-llm/{image_path:path}")
+async def generate_caption_llm(image_path: str):
+    """對圖片呼叫 LLM（如 BLIP2 或外部 API）產生 caption，寫入同名 .txt"""
+    settings = get_settings()
+    base_dir = Path(settings.lora_train_dir).resolve()
+    llm_url = settings.llm_caption_url
+    
+    if not llm_url:
+        raise HTTPException(
+            500, 
+            "llm_caption_url 未設定，請在 .env 中新增 llm_caption_url 優先使用 BLIP2 或設定外部 API"
+        )
+    
+    try:
+        img_full, caption_full, caption_rel = _resolve_image_and_caption(
+            image_path, base_dir
+        )
+    except HTTPException:
+        raise
+    
+    if not img_full.exists():
+        raise HTTPException(404, "找不到該圖片")
+    
+    # 呼叫 LLM API 產生 caption
+    import httpx
+    try:
+        # 假設 LLM API 接收 {"image_path": "absolute/path/to/image.png"}
+        # 實際格式依 llm_caption_url 的 specification 調整
+        response = await httpx.AsyncClient().post(
+            llm_url,
+            json={"image_path": str(img_full)},
+            timeout=60.0,
+        )
+        response.raise_for_status()
+        caption_text = response.json().get("caption", "")
+        if not caption_text:
+            raise HTTPException(500, "LLM 回傳空 caption")
+    except httpx.RequestError as e:
+        raise HTTPException(500, f"LLM API 請求失敗: {e}")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(500, f"LLM API 錯誤 {e.response.status_code}: {e.response.text}")
+    
+    # 寫入 .txt
+    caption_full.parent.mkdir(parents=True, exist_ok=True)
+    caption_full.write_text(caption_text, encoding="utf-8")
+    
+    return {"path": caption_rel, "content": caption_text}
