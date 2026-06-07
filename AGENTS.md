@@ -1,6 +1,21 @@
 # Agent Context: AI 自動化出圖系統
 
-> 修改前請先閱讀。本文件是 agent 的最小必讀上下文。
+> 修改前請先閱讀。本文件是所有 agent 的單一資訊來源（Single Source of Truth）。
+
+---
+
+## Agent 系統導航說明
+
+不同 agent 系統各有自己的自動讀取規則，本文件作為統一的實質 context：
+
+| Agent 系統 | 自動讀取入口 | 說明 |
+|-----------|------------|------|
+| Claude Code | [CLAUDE.md](CLAUDE.md) → 本文件 | CLAUDE.md 導航至此 |
+| OpenAI Codex / GPT agents | 本文件（直接） | `AGENTS.md` 為標準慣例 |
+| Cursor | [.cursor/rules/](.cursor/rules/) | 各 `.mdc` 規則檔 |
+| 人類 / 新成員 | [README.md](README.md) → 本文件 | README 導航至此 |
+
+**所有 agent 的架構、約束、編碼慣例皆以本文件為準。**
 
 ---
 

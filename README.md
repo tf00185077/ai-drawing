@@ -4,7 +4,22 @@
 
 整合 ComfyUI、LoRA 訓練與參數記錄的完整自動化圖片生成流水線。
 
-> **Agent / 新成員入口**：先讀 [AGENTS.md](AGENTS.md)（架構與約束），再看 [docs/GOAL.md](docs/GOAL.md)（目標），再看 [docs/PROGRESS.md](docs/PROGRESS.md)（現在做到哪）。
+## Agent / 新成員入口
+
+> 不同 agent 系統讀取不同入口，但都指向同一份 context：
+
+| 你是誰 | 讀哪裡 |
+|--------|--------|
+| Claude Code | [CLAUDE.md](CLAUDE.md) → [AGENTS.md](AGENTS.md) |
+| OpenAI Codex / GPT agents | [AGENTS.md](AGENTS.md)（直接） |
+| Cursor | [.cursor/rules/](.cursor/rules/) |
+| 人類 / 新成員 | 本頁 → [AGENTS.md](AGENTS.md) |
+
+**必讀順序**（適用所有 agent）：
+
+1. [AGENTS.md](AGENTS.md) — 架構、Tech Stack、安全規則、編碼慣例
+2. [docs/GOAL.md](docs/GOAL.md) — 系統目標與設計原則
+3. [docs/PROGRESS.md](docs/PROGRESS.md) — 當前進度，確認下一步
 
 > **文件同步規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
 
