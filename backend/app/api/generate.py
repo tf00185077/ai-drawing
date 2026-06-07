@@ -44,6 +44,10 @@ async def trigger_generate(body: GenerateRequest):
             params["sampler_name"] = body.sampler_name
         if body.scheduler is not None:
             params["scheduler"] = body.scheduler
+        if body.lora_strength is not None:
+            params["lora_strength"] = body.lora_strength
+        if body.denoise is not None:
+            params["denoise"] = body.denoise
         job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,
@@ -85,6 +89,10 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["image"] = body.image
         if body.image_pose is not None:
             params["image_pose"] = body.image_pose
+        if body.lora_strength is not None:
+            params["lora_strength"] = body.lora_strength
+        if body.denoise is not None:
+            params["denoise"] = body.denoise
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,
