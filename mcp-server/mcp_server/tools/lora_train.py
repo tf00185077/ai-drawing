@@ -7,6 +7,20 @@ from mcp_server.server import _get_client, mcp
 
 
 @mcp.tool()
+def caption_image(image_path: str) -> str:
+    """對訓練資料夾內的圖片呼叫 LLM 自動產生 caption，寫入同名 .txt。image_path 相對於 lora_train_dir，如 "character/miku/img1.png"。回傳產生的 caption 文字。"""
+    try:
+        client = _get_client()
+        resp = client.post(f"lora-docs/caption-llm/{image_path}")
+        caption_text = resp.get("content", "")
+        if not caption_text:
+            return "error: LLM 回傳空 caption"
+        return caption_text
+    except Exception as e:
+        return f"error: {e}"
+
+
+@mcp.tool()
 def lora_train_start(
     folder: str,
     checkpoint: str | None = None,
