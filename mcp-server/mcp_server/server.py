@@ -40,6 +40,7 @@ from mcp_server.tools import (  # noqa: E402, F401
     gallery,
     generate,
     lora_train,
+    lora_docs,
 )
 
 
