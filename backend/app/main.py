@@ -25,48 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 def _on_lora_complete(output_lora_path: str, folder: str) -> None:
-    """LoRA 訓練完成後自動產圖：若有 generate_after 則依其參數，否則用預設 prompt"""
-    settings = get_settings()
-    lora_name = Path(output_lora_path).name
-
-    pending = lora_trainer.get_and_clear_pending_generate(folder)
-    if pending:
-        # 使用訓練時指定的 generate_after 參數
-        prompt = pending.get("prompt", settings.lora_auto_prompt)
-        count = max(1, min(int(pending.get("count", 1)), 64))
-        batch_size = max(1, min(int(pending.get("batch_size", 1)), 8))
-        base_params = {
-            "lora": lora_name,
-            "prompt": prompt,
-            "negative_prompt": pending.get("negative_prompt"),
-            "checkpoint": pending.get("checkpoint") or settings.lora_default_checkpoint,
-        }
-        base_params = {k: v for k, v in base_params.items() if v is not None}
-        remaining = count
-        submitted = 0
-        try:
-            while remaining > 0:
-                bs = min(batch_size, remaining)
-                params = {**base_params, "batch_size": bs}
-                queue_submit(params)
-                submitted += bs
-                remaining -= bs
-            logger.info("LoRA 完成已提交產圖: folder=%s, lora=%s, count=%d", folder, output_lora_path, submitted)
-        except QueueFullError as e:
-            logger.warning("生圖佇列已滿，已提交 %d 張後略過: %s", submitted, e)
-        return
-
-    try:
-        params = {
-            "lora": lora_name,
-            "prompt": settings.lora_auto_prompt,
-        }
-        if settings.lora_default_checkpoint:
-            params["checkpoint"] = settings.lora_default_checkpoint
-        queue_submit(params)
-        logger.info("LoRA 完成已提交產圖: folder=%s, lora=%s", folder, output_lora_path)
-    except QueueFullError as e:
-        logger.warning("生圖佇列已滿，略過 LoRA 產圖: %s", e)
+    """LoRA 訓練完成回呼。訓練與生圖已解耦，此處不再自動生圖。"""
+    logger.info("LoRA 訓練完成：folder=%s, path=%s", folder, output_lora_path)
 
 
 @asynccontextmanager

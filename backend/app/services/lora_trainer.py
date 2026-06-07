@@ -496,7 +496,6 @@ def enqueue(
     mixed_precision: str | None = None,
     network_dim: int | None = None,
     network_alpha: int | None = None,
-    generate_after: dict | None = None,
 ) -> str:
     """
     加入訓練佇列。
@@ -548,9 +547,6 @@ def enqueue(
         if _running and _running.job.folder == folder:
             raise ValueError(f"資料夾訓練中: {folder}")
         _queue.append(job)
-
-    if generate_after:
-        set_pending_generate(folder, generate_after)
 
     _ensure_worker()
     logger.info("Job %s 已加入佇列: folder=%s", job_id, folder)
