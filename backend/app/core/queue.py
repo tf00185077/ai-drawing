@@ -50,6 +50,8 @@ class GenerateParams(TypedDict, total=False):
     batch_size: int
     sampler_name: str
     scheduler: str
+    lora_strength: float
+    denoise: float
 
 
 class _Job:
@@ -276,6 +278,8 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             batch_size=job.params.get("batch_size"),
             sampler_name=job.params.get("sampler_name"),
             scheduler=job.params.get("scheduler"),
+            lora_strength=job.params.get("lora_strength"),
+            denoise=job.params.get("denoise"),
         )
         # 使用者未提供 seed 時，apply_params 會產生隨機值；擷取實際使用的 seed 供 recording
         if job.params.get("seed") is None:

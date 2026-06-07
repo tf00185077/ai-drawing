@@ -23,9 +23,15 @@ def generate_image(
     seed: int | None = None,
     steps: int | None = None,
     cfg: float | None = None,
+    width: int | None = None,
+    height: int | None = None,
     batch_size: int | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
+    lora_strength: float | None = None,
+    denoise: float | None = None,
 ) -> str:
-    """觸發圖片生成。可用 character、style 自然語言描述，或直接給 prompt。batch_size 可一次產多張（1～8）。回傳 job_id 或錯誤訊息。"""
+    """觸發圖片生成。可用 character、style 自然語言描述，或直接給 prompt。支援完整參數控制：sampler_name、scheduler、lora_strength、denoise、width/height等。batch_size 可一次產多張（1～8）。回傳 job_id 或錯誤訊息。"""
     try:
         client = _get_client()
         final_prompt = prompt
@@ -54,6 +60,18 @@ def generate_image(
             body["cfg"] = cfg
         if batch_size is not None and 1 <= batch_size <= 8:
             body["batch_size"] = batch_size
+        if width is not None:
+            body["width"] = width
+        if height is not None:
+            body["height"] = height
+        if sampler_name is not None:
+            body["sampler_name"] = sampler_name
+        if scheduler is not None:
+            body["scheduler"] = scheduler
+        if lora_strength is not None:
+            body["lora_strength"] = lora_strength
+        if denoise is not None:
+            body["denoise"] = denoise
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
@@ -102,6 +120,10 @@ def generate_image_custom_workflow(
     width: int | None = None,
     height: int | None = None,
     image_pose: str | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
+    lora_strength: float | None = None,
+    denoise: float | None = None,
 ) -> str:
     """
     使用自訂 workflow 觸發圖片生成。AI 可根據使用者描述：
@@ -147,6 +169,14 @@ def generate_image_custom_workflow(
             body["height"] = height
         if image_pose is not None:
             body["image_pose"] = image_pose
+        if sampler_name is not None:
+            body["sampler_name"] = sampler_name
+        if scheduler is not None:
+            body["scheduler"] = scheduler
+        if lora_strength is not None:
+            body["lora_strength"] = lora_strength
+        if denoise is not None:
+            body["denoise"] = denoise
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")

@@ -7,7 +7,7 @@
 
 ## 目前聚焦
 
-F-B、F-C、F-D 已完成。下一步建議優先 F-A（生圖完整參數），其後依序推進 F-E、F-F。
+F-A、F-B、F-C、F-D、F-E 已完成。下一步建議優先推進 F-F（LLM 自動 caption）。
 
 ---
 
@@ -28,6 +28,8 @@ F-B、F-C、F-D 已完成。下一步建議優先 F-A（生圖完整參數），
 - [x] F-B Job 狀態查詢（DB job_id + API endpoint + MCP tool）
 - [x] F-C Job 取消（`queue.cancel()` + `DELETE /api/generate/queue/{job_id}` + MCP tool，PR #4，2026-06-07）
 - [x] F-D 查詢可用資源（純 MCP tool，API 已有）
+- [x] F-A 生圖完整參數（lora_strength、denoise、width/height、sampler_name、scheduler 暴露至 MCP，2026-06-07）
+- [x] F-E LoRA 訓練完整參數（移除 generate_after + MCP 補齊參數，PR #5，2026-06-07）
 
 ### Phase 0：Slack 清理（PR #1，2026-06-04）
 - [x] 刪除 Slack service 檔案
@@ -50,8 +52,8 @@ F-B、F-C、F-D 已完成。下一步建議優先 F-A（生圖完整參數），
 
 | 任務 | 說明 | 狀態 | Spec |
 |------|------|------|------|
-| F-A | 生圖完整參數（lora_strength、denoise、width/height 等暴露至 MCP） | 待做 | [F-A](task-specs/F-A-generate-params.md) |
-| F-E | LoRA 訓練完整參數（移除 generate_after + MCP 補齊參數） | 待做 | [F-E](task-specs/F-E-lora-train-params.md) |
+| F-A | 生圖完整參數（lora_strength、denoise、width/height 等暴露至 MCP） | ✅ 完成 | [F-A](task-specs/F-A-generate-params.md) |
+| F-E | LoRA 訓練完整參數（移除 generate_after + MCP 補齊參數） | ✅ 完成 | [F-E](task-specs/F-E-lora-train-params.md) |
 | F-F | LLM 自動 caption（API + MCP tool） | 待做 | [F-F](task-specs/F-F-llm-caption.md) |
 
 ---

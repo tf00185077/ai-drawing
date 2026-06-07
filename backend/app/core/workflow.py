@@ -54,6 +54,7 @@ def apply_params(
     image: str | None = None,
     image_pose: str | None = None,
     denoise: float | None = None,
+    lora_strength: float | None = None,
     bbox_detector: str | None = "yolo_nas_s_fp16.onnx",
 ) -> dict:
     """
@@ -153,8 +154,12 @@ def apply_params(
         if ct == "CheckpointLoaderSimple" and checkpoint is not None:
             inputs["ckpt_name"] = checkpoint
 
-        if ct == "LoraLoader" and lora is not None:
-            inputs["lora_name"] = lora
+        if ct == "LoraLoader":
+            if lora is not None:
+                inputs["lora_name"] = lora
+            if lora_strength is not None:
+                inputs["strength_model"] = lora_strength
+                inputs["strength_clip"] = lora_strength
 
         if ct == "KSampler":
             if seed is not None:
