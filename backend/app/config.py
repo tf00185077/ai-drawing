@@ -4,6 +4,7 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -11,13 +12,38 @@ from functools import lru_cache
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _ENV_PATH = _PROJECT_ROOT / ".env"
 
+
+def _project_root_path(*parts: str) -> str:
+    """回傳以專案根目錄為基準的絕對路徑字串。"""
+    return str((_PROJECT_ROOT.joinpath(*parts)).resolve())
+
+
+def _resolve_project_path(path_str: str) -> str:
+    """將相對路徑轉成以專案根目錄為基準的絕對路徑。"""
+    p = Path(path_str).expanduser()
+    if p.is_absolute():
+        return str(p.resolve())
+    return str((_PROJECT_ROOT / p).resolve())
+
+
+def _resolve_sqlite_url(url: str) -> str:
+    """將 sqlite 相對路徑 URL 轉為 project-root 基準的絕對路徑 URL。"""
+    if not url.startswith("sqlite:///"):
+        return url
+    raw_path = url.removeprefix("sqlite:///")
+    if not raw_path:
+        return url
+    resolved = _resolve_project_path(raw_path)
+    return f"sqlite:///{resolved}"
+
+
 # 最早載入 .env 至 os.environ，確保不論從何處啟動都能讀到
 load_dotenv(_ENV_PATH)
 
 
 class Settings(BaseSettings):
     # 資料庫
-    database_url: str = "sqlite:///./auto_draw.db"
+    database_url: str = f"sqlite:///{_project_root_path('backend', 'auto_draw.db')}"
 
     # ComfyUI
     comfyui_base_url: str = "http://127.0.0.1:8188"
@@ -33,11 +59,11 @@ class Settings(BaseSettings):
     comfyui_history_poll_interval: float = 10.0  # 秒
 
     # 輸出目錄
-    output_dir: str = "./outputs"
-    gallery_dir: str = "./outputs/gallery"
+    output_dir: str = _project_root_path("backend", "outputs")
+    gallery_dir: str = _project_root_path("backend", "outputs", "gallery")
 
     # LoRA 訓練
-    lora_train_dir: str = "./lora_train"
+    lora_train_dir: str = _project_root_path("backend", "lora_train")
     # 建議資料夾結構（WD Tagger 依路徑選用不同 blacklist）：
     #   lora_train/character/10_角色名/  → 人物訓練
     #   lora_train/style/10_畫師名/      → 畫風訓練
@@ -48,7 +74,7 @@ class Settings(BaseSettings):
     lora_checkpoint_dirs: str = ""  # 逗號分隔，純檔名 checkpoint 在此搜尋
     lora_sdxl: bool = False  # True 時使用 sdxl_train_network.py（SDXL/PDXL 模型）
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
-    sd_scripts_path: str = "./sd-scripts"
+    sd_scripts_path: str = _project_root_path("sd-scripts")
     sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
     # WD Tagger 後處理
     wd_tag_limit: int = 20  # caption 最多保留 tag 數
@@ -66,13 +92,27 @@ class Settings(BaseSettings):
     lora_save_every_n_epochs: int = 1  # 每 N epoch 存檔，0=僅最後
 
     # watchdog
-    watch_dirs: str = "./lora_train"  # 逗號分隔
+    watch_dirs: str = _project_root_path("backend", "lora_train")  # 逗號分隔
 
     # ControlNet 預設姿態圖（路徑相對於專案根目錄）
     controlnet_default_pose_image: str = "backend/lora_train/lovelive/__asaka_karin_love_live_and_1_more_drawn_by_nasuno_nasuno42__sample-363e09661ab550cd5a85bbc226caf34e.jpg"
 
     # LLM Caption
     llm_caption_url: str | None = None  # 外部 LLM caption API URL（如 BLIP2 service）
+
+    @model_validator(mode="after")
+    def _normalize_project_relative_paths(self):
+        self.database_url = _resolve_sqlite_url(self.database_url)
+        self.output_dir = _resolve_project_path(self.output_dir)
+        self.gallery_dir = _resolve_project_path(self.gallery_dir)
+        self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
+        self.sd_scripts_path = _resolve_project_path(self.sd_scripts_path)
+        self.watch_dirs = ",".join(
+            _resolve_project_path(part.strip())
+            for part in self.watch_dirs.split(",")
+            if part.strip()
+        )
+        return self
 
     class Config:
         env_file = str(_ENV_PATH)
