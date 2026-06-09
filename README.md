@@ -1,8 +1,8 @@
 # AI 自動化出圖系統
 
-> 資料夾監聽自動 .txt · LoRA 訓練觸發 · ComfyUI 產圖 · 參數記錄
+> 資料夾監聽自動 .txt · LoRA 訓練觸發 · 參數記錄
 
-整合 ComfyUI、LoRA 訓練與參數記錄的完整自動化圖片生成流水線。
+整合 ComfyUI、LoRA 訓練與參數記錄的自動化工作流。
 
 ## Agent / 新成員入口
 
@@ -45,7 +45,7 @@
 - **生圖**：ComfyUI API 串接、Workflow 模板、批次排程
 - **圖庫**：參數記錄、Gallery 瀏覽、一鍵重現
 - **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
-- **LoRA 訓練與產圖串接**：訓練執行、自動觸發、產圖 Pipeline
+- **LoRA 訓練流程**：訓練執行、自動觸發、訓練結果管理
 - **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合（設定見 [docs/mcp-setup.md](docs/mcp-setup.md)）
 
 ---
@@ -57,7 +57,7 @@
 | 生圖 | ComfyUI API 串接、Workflow 模板、批次排程 |
 | 圖庫 | 參數記錄、Gallery 瀏覽、一鍵重現 |
 | LoRA 文件工具 | 資料夾監聽 .txt、Caption 編輯、打包下載 |
-| LoRA 訓練 | 訓練執行器、自動觸發、Pipeline 串接 |
+| LoRA 訓練 | 訓練執行器、自動觸發、訓練流程管理 |
 | MCP Tools | 生圖、訓練、圖庫操作，供 agent 呼叫 |
 
 進度追蹤：[docs/PROGRESS.md](docs/PROGRESS.md)
@@ -71,7 +71,7 @@
      ↓
 [圖片數 ≥ 門檻] → Kohya sd-scripts → LoRA 訓練
      ↓
-[訓練完成] → 自動選用新 LoRA → ComfyUI 產圖 → 參數記錄 → Gallery
+[LoRA 與參數資料可供後續生圖流程使用] → 參數記錄 / Gallery 串接
 ```
 
 ### WD Tagger 資料夾類型（依路徑選用 blacklist）
