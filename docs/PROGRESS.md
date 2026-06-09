@@ -13,6 +13,12 @@ F-F（LLM 自動 caption）已完成並合併。無待辦任務。
 
 ## 已完成
 
+### 路徑正規化修正（2026-06-09）
+- [x] `backend/app/config.py` 將 DB / output / gallery / lora_train / sd-scripts / watch_dirs 的相對路徑統一正規化為 **project root 基準**
+- [x] 修正 `DATABASE_URL` 為 sqlite 相對路徑時會隨啟動 cwd 漂移的問題
+- [x] 新增 `backend/tests/test_config_paths.py`，驗證 defaults 與 env override 在不同 cwd 下都解析到同一位置
+- [x] 實測 `POST /api/generate/` 成功，輸出與 DB 記錄固定落在 `backend/` 路徑下
+
 ### F-F：LLM 自動產生 Caption (2026-06-07)
 - [x] 後端 LLM caption API：`POST /api/lora-docs/caption-llm/{image_path}`
 - [x] MCP tool：`caption_image(image_path)`
