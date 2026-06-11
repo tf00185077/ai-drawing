@@ -7,7 +7,9 @@
 
 ## 目前聚焦
 
-F-F（LLM 自動 caption）已完成並合併。無待辦任務。
+OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
+
+目前執行位置：尚未開始 Phase 1；下一步是透過 ai-drawing backend 端點實際進行一次低負載繪圖驗證。
 
 ---
 
@@ -61,7 +63,15 @@ F-F（LLM 自動 caption）已完成並合併。無待辦任務。
 
 ## 待做
 
-目前無待辦任務。
+OpenClaw × ai-drawing 本地繪圖 / MCP 整合：
+
+1. [ ] 透過 ai-drawing backend 端點進行低負載繪圖驗證
+2. [ ] 整理 OpenClaw backend 繪圖 SOP
+3. [ ] 將 ai-drawing 繪圖最小閉環做成 MCP tools
+4. [ ] 透過 MCP 實際完成一次繪圖驗證
+5. [ ] 整理 OpenClaw MCP 繪圖 SOP
+
+詳細順序、狀態與驗證標準見 `docs/openclaw-ai-drawing-mcp-handoff.md`。
 
 ---
 
