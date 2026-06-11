@@ -260,12 +260,12 @@ def list_resources() -> str:
 
 ### 驗收標準
 
-- [ ] tool 名稱是 `list_resources`。
-- [ ] 呼叫 `generate/available-resources`。
-- [ ] 回傳可 JSON parse。
-- [ ] response 中包含 `checkpoints`、`loras`、`workflows`。
-- [ ] checkpoints 空時 `ok` 可以仍為 true，但 `next` 必須提示不能提交生圖。
-- [ ] 保留或兼容現有 `get_available_resources`。
+- [x] tool 名稱是 `list_resources`。
+- [x] 呼叫 `generate/available-resources`。
+- [x] 回傳可 JSON parse。
+- [x] response 中包含 `checkpoints`、`loras`、`workflows`。
+- [x] checkpoints 空時 `ok` 可以仍為 true，但 `next` 必須提示不能提交生圖。
+- [x] 保留或兼容現有 `get_available_resources`。
 
 ### 單元測試
 
@@ -282,6 +282,18 @@ def list_resources() -> str:
 cd ~/Desktop/ai-drawing/mcp-server
 uv run pytest tests/test_tools.py -k 'list_resources or available_resources' -q
 ```
+
+### Step 2 實測結果（2026-06-11 14:41 CST）
+
+- 新增 `list_resources` MCP tool，回傳 agent-friendly JSON 字串。
+- `list_resources` 呼叫既有 backend endpoint：`generate/available-resources`。
+- `list_resources` 成功時回傳：`ok`、`tool`、`backend_base_url`、`checkpoints`、`loras`、`workflows`、`next`。
+- checkpoints 空時仍回傳 `ok=true`，但 `next` 明確提醒 `do not call generate_image`。
+- backend exception 時回傳 `ok=false`、`where="backend"` 與具體 error。
+- 保留既有 `get_available_resources` 文字輸出相容性。
+- 驗證：
+  - RED：`ImportError: cannot import name 'list_resources'`。
+  - GREEN：`uv run pytest tests/test_tools.py -k 'list_resources or available_resources' -q` → `5 passed, 16 deselected`。
 
 ---
 
