@@ -8,6 +8,7 @@
 import json
 
 from mcp_server.character_style import resolve_to_prompt
+from mcp_server.config import get_mcp_settings
 from mcp_server.description_parser import parse_description
 from mcp_server.server import _get_client, mcp
 
@@ -299,6 +300,44 @@ def cancel_job(job_id: str) -> str:
         return resp.get("message", "已取消")
     except Exception as e:
         return f"error: {e}"
+
+
+@mcp.tool()
+def list_resources() -> str:
+    """列出可用 checkpoints、LoRA、workflow 模板，回傳 agent-friendly JSON。"""
+    try:
+        client = _get_client()
+        resp = client.get("generate/available-resources")
+        checkpoints = resp.get("checkpoints", [])
+        loras = resp.get("loras", [])
+        workflows = resp.get("workflows", [])
+        next_step = (
+            "choose a checkpoint, then call generate_image"
+            if checkpoints
+            else "no checkpoints available; do not call generate_image until backend resources are fixed"
+        )
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "list_resources",
+                "backend_base_url": get_mcp_settings().backend_api_url,
+                "checkpoints": checkpoints,
+                "loras": loras,
+                "workflows": workflows,
+                "next": next_step,
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "list_resources",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
 
 
 @mcp.tool()
