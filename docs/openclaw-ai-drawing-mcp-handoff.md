@@ -32,13 +32,13 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 | 順序 | 階段 | 狀態 | 目標 |
 |---:|---|---|---|
-| 1 | 透過 ai-drawing backend 端點進行繪圖 | **待執行** | 先證明 backend → ComfyUI → gallery 的繪圖閉環可用 |
-| 2 | 教 OpenClaw 使用 backend 繪圖 | 待執行 | 在 MCP 完成前，讓 OpenClaw 可以用 HTTP endpoint 進行繪圖 |
+| 1 | 透過 ai-drawing backend 端點進行繪圖 | **已完成** | 已證明 backend → ComfyUI → gallery 的繪圖閉環可用 |
+| 2 | 教 OpenClaw 使用 backend 繪圖 | **已完成** | 已整理 HTTP endpoint SOP，MCP 完成前可照文件操作 |
 | 3 | 將 ai-drawing 功能做成 MCP | 待執行 | 把 backend 能力包成 agent 穩定可用的 MCP tools |
 | 4 | 由 Hermes / agent 實際使用 MCP 驗證功能 | 待執行 | 不只啟動 MCP，要實際透過 MCP 完成生圖與查詢 |
 | 5 | 教 OpenClaw agent 使用 MCP | 待執行 | 形成 OpenClaw 可遵守的 MCP 操作 SOP |
 
-目前執行位置：**尚未開始第 1 步；下一步是「透過 backend 端點實際繪圖」。**
+目前執行位置：**第 2 步已完成；下一步是「將 ai-drawing 繪圖最小閉環做成 MCP tools」。**
 
 ---
 
@@ -46,7 +46,7 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 ### Phase 1：透過 ai-drawing backend 端點進行繪圖
 
-狀態：`pending`
+狀態：`completed`
 
 目的：不用 MCP，直接透過 backend HTTP API 讓 `ai-drawing` 呼叫 ComfyUI 並產出圖片。
 
@@ -76,19 +76,19 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 驗證標準：
 
-- [ ] backend health OK
-- [ ] available resources 可列出至少一個 checkpoint
-- [ ] generate request 成功送出
-- [ ] job completed
-- [ ] 圖片檔案存在且可讀
-- [ ] ComfyUI `/free` 呼叫成功
-- [ ] 記錄實際 backend port、job id、圖片路徑、使用 checkpoint
+- [x] backend health OK
+- [x] available resources 可列出至少一個 checkpoint
+- [x] generate request 成功送出
+- [x] job completed
+- [x] 圖片檔案存在且可讀
+- [x] ComfyUI `/free` 呼叫成功
+- [x] 記錄實際 backend port、job id、圖片路徑、使用 checkpoint
 
 ---
 
 ### Phase 2：教 OpenClaw 使用 backend 進行繪圖
 
-狀態：`pending`
+狀態：`completed`
 
 目的：在 MCP 完成前，先讓 OpenClaw agent 可以用 backend HTTP endpoint 畫圖。
 
@@ -115,10 +115,10 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 驗證標準：
 
-- [ ] 文件包含實測可用的 curl / HTTP 範例
-- [ ] 文件包含成功/失敗判斷方式
-- [ ] 文件包含資源限制規則
-- [ ] OpenClaw agent 讀取後可照步驟操作，不需要猜 endpoint
+- [x] 文件包含實測可用的 curl / HTTP 範例
+- [x] 文件包含成功/失敗判斷方式
+- [x] 文件包含資源限制規則
+- [x] OpenClaw agent 讀取後可照步驟操作，不需要猜 endpoint
 
 ---
 
@@ -320,6 +320,56 @@ curl -X POST http://127.0.0.1:8188/free \
 - 確認任務順序：backend 繪圖 → backend 使用教學 → MCP 化 → MCP 實測 → OpenClaw MCP 使用教學。
 - 目前尚未開始 Phase 1。
 - 下一步：透過 ai-drawing backend 端點實際進行一次低負載繪圖驗證。
+
+### 2026-06-11 12:02 CST
+
+- 執行 phase：Phase 1 - 透過 ai-drawing backend 端點進行繪圖
+- 狀態：completed
+- 實際操作：
+  - 確認 ComfyUI `http://127.0.0.1:8188/system_stats` 正常回傳 JSON。
+  - 確認 ai-drawing backend `http://127.0.0.1:8001/health` 回傳 `{"status":"healthy"}`。
+  - 確認 `GET /api/generate/available-resources` 可列出 checkpoints：`novaAnimeXL_ilV190.safetensors`、`v1-5-pruned-emaonly.ckpt`。
+  - 確認 `GET /api/generate/queue` 在送出前為空佇列。
+  - 透過 `POST http://127.0.0.1:8001/api/generate/` 送出低負載生圖 request：batch size 1、512×512、steps 8、CFG 6.0、checkpoint `novaAnimeXL_ilV190.safetensors`。
+  - 使用 `GET /api/generate/job/{job_id}` 查詢到 completed。
+  - 使用 gallery API 與檔案系統確認輸出圖片存在且可讀。
+  - 呼叫 ComfyUI `POST /free`，body 為 `{"unload_models": true, "free_memory": true}`，呼叫後 `/system_stats` 仍正常。
+- 驗證結果：
+  - backend health OK。
+  - available resources OK。
+  - generate request 成功送出並完成。
+  - gallery record 與實際 PNG 檔案一致。
+  - 實際圖片為 PNG，尺寸 512×512。
+- 產物：
+  - backend port：8001
+  - job id：`27920202-569f-4880-abc2-7a9f477d0094`
+  - image id：`1`
+  - image path：`2026-06-11/ComfyUI_00007__27920202_0.png`
+  - 實際檔案：`/Users/tf00185088/Desktop/ai-drawing/outputs/gallery/2026-06-11/ComfyUI_00007__27920202_0.png`
+  - checkpoint：`novaAnimeXL_ilV190.safetensors`
+- 下一步：整理 `docs/openclaw-backend-drawing-sop.md`，讓 OpenClaw 在 MCP 完成前可透過 backend HTTP endpoint 進行本地繪圖。
+- 阻塞點：無
+
+### 2026-06-11 13:36 CST
+
+- 執行 phase：Phase 2 - 教 OpenClaw 使用 backend 進行繪圖
+- 狀態：completed
+- 實際操作：
+  - 根據 Phase 1 實測結果整理 backend base URL：`http://127.0.0.1:8001`。
+  - 根據 Phase 1 實測結果整理 ComfyUI base URL：`http://127.0.0.1:8188`。
+  - 建立 `docs/openclaw-backend-drawing-sop.md`。
+  - SOP 內容包含：health check、queue check、available resources、submit generation、job status、gallery detail、ComfyUI `/free`。
+  - SOP 明確記錄限制：一次只送一個 generation job、batch size 預設 1、busy 時等待、不要使用 `8000`、不要猜 checkpoint、完成後釋放 ComfyUI memory。
+  - SOP 包含 Phase 1 實測成功的 job id、image id、image path 與實際檔案位置。
+- 驗證結果：
+  - 文件包含可直接複製使用的 curl / HTTP 範例。
+  - 文件包含成功/失敗判斷方式。
+  - 文件包含資源限制與 busy 處理規則。
+  - OpenClaw agent 讀取後可照步驟操作，不需要猜 endpoint。
+- 產物：
+  - 文件：`docs/openclaw-backend-drawing-sop.md`
+- 下一步：Phase 3 - 將 ai-drawing 繪圖最小閉環做成 MCP tools。
+- 阻塞點：無
 
 ---
 
