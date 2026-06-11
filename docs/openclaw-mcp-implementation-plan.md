@@ -347,13 +347,13 @@ mcp-server/tests/test_tools.py
 
 ### 驗收標準
 
-- [ ] 對 backend 呼叫 `post("generate/", json=body)`。
-- [ ] body 包含 prompt 與指定 optional params。
-- [ ] 預設 `batch_size` 最終為 1 或明確記錄未傳。
-- [ ] 回傳可 JSON parse。
-- [ ] 回傳包含 `job_id`、`status`、`next`。
-- [ ] backend 503 / exception 時回傳 `ok=false` 且 `where="backend"`。
-- [ ] 不破壞 character/style prompt 解析能力。
+- [x] 對 backend 呼叫 `post("generate/", json=body)`。
+- [x] body 包含 prompt 與指定 optional params。
+- [x] 預設 `batch_size` 最終為 1 或明確記錄未傳。
+- [x] 回傳可 JSON parse。
+- [x] 回傳包含 `job_id`、`status`、`next`。
+- [x] backend 503 / exception 時回傳 `ok=false` 且 `where="backend"`。
+- [x] 不破壞 character/style prompt 解析能力。
 
 ### 單元測試
 
@@ -370,6 +370,18 @@ mcp-server/tests/test_tools.py
 cd ~/Desktop/ai-drawing/mcp-server
 uv run pytest tests/test_tools.py -k 'generate_image and not custom' -q
 ```
+
+### Step 3 實測結果（2026-06-11 15:07 CST）
+
+- 改造 `generate_image`，成功時回傳 agent-friendly JSON 字串。
+- `generate_image` 成功回傳包含：`ok`、`tool`、`job_id`、`status`、`submitted`、`next`。
+- `generate_image` 現在預設送出 `batch_size=1`，符合 OpenClaw 單任務 / 低負載策略。
+- optional params 會保留在 backend request body，並原樣回填到 `submitted`。
+- backend exception 時回傳 `ok=false`、`where="backend"` 與具體 error。
+- character/style prompt 解析測試保持通過。
+- 驗證：
+  - RED：`json.decoder.JSONDecodeError`，因原本 `generate_image` 回傳文字。
+  - GREEN：`uv run pytest tests/test_tools.py -k 'generate_image and not custom and not description' -q` → `4 passed, 18 deselected`。
 
 ---
 

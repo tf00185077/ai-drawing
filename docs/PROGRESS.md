@@ -9,7 +9,7 @@
 
 OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
-目前執行位置：Phase 1 backend 低負載繪圖驗證與 Phase 2 OpenClaw backend 繪圖 SOP 已完成；Phase 3 Step 1 MCP config / URL 基礎整理與 Step 2 `list_resources` 已完成，下一步是依 `docs/openclaw-mcp-implementation-plan.md` 執行 Step 3：改造 / 補齊 `generate_image`。
+目前執行位置：Phase 1 backend 低負載繪圖驗證與 Phase 2 OpenClaw backend 繪圖 SOP 已完成；Phase 3 Step 1 MCP config / URL、Step 2 `list_resources`、Step 3 `generate_image` 已完成，下一步是依 `docs/openclaw-mcp-implementation-plan.md` 執行 Step 4：新增 `get_generation_status`。
 
 ---
 
