@@ -166,10 +166,10 @@ mcp-server/tests/test_client.py
 
 ### 驗收標準
 
-- [ ] `config.py` 可讀取 backend URL、ComfyUI URL、gallery dir。
-- [ ] 未設定 env 時，本機預設不會指向 `8000`。
-- [ ] 測試覆蓋 env override。
-- [ ] 不把 `.env` 或 secrets 寫進 repo。
+- [x] `config.py` 可讀取 backend URL、ComfyUI URL、gallery dir。
+- [x] 未設定 env 時，本機預設不會指向 `8000`。
+- [x] 測試覆蓋 env override。
+- [x] 不把 `.env` 或 secrets 寫進 repo。
 
 ### 驗證指令
 
@@ -189,6 +189,19 @@ uv run pytest tests/ -k 'config or client' -q
 
 - config 測試通過。
 - 文件或 README 不再誤導 agent 使用 `8000` 作為 ai-drawing backend。
+
+### Step 1 實測結果（2026-06-11 14:12 CST）
+
+- 新增 `mcp-server/tests/test_config.py`，覆蓋本機預設值與 `MCP_*` env override。
+- `mcp-server/mcp_server/config.py` 預設值已更新：
+  - `backend_api_url = "http://127.0.0.1:8001"`
+  - `comfyui_api_url = "http://127.0.0.1:8188"`
+  - `gallery_dir = "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery"`
+- `docs/mcp-setup.md` 與 `mcp-server/README.md` 已同步 MCP env 文件與本機 OpenClaw 注意事項。
+- 移除 `mcp-server/mcp_server/server.py` 對不存在 `lora_docs` module 的 import，讓 server tests 可正常載入。
+- 驗證：
+  - `uv run pytest tests/test_config.py tests/test_client.py tests/test_server.py -q` → `6 passed`
+  - `uv run pytest tests/ -q` → `33 passed`
 
 ---
 

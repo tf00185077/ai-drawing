@@ -19,7 +19,14 @@ class McpSettings(BaseSettings):
     )
 
     # Backend API Base URL（MCP 呼叫 ai-drawing 後端用）
-    backend_api_url: str = "http://127.0.0.1:8000"
+    # 本機已驗證 ai-drawing backend 使用 8001；8000 通常是其他本地 LLM/MLX 服務。
+    backend_api_url: str = "http://127.0.0.1:8001"
+
+    # ComfyUI API Base URL（用於 MCP 層釋放 ComfyUI 記憶體等操作）
+    comfyui_api_url: str = "http://127.0.0.1:8188"
+
+    # Backend gallery 實體檔案根目錄（用於 agent 交付本機圖片檔案）
+    gallery_dir: str = "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery"
 
 
 @lru_cache

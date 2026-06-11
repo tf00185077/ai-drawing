@@ -390,6 +390,31 @@ curl -X POST http://127.0.0.1:8188/free \
 - 下一步：依 `docs/openclaw-mcp-implementation-plan.md` 從 Step 1 開始實作並驗收。
 - 阻塞點：無
 
+### 2026-06-11 14:12 CST
+
+- 執行 phase：Phase 3 Step 1 - 整理 MCP config 與 backend / ComfyUI base URL
+- 狀態：completed
+- 實際操作：
+  - 依 TDD 流程新增 `mcp-server/tests/test_config.py`。
+  - 先確認 RED：預設 backend 仍指向 `8000`，且 `comfyui_api_url` / `gallery_dir` 不存在。
+  - 更新 `mcp-server/mcp_server/config.py`，加入本機驗證過的預設：backend `8001`、ComfyUI `8188`、gallery root `/Users/tf00185088/Desktop/ai-drawing/outputs/gallery`。
+  - 修正 `mcp-server/mcp_server/server.py` 匯入不存在 `lora_docs` module 的問題，讓 server tests 可正常 collection。
+  - 更新 `docs/mcp-setup.md` 與 `mcp-server/README.md` 的 MCP env 文件，避免 MCP / OpenClaw 被誤導使用 `8000`。
+  - 更新 `docs/openclaw-mcp-implementation-plan.md` 的 Step 1 checklist 與實測結果。
+- 驗證結果：
+  - `uv run pytest tests/test_config.py tests/test_client.py tests/test_server.py -q` → `6 passed`
+  - `uv run pytest tests/ -q` → `33 passed`
+  - MCP docs 中不再存在 `http(s)://...:8000` 範例；只保留「不要使用 8000」警告。
+- 產物：
+  - `mcp-server/tests/test_config.py`
+  - `mcp-server/mcp_server/config.py`
+  - `mcp-server/mcp_server/server.py`
+  - `docs/mcp-setup.md`
+  - `mcp-server/README.md`
+  - `docs/openclaw-mcp-implementation-plan.md`
+- 下一步：Phase 3 Step 2 - 新增 `list_resources`。
+- 阻塞點：無
+
 ---
 
 ## 7. 狀態更新模板
