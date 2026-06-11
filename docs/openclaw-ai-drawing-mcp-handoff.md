@@ -38,7 +38,7 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 | 4 | 由 Hermes / agent 實際使用 MCP 驗證功能 | 待執行 | 不只啟動 MCP，要實際透過 MCP 完成生圖與查詢 |
 | 5 | 教 OpenClaw agent 使用 MCP | 待執行 | 形成 OpenClaw 可遵守的 MCP 操作 SOP |
 
-目前執行位置：**第 2 步已完成；下一步是「將 ai-drawing 繪圖最小閉環做成 MCP tools」。**
+目前執行位置：**第 2 步已完成；Phase 3 的可驗收實作計畫已寫入 `docs/openclaw-mcp-implementation-plan.md`。下一步是依該文件逐步實作並驗收 MCP tools。**
 
 ---
 
@@ -128,7 +128,9 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 目的：將 backend 功能包成 MCP tools，讓 OpenClaw agent 不需要手寫 HTTP 細節。
 
-建議不要一口氣做全部；先做「繪圖最小閉環」。
+可驗收實作計畫：`docs/openclaw-mcp-implementation-plan.md`。
+
+建議不要一口氣做全部；先做「繪圖最小閉環」並依計畫文件逐 step 驗收。
 
 第一批 MCP tools：
 
@@ -369,6 +371,23 @@ curl -X POST http://127.0.0.1:8188/free \
 - 產物：
   - 文件：`docs/openclaw-backend-drawing-sop.md`
 - 下一步：Phase 3 - 將 ai-drawing 繪圖最小閉環做成 MCP tools。
+- 阻塞點：無
+
+### 2026-06-11 14:01 CST
+
+- 執行 phase：Phase 3 - MCP tools 實作前計畫化
+- 狀態：planned
+- 實際操作：
+  - 盤點 `mcp-server/` 現有 tools 與測試：目前已有 `generate_image`、`get_job_status`、`get_available_resources`、`gallery_detail` 等基礎能力，但回傳偏文字、缺少 `free_comfyui_memory`，且尚未以 OpenClaw 最小閉環為單位建立可驗收步驟。
+  - 建立 `docs/openclaw-mcp-implementation-plan.md`。
+  - 計畫文件把 Phase 3 切成可逐步驗收的 steps：config / URL、`list_resources`、`generate_image`、`get_generation_status`、`get_gallery_image`、`free_comfyui_memory`、registration/docs、完整單元測試、真 backend/ComfyUI smoke test、進度文件更新。
+  - 每個 step 都寫入目標、預期變更、驗收標準、驗證指令與完成產物。
+- 驗證結果：
+  - 計畫文件提供每一步可驗收標準，不需一次性大改。
+  - handoff 與 PROGRESS 已引用新計畫文件。
+- 產物：
+  - 文件：`docs/openclaw-mcp-implementation-plan.md`
+- 下一步：依 `docs/openclaw-mcp-implementation-plan.md` 從 Step 1 開始實作並驗收。
 - 阻塞點：無
 
 ---

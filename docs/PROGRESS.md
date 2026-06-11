@@ -9,7 +9,7 @@
 
 OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
-目前執行位置：Phase 1 backend 低負載繪圖驗證與 Phase 2 OpenClaw backend 繪圖 SOP 已完成；下一步是將 ai-drawing 繪圖最小閉環做成 MCP tools。
+目前執行位置：Phase 1 backend 低負載繪圖驗證與 Phase 2 OpenClaw backend 繪圖 SOP 已完成；Phase 3 MCP 實作驗收計畫已建立於 `docs/openclaw-mcp-implementation-plan.md`，下一步是依文件逐 step 實作與驗收。
 
 ---
 
