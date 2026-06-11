@@ -46,7 +46,7 @@ def generate_image(
             if style_lora and not resolved_lora:
                 resolved_lora = style_lora
 
-        body = {"prompt": final_prompt}
+        body: dict[str, object] = {"prompt": final_prompt}
         if checkpoint:
             body["checkpoint"] = checkpoint
         if resolved_lora:
@@ -59,8 +59,11 @@ def generate_image(
             body["steps"] = steps
         if cfg is not None:
             body["cfg"] = cfg
-        if batch_size is not None and 1 <= batch_size <= 8:
-            body["batch_size"] = batch_size
+        if batch_size is not None:
+            if 1 <= batch_size <= 8:
+                body["batch_size"] = batch_size
+        else:
+            body["batch_size"] = 1
         if width is not None:
             body["width"] = width
         if height is not None:
@@ -76,9 +79,27 @@ def generate_image(
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
-        return f"已加入生圖佇列：job_id={job_id}, status={status}"
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_image",
+                "job_id": job_id,
+                "status": status,
+                "submitted": body,
+                "next": "call get_generation_status with this job_id",
+            },
+            ensure_ascii=False,
+        )
     except Exception as e:
-        return f"error: {e}"
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "generate_image",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
 
 
 @mcp.tool()

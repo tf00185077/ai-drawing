@@ -108,37 +108,79 @@ def test_get_available_resources_empty_lists() -> None:
     assert "(無)" in result
 
 
-def test_generate_image_returns_success_message() -> None:
-    """generate_image 成功時回傳 job_id"""
+def test_generate_image_returns_agent_friendly_json() -> None:
+    """generate_image 成功時回傳 agent 可解析的 JSON job 結果"""
     mock_client = MagicMock()
     mock_client.post.return_value = {"job_id": "abc-123", "status": "queued"}
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
         result = generate_image(prompt="1girl, solo")
 
-    assert "abc-123" in result
-    assert "error" not in result.lower()
-    mock_client.post.assert_called_once_with("generate/", json={"prompt": "1girl, solo"})
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "generate_image"
+    assert data["job_id"] == "abc-123"
+    assert data["status"] == "queued"
+    assert data["submitted"]["prompt"] == "1girl, solo"
+    assert data["submitted"]["batch_size"] == 1
+    assert "get_generation_status" in data["next"]
+    mock_client.post.assert_called_once_with(
+        "generate/",
+        json={"prompt": "1girl, solo", "batch_size": 1},
+    )
 
 
-def test_generate_image_with_optional_params() -> None:
-    """generate_image 可傳入 checkpoint、lora 等參數"""
+def test_generate_image_with_optional_params_returns_submitted_payload() -> None:
+    """generate_image 可傳入完整參數並在 submitted 中回傳"""
     mock_client = MagicMock()
     mock_client.post.return_value = {"job_id": "x", "status": "queued"}
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        generate_image(
+        result = generate_image(
             prompt="test",
             checkpoint="model.safetensors",
             lora="style.safetensors",
+            negative_prompt="bad",
             steps=25,
+            cfg=6.5,
+            width=512,
+            height=768,
+            batch_size=1,
+            sampler_name="euler",
+            scheduler="normal",
         )
 
     call_json = mock_client.post.call_args[1]["json"]
     assert call_json["prompt"] == "test"
     assert call_json["checkpoint"] == "model.safetensors"
     assert call_json["lora"] == "style.safetensors"
+    assert call_json["negative_prompt"] == "bad"
     assert call_json["steps"] == 25
+    assert call_json["cfg"] == 6.5
+    assert call_json["width"] == 512
+    assert call_json["height"] == 768
+    assert call_json["batch_size"] == 1
+    assert call_json["sampler_name"] == "euler"
+    assert call_json["scheduler"] == "normal"
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["submitted"] == call_json
+
+
+def test_generate_image_backend_error_returns_structured_json() -> None:
+    """generate_image backend 失敗時回傳 ok=false 的穩定 JSON"""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = RuntimeError("queue full")
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image(prompt="test")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "generate_image"
+    assert data["where"] == "backend"
+    assert "queue full" in data["error"]
 
 
 def test_generate_queue_status_formats_output() -> None:
