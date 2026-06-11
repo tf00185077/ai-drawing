@@ -29,6 +29,7 @@
 | REST API 格式？ | [docs/api-contract.md](docs/api-contract.md) |
 | 模組介面？ | [docs/internal-interfaces.md](docs/internal-interfaces.md) |
 | 如何啟動系統？ | [docs/setup-guide.md](docs/setup-guide.md) |
+| OpenClaw 如何接手本地繪圖 / MCP 整合？ | [docs/openclaw-ai-drawing-mcp-handoff.md](docs/openclaw-ai-drawing-mcp-handoff.md) |
 
 **執行規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
 
