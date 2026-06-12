@@ -540,6 +540,14 @@ cd ~/Desktop/ai-drawing/mcp-server
 uv run pytest tests/test_tools.py -k 'gallery_image or gallery_detail' -q
 ```
 
+### Step 5 實測結果（2026-06-12）
+
+- 新增 `get_gallery_image` MCP tool，回傳 agent-friendly JSON 字串。
+- 成功回傳包含：`ok`、`tool`、`image_id`、`image_path`、`image_url`、`local_path`、`metadata`、`next`。
+- 保留既有 `gallery_detail` 文字輸出相容性。
+- 驗證：
+  - `uv run pytest tests/test_tools.py -k 'gallery_image or gallery_detail' -q` → `4 passed, 30 deselected`。
+
 ---
 
 ## Step 6：新增 `free_comfyui_memory`
@@ -630,6 +638,13 @@ cd ~/Desktop/ai-drawing/mcp-server
 uv run pytest tests/ -k 'free_comfyui_memory or comfyui' -q
 ```
 
+### Step 6 實測結果（2026-06-12）
+
+- 新增 `mcp-server/mcp_server/tools/comfyui.py`，提供 `free_comfyui_memory` MCP tool。
+- 成功時回傳 `ok/tool/comfyui_base_url/unload_models/free_memory/next`；失敗時回傳 `ok=false` 與 `where="comfyui"`。
+- 驗證：
+  - `uv run pytest tests/ -k 'free_comfyui_memory or comfyui' -q` → `3 passed, 47 deselected`。
+
 ---
 
 ## Step 7：更新 MCP server tool registration / docs
@@ -670,6 +685,13 @@ uv run pytest tests/test_server.py -q
 
 如果 MCP SDK 支援工具列舉測試，新增測試確認 tool names 存在。
 
+### Step 7 實測結果（2026-06-12）
+
+- `mcp-server/mcp_server/server.py` 已匯入 `comfyui`、`gallery`、`generate` 等最小閉環 tools。
+- `docs/mcp-setup.md` 與 `mcp-server/README.md` 已同步列出：`list_resources`、`generate_image`、`get_generation_status`、`get_gallery_image`、`free_comfyui_memory`。
+- 驗證：
+  - `uv run pytest tests/test_server.py -q` → `3 passed`。
+
 ---
 
 ## Step 8：執行完整單元測試
@@ -691,6 +713,11 @@ cd ~/Desktop/ai-drawing/mcp-server
 uv run pytest tests/ -q
 ```
 
+### Step 8 實測結果（2026-06-12）
+
+- `uv run pytest tests/ -q` → `50 passed`。
+- Phase 3 新增的 JSON wrapper tools 與既有文字回傳 tools 目前都維持相容。
+
 ### 若失敗
 
 必須記錄：
@@ -709,7 +736,7 @@ uv run pytest tests/ -q
 
 在真實 backend `8001` 與 ComfyUI `8188` 下，透過 MCP tool 完成一次低負載繪圖閉環。
 
-這一步是 Phase 3 完成前的 integration smoke test；Phase 4 會再做正式 agent-through-MCP 驗證。
+這一步原本是 Phase 3 完成前的 integration smoke test；2026-06-12 同一條 MCP 最小閉環也已完成正式 Hermes/agent 驗證，因此後續焦點轉為 Phase 5 SOP。
 
 ### 前置條件
 
@@ -730,14 +757,14 @@ uv run pytest tests/ -q
 
 ### 驗收標準
 
-- [ ] `list_resources` 回傳 checkpoints。
-- [ ] `generate_image` 回傳 job id。
-- [ ] `get_generation_status` 回傳 completed。
-- [ ] `get_gallery_image` 回傳 image_url 與 local_path。
-- [ ] local_path 對應檔案存在且可讀。
-- [ ] 圖片尺寸與 request 一致。
-- [ ] `free_comfyui_memory` 回傳 ok。
-- [ ] 測試後 backend queue 為空。
+- [x] `list_resources` 回傳 checkpoints。
+- [x] `generate_image` 回傳 job id。
+- [x] `get_generation_status` 回傳 completed。
+- [x] `get_gallery_image` 回傳 image_url 與 local_path。
+- [x] local_path 對應檔案存在且可讀。
+- [x] 圖片尺寸與 request 一致。
+- [x] `free_comfyui_memory` 回傳 ok。
+- [x] 測試後 backend queue 為空。
 
 ### 建議 payload
 
@@ -768,6 +795,19 @@ uv run pytest tests/ -q
 - PNG dimensions
 - `/free` 結果
 
+### Step 9 實測結果（2026-06-12）
+
+- backend port：`8001`
+- ComfyUI port：`8188`
+- checkpoint：`novaAnimeXL_ilV190.safetensors`
+- job id：`c99167aa-4370-47e1-ae09-2b97d5f18978`
+- image id：`2`
+- image path：`2026-06-12/ComfyUI_00008__c99167aa_0.png`
+- local path：`/Users/tf00185088/Desktop/ai-drawing/outputs/gallery/2026-06-12/ComfyUI_00008__c99167aa_0.png`
+- PNG dimensions：`512x512`
+- `/free` 結果：`ok=true`
+- 測試後 queue：`{"queue_running":[],"queue_pending":[]}`
+
 ---
 
 ## Step 10：更新進度與交接文件
@@ -789,15 +829,21 @@ docs/PROGRESS.md
 - 驗證 checklist 打勾
 - 執行紀錄新增具體結果
 - `docs/PROGRESS.md` 待做清單第 3 項打勾
-- 下一步指向 Phase 4：透過 MCP 實際完成一次繪圖驗證
+- 下一步指向 Phase 4（若正式驗證已完成則改指向 Phase 5 OpenClaw MCP SOP）
 
 ### 驗收標準
 
-- [ ] handoff 狀態表更新。
-- [ ] Phase 3 checklist 更新。
-- [ ] 執行紀錄含 job id / image path / tool names。
-- [ ] PROGRESS 目前聚焦改成 Phase 4。
-- [ ] git diff 只包含本 phase 相關檔案。
+- [x] handoff 狀態表更新。
+- [x] Phase 3 checklist 更新。
+- [x] 執行紀錄含 job id / image path / tool names。
+- [x] PROGRESS 目前聚焦改成 Phase 4 或 Phase 5。
+- [x] git diff 只包含本 phase 相關檔案。
+
+### Step 10 實測結果（2026-06-12）
+
+- `docs/PROGRESS.md` 已更新為：Phase 3 與 Phase 4 完成，下一步是 Phase 5 OpenClaw MCP SOP。
+- `docs/openclaw-ai-drawing-mcp-handoff.md` 已改成 phase-level 狀態：Phase 3 completed、Phase 4 completed、Phase 5 pending。
+- 本次文件更新僅修改本 phase 相關文件：`docs/PROGRESS.md`、`docs/openclaw-mcp-implementation-plan.md`、`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
 ---
 
@@ -824,20 +870,20 @@ docs/PROGRESS.md
 
 只有同時滿足以下條件，Phase 3 才能標記完成：
 
-- [ ] 五個最小 MCP tools 都存在：
-  - [ ] `list_resources`
-  - [ ] `generate_image`
-  - [ ] `get_generation_status`
-  - [ ] `get_gallery_image`
-  - [ ] `free_comfyui_memory`
-- [ ] 每個 tool 回傳 agent-friendly JSON 字串。
-- [ ] 每個 tool 有單元測試。
-- [ ] `uv run pytest tests/ -q` 通過。
-- [ ] 真 backend / ComfyUI smoke test 通過。
-- [ ] 生圖後有呼叫 `free_comfyui_memory`。
-- [ ] 實體圖片檔案存在且可讀。
-- [ ] `docs/openclaw-ai-drawing-mcp-handoff.md` 更新。
-- [ ] `docs/PROGRESS.md` 更新。
+- [x] 五個最小 MCP tools 都存在：
+  - [x] `list_resources`
+  - [x] `generate_image`
+  - [x] `get_generation_status`
+  - [x] `get_gallery_image`
+  - [x] `free_comfyui_memory`
+- [x] 每個 tool 回傳 agent-friendly JSON 字串。
+- [x] 每個 tool 有單元測試。
+- [x] `uv run pytest tests/ -q` 通過。
+- [x] 真 backend / ComfyUI smoke test 通過。
+- [x] 生圖後有呼叫 `free_comfyui_memory`。
+- [x] 實體圖片檔案存在且可讀。
+- [x] `docs/openclaw-ai-drawing-mcp-handoff.md` 更新。
+- [x] `docs/PROGRESS.md` 更新。
 
 ---
 

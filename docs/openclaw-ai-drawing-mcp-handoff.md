@@ -34,11 +34,11 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 |---:|---|---|---|
 | 1 | 透過 ai-drawing backend 端點進行繪圖 | **已完成** | 已證明 backend → ComfyUI → gallery 的繪圖閉環可用 |
 | 2 | 教 OpenClaw 使用 backend 繪圖 | **已完成** | 已整理 HTTP endpoint SOP，MCP 完成前可照文件操作 |
-| 3 | 將 ai-drawing 功能做成 MCP | 待執行 | 把 backend 能力包成 agent 穩定可用的 MCP tools |
-| 4 | 由 Hermes / agent 實際使用 MCP 驗證功能 | 待執行 | 不只啟動 MCP，要實際透過 MCP 完成生圖與查詢 |
+| 3 | 將 ai-drawing 功能做成 MCP | **已完成** | 最小閉環五個 MCP tools 已齊，並已通過單元測試與本機 smoke test |
+| 4 | 由 Hermes / agent 實際使用 MCP 驗證功能 | **已完成** | 已由 Hermes 透過 MCP tools 完成一次真實生圖、查詢、取圖與 `/free` 驗證 |
 | 5 | 教 OpenClaw agent 使用 MCP | 待執行 | 形成 OpenClaw 可遵守的 MCP 操作 SOP |
 
-目前執行位置：**第 2 步已完成；Phase 3 的可驗收實作計畫已寫入 `docs/openclaw-mcp-implementation-plan.md`。下一步是依該文件逐步實作並驗收 MCP tools。**
+目前執行位置：**Phase 3 與 Phase 4 已完成。下一步是整理 `docs/openclaw-mcp-drawing-sop.md`，把已驗證的 MCP 最小閉環整理成 OpenClaw 可直接遵守的操作 SOP。**
 
 ---
 
@@ -124,15 +124,18 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 ### Phase 3：將 ai-drawing 功能做成 MCP
 
-狀態：`pending`
+狀態：`completed`
 
 目的：將 backend 功能包成 MCP tools，讓 OpenClaw agent 不需要手寫 HTTP 細節。
 
 可驗收實作計畫：`docs/openclaw-mcp-implementation-plan.md`。
 
-建議不要一口氣做全部；先做「繪圖最小閉環」並依計畫文件逐 step 驗收。
+第一批最小閉環已完成，並已通過：
+- MCP tool 單元測試
+- MCP server import / registration 測試
+- 本機 backend `8001` + ComfyUI `8188` smoke test
 
-第一批 MCP tools：
+已完成的第一批 MCP tools：
 
 1. `list_resources`
    - 列出 checkpoints、LoRAs、workflow templates。
@@ -166,20 +169,22 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 驗證標準：
 
-- [ ] MCP server 可啟動
-- [ ] `list_resources` 可回傳實際 backend 資源
-- [ ] `generate_image` 可建立 job
-- [ ] `get_generation_status` 可追蹤到 completed
-- [ ] `get_gallery_image` 可取得實際輸出
-- [ ] `free_comfyui_memory` 可成功呼叫
+- [x] MCP server 可啟動
+- [x] `list_resources` 可回傳實際 backend 資源
+- [x] `generate_image` 可建立 job
+- [x] `get_generation_status` 可追蹤到 completed
+- [x] `get_gallery_image` 可取得實際輸出
+- [x] `free_comfyui_memory` 可成功呼叫
 
 ---
 
 ### Phase 4：由 Hermes / agent 實際使用 MCP 驗證功能
 
-狀態：`pending`
+狀態：`completed`
 
 目的：確認 MCP 不是只有程式碼存在，而是真的能被 agent 用來完成繪圖。
+
+2026-06-12 已由 Hermes 透過 MCP tools 完成一次低負載繪圖驗證：`list_resources → generate_image → get_generation_status → get_gallery_image → free_comfyui_memory`，job `c99167aa-4370-47e1-ae09-2b97d5f18978`、image `2`、輸出 PNG 512×512，backend queue 驗證後為空。
 
 執行項目：
 
@@ -198,11 +203,11 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 驗證標準：
 
-- [ ] agent 不是透過 curl，而是透過 MCP 完成一次繪圖
-- [ ] MCP 回傳 job id / image path / metadata
-- [ ] 圖片存在
-- [ ] 生圖完成後有釋放 ComfyUI memory
-- [ ] 若失敗，有明確錯誤來源：backend、ComfyUI、MCP、路徑、DB、模型資源
+- [x] agent 不是透過 curl，而是透過 MCP 完成一次繪圖
+- [x] MCP 回傳 job id / image path / metadata
+- [x] 圖片存在
+- [x] 生圖完成後有釋放 ComfyUI memory
+- [x] 若失敗，有明確錯誤來源：backend、ComfyUI、MCP、路徑、DB、模型資源
 
 ---
 
