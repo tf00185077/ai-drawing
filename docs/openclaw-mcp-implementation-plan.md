@@ -680,9 +680,9 @@ uv run pytest tests/test_server.py -q
 
 ### 驗收標準
 
-- [ ] `mcp-server/tests/` 全部通過。
-- [ ] 沒有因回傳格式調整破壞既有測試。
-- [ ] 若既有 tool 仍回文字，新增 wrapper tool 的 JSON 測試也通過。
+- [x] `mcp-server/tests/` 全部通過。
+- [x] 沒有因回傳格式調整破壞既有測試。
+- [x] 若既有 tool 仍回文字，新增 wrapper tool 的 JSON 測試也通過。
 
 ### 驗證指令
 
