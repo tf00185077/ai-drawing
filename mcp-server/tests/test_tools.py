@@ -2,6 +2,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from mcp_server.tools.comfyui import free_comfyui_memory
 from mcp_server.tools.generate import (
     generate_image,
     generate_image_custom_workflow,
@@ -568,3 +569,54 @@ def test_get_gallery_image_backend_error_returns_structured_json() -> None:
     assert data["tool"] == "get_gallery_image"
     assert data["where"] == "backend"
     assert "not found" in data["error"]
+
+
+def test_free_comfyui_memory_success_returns_agent_friendly_json() -> None:
+    """free_comfyui_memory 成功時回傳含 ok/comfyui_base_url/next 的 JSON"""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+
+    with patch("mcp_server.tools.comfyui.httpx.Client") as mock_client_cls:
+        mock_client_cls.return_value.__enter__.return_value.post.return_value = mock_response
+        result = free_comfyui_memory()
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "free_comfyui_memory"
+    assert "comfyui_base_url" in data
+    assert data["unload_models"] is True
+    assert data["free_memory"] is True
+    assert "complete" in data["next"]
+    mock_client_cls.return_value.__enter__.return_value.post.assert_called_once()
+    call_args = mock_client_cls.return_value.__enter__.return_value.post.call_args
+    assert call_args[1]["json"] == {"unload_models": True, "free_memory": True}
+    assert "/free" in call_args[0][0]
+
+
+def test_free_comfyui_memory_empty_response_body_treated_as_success() -> None:
+    """free_comfyui_memory ComfyUI 回應空 body 時仍視為成功"""
+    mock_response = MagicMock()
+    mock_response.raise_for_status.return_value = None
+    mock_response.content = b""
+
+    with patch("mcp_server.tools.comfyui.httpx.Client") as mock_client_cls:
+        mock_client_cls.return_value.__enter__.return_value.post.return_value = mock_response
+        result = free_comfyui_memory()
+
+    data = json.loads(result)
+    assert data["ok"] is True
+
+
+def test_free_comfyui_memory_connection_error_returns_structured_json() -> None:
+    """free_comfyui_memory 連線失敗時回傳 ok=false 的穩定 JSON"""
+    with patch("mcp_server.tools.comfyui.httpx.Client") as mock_client_cls:
+        mock_client_cls.return_value.__enter__.return_value.post.side_effect = (
+            Exception("connection refused")
+        )
+        result = free_comfyui_memory()
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "free_comfyui_memory"
+    assert data["where"] == "comfyui"
+    assert "connection refused" in data["error"]
