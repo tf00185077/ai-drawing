@@ -608,12 +608,12 @@ mcp-server/tests/test_comfyui_tools.py
 
 ### 驗收標準
 
-- [ ] tool 名稱是 `free_comfyui_memory`。
-- [ ] POST 到 ComfyUI `/free`。
-- [ ] body 包含 `unload_models=true` 與 `free_memory=true`。
-- [ ] 成功時回傳可 JSON parse。
-- [ ] ComfyUI 無 body 回應時也視為成功。
-- [ ] 失敗時回傳 `ok=false`，不讓 exception 直接炸出。
+- [x] tool 名稱是 `free_comfyui_memory`。
+- [x] POST 到 ComfyUI `/free`。
+- [x] body 包含 `unload_models=true` 與 `free_memory=true`。
+- [x] 成功時回傳可 JSON parse。
+- [x] ComfyUI 無 body 回應時也視為成功。
+- [x] 失敗時回傳 `ok=false`，不讓 exception 直接炸出。
 
 ### 單元測試
 
@@ -651,15 +651,15 @@ docs/mcp-setup.md
 
 ### 驗收標準
 
-- [ ] MCP server 啟動時載入新 tools。
-- [ ] `docs/mcp-setup.md` 的 tool list 包含：
+- [x] MCP server 啟動時載入新 tools。
+- [x] `docs/mcp-setup.md` 的 tool list 包含：
   - `list_resources`
   - `generate_image`
   - `get_generation_status`
   - `get_gallery_image`
   - `free_comfyui_memory`
-- [ ] `MCP_BACKEND_API_URL` 範例不再只指向錯誤的本機 `8000`。
-- [ ] README 或 docs 說明「MCP tools 包裝 backend HTTP API，不重寫 backend logic」。
+- [x] `MCP_BACKEND_API_URL` 範例不再只指向錯誤的本機 `8000`。
+- [x] README 或 docs 說明「MCP tools 包裝 backend HTTP API，不重寫 backend logic」。
 
 ### 驗證指令
 
