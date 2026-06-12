@@ -150,20 +150,35 @@ pip install -e .
 
 ## 六、可用 Tools
 
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。
+
+### 最小閉環 Tools（繪圖 MVP）
+
+| Tool | 說明 |
+|------|------|
+| `list_resources` | 列出可用 checkpoints / LoRA / workflow，回傳 agent-friendly JSON |
+| `generate_image` | 送出生圖 job，回傳 job_id（agent 可解析 JSON） |
+| `get_generation_status` | 查詢 job 狀態（queued/running/completed），completed 時含 image_id |
+| `get_gallery_image` | 取得圖片完整資訊，含 image_url、local_path、metadata |
+| `free_comfyui_memory` | 釋放 ComfyUI 顯示記憶體，生圖完成或失敗後必須呼叫 |
+
+### 其他 Tools
+
 | Tool | 說明 | 範例指令 |
 |------|------|----------|
 | `mcp_ping` | 檢查 Backend 連線 | 檢查 ai-drawing 連線 |
-| `generate_image` | 觸發生圖 | 產生初音、動漫風格的圖 |
-| `generate_image_from_description` | **依描述自動選 workflow 生圖** | 穿和服的初音，動漫風格，1024 |
+| `generate_image_from_description` | 依描述自動選 workflow 生圖 | 穿和服的初音，動漫風格，1024 |
 | `suggest_workflow_from_description` | 預覽描述解析結果 | 穿和服初音會用什麼參數 |
 | `generate_image_custom_workflow` | 自訂 workflow 生圖 | 用 default 模板產生穿和服的初音 |
 | `list_workflow_templates` | 列出 workflow 模板 | 有哪些 workflow 可選 |
 | `get_workflow_template` | 取得模板 JSON | 取得 default 模板 |
 | `generate_queue_status` | 生圖佇列狀態 | 查生圖佇列 |
+| `get_job_status` | 查詢 job 狀態（文字回傳，相容舊用法） | 查 job-123 狀態 |
+| `get_available_resources` | 列出可用資源（文字回傳，相容舊用法） | 有哪些 checkpoint |
 | `lora_train_start` | 手動觸發 LoRA 訓練 | 開始訓練 my_lora 資料夾 |
 | `lora_train_status` | 訓練進度 | 查 LoRA 訓練進度 |
 | `gallery_list` | 圖庫列表 | 列出最近的圖 |
-| `gallery_detail` | 單張圖片參數 | 查 id=1 的圖片參數 |
+| `gallery_detail` | 單張圖片參數（文字回傳，相容舊用法） | 查 id=1 的圖片參數 |
 | `gallery_rerun` | 一鍵重現 | 用 id=1 的參數再產一張 |
 | `list_character_styles` | 可用角色／風格 | 有哪些角色和風格可選 |
 | `resolve_character_style_prompt` | 預覽 prompt | 初音+動漫會變成什麼 prompt |
