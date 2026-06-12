@@ -15,7 +15,7 @@ from mcp_server.tools.generate import (
     list_workflow_templates,
     suggest_workflow_from_description,
 )
-from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun
+from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun, get_gallery_image
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
 
 
@@ -483,3 +483,88 @@ def test_gallery_list_returns_summary() -> None:
 
     assert "1" in result
     assert "test prompt" in result or "1 筆" in result
+
+
+def test_get_gallery_image_returns_agent_friendly_json() -> None:
+    """get_gallery_image 成功時回傳含 image_url、local_path 與 metadata 的 JSON"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "id": 1,
+        "image_path": "2026-06-11/ComfyUI_00007__27920202_0.png",
+        "image_url": "http://127.0.0.1:8001/gallery/2026-06-11/ComfyUI_00007__27920202_0.png",
+        "checkpoint": "novaAnimeXL_ilV190.safetensors",
+        "lora": None,
+        "seed": 338566325,
+        "steps": 8,
+        "cfg": 6.0,
+        "prompt": "1girl, solo",
+        "negative_prompt": "lowres",
+        "created_at": "2026-06-11T10:00:00",
+    }
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_image(1)
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "get_gallery_image"
+    assert data["image_id"] == 1
+    assert data["image_path"] == "2026-06-11/ComfyUI_00007__27920202_0.png"
+    assert data["image_url"] == "http://127.0.0.1:8001/gallery/2026-06-11/ComfyUI_00007__27920202_0.png"
+    assert "local_path" in data
+    assert data["metadata"]["checkpoint"] == "novaAnimeXL_ilV190.safetensors"
+    assert data["metadata"]["seed"] == 338566325
+    assert data["metadata"]["prompt"] == "1girl, solo"
+    assert "free_comfyui_memory" in data["next"]
+    mock_client.get.assert_called_once_with("gallery/1")
+
+
+def test_get_gallery_image_constructs_url_when_backend_omits_it() -> None:
+    """get_gallery_image 在 backend 未回傳 image_url 時，應自行組出 URL"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "id": 2,
+        "image_path": "2026-06-12/ComfyUI_00010__abc_0.png",
+        "checkpoint": "model.safetensors",
+    }
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_image(2)
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert "2026-06-12/ComfyUI_00010__abc_0.png" in data["image_url"]
+    assert data["image_url"].startswith("http://")
+
+
+def test_get_gallery_image_local_path_uses_gallery_dir() -> None:
+    """get_gallery_image local_path 應以 MCP_GALLERY_DIR 為根目錄拼接"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "id": 3,
+        "image_path": "2026-06-12/ComfyUI_00011__xyz_0.png",
+    }
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_image(3)
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert "2026-06-12/ComfyUI_00011__xyz_0.png" in data["local_path"]
+    # local_path 應包含 gallery_dir 的根目錄
+    assert data["local_path"] != data["image_path"]
+
+
+def test_get_gallery_image_backend_error_returns_structured_json() -> None:
+    """get_gallery_image backend 失敗時回傳 ok=false 的穩定 JSON"""
+    mock_client = MagicMock()
+    mock_client.get.side_effect = RuntimeError("not found")
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_image(999)
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "get_gallery_image"
+    assert data["where"] == "backend"
+    assert "not found" in data["error"]
