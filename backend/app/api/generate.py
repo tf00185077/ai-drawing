@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.core.resources import default_checkpoint, list_checkpoints, list_loras
 from app.core.queue import QueueFullError, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.db.database import get_db
 from app.schemas.generate import (
@@ -118,11 +119,8 @@ def _list_model_files(dir_path: Path, exts: tuple[str, ...] = (".safetensors", "
 async def get_available_resources():
     """列出可用的 checkpoint、lora、workflow 模板"""
     settings = get_settings()
-    checkpoints_dir = Path(settings.comfyui_checkpoints_dir)
-    loras_dir = Path(settings.comfyui_loras_dir)
-
-    checkpoints = _list_model_files(checkpoints_dir)
-    loras = _list_model_files(loras_dir)
+    checkpoints = list_checkpoints(settings)
+    loras = list_loras(settings)
 
     workflows_dir = Path(__file__).resolve().parent.parent.parent / "workflows"
     templates = []
@@ -133,6 +131,7 @@ async def get_available_resources():
         "checkpoints": checkpoints,
         "loras": loras,
         "workflows": templates,
+        "default_checkpoint": default_checkpoint(settings),
     }
 
 

@@ -20,6 +20,7 @@ import httpx
 from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client, get_output_images
 from app.core.recording import save as recording_save
+from app.core.resources import default_checkpoint
 from app.core.workflow import apply_params, get_seed_from_workflow, load_template
 from app.db.database import SessionLocal
 
@@ -200,9 +201,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         settings = get_settings()
         effective_checkpoint = (
             job.params.get("checkpoint")
-            or settings.lora_default_checkpoint
-            or None
+            or default_checkpoint(settings)
         )
+        if effective_checkpoint is None:
+            raise FileNotFoundError(
+                "No checkpoint available from /api/generate/available-resources"
+            )
         if effective_checkpoint and not job.params.get("checkpoint"):
             job.params["checkpoint"] = effective_checkpoint
         width = job.params.get("width")
