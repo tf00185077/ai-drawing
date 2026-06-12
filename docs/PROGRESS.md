@@ -9,7 +9,7 @@
 
 OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
-目前執行位置：Phase 1 backend 低負載繪圖驗證與 Phase 2 OpenClaw backend 繪圖 SOP 已完成；Phase 3 Step 1 MCP config / URL、Step 2 `list_resources`、Step 3 `generate_image` 已完成，下一步是依 `docs/openclaw-mcp-implementation-plan.md` 執行 Step 4：新增 `get_generation_status`。
+目前執行位置：Phase 3 Step 1~4 已完成，下一步是依 `docs/openclaw-mcp-implementation-plan.md` 執行 Step 5：新增 `get_gallery_image`。
 
 ---
 
@@ -18,6 +18,10 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 ### OpenClaw × ai-drawing 本地繪圖 / MCP 整合
 - [x] Phase 1 backend 低負載繪圖驗證（2026-06-11）：backend `8001` → ComfyUI `8188` → gallery 閉環成功，job `27920202-569f-4880-abc2-7a9f477d0094`，輸出 PNG 512×512。
 - [x] Phase 2 OpenClaw backend 繪圖 SOP（2026-06-11）：建立 `docs/openclaw-backend-drawing-sop.md`，包含可用 curl/HTTP 範例、成功/失敗判斷、資源限制與 busy 處理規則。
+- [x] Phase 3 Step 1 MCP config / URL（2026-06-11）：`config.py` 預設 `8001`，新增 `test_config.py`，`uv run python -m pytest tests/ -q` → 通過。
+- [x] Phase 3 Step 2 `list_resources`（2026-06-11）：agent-friendly JSON，`5 passed`。
+- [x] Phase 3 Step 3 `generate_image`（2026-06-11）：回傳含 `job_id/status/submitted/next`，`4 passed`。
+- [x] Phase 3 Step 4 `get_generation_status`（2026-06-12）：queued/running/completed/error 四種狀態，`10 passed`，完整回歸 `42 passed`。
 
 ### 路徑正規化修正（2026-06-09）
 - [x] `backend/app/config.py` 將 DB / output / gallery / lora_train / sd-scripts / watch_dirs 的相對路徑統一正規化為 **project root 基準**

@@ -292,6 +292,62 @@ def generate_queue_status() -> str:
 
 
 @mcp.tool()
+def get_generation_status(job_id: str) -> str:
+    """查詢生圖 job 狀態，回傳 agent-friendly JSON。status=completed 時包含 image_id 與 image_path。"""
+    try:
+        client = _get_client()
+        resp = client.get(f"generate/job/{job_id}")
+        status = resp.get("status", "unknown")
+        if status == "completed":
+            return json.dumps(
+                {
+                    "ok": True,
+                    "tool": "get_generation_status",
+                    "job_id": job_id,
+                    "status": "completed",
+                    "image_id": resp.get("image_id"),
+                    "image_path": resp.get("image_path", ""),
+                    "next": "call get_gallery_image with image_id, then free_comfyui_memory",
+                },
+                ensure_ascii=False,
+            )
+        elif status in ("queued", "running"):
+            return json.dumps(
+                {
+                    "ok": True,
+                    "tool": "get_generation_status",
+                    "job_id": job_id,
+                    "status": status,
+                    "prompt_id": resp.get("prompt_id"),
+                    "next": "wait, then call get_generation_status again",
+                },
+                ensure_ascii=False,
+            )
+        else:
+            return json.dumps(
+                {
+                    "ok": False,
+                    "tool": "get_generation_status",
+                    "where": "backend",
+                    "job_id": job_id,
+                    "error": f"Job not found or unexpected status: {status}",
+                },
+                ensure_ascii=False,
+            )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "get_generation_status",
+                "where": "backend",
+                "job_id": job_id,
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def get_job_status(job_id: str) -> str:
     """查詢生圖 job 狀態（queued / running / completed）。completed 時回傳 image_id 可用 gallery_detail 查看結果。"""
     try:

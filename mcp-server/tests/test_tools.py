@@ -8,6 +8,7 @@ from mcp_server.tools.generate import (
     generate_image_from_description,
     generate_queue_status,
     get_available_resources,
+    get_generation_status,
     get_job_status,
     get_workflow_template,
     list_resources,
@@ -378,6 +379,95 @@ def test_get_job_status_on_error_returns_error_message() -> None:
 
     assert result.startswith("error:")
     assert "connection refused" in result
+
+
+def test_get_generation_status_queued_returns_agent_friendly_json() -> None:
+    """get_generation_status queued 時回傳含 next 的穩定 JSON"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"status": "queued", "job_id": "job-q1", "prompt_id": None}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-q1")
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "get_generation_status"
+    assert data["job_id"] == "job-q1"
+    assert data["status"] == "queued"
+    assert "again" in data["next"]
+    mock_client.get.assert_called_once_with("generate/job/job-q1")
+
+
+def test_get_generation_status_running_includes_prompt_id() -> None:
+    """get_generation_status running 時包含 prompt_id"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "status": "running",
+        "job_id": "job-r1",
+        "prompt_id": "comfy-abc",
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-r1")
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["status"] == "running"
+    assert data["prompt_id"] == "comfy-abc"
+
+
+def test_get_generation_status_completed_includes_image_info() -> None:
+    """get_generation_status completed 時包含 image_id 與 image_path"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "status": "completed",
+        "job_id": "job-c1",
+        "image_id": 7,
+        "image_path": "2026-06-11/ComfyUI_00007__job_0.png",
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-c1")
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["status"] == "completed"
+    assert data["image_id"] == 7
+    assert data["image_path"] == "2026-06-11/ComfyUI_00007__job_0.png"
+    assert "get_gallery_image" in data["next"]
+    assert "free_comfyui_memory" in data["next"]
+
+
+def test_get_generation_status_not_found_returns_ok_false() -> None:
+    """get_generation_status job 不存在時回傳 ok=false"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"status": "not_found"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-missing")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "get_generation_status"
+    assert data["where"] == "backend"
+    assert data["job_id"] == "job-missing"
+    assert "not_found" in data["error"]
+
+
+def test_get_generation_status_backend_error_returns_structured_json() -> None:
+    """get_generation_status backend 失敗時回傳 ok=false 的穩定 JSON"""
+    mock_client = MagicMock()
+    mock_client.get.side_effect = RuntimeError("connection refused")
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-err2")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "get_generation_status"
+    assert data["where"] == "backend"
+    assert data["job_id"] == "job-err2"
+    assert "connection refused" in data["error"]
 
 
 def test_gallery_list_returns_summary() -> None:
