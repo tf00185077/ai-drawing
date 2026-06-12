@@ -9,7 +9,7 @@
 
 OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
-目前執行位置：Phase 3 Step 1~4 已完成，下一步是依 `docs/openclaw-mcp-implementation-plan.md` 執行 Step 5：新增 `get_gallery_image`。
+目前執行位置：Phase 3 與 Phase 4 已完成。最小 MCP 閉環已通過單元測試與本機實測；下一步是整理 Phase 5：OpenClaw MCP 繪圖 SOP。
 
 ---
 
@@ -22,6 +22,12 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 - [x] Phase 3 Step 2 `list_resources`（2026-06-11）：agent-friendly JSON，`5 passed`。
 - [x] Phase 3 Step 3 `generate_image`（2026-06-11）：回傳含 `job_id/status/submitted/next`，`4 passed`。
 - [x] Phase 3 Step 4 `get_generation_status`（2026-06-12）：queued/running/completed/error 四種狀態，`10 passed`，完整回歸 `42 passed`。
+- [x] Phase 3 Step 5 `get_gallery_image`（2026-06-12）：回傳 `image_url`、`local_path`、metadata 與 JSON 錯誤結構，`uv run pytest tests/test_tools.py -k 'gallery_image or gallery_detail' -q` → `4 passed`。
+- [x] Phase 3 Step 6 `free_comfyui_memory`（2026-06-12）：新增 ComfyUI `/free` wrapper，`uv run pytest tests/ -k 'free_comfyui_memory or comfyui' -q` → `3 passed`。
+- [x] Phase 3 Step 7 registration / docs（2026-06-12）：MCP server 載入新 tools，`docs/mcp-setup.md` 與 `mcp-server/README.md` 已同步最小閉環 tool 清單，`uv run pytest tests/test_server.py -q` → `3 passed`。
+- [x] Phase 3 Step 8 完整單元測試（2026-06-12）：`uv run pytest tests/ -q` → `50 passed`。
+- [x] Phase 3 Step 9 本機 backend / ComfyUI MCP smoke test（2026-06-12）：以 MCP tools 完成 `list_resources → generate_image → get_generation_status → get_gallery_image → free_comfyui_memory` 閉環；job `c99167aa-4370-47e1-ae09-2b97d5f18978`、image `2`、輸出 `outputs/gallery/2026-06-12/ComfyUI_00008__c99167aa_0.png`、PNG 512×512，測試後 queue 為空。
+- [x] Phase 4 Hermes / agent MCP 實際驗證（2026-06-12）：已由 Hermes 實際透過 MCP tools 完成一次生圖與查詢，不再依賴 curl/HTTP 手動操作。
 
 ### 路徑正規化修正（2026-06-09）
 - [x] `backend/app/config.py` 將 DB / output / gallery / lora_train / sd-scripts / watch_dirs 的相對路徑統一正規化為 **project root 基準**
@@ -75,8 +81,8 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合：
 
 1. [x] 透過 ai-drawing backend 端點進行低負載繪圖驗證
 2. [x] 整理 OpenClaw backend 繪圖 SOP
-3. [ ] 將 ai-drawing 繪圖最小閉環做成 MCP tools
-4. [ ] 透過 MCP 實際完成一次繪圖驗證
+3. [x] 將 ai-drawing 繪圖最小閉環做成 MCP tools
+4. [x] 透過 MCP 實際完成一次繪圖驗證
 5. [ ] 整理 OpenClaw MCP 繪圖 SOP
 
 詳細順序、狀態與驗證標準見 `docs/openclaw-ai-drawing-mcp-handoff.md`。
