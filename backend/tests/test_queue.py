@@ -1,10 +1,12 @@
 """批次生圖排程器單元測試"""
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from app.core.queue import (
     QueueFullError,
+    _process_pending,
     _reset_for_test,
     get_job_status,
     get_status,
@@ -84,3 +86,47 @@ def test_submit_custom_returns_job_id() -> None:
     assert len(job_id) == 36
     status = get_status()
     assert any(p["job_id"] == job_id for p in status["queue_pending"])
+
+
+class _FakeComfy:
+    def __init__(self) -> None:
+        self.submitted_prompt = None
+
+    def submit_prompt(self, prompt):
+        self.submitted_prompt = prompt
+        return "prompt-123"
+
+
+def _settings_for_checkpoint_dir(tmp_path):
+    return SimpleNamespace(
+        comfyui_checkpoints_dir=str(tmp_path),
+        lora_default_checkpoint="",
+        lora_sdxl=False,
+        gallery_dir=str(tmp_path),
+        controlnet_default_pose_image="",
+    )
+
+
+def test_process_pending_uses_first_available_resource_checkpoint_when_unspecified(tmp_path) -> None:
+    """未指定 checkpoint 時，queue 使用 available-resources 同源掃描到的第一個 checkpoint。"""
+    (tmp_path / "b_model.safetensors").write_text("", encoding="utf-8")
+    (tmp_path / "a_model.safetensors").write_text("", encoding="utf-8")
+    fake_comfy = _FakeComfy()
+    submit({"prompt": "1girl"})
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["4"]["inputs"]["ckpt_name"] == "a_model.safetensors"
+
+
+def test_process_pending_keeps_explicit_checkpoint_over_available_resources(tmp_path) -> None:
+    """明確傳入 checkpoint 時，不被 available-resources 預設值覆蓋。"""
+    (tmp_path / "a_model.safetensors").write_text("", encoding="utf-8")
+    fake_comfy = _FakeComfy()
+    submit({"prompt": "1girl", "checkpoint": "manual.safetensors"})
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["4"]["inputs"]["ckpt_name"] == "manual.safetensors"

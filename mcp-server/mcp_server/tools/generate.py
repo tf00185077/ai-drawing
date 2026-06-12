@@ -388,6 +388,7 @@ def list_resources() -> str:
         checkpoints = resp.get("checkpoints", [])
         loras = resp.get("loras", [])
         workflows = resp.get("workflows", [])
+        default_checkpoint = resp.get("default_checkpoint")
         next_step = (
             "choose a checkpoint, then call generate_image"
             if checkpoints
@@ -401,6 +402,7 @@ def list_resources() -> str:
                 "checkpoints": checkpoints,
                 "loras": loras,
                 "workflows": workflows,
+                "default_checkpoint": default_checkpoint,
                 "next": next_step,
             },
             ensure_ascii=False,

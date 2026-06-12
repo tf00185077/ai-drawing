@@ -34,6 +34,7 @@ uv sync
 
 ```bash
 # stdio（供 Cursor 等 MCP 用戶端使用）
+# 目前請優先使用
 uv run ai-drawing-mcp
 # 或 python -m mcp_server.server
 ```
