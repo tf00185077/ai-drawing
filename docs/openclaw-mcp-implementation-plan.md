@@ -447,12 +447,12 @@ not found / backend error：
 
 ### 驗收標準
 
-- [ ] tool 名稱是 `get_generation_status`。
-- [ ] 呼叫 `generate/job/{job_id}`。
-- [ ] queued、running、completed 都有測試。
-- [ ] completed response 包含 `image_id` 與 `image_path`。
-- [ ] 回傳可 JSON parse。
-- [ ] 保留或兼容現有 `get_job_status`。
+- [x] tool 名稱是 `get_generation_status`。
+- [x] 呼叫 `generate/job/{job_id}`。
+- [x] queued、running、completed 都有測試。
+- [x] completed response 包含 `image_id` 與 `image_path`。
+- [x] 回傳可 JSON parse。
+- [x] 保留或兼容現有 `get_job_status`。
 
 ### 驗證指令
 
@@ -515,14 +515,14 @@ mcp-server/tests/test_tools.py
 
 ### 驗收標準
 
-- [ ] tool 名稱是 `get_gallery_image`。
-- [ ] 呼叫 `gallery/{image_id}`。
-- [ ] 回傳可 JSON parse。
-- [ ] 包含 `image_url`。
-- [ ] 包含 `local_path`。
-- [ ] `local_path` 以 `MCP_GALLERY_DIR` / gallery root 組出。
-- [ ] metadata 包含 checkpoint、seed、steps、cfg、prompt。
-- [ ] 保留或兼容現有 `gallery_detail`。
+- [x] tool 名稱是 `get_gallery_image`。
+- [x] 呼叫 `gallery/{image_id}`。
+- [x] 回傳可 JSON parse。
+- [x] 包含 `image_url`。
+- [x] 包含 `local_path`。
+- [x] `local_path` 以 `MCP_GALLERY_DIR` / gallery root 組出。
+- [x] metadata 包含 checkpoint、seed、steps、cfg、prompt。
+- [x] 保留或兼容現有 `gallery_detail`。
 
 ### 單元測試
 

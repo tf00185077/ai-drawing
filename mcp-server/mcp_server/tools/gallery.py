@@ -3,6 +3,10 @@
 
 對應：GET /api/gallery/、GET /api/gallery/{id}、POST /api/gallery/{id}/rerun
 """
+import json
+import os
+
+from mcp_server.config import get_mcp_settings
 from mcp_server.server import _get_client, mcp
 
 
@@ -42,6 +46,51 @@ def gallery_list(
         return "\n".join(lines)
     except Exception as e:
         return f"error: {e}"
+
+
+@mcp.tool()
+def get_gallery_image(image_id: int) -> str:
+    """取得單張圖片，回傳 agent-friendly JSON，包含 image_url、local_path 與完整 metadata。"""
+    try:
+        settings = get_mcp_settings()
+        client = _get_client()
+        resp = client.get(f"gallery/{image_id}")
+        image_path = resp.get("image_path", "")
+        # 優先使用 backend 回傳的 image_url；若無則由 backend base URL + image_path 組出
+        image_url = resp.get("image_url") or f"{settings.backend_api_url}/gallery/{image_path}"
+        local_path = os.path.join(settings.gallery_dir, image_path) if image_path else ""
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "get_gallery_image",
+                "image_id": resp.get("id", image_id),
+                "image_path": image_path,
+                "image_url": image_url,
+                "local_path": local_path,
+                "metadata": {
+                    "checkpoint": resp.get("checkpoint"),
+                    "lora": resp.get("lora"),
+                    "seed": resp.get("seed"),
+                    "steps": resp.get("steps"),
+                    "cfg": resp.get("cfg"),
+                    "prompt": resp.get("prompt"),
+                    "negative_prompt": resp.get("negative_prompt"),
+                    "created_at": resp.get("created_at"),
+                },
+                "next": "deliver image to user, then call free_comfyui_memory if not already called",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "get_gallery_image",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
 
 
 @mcp.tool()
