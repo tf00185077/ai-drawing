@@ -1,7 +1,7 @@
 """
-ComfyUI 直連 MCP Tools
+ComfyUI Direct-Connection MCP Tools
 
-直接呼叫 ComfyUI API（不走 ai-drawing backend），目前用於釋放記憶體。
+Calls the ComfyUI API directly (bypassing the ai-drawing backend), currently used to free memory.
 """
 import json
 
@@ -16,7 +16,7 @@ def free_comfyui_memory(
     unload_models: bool = True,
     free_memory: bool = True,
 ) -> str:
-    """釋放 ComfyUI 顯示記憶體，生圖完成或失敗後必須呼叫。回傳 agent-friendly JSON。"""
+    """Free ComfyUI VRAM. Must be called after image generation completes or fails. Returns agent-friendly JSON."""
     settings = get_mcp_settings()
     comfyui_url = settings.comfyui_api_url.rstrip("/")
     try:

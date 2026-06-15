@@ -1,7 +1,7 @@
 """
-角色與風格語意對應 MCP Tools
+Character and Style Semantic Mapping MCP Tools
 
-供 AI 查詢可用的角色／風格別名，或直接解析為 prompt。
+Allows AI to query available character/style aliases or resolve them directly to prompts.
 """
 from mcp_server.character_style import get_resolver, resolve_to_prompt
 from mcp_server.server import mcp
@@ -9,7 +9,7 @@ from mcp_server.server import mcp
 
 @mcp.tool()
 def list_character_styles() -> str:
-    """列出所有可用的角色與風格別名，供 generate_image 的 character、style 參數使用。"""
+    """List all available character and style aliases for use as character and style parameters in generate_image."""
     resolver = get_resolver()
     chars = resolver.list_characters()
     styles = resolver.list_styles()
@@ -26,7 +26,7 @@ def resolve_character_style_prompt(
     style: str | None = None,
     base_prompt: str = "1girl, solo",
 ) -> str:
-    """將角色、風格解析為完整 prompt（不觸發生圖）。可先預覽再呼叫 generate_image。"""
+    """Resolve a character and style into a full prompt (without triggering image generation). Use to preview before calling generate_image."""
     prompt, lora = resolve_to_prompt(
         character=character, style=style, base_prompt=base_prompt
     )

@@ -1,7 +1,7 @@
 """
-圖庫 MCP Tools
+Gallery MCP Tools
 
-對應：GET /api/gallery/、GET /api/gallery/{id}、POST /api/gallery/{id}/rerun
+Corresponds to: GET /api/gallery/, GET /api/gallery/{id}, POST /api/gallery/{id}/rerun
 """
 import json
 import os
@@ -19,7 +19,7 @@ def gallery_list(
     limit: int = 20,
     offset: int = 0,
 ) -> str:
-    """取得圖庫列表，支援篩選 checkpoint、lora、日期範圍。"""
+    """Get the gallery list with optional filtering by checkpoint, lora, and date range."""
     try:
         client = _get_client()
         params = {"limit": limit, "offset": offset}
@@ -50,7 +50,7 @@ def gallery_list(
 
 @mcp.tool()
 def get_gallery_image(image_id: int) -> str:
-    """取得單張圖片，回傳 agent-friendly JSON，包含 image_url、local_path 與完整 metadata。"""
+    """Get a single image and return agent-friendly JSON including image_url, local_path, and full metadata."""
     try:
         settings = get_mcp_settings()
         client = _get_client()
@@ -95,7 +95,7 @@ def get_gallery_image(image_id: int) -> str:
 
 @mcp.tool()
 def gallery_detail(image_id: int) -> str:
-    """取得單張圖片的完整參數（checkpoint、lora、prompt、seed 等）。"""
+    """Get the full parameters for a single image (checkpoint, lora, prompt, seed, etc.)."""
     try:
         client = _get_client()
         resp = client.get(f"gallery/{image_id}")
@@ -117,7 +117,7 @@ def gallery_detail(image_id: int) -> str:
 
 @mcp.tool()
 def gallery_rerun(image_id: int) -> str:
-    """一鍵重現：載入該圖參數再次生成，回傳 job_id。"""
+    """One-click re-run: reload the image parameters and generate again, returns job_id."""
     try:
         client = _get_client()
         resp = client.post(f"gallery/{image_id}/rerun")

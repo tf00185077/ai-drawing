@@ -1,8 +1,8 @@
 """
-AI 自動化出圖系統 MCP Server
+AI Drawing MCP Server
 
-使用 FastMCP，透過 stdio 與 Cursor 等 MCP 用戶端通訊。
-Tools 定義於 mcp_server.tools 模組。
+Uses FastMCP, communicates with Cursor and other MCP clients via stdio.
+Tools are defined in the mcp_server.tools module.
 """
 from mcp.server.fastmcp import FastMCP
 
@@ -16,16 +16,16 @@ mcp = FastMCP(
 
 
 def _get_client() -> HttpBackendClient:
-    """取得 Backend API Client（可注入，便於測試）"""
+    """Get the Backend API Client (injectable for testing)"""
     settings = get_mcp_settings()
     return HttpBackendClient(base_url=f"{settings.backend_api_url}/api")
 
 
 @mcp.tool()
 def mcp_ping() -> str:
-    """檢查 MCP Server 與 Backend 連線狀態。若 Backend 未啟動會回傳錯誤。"""
+    """Check MCP Server and Backend connection status. Returns an error if the Backend is not running."""
     try:
-        # 使用 /health 端點，不依賴 DB 或 gallery
+        # Use the /health endpoint, independent of DB or gallery
         settings = get_mcp_settings()
         client = HttpBackendClient(base_url=settings.backend_api_url, timeout=5.0)
         client.get("health")
@@ -34,7 +34,7 @@ def mcp_ping() -> str:
         return f"error: {e}"
 
 
-# 註冊 tools 模組（透過 import 觸發 @mcp.tool() 裝飾器）
+# Register tools modules (importing triggers @mcp.tool() decorators)
 from mcp_server.tools import (  # noqa: E402, F401
     character_style_tools,
     comfyui,
@@ -45,7 +45,7 @@ from mcp_server.tools import (  # noqa: E402, F401
 
 
 def main() -> None:
-    """Entry point：以 stdio transport 啟動（供 Cursor 等 MCP 用戶端使用）"""
+    """Entry point: start with stdio transport (for Cursor and other MCP clients)"""
     mcp.run(transport="stdio")
 
 

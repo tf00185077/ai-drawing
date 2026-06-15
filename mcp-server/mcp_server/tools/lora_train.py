@@ -1,14 +1,14 @@
 """
-LoRA 訓練 MCP Tools
+LoRA Training MCP Tools
 
-對應：POST /api/lora-train/start、GET /api/lora-train/status
+Corresponds to: POST /api/lora-train/start, GET /api/lora-train/status
 """
 from mcp_server.server import _get_client, mcp
 
 
 @mcp.tool()
 def caption_image(image_path: str) -> str:
-    """對訓練資料夾內的圖片呼叫 LLM 自動產生 caption，寫入同名 .txt。image_path 相對於 lora_train_dir，如 "character/miku/img1.png"。回傳產生的 caption 文字。"""
+    """Call LLM to auto-generate a caption for an image in the training folder and write it to a same-named .txt file. image_path is relative to lora_train_dir, e.g. "character/miku/img1.png". Returns the generated caption text."""
     try:
         client = _get_client()
         resp = client.post(f"lora-docs/caption-llm/{image_path}")
@@ -34,7 +34,7 @@ def lora_train_start(
     num_repeats: int | None = None,
     learning_rate: str | None = None,
 ) -> str:
-    """手動觸發 LoRA 訓練。folder 為必填。訓練完成後請另行呼叫 generate_image 使用新 LoRA。"""
+    """Manually trigger LoRA training. folder is required. After training completes, call generate_image separately to use the new LoRA."""
     try:
         client = _get_client()
         body = {"folder": folder}
@@ -67,7 +67,7 @@ def lora_train_start(
 
 @mcp.tool()
 def lora_train_status() -> str:
-    """取得 LoRA 訓練進度與佇列狀態。idle 時顯示上次訓練結果（成功則含輸出 LoRA 路徑）。"""
+    """Get LoRA training progress and queue status. When idle, shows the last training result (including the output LoRA path on success)."""
     try:
         client = _get_client()
         resp = client.get("lora-train/status")
