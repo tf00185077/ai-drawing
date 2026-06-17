@@ -55,6 +55,9 @@ def apply_params(
     image_pose: str | None = None,
     denoise: float | None = None,
     lora_strength: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
     bbox_detector: str | None = "yolo_nas_s_fp16.onnx",
 ) -> dict:
     """
@@ -63,7 +66,9 @@ def apply_params(
 
     透過 class_type 與連線關係自動定位要替換的節點：
     - CheckpointLoaderSimple.ckpt_name <- checkpoint
-    - UNETLoader.unet_name <- checkpoint（diffusion-model 家族，如 Anima；僅在明確指定時覆寫）
+    - UNETLoader.unet_name <- diffusion_model（退回 checkpoint）；diffusion-model 家族，如 Anima
+    - CLIPLoader.clip_name <- text_encoder
+    - VAELoader.vae_name <- vae
     - LoraLoader.lora_name <- lora
     - CLIPTextEncode (接 KSampler.positive).text <- prompt
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
@@ -155,11 +160,18 @@ def apply_params(
         if ct == "CheckpointLoaderSimple" and checkpoint is not None:
             inputs["ckpt_name"] = checkpoint
 
-        # Diffusion-model 家族（如 Anima）以 UNETLoader 取代 CheckpointLoaderSimple。
-        # 僅在呼叫端明確指定 checkpoint 時覆寫 unet_name，否則沿用模板既有檔名，
-        # 避免把傳統 checkpoint 名稱誤寫進 diffusion-model workflow。
-        if ct == "UNETLoader" and checkpoint is not None:
-            inputs["unet_name"] = checkpoint
+        # Diffusion-model 家族（如 Anima）的元件以獨立節點載入：
+        #   UNETLoader.unet_name / CLIPLoader.clip_name / VAELoader.vae_name
+        # 僅在明確指定時覆寫，否則沿用模板既有檔名（一般生圖即走此路）。
+        # diffusion_model 優先；未提供時退回 checkpoint，維持舊呼叫相容。
+        if ct == "UNETLoader":
+            unet_value = diffusion_model or checkpoint
+            if unet_value is not None:
+                inputs["unet_name"] = unet_value
+        if ct == "CLIPLoader" and text_encoder is not None:
+            inputs["clip_name"] = text_encoder
+        if ct == "VAELoader" and vae is not None:
+            inputs["vae_name"] = vae
 
         if ct == "LoraLoader":
             if lora is not None:
@@ -226,6 +238,45 @@ def get_seed_from_workflow(workflow: dict) -> int | None:
             if isinstance(seed, int):
                 return seed
     return None
+
+
+def extract_model_files_from_workflow(workflow: dict) -> dict:
+    """
+    從（已套用參數的）workflow 反解實際使用的模型檔名，供 recording 記錄、之後重生。
+    涵蓋傳統 checkpoint 與 diffusion-model 家族（Anima）的元件。
+
+    Returns:
+        {
+            "checkpoint": str | None,        # CheckpointLoaderSimple.ckpt_name
+            "lora": str | None,              # LoraLoader.lora_name
+            "diffusion_model": str | None,   # UNETLoader.unet_name
+            "text_encoder": str | None,      # CLIPLoader.clip_name
+            "vae": str | None,               # VAELoader.vae_name
+        }
+    """
+    result: dict = {
+        "checkpoint": None,
+        "lora": None,
+        "diffusion_model": None,
+        "text_encoder": None,
+        "vae": None,
+    }
+    for node in workflow.values():
+        if not isinstance(node, dict):
+            continue
+        ct = node.get("class_type")
+        inputs = node.get("inputs", {})
+        if ct == "CheckpointLoaderSimple":
+            result["checkpoint"] = inputs.get("ckpt_name")
+        elif ct == "LoraLoader":
+            result["lora"] = inputs.get("lora_name")
+        elif ct == "UNETLoader":
+            result["diffusion_model"] = inputs.get("unet_name")
+        elif ct == "CLIPLoader":
+            result["text_encoder"] = inputs.get("clip_name")
+        elif ct == "VAELoader":
+            result["vae"] = inputs.get("vae_name")
+    return result
 
 
 def extract_params_from_workflow(workflow: dict) -> dict:
