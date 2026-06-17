@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # ComfyUI 模型目錄，用於列出可用 checkpoint / lora（!查可用資源 指令）
     comfyui_checkpoints_dir: str = "D:/AI/ComfyUI/models/checkpoints"
     comfyui_loras_dir: str = "D:/AI/ComfyUI/models/loras"
+    # diffusion-model 家族（如 Anima）的元件目錄：UNET / text encoder / VAE 分開存放
+    comfyui_diffusion_models_dir: str = "D:/AI/ComfyUI/models/diffusion_models"
+    comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
+    comfyui_vae_dir: str = "D:/AI/ComfyUI/models/vae"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0

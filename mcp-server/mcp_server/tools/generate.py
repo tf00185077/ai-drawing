@@ -351,27 +351,6 @@ def get_generation_status(job_id: str) -> str:
 
 
 @mcp.tool()
-def get_job_status(job_id: str) -> str:
-    """Query image generation job status (queued / running / completed). When completed, returns image_id; use gallery_detail to view the result."""
-    try:
-        client = _get_client()
-        resp = client.get(f"generate/job/{job_id}")
-        status = resp.get("status", "unknown")
-        if status == "completed":
-            image_id = resp.get("image_id")
-            image_path = resp.get("image_path", "")
-            return f"Job {job_id} 已完成：image_id={image_id}, path={image_path}. 可用 gallery_detail({image_id}) 查看詳細。"
-        elif status in ("queued", "running"):
-            prompt_id = resp.get("prompt_id", "") or "(empty)"
-            submitted_at = resp.get("submitted_at", "") or "(empty)"
-            return f"Job {job_id}: status={status}, prompt_id={prompt_id}, submitted_at={submitted_at}"
-        else:
-            return f"Job {job_id}: status={status}"
-    except Exception as e:
-        return f"error: {e}"
-
-
-@mcp.tool()
 def cancel_job(job_id: str) -> str:
     """Cancel an image generation job that has not yet started (pending status). Running jobs cannot be cancelled."""
     try:
@@ -384,12 +363,15 @@ def cancel_job(job_id: str) -> str:
 
 @mcp.tool()
 def list_resources() -> str:
-    """List available checkpoints, LoRAs, and workflow templates, returns agent-friendly JSON."""
+    """List available checkpoints, LoRAs, diffusion models (UNET, e.g. Anima), text encoders, VAEs, and workflow templates, returns agent-friendly JSON. diffusion_models / text_encoders / vaes are the components for diffusion-model families used by the anima template."""
     try:
         client = _get_client()
         resp = client.get("generate/available-resources")
         checkpoints = resp.get("checkpoints", [])
         loras = resp.get("loras", [])
+        diffusion_models = resp.get("diffusion_models", [])
+        text_encoders = resp.get("text_encoders", [])
+        vaes = resp.get("vaes", [])
         workflows = resp.get("workflows", [])
         default_checkpoint = resp.get("default_checkpoint")
         next_step = (
@@ -404,6 +386,9 @@ def list_resources() -> str:
                 "backend_base_url": get_mcp_settings().backend_api_url,
                 "checkpoints": checkpoints,
                 "loras": loras,
+                "diffusion_models": diffusion_models,
+                "text_encoders": text_encoders,
+                "vaes": vaes,
                 "workflows": workflows,
                 "default_checkpoint": default_checkpoint,
                 "next": next_step,
@@ -422,20 +407,3 @@ def list_resources() -> str:
         )
 
 
-@mcp.tool()
-def get_available_resources() -> str:
-    """List available checkpoints, LoRA models, and workflow templates. Call before generating or training to confirm what's available."""
-    try:
-        client = _get_client()
-        resp = client.get("generate/available-resources")
-        checkpoints = resp.get("checkpoints", [])
-        loras = resp.get("loras", [])
-        workflows = resp.get("workflows", [])
-        lines = [
-            f"Checkpoints ({len(checkpoints)}): {', '.join(checkpoints) or '(無)'}",
-            f"LoRAs ({len(loras)}): {', '.join(loras) or '(無)'}",
-            f"Workflows ({len(workflows)}): {', '.join(workflows) or '(無)'}",
-        ]
-        return "\n".join(lines)
-    except Exception as e:
-        return f"error: {e}"

@@ -8,15 +8,13 @@ from mcp_server.tools.generate import (
     generate_image_custom_workflow,
     generate_image_from_description,
     generate_queue_status,
-    get_available_resources,
     get_generation_status,
-    get_job_status,
     get_workflow_template,
     list_resources,
     list_workflow_templates,
     suggest_workflow_from_description,
 )
-from mcp_server.tools.gallery import gallery_detail, gallery_list, gallery_rerun, get_gallery_image
+from mcp_server.tools.gallery import gallery_list, gallery_rerun, get_gallery_image
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
 
 
@@ -71,43 +69,6 @@ def test_list_resources_backend_error_returns_structured_error() -> None:
     assert data["tool"] == "list_resources"
     assert data["where"] == "backend"
     assert "backend down" in data["error"]
-
-
-def test_get_available_resources_formats_output() -> None:
-    """get_available_resources 正確格式化 checkpoints、loras、workflows 清單"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {
-        "checkpoints": ["v1-5-pruned.safetensors", "animagine-xl.safetensors"],
-        "loras": ["my_character.safetensors"],
-        "workflows": ["default", "default_lora", "img2img_lora_pose"],
-    }
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_available_resources()
-
-    assert "Checkpoints (2)" in result
-    assert "v1-5-pruned" in result
-    assert "animagine-xl" in result
-    assert "LoRAs (1)" in result
-    assert "my_character" in result
-    assert "Workflows (3)" in result
-    assert "default" in result
-    assert "default_lora" in result
-    mock_client.get.assert_called_once_with("generate/available-resources")
-
-
-def test_get_available_resources_empty_lists() -> None:
-    """get_available_resources 處理空清單"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {"checkpoints": [], "loras": [], "workflows": []}
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_available_resources()
-
-    assert "Checkpoints (0)" in result
-    assert "LoRAs (0)" in result
-    assert "Workflows (0)" in result
-    assert "(無)" in result
 
 
 def test_generate_image_returns_agent_friendly_json() -> None:
@@ -300,86 +261,6 @@ def test_generate_image_custom_workflow_with_image_pose() -> None:
     assert "xyz" in result
     call_json = mock_client.post.call_args[1]["json"]
     assert call_json["image_pose"] == "2026-03-08/ComfyUI_01305__318631e3_0.png"
-
-
-def test_get_job_status_queued() -> None:
-    """get_job_status 回傳 queued 狀態時格式正確"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {
-        "status": "queued",
-        "job_id": "job-123",
-        "submitted_at": "2026-06-05T07:00:00Z",
-    }
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_job_status("job-123")
-
-    assert "job-123" in result
-    assert "queued" in result
-    assert "2026-06-05T07:00:00Z" in result
-    mock_client.get.assert_called_once_with("generate/job/job-123")
-
-
-def test_get_job_status_running() -> None:
-    """get_job_status 回傳 running 狀態時包含 prompt_id"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {
-        "status": "running",
-        "job_id": "job-456",
-        "prompt_id": "comfy-prompt-abc",
-        "submitted_at": "2026-06-05T08:00:00Z",
-    }
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_job_status("job-456")
-
-    assert "job-456" in result
-    assert "running" in result
-    assert "comfy-prompt-abc" in result
-
-
-def test_get_job_status_completed() -> None:
-    """get_job_status 回傳 completed 時包含 image_id 與 path"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {
-        "status": "completed",
-        "job_id": "job-789",
-        "image_id": 42,
-        "image_path": "2026-06-05/ComfyUI_xxx.png",
-    }
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_job_status("job-789")
-
-    assert "job-789" in result
-    assert "已完成" in result
-    assert "42" in result
-    assert "2026-06-05/ComfyUI_xxx.png" in result
-    assert "gallery_detail" in result
-
-
-def test_get_job_status_not_found_returns_unknown() -> None:
-    """get_job_status 遇到非預期 status 時仍回傳資訊"""
-    mock_client = MagicMock()
-    mock_client.get.return_value = {"status": "not_found"}
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_job_status("job-000")
-
-    assert "job-000" in result
-    assert "not_found" in result
-
-
-def test_get_job_status_on_error_returns_error_message() -> None:
-    """get_job_status API 呼叫失敗時回傳 error 訊息而非拋出例外"""
-    mock_client = MagicMock()
-    mock_client.get.side_effect = ConnectionError("connection refused")
-
-    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = get_job_status("job-err")
-
-    assert result.startswith("error:")
-    assert "connection refused" in result
 
 
 def test_get_generation_status_queued_returns_agent_friendly_json() -> None:

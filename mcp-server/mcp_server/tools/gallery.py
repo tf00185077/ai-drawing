@@ -94,28 +94,6 @@ def get_gallery_image(image_id: int) -> str:
 
 
 @mcp.tool()
-def gallery_detail(image_id: int) -> str:
-    """Get the full parameters for a single image (checkpoint, lora, prompt, seed, etc.)."""
-    try:
-        client = _get_client()
-        resp = client.get(f"gallery/{image_id}")
-        lines = [
-            f"id: {resp.get('id')}",
-            f"prompt: {resp.get('prompt', '')}",
-            f"negative_prompt: {resp.get('negative_prompt', '')}",
-            f"checkpoint: {resp.get('checkpoint', '')}",
-            f"lora: {resp.get('lora', '')}",
-            f"seed: {resp.get('seed')}",
-            f"steps: {resp.get('steps')}",
-            f"cfg: {resp.get('cfg')}",
-            f"created_at: {resp.get('created_at')}",
-        ]
-        return "\n".join(lines)
-    except Exception as e:
-        return f"error: {e}"
-
-
-@mcp.tool()
 def gallery_rerun(image_id: int) -> str:
     """One-click re-run: reload the image parameters and generate again, returns job_id."""
     try:
