@@ -12,6 +12,10 @@ class GenerateRequest(BaseModel):
 
     checkpoint: str | None = None
     lora: str | None = None
+    template: str | None = Field(
+        default=None,
+        description="指定 workflow 模板名稱（如 anima）；省略時依是否有 lora 選 default / default_lora",
+    )
     prompt: str = Field(..., min_length=1)
     negative_prompt: str | None = None
     seed: int | None = None

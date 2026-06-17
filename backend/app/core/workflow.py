@@ -63,11 +63,12 @@ def apply_params(
 
     透過 class_type 與連線關係自動定位要替換的節點：
     - CheckpointLoaderSimple.ckpt_name <- checkpoint
+    - UNETLoader.unet_name <- checkpoint（diffusion-model 家族，如 Anima；僅在明確指定時覆寫）
     - LoraLoader.lora_name <- lora
     - CLIPTextEncode (接 KSampler.positive).text <- prompt
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
     - KSampler.seed, steps, cfg, sampler_name, scheduler, denoise
-    - EmptyLatentImage.width, height, batch_size
+    - EmptyLatentImage / EmptySD3LatentImage.width, height, batch_size
     - LoadImage.image <- image / image_pose（依節點順序：第一為 subject，第二為 pose）
     - DWPreprocessor.bbox_detector <- bbox_detector（ControlNet 預處理器，預設 yolo_nas_s_fp16.onnx）
 
@@ -154,6 +155,12 @@ def apply_params(
         if ct == "CheckpointLoaderSimple" and checkpoint is not None:
             inputs["ckpt_name"] = checkpoint
 
+        # Diffusion-model 家族（如 Anima）以 UNETLoader 取代 CheckpointLoaderSimple。
+        # 僅在呼叫端明確指定 checkpoint 時覆寫 unet_name，否則沿用模板既有檔名，
+        # 避免把傳統 checkpoint 名稱誤寫進 diffusion-model workflow。
+        if ct == "UNETLoader" and checkpoint is not None:
+            inputs["unet_name"] = checkpoint
+
         if ct == "LoraLoader":
             if lora is not None:
                 inputs["lora_name"] = lora
@@ -186,7 +193,9 @@ def apply_params(
         if ct == "DWPreprocessor" and bbox_detector is not None:
             inputs["bbox_detector"] = bbox_detector
 
-        if ct == "EmptyLatentImage":
+        # EmptyLatentImage（傳統）與 EmptySD3LatentImage（SD3 / Anima 家族）
+        # 的 width / height / batch_size 介面相同，一併處理。
+        if ct in ("EmptyLatentImage", "EmptySD3LatentImage"):
             if width is not None:
                 inputs["width"] = width
             if height is not None:
