@@ -9,7 +9,7 @@
 
 OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/openclaw-ai-drawing-mcp-handoff.md`。
 
-目前執行位置：Phase 3 與 Phase 4 已完成。最小 MCP 閉環已通過單元測試與本機實測；下一步是整理 Phase 5：OpenClaw MCP 繪圖 SOP。
+目前執行位置：Phase 1~5 文件化流程已完成。最小 MCP 閉環已通過單元測試與本機實測，且 OpenClaw MCP 繪圖 SOP 已整理完成。
 
 ---
 
@@ -28,6 +28,8 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 - [x] Phase 3 Step 8 完整單元測試（2026-06-12）：`uv run pytest tests/ -q` → `50 passed`。
 - [x] Phase 3 Step 9 本機 backend / ComfyUI MCP smoke test（2026-06-12）：以 MCP tools 完成 `list_resources → generate_image → get_generation_status → get_gallery_image → free_comfyui_memory` 閉環；job `c99167aa-4370-47e1-ae09-2b97d5f18978`、image `2`、輸出 `outputs/gallery/2026-06-12/ComfyUI_00008__c99167aa_0.png`、PNG 512×512，測試後 queue 為空。
 - [x] Phase 4 Hermes / agent MCP 實際驗證（2026-06-12）：已由 Hermes 實際透過 MCP tools 完成一次生圖與查詢，不再依賴 curl/HTTP 手動操作。
+- [x] Phase 5 OpenClaw MCP 繪圖 SOP（2026-06-15）：建立 `docs/openclaw-mcp-drawing-sop.md`，根據本機 `openclaw mcp show` 設定與真 stdio MCP 驗證整理 OpenClaw agent 使用規則、`openclaw mcp set` 範例與最小閉環操作順序；當日再次實測 job `3a18d370-3726-4fcf-b91b-b838fb6e4b87`、image `6`、輸出 `outputs/gallery/2026-06-15/ComfyUI_00012__3a18d370_0.png`。
+- [x] MCP README tool 清單同步（2026-06-17）：`mcp-server/README.md` 更新為完整 23 個 tool（分組並標示與純文字版重疊的 JSON 版），補上先前漏列的 `get_generation_status`、`get_job_status`、`cancel_job`、`list_resources`、`get_available_resources`、`caption_image`、`get_gallery_image`、`free_comfyui_memory`。
 
 ### 路徑正規化修正（2026-06-09）
 - [x] `backend/app/config.py` 將 DB / output / gallery / lora_train / sd-scripts / watch_dirs 的相對路徑統一正規化為 **project root 基準**
@@ -83,7 +85,7 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合：
 2. [x] 整理 OpenClaw backend 繪圖 SOP
 3. [x] 將 ai-drawing 繪圖最小閉環做成 MCP tools
 4. [x] 透過 MCP 實際完成一次繪圖驗證
-5. [ ] 整理 OpenClaw MCP 繪圖 SOP
+5. [x] 整理 OpenClaw MCP 繪圖 SOP
 
 詳細順序、狀態與驗證標準見 `docs/openclaw-ai-drawing-mcp-handoff.md`。
 
@@ -93,4 +95,5 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合：
 
 | 項目 | 原因 | 需要 |
 |------|------|------|
+| backend 生圖 queue 隊首阻塞（2026-06-16） | `backend/app/core/queue.py` 在 submit failure 時會把 job 插回隊首，可能造成壞 job 無限重試並堵住後續任務 | 修 queue failure-handling（retry_count / last_error / retry 上限 / failed 狀態）；詳見 `docs/backend-generate-queue-head-blocking-2026-06-16.md` |
 | Skill 文件 | openclaw skill 格式未確認 | 確認工具名稱 / 框架後才能開始 |

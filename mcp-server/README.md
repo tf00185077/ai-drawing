@@ -4,23 +4,60 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
+> 共 23 個 tool。標示 *(JSON)* 者回傳 agent-friendly JSON，與其純文字版功能重疊（agent 流程建議用 JSON 版）。
+
+### 連線檢查
+
 | Tool | 說明 |
 |------|------|
-| `mcp_ping` | 檢查 Backend 連線狀態 |
-| `generate_image` | 觸發圖片生成；支援 character、style 語意（如「初音」「動漫」） |
+| `mcp_ping` | 檢查 MCP 與 Backend 連線（打 `/health`） |
+
+### 生圖
+
+| Tool | 說明 |
+|------|------|
+| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8） |
 | `generate_image_from_description` | 依描述生圖（預存模板）；複雜需求由 AI 組 workflow 後呼叫 generate_image_custom_workflow |
 | `suggest_workflow_from_description` | 預覽描述解析結果（不觸發生圖） |
-| `generate_image_custom_workflow` | 使用自訂 workflow 生圖；AI 可依描述取得模板、修改後提交 |
+| `generate_image_custom_workflow` | 使用自訂 workflow 生圖；支援 `image_pose`（ControlNet 姿勢參考圖） |
 | `list_workflow_templates` | 列出可用 workflow 模板（default、default_lora 等） |
 | `get_workflow_template` | 取得指定模板的 workflow JSON |
-| `generate_queue_status` | 取得生圖佇列狀態 |
-| `lora_train_start` | 手動觸發 LoRA 訓練 |
-| `lora_train_status` | 取得 LoRA 訓練進度 |
-| `gallery_list` | 圖庫列表（可篩選） |
-| `gallery_detail` | 單張圖片完整參數 |
+| `generate_queue_status` | 取得生圖佇列狀態（執行中／等候中） |
+| `get_generation_status` | 查詢 job 狀態 *(JSON)*；完成時帶 image_id / image_path |
+| `get_job_status` | 查詢 job 狀態（純文字版） |
+| `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
+| `list_resources` | 列出 checkpoints / LoRA / workflows *(JSON)*，含 default_checkpoint |
+| `get_available_resources` | 列出可用資源（純文字版） |
+
+### LoRA 訓練
+
+| Tool | 說明 |
+|------|------|
+| `caption_image` | 對訓練資料夾的圖呼叫 LLM 自動產生 caption，寫入同名 .txt |
+| `lora_train_start` | 手動觸發 LoRA 訓練（folder 必填，可帶 epochs、resolution、network_dim 等） |
+| `lora_train_status` | 取得 LoRA 訓練進度與佇列狀態 |
+
+### 圖庫
+
+| Tool | 說明 |
+|------|------|
+| `gallery_list` | 圖庫列表（可依 checkpoint / lora / 日期篩選） |
+| `get_gallery_image` | 單張圖片 *(JSON)*，含 image_url、local_path 與完整 metadata |
+| `gallery_detail` | 單張圖片完整參數（純文字版） |
 | `gallery_rerun` | 一鍵重現該圖參數 |
+
+### 角色／風格語意
+
+| Tool | 說明 |
+|------|------|
 | `list_character_styles` | 列出可用的角色／風格別名 |
-| `resolve_character_style_prompt` | 預覽角色+風格解析後的 prompt |
+| `resolve_character_style_prompt` | 預覽角色+風格解析後的 prompt（不生圖） |
+
+### ComfyUI 直連
+
+| Tool | 說明 |
+|------|------|
+| `free_comfyui_memory` | 釋放 ComfyUI 顯存（直連 ComfyUI `/free`，生圖完成後應呼叫） |
 
 ## 安裝
 
