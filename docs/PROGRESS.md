@@ -15,6 +15,9 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 
 ## 已完成
 
+### 修復
+- [x] MCP tool 呼叫時 `McpSettings` 驗證錯誤（`Extra inputs are not permitted`，2026-06-17）：root cause 是 `config.py` 用了 pydantic 核心的 `ConfigDict` + 相對路徑 `env_file=".env"`，Hermes 從 `~/.hermes` 啟動時把 `~/.hermes/.env` 整包當成 extra 欄位吃進來。改為 `SettingsConfigDict(env_prefix="MCP_", extra="ignore")` 並移除 `env_file`，只讀 `MCP_*` 真實環境變數。已在汙染 CWD `.env` + process env 下驗證初始化正常。
+
 ### OpenClaw × ai-drawing 本地繪圖 / MCP 整合
 - [x] Phase 1 backend 低負載繪圖驗證（2026-06-11）：backend `8001` → ComfyUI `8188` → gallery 閉環成功，job `27920202-569f-4880-abc2-7a9f477d0094`，輸出 PNG 512×512。
 - [x] Phase 2 OpenClaw backend 繪圖 SOP（2026-06-11）：建立 `docs/openclaw-backend-drawing-sop.md`，包含可用 curl/HTTP 範例、成功/失敗判斷、資源限制與 busy 處理規則。

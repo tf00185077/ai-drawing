@@ -5,17 +5,18 @@ Backend API URL 從環境變數讀取，避免硬編碼。
 """
 from functools import lru_cache
 
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class McpSettings(BaseSettings):
     """MCP Server 專用設定"""
 
-    model_config = ConfigDict(
+    # 只從 MCP_ 開頭的真實環境變數讀取。
+    # 不掛 env_file：避免誤吃啟動者 CWD（如 ~/.hermes/.env）的無關設定。
+    # extra="ignore"：即使來源混入非預期欄位也直接忽略，不 raise。
+    model_config = SettingsConfigDict(
         env_prefix="MCP_",
-        env_file=".env",
-        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     # Backend API Base URL（MCP 呼叫 ai-drawing 後端用）
