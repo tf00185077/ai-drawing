@@ -1,0 +1,401 @@
+{
+  "id": "41dc1f3c-6348-4dfb-ba53-b32674b330e7",
+  "revision": 0,
+  "last_node_id": 16,
+  "last_link_id": 14,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "UNETLoader",
+      "pos": [-290.06224359247096, -228.8425312837989],
+      "size": [270, 110],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": { "name": "unet_name" },
+          "link": null
+        },
+        {
+          "localized_name": "weight_dtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": { "name": "weight_dtype" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "模型",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [1]
+        }
+      ],
+      "properties": { "Node name for S&R": "UNETLoader" },
+      "widgets_values": ["anima_preview3Base.safetensors", "default"]
+    },
+    {
+      "id": 2,
+      "type": "CLIPLoader",
+      "pos": [-273.37790370368384, 76.96101557227786],
+      "size": [270, 178],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "showAdvanced": true,
+      "inputs": [
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": { "name": "clip_name" },
+          "link": null
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": { "name": "type" },
+          "link": null
+        },
+        {
+          "localized_name": "device",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": { "name": "device" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [3, 4]
+        }
+      ],
+      "properties": { "Node name for S&R": "CLIPLoader" },
+      "widgets_values": ["qwen_3_06b_base.safetensors", "qwen_image", "default"]
+    },
+    {
+      "id": 3,
+      "type": "VAELoader",
+      "pos": [235.65647162950842, 510.00683262693514],
+      "size": [270, 82],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": { "name": "vae_name" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        { "localized_name": "VAE", "name": "VAE", "type": "VAE", "links": [9] }
+      ],
+      "properties": { "Node name for S&R": "VAELoader" },
+      "widgets_values": ["qwen_image_vae.safetensors"]
+    },
+    {
+      "id": 4,
+      "type": "EmptySD3LatentImage",
+      "pos": [290.030931035123, -359.2645474298375],
+      "size": [270, 144],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "寬度",
+          "name": "width",
+          "type": "INT",
+          "widget": { "name": "width" },
+          "link": null
+        },
+        {
+          "localized_name": "高度",
+          "name": "height",
+          "type": "INT",
+          "widget": { "name": "height" },
+          "link": null
+        },
+        {
+          "localized_name": "批次大小",
+          "name": "batch_size",
+          "type": "INT",
+          "widget": { "name": "batch_size" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "latent (潛空間)",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [14]
+        }
+      ],
+      "properties": { "Node name for S&R": "EmptySD3LatentImage" },
+      "widgets_values": [1024, 1024, 1]
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [163.13481824219886, -68.78572033901273],
+      "size": [400, 200],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        { "localized_name": "CLIP", "name": "clip", "type": "CLIP", "link": 4 },
+        {
+          "localized_name": "文字",
+          "name": "text",
+          "type": "STRING",
+          "widget": { "name": "text" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "條件設定",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [6]
+        }
+      ],
+      "properties": { "Node name for S&R": "CLIPTextEncode" },
+      "widgets_values": [""]
+    },
+    {
+      "id": 6,
+      "type": "CLIPTextEncode",
+      "pos": [165.25901468613054, 192.43218618623087],
+      "size": [400, 200],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        { "localized_name": "CLIP", "name": "clip", "type": "CLIP", "link": 3 },
+        {
+          "localized_name": "文字",
+          "name": "text",
+          "type": "STRING",
+          "widget": { "name": "text" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "條件設定",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [8]
+        }
+      ],
+      "properties": { "Node name for S&R": "CLIPTextEncode" },
+      "widgets_values": [""]
+    },
+    {
+      "id": 7,
+      "type": "KSampler",
+      "pos": [725.2636690214241, -41.7780191637564],
+      "size": [270, 344],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "模型",
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        },
+        {
+          "localized_name": "正向條件",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 6
+        },
+        {
+          "localized_name": "負向條件",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 8
+        },
+        {
+          "localized_name": "潛在空間影像",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 14
+        },
+        {
+          "localized_name": "種子",
+          "name": "seed",
+          "type": "INT",
+          "widget": { "name": "seed" },
+          "link": null
+        },
+        {
+          "localized_name": "步驟數",
+          "name": "steps",
+          "type": "INT",
+          "widget": { "name": "steps" },
+          "link": null
+        },
+        {
+          "localized_name": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": { "name": "cfg" },
+          "link": null
+        },
+        {
+          "localized_name": "取樣器",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": { "name": "sampler_name" },
+          "link": null
+        },
+        {
+          "localized_name": "排程器",
+          "name": "scheduler",
+          "type": "COMBO",
+          "widget": { "name": "scheduler" },
+          "link": null
+        },
+        {
+          "localized_name": "去雜訊強度",
+          "name": "denoise",
+          "type": "FLOAT",
+          "widget": { "name": "denoise" },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "latent (潛空間)",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [13]
+        }
+      ],
+      "properties": { "Node name for S&R": "KSampler" },
+      "widgets_values": [
+        336994947639588,
+        "randomize",
+        20,
+        3.5,
+        "dpmpp_2m",
+        "simple",
+        1
+      ]
+    },
+    {
+      "id": 8,
+      "type": "VAEDecode",
+      "pos": [1112.7852983648363, 152.6086130026049],
+      "size": [225, 72],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 13
+        },
+        { "localized_name": "vae", "name": "vae", "type": "VAE", "link": 9 }
+      ],
+      "outputs": [
+        {
+          "localized_name": "影像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [11, 12]
+        }
+      ],
+      "properties": { "Node name for S&R": "VAEDecode" },
+      "widgets_values": []
+    },
+    {
+      "id": 9,
+      "type": "SaveImage",
+      "pos": [1118.404653351559, -228.01114044311163],
+      "size": [270, 83.984375],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "影像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        },
+        {
+          "localized_name": "檔名前綴",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": { "name": "filename_prefix" },
+          "link": null
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [""]
+    },
+    {
+      "id": 13,
+      "type": "PreviewImage",
+      "pos": [1110.9447871993398, -39.12474787745202],
+      "size": [225, 280],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "圖片",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 12
+        }
+      ],
+      "outputs": [],
+      "properties": { "Node name for S&R": "PreviewImage" },
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [1, 1, 0, 7, 0, "MODEL"],
+    [3, 2, 0, 6, 0, "CLIP"],
+    [4, 2, 0, 5, 0, "CLIP"],
+    [6, 5, 0, 7, 1, "CONDITIONING"],
+    [8, 6, 0, 7, 2, "CONDITIONING"],
+    [9, 3, 0, 8, 1, "VAE"],
+    [11, 8, 0, 9, 0, "IMAGE"],
+    [12, 8, 0, 13, 0, "IMAGE"],
+    [13, 7, 0, 8, 0, "LATENT"],
+    [14, 4, 0, 7, 3, "LATENT"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6899160312690542,
+      "offset": [360.39344458873757, 748.4022935604618]
+    }
+  },
+  "version": 0.4
+}

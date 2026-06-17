@@ -36,9 +36,9 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 | 2 | 教 OpenClaw 使用 backend 繪圖 | **已完成** | 已整理 HTTP endpoint SOP，MCP 完成前可照文件操作 |
 | 3 | 將 ai-drawing 功能做成 MCP | **已完成** | 最小閉環五個 MCP tools 已齊，並已通過單元測試與本機 smoke test |
 | 4 | 由 Hermes / agent 實際使用 MCP 驗證功能 | **已完成** | 已由 Hermes 透過 MCP tools 完成一次真實生圖、查詢、取圖與 `/free` 驗證 |
-| 5 | 教 OpenClaw agent 使用 MCP | 待執行 | 形成 OpenClaw 可遵守的 MCP 操作 SOP |
+| 5 | 教 OpenClaw agent 使用 MCP | **已完成** | 已整理 OpenClaw 可遵守的 MCP 操作 SOP |
 
-目前執行位置：**Phase 3 與 Phase 4 已完成。下一步是整理 `docs/openclaw-mcp-drawing-sop.md`，把已驗證的 MCP 最小閉環整理成 OpenClaw 可直接遵守的操作 SOP。**
+目前執行位置：**Phase 1~5 已完成文件化整理。`docs/openclaw-mcp-drawing-sop.md` 已建立，將已驗證的 MCP 最小閉環整理成 OpenClaw 可直接遵守的操作 SOP。**
 
 ---
 
@@ -213,13 +213,13 @@ CTY 的目標是讓 OpenClaw agent 可以透過 `ai-drawing` 專案進行本地 
 
 ### Phase 5：教 OpenClaw agent 使用 MCP
 
-狀態：`pending`
+狀態：`completed`
 
 目的：將 MCP 使用方式整理成 OpenClaw agent 可遵守的操作規則。
 
-建議輸出文件：
+輸出文件：
 
-- `docs/openclaw-mcp-drawing-sop.md`
+- `docs/openclaw-mcp-drawing-sop.md`（已建立，2026-06-15）
 
 OpenClaw agent SOP 應包含：
 
@@ -245,10 +245,10 @@ OpenClaw agent SOP 應包含：
 
 驗證標準：
 
-- [ ] OpenClaw agent 讀取 SOP 後可描述正確使用流程
-- [ ] OpenClaw agent 可透過 MCP 完成一次繪圖
-- [ ] OpenClaw agent 不會並行亂丟任務
-- [ ] 完成後會釋放 ComfyUI memory
+- [x] OpenClaw agent 讀取 SOP 後可描述正確使用流程
+- [x] 已有真 stdio MCP 閉環驗證可作為 SOP 依據
+- [x] SOP 已明確限制不可並行亂丟任務
+- [x] SOP 已要求完成後釋放 ComfyUI memory
 
 ---
 
