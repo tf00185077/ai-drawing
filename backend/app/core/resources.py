@@ -10,6 +10,9 @@ MODEL_EXTENSIONS = (".safetensors", ".ckpt", ".pth")
 class ResourceSettings(Protocol):
     comfyui_checkpoints_dir: str
     comfyui_loras_dir: str
+    comfyui_diffusion_models_dir: str
+    comfyui_text_encoders_dir: str
+    comfyui_vae_dir: str
     lora_default_checkpoint: str
 
 
@@ -32,6 +35,21 @@ def list_checkpoints(settings: ResourceSettings) -> list[str]:
 
 def list_loras(settings: ResourceSettings) -> list[str]:
     return list_model_files(Path(settings.comfyui_loras_dir))
+
+
+def list_diffusion_models(settings: ResourceSettings) -> list[str]:
+    """diffusion-model 家族（如 Anima）的 UNET 檔，供 UNETLoader 使用"""
+    return list_model_files(Path(settings.comfyui_diffusion_models_dir))
+
+
+def list_text_encoders(settings: ResourceSettings) -> list[str]:
+    """text encoder 檔，供 CLIPLoader 使用"""
+    return list_model_files(Path(settings.comfyui_text_encoders_dir))
+
+
+def list_vaes(settings: ResourceSettings) -> list[str]:
+    """VAE 檔，供 VAELoader 使用"""
+    return list_model_files(Path(settings.comfyui_vae_dir))
 
 
 def first_available_checkpoint(settings: ResourceSettings) -> str | None:

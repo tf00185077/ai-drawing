@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 23 個 tool。標示 *(JSON)* 者回傳 agent-friendly JSON，與其純文字版功能重疊（agent 流程建議用 JSON 版）。
+> 共 20 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除）。
 
 ### 連線檢查
 
@@ -23,11 +23,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `list_workflow_templates` | 列出可用 workflow 模板（default、default_lora 等） |
 | `get_workflow_template` | 取得指定模板的 workflow JSON |
 | `generate_queue_status` | 取得生圖佇列狀態（執行中／等候中） |
-| `get_generation_status` | 查詢 job 狀態 *(JSON)*；完成時帶 image_id / image_path |
-| `get_job_status` | 查詢 job 狀態（純文字版） |
+| `get_generation_status` | 查詢 job 狀態；完成時帶 image_id / image_path |
 | `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
-| `list_resources` | 列出 checkpoints / LoRA / workflows *(JSON)*，含 default_checkpoint |
-| `get_available_resources` | 列出可用資源（純文字版） |
+| `list_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint |
 
 ### LoRA 訓練
 
@@ -42,8 +40,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | Tool | 說明 |
 |------|------|
 | `gallery_list` | 圖庫列表（可依 checkpoint / lora / 日期篩選） |
-| `get_gallery_image` | 單張圖片 *(JSON)*，含 image_url、local_path 與完整 metadata |
-| `gallery_detail` | 單張圖片完整參數（純文字版） |
+| `get_gallery_image` | 單張圖片，含 image_url、local_path 與完整 metadata |
 | `gallery_rerun` | 一鍵重現該圖參數 |
 
 ### 角色／風格語意

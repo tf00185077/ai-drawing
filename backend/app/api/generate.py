@@ -9,7 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core.resources import default_checkpoint, list_checkpoints, list_loras
+from app.core.resources import (
+    default_checkpoint,
+    list_checkpoints,
+    list_diffusion_models,
+    list_loras,
+    list_text_encoders,
+    list_vaes,
+)
 from app.core.queue import QueueFullError, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.db.database import get_db
 from app.schemas.generate import (
@@ -123,6 +130,9 @@ async def get_available_resources():
     settings = get_settings()
     checkpoints = list_checkpoints(settings)
     loras = list_loras(settings)
+    diffusion_models = list_diffusion_models(settings)
+    text_encoders = list_text_encoders(settings)
+    vaes = list_vaes(settings)
 
     workflows_dir = Path(__file__).resolve().parent.parent.parent / "workflows"
     templates = []
@@ -132,6 +142,9 @@ async def get_available_resources():
     return {
         "checkpoints": checkpoints,
         "loras": loras,
+        "diffusion_models": diffusion_models,
+        "text_encoders": text_encoders,
+        "vaes": vaes,
         "workflows": templates,
         "default_checkpoint": default_checkpoint(settings),
     }
