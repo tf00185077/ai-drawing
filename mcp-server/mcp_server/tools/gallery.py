@@ -70,6 +70,10 @@ def get_gallery_image(image_id: int) -> str:
                 "metadata": {
                     "checkpoint": resp.get("checkpoint"),
                     "lora": resp.get("lora"),
+                    "template": resp.get("template"),
+                    "diffusion_model": resp.get("diffusion_model"),
+                    "text_encoder": resp.get("text_encoder"),
+                    "vae": resp.get("vae"),
                     "seed": resp.get("seed"),
                     "steps": resp.get("steps"),
                     "cfg": resp.get("cfg"),

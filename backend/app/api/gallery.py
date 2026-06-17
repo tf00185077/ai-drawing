@@ -46,6 +46,10 @@ def _image_to_item(row: GeneratedImage) -> GalleryItem:
         image_url=_to_image_url(row.image_path) or None,
         checkpoint=row.checkpoint,
         lora=row.lora,
+        template=row.template,
+        diffusion_model=row.diffusion_model,
+        text_encoder=row.text_encoder,
+        vae=row.vae,
         seed=row.seed,
         steps=row.steps,
         cfg=row.cfg,
@@ -126,6 +130,15 @@ async def rerun_image(
         "steps": row.steps,
         "cfg": row.cfg,
     }
+    # 帶回模板與 diffusion-model 元件，確保 Anima 等非傳統 checkpoint 也能重生
+    if row.template:
+        params["template"] = row.template
+    if row.diffusion_model:
+        params["diffusion_model"] = row.diffusion_model
+    if row.text_encoder:
+        params["text_encoder"] = row.text_encoder
+    if row.vae:
+        params["vae"] = row.vae
     try:
         job_id = submit(params)
         return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列")
@@ -149,13 +162,15 @@ async def export_params(
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow([
-            "id", "image_path", "checkpoint", "lora", "seed", "steps", "cfg",
+            "id", "image_path", "checkpoint", "lora", "template",
+            "diffusion_model", "text_encoder", "vae", "seed", "steps", "cfg",
             "prompt", "negative_prompt", "created_at",
         ])
         created = row.created_at.isoformat() if row.created_at else ""
         writer.writerow([
             row.id, row.image_path or "", row.checkpoint or "", row.lora or "",
-            row.seed or "", row.steps or "", row.cfg or "",
+            row.template or "", row.diffusion_model or "", row.text_encoder or "",
+            row.vae or "", row.seed or "", row.steps or "", row.cfg or "",
             row.prompt or "", row.negative_prompt or "", created,
         ])
         return Response(

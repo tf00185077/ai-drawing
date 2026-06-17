@@ -17,6 +17,11 @@ class GeneratedImage(Base):
     image_path = Column(String(512), nullable=False)
     checkpoint = Column(String(256), nullable=True)
     lora = Column(String(256), nullable=True)
+    # 重生所需：使用的 workflow 模板與 diffusion-model 家族（如 Anima）的元件檔名
+    template = Column(String(128), nullable=True)
+    diffusion_model = Column(String(256), nullable=True)  # UNETLoader.unet_name
+    text_encoder = Column(String(256), nullable=True)  # CLIPLoader.clip_name
+    vae = Column(String(256), nullable=True)  # VAELoader.vae_name
     seed = Column(Integer, nullable=True)
     steps = Column(Integer, nullable=True)
     cfg = Column(Float, nullable=True)

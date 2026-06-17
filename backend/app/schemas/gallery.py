@@ -17,6 +17,10 @@ class GalleryItem(BaseModel):
     image_url: str | None = None  # 前端顯示用，/gallery/ 開頭
     checkpoint: str | None = None
     lora: str | None = None
+    template: str | None = None
+    diffusion_model: str | None = None
+    text_encoder: str | None = None
+    vae: str | None = None
     seed: int | None = None
     steps: int | None = None
     cfg: float | None = None

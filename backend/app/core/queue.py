@@ -21,7 +21,12 @@ from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client, get_output_images
 from app.core.recording import save as recording_save
 from app.core.resources import default_checkpoint
-from app.core.workflow import apply_params, get_seed_from_workflow, load_template
+from app.core.workflow import (
+    apply_params,
+    extract_model_files_from_workflow,
+    get_seed_from_workflow,
+    load_template,
+)
 from app.db.database import SessionLocal
 
 logger = logging.getLogger(__name__)
@@ -39,6 +44,9 @@ class GenerateParams(TypedDict, total=False):
     workflow: dict[str, Any]  # 自訂 workflow，若有則跳過 template 載入
     template: str  # 指定 workflow 模板名稱（如 "anima"），優先於依 lora 推斷的預設
     checkpoint: str
+    diffusion_model: str  # UNETLoader.unet_name（diffusion-model 家族，如 Anima）
+    text_encoder: str  # CLIPLoader.clip_name
+    vae: str  # VAELoader.vae_name
     lora: str
     prompt: str
     image: str  # 主體圖路徑（img2img），相對於 gallery_dir
@@ -299,12 +307,19 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             scheduler=job.params.get("scheduler"),
             lora_strength=job.params.get("lora_strength"),
             denoise=job.params.get("denoise"),
+            diffusion_model=job.params.get("diffusion_model"),
+            text_encoder=job.params.get("text_encoder"),
+            vae=job.params.get("vae"),
         )
         # 使用者未提供 seed 時，apply_params 會產生隨機值；擷取實際使用的 seed 供 recording
         if job.params.get("seed") is None:
             effective_seed = get_seed_from_workflow(prompt)
             if effective_seed is not None:
                 job.params["seed"] = effective_seed
+        # 反解實際送出 workflow 的模型檔名（含 anima.json 內嵌值），供 recording 記錄、之後重生
+        for key, value in extract_model_files_from_workflow(prompt).items():
+            if value is not None and not job.params.get(key):
+                job.params[key] = value
         prompt_id = comfy.submit_prompt(prompt)
         with _lock:
             if _running and _running.job_id == job.job_id:
@@ -389,6 +404,10 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
                     job_id=job.job_id,
                     checkpoint=job.params.get("checkpoint"),
                     lora=job.params.get("lora"),
+                    template=job.params.get("template"),
+                    diffusion_model=job.params.get("diffusion_model"),
+                    text_encoder=job.params.get("text_encoder"),
+                    vae=job.params.get("vae"),
                     seed=job.params.get("seed"),
                     steps=job.params.get("steps"),
                     cfg=job.params.get("cfg"),
