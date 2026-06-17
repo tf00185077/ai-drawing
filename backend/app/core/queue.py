@@ -37,6 +37,7 @@ class QueueFullError(Exception):
 
 class GenerateParams(TypedDict, total=False):
     workflow: dict[str, Any]  # 自訂 workflow，若有則跳過 template 載入
+    template: str  # 指定 workflow 模板名稱（如 "anima"），優先於依 lora 推斷的預設
     checkpoint: str
     lora: str
     prompt: str
@@ -199,30 +200,44 @@ def _process_pending(comfy: ComfyUIClient) -> None:
 
     try:
         settings = get_settings()
-        effective_checkpoint = (
-            job.params.get("checkpoint")
-            or default_checkpoint(settings)
-        )
-        if effective_checkpoint is None:
-            raise FileNotFoundError(
-                "No checkpoint available from /api/generate/available-resources"
-            )
-        if effective_checkpoint and not job.params.get("checkpoint"):
-            job.params["checkpoint"] = effective_checkpoint
-        width = job.params.get("width")
-        height = job.params.get("height")
-        if width is None and height is None and effective_checkpoint and settings.lora_sdxl:
-            width, height = 1024, 1024
+        # 先決定並載入 workflow；checkpoint 預設邏輯需依其節點型別判斷。
+        # template 優先序：自訂 workflow > 明確指定的 template > 依 lora 推斷的預設模板。
         custom_wf = job.params.get("workflow")
         if custom_wf:
             wf = copy.deepcopy(custom_wf)
         else:
             template = (
-                WORKFLOW_TEMPLATE_LORA
-                if job.params.get("lora")
-                else WORKFLOW_TEMPLATE
+                job.params.get("template")
+                or (WORKFLOW_TEMPLATE_LORA if job.params.get("lora") else WORKFLOW_TEMPLATE)
             )
             wf = load_template(template)
+
+        # 僅傳統 checkpoint workflow（含 CheckpointLoaderSimple）才套用預設 checkpoint；
+        # diffusion-model workflow（如 Anima 的 UNETLoader）模板已內嵌模型檔名，
+        # 不應把傳統 checkpoint 名稱注入進去。
+        has_checkpoint_loader = any(
+            isinstance(n, dict) and n.get("class_type") == "CheckpointLoaderSimple"
+            for n in wf.values()
+        )
+        if has_checkpoint_loader:
+            effective_checkpoint = (
+                job.params.get("checkpoint")
+                or default_checkpoint(settings)
+            )
+            if effective_checkpoint is None:
+                raise FileNotFoundError(
+                    "No checkpoint available from /api/generate/available-resources"
+                )
+            if not job.params.get("checkpoint"):
+                job.params["checkpoint"] = effective_checkpoint
+        else:
+            # 模板自帶模型；僅在呼叫端明確指定時才覆寫（apply_params 寫入 UNETLoader.unet_name）
+            effective_checkpoint = job.params.get("checkpoint")
+
+        width = job.params.get("width")
+        height = job.params.get("height")
+        if width is None and height is None and effective_checkpoint and settings.lora_sdxl:
+            width, height = 1024, 1024
         # 若提供 image / image_pose，從 gallery 讀取並上傳至 ComfyUI，取得檔名後替換
         image_for_wf: str | None = None
         image_pose_for_wf: str | None = None

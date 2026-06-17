@@ -20,6 +20,7 @@ def generate_image(
     style: str | None = None,
     checkpoint: str | None = None,
     lora: str | None = None,
+    template: str | None = None,
     negative_prompt: str | None = None,
     seed: int | None = None,
     steps: int | None = None,
@@ -32,7 +33,7 @@ def generate_image(
     lora_strength: float | None = None,
     denoise: float | None = None,
 ) -> str:
-    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). Returns job_id or an error message."""
+    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. Call list_workflow_templates to see available names. Returns job_id or an error message."""
     try:
         client = _get_client()
         final_prompt = prompt
@@ -49,6 +50,8 @@ def generate_image(
         body: dict[str, object] = {"prompt": final_prompt}
         if checkpoint:
             body["checkpoint"] = checkpoint
+        if template:
+            body["template"] = template
         if resolved_lora:
             body["lora"] = resolved_lora
         if negative_prompt is not None:

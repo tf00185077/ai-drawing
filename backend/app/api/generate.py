@@ -35,6 +35,8 @@ async def trigger_generate(body: GenerateRequest):
             "steps": body.steps,
             "cfg": body.cfg,
         }
+        if body.template is not None:
+            params["template"] = body.template
         if body.width is not None:
             params["width"] = body.width
         if body.height is not None:
