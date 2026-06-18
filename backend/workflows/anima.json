@@ -63,7 +63,7 @@
   "7": {
     "inputs": {
       "seed": 336994947639588,
-      "steps": 20,
+      "steps": 40,
       "cfg": 3.5,
       "sampler_name": "dpmpp_2m",
       "scheduler": "simple",

@@ -156,7 +156,7 @@ pip install -e .
 
 | Tool | 說明 |
 |------|------|
-| `list_resources` | 列出可用 checkpoints / LoRA / workflow，回傳 agent-friendly JSON |
+| `list_available_resources` | 列出可用 checkpoints / LoRA / workflow，回傳 agent-friendly JSON |
 | `generate_image` | 送出生圖 job，回傳 job_id（agent 可解析 JSON） |
 | `get_generation_status` | 查詢 job 狀態（queued/running/completed），completed 時含 image_id |
 | `get_gallery_image` | 取得圖片完整資訊，含 image_url、local_path、metadata |

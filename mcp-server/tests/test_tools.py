@@ -10,7 +10,7 @@ from mcp_server.tools.generate import (
     generate_queue_status,
     get_generation_status,
     get_workflow_template,
-    list_resources,
+    list_available_resources,
     list_workflow_templates,
     suggest_workflow_from_description,
 )
@@ -28,11 +28,11 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     }
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = list_resources()
+        result = list_available_resources()
 
     data = json.loads(result)
     assert data["ok"] is True
-    assert data["tool"] == "list_resources"
+    assert data["tool"] == "list_available_resources"
     assert data["backend_base_url"] == "http://127.0.0.1:8001"
     assert data["checkpoints"] == ["novaAnimeXL_ilV190.safetensors", "v1-5-pruned-emaonly.ckpt"]
     assert data["loras"] == []
@@ -47,7 +47,7 @@ def test_list_resources_empty_checkpoints_tells_agent_not_to_submit() -> None:
     mock_client.get.return_value = {"checkpoints": [], "loras": [], "workflows": ["default"]}
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = list_resources()
+        result = list_available_resources()
 
     data = json.loads(result)
     assert data["ok"] is True
@@ -62,11 +62,11 @@ def test_list_resources_backend_error_returns_structured_error() -> None:
     mock_client.get.side_effect = RuntimeError("backend down")
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = list_resources()
+        result = list_available_resources()
 
     data = json.loads(result)
     assert data["ok"] is False
-    assert data["tool"] == "list_resources"
+    assert data["tool"] == "list_available_resources"
     assert data["where"] == "backend"
     assert "backend down" in data["error"]
 

@@ -16,6 +16,7 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 ## 已完成
 
 ### 修復
+- [x] `list_resources` tool 回傳 `{}`（2026-06-17）：tool 名稱與 MCP 協定內建的 `resources` primitive（`resources/list`）撞名，agent 端被路由到沒掛任何 resource 的 `resources/list` → 空 `{}`，而非真正的 tool。backend 與 tool 邏輯本身正常。改名為 `list_available_resources`（與 backend `available-resources` 端點同名、避開 primitive），同步更新 `generate.py`、tests、`mcp-server/README.md`、`docs/mcp-setup.md`、`docs/openclaw-mcp-drawing-sop.md`。歷史規劃/SOP 記錄文件保留原名不動。`uv run pytest tests/ -q` → `43 passed`。
 - [x] MCP tool 呼叫時 `McpSettings` 驗證錯誤（`Extra inputs are not permitted`，2026-06-17）：root cause 是 `config.py` 用了 pydantic 核心的 `ConfigDict` + 相對路徑 `env_file=".env"`，Hermes 從 `~/.hermes` 啟動時把 `~/.hermes/.env` 整包當成 extra 欄位吃進來。改為 `SettingsConfigDict(env_prefix="MCP_", extra="ignore")` 並移除 `env_file`，只讀 `MCP_*` 真實環境變數。已在汙染 CWD `.env` + process env 下驗證初始化正常。
 
 ### OpenClaw × ai-drawing 本地繪圖 / MCP 整合
