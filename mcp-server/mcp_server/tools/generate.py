@@ -144,11 +144,17 @@ def generate_image_custom_workflow(
     cfg: float | None = None,
     width: int | None = None,
     height: int | None = None,
+    image: str | None = None,
     image_pose: str | None = None,
+    mask: str | None = None,
+    batch_size: int | None = None,
     sampler_name: str | None = None,
     scheduler: str | None = None,
     lora_strength: float | None = None,
     denoise: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
 ) -> str:
     """
     Trigger image generation using a custom workflow. AI should:
@@ -157,8 +163,30 @@ def generate_image_custom_workflow(
     3. Optionally modify the workflow JSON (e.g. adjust nodes or parameters)
     4. Pass it to this tool; workflow must be a JSON string; prompt/character/style will be applied to the workflow
 
+    This is the most flexible generation tool: since the workflow JSON is a full computation
+    graph, it can in principle cover any scenario — txt2img, img2img, ControlNet, inpaint,
+    diffusion-model families like Anima.
+
+    image: subject reference image for img2img, relative to gallery_dir (e.g. 2026-03-08/subject.png).
+    The backend uploads it to ComfyUI and replaces the first LoadImage node's image input.
+
+    mask: inpaint mask image, relative to gallery_dir. Use together with the "inpaint" workflow
+    template (LoadImage subject + LoadImageMask + VAEEncodeForInpaint). The backend uploads it
+    and replaces the LoadImageMask node's image input; it never collides with the subject image
+    since they are distinct node types.
+
     image_pose: pose reference image, relative to gallery_dir (e.g. 2026-03-08/ComfyUI_xxx.png).
     The backend reads it from the gallery, uploads it to ComfyUI, and replaces the LoadImage node. Used for ControlNet pose, etc.
+
+    diffusion_model / text_encoder / vae: components for diffusion-model families (e.g. Anima),
+    injected into UNETLoader.unet_name / CLIPLoader.clip_name / VAELoader.vae_name respectively.
+
+    Important: every parameter here is only applied when explicitly provided. Any value already
+    present in the submitted workflow JSON (steps, cfg, seed, model filenames, etc.) is left as-is
+    when the corresponding parameter is omitted — the workflow JSON is the source of truth. This
+    means a workflow with a fixed/non-zero seed will reproduce deterministically unless you pass
+    seed explicitly for variation, and hires-fix / multi-KSampler graphs keep each sampler's own
+    steps/cfg.
     """
     try:
         client = _get_client()
@@ -192,8 +220,14 @@ def generate_image_custom_workflow(
             body["width"] = width
         if height is not None:
             body["height"] = height
+        if image is not None:
+            body["image"] = image
         if image_pose is not None:
             body["image_pose"] = image_pose
+        if mask is not None:
+            body["mask"] = mask
+        if batch_size is not None:
+            body["batch_size"] = batch_size
         if sampler_name is not None:
             body["sampler_name"] = sampler_name
         if scheduler is not None:
@@ -202,6 +236,12 @@ def generate_image_custom_workflow(
             body["lora_strength"] = lora_strength
         if denoise is not None:
             body["denoise"] = denoise
+        if diffusion_model is not None:
+            body["diffusion_model"] = diffusion_model
+        if text_encoder is not None:
+            body["text_encoder"] = text_encoder
+        if vae is not None:
+            body["vae"] = vae
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")

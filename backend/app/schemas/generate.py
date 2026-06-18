@@ -69,8 +69,8 @@ class GenerateCustomRequest(BaseModel):
     lora: str | None = None
     negative_prompt: str | None = None
     seed: int | None = None
-    steps: int = Field(default=20, ge=1, le=150)
-    cfg: float = Field(default=7.0, ge=1.0, le=30.0)
+    steps: int | None = Field(default=None, ge=1, le=150)
+    cfg: float | None = Field(default=None, ge=1.0, le=30.0)
     width: int | None = Field(default=None, ge=256, le=2048)
     height: int | None = Field(default=None, ge=256, le=2048)
     batch_size: int | None = Field(default=None, ge=1, le=8)
@@ -85,4 +85,20 @@ class GenerateCustomRequest(BaseModel):
     image_pose: str | None = Field(
         default=None,
         description="姿態參考圖路徑，相對於 gallery_dir（如 2026-03-08/ComfyUI_xxx.png）。會先上傳至 ComfyUI 再替換 LoadImage",
+    )
+    mask: str | None = Field(
+        default=None,
+        description="遮罩參考圖路徑（inpaint），相對於 gallery_dir。會先上傳至 ComfyUI 再替換 LoadImageMask",
+    )
+    diffusion_model: str | None = Field(
+        default=None,
+        description="UNETLoader.unet_name（diffusion-model 家族，如 Anima）；省略時沿用 workflow JSON 既有值",
+    )
+    text_encoder: str | None = Field(
+        default=None,
+        description="CLIPLoader.clip_name；省略時沿用 workflow JSON 既有值",
+    )
+    vae: str | None = Field(
+        default=None,
+        description="VAELoader.vae_name；省略時沿用 workflow JSON 既有值",
     )

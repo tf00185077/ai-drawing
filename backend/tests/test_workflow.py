@@ -63,13 +63,16 @@ def test_apply_params_does_not_modify_original() -> None:
     assert wf["4"]["inputs"]["ckpt_name"] == original_ckpt
 
 
-def test_apply_params_seed_random_when_none() -> None:
-    """seed 為 None 時使用隨機值"""
+def test_apply_params_seed_steps_cfg_preserved_when_none() -> None:
+    """steps/cfg/seed 為 None 時保留 workflow 原值（隨機 seed/預設值由呼叫端 queue 決定，不在 apply_params 處理）"""
     wf = load_template("default")
+    orig_seed = wf["3"]["inputs"]["seed"]
+    orig_steps = wf["3"]["inputs"]["steps"]
+    orig_cfg = wf["3"]["inputs"]["cfg"]
     result = apply_params(wf, prompt="test")
-    seed = result["3"]["inputs"]["seed"]
-    assert isinstance(seed, int)
-    assert 0 <= seed <= 2**32 - 1
+    assert result["3"]["inputs"]["seed"] == orig_seed
+    assert result["3"]["inputs"]["steps"] == orig_steps
+    assert result["3"]["inputs"]["cfg"] == orig_cfg
 
 
 def test_load_template_default_lora_has_loraloader() -> None:
@@ -220,6 +223,52 @@ def test_extract_params_from_workflow_returns_all_params() -> None:
     assert result["seed"] == 12345
     assert result["steps"] == 25
     assert result["cfg"] == 7.5
+
+
+def test_apply_params_injects_mask_into_loadimagemask() -> None:
+    """apply_params 將 mask 注入 LoadImageMask.image，且不影響 LoadImage（subject）"""
+    wf = load_template("inpaint")
+    result = apply_params(
+        wf,
+        prompt="test",
+        image="subject.png",
+        mask="mask.png",
+    )
+    assert result["10"]["class_type"] == "LoadImage"
+    assert result["10"]["inputs"]["image"] == "subject.png"
+    assert result["11"]["class_type"] == "LoadImageMask"
+    assert result["11"]["inputs"]["image"] == "mask.png"
+
+
+def test_apply_params_keeps_loadimagemask_when_mask_none() -> None:
+    """mask 為 None 時保留 LoadImageMask 原始 image 值"""
+    wf = load_template("inpaint")
+    orig = wf["11"]["inputs"]["image"]
+    result = apply_params(wf, prompt="test")
+    assert result["11"]["inputs"]["image"] == orig
+
+
+def test_apply_params_two_ksamplers_keep_independent_steps_cfg_when_omitted() -> None:
+    """多 KSampler 工作流（hires-fix）省略 steps/cfg 時，各節點保留自己的原值"""
+    wf = {
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"steps": 30, "cfg": 5.5, "seed": 111, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "20": {
+            "class_type": "KSampler",
+            "inputs": {"steps": 12, "cfg": 9.0, "seed": 222, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+    }
+    result = apply_params(wf, prompt="test")
+    assert result["3"]["inputs"]["steps"] == 30
+    assert result["3"]["inputs"]["cfg"] == 5.5
+    assert result["3"]["inputs"]["seed"] == 111
+    assert result["20"]["inputs"]["steps"] == 12
+    assert result["20"]["inputs"]["cfg"] == 9.0
+    assert result["20"]["inputs"]["seed"] == 222
 
 
 def test_extract_params_from_workflow_returns_none_for_empty() -> None:

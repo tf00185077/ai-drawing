@@ -263,6 +263,48 @@ def test_generate_image_custom_workflow_with_image_pose() -> None:
     assert call_json["image_pose"] == "2026-03-08/ComfyUI_01305__318631e3_0.png"
 
 
+def test_generate_image_custom_workflow_forwards_new_params_when_provided() -> None:
+    """generate_image_custom_workflow 傳入 image/mask/batch_size/diffusion_model/text_encoder/vae 時會帶入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"x.safetensors"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(
+            workflow=wf_json,
+            prompt="1girl",
+            image="2026-03-08/subject.png",
+            mask="2026-03-08/mask.png",
+            batch_size=4,
+            diffusion_model="anima_unet.safetensors",
+            text_encoder="anima_clip.safetensors",
+            vae="anima_vae.safetensors",
+        )
+
+    assert "abc" in result
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["image"] == "2026-03-08/subject.png"
+    assert call_json["mask"] == "2026-03-08/mask.png"
+    assert call_json["batch_size"] == 4
+    assert call_json["diffusion_model"] == "anima_unet.safetensors"
+    assert call_json["text_encoder"] == "anima_clip.safetensors"
+    assert call_json["vae"] == "anima_vae.safetensors"
+
+
+def test_generate_image_custom_workflow_omits_new_params_when_not_provided() -> None:
+    """generate_image_custom_workflow 未提供 image/mask/batch_size/diffusion_model/text_encoder/vae 時不放入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"x.safetensors"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        generate_image_custom_workflow(workflow=wf_json, prompt="1girl")
+
+    call_json = mock_client.post.call_args[1]["json"]
+    for key in ("image", "mask", "batch_size", "diffusion_model", "text_encoder", "vae"):
+        assert key not in call_json
+
+
 def test_get_generation_status_queued_returns_agent_friendly_json() -> None:
     """get_generation_status queued 時回傳含 next 的穩定 JSON"""
     mock_client = MagicMock()
