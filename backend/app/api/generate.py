@@ -82,9 +82,11 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             "prompt": body.prompt,
             "negative_prompt": body.negative_prompt,
             "seed": body.seed,
-            "steps": body.steps,
-            "cfg": body.cfg,
         }
+        if body.steps is not None:
+            params["steps"] = body.steps
+        if body.cfg is not None:
+            params["cfg"] = body.cfg
         if body.width is not None:
             params["width"] = body.width
         if body.height is not None:
@@ -99,6 +101,14 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["image"] = body.image
         if body.image_pose is not None:
             params["image_pose"] = body.image_pose
+        if body.mask is not None:
+            params["mask"] = body.mask
+        if body.diffusion_model is not None:
+            params["diffusion_model"] = body.diffusion_model
+        if body.text_encoder is not None:
+            params["text_encoder"] = body.text_encoder
+        if body.vae is not None:
+            params["vae"] = body.vae
         if body.lora_strength is not None:
             params["lora_strength"] = body.lora_strength
         if body.denoise is not None:

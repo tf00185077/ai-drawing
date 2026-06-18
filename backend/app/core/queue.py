@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import logging
+import random
 import threading
 import time
 import uuid
@@ -51,6 +52,7 @@ class GenerateParams(TypedDict, total=False):
     prompt: str
     image: str  # 主體圖路徑（img2img），相對於 gallery_dir
     image_pose: str  # 姿態圖路徑，相對於 gallery_dir，會上傳至 ComfyUI
+    mask: str  # 遮罩圖路徑（inpaint），相對於 gallery_dir，會上傳至 ComfyUI
     negative_prompt: str
     seed: int
     steps: int
@@ -267,8 +269,11 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             logger.warning("Image not found: %s", path)
             return None
 
+        mask_for_wf: str | None = None
         if job.params.get("image"):
             image_for_wf = _upload_gallery_image(job.params["image"])
+        if job.params.get("mask"):
+            mask_for_wf = _upload_gallery_image(job.params["mask"])
         if job.params.get("image_pose"):
             image_pose_for_wf = _upload_gallery_image(job.params["image_pose"])
         elif settings.controlnet_default_pose_image:
@@ -289,17 +294,31 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 else:
                     logger.warning("ControlNet default pose image not found: %s", default_pose_path)
 
+        # template 路徑維持既有行為：省略 steps/cfg 補上預設值，省略 seed 則產生隨機值並記錄；
+        # custom 路徑尊重提交的 workflow JSON，省略時原樣傳遞 None（不覆寫）。
+        if custom_wf:
+            effective_steps = job.params.get("steps")
+            effective_cfg = job.params.get("cfg")
+            effective_seed = job.params.get("seed")
+        else:
+            effective_steps = job.params.get("steps", 20)
+            effective_cfg = job.params.get("cfg", 7.0)
+            effective_seed = job.params.get("seed")
+            if effective_seed is None:
+                effective_seed = random.randint(0, 2**32 - 1)
+
         prompt = apply_params(
             wf,
             checkpoint=effective_checkpoint,
             image=image_for_wf,
             image_pose=image_pose_for_wf,
+            mask=mask_for_wf,
             lora=job.params.get("lora"),
             prompt=job.params.get("prompt", ""),
             negative_prompt=job.params.get("negative_prompt"),
-            seed=job.params.get("seed"),
-            steps=job.params.get("steps", 20),
-            cfg=job.params.get("cfg", 7.0),
+            seed=effective_seed,
+            steps=effective_steps,
+            cfg=effective_cfg,
             width=width,
             height=height,
             batch_size=job.params.get("batch_size"),
