@@ -7,7 +7,6 @@ Workflow JSON 管理
 from __future__ import annotations
 
 import json
-import random
 from pathlib import Path
 
 WORKFLOWS_DIR = Path(__file__).resolve().parent.parent.parent / "workflows"
@@ -44,8 +43,8 @@ def apply_params(
     prompt: str | None = None,
     negative_prompt: str | None = None,
     seed: int | None = None,
-    steps: int = 20,
-    cfg: float = 7.0,
+    steps: int | None = None,
+    cfg: float | None = None,
     width: int | None = None,
     height: int | None = None,
     batch_size: int | None = None,
@@ -53,6 +52,7 @@ def apply_params(
     scheduler: str | None = None,
     image: str | None = None,
     image_pose: str | None = None,
+    mask: str | None = None,
     denoise: float | None = None,
     lora_strength: float | None = None,
     diffusion_model: str | None = None,
@@ -75,7 +75,11 @@ def apply_params(
     - KSampler.seed, steps, cfg, sampler_name, scheduler, denoise
     - EmptyLatentImage / EmptySD3LatentImage.width, height, batch_size
     - LoadImage.image <- image / image_pose（依節點順序：第一為 subject，第二為 pose）
+    - LoadImageMask.image <- mask（inpaint 遮罩，獨立 class_type，無位置衝突）
     - DWPreprocessor.bbox_detector <- bbox_detector（ControlNet 預處理器，預設 yolo_nas_s_fp16.onnx）
+
+    steps/cfg/seed 僅在明確提供時覆寫（None 則保留 workflow JSON 原值）；
+    template 路徑的預設值/隨機 seed 由呼叫端（queue）決定，不在此函式內處理。
 
     Args:
         workflow: 原始 workflow（會複製，不修改原物件）
@@ -183,10 +187,10 @@ def apply_params(
         if ct == "KSampler":
             if seed is not None:
                 inputs["seed"] = seed
-            else:
-                inputs["seed"] = random.randint(0, 2**32 - 1)
-            inputs["steps"] = steps
-            inputs["cfg"] = cfg
+            if steps is not None:
+                inputs["steps"] = steps
+            if cfg is not None:
+                inputs["cfg"] = cfg
             if sampler_name is not None:
                 inputs["sampler_name"] = sampler_name
             if scheduler is not None:
@@ -201,6 +205,9 @@ def apply_params(
                 inputs["image"] = image_pose
             elif image is not None:
                 inputs["image"] = image
+
+        if ct == "LoadImageMask" and mask is not None:
+            inputs["image"] = mask
 
         if ct == "DWPreprocessor" and bbox_detector is not None:
             inputs["bbox_detector"] = bbox_detector

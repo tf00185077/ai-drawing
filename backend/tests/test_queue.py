@@ -91,10 +91,15 @@ def test_submit_custom_returns_job_id() -> None:
 class _FakeComfy:
     def __init__(self) -> None:
         self.submitted_prompt = None
+        self.uploaded_paths: list = []
 
     def submit_prompt(self, prompt):
         self.submitted_prompt = prompt
         return "prompt-123"
+
+    def upload_image(self, path):
+        self.uploaded_paths.append(path)
+        return {"name": path.name, "subfolder": ""}
 
 
 def _settings_for_checkpoint_dir(tmp_path):
@@ -130,3 +135,149 @@ def test_process_pending_keeps_explicit_checkpoint_over_available_resources(tmp_
         _process_pending(fake_comfy)
 
     assert fake_comfy.submitted_prompt["4"]["inputs"]["ckpt_name"] == "manual.safetensors"
+
+
+def test_process_pending_template_path_defaults_steps_cfg_and_random_seed_when_omitted(tmp_path) -> None:
+    """template 路徑省略 steps/cfg/seed 時，仍補上 20/7.0 並產生隨機 seed（回歸測試）"""
+    (tmp_path / "a_model.safetensors").write_text("", encoding="utf-8")
+    fake_comfy = _FakeComfy()
+    job_id = submit({"prompt": "1girl"})
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["steps"] == 20
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["cfg"] == 7.0
+    seed = fake_comfy.submitted_prompt["3"]["inputs"]["seed"]
+    assert isinstance(seed, int)
+    assert 0 <= seed <= 2**32 - 1
+    job = get_job_status(job_id)
+    assert job is not None
+    assert job["status"] == "running"
+
+
+def test_process_pending_custom_path_preserves_workflow_json_steps_cfg_when_omitted(tmp_path) -> None:
+    """custom 路徑省略 steps/cfg 時，保留提交 workflow JSON 中的原值"""
+    custom_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"steps": 30, "cfg": 5.5, "seed": 999, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+    }
+    fake_comfy = _FakeComfy()
+    submit_custom({"workflow": custom_wf, "prompt": "1girl", "checkpoint": "x.safetensors"})
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["steps"] == 30
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["cfg"] == 5.5
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["seed"] == 999
+
+
+def test_process_pending_custom_path_two_ksamplers_keep_independent_values(tmp_path) -> None:
+    """custom 路徑下，兩個 KSampler（hires-fix）省略 steps/cfg 時各自保留原值"""
+    custom_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"steps": 30, "cfg": 5.5, "seed": 1, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "20": {
+            "class_type": "KSampler",
+            "inputs": {"steps": 12, "cfg": 9.0, "seed": 2, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+    }
+    fake_comfy = _FakeComfy()
+    submit_custom({"workflow": custom_wf, "prompt": "1girl", "checkpoint": "x.safetensors"})
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["steps"] == 30
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["cfg"] == 5.5
+    assert fake_comfy.submitted_prompt["20"]["inputs"]["steps"] == 12
+    assert fake_comfy.submitted_prompt["20"]["inputs"]["cfg"] == 9.0
+
+
+def test_process_pending_uploads_subject_image_and_mask(tmp_path) -> None:
+    """queue 上傳 image 與 mask 至 ComfyUI，並將上傳後檔名注入對應節點"""
+    gallery = tmp_path / "gallery"
+    gallery.mkdir()
+    (gallery / "subject.png").write_bytes(b"fake")
+    (gallery / "mask.png").write_bytes(b"fake")
+    custom_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"seed": 1, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "10": {"class_type": "LoadImage", "inputs": {"image": "orig_subject.png"}},
+        "11": {"class_type": "LoadImageMask", "inputs": {"image": "orig_mask.png"}},
+    }
+    fake_comfy = _FakeComfy()
+    submit_custom({
+        "workflow": custom_wf,
+        "prompt": "1girl",
+        "checkpoint": "x.safetensors",
+        "image": "subject.png",
+        "mask": "mask.png",
+    })
+
+    settings = SimpleNamespace(
+        comfyui_checkpoints_dir=str(tmp_path),
+        lora_default_checkpoint="",
+        lora_sdxl=False,
+        gallery_dir=str(gallery),
+        controlnet_default_pose_image="",
+    )
+    with patch("app.core.queue.get_settings", return_value=settings):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["10"]["inputs"]["image"] == "subject.png"
+    assert fake_comfy.submitted_prompt["11"]["inputs"]["image"] == "mask.png"
+
+
+def test_process_pending_rejects_gallery_escaping_mask_path(tmp_path) -> None:
+    """mask 路徑逃出 gallery_dir 時被視為不存在，不注入 workflow"""
+    gallery = tmp_path / "gallery"
+    gallery.mkdir()
+    outside = tmp_path / "outside.png"
+    outside.write_bytes(b"fake")
+    custom_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"seed": 1, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "11": {"class_type": "LoadImageMask", "inputs": {"image": "orig_mask.png"}},
+    }
+    fake_comfy = _FakeComfy()
+    submit_custom({
+        "workflow": custom_wf,
+        "prompt": "1girl",
+        "checkpoint": "x.safetensors",
+        "mask": "../outside.png",
+    })
+
+    settings = SimpleNamespace(
+        comfyui_checkpoints_dir=str(tmp_path),
+        lora_default_checkpoint="",
+        lora_sdxl=False,
+        gallery_dir=str(gallery),
+        controlnet_default_pose_image="",
+    )
+    with patch("app.core.queue.get_settings", return_value=settings):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.submitted_prompt["11"]["inputs"]["image"] == "orig_mask.png"
+    assert fake_comfy.uploaded_paths == []
