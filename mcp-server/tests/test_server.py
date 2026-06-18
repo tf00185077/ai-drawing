@@ -24,10 +24,10 @@ def test_minimum_loop_tools_are_importable() -> None:
     from mcp_server.tools.generate import (
         generate_image,
         get_generation_status,
-        list_resources,
+        list_available_resources,
     )
 
-    assert callable(list_resources)
+    assert callable(list_available_resources)
     assert callable(generate_image)
     assert callable(get_generation_status)
     assert callable(get_gallery_image)

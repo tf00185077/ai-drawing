@@ -402,7 +402,7 @@ def cancel_job(job_id: str) -> str:
 
 
 @mcp.tool()
-def list_resources() -> str:
+def list_available_resources() -> str:
     """List available checkpoints, LoRAs, diffusion models (UNET, e.g. Anima), text encoders, VAEs, and workflow templates, returns agent-friendly JSON. diffusion_models / text_encoders / vaes are the components for diffusion-model families used by the anima template."""
     try:
         client = _get_client()
@@ -422,7 +422,7 @@ def list_resources() -> str:
         return json.dumps(
             {
                 "ok": True,
-                "tool": "list_resources",
+                "tool": "list_available_resources",
                 "backend_base_url": get_mcp_settings().backend_api_url,
                 "checkpoints": checkpoints,
                 "loras": loras,
@@ -439,7 +439,7 @@ def list_resources() -> str:
         return json.dumps(
             {
                 "ok": False,
-                "tool": "list_resources",
+                "tool": "list_available_resources",
                 "where": "backend",
                 "error": str(e),
             },

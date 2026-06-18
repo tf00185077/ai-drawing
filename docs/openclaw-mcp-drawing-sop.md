@@ -11,7 +11,7 @@
 如果你要直接教 OpenClaw agent，核心不是叫它「去畫圖」，而是明確教它遵守這個固定閉環：
 
 ```text
-1. 先 call list_resources
+1. 先 call list_available_resources
 2. 確認 queue 空閒（generate_queue_status）
 3. 選 checkpoint，預設 batch_size=1
 4. call generate_image
@@ -23,7 +23,7 @@
 
 你真正要灌輸給 agent 的不是「某個 prompt 怎麼寫」，而是：
 
-- **不要猜模型名**，先查 `list_resources`
+- **不要猜模型名**，先查 `list_available_resources`
 - **不要並行送多張**，一次只送一個 job
 - **不要看到 queued 就當完成**，一定要輪詢 `get_generation_status`
 - **不要忘了 free memory**
@@ -138,7 +138,7 @@ curl -sS http://127.0.0.1:8188/system_stats
 
 先呼叫：
 
-- `list_resources`
+- `list_available_resources`
 
 目的：
 
@@ -217,7 +217,7 @@ uv run ai-drawing-mcp
 並實際完成以下閉環：
 
 ```text
-list_resources
+list_available_resources
 → generate_queue_status
 → generate_image
 → get_generation_status (輪詢)
@@ -268,7 +268,7 @@ list_resources
 
 ```text
 Use the ai-drawing MCP server for this task.
-Before generating, first call list_resources and generate_queue_status.
+Before generating, first call list_available_resources and generate_queue_status.
 Do not assume checkpoint names.
 Submit only one generation job (batch_size=1).
 Poll with get_generation_status until completed.
@@ -281,7 +281,7 @@ Report the final image_path, image_url, checkpoint, steps, cfg, and any error if
 
 ```text
 請使用 ai-drawing MCP server 完成這次繪圖。
-先呼叫 list_resources 與 generate_queue_status，不要猜 checkpoint 名稱。
+先呼叫 list_available_resources 與 generate_queue_status，不要猜 checkpoint 名稱。
 一次只允許一個 generation job，batch_size 固定為 1。
 提交後用 get_generation_status 輪詢到 completed。
 完成後呼叫 get_gallery_image 取得結果。
@@ -337,7 +337,7 @@ Report the final image_path, image_url, checkpoint, steps, cfg, and any error if
 1. 先讓 OpenClaw agent 實際讀這份 SOP
 2. 指派它做一次低負載 smoke test
 3. 看它是否真的遵守：
-   - `list_resources`
+   - `list_available_resources`
    - `generate_queue_status`
    - `generate_image`
    - `get_generation_status`
