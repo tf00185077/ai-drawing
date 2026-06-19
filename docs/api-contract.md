@@ -35,6 +35,10 @@
 |------|------|------|------|
 | checkpoint | string | 否 | Checkpoint 路徑或檔名 |
 | lora | string | 否 | LoRA 路徑或檔名，可多個（依 workflow 規格） |
+| template | string | 否 | 指定 workflow 模板名稱（如 `anima`）；省略時依是否有 lora 選 `default` / `default_lora` |
+| diffusion_model | string | 否 | UNETLoader.unet_name（diffusion-model 家族，如 Anima）；省略時沿用模板內嵌值 |
+| text_encoder | string | 否 | CLIPLoader.clip_name；省略時沿用模板內嵌值 |
+| vae | string | 否 | VAELoader.vae_name；省略時沿用模板內嵌值 |
 | prompt | string | 是 | 正向 prompt |
 | negative_prompt | string | 否 | 負向 prompt |
 | seed | integer | 否 | 隨機種子，不傳則隨機 |
@@ -45,6 +49,9 @@
 | batch_size | integer | 否 | 一次產圖張數 |
 | sampler_name | string | 否 | 採樣器（euler、dpmpp_2m、ddim 等） |
 | scheduler | string | 否 | 調度器（normal、karras、exponential 等） |
+
+> `diffusion_model` / `text_encoder` / `vae` 讓 diffusion-model 家族（如 Anima）的 preset
+> 也能走這條一般生圖路徑，而不必改用 `POST /custom`。省略時保留 workflow 模板內嵌值。
 
 **Response** `201 Created`:
 
@@ -562,6 +569,122 @@
 ```
 
 **Error**: `400` - from_date 或 to_date 格式無效
+
+---
+
+## 5c. 風格預設目錄 `/api/style-presets`
+
+創作者／風格「食譜」：記錄 checkpoint / LoRA / diffusion 元件、base/negative prompt、預設參數與
+profiles。執行期來源為 `backend/style_presets/catalog.json`（Obsidian/Markdown 僅作人類筆記，透過
+`note_path` 參照，不在請求時解析）。compose 產出可直接交給 `POST /api/generate` / `generate_image`
+的 `generation` payload，但**不會送出生圖**（compose first, generate second）。
+
+### GET `/`
+
+列出所有 preset（輕量條目，不需讀取 Obsidian / Markdown）。
+
+**Response** `200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": "creator-a",
+      "name": "Creator A",
+      "profiles": ["portrait", "full-body"],
+      "note_path": "docs/style-presets/creator-a.md",
+      "template": "default_lora",
+      "checkpoint": "model.safetensors",
+      "lora": "creator-a.safetensors",
+      "diffusion_model": null
+    }
+  ]
+}
+```
+
+---
+
+### GET `/validate`
+
+驗證每個 preset 參照的資源（checkpoint / lora / diffusion_model / text_encoder / vae / template）是否
+已安裝，並檢查 `note_path` 是否存在、Markdown frontmatter 的 `preset_id` 是否與 catalog `id`
+一致。invalid preset **仍會被列出**，以便修復目錄。
+
+**Response** `200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "preset_id": "creator-a",
+      "valid": false,
+      "checked": {"checkpoint": "model.safetensors", "lora": "creator-a.safetensors"},
+      "missing": [{"resource_type": "lora", "name": "creator-a.safetensors"}]
+    }
+  ]
+}
+```
+
+---
+
+### GET `/{preset_id}`
+
+取得單一 preset 的完整食譜（resource references、base/negative prompt、default_params、profiles、note）。
+
+**Response** `200 OK`：包含 `id`、`name`、`note_path`、`template`、`checkpoint`、`lora`、
+`lora_strength`、`diffusion_model`、`text_encoder`、`vae`、`base_prompt`、`negative_prompt`、
+`default_params`、`profiles[]`。
+
+**Error**: `404` - 找不到該 preset_id
+
+---
+
+### POST `/{preset_id}/compose`
+
+將 preset 與使用者 `content_prompt` 組成 generation payload。
+
+**Request Body** (`application/json`):
+
+```json
+{
+  "content_prompt": "a girl in a raincoat",
+  "profile": "portrait",
+  "overrides": {"seed": 123}
+}
+```
+
+| 欄位 | 型別 | 必填 | 說明 |
+|------|------|------|------|
+| content_prompt | string | 是 | 使用者想在這張圖中呈現的內容（非最終完整 prompt） |
+| profile | string | 否 | 具名 profile（如 `portrait`）；改變 prompt 前後綴並覆寫部分參數 |
+| overrides | object | 否 | 覆寫生成參數（如 seed、steps），優先序最高 |
+
+最終 prompt 組裝順序：preset `base_prompt` → profile `prompt_prefix` → `content_prompt` →
+profile `prompt_suffix`（空白片段略過、以逗號合併）。負面 prompt 合併 preset 與 profile 兩層。
+
+**Response** `200 OK`:
+
+```json
+{
+  "preset_id": "creator-a",
+  "profile": "portrait",
+  "generation": {
+    "template": "default_lora",
+    "checkpoint": "model.safetensors",
+    "lora": "creator-a.safetensors",
+    "lora_strength": 0.75,
+    "prompt": "creator_a_style, anime illustration, upper body, a girl in a raincoat",
+    "negative_prompt": "low quality, bad anatomy",
+    "steps": 32,
+    "cfg": 6.5,
+    "seed": 123
+  }
+}
+```
+
+**Error**:
+- `404`: 找不到該 preset_id
+- `422`: preset 無此 profile（回傳訊息含可用 profiles）
 
 ---
 

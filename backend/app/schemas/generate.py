@@ -16,6 +16,18 @@ class GenerateRequest(BaseModel):
         default=None,
         description="指定 workflow 模板名稱（如 anima）；省略時依是否有 lora 選 default / default_lora",
     )
+    diffusion_model: str | None = Field(
+        default=None,
+        description="UNETLoader.unet_name（diffusion-model 家族，如 Anima）；省略時沿用模板內嵌值",
+    )
+    text_encoder: str | None = Field(
+        default=None,
+        description="CLIPLoader.clip_name；省略時沿用模板內嵌值",
+    )
+    vae: str | None = Field(
+        default=None,
+        description="VAELoader.vae_name；省略時沿用模板內嵌值",
+    )
     prompt: str = Field(..., min_length=1)
     negative_prompt: str | None = None
     seed: int | None = None

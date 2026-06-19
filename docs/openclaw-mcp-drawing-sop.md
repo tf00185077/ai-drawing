@@ -11,15 +11,25 @@
 如果你要直接教 OpenClaw agent，核心不是叫它「去畫圖」，而是明確教它遵守這個固定閉環：
 
 ```text
-1. 先 call list_available_resources
-2. 確認 queue 空閒（generate_queue_status）
-3. 選 checkpoint，預設 batch_size=1
-4. call generate_image
-5. 用 get_generation_status 輪詢到 completed 或 failed
-6. completed 後 call get_gallery_image
-7. 最後一定 call free_comfyui_memory
-8. 回覆使用者時附上 image_path / image_url / 主要參數
+0. 判斷模式：
+   - 使用者指名某個風格 preset → preset 模式
+   - 使用者直接指定 checkpoint / LoRA → 手動模式
+1. 先 call list_available_resources（手動模式必做；preset 模式可改用 validate_style_presets 確認資源）
+2. preset 模式：list_style_presets → compose_style_preset(preset_id, content_prompt[, profile])
+   取得 generation payload；手動模式：直接決定 checkpoint / LoRA
+3. 確認 queue 空閒（generate_queue_status）
+4. 選 checkpoint / 套用 generation payload，預設 batch_size=1
+5. call generate_image（preset 模式餵入 compose 回傳的 generation 欄位）
+6. 用 get_generation_status 輪詢到 completed 或 failed
+7. completed 後 call get_gallery_image
+8. 最後一定 call free_comfyui_memory
+9. 回覆使用者時附上 image_path / image_url / 主要參數
 ```
+
+> **何時問使用者要不要建立新 preset**：只有當使用者指名某個風格／創作者，但 `list_style_presets`
+> 裡找不到對應 preset 時，才詢問是否要新增一筆食譜。**日常生圖不要每次都叫使用者填模板**——
+> 有 preset 就用 preset，沒指名 preset 就走手動模式。建立新 preset 屬於另一條 curation 流程，
+> 不是例行生圖的一部分。
 
 你真正要灌輸給 agent 的不是「某個 prompt 怎麼寫」，而是：
 
@@ -133,6 +143,17 @@ curl -sS http://127.0.0.1:8188/system_stats
 ---
 
 ## 4. OpenClaw agent 應遵守的最小閉環
+
+### Step 0：判斷 preset 模式或手動模式
+
+- **使用者指名某個風格 / 創作者 preset**（例如「用 creator-a 風格」）→ **preset 模式**：
+  1. `list_style_presets` 找到對應 preset id（找不到才詢問使用者是否要建立新 preset）
+  2. （建議）`validate_style_presets` 確認該 preset 的資源都已安裝
+  3. `compose_style_preset(preset_id, content_prompt[, profile, overrides])` 取得 `generation` payload
+  4. 把 `generation` 的欄位（prompt、checkpoint、lora、diffusion_model、steps、cfg…）餵給 `generate_image`
+- **使用者直接指定 checkpoint / LoRA** 或沒指名 preset → **手動模式**：照 Step 1 起的流程走。
+
+`compose_style_preset` 只組裝、不送出生圖；可先把 `generation.prompt` 與參數回報使用者確認，再 `generate_image`。
 
 ### Step 1：先查資源
 
@@ -281,7 +302,9 @@ Report the final image_path, image_url, checkpoint, steps, cfg, and any error if
 
 ```text
 請使用 ai-drawing MCP server 完成這次繪圖。
-先呼叫 list_available_resources 與 generate_queue_status，不要猜 checkpoint 名稱。
+如果我指名了某個風格 preset，先 list_style_presets 找到它，再 compose_style_preset 取得 generation
+payload，把該 payload 餵給 generate_image；找不到對應 preset 時才問我要不要新增一筆。
+如果我沒指名 preset，就走手動模式：先呼叫 list_available_resources 與 generate_queue_status，不要猜 checkpoint 名稱。
 一次只允許一個 generation job，batch_size 固定為 1。
 提交後用 get_generation_status 輪詢到 completed。
 完成後呼叫 get_gallery_image 取得結果。
