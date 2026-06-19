@@ -62,6 +62,7 @@ REST API 遠端觸發 workflow、取得佇列狀態、取回輸出圖片
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -70,6 +71,16 @@ import httpx
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# /object_info 的程序內快取，以 base_url 為 key：{base_url: (fetched_at, object_info)}。
+# get_comfy_client() 每次請求都會 new 一個 client，故快取放模組層級才能跨請求共用。
+# TTL 逾時即重抓，讓 ComfyUI 重啟或新增 custom node 後的節點集合能被反映。
+_object_info_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
+def clear_object_info_cache() -> None:
+    """清空 /object_info 快取（測試用，或在已知實例變動時主動失效）。"""
+    _object_info_cache.clear()
 
 
 class ComfyUIError(Exception):
@@ -284,6 +295,26 @@ class ComfyUIClient:
             r = client.post(self._url("/queue"), json=payload)
             r.raise_for_status()
 
+    def get_object_info(self, *, force_refresh: bool = False) -> dict[str, Any]:
+        """
+        取得 ComfyUI 節點目錄（/object_info），描述本實例「實際裝了哪些 node」與其
+        input/output 規格。結果以 base_url 為 key 做程序內 TTL 快取，逾時或 force_refresh
+        時重抓，以反映 ComfyUI 重啟 / 新增 custom node 後的節點變動。
+        Returns: { node_type: { "input": {...}, "output": [...], "output_name": [...], ... }, ... }
+        """
+        settings = get_settings()
+        ttl = settings.comfyui_object_info_ttl
+        now = time.monotonic()
+        cached = _object_info_cache.get(self.base_url)
+        if not force_refresh and cached is not None and (now - cached[0]) < ttl:
+            return cached[1]
+        with httpx.Client(timeout=self._timeout_fetch) as client:
+            r = client.get(self._url("/object_info"))
+            r.raise_for_status()
+            data = r.json()
+        _object_info_cache[self.base_url] = (now, data)
+        return data
+
 
 def get_comfy_client() -> ComfyUIClient:
     """
@@ -296,6 +327,87 @@ def get_comfy_client() -> ComfyUIClient:
     """
     settings = get_settings()
     return ComfyUIClient(base_url=settings.comfyui_base_url)
+
+
+def search_node_types(
+    object_info: dict[str, Any], query: str = "", category: str = ""
+) -> list[dict[str, str]]:
+    """
+    從 /object_info 篩出 node type，僅回 {name, category}（不回完整 schema），供 agent
+    單點查時避免一次拉回整包目錄。兩個篩選條件皆大小寫不敏感、子字串比對、可組合（AND）：
+    - query：比對節點「名稱」（如 "ksampler"）
+    - category：比對節點「類別」（如 "loaders"、"conditioning"）
+    皆為空時列出全部；無相符回空清單（非錯誤）。
+    """
+    q = query.strip().lower()
+    cat = category.strip().lower()
+    result: list[dict[str, str]] = []
+    for name, spec in object_info.items():
+        node_cat = (spec.get("category") or "") if isinstance(spec, dict) else ""
+        if q and q not in name.lower():
+            continue
+        if cat and cat not in node_cat.lower():
+            continue
+        result.append({"name": name, "category": node_cat})
+    return sorted(result, key=lambda r: r["name"])
+
+
+def list_node_categories(object_info: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    列出 /object_info 中所有節點類別與其節點數量，供 agent 先瀏覽「有哪些功能分類」
+    再用 search_node_types(category=...) 縮小範圍。依類別名稱排序。
+    """
+    counts: dict[str, int] = {}
+    for spec in object_info.values():
+        cat = (spec.get("category") or "") if isinstance(spec, dict) else ""
+        counts[cat] = counts.get(cat, 0) + 1
+    return [{"category": c, "count": n} for c, n in sorted(counts.items())]
+
+
+def extract_node_schema(
+    object_info: dict[str, Any], node_type: str
+) -> dict[str, Any] | None:
+    """
+    從 /object_info 萃取單一 node type 的 input/output 規格。
+    Returns: {"node_type", "display_name", "category",
+              "inputs": {"required": [{"name","type"}], "optional": [...]},
+              "outputs": [{"name","type"}]}
+    若該 node type 不存在於本實例則回 None。
+    """
+    spec = object_info.get(node_type)
+    if spec is None:
+        return None
+
+    def _parse_inputs(group: dict[str, Any]) -> list[dict[str, str]]:
+        result: list[dict[str, str]] = []
+        for name, definition in group.items():
+            # ComfyUI input 定義為 [type, opts?]；type 可能是字串或 enum 清單
+            if isinstance(definition, (list, tuple)) and definition:
+                raw_type = definition[0]
+            else:
+                raw_type = definition
+            type_name = "COMBO" if isinstance(raw_type, list) else str(raw_type)
+            result.append({"name": name, "type": type_name})
+        return result
+
+    input_def = spec.get("input", {}) or {}
+    outputs_types = spec.get("output", []) or []
+    output_names = spec.get("output_name", []) or []
+    outputs: list[dict[str, str]] = []
+    for idx, otype in enumerate(outputs_types):
+        oname = output_names[idx] if idx < len(output_names) else str(otype)
+        outputs.append({"name": str(oname), "type": str(otype)})
+
+    return {
+        "node_type": node_type,
+        "display_name": spec.get("display_name", node_type),
+        "category": spec.get("category", ""),
+        "inputs": {
+            "required": _parse_inputs(input_def.get("required", {}) or {}),
+            "optional": _parse_inputs(input_def.get("optional", {}) or {}),
+        },
+        "outputs": outputs,
+    }
 
 
 def get_output_images(history: dict[str, Any], prompt_id: str) -> list[dict[str, Any]]:
