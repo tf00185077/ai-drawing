@@ -64,6 +64,7 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
 import httpx
@@ -89,6 +90,47 @@ class ComfyUIError(Exception):
     def __init__(self, message: str, node_errors: dict[str, str] | None = None):
         super().__init__(message)
         self.node_errors = node_errors or {}
+
+
+def structure_node_errors(
+    node_errors: Mapping[str, Any] | None,
+    workflow: Mapping[str, Any] | None = None,
+) -> list[dict[str, str]]:
+    """
+    把 ComfyUI /prompt 回傳的 node_errors 整理成 agent 易解析的清單
+    [{node_id, class_type, reason}]，供自組 workflow 失敗時讓 agent 自我修正。
+    ComfyUI 的 node_errors 值可能是 {errors:[{message,details}], class_type} 或純字串，皆相容。
+    """
+    out: list[dict[str, str]] = []
+    wf = workflow or {}
+    for node_id, info in (node_errors or {}).items():
+        class_type = ""
+        reason = ""
+        if isinstance(info, Mapping):
+            class_type = str(info.get("class_type", "") or "")
+            errs = info.get("errors")
+            if isinstance(errs, (list, tuple)):
+                msgs = []
+                for e in errs:
+                    if isinstance(e, Mapping):
+                        m = str(e.get("message", "") or "")
+                        d = str(e.get("details", "") or "")
+                        msgs.append(f"{m}: {d}" if d else m)
+                    else:
+                        msgs.append(str(e))
+                reason = "; ".join(m for m in msgs if m)
+            else:
+                reason = str(info.get("message", "") or info)
+        else:
+            reason = str(info)
+        if not class_type:
+            node = wf.get(str(node_id)) or wf.get(node_id)
+            if isinstance(node, Mapping):
+                class_type = str(node.get("class_type", "") or "")
+        out.append(
+            {"node_id": str(node_id), "class_type": class_type, "reason": reason}
+        )
+    return sorted(out, key=lambda x: x["node_id"])
 
 
 @runtime_checkable

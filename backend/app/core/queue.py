@@ -12,6 +12,7 @@ import random
 import threading
 import time
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
@@ -19,7 +20,13 @@ from typing import Any, TypedDict
 import httpx
 
 from app.config import get_settings
-from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client, get_output_images
+from app.core.comfyui import (
+    ComfyUIClient,
+    ComfyUIError,
+    get_comfy_client,
+    get_output_images,
+    structure_node_errors,
+)
 from app.core.recording import save as recording_save
 from app.core.resources import default_checkpoint
 from app.core.workflow import (
@@ -76,9 +83,12 @@ class _Job:
         self.prompt_id: str | None = None
 
 
+MAX_FAILED = 100  # 失敗任務保留上限（含結構化錯誤，供 agent 查詢後自我修正）
+
 _lock = threading.Lock()
 _pending: list[_Job] = []
 _running: _Job | None = None
+_failed: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
 _our_prompt_ids: set[str] = set()  # 本系統提交的 prompt_id，history watcher 略過
@@ -90,6 +100,24 @@ def _reset_for_test() -> None:
     with _lock:
         _pending.clear()
         _running = None
+        _failed.clear()
+
+
+def _record_failure(
+    job: "_Job", error: Exception, node_errors: list[dict[str, str]] | None = None
+) -> None:
+    """記錄失敗任務（不重試）。validation 類錯誤帶 node_errors 供 agent 修正。"""
+    with _lock:
+        _failed[job.job_id] = {
+            "job_id": job.job_id,
+            "status": "failed",
+            "submitted_at": job.submitted_at,
+            "error": str(error),
+            "node_errors": node_errors or [],
+            "is_custom": bool(job.params.get("workflow")),
+        }
+        while len(_failed) > MAX_FAILED:
+            _failed.popitem(last=False)
 
 
 def submit(params: GenerateParams) -> str:
@@ -175,6 +203,8 @@ def get_job_status(job_id: str) -> dict[str, Any] | None:
                     "status": "queued",
                     "submitted_at": j.submitted_at,
                 }
+        if job_id in _failed:
+            return dict(_failed[job_id])
     return None
 
 
@@ -345,18 +375,32 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 _running.prompt_id = prompt_id
             _our_prompt_ids.add(prompt_id)
         logger.info("Job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
-    except (ComfyUIError, FileNotFoundError) as e:
-        logger.exception("ComfyUI submit failed for job %s: %s", job.job_id, e)
+    except ComfyUIError as e:
+        # ComfyUI /prompt 驗證/執行被拒：永久性失敗，不重試（過去插回隊首會無限重試而堵塞隊列）。
+        # 把 node_errors 結構化記錄，供 agent 查 job 狀態後自我修正並重送。
+        structured = structure_node_errors(e.node_errors, job.params.get("workflow"))
+        logger.error(
+            "ComfyUI rejected job %s: %s (node_errors=%s)",
+            job.job_id, e, structured,
+        )
         with _lock:
             if _running and _running.job_id == job.job_id:
                 _running = None
-            _pending.insert(0, job)
+        _record_failure(job, e, structured)
+    except FileNotFoundError as e:
+        # 參考圖/遮罩等輸入檔不存在：永久性失敗，不重試。
+        logger.error("Job %s input file missing: %s", job.job_id, e)
+        with _lock:
+            if _running and _running.job_id == job.job_id:
+                _running = None
+        _record_failure(job, e)
     except (httpx.ConnectError, httpx.RequestError) as e:
-        # ComfyUI 連線失敗：任務失敗，不重試
+        # ComfyUI 連線失敗：任務失敗，不重試（記錄以利 agent 查詢，而非靜默消失）。
         logger.exception("ComfyUI connection failed for job %s: %s", job.job_id, e)
         with _lock:
             if _running and _running.job_id == job.job_id:
                 _running = None
+        _record_failure(job, e)
 
 
 def _check_running_complete(comfy: ComfyUIClient) -> None:
