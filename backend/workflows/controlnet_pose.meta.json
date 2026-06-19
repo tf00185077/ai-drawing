@@ -1,0 +1,13 @@
+{
+  "id": "controlnet_pose",
+  "modality": "img2img",
+  "model_family": "sdxl",
+  "conditioning": [
+    "controlnet_pose"
+  ],
+  "io": [
+    "text",
+    "image_ref"
+  ],
+  "description": "Image-to-image guided by a ControlNet pose (DWPreprocessor), init latent from VAEEncode."
+}

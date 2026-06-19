@@ -1,0 +1,13 @@
+{
+  "id": "img2img_lora_pose",
+  "modality": "img2img",
+  "model_family": "sdxl",
+  "conditioning": [
+    "controlnet_pose"
+  ],
+  "io": [
+    "text",
+    "image_ref"
+  ],
+  "description": "Image-to-image (VAEEncode) with a LoRA and ControlNet pose guidance."
+}

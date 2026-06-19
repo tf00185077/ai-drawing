@@ -1,0 +1,10 @@
+{
+  "id": "default",
+  "modality": "txt2img",
+  "model_family": "sdxl",
+  "conditioning": [],
+  "io": [
+    "text"
+  ],
+  "description": "Basic text-to-image with a checkpoint. Works with any checkpoint family."
+}

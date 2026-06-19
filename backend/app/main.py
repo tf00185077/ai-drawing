@@ -70,6 +70,7 @@ from app.api import (
     lora_train,
     prompt_templates,
     style_presets,
+    workflow_catalog,
 )
 
 app.include_router(generate.router)
@@ -80,6 +81,7 @@ app.include_router(prompt_templates.router)
 app.include_router(analytics.router)
 app.include_router(style_presets.router)
 app.include_router(comfyui.router)
+app.include_router(workflow_catalog.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)
