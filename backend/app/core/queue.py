@@ -25,6 +25,7 @@ from app.core.comfyui import (
     ComfyUIError,
     get_comfy_client,
     get_output_images,
+    structure_execution_error,
     structure_node_errors,
 )
 from app.core.recording import save as recording_save
@@ -74,16 +75,20 @@ class GenerateParams(TypedDict, total=False):
 
 
 class _Job:
-    __slots__ = ("job_id", "params", "submitted_at", "prompt_id")
+    __slots__ = ("job_id", "params", "submitted_at", "prompt_id", "completion_polls")
 
     def __init__(self, job_id: str, params: dict[str, Any], submitted_at: str):
         self.job_id = job_id
         self.params = params
         self.submitted_at = submitted_at
         self.prompt_id: str | None = None
+        self.completion_polls = 0  # history 延遲時的等待計數（見 MAX_COMPLETION_POLLS）
 
 
 MAX_FAILED = 100  # 失敗任務保留上限（含結構化錯誤，供 agent 查詢後自我修正）
+# prompt 離開 ComfyUI 佇列後，history 尚未出現時的最大重試 tick 數（每 tick ~2s）；
+# 超過視為「無結果」標 failed，避免 worker 卡在單一 job。
+MAX_COMPLETION_POLLS = 15
 
 _lock = threading.Lock()
 _pending: list[_Job] = []
@@ -410,9 +415,87 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         _record_failure(job, e)
 
 
-def _check_running_complete(comfy: ComfyUIClient) -> None:
-    """檢查 running 是否完成，完成則取圖、存檔、記錄"""
+def _release_running(job: "_Job") -> None:
+    """釋放 running 槽（限本 job），讓後續任務可被處理。"""
     global _running
+    with _lock:
+        if _running and _running.job_id == job.job_id:
+            _running = None
+
+
+def _prompt_in_comfy_queue(queue_data: dict[str, Any], prompt_id: str) -> bool:
+    """prompt 是否仍在 ComfyUI 佇列（running 或 pending）。
+    ComfyUI item 格式：[job_number, prompt_id, workflow, output_node_ids, metadata]。"""
+    for key in ("queue_running", "queue_pending"):
+        for item in queue_data.get(key, []) or []:
+            pid = item[1] if isinstance(item, (list, tuple)) and len(item) > 1 else None
+            if pid == prompt_id:
+                return True
+    return False
+
+
+def _save_job_outputs(
+    comfy: ComfyUIClient, job: "_Job", images_info: list[dict[str, Any]]
+) -> int:
+    """取圖、存檔、寫入 GeneratedImage。回傳成功記錄數。失敗會拋例外（由呼叫端轉 failed）。"""
+    settings = get_settings()
+    gallery_path = Path(settings.gallery_dir).resolve()
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    out_dir = gallery_path / date_str
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    saved_infos: list[tuple[str, str]] = []  # (rel_path, out_name)
+    for i, img in enumerate(images_info):
+        data = comfy.fetch_image(
+            img["filename"],
+            subfolder=img.get("subfolder", ""),
+            ftype=img.get("type", "output"),
+        )
+        base = img["filename"].rsplit(".", 1)[0] if "." in img["filename"] else img["filename"]
+        ext = img["filename"].rsplit(".", 1)[-1] if "." in img["filename"] else "png"
+        out_name = f"{base}_{job.job_id[:8]}_{i}.{ext}"
+        (out_dir / out_name).write_bytes(data)
+        saved_infos.append((str(Path(date_str) / out_name), out_name))
+
+    count = 0
+    for rel_path, _out_name in saved_infos:
+        db = SessionLocal()
+        try:
+            recording_save(
+                rel_path,
+                job_id=job.job_id,
+                checkpoint=job.params.get("checkpoint"),
+                lora=job.params.get("lora"),
+                template=job.params.get("template"),
+                diffusion_model=job.params.get("diffusion_model"),
+                text_encoder=job.params.get("text_encoder"),
+                vae=job.params.get("vae"),
+                seed=job.params.get("seed"),
+                steps=job.params.get("steps"),
+                cfg=job.params.get("cfg"),
+                prompt=job.params.get("prompt"),
+                negative_prompt=job.params.get("negative_prompt"),
+                workflow_json=job.params.get("workflow_json"),
+                source_image=job.params.get("source_image"),
+                source_mask=job.params.get("source_mask"),
+                db=db,
+            )
+            count += 1
+        finally:
+            db.close()
+    return count
+
+
+def _check_running_complete(comfy: ComfyUIClient) -> None:
+    """檢查 running job 的終局狀態。
+
+    保證每個終局 job 都落在 completed（DB）或 failed（_failed，帶原因）其一，不再靜默消失：
+    - 仍在 ComfyUI queue_running/queue_pending → 還在處理。
+    - 離開佇列但 history 未出現 → 有上限地等待（history 延遲競態）。
+    - history status_str == "error" → failed（結構化 execution_error）。
+    - success 有圖 → 存檔記錄 completed；save 失敗 → failed（不靜默丟）。
+    - success 無圖 → failed。
+    """
     with _lock:
         job = _running
         if not job or not job.prompt_id:
@@ -420,81 +503,54 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
 
     try:
         queue_data = comfy.get_queue()
-        running_items = queue_data.get("queue_running", [])
-        # ComfyUI 格式：每個 item 為 [job_number, prompt_id, workflow_json, output_node_ids, metadata]
-        still_running = any(
-            (item[1] if isinstance(item, (list, tuple)) and len(item) > 1 else None)
-            == job.prompt_id
-            for item in running_items
-        )
-        if still_running:
-            return
     except Exception as e:
         logger.warning("Failed to get ComfyUI queue: %s", e)
         return
-
-    with _lock:
-        if _running and _running.job_id == job.job_id:
-            _running = None
+    if _prompt_in_comfy_queue(queue_data, job.prompt_id):
+        return  # 仍在 ComfyUI 佇列（執行中或排隊中）
 
     try:
         history = comfy.get_history(job.prompt_id)
-        images_info = get_output_images(history, job.prompt_id)
-        if not images_info:
-            logger.warning("Job %s completed but no output images", job.job_id)
-            return
+    except Exception as e:
+        logger.warning("Failed to get ComfyUI history for job %s: %s", job.job_id, e)
+        return
 
-        settings = get_settings()
-        gallery_path = Path(settings.gallery_dir).resolve()
-        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        out_dir = gallery_path / date_str
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        saved_infos: list[tuple[str, str, str]] = []  # (full_path, rel_path, out_name)
-        for i, img in enumerate(images_info):
-            data = comfy.fetch_image(
-                img["filename"],
-                subfolder=img.get("subfolder", ""),
-                ftype=img.get("type", "output"),
+    entry = history.get(job.prompt_id)
+    if entry is None:
+        # history 尚未填好（完成後短暫延遲）→ 有上限地等待，超時才判失敗
+        job.completion_polls += 1
+        if job.completion_polls >= MAX_COMPLETION_POLLS:
+            _release_running(job)
+            _record_failure(
+                job, RuntimeError("ComfyUI returned no result (history missing after completion)")
             )
-            base = img["filename"].rsplit(".", 1)[0] if "." in img["filename"] else img["filename"]
-            ext = img["filename"].rsplit(".", 1)[-1] if "." in img["filename"] else "png"
-            out_name = f"{base}_{job.job_id[:8]}_{i}.{ext}"
-            out_file = out_dir / out_name
-            out_file.write_bytes(data)
-            rel_path = str(Path(date_str) / out_name)
-            saved_infos.append((str(out_file), rel_path, out_name))
+            logger.error("Job %s timed out waiting for ComfyUI history", job.job_id)
+        return
 
-        records: list[tuple[str, int, str]] = []  # (full_path, db_id, filename)
-        for full_path, rel_path, out_name in saved_infos:
-            db = SessionLocal()
-            try:
-                rec = recording_save(
-                    rel_path,
-                    job_id=job.job_id,
-                    checkpoint=job.params.get("checkpoint"),
-                    lora=job.params.get("lora"),
-                    template=job.params.get("template"),
-                    diffusion_model=job.params.get("diffusion_model"),
-                    text_encoder=job.params.get("text_encoder"),
-                    vae=job.params.get("vae"),
-                    seed=job.params.get("seed"),
-                    steps=job.params.get("steps"),
-                    cfg=job.params.get("cfg"),
-                    prompt=job.params.get("prompt"),
-                    negative_prompt=job.params.get("negative_prompt"),
-                    workflow_json=job.params.get("workflow_json"),
-                    source_image=job.params.get("source_image"),
-                    source_mask=job.params.get("source_mask"),
-                    db=db,
-                )
-                records.append((full_path, rec.id, out_name))
-            finally:
-                db.close()
+    status = entry.get("status", {}) or {}
+    status_str = status.get("status_str")
+    images_info = get_output_images(history, job.prompt_id)
 
-        logger.info("Job %s completed, saved %d image(s)", job.job_id, len(records))
+    _release_running(job)  # 已是終局，先釋放槽
+
+    if status_str == "error":
+        node_errors = structure_execution_error(status)
+        reason = node_errors[0]["reason"] if node_errors else "ComfyUI execution error"
+        _record_failure(job, RuntimeError(reason), node_errors)
+        logger.error("Job %s failed during ComfyUI execution: %s", job.job_id, reason)
+        return
+
+    if not images_info:
+        _record_failure(job, RuntimeError("generation finished with no output images"))
+        logger.warning("Job %s finished with no output images", job.job_id)
+        return
+
+    try:
+        n = _save_job_outputs(comfy, job, images_info)
+        logger.info("Job %s completed, saved %d image(s)", job.job_id, n)
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
+        _record_failure(job, e)
 
 
 def _worker_loop() -> None:

@@ -133,6 +133,31 @@ def structure_node_errors(
     return sorted(out, key=lambda x: x["node_id"])
 
 
+def structure_execution_error(history_status: Mapping[str, Any] | None) -> list[dict[str, str]]:
+    """
+    從 ComfyUI history entry 的 status（含 messages 內的 execution_error）整理成
+    [{node_id, class_type, reason}]，與 structure_node_errors 同形狀，供執行期失敗回報。
+    """
+    out: list[dict[str, str]] = []
+    messages = (history_status or {}).get("messages") or []
+    for m in messages:
+        if isinstance(m, (list, tuple)) and len(m) >= 2 and m[0] == "execution_error":
+            d = m[1] if isinstance(m[1], Mapping) else {}
+            reason = (
+                str(d.get("exception_message", "") or "")
+                or str(d.get("exception_type", "") or "")
+                or "execution error"
+            )
+            out.append(
+                {
+                    "node_id": str(d.get("node_id", "") or ""),
+                    "class_type": str(d.get("node_type", "") or ""),
+                    "reason": reason,
+                }
+            )
+    return out
+
+
 @runtime_checkable
 class ImageGenerationClient(Protocol):
     """
