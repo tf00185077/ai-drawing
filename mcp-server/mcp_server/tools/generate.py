@@ -255,11 +255,26 @@ def generate_image_custom_workflow(
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
-        return f"已加入生圖佇列（自訂 workflow）：job_id={job_id}, status={status}"
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_image_custom_workflow",
+                "job_id": job_id,
+                "status": status,
+                "next": "poll get_generation_status(job_id); if it returns status=failed with node_errors, fix those nodes and resubmit",
+            },
+            ensure_ascii=False,
+        )
     except json.JSONDecodeError as e:
-        return f"error: workflow 必須為合法 JSON: {e}"
+        return json.dumps(
+            {"ok": False, "tool": "generate_image_custom_workflow", "error": f"workflow 必須為合法 JSON: {e}"},
+            ensure_ascii=False,
+        )
     except Exception as e:
-        return f"error: {e}"
+        return json.dumps(
+            {"ok": False, "tool": "generate_image_custom_workflow", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -364,7 +379,7 @@ def generate_queue_status() -> str:
 
 @mcp.tool()
 def get_generation_status(job_id: str) -> str:
-    """Query image generation job status, returns agent-friendly JSON. When status=completed, includes image_id and image_path."""
+    """Query image generation job status, returns agent-friendly JSON. When status=completed, includes image_id and image_path. When status=failed (e.g. a self-authored custom workflow rejected by ComfyUI), returns ok=false with structured node_errors ([{node_id, class_type, reason}]) so you can fix the workflow and resubmit."""
     try:
         client = _get_client()
         resp = client.get(f"generate/job/{job_id}")
@@ -379,6 +394,25 @@ def get_generation_status(job_id: str) -> str:
                     "image_id": resp.get("image_id"),
                     "image_path": resp.get("image_path", ""),
                     "next": "call get_gallery_image with image_id, then free_comfyui_memory",
+                },
+                ensure_ascii=False,
+            )
+        elif status == "failed":
+            node_errors = resp.get("node_errors", [])
+            return json.dumps(
+                {
+                    "ok": False,
+                    "tool": "get_generation_status",
+                    "where": "comfyui",
+                    "job_id": job_id,
+                    "status": "failed",
+                    "error": resp.get("error"),
+                    "node_errors": node_errors,
+                    "next": (
+                        "fix the offending nodes (check names/inputs via get_node_schema) and resubmit generate_image_custom_workflow"
+                        if node_errors
+                        else "generation failed; inspect error and resubmit"
+                    ),
                 },
                 ensure_ascii=False,
             )

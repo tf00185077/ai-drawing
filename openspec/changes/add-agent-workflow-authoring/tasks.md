@@ -21,10 +21,10 @@
 
 ## 4. Custom-workflow validation-error forwarding (capability: custom-workflow-generation)
 
-- [ ] 4.1 Capture ComfyUI `/prompt` validation `node_errors` in the custom submission path (`backend/app/core/queue.py` / comfyui client) instead of swallowing them
-- [ ] 4.2 Map errors to a structured `{node_id, class_type, reason}` payload and return it through `/api/generate/custom`
-- [ ] 4.3 Update `generate_image_custom_workflow` to surface `ok=false` + structured node errors shaped for agent self-correction; valid workflows return unchanged success
-- [ ] 4.4 Tests: rejected node input → structured node_errors; unknown class_type → offending node identified as unknown; valid workflow → no error payload
+- [x] 4.1 Capture ComfyUI `/prompt` validation `node_errors` in the custom submission path (`backend/app/core/queue.py` / comfyui client) instead of swallowing them — failures now recorded (no head-of-queue retry), fixing the documented head-blocking bug
+- [x] 4.2 Map errors to a structured `{node_id, class_type, reason}` payload and return it through `/api/generate/job/{id}` (failed status)
+- [x] 4.3 Update `generate_image_custom_workflow` (JSON result + next) and `get_generation_status` to surface `ok=false` + structured node errors for agent self-correction; valid workflows unchanged
+- [x] 4.4 Tests: rejected node input → structured node_errors; class_type fallback from workflow; valid workflow → no error payload; verified live against ComfyUI (bad sampler_name → node_errors)
 
 ## 5. Template backfill / self-extending catalog (capability: workflow-template-catalog)
 
