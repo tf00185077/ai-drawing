@@ -9,7 +9,8 @@ import json
 
 from mcp_server.character_style import resolve_to_prompt
 from mcp_server.config import get_mcp_settings
-from mcp_server.description_parser import parse_description
+# parse_description 僅供下方已停用的 *_from_description 工具使用，連同一併註解。
+# from mcp_server.description_parser import parse_description
 from mcp_server.server import _get_client, mcp
 
 
@@ -261,67 +262,85 @@ def generate_image_custom_workflow(
         return f"error: {e}"
 
 
-@mcp.tool()
-def generate_image_from_description(description: str) -> str:
-    """
-    Generate an image from a natural language description using preset templates.
-    Parses character, style, resolution, and extra prompt, then selects a template and submits.
-    Example: "Miku in a kimono, anime style, 1024"
-    If the description requires ControlNet, img2img, or other features not in the preset templates, the AI should compose a workflow and call generate_image_custom_workflow instead.
-    """
-    try:
-        parsed = parse_description(description)
-        client = _get_client()
-        workflow = client.get(f"generate/workflow-templates/{parsed.template}")
-        final_prompt, resolved_lora = resolve_to_prompt(
-            character=parsed.character,
-            style=parsed.style,
-            base_prompt="1girl, solo",
-        )
-        if parsed.extra_prompt:
-            final_prompt = f"{final_prompt}, {parsed.extra_prompt}"
-        body = {"workflow": workflow, "prompt": final_prompt}
-        if resolved_lora:
-            body["lora"] = resolved_lora
-        if parsed.width is not None:
-            body["width"] = parsed.width
-        if parsed.height is not None:
-            body["height"] = parsed.height
-        resp = client.post("generate/custom", json=body)
-        job_id = resp.get("job_id", "unknown")
-        status = resp.get("status", "queued")
-        summary = f"template={parsed.template}, character={parsed.character}, style={parsed.style}"
-        if parsed.width:
-            summary += f", {parsed.width}x{parsed.height}"
-        return f"已加入生圖佇列：job_id={job_id}, status={status}\n{summary}"
-    except Exception as e:
-        return f"error: {e}"
-
-
-@mcp.tool()
-def suggest_workflow_from_description(description: str) -> str:
-    """
-    Parse the description only, without returning a workflow JSON. Use for previewing or letting the AI understand which parameters would be selected.
-    """
-    try:
-        parsed = parse_description(description)
-        _, resolved_lora = resolve_to_prompt(
-            character=parsed.character,
-            style=parsed.style,
-            base_prompt="1girl, solo",
-        )
-        lines = [
-            f"character: {parsed.character or '(未辨識)'}",
-            f"style: {parsed.style or '(未辨識)'}",
-            f"extra_prompt: {parsed.extra_prompt or '(無)'}",
-            f"template: {parsed.template}",
-            f"resolution: {parsed.width}x{parsed.height}" if parsed.width else "resolution: (預設)",
-        ]
-        if resolved_lora:
-            lines.append(f"lora: {resolved_lora}")
-        return "\n".join(lines)
-    except Exception as e:
-        return f"error: {e}"
+# ---------------------------------------------------------------------------
+# 已停用：generate_image_from_description / suggest_workflow_from_description
+#
+# 原因：這兩個工具的核心是 description_parser.parse_description()，一個寫死的
+# 關鍵字／正則解析器（角色與風格只比對字面別名、中文轉英文僅 4 個硬編字、解析度
+# 只認 512/768/1024、template 只在出現 "lora" 字樣時切換）。它本質上是給「不會
+# 推理的規則型 client」用的 NLP fallback。
+#
+# 在由 LLM agent 接管的 MCP 生圖流程中，agent 本來就能把自然語言直接拆成結構化
+# 參數，且遠比 regex 準確（同義詞、英文、複雜場景都能處理）。因此：
+#   - 想一句話生圖 → agent 自行解析後直接呼叫 generate_image(prompt=, character=,
+#     style=, width=, ...)
+#   - 想生圖前預覽 → 改用 resolve_character_style_prompt(...)
+#   - 想走風格食譜 → compose_style_preset(...) → generate_image(...)
+#
+# 保留原始碼（註解形式）以便日後若需支援非 agent client 時還原；底層的
+# character/style 語意映射（resolve_to_prompt）不受影響，仍由 generate_image 使用。
+# ---------------------------------------------------------------------------
+# @mcp.tool()
+# def generate_image_from_description(description: str) -> str:
+#     """
+#     Generate an image from a natural language description using preset templates.
+#     Parses character, style, resolution, and extra prompt, then selects a template and submits.
+#     Example: "Miku in a kimono, anime style, 1024"
+#     If the description requires ControlNet, img2img, or other features not in the preset templates, the AI should compose a workflow and call generate_image_custom_workflow instead.
+#     """
+#     try:
+#         parsed = parse_description(description)
+#         client = _get_client()
+#         workflow = client.get(f"generate/workflow-templates/{parsed.template}")
+#         final_prompt, resolved_lora = resolve_to_prompt(
+#             character=parsed.character,
+#             style=parsed.style,
+#             base_prompt="1girl, solo",
+#         )
+#         if parsed.extra_prompt:
+#             final_prompt = f"{final_prompt}, {parsed.extra_prompt}"
+#         body = {"workflow": workflow, "prompt": final_prompt}
+#         if resolved_lora:
+#             body["lora"] = resolved_lora
+#         if parsed.width is not None:
+#             body["width"] = parsed.width
+#         if parsed.height is not None:
+#             body["height"] = parsed.height
+#         resp = client.post("generate/custom", json=body)
+#         job_id = resp.get("job_id", "unknown")
+#         status = resp.get("status", "queued")
+#         summary = f"template={parsed.template}, character={parsed.character}, style={parsed.style}"
+#         if parsed.width:
+#             summary += f", {parsed.width}x{parsed.height}"
+#         return f"已加入生圖佇列：job_id={job_id}, status={status}\n{summary}"
+#     except Exception as e:
+#         return f"error: {e}"
+#
+#
+# @mcp.tool()
+# def suggest_workflow_from_description(description: str) -> str:
+#     """
+#     Parse the description only, without returning a workflow JSON. Use for previewing or letting the AI understand which parameters would be selected.
+#     """
+#     try:
+#         parsed = parse_description(description)
+#         _, resolved_lora = resolve_to_prompt(
+#             character=parsed.character,
+#             style=parsed.style,
+#             base_prompt="1girl, solo",
+#         )
+#         lines = [
+#             f"character: {parsed.character or '(未辨識)'}",
+#             f"style: {parsed.style or '(未辨識)'}",
+#             f"extra_prompt: {parsed.extra_prompt or '(無)'}",
+#             f"template: {parsed.template}",
+#             f"resolution: {parsed.width}x{parsed.height}" if parsed.width else "resolution: (預設)",
+#         ]
+#         if resolved_lora:
+#             lines.append(f"lora: {resolved_lora}")
+#         return "\n".join(lines)
+#     except Exception as e:
+#         return f"error: {e}"
 
 
 @mcp.tool()
