@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 20 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除）。
+> 共 24 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除）。
 
 ### 連線檢查
 
@@ -16,7 +16,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 | Tool | 說明 |
 |------|------|
-| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8） |
+| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8、diffusion_model / text_encoder / vae）；可直接餵入 `compose_style_preset` 產出的 `generation` payload |
 | `generate_image_from_description` | 依描述生圖（預存模板）；複雜需求由 AI 組 workflow 後呼叫 generate_image_custom_workflow |
 | `suggest_workflow_from_description` | 預覽描述解析結果（不觸發生圖） |
 | `generate_image_custom_workflow` | 使用自訂 workflow 生圖；支援 `image_pose`（ControlNet 姿勢參考圖） |
@@ -49,6 +49,26 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 |------|------|
 | `list_character_styles` | 列出可用的角色／風格別名 |
 | `resolve_character_style_prompt` | 預覽角色+風格解析後的 prompt（不生圖） |
+
+### 風格預設目錄（Style Preset Catalog）
+
+創作者／風格「食譜」：記錄 checkpoint / LoRA / diffusion 元件、trigger words、base/negative prompt、profiles。
+**兩種使用模式，共用同一條生圖路徑：**
+
+- **Preset 模式**：使用者指名某個 preset → `list_style_presets` / `get_style_preset` →
+  `compose_style_preset(preset_id, content_prompt[, profile])` 取得 `generation` payload →
+  把該 payload 的欄位餵給 `generate_image`。
+- **手動模式**：使用者直接指定 checkpoint / LoRA → 用 `list_available_resources` 驗證 → 直接呼叫 `generate_image`。
+
+`compose_style_preset` 採「compose first, generate second」：先回傳完整 `generation`（含最終
+prompt / 參數）供檢視，不會送出生圖；確認後再交給 `generate_image`。
+
+| Tool | 說明 |
+|------|------|
+| `list_style_presets` | 列出所有 preset（id、name、profiles、資源摘要） |
+| `get_style_preset` | 取得單一 preset 完整食譜 |
+| `validate_style_presets` | 驗證每個 preset 參照的資源是否已安裝；invalid preset 以資料形式回傳，不隱藏 |
+| `compose_style_preset` | 將 preset + 使用者 `content_prompt`（＋ profile / overrides）組成可餵給 `generate_image` 的 `generation` payload |
 
 ### ComfyUI 直連
 

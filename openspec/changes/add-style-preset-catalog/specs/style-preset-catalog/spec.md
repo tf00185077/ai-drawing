@@ -20,13 +20,13 @@ The system SHALL load a structured style preset catalog and expose named presets
 - **WHEN** a client requests a preset id that is not in the catalog
 - **THEN** the system returns a structured not-found error
 
-### Requirement: Catalog validation checks referenced resources
+### Requirement: Catalog validation checks referenced resources and notes
 
-The system SHALL validate preset resource references against the currently available ComfyUI resources and workflow templates.
+The system SHALL validate preset resource references against the currently available ComfyUI resources and workflow templates. The system SHALL also validate project-local note references when a preset defines `note_path`.
 
-#### Scenario: Valid preset reports available resources
+#### Scenario: Valid preset reports available resources and note metadata
 
-- **WHEN** a preset references installed checkpoint, LoRA, workflow template, and optional diffusion-family components
+- **WHEN** a preset references installed checkpoint, LoRA, workflow template, optional diffusion-family components, and a note whose frontmatter `preset_id` matches the catalog `id`
 - **THEN** validation marks that preset as valid
 - **AND** includes the checked resource names in the result
 
@@ -36,6 +36,18 @@ The system SHALL validate preset resource references against the currently avail
 - **THEN** validation marks that preset as invalid
 - **AND** lists every missing resource by resource type and name
 - **AND** listing presets still returns the preset so the user can repair the catalog
+
+#### Scenario: Missing note path is reported without hiding the preset
+
+- **WHEN** a preset defines `note_path` but that Markdown file does not exist under the project
+- **THEN** validation marks that preset as invalid
+- **AND** includes a diagnostic with resource type `note_path`
+
+#### Scenario: Note frontmatter id must match catalog id
+
+- **WHEN** a preset defines `note_path` and the Markdown frontmatter `preset_id` differs from the catalog `id`
+- **THEN** validation marks that preset as invalid
+- **AND** includes a diagnostic with resource type `note_preset_id`
 
 ### Requirement: Preset composition produces a generate_image-compatible payload
 

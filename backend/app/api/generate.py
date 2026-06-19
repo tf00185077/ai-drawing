@@ -44,6 +44,12 @@ async def trigger_generate(body: GenerateRequest):
         }
         if body.template is not None:
             params["template"] = body.template
+        if body.diffusion_model is not None:
+            params["diffusion_model"] = body.diffusion_model
+        if body.text_encoder is not None:
+            params["text_encoder"] = body.text_encoder
+        if body.vae is not None:
+            params["vae"] = body.vae
         if body.width is not None:
             params["width"] = body.width
         if body.height is not None:

@@ -35,7 +35,7 @@ Create a repo-managed JSON catalog, for example `backend/style_presets/catalog.j
     {
       "id": "creator-a",
       "name": "Creator A",
-      "note_path": "Obsidian/Creators/creator-a.md",
+      "note_path": "docs/style-presets/creator-a.md",
       "template": "default_lora",
       "checkpoint": "model.safetensors",
       "lora": "creator-a.safetensors",
@@ -61,7 +61,7 @@ Create a repo-managed JSON catalog, for example `backend/style_presets/catalog.j
 }
 ```
 
-JSON avoids adding a YAML parser dependency and is easy for tests and agents to consume. Obsidian notes stay human-facing and are referenced by `note_path`; they are not parsed on every generation request.
+JSON avoids adding a YAML parser dependency and is easy for tests and agents to consume. Markdown notes stay human-facing and are referenced by project-relative `note_path`; list/detail requests do not parse notes, while validation checks that note files exist and their frontmatter `preset_id` matches the catalog `id`.
 
 *Alternative considered:* Parse Obsidian Markdown frontmatter directly. Rejected for runtime because Markdown is flexible for humans but brittle for agent-safe validation and backend tests.
 
@@ -74,7 +74,7 @@ Add a backend provider, similar in spirit to `PromptTemplateProvider`, that load
 - `validate_presets(resources)`
 - `compose(preset_id, profile, content_prompt, overrides)`
 
-Validation compares catalog resource names against existing resource scanners: checkpoints, LoRAs, diffusion models, text encoders, VAEs, and workflow templates. Validation returns structured diagnostics instead of hiding invalid presets.
+Validation compares catalog resource names against existing resource scanners: checkpoints, LoRAs, diffusion models, text encoders, VAEs, and workflow templates. It also checks project-local note consistency: `note_path` must exist under the repo and note frontmatter `preset_id` must match the preset `id`. Validation returns structured diagnostics instead of hiding invalid presets.
 
 ### Decision 3: Compose first, generate second
 
@@ -128,7 +128,7 @@ Daily use remains one generation skill:
 
 ## Risks / Trade-offs
 
-- **Catalog drift**: A preset can reference a deleted or renamed model file. Mitigation: validation endpoint/tool reports missing resources and composition returns a clear error for invalid required resources.
+- **Catalog drift**: A preset can reference a deleted or renamed model file, missing note, or mismatched note id. Mitigation: validation endpoint/tool reports missing resources and note inconsistencies; composition returns a clear error for invalid required resources.
 - **Prompt expectations**: A preset cannot guarantee a creator style for every content prompt. Mitigation: profiles make prompt variants explicit, and composition returns the final prompt for inspection.
 - **Single LoRA MVP**: Some creator recipes may need multiple LoRAs. Mitigation: document this as out of scope for the first change; those recipes can use custom workflows until multi-LoRA template support is designed.
 - **JSON editing ergonomics**: JSON is less pleasant than Markdown. Mitigation: Obsidian remains the writing surface for notes, and the JSON catalog stays compact and structured.

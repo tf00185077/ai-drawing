@@ -32,8 +32,11 @@ def generate_image(
     scheduler: str | None = None,
     lora_strength: float | None = None,
     denoise: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
 ) -> str:
-    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. Call list_workflow_templates to see available names. Returns job_id or an error message."""
+    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima), injected into UNETLoader / CLIPLoader / VAELoader; include them only when needed (a composed style preset payload may already provide them). Call list_workflow_templates to see available names. Returns job_id or an error message."""
     try:
         client = _get_client()
         final_prompt = prompt
@@ -79,6 +82,12 @@ def generate_image(
             body["lora_strength"] = lora_strength
         if denoise is not None:
             body["denoise"] = denoise
+        if diffusion_model is not None:
+            body["diffusion_model"] = diffusion_model
+        if text_encoder is not None:
+            body["text_encoder"] = text_encoder
+        if vae is not None:
+            body["vae"] = vae
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
