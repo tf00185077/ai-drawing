@@ -369,6 +369,13 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         for key, value in extract_model_files_from_workflow(prompt).items():
             if value is not None and not job.params.get(key):
                 job.params[key] = value
+        # 擷取「實際送出的完整 workflow」與來源圖/遮罩（gallery 相對路徑，非 ComfyUI 暫存檔名），
+        # 供 gallery_rerun 忠實重生（見 persist-full-workflow-for-rerun）。
+        job.params["workflow_json"] = prompt
+        if job.params.get("image"):
+            job.params["source_image"] = job.params["image"]
+        if job.params.get("mask"):
+            job.params["source_mask"] = job.params["mask"]
         prompt_id = comfy.submit_prompt(prompt)
         with _lock:
             if _running and _running.job_id == job.job_id:
@@ -476,6 +483,9 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
                     cfg=job.params.get("cfg"),
                     prompt=job.params.get("prompt"),
                     negative_prompt=job.params.get("negative_prompt"),
+                    workflow_json=job.params.get("workflow_json"),
+                    source_image=job.params.get("source_image"),
+                    source_mask=job.params.get("source_mask"),
                     db=db,
                 )
                 records.append((full_path, rec.id, out_name))

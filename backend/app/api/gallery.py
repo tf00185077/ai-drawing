@@ -5,6 +5,7 @@
 """
 import csv
 import io
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core.queue import QueueFullError, submit
+from app.core.queue import QueueFullError, submit, submit_custom
 from app.db.database import get_db
 from app.db.models import GeneratedImage
 from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunRequest, RerunResponse
@@ -117,11 +118,46 @@ async def rerun_image(
     image_id: int,
     db: Session = Depends(get_db),
 ):
-    """一鍵重現：載入參數再次生成"""
+    """一鍵重現：載入參數再次生成。
+
+    有存完整 workflow（workflow_json）者走 custom 路徑忠實重現：重新上傳 source_image/
+    source_mask 並重注入，沿用 workflow 內 baked 的 seed（不重新隨機）。
+    舊資料（無 workflow_json）退回原本依欄位重建、走 template 路徑。
+    """
     row = db.query(GeneratedImage).filter(GeneratedImage.id == image_id).first()
     if not row:
         raise HTTPException(404, "找不到該圖片")
-    params: dict = {
+
+    # 忠實重現路徑：有存完整 workflow
+    if row.workflow_json:
+        try:
+            wf = json.loads(row.workflow_json)
+        except (TypeError, ValueError):
+            wf = None
+        if wf:
+            gallery_dir = Path(get_settings().gallery_dir).resolve()
+
+            def _require_source(rel: str, label: str) -> None:
+                # 來源圖被刪則無法重新上傳，明確報錯而非送出壞圖
+                if not (gallery_dir / rel).resolve().is_file():
+                    raise HTTPException(409, f"無法重現：{label} 來源檔已不存在（{rel}）")
+
+            params: dict = {"workflow": wf, "prompt": row.prompt or ""}
+            if row.source_image:
+                _require_source(row.source_image, "image")
+                params["image"] = row.source_image
+            if row.source_mask:
+                _require_source(row.source_mask, "mask")
+                params["mask"] = row.source_mask
+            # 不傳 seed：custom 路徑省略時保留 workflow 原值 → 忠實重現
+            try:
+                job_id = submit_custom(params)
+                return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列（忠實重現）")
+            except QueueFullError as e:
+                raise HTTPException(503, str(e))
+
+    # Legacy 路徑：依欄位重建、走 template
+    params = {
         "checkpoint": row.checkpoint,
         "lora": row.lora,
         "prompt": row.prompt or "",
