@@ -63,6 +63,7 @@ app.add_middleware(
 # 四大模組 API
 from app.api import (
     analytics,
+    comfyui,
     generate,
     gallery,
     lora_docs,
@@ -78,6 +79,7 @@ app.include_router(lora_train.router)
 app.include_router(prompt_templates.router)
 app.include_router(analytics.router)
 app.include_router(style_presets.router)
+app.include_router(comfyui.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)

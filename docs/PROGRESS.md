@@ -83,7 +83,15 @@ OpenClaw × ai-drawing 本地繪圖 / MCP 整合已建立交接計畫：`docs/op
 
 ## 進行中
 
-（目前無）
+- [ ] `add-agent-workflow-authoring`（openspec change，2026-06-19 起）：把重心從「人供給固定模板」轉成「供給 agent 能力＋護欄」，讓 agent 自組 workflow 為主路徑、模板庫自我擴充。6 個階段，**一次做一階段、階段間 review**。
+  - [x] #1 ComfyUI 節點 schema grounding（單點查）：`ComfyUIClient.get_object_info`（以 base_url 為 key 的程序內 TTL 快取，新增 `comfyui_object_info_ttl` 設定，可 `force_refresh`／`clear_object_info_cache` 失效）＋純函式 `search_node_types`（名稱＋類別雙條件 AND，回 `{name, category}`）／`list_node_categories`／`extract_node_schema`；新增 `GET /api/comfyui/nodes`（依 query/category 搜尋）、`/api/comfyui/node-categories`（列類別＋數量）、`/api/comfyui/nodes/{node_type}`（單節點 input/output 規格，缺則 404），於 `main.py` 註冊；MCP 新增 `search_nodes`（query＋category）／`list_node_categories`／`get_node_schema` 三個 agent-friendly tool（404→`not_found`）。測試：backend `test_comfyui_nodes.py`（15）、mcp-server `test_comfyui_tools.py`（6）。**真機驗證**：對 live ComfyUI（8188, 747 節點）實測名稱搜尋、類別搜尋（`category=loaders` 找到 CLIPLoader/DualCLIPLoader/UNETLoader/VAELoader 等 text-encoder 載入器）、query+category 組合、單節點 schema、未知節點 404/not_found、TTL 快取命中（0ms 同物件）vs `force_refresh` 重抓；MCP→backend→ComfyUI 全鏈路通。backend 在本機新建 `backend/.venv`（py3.11，本機原僅 3.9 系統＋3.10 bare），4 個既有失敗與本次無關（config-path cwd、兩個 lora_trainer mock、workflow bbox detector）。
+  - **Context 防護**（2026-06-19）：雙重把關——(1) `search_nodes` 的 `query`/`category` **至少要給一個，皆空回 400**（backend 端，連 `/object_info` 都不抓；MCP 端同步先擋回 `missing_filter` 不打 backend），擋「完全不篩」；(2) 每頁**上限**（預設 50、上限 200），擋「篩了但範圍太寬」；(3) 加 `offset` **分頁**（命中按名稱排序、回 `offset`/`next_offset`/`truncated`），讓超過上限的尾巴仍可翻頁取得（避免「永遠拿不到後面」），但 `next` 仍引導優先縮小條件、翻頁為退路。真機驗證 `category=model` 274 個 → 6 頁全取回。`list_node_categories` 維持**無參數**作為探索入口（先瀏覽 144 類再 `search_nodes(category=…)`）。`get_object_info` 原始 1.2MB 僅 backend 內部用、永不回給 agent。COMBO 維持壓成 `"COMBO"` 不回可選值（定案，可選值走 `list_available_resources`）。真機驗證：無參數→400、`category=loaders`→35 筆、`node-categories`→144 類。spec 新增「依名稱/類別搜尋」與「搜尋有界以保護 context（強制給參數＋上限）」requirement，`openspec validate` 通過。
+  - [ ] #2 模板能力 manifest＋索引（受控詞彙二元標籤）
+  - [ ] #3 二元 reuse 匹配（superset 測試）
+  - [ ] #4 custom workflow 轉發 ComfyUI 驗證錯誤
+  - [ ] #5 回填／自我擴充模板庫（成功閘門＋key 去重＋家族歸檔＋版本化不就地改）
+  - [ ] #6 agent 指引＋consolidation
+  - artifacts：`openspec/changes/add-agent-workflow-authoring/`（proposal/design/specs/tasks，已 `openspec validate` 通過）。
 
 ---
 
