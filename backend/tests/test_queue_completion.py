@@ -1,0 +1,108 @@
+"""harden-queue-completion：終局狀態處理（不再靜默消失）"""
+from unittest.mock import MagicMock, patch
+
+from app.core import queue as q
+
+
+def _set_running(prompt_id: str = "pid", **params) -> "q._Job":
+    q._reset_for_test()
+    job = q._Job(job_id="j1", params=dict(params), submitted_at="t")
+    job.prompt_id = prompt_id
+    q._running = job
+    return job
+
+
+def _queue(running=(), pending=()):
+    fake = MagicMock()
+    fake.get_queue.return_value = {
+        "queue_running": [[0, p] for p in running],
+        "queue_pending": [[0, p] for p in pending],
+    }
+    return fake
+
+
+def _hist_success_with_image():
+    return {"pid": {"status": {"status_str": "success"},
+                    "outputs": {"9": {"images": [{"filename": "a.png", "subfolder": "", "type": "output"}]}}}}
+
+
+def test_pending_in_comfy_stays_running() -> None:
+    job = _set_running()
+    fake = _queue(pending=["pid"])  # 仍在 ComfyUI 排隊
+    q._check_running_complete(fake)
+    assert q._running is job
+    assert q.get_job_status("j1")["status"] == "running"
+
+
+def test_history_lag_keeps_running_then_resolves() -> None:
+    _set_running()
+    fake = _queue()  # 已離開佇列
+    fake.get_history.return_value = {}  # history 尚未出現
+    q._check_running_complete(fake)
+    assert q._running is not None  # 不丟，繼續等
+    assert q._running.completion_polls == 1
+
+    # 下一個 tick：history 出現且成功
+    fake.get_history.return_value = _hist_success_with_image()
+    with patch("app.core.queue._save_job_outputs", return_value=1) as m_save:
+        q._check_running_complete(fake)
+    m_save.assert_called_once()
+    assert q._running is None
+    assert "j1" not in q._failed  # 成功，非 failed
+
+
+def test_history_timeout_marks_failed_and_releases() -> None:
+    _set_running()
+    fake = _queue()
+    fake.get_history.return_value = {}
+    for _ in range(q.MAX_COMPLETION_POLLS):
+        q._check_running_complete(fake)
+    assert q._running is None
+    st = q.get_job_status("j1")
+    assert st["status"] == "failed"
+    assert "no result" in st["error"].lower()
+
+
+def test_execution_error_marks_failed_with_structured_reason() -> None:
+    _set_running()
+    fake = _queue()
+    fake.get_history.return_value = {
+        "pid": {
+            "status": {
+                "status_str": "error",
+                "messages": [["execution_error", {
+                    "node_id": "6", "node_type": "CLIPTextEncode",
+                    "exception_message": "clip input is invalid: None",
+                }]],
+            },
+            "outputs": {},
+        }
+    }
+    q._check_running_complete(fake)
+    assert q._running is None
+    st = q.get_job_status("j1")
+    assert st["status"] == "failed"
+    assert st["node_errors"] == [
+        {"node_id": "6", "class_type": "CLIPTextEncode", "reason": "clip input is invalid: None"}
+    ]
+
+
+def test_success_no_outputs_marks_failed() -> None:
+    _set_running()
+    fake = _queue()
+    fake.get_history.return_value = {"pid": {"status": {"status_str": "success"}, "outputs": {}}}
+    q._check_running_complete(fake)
+    assert q._running is None
+    assert q.get_job_status("j1")["status"] == "failed"
+
+
+def test_recording_failure_marks_failed_not_dropped() -> None:
+    _set_running()
+    fake = _queue()
+    fake.get_history.return_value = _hist_success_with_image()
+    with patch("app.core.queue._save_job_outputs", side_effect=RuntimeError("disk full")):
+        q._check_running_complete(fake)
+    assert q._running is None
+    st = q.get_job_status("j1")
+    assert st["status"] == "failed"
+    assert "disk full" in st["error"]
