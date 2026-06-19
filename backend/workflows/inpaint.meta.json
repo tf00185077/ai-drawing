@@ -1,0 +1,12 @@
+{
+  "id": "inpaint",
+  "modality": "inpaint",
+  "model_family": "sdxl",
+  "conditioning": [],
+  "io": [
+    "text",
+    "image_ref",
+    "mask"
+  ],
+  "description": "Masked inpaint: subject LoadImage + LoadImageMask + VAEEncodeForInpaint."
+}

@@ -2,18 +2,24 @@
 
 ### Requirement: Templates carry a machine-readable capability manifest
 
-Each workflow template SHALL have an associated manifest containing a controlled-vocabulary set of capability tags. The manifest SHALL define `modality` (single-valued enum: `txt2img` | `img2img` | `inpaint`), and MAY define `conditioning` (set, e.g. `controlnet_pose`), `io` (set, e.g. `text`, `image_ref`, `mask`), and `model_family` (single-valued, e.g. `sdxl`, `anima`). A human-readable `description` MAY be present but SHALL NOT participate in matching decisions.
+Each workflow template SHALL have an associated manifest containing a controlled-vocabulary set of capability tags. The manifest SHALL define both `modality` (single-valued enum: `txt2img` | `img2img` | `inpaint`) and `model_family` (single-valued, e.g. `sdxl`, `sd15`, `anima`) as required fields — neither may be omitted or null, so matching never falls into an "unknown family" gray zone. The manifest MAY additionally define `conditioning` (set, e.g. `controlnet_pose`) and `io` (set, e.g. `text`, `image_ref`, `mask`). A human-readable `description` MAY be present but SHALL NOT participate in matching decisions.
 
 #### Scenario: Manifest exposes capability tags
 
 - **WHEN** a client reads the manifest for the `inpaint` template
-- **THEN** the manifest reports `modality=inpaint` and `io` including `mask`
+- **THEN** the manifest reports `modality=inpaint`, a non-null `model_family`, and `io` including `mask`
 - **AND** any `description` text is returned as metadata only
 
 #### Scenario: Tags are drawn from a controlled vocabulary
 
 - **WHEN** a manifest is created or backfilled with a capability tag not in the controlled vocabulary
 - **THEN** the system rejects or flags the manifest as invalid rather than silently accepting a free-form tag
+
+#### Scenario: Missing required field is rejected
+
+- **WHEN** a manifest omits `modality` or `model_family`
+- **THEN** the system flags the manifest as invalid identifying the missing required field
+- **AND** does not treat the absent field as a wildcard
 
 ### Requirement: Lightweight capability index avoids reading full workflow JSON
 

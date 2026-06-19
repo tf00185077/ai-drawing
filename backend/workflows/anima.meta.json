@@ -1,0 +1,8 @@
+{
+  "id": "anima",
+  "modality": "txt2img",
+  "conditioning": [],
+  "io": ["text"],
+  "model_family": "anima",
+  "description": "Text-to-image for the Anima diffusion-model family (UNETLoader/CLIPLoader/VAELoader)."
+}

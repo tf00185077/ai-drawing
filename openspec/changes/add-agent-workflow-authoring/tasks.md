@@ -7,11 +7,11 @@
 
 ## 2. Template capability manifest + index (capability: workflow-template-catalog)
 
-- [ ] 2.1 Define the controlled vocabulary (modality enum, conditioning set, io set, model_family) and a registry of allowed tags; decide storage shape (sidecar `workflows/<name>.meta.json` vs central `workflows/index.json` — see design Open Questions)
-- [ ] 2.2 Author capability manifests for the existing templates in `backend/workflows/` (default, default_lora, anima, inpaint, controlnet_pose, txt2img_lora_pose, img2img_lora_pose)
-- [ ] 2.3 Add backend manifest loader + validation that rejects/flags tags outside the controlled vocabulary
-- [ ] 2.4 Add a lightweight capability-index read API (id + tags + description, no full workflow JSON) and an MCP tool to query it
-- [ ] 2.5 Tests: manifest exposes tags with description as metadata-only; out-of-vocabulary tag is rejected; index entries omit full graph JSON
+- [x] 2.1 Define the controlled vocabulary (modality enum, conditioning set, io set, model_family) and a registry of allowed tags; decide storage shape — **sidecar `workflows/<name>.meta.json`** (co-located with graph; index globs only the small sidecars)
+- [x] 2.2 Author capability manifests for the existing templates in `backend/workflows/` (default, default_lora, anima, inpaint, controlnet_pose, txt2img_lora_pose, img2img_lora_pose)
+- [x] 2.3 Add backend manifest loader + validation that rejects/flags tags outside the controlled vocabulary
+- [x] 2.4 Add a lightweight capability-index read API (id + tags + description, no full workflow JSON) and an MCP tool to query it
+- [x] 2.5 Tests: manifest exposes tags with description as metadata-only; out-of-vocabulary tag is rejected; index entries omit full graph JSON
 
 ## 3. Binary reuse matching (capability: workflow-template-catalog)
 
