@@ -110,6 +110,47 @@ def validate_manifest(
     return problems
 
 
+@dataclass(frozen=True)
+class CapabilityRequest:
+    """agent 表達「這次生圖需要的能力」。modality 必填；其餘為選用約束。"""
+
+    modality: str
+    model_family: str | None = None
+    conditioning: tuple[str, ...] = ()
+    io: tuple[str, ...] = ()
+
+
+def manifest_covers(manifest: WorkflowManifest, request: CapabilityRequest) -> bool:
+    """
+    二元判定：模板能力是否「涵蓋」需求（superset 測試）。逐欄位皆需成立（AND）：
+    - modality 必須相等（必填、必比）
+    - model_family：需求若指定則須相等；未指定代表不限制家族
+    - conditioning / io：需求集合須是模板集合的子集（模板要做得到至少需求那些）
+    無模糊分數，純集合運算。
+    """
+    if request.modality != manifest.modality:
+        return False
+    if request.model_family is not None and request.model_family != manifest.model_family:
+        return False
+    if not set(request.conditioning) <= set(manifest.conditioning):
+        return False
+    if not set(request.io) <= set(manifest.io):
+        return False
+    return True
+
+
+def find_matching_templates(
+    loaded: list["LoadedManifest"], request: CapabilityRequest
+) -> list[str]:
+    """回傳能涵蓋需求的模板 id（依 id 排序）。只有通過驗證的 manifest 才可被匹配——
+    壞掉/詞彙不合的模板不該被 reuse。無命中回空清單（agent 應改為自組）。"""
+    return sorted(
+        lm.manifest.id
+        for lm in loaded
+        if lm.valid and manifest_covers(lm.manifest, request)
+    )
+
+
 @dataclass
 class LoadedManifest:
     """載入結果：manifest 本體 + 驗證問題 + 對應 workflow 是否存在。"""
