@@ -15,9 +15,9 @@
 
 ## 3. Binary reuse matching (capability: workflow-template-catalog)
 
-- [ ] 3.1 Implement deterministic superset match (`template_tags ⊇ required_tags`) returning matched template id(s) or an explicit miss
-- [ ] 3.2 Expose matching via MCP so the agent gets match→template-name or miss→self-author guidance; ensure `modality` is a required member of the test
-- [ ] 3.3 Tests: covering template matches; missing required capability → miss; differing modality → miss despite other overlap
+- [x] 3.1 Implement deterministic superset match (`template_tags ⊇ required_tags`) returning matched template id(s) or an explicit miss
+- [x] 3.2 Expose matching via MCP so the agent gets match→template-name or miss→self-author guidance; ensure `modality` is a required member of the test
+- [x] 3.3 Tests: covering template matches; missing required capability → miss; differing modality → miss despite other overlap
 
 ## 4. Custom-workflow validation-error forwarding (capability: custom-workflow-generation)
 

@@ -41,6 +41,51 @@ def list_template_capabilities() -> str:
 
 
 @mcp.tool()
+def match_workflow_template(
+    modality: str,
+    model_family: str = "",
+    conditioning: list[str] | None = None,
+    io: list[str] | None = None,
+) -> str:
+    """Deterministically decide whether an existing template can satisfy a need, by the binary set test `template capabilities ⊇ required capabilities`. Supply the capabilities you need: `modality` is REQUIRED (txt2img | img2img | inpaint); `model_family` (e.g. sdxl, anima) constrains family only if given; `conditioning` (e.g. ["controlnet_pose"]) and `io` (e.g. ["text","image_ref","mask"]) are sets the template must cover. On a hit, apply a returned template id via generate_image(template=...). On a miss (empty list), self-author a workflow with search_nodes/get_node_schema — matching is strict (a differing modality is a miss even if other tags overlap). Returns agent-friendly JSON."""
+    try:
+        client = _get_client()
+        params = {
+            "modality": modality,
+            "model_family": model_family,
+            "conditioning": ",".join(conditioning or []),
+            "io": ",".join(io or []),
+        }
+        resp = client.get("workflow-catalog/match", params=params)
+        matched = resp.get("matched", [])
+        next_step = (
+            f"reuse: call generate_image(template={matched[0]!r}, ...) (or pick among {matched})"
+            if matched
+            else "miss: no template covers this need; self-author a workflow via search_nodes/get_node_schema"
+        )
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "match_workflow_template",
+                "request": resp.get("request", params),
+                "matched": matched,
+                "next": next_step,
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "match_workflow_template",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def validate_template_capabilities() -> str:
     """Validate every workflow template's capability manifest: tags drawn from the controlled vocabulary, manifest id matching the template filename, and the referenced workflow file existing. Invalid templates are returned as data (with per-template problems), not as a tool failure. Returns agent-friendly JSON."""
     try:
