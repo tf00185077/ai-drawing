@@ -19,6 +19,11 @@ style_presets/
 > 或 `POST /api/style-presets/reindex`）重建索引；`index.json` 不存在時讀取路徑會自動重建。
 > `validate_style_presets` 會回報 index 與 detail 檔的漂移。
 
+> **多 LoRA**：preset 可用 `loras: [{name, strength_model, strength_clip?}]`（取代單一 `lora`，
+> 優先生效）；compose 會帶成 `generation.loras`，生圖時依模板內 `LoraLoader` 節點的出現順序逐一
+>對應（第 i 個 lora → 第 i 個 loader），`strength_clip` 省略時沿用 `strength_model`。模板需含足夠
+> 的 LoraLoader 節點（能力標 `multi_lora`）。
+
 > **建立 preset**：agent 可用 MCP `create_style_preset(id, name, …)`（或 `POST /api/style-presets/`）
 > 依描述一次建立**機器食譜 + 人類 note**（note frontmatter `preset_id` 自動對齊）並 reindex；
 > id 重複預設不覆寫（需 `overwrite=true`），缺資源會回報但不阻擋建立。

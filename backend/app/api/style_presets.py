@@ -76,6 +76,7 @@ async def list_style_presets(
             template=s.get("template"),
             checkpoint=s.get("checkpoint"),
             lora=s.get("lora"),
+            loras=s.get("loras", []),
             diffusion_model=s.get("diffusion_model"),
         )
         for s in provider.list_summaries()
@@ -154,6 +155,7 @@ async def get_style_preset(
         checkpoint=preset.checkpoint,
         lora=preset.lora,
         lora_strength=preset.lora_strength,
+        loras=[dict(x) for x in preset.loras],
         diffusion_model=preset.diffusion_model,
         text_encoder=preset.text_encoder,
         vae=preset.vae,

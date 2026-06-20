@@ -79,6 +79,7 @@ class StylePreset:
     checkpoint: str | None = None
     lora: str | None = None
     lora_strength: float | None = None
+    loras: tuple[Mapping[str, Any], ...] = ()  # 多 lora：[{name, strength_model, strength_clip?}]，優先於單一 lora
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None
@@ -231,6 +232,7 @@ def _parse_preset(raw: Mapping[str, Any]) -> StylePreset:
         checkpoint=raw.get("checkpoint"),
         lora=raw.get("lora"),
         lora_strength=raw.get("lora_strength"),
+        loras=tuple(dict(x) for x in (raw.get("loras") or [])),
         diffusion_model=raw.get("diffusion_model"),
         text_encoder=raw.get("text_encoder"),
         vae=raw.get("vae"),
@@ -293,6 +295,7 @@ def build_summary(preset: StylePreset) -> dict[str, Any]:
         "template": preset.template,
         "checkpoint": preset.checkpoint,
         "lora": preset.lora,
+        "loras": [dict(x) for x in preset.loras],
         "diffusion_model": preset.diffusion_model,
     }
 
@@ -374,10 +377,13 @@ def compose_preset(
         generation["template"] = preset.template
     if preset.checkpoint:
         generation["checkpoint"] = preset.checkpoint
-    if preset.lora:
+    # 多 lora 優先：有 loras 就帶清單，否則退回單一 lora（維持相容）
+    if preset.loras:
+        generation["loras"] = [dict(x) for x in preset.loras]
+    elif preset.lora:
         generation["lora"] = preset.lora
-    if preset.lora_strength is not None:
-        generation["lora_strength"] = preset.lora_strength
+        if preset.lora_strength is not None:
+            generation["lora_strength"] = preset.lora_strength
     if preset.diffusion_model:
         generation["diffusion_model"] = preset.diffusion_model
     if preset.text_encoder:

@@ -57,6 +57,7 @@ class GenerateParams(TypedDict, total=False):
     text_encoder: str  # CLIPLoader.clip_name
     vae: str  # VAELoader.vae_name
     lora: str
+    loras: list[dict]  # 多 lora：[{name, strength_model, strength_clip?}]，有則優先於單一 lora
     prompt: str
     image: str  # 主體圖路徑（img2img），相對於 gallery_dir
     image_pose: str  # 姿態圖路徑，相對於 gallery_dir，會上傳至 ComfyUI
@@ -349,6 +350,7 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             image_pose=image_pose_for_wf,
             mask=mask_for_wf,
             lora=job.params.get("lora"),
+            loras=job.params.get("loras"),
             prompt=job.params.get("prompt", ""),
             negative_prompt=job.params.get("negative_prompt"),
             seed=effective_seed,

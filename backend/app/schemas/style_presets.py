@@ -18,6 +18,7 @@ class StylePresetSummary(BaseModel):
     template: str | None = None
     checkpoint: str | None = None
     lora: str | None = None
+    loras: list[dict[str, Any]] = Field(default_factory=list)
     diffusion_model: str | None = None
 
 
@@ -39,6 +40,10 @@ class CreatePresetRequest(BaseModel):
     checkpoint: str | None = None
     lora: str | None = None
     lora_strength: float | None = None
+    loras: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="多 lora：[{name, strength_model, strength_clip?}]，依模板 LoraLoader 順序對應；優先於單一 lora",
+    )
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None
@@ -69,6 +74,7 @@ class StylePresetDetail(BaseModel):
     checkpoint: str | None = None
     lora: str | None = None
     lora_strength: float | None = None
+    loras: list[dict[str, Any]] = Field(default_factory=list)
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None

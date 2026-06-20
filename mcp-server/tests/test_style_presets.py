@@ -25,6 +25,15 @@ def test_create_style_preset_forwards_and_reports() -> None:
     assert body["id"] == "cx" and body["name"] == "Name" and body["checkpoint"] == "m.safetensors"
 
 
+def test_create_style_preset_forwards_loras() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"id": "mlx", "created": True, "validation": {"valid": True, "missing": []}}
+    loras = [{"name": "a.safetensors", "strength_model": 0.8}, {"name": "b.safetensors", "strength_model": 0.5}]
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        create_style_preset("mlx", "ML", template="multi", loras=loras)
+    assert mock_client.post.call_args[1]["json"]["loras"] == loras
+
+
 def test_create_style_preset_duplicate_409() -> None:
     mock_client = MagicMock()
     resp = httpx.Response(409, request=httpx.Request("POST", "http://x/style-presets/"))

@@ -64,6 +64,8 @@ async def trigger_generate(body: GenerateRequest):
             params["lora_strength"] = body.lora_strength
         if body.denoise is not None:
             params["denoise"] = body.denoise
+        if body.loras is not None:
+            params["loras"] = [lo.model_dump() for lo in body.loras]
         job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,
@@ -117,6 +119,8 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["vae"] = body.vae
         if body.lora_strength is not None:
             params["lora_strength"] = body.lora_strength
+        if body.loras is not None:
+            params["loras"] = [lo.model_dump() for lo in body.loras]
         if body.denoise is not None:
             params["denoise"] = body.denoise
         job_id = submit_custom(params)
