@@ -63,21 +63,29 @@ def _current_inventory() -> ResourceInventory:
 async def list_style_presets(
     provider: StylePresetProvider = Depends(_provider),
 ):
-    """列出所有風格 preset（輕量條目，不需讀取 Obsidian / Markdown）。"""
+    """列出所有風格 preset（只讀輕量 index，不載入完整食譜或 Markdown）。"""
     items = [
         StylePresetSummary(
-            id=p.id,
-            name=p.name,
-            profiles=p.profile_names,
-            note_path=p.note_path,
-            template=p.template,
-            checkpoint=p.checkpoint,
-            lora=p.lora,
-            diffusion_model=p.diffusion_model,
+            id=s["id"],
+            name=s["name"],
+            profiles=s.get("profiles", []),
+            note_path=s.get("note_path"),
+            template=s.get("template"),
+            checkpoint=s.get("checkpoint"),
+            lora=s.get("lora"),
+            diffusion_model=s.get("diffusion_model"),
         )
-        for p in provider.list_presets()
+        for s in provider.list_summaries()
     ]
     return StylePresetListResponse(items=items)
+
+
+@router.post("/reindex")
+async def reindex_style_presets(
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """重建輕量 index（掃描 presets/*.json）。手動／編輯 preset 後呼叫。"""
+    return provider.reindex()
 
 
 @router.get("/validate", response_model=StylePresetValidationResponse)

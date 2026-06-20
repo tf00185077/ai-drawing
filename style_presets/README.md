@@ -5,12 +5,19 @@
 
 ```
 style_presets/
-├── agent/            # 機器可讀來源（後端與 MCP 實際讀取）
-│   └── catalog.json  # 執行期唯一真相：每個 preset 的 id / 資源 / prompt / params / profiles
-└── human/            # 人類筆記（不被程式解析）
-    ├── _template.md  # 撰寫範本
+├── agent/                  # 機器可讀來源（後端與 MCP 實際讀取），分兩層：
+│   ├── index.json          #   輕量索引：[{id, name, profiles, 資源摘要}] ← list 只讀這個
+│   └── presets/
+│       └── <preset-id>.json #  單一 preset 完整食譜 ← get/compose 只讀對應單檔
+└── human/                  # 人類筆記（不被程式解析）
+    ├── _template.md        #   撰寫範本
     └── <preset-id>.md
 ```
+
+> **分層**：`list` 只讀 `index.json`（不全掃所有食譜）；`get`/`compose` 只讀對應的
+> `presets/<id>.json`。編輯／新增 preset 後執行 **reindex**（MCP `reindex_style_presets`
+> 或 `POST /api/style-presets/reindex`）重建索引；`index.json` 不存在時讀取路徑會自動重建。
+> `validate_style_presets` 會回報 index 與 detail 檔的漂移。
 
 ## 規則
 

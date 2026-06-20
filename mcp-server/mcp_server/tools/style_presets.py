@@ -16,8 +16,32 @@ from mcp_server.server import _get_client, mcp
 
 
 @mcp.tool()
+def reindex_style_presets() -> str:
+    """Rebuild the style-preset lightweight index from the per-preset detail files. Call after manually adding/editing presets so list_style_presets reflects them. Returns the rebuilt index entries."""
+    try:
+        client = _get_client()
+        resp = client.post("style-presets/reindex")
+        presets = resp.get("presets", [])
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "reindex_style_presets",
+                "presets": presets,
+                "count": len(presets),
+                "next": "index rebuilt; list_style_presets now reflects current presets",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {"ok": False, "tool": "reindex_style_presets", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def list_style_presets() -> str:
-    """List available style presets (creator/style recipes). Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with compose_style_preset to build a generation payload."""
+    """List available style presets (creator/style recipes) from the lightweight index — does not load full preset bodies. Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with compose_style_preset to build a generation payload."""
     try:
         client = _get_client()
         resp = client.get("style-presets/")

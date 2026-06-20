@@ -1,0 +1,17 @@
+{
+  "presets": [
+    {
+      "id": "creator-a",
+      "name": "Creator A 柔光動漫",
+      "template": "default_lora",
+      "checkpoint": "novaAnimeXL_ilV190.safetensors",
+      "lora": "creatorA_style_v2.safetensors",
+      "diffusion_model": null,
+      "profiles": [
+        "portrait",
+        "full-body"
+      ],
+      "note_path": "style_presets/human/creator-a.md"
+    }
+  ]
+}
