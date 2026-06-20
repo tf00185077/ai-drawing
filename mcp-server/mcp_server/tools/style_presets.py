@@ -27,6 +27,7 @@ def create_style_preset(
     checkpoint: str | None = None,
     lora: str | None = None,
     lora_strength: float | None = None,
+    loras: list[dict] | None = None,
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
@@ -34,7 +35,7 @@ def create_style_preset(
     profiles: dict | None = None,
     overwrite: bool = False,
 ) -> str:
-    """Create a new style preset from the fields the user describes, writing BOTH the machine recipe (style_presets/agent/presets/<id>.json) and a human note (style_presets/human/<id>.md, frontmatter preset_id matching id), then reindexing so it's listable. `id` (kebab-ish slug) and `name` are required; fill the recipe fields you know (template/checkpoint/lora/lora_strength, base_prompt/negative_prompt, default_params, and `profiles` as {name: {prompt_prefix, prompt_suffix, negative_prompt, params}}). Refuses to overwrite an existing preset unless `overwrite=true`. Missing referenced resources are reported in the result (validation) but do NOT block creation. Returns agent-friendly JSON with the created id and validation."""
+    """Create a new style preset from the fields the user describes, writing BOTH the machine recipe (style_presets/agent/presets/<id>.json) and a human note (style_presets/human/<id>.md, frontmatter preset_id matching id), then reindexing so it's listable. `id` (kebab-ish slug) and `name` are required; fill the recipe fields you know (template/checkpoint/lora/lora_strength, base_prompt/negative_prompt, default_params, and `profiles` as {name: {prompt_prefix, prompt_suffix, negative_prompt, params}}). For multiple LoRAs use `loras` = [{name, strength_model, strength_clip?}] (ordered to the template's LoraLoader nodes; takes precedence over single lora). Refuses to overwrite an existing preset unless `overwrite=true`. Missing referenced resources are reported in the result (validation) but do NOT block creation. Returns agent-friendly JSON with the created id and validation."""
     try:
         client = _get_client()
         body = {
@@ -46,6 +47,7 @@ def create_style_preset(
             "checkpoint": checkpoint,
             "lora": lora,
             "lora_strength": lora_strength,
+            "loras": loras or [],
             "diffusion_model": diffusion_model,
             "text_encoder": text_encoder,
             "vae": vae,

@@ -131,6 +131,16 @@ def test_generate_image_with_optional_params_returns_submitted_payload() -> None
     assert data["submitted"] == call_json
 
 
+def test_generate_image_forwards_loras() -> None:
+    """generate_image 將多 lora 清單帶入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "x", "status": "queued"}
+    loras = [{"name": "a.safetensors", "strength_model": 0.8}, {"name": "b.safetensors", "strength_model": 0.5}]
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        generate_image(prompt="t", loras=loras)
+    assert mock_client.post.call_args[1]["json"]["loras"] == loras
+
+
 def test_generate_image_backend_error_returns_structured_json() -> None:
     """generate_image backend 失敗時回傳 ok=false 的穩定 JSON"""
     mock_client = MagicMock()
