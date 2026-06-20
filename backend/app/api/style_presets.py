@@ -17,6 +17,7 @@ from app.core.resources import (
     list_vaes,
 )
 from app.core.style_presets import (
+    PresetExistsError,
     PresetNotFoundError,
     ProfileNotFoundError,
     ResourceInventory,
@@ -26,6 +27,7 @@ from app.core.style_presets import (
 from app.schemas.style_presets import (
     ComposeRequest,
     ComposeResponse,
+    CreatePresetRequest,
     MissingResourceItem,
     PresetValidationItem,
     StylePresetDetail,
@@ -86,6 +88,30 @@ async def reindex_style_presets(
 ):
     """重建輕量 index（掃描 presets/*.json）。手動／編輯 preset 後呼叫。"""
     return provider.reindex()
+
+
+@router.post("/", status_code=201)
+async def create_style_preset(
+    body: CreatePresetRequest,
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """依欄位建立 preset：寫機器食譜 + 人類 note + reindex。id 重複回 409、id/name 不合法回 422。"""
+    fields = body.model_dump(exclude={"create_note", "overwrite"})
+    try:
+        result = provider.create_preset(
+            fields, create_note=body.create_note, overwrite=body.overwrite
+        )
+    except PresetExistsError:
+        raise HTTPException(409, f"preset 已存在：{body.id}（如要取代請設 overwrite=true）")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    # 非阻斷式驗證：回報缺少的資源讓呼叫端後續修正
+    v = provider.validate_preset(result["id"], _current_inventory())
+    result["validation"] = {
+        "valid": v.valid,
+        "missing": [{"resource_type": m.resource_type, "name": m.name} for m in v.missing],
+    }
+    return result
 
 
 @router.get("/validate", response_model=StylePresetValidationResponse)

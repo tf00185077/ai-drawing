@@ -12,7 +12,75 @@ job: the agent then forwards the composed `generation` payload to generate_image
 """
 import json
 
+import httpx
+
 from mcp_server.server import _get_client, mcp
+
+
+@mcp.tool()
+def create_style_preset(
+    id: str,
+    name: str,
+    base_prompt: str = "",
+    negative_prompt: str = "",
+    template: str | None = None,
+    checkpoint: str | None = None,
+    lora: str | None = None,
+    lora_strength: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+    default_params: dict | None = None,
+    profiles: dict | None = None,
+    overwrite: bool = False,
+) -> str:
+    """Create a new style preset from the fields the user describes, writing BOTH the machine recipe (style_presets/agent/presets/<id>.json) and a human note (style_presets/human/<id>.md, frontmatter preset_id matching id), then reindexing so it's listable. `id` (kebab-ish slug) and `name` are required; fill the recipe fields you know (template/checkpoint/lora/lora_strength, base_prompt/negative_prompt, default_params, and `profiles` as {name: {prompt_prefix, prompt_suffix, negative_prompt, params}}). Refuses to overwrite an existing preset unless `overwrite=true`. Missing referenced resources are reported in the result (validation) but do NOT block creation. Returns agent-friendly JSON with the created id and validation."""
+    try:
+        client = _get_client()
+        body = {
+            "id": id,
+            "name": name,
+            "base_prompt": base_prompt,
+            "negative_prompt": negative_prompt,
+            "template": template,
+            "checkpoint": checkpoint,
+            "lora": lora,
+            "lora_strength": lora_strength,
+            "diffusion_model": diffusion_model,
+            "text_encoder": text_encoder,
+            "vae": vae,
+            "default_params": default_params or {},
+            "profiles": profiles or {},
+            "overwrite": overwrite,
+        }
+        resp = client.post("style-presets/", json=body)
+        val = resp.get("validation", {})
+        missing = val.get("missing", [])
+        if missing:
+            nxt = f"created; but missing resources {[m['name'] for m in missing]} — install them or edit the preset"
+        else:
+            nxt = "created and valid; use compose_style_preset to generate with it"
+        return json.dumps(
+            {"ok": True, "tool": "create_style_preset", **resp, "next": nxt},
+            ensure_ascii=False,
+        )
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code if e.response is not None else None
+        if code == 409:
+            err, nxt = "already_exists", "set overwrite=true to replace, or choose a different id"
+        elif code == 422:
+            err, nxt = "invalid_request", "id must be a slug (letters/digits/_/-) and name is required"
+        else:
+            err, nxt = str(e), "check backend"
+        return json.dumps(
+            {"ok": False, "tool": "create_style_preset", "error": err, "next": nxt},
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {"ok": False, "tool": "create_style_preset", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
 
 
 @mcp.tool()
