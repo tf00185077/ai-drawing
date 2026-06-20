@@ -73,6 +73,7 @@ class StylePreset:
 
     id: str
     name: str
+    chinese_name: str | None = None
     note_path: str | None = None
     template: str | None = None
     checkpoint: str | None = None
@@ -224,6 +225,7 @@ def _parse_preset(raw: Mapping[str, Any]) -> StylePreset:
     return StylePreset(
         id=str(raw["id"]),
         name=str(raw["name"]),
+        chinese_name=raw.get("chinese_name"),
         note_path=raw.get("note_path"),
         template=raw.get("template"),
         checkpoint=raw.get("checkpoint"),
@@ -285,6 +287,7 @@ def build_summary(preset: StylePreset) -> dict[str, Any]:
     return {
         "id": preset.id,
         "name": preset.name,
+        "chinese_name": preset.chinese_name,
         "profiles": preset.profile_names,
         "note_path": preset.note_path,
         "template": preset.template,

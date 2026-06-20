@@ -24,7 +24,12 @@ WORKFLOWS_DIR = Path(__file__).resolve().parent.parent.parent / "workflows"
 # 受控詞彙：欄位 -> 允許值集合。新增標籤須在此登錄，不得自由發明。
 CONTROLLED_VOCABULARY: dict[str, set[str]] = {
     "modality": {"txt2img", "img2img", "inpaint"},
-    "conditioning": {"controlnet_pose"},
+    # conditioning captures optional graph capabilities beyond the base modality.
+    # `lora_model_only` is used by split-model families such as Anima where a
+    # LoRA is injected into MODEL via LoraLoaderModelOnly without touching CLIP.
+    # `multi_lora` distinguishes chained LoRA graphs from single-LoRA templates;
+    # use it when a preset/source page requires multiple LoRAs to be wired in order.
+    "conditioning": {"controlnet_pose", "lora_model_only", "multi_lora"},
     "io": {"text", "image_ref", "mask"},
     "model_family": {"sdxl", "sd15", "anima"},
 }

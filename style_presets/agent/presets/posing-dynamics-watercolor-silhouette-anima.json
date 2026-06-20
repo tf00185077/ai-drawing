@@ -1,0 +1,44 @@
+{
+  "id": "posing-dynamics-watercolor-silhouette-anima",
+  "name": "Posing Dynamics Watercolor Silhouette Anima",
+  "base_prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, airy watercolor anime illustration, luminous backlit silhouette, soft pastel gradient wash, cyan blue and cotton candy pink sky, warm yellow orange foreground glow, translucent watercolor blooms, wet-on-wet color bleeding, fine paint speckles, floating petals, delicate ink-like edge accents, broad white negative space, dreamy high-key lighting, soft rim light, clean elegant composition",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, photorealistic, harsh outlines, muddy colors, dull palette, heavy black shadows, noisy texture, cluttered background, text, watermark, logo, signature",
+  "template": "gen_txt2img_anima_lora_model_only",
+  "checkpoint": null,
+  "lora": "posing-dynamics-anima.safetensors",
+  "lora_strength": 0.7,
+  "diffusion_model": "anima_preview3Base.safetensors",
+  "text_encoder": "qwen_3_06b_base.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "steps": 30,
+    "cfg": 7,
+    "width": 832,
+    "height": 1152,
+    "sampler_name": "er_sde",
+    "scheduler": "simple",
+    "batch_size": 1
+  },
+  "profiles": {
+    "source-color-style-neutral": {
+      "prompt_prefix": "",
+      "prompt_suffix": "soft backlight, pastel cyan pink blue yellow palette, watercolor wash background, paint splatter particles, floating petals, luminous airy negative space, flower-field color accents, silhouette-friendly lighting",
+      "negative_prompt": "photorealistic, oil painting, thick impasto, dark gothic palette, hard cel shading, dense detailed background",
+      "params": {
+        "lora_strength": 0.65
+      }
+    },
+    "source-image-130172482": {
+      "prompt_prefix": "solitary figure, side profile silhouette, standing in flower field, head and hair dissolving into colorful paint splashes, windblown petals, ",
+      "prompt_suffix": "strong white central glow, pastel blue left sky, pastel pink right sky, warm yellow orange lower glow, watercolor paper texture, soft floral foreground, expressive negative space",
+      "negative_prompt": "sharp facial detail, busy city background, realistic photo, flat monochrome silhouette, hard outline, low contrast",
+      "params": {
+        "lora_strength": 0.75,
+        "width": 832,
+        "height": 1152
+      }
+    }
+  },
+  "note_path": "style_presets/human/posing-dynamics-watercolor-silhouette-anima.md",
+  "chinese_name": "水彩剪影動態姿勢 Anima"
+}
