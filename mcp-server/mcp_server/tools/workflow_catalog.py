@@ -129,6 +129,35 @@ def save_workflow_template(
 
 
 @mcp.tool()
+def consolidate_workflow_templates() -> str:
+    """Retire deprecated templates by deleting their files — periodic/manual housekeeping for the self-extending catalog. Deprecated templates (superseded by a newer version) are already excluded from reuse matching; this just removes the leftover files so the catalog stays tidy. Safe to run anytime. Returns the removed template ids."""
+    try:
+        client = _get_client()
+        resp = client.post("workflow-catalog/consolidate")
+        removed = resp.get("removed", [])
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "consolidate_workflow_templates",
+                "removed": removed,
+                "count": resp.get("count", len(removed)),
+                "next": "catalog cleaned" if removed else "nothing to retire",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "consolidate_workflow_templates",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def validate_template_capabilities() -> str:
     """Validate every workflow template's capability manifest: tags drawn from the controlled vocabulary, manifest id matching the template filename, and the referenced workflow file existing. Invalid templates are returned as data (with per-template problems), not as a tool failure. Returns agent-friendly JSON."""
     try:

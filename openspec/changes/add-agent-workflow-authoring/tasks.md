@@ -37,6 +37,6 @@
 
 ## 6. Agent guidance + consolidation
 
-- [ ] 6.1 Update MCP tool docstrings/guidance so the agent default flow is "query capability index → binary match → apply template-name on hit, else self-author (optionally scaffolding from a similar template) via custom"
-- [ ] 6.2 Add an optional consolidation routine to retire deprecated entries (manual/periodic; cadence per design Open Questions)
-- [ ] 6.3 Update `docs/PROGRESS.md` and run `openspec validate add-agent-workflow-authoring`; verify full match→build→backfill loop end to end against a live ComfyUI
+- [x] 6.1 Update MCP tool docstrings/guidance + mcp-server/README.md so the agent default flow is "capability index/match → apply template-name on hit, else self-author (search_nodes/get_node_schema, scaffold from a similar template) via custom → save_workflow_template on success"; custom success `next` now points to backfill
+- [x] 6.2 Add a consolidation routine to retire deprecated entries — `consolidate_templates` core + `POST /api/workflow-catalog/consolidate` + MCP `consolidate_workflow_templates` (manual/on-demand)
+- [x] 6.3 Update `docs/PROGRESS.md` and run `openspec validate`; live-smoked catalog index / backfill gate (404) / consolidate endpoints. NOTE: the full generate→backfill leg could not be observed live on this machine (ComfyUI backlog/errors); covered by unit tests incl. the DB gate

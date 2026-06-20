@@ -337,3 +337,20 @@ def backfill_template(
         "template_id": new_id,
         "deprecated": deprecated_id,
     }
+
+
+def consolidate_templates(workflows_dir: Path | None = None) -> dict[str, Any]:
+    """清理（retire）已 deprecated 的模板：刪除其 sidecar（<id>.json + <id>.meta.json）。
+    deprecated 本就不被 reuse；此為週期性／手動的家務整理，避免庫長期堆積。回傳被移除的 id。"""
+    wf_dir = workflows_dir or WORKFLOWS_DIR
+    removed: list[str] = []
+    for lm in load_manifests(wf_dir):
+        if not lm.manifest.deprecated:
+            continue
+        tid = lm.manifest.id
+        for suffix in (".json", ".meta.json"):
+            p = wf_dir / f"{tid}{suffix}"
+            if p.exists():
+                p.unlink()
+        removed.append(tid)
+    return {"removed": sorted(removed), "count": len(removed)}

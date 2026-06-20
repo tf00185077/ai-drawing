@@ -261,7 +261,7 @@ def generate_image_custom_workflow(
                 "tool": "generate_image_custom_workflow",
                 "job_id": job_id,
                 "status": status,
-                "next": "poll get_generation_status(job_id); if it returns status=failed with node_errors, fix those nodes and resubmit",
+                "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it",
             },
             ensure_ascii=False,
         )

@@ -3,11 +3,23 @@ import json
 from unittest.mock import MagicMock, patch
 
 from mcp_server.tools.workflow_catalog import (
+    consolidate_workflow_templates,
     list_template_capabilities,
     match_workflow_template,
     save_workflow_template,
     validate_template_capabilities,
 )
+
+
+def test_consolidate_reports_removed() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"removed": ["old_v1"], "count": 1}
+    with patch("mcp_server.tools.workflow_catalog._get_client", return_value=mock_client):
+        result = json.loads(consolidate_workflow_templates())
+
+    assert result["ok"] is True
+    assert result["removed"] == ["old_v1"]
+    mock_client.post.assert_called_once_with("workflow-catalog/consolidate")
 
 
 def test_save_workflow_template_created() -> None:
