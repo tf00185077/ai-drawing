@@ -19,6 +19,10 @@ style_presets/
 > 或 `POST /api/style-presets/reindex`）重建索引；`index.json` 不存在時讀取路徑會自動重建。
 > `validate_style_presets` 會回報 index 與 detail 檔的漂移。
 
+> **建立 preset**：agent 可用 MCP `create_style_preset(id, name, …)`（或 `POST /api/style-presets/`）
+> 依描述一次建立**機器食譜 + 人類 note**（note frontmatter `preset_id` 自動對齊）並 reindex；
+> id 重複預設不覆寫（需 `overwrite=true`），缺資源會回報但不阻擋建立。
+
 ## 規則
 
 - **同一個穩定的 kebab-case `preset_id`** 必須在三處一致：`agent/catalog.json` 的 `id`、

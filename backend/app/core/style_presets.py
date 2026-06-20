@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Protocol
@@ -34,6 +35,22 @@ class ProfileNotFoundError(KeyError):
         self.profile = profile
         self.available = available
         super().__init__(profile)
+
+
+class PresetExistsError(Exception):
+    """建立時 preset id 已存在且未指定覆寫。"""
+
+    def __init__(self, preset_id: str) -> None:
+        self.preset_id = preset_id
+        super().__init__(preset_id)
+
+
+_ID_SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+
+
+def is_valid_preset_id(preset_id: str) -> bool:
+    """preset id 須為簡單 slug（英數開頭，僅含英數／底線／連字號，無路徑分隔或空白）。"""
+    return bool(preset_id) and bool(_ID_SLUG.match(preset_id))
 
 
 # --- 型別模型 -------------------------------------------------------------
@@ -242,6 +259,25 @@ def _read_frontmatter_value(path: Path, key: str) -> str | None:
 # --- 共用：摘要 / 驗證 / compose（兩種 provider 共用）---------------------
 
 _SUMMARY_REFS = ("template", "checkpoint", "lora", "diffusion_model")
+
+
+def _note_stub(preset: StylePreset) -> str:
+    """產生人類 note 初稿，frontmatter preset_id 對齊 catalog id（通過 note 驗證）。"""
+    return (
+        "---\n"
+        f"preset_id: {preset.id}\n"
+        f"catalog_path: style_presets/agent/presets/{preset.id}.json\n"
+        f"checkpoint: {preset.checkpoint or ''}\n"
+        f"lora: {preset.lora or ''}\n"
+        "source_url:\n"
+        "---\n\n"
+        f"# {preset.name}\n\n"
+        "（由 create_style_preset 產生的初始筆記，可自行補充來源 / 授權 / 試驗心得）\n\n"
+        "## Resource Pairing\n\n"
+        f"- Checkpoint: {preset.checkpoint or ''}\n"
+        f"- LoRA: {preset.lora or ''}\n"
+        f"- Template: {preset.template or ''}\n"
+    )
 
 
 def build_summary(preset: StylePreset) -> dict[str, Any]:
@@ -480,6 +516,64 @@ class DirStylePresetProvider:
     def reindex(self) -> dict[str, Any]:
         self._cache.clear()
         return reindex(self._agent_dir)
+
+    def validate_preset(
+        self, preset_id: str, inventory: ResourceInventory
+    ) -> PresetValidation:
+        return validate_preset_against(
+            self._require_preset(preset_id), inventory, self._project_root
+        )
+
+    def create_preset(
+        self,
+        fields: Mapping[str, Any],
+        *,
+        create_note: bool = True,
+        overwrite: bool = False,
+    ) -> dict[str, Any]:
+        """從欄位建立 preset：寫 detail JSON + 人類 note stub（frontmatter 對齊 id）+ reindex。
+        id/name 必填、id 須為合法 slug；detail 已存在且未 overwrite 則 raise PresetExistsError。"""
+        pid = str(fields.get("id", "")).strip()
+        name = str(fields.get("name", "")).strip()
+        if not is_valid_preset_id(pid):
+            raise ValueError(f"invalid preset id: {pid!r}（需英數開頭、僅含英數/底線/連字號）")
+        if not name:
+            raise ValueError("preset 需要 name")
+
+        detail_path = self._presets_dir / f"{pid}.json"
+        if detail_path.exists() and not overwrite:
+            raise PresetExistsError(pid)
+
+        recipe = dict(fields)
+        recipe["id"] = pid
+        recipe["name"] = name
+
+        note_rel: str | None = None
+        if create_note and self._project_root is not None:
+            human_dir = self._agent_dir.parent / "human"
+            note_abs = human_dir / f"{pid}.md"
+            note_rel = note_abs.resolve().relative_to(self._project_root.resolve()).as_posix()
+            recipe["note_path"] = note_rel
+
+        # 解析驗證（確保結構合法，並讓 None 欄位乾淨）
+        preset = _parse_preset(recipe)
+
+        self._presets_dir.mkdir(parents=True, exist_ok=True)
+        with detail_path.open("w", encoding="utf-8") as f:
+            json.dump(recipe, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+
+        if note_rel is not None:
+            human_dir.mkdir(parents=True, exist_ok=True)
+            note_abs.write_text(_note_stub(preset), encoding="utf-8")
+
+        self.reindex()
+        return {
+            "id": pid,
+            "created": True,
+            "overwritten": detail_path.exists() and overwrite,
+            "note_path": note_rel,
+        }
 
     def _index_ids(self) -> set[str]:
         return {e.get("id") for e in self.list_summaries() if e.get("id")}

@@ -26,6 +26,26 @@ class StylePresetListResponse(BaseModel):
     items: list[StylePresetSummary]
 
 
+class CreatePresetRequest(BaseModel):
+    """POST /api/style-presets/ 的 Request：依欄位建立 preset（機器食譜 + 人類 note）。"""
+
+    id: str
+    name: str
+    base_prompt: str = ""
+    negative_prompt: str = ""
+    template: str | None = None
+    checkpoint: str | None = None
+    lora: str | None = None
+    lora_strength: float | None = None
+    diffusion_model: str | None = None
+    text_encoder: str | None = None
+    vae: str | None = None
+    default_params: dict[str, Any] = Field(default_factory=dict)
+    profiles: dict[str, Any] = Field(default_factory=dict)
+    create_note: bool = True
+    overwrite: bool = False
+
+
 class StylePresetProfileDetail(BaseModel):
     """preset detail 中的 profile 內容。"""
 
