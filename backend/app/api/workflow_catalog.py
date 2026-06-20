@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.workflow_manifest import (
     CapabilityRequest,
     backfill_template,
+    consolidate_templates,
     find_matching_templates,
     load_manifests,
 )
@@ -135,3 +136,9 @@ async def backfill(body: BackfillRequest, db: Session = Depends(get_db)):
     if not result.get("ok"):
         raise HTTPException(422, {"error": result.get("error"), "problems": result.get("problems")})
     return result
+
+
+@router.post("/consolidate")
+async def consolidate():
+    """清理已 deprecated 的模板（刪除其 sidecar）。手動／週期性家務整理，回傳被移除的 id。"""
+    return consolidate_templates()

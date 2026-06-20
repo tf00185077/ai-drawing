@@ -4,7 +4,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 24 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除）。
+> 共 30 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除；NLP 解析版 `generate_image_from_description` / `suggest_workflow_from_description` 已停用——agent 自行解析後直接呼叫 `generate_image`）。
+>
+> **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
 
 ### 連線檢查
 
@@ -16,14 +18,12 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 | Tool | 說明 |
 |------|------|
-| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8、diffusion_model / text_encoder / vae）；可直接餵入 `compose_style_preset` 產出的 `generation` payload |
-| `generate_image_from_description` | 依描述生圖（預存模板）；複雜需求由 AI 組 workflow 後呼叫 generate_image_custom_workflow |
-| `suggest_workflow_from_description` | 預覽描述解析結果（不觸發生圖） |
-| `generate_image_custom_workflow` | 使用自訂 workflow 生圖；支援 `image_pose`（ControlNet 姿勢參考圖） |
-| `list_workflow_templates` | 列出可用 workflow 模板（default、default_lora 等） |
-| `get_workflow_template` | 取得指定模板的 workflow JSON |
+| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8、diffusion_model / text_encoder / vae）；可直接餵入 `compose_style_preset` 產出的 `generation` payload，或用 `match_workflow_template` 命中的模板 id |
+| `generate_image_custom_workflow` | 使用自訂 workflow 生圖（自組為主路徑）；支援 `image`（img2img 主體）/`image_pose`（ControlNet 姿勢）/`mask`（inpaint）；成功後可 `save_workflow_template` 晉升 |
+| `list_workflow_templates` | 列出可用 workflow 模板名稱（default、default_lora 等） |
+| `get_workflow_template` | 取得指定模板的 workflow JSON（可當自組起手鷹架） |
 | `generate_queue_status` | 取得生圖佇列狀態（執行中／等候中） |
-| `get_generation_status` | 查詢 job 狀態；完成時帶 image_id / image_path |
+| `get_generation_status` | 查詢 job 狀態；完成帶 image_id / image_path；**失敗（含執行期）回 `node_errors`** 供自我修正 |
 | `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
 | `list_available_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint |
 
@@ -69,6 +69,30 @@ prompt / 參數）供檢視，不會送出生圖；確認後再交給 `generate_
 | `get_style_preset` | 取得單一 preset 完整食譜 |
 | `validate_style_presets` | 驗證每個 preset 參照的資源是否已安裝；invalid preset 以資料形式回傳，不隱藏 |
 | `compose_style_preset` | 將 preset + 使用者 `content_prompt`（＋ profile / overrides）組成可餵給 `generate_image` 的 `generation` payload |
+
+### ComfyUI 節點 Schema（自組 workflow 的 grounding）
+
+讓 agent 認識「本機 ComfyUI 實際有哪些節點」才能組出合法 workflow。皆有 context 防護：
+`search_nodes` 強制至少給 `query` 或 `category`、每頁上限、可 `offset` 翻頁；`get_object_info` 原始大檔不會回給 agent。
+
+| Tool | 說明 |
+|------|------|
+| `list_node_categories` | 列出所有節點類別與數量（無參數探索入口，先瀏覽再縮小） |
+| `search_nodes` | 依名稱／類別搜尋節點（`{name, category}`，須給 query 或 category，分頁） |
+| `get_node_schema` | 取單一節點的 input/output 規格（COMBO 不展開可選值，可選值走 `list_available_resources`） |
+
+### Workflow 模板能力目錄（自組／reuse／回填）
+
+模板帶受控詞彙的能力標籤（modality 必填、model_family 必填、conditioning、io），agent 不必展開
+整份 workflow 即可二元判斷可用性；成功的自組 workflow 可回填成可重用模板，模板庫自我擴充。
+
+| Tool | 說明 |
+|------|------|
+| `list_template_capabilities` | 列出模板能力標籤與 description（輕量，不含 workflow JSON） |
+| `match_workflow_template` | 二元 reuse 匹配（模板 ⊇ 需求）；命中→`generate_image(template=…)`，miss→自組；deprecated 不列入 |
+| `save_workflow_template` | 把已成功 job 的 workflow 晉升為模板（DB 成功閘門、剝 prompt/seed 存形狀、key 去重、家族歸檔、版本化） |
+| `validate_template_capabilities` | 逐模板驗證能力 manifest（詞彙／id／檔案；invalid 以資料回報） |
+| `consolidate_workflow_templates` | 清理已 deprecated 的模板（手動／週期家務整理） |
 
 ### ComfyUI 直連
 

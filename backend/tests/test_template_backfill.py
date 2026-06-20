@@ -14,6 +14,7 @@ from app.core.workflow_manifest import (
     LoadedManifest,
     WorkflowManifest,
     backfill_template,
+    consolidate_templates,
     find_matching_templates,
     strip_workflow_to_shape,
 )
@@ -101,6 +102,17 @@ def test_backfill_rejects_out_of_vocabulary_tags(tmp_path) -> None:
     )
     assert r["ok"] is False
     assert r["error"] == "invalid_tags"
+
+
+def test_consolidate_removes_deprecated_only(tmp_path) -> None:
+    # 一個正常、一個 deprecated
+    _write_meta(tmp_path, "keep", modality="txt2img", model_family="sdxl", io=["text"])
+    _write_meta(tmp_path, "old", modality="txt2img", model_family="sdxl", io=["text"], deprecated=True)
+    r = consolidate_templates(workflows_dir=tmp_path)
+    assert r["removed"] == ["old"]
+    assert not (tmp_path / "old.meta.json").exists()
+    assert not (tmp_path / "old.json").exists()
+    assert (tmp_path / "keep.meta.json").exists()  # 正常的保留
 
 
 def test_matching_skips_deprecated() -> None:
