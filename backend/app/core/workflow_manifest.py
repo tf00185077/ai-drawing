@@ -45,6 +45,7 @@ class WorkflowManifest:
     conditioning: tuple[str, ...] = ()
     io: tuple[str, ...] = ()
     description: str = ""
+    deprecated: bool = False  # 版本化淘汰：不再被 reuse 匹配，但檔案保留供追溯
 
     def tags(self) -> dict[str, Any]:
         """供索引輸出的標籤（不含 description 的決策語意，但一併附給人看）。"""
@@ -72,6 +73,7 @@ def parse_manifest(template_id: str, raw: Mapping[str, Any]) -> WorkflowManifest
         conditioning=_as_tuple(raw.get("conditioning")),
         io=_as_tuple(raw.get("io")),
         description=str(raw.get("description", "")),
+        deprecated=bool(raw.get("deprecated", False)),
     )
 
 
@@ -142,13 +144,24 @@ def manifest_covers(manifest: WorkflowManifest, request: CapabilityRequest) -> b
 def find_matching_templates(
     loaded: list["LoadedManifest"], request: CapabilityRequest
 ) -> list[str]:
-    """回傳能涵蓋需求的模板 id（依 id 排序）。只有通過驗證的 manifest 才可被匹配——
-    壞掉/詞彙不合的模板不該被 reuse。無命中回空清單（agent 應改為自組）。"""
+    """回傳能涵蓋需求的模板 id（依 id 排序）。只有通過驗證、且未 deprecated 的 manifest 才可
+    被匹配——壞掉/詞彙不合/已淘汰的模板不該被 reuse。無命中回空清單（agent 應改為自組）。"""
     return sorted(
         lm.manifest.id
         for lm in loaded
-        if lm.valid and manifest_covers(lm.manifest, request)
+        if lm.valid and not lm.manifest.deprecated and manifest_covers(lm.manifest, request)
     )
+
+
+def capability_key(
+    modality: str, model_family: str, conditioning, io
+) -> tuple[str, str, frozenset, frozenset]:
+    """能力標籤集合的正規化 key，用於回填去重（集合無序、可雜湊）。"""
+    return (modality, model_family, frozenset(conditioning), frozenset(io))
+
+
+def manifest_key(m: "WorkflowManifest") -> tuple[str, str, frozenset, frozenset]:
+    return capability_key(m.modality, m.model_family, m.conditioning, m.io)
 
 
 @dataclass
@@ -189,3 +202,138 @@ def load_manifests(workflows_dir: Path | None = None) -> list[LoadedManifest]:
             )
         )
     return sorted(results, key=lambda r: r.manifest.id)
+
+
+# --- 回填：把一份驗證過成功的 workflow 晉升為可重用模板 -------------------
+
+
+def strip_workflow_to_shape(workflow: Mapping[str, Any]) -> dict[str, Any]:
+    """剝去一次性內容（content prompt、固定 seed），留下可重用形狀。
+    重用 apply_params 的節點定位（positive/negative CLIPTextEncode、KSampler.seed），
+    把 seed 歸零、prompt/negative 文字清空；其餘圖結構不動。"""
+    import copy
+
+    from app.core.workflow import apply_params
+
+    return apply_params(
+        copy.deepcopy(dict(workflow)),
+        seed=0,
+        prompt="",
+        negative_prompt="",
+        bbox_detector=None,
+    )
+
+
+def _backfill_base_id(
+    modality: str, model_family: str, conditioning, io
+) -> str:
+    """由能力 key 產生可讀且編入家族（modality）的 base id。"""
+    parts = ["gen", modality, model_family]
+    parts += sorted(conditioning)
+    parts += sorted(set(io) - {"text"})  # text 為基本，不入名以免冗長
+    return "_".join(p for p in parts if p)
+
+
+def _available_id(wf_dir: Path, base: str) -> str:
+    """回傳未被占用的 id：base 可用就用 base，否則 base_v2 / v3 ...（版本化、不覆寫）。"""
+    if not (wf_dir / f"{base}.json").exists() and not (wf_dir / f"{base}.meta.json").exists():
+        return base
+    n = 2
+    while (wf_dir / f"{base}_v{n}.json").exists() or (wf_dir / f"{base}_v{n}.meta.json").exists():
+        n += 1
+    return f"{base}_v{n}"
+
+
+def _mark_deprecated(wf_dir: Path, template_id: str) -> None:
+    """把既有模板的 meta 標記 deprecated（只動 metadata，不碰 graph）。"""
+    meta = wf_dir / f"{template_id}.meta.json"
+    if not meta.exists():
+        return
+    with meta.open(encoding="utf-8") as f:
+        raw = json.load(f)
+    raw["deprecated"] = True
+    with meta.open("w", encoding="utf-8") as f:
+        json.dump(raw, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def backfill_template(
+    workflow: Mapping[str, Any],
+    *,
+    modality: str,
+    model_family: str,
+    conditioning,
+    io,
+    description: str = "",
+    workflows_dir: Path | None = None,
+) -> dict[str, Any]:
+    """
+    把一份「已驗證成功」的 workflow 晉升為模板（呼叫端負責 DB 成功閘門）。
+    - 標籤須通過受控詞彙驗證。
+    - 以能力 key 去重：已有有效同 key 模板 → 不新增（回 reused）。
+    - 無同 key → 新增，依 modality 家族命名歸檔，存「形狀」（剝 prompt/seed）。
+    - 同 key 但既有模板已壞 → 出新版本並把舊的標 deprecated（永不就地改 graph、不合併圖）。
+    """
+    wf_dir = workflows_dir or WORKFLOWS_DIR
+    conditioning = tuple(conditioning or ())
+    io = tuple(io or ())
+
+    candidate = WorkflowManifest(
+        id="(pending)",
+        modality=modality,
+        model_family=model_family,
+        conditioning=conditioning,
+        io=io,
+        description=description,
+    )
+    problems = validate_manifest(candidate)
+    if problems:
+        return {"ok": False, "error": "invalid_tags", "problems": problems}
+
+    key = capability_key(modality, model_family, conditioning, io)
+    existing = load_manifests(wf_dir)
+    same_key = [
+        lm for lm in existing
+        if manifest_key(lm.manifest) == key and not lm.manifest.deprecated
+    ]
+    valid_same = [lm for lm in same_key if lm.valid]
+    if valid_same:
+        return {
+            "ok": True,
+            "created": False,
+            "reused": valid_same[0].manifest.id,
+            "reason": "capability already covered by an existing template",
+        }
+
+    base_id = _backfill_base_id(modality, model_family, conditioning, io)
+    deprecated_id = None
+    broken_same = [lm for lm in same_key if not lm.valid]
+    if broken_same:
+        _mark_deprecated(wf_dir, broken_same[0].manifest.id)
+        deprecated_id = broken_same[0].manifest.id
+
+    new_id = _available_id(wf_dir, base_id)
+    shape = strip_workflow_to_shape(workflow)
+
+    wf_dir.mkdir(parents=True, exist_ok=True)
+    with (wf_dir / f"{new_id}.json").open("w", encoding="utf-8") as f:
+        json.dump(shape, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    manifest_doc = {
+        "id": new_id,
+        "modality": modality,
+        "model_family": model_family,
+        "conditioning": list(conditioning),
+        "io": list(io),
+        "description": description,
+    }
+    with (wf_dir / f"{new_id}.meta.json").open("w", encoding="utf-8") as f:
+        json.dump(manifest_doc, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+    return {
+        "ok": True,
+        "created": True,
+        "template_id": new_id,
+        "deprecated": deprecated_id,
+    }
