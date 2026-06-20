@@ -1,0 +1,12 @@
+{
+  "id": "gen_txt2img_anima_lora_model_only",
+  "modality": "txt2img",
+  "model_family": "anima",
+  "conditioning": [
+    "lora_model_only"
+  ],
+  "io": [
+    "text"
+  ],
+  "description": "Reusable Anima txt2img workflow with Qwen text encoder/VAE and model-only LoRA injection via LoraLoaderModelOnly before KSampler; verified from successful job 17aa6303-8f75-4f50-b790-d66340071c2b."
+}

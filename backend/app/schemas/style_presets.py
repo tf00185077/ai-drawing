@@ -12,6 +12,7 @@ class StylePresetSummary(BaseModel):
 
     id: str
     name: str
+    chinese_name: str | None = None
     profiles: list[str] = Field(default_factory=list)
     note_path: str | None = None
     template: str | None = None
@@ -31,6 +32,7 @@ class CreatePresetRequest(BaseModel):
 
     id: str
     name: str
+    chinese_name: str | None = None
     base_prompt: str = ""
     negative_prompt: str = ""
     template: str | None = None
@@ -61,6 +63,7 @@ class StylePresetDetail(BaseModel):
 
     id: str
     name: str
+    chinese_name: str | None = None
     note_path: str | None = None
     template: str | None = None
     checkpoint: str | None = None

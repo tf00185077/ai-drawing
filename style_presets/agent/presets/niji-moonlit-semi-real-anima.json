@@ -1,0 +1,79 @@
+{
+  "id": "niji-moonlit-semi-real-anima",
+  "name": "Niji Moonlit Semi-real Anima",
+  "base_prompt": "masterpiece, best quality, high-quality Anima illustration, semi-realistic anime rendering, dark cinematic color grading, moonlit atmosphere, cool blue rim lighting, deep shadow contrast, glossy highlight rendering, sharp detailed hair, polished high-resolution finish, dramatic portrait lighting",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, bright daytime, washed out, low contrast",
+  "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+  "checkpoint": null,
+  "lora": "anima-highres-aesthetic-boost.safetensors",
+  "lora_strength": 0.7,
+  "diffusion_model": "anima_baseV10.safetensors",
+  "text_encoder": "anima_baseV10_txt.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "steps": 30,
+    "cfg": 5.0,
+    "sampler_name": "er_sde",
+    "scheduler": "simple",
+    "seed": 375618583377335
+  },
+  "profiles": {
+    "source-color-style-neutral": {
+      "prompt_prefix": "semi-realistic niji anime style, cool moonlit color palette, high-contrast glossy lighting, sharp specular highlights",
+      "prompt_suffix": "polished high-resolution finish, cinematic dark background separation, refined semi-real rendering",
+      "negative_prompt": "black armor, sword, moon, night sky, black hair, woman, armor, medieval costume, source character, exact source pose",
+      "params": {
+        "steps": 30,
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "scheduler": "simple"
+      }
+    },
+    "source-image-131966887": {
+      "prompt_prefix": "black hair, woman, solo, armor, moon, night, dark fantasy portrait, upper body, cool moonlight, glossy metal armor",
+      "prompt_suffix": "semi-realistic niji anime style, highres aesthetic boost, sharp detailed hair, cinematic dark background",
+      "negative_prompt": "",
+      "params": {
+        "steps": 30,
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "scheduler": "simple",
+        "seed": 375618583377335
+      }
+    }
+  },
+  "note_path": "style_presets/human/niji-moonlit-semi-real-anima.md",
+  "required_resources": {
+    "source_image_url": "https://civitai.com/images/131966887",
+    "base_model": {
+      "type": "anima_split_model",
+      "diffusion_model": "anima_baseV10.safetensors",
+      "text_encoder": "anima_baseV10_txt.safetensors",
+      "vae": "qwen_image_vae.safetensors",
+      "model_version_id": 2945208
+    },
+    "loras": [
+      {
+        "name": "anima-highres-aesthetic-boost.safetensors",
+        "model": "Anima Highres/Aesthetic Boost",
+        "version_id": 2855073,
+        "strength_model": 0.7
+      },
+      {
+        "name": "Niji Reol v1 EP11.safetensors",
+        "model": "NijiReol | Semi-realistic Niji Style [Anima/NAI/Z-Image]",
+        "version_id": 2960729,
+        "strength_model": 0.8
+      },
+      {
+        "name": "AnimaNSS4RE.safetensors",
+        "model": "Niji Sweet Spot",
+        "version_id": 2964538,
+        "strength_model": 0.65
+      }
+    ],
+    "required_workflow": "anima_txt2img_multi_lora_model_only",
+    "note": "MCP StylePreset schema currently exposes one lora field; required_resources is agent-readable metadata. Actual generation must use a custom/workflow-template graph with all three LoraLoaderModelOnly nodes."
+  },
+  "chinese_name": "月光半寫實 Niji Anima"
+}

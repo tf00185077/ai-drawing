@@ -1,0 +1,33 @@
+{
+  "id": "digital-painting-a",
+  "name": "電繪A / Anima Masterpiece Digital Painting",
+  "base_prompt": "masterpiece, very aesthetic, absurdres, @[yoneyama mai|kuga huna|diyokama], high-end digital anime illustration, refined painterly linework, polished commercial key visual, elegant decorative composition",
+  "negative_prompt": "worst quality, low quality, blurry, jpeg artifacts, sepia, signature, artist name, bad anatomy, deformed",
+  "template": "anima",
+  "checkpoint": null,
+  "lora": "anima-base-1-masterpiece-v51.safetensors",
+  "lora_strength": 1.0,
+  "diffusion_model": "anima_baseV10.safetensors",
+  "text_encoder": "qwen_3_06b_base.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "steps": 30,
+    "cfg": 4.0,
+    "sampler_name": "sa_solver_pece",
+    "scheduler": "simple",
+    "denoise": 1.0
+  },
+  "profiles": {
+    "warm-pastel": {
+      "prompt_prefix": "soft warm lighting, pastel color palette, delicate atmospheric glow",
+      "prompt_suffix": "flowing fabric accents, traditional decorative background elements, cinematic medium-shot framing, clean detailed rendering",
+      "negative_prompt": "harsh contrast, muddy colors, flat lighting",
+      "params": {
+        "cfg": 4.0,
+        "steps": 30
+      }
+    }
+  },
+  "note_path": "style_presets/human/digital-painting-a.md",
+  "chinese_name": "暖粉日系電繪 Anima"
+}

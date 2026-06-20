@@ -70,6 +70,7 @@ async def list_style_presets(
         StylePresetSummary(
             id=s["id"],
             name=s["name"],
+            chinese_name=s.get("chinese_name"),
             profiles=s.get("profiles", []),
             note_path=s.get("note_path"),
             template=s.get("template"),
@@ -147,6 +148,7 @@ async def get_style_preset(
     return StylePresetDetail(
         id=preset.id,
         name=preset.name,
+        chinese_name=preset.chinese_name,
         note_path=preset.note_path,
         template=preset.template,
         checkpoint=preset.checkpoint,
