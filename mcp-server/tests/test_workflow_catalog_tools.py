@@ -5,8 +5,35 @@ from unittest.mock import MagicMock, patch
 from mcp_server.tools.workflow_catalog import (
     list_template_capabilities,
     match_workflow_template,
+    save_workflow_template,
     validate_template_capabilities,
 )
+
+
+def test_save_workflow_template_created() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"ok": True, "created": True, "template_id": "gen_img2img_sdxl", "deprecated": None}
+    with patch("mcp_server.tools.workflow_catalog._get_client", return_value=mock_client):
+        result = json.loads(save_workflow_template("job1", "img2img", "sdxl", conditioning=["controlnet_pose"], io=["text", "image_ref"]))
+
+    assert result["ok"] is True and result["created"] is True
+    assert result["template_id"] == "gen_img2img_sdxl"
+    assert "reuse" in result["next"]
+    mock_client.post.assert_called_once_with(
+        "workflow-catalog/backfill",
+        json={"job_id": "job1", "modality": "img2img", "model_family": "sdxl",
+              "conditioning": ["controlnet_pose"], "io": ["text", "image_ref"], "description": ""},
+    )
+
+
+def test_save_workflow_template_reused() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"ok": True, "created": False, "reused": "default"}
+    with patch("mcp_server.tools.workflow_catalog._get_client", return_value=mock_client):
+        result = json.loads(save_workflow_template("job1", "txt2img", "sdxl"))
+
+    assert result["created"] is False
+    assert "default" in result["next"]
 
 
 def test_match_hit_tells_agent_to_reuse() -> None:

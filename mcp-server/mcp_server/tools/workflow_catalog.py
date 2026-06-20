@@ -86,6 +86,49 @@ def match_workflow_template(
 
 
 @mcp.tool()
+def save_workflow_template(
+    job_id: str,
+    modality: str,
+    model_family: str,
+    conditioning: list[str] | None = None,
+    io: list[str] | None = None,
+    description: str = "",
+) -> str:
+    """Promote a self-authored workflow that SUCCEEDED into the reusable template catalog, so future needs match it (the library self-extends). Call this only after a custom-workflow job has completed successfully (get_generation_status returns completed). Pass that job's `job_id` plus the capability tags describing what the workflow does — `modality` (txt2img|img2img|inpaint), `model_family` (e.g. sdxl, anima), and optional `conditioning`/`io` sets — drawn from the controlled vocabulary. The backend gates on the DB success record (only a recorded success is promotable), reads the actual submitted workflow, strips one-off prompt/seed to store a reusable shape, dedupes on the capability tag-set (no duplicate if already covered), files it under its modality family, and versions rather than overwriting. Returns agent-friendly JSON: created (new template_id), reused (existing id covers it), or an error. Reserve this for genuinely new, reusable shapes — not one-off experiments."""
+    try:
+        client = _get_client()
+        body = {
+            "job_id": job_id,
+            "modality": modality,
+            "model_family": model_family,
+            "conditioning": conditioning or [],
+            "io": io or [],
+            "description": description,
+        }
+        resp = client.post("workflow-catalog/backfill", json=body)
+        if resp.get("created"):
+            nxt = f"template '{resp.get('template_id')}' added; future matches can reuse it"
+            if resp.get("deprecated"):
+                nxt += f" (superseded broken template '{resp['deprecated']}')"
+        else:
+            nxt = f"not added; capability already covered by '{resp.get('reused')}'"
+        return json.dumps(
+            {"ok": True, "tool": "save_workflow_template", **resp, "next": nxt},
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "save_workflow_template",
+                "where": "backend",
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def validate_template_capabilities() -> str:
     """Validate every workflow template's capability manifest: tags drawn from the controlled vocabulary, manifest id matching the template filename, and the referenced workflow file existing. Invalid templates are returned as data (with per-template problems), not as a tool failure. Returns agent-friendly JSON."""
     try:

@@ -28,12 +28,12 @@
 
 ## 5. Template backfill / self-extending catalog (capability: workflow-template-catalog)
 
-- [ ] 5.1 Define the verified-success gate (ComfyUI produced an image AND recording succeeded) as the only promotion trigger
-- [ ] 5.2 Implement shape extraction that strips one-off values (content prompt, fixed seed) leaving a parameterizable template
-- [ ] 5.3 Implement capability-key dedup: existing key → no duplicate; new key → create entry tagged + filed under modality family
-- [ ] 5.4 Implement version-on-change: superseding a broken same-key template creates a new version and marks the prior deprecated; never mutate a shared template in place; never auto-merge graphs
-- [ ] 5.5 Decide and implement the backfill trigger surface (worker post-record vs explicit MCP tool — see design Open Questions)
-- [ ] 5.6 Tests: failed/unrecorded generation not promoted; verified new key creates family-filed entry; existing key not duplicated; broken same-key superseded by new version with prior deprecated and unmodified; scaffold template not mutated; backfilled template does not hardcode content prompt or seed
+- [x] 5.1 Define the verified-success gate (ComfyUI produced an image AND recording succeeded) as the only promotion trigger — backend gates on a DB `GeneratedImage` row for the `job_id` with a non-null `workflow_json` (cross-process/restart safe; relies on persist-full-workflow-for-rerun + harden-queue-completion)
+- [x] 5.2 Implement shape extraction that strips one-off values (content prompt, fixed seed) leaving a parameterizable template — `strip_workflow_to_shape` reuses `apply_params(seed=0, prompt="", negative_prompt="")`
+- [x] 5.3 Implement capability-key dedup: existing key → no duplicate (reused); new key → create entry tagged + filed under modality family (id `gen_<modality>_<family>[_<cond>][_<io>]`)
+- [x] 5.4 Implement version-on-change: broken same-key template → new version + prior marked `deprecated` (meta-only, graph untouched); deprecated excluded from reuse matching; never mutate a shared graph; never auto-merge
+- [x] 5.5 Backfill trigger = explicit MCP tool `save_workflow_template` (+ `POST /api/workflow-catalog/backfill`), not the worker — agent supplies accurate tags, backend enforces the DB success gate
+- [x] 5.6 Tests: unknown/legacy job not promoted (404/409); verified new key creates family-filed entry; existing key not duplicated; broken same-key superseded by new version with prior deprecated and unmodified; deprecated not matched; shape strips prompt/seed
 
 ## 6. Agent guidance + consolidation
 
