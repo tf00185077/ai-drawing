@@ -1,6 +1,6 @@
 ---
 preset_id: creator-a
-catalog_path: backend/style_presets/catalog.json
+catalog_path: style_presets/agent/catalog.json
 checkpoint: novaAnimeXL_ilV190.safetensors
 lora: creatorA_style_v2.safetensors
 source_url:

@@ -405,9 +405,12 @@ class FileStylePresetProvider:
 
 # --- 預設來源（執行期 catalog 檔） ----------------------------------------
 
-# backend/style_presets/catalog.json（backend 套件的上層目錄）
+# 專案根目錄 style_presets/agent/catalog.json（機器可讀來源；人類筆記在 style_presets/human/）
+# 注意：from_file 以 path.parent.parent.parent 推 project_root，此路徑（root/style_presets/agent）
+# 三層回到 repo root，note_path 仍以 repo-root 相對路徑解析。
 DEFAULT_CATALOG_PATH = (
-    Path(__file__).resolve().parent.parent.parent / "style_presets" / "catalog.json"
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "style_presets" / "agent" / "catalog.json"
 )
 
 

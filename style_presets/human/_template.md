@@ -1,6 +1,6 @@
 ---
 preset_id: replace-with-kebab-case-id
-catalog_path: backend/style_presets/catalog.json
+catalog_path: style_presets/agent/catalog.json
 checkpoint:
 lora:
 source_url:
