@@ -7,8 +7,19 @@ from mcp_server.tools.style_presets import (
     compose_style_preset,
     get_style_preset,
     list_style_presets,
+    reindex_style_presets,
     validate_style_presets,
 )
+
+
+def test_reindex_style_presets_rebuilds() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"presets": [{"id": "creator-a", "name": "x", "profiles": []}]}
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        result = json.loads(reindex_style_presets())
+    assert result["ok"] is True
+    assert result["count"] == 1
+    mock_client.post.assert_called_once_with("style-presets/reindex")
 
 
 def test_list_style_presets_returns_agent_friendly_json() -> None:
