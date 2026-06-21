@@ -12,11 +12,13 @@ class StylePresetSummary(BaseModel):
 
     id: str
     name: str
+    chinese_name: str | None = None
     profiles: list[str] = Field(default_factory=list)
     note_path: str | None = None
     template: str | None = None
     checkpoint: str | None = None
     lora: str | None = None
+    loras: list[dict[str, Any]] = Field(default_factory=list)
     diffusion_model: str | None = None
 
 
@@ -24,6 +26,31 @@ class StylePresetListResponse(BaseModel):
     """GET /api/style-presets/ 的 Response"""
 
     items: list[StylePresetSummary]
+
+
+class CreatePresetRequest(BaseModel):
+    """POST /api/style-presets/ 的 Request：依欄位建立 preset（機器食譜 + 人類 note）。"""
+
+    id: str
+    name: str
+    chinese_name: str | None = None
+    base_prompt: str = ""
+    negative_prompt: str = ""
+    template: str | None = None
+    checkpoint: str | None = None
+    lora: str | None = None
+    lora_strength: float | None = None
+    loras: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="多 lora：[{name, strength_model, strength_clip?}]，依模板 LoraLoader 順序對應；優先於單一 lora",
+    )
+    diffusion_model: str | None = None
+    text_encoder: str | None = None
+    vae: str | None = None
+    default_params: dict[str, Any] = Field(default_factory=dict)
+    profiles: dict[str, Any] = Field(default_factory=dict)
+    create_note: bool = True
+    overwrite: bool = False
 
 
 class StylePresetProfileDetail(BaseModel):
@@ -41,11 +68,13 @@ class StylePresetDetail(BaseModel):
 
     id: str
     name: str
+    chinese_name: str | None = None
     note_path: str | None = None
     template: str | None = None
     checkpoint: str | None = None
     lora: str | None = None
     lora_strength: float | None = None
+    loras: list[dict[str, Any]] = Field(default_factory=list)
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None

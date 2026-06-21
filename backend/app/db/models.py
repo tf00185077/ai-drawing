@@ -27,4 +27,9 @@ class GeneratedImage(Base):
     cfg = Column(Float, nullable=True)
     prompt = Column(Text, nullable=True)
     negative_prompt = Column(Text, nullable=True)
+    # 忠實重生所需：實際送出 ComfyUI 的完整 workflow（JSON 字串），以及來源圖/遮罩的
+    # gallery 相對路徑（workflow_json 內只嵌 ComfyUI 暫存輸入檔名，重生需重新上傳原圖）。
+    workflow_json = Column(Text, nullable=True)
+    source_image = Column(String(512), nullable=True)
+    source_mask = Column(String(512), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

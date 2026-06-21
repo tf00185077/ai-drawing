@@ -90,6 +90,38 @@ def test_apply_params_replaces_lora_in_default_lora() -> None:
     assert result["10"]["inputs"]["lora_name"] == "/path/to/my_lora.safetensors"
 
 
+def test_apply_params_replaces_lora_model_only_in_anima_lora_template() -> None:
+    """Anima 的 LoraLoaderModelOnly 也必須被 lora/lora_strength 覆寫。"""
+    wf = load_template("gen_txt2img_anima_lora_model_only")
+    original_lora = wf["10"]["inputs"]["lora_name"]
+
+    result = apply_params(
+        wf,
+        prompt="test",
+        lora="Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+        lora_strength=0.73,
+    )
+
+    assert original_lora != "Tactile_Verism-Anima-tcl-vrs-style.safetensors"
+    assert result["10"]["class_type"] == "LoraLoaderModelOnly"
+    assert result["10"]["inputs"]["lora_name"] == "Tactile_Verism-Anima-tcl-vrs-style.safetensors"
+    assert result["10"]["inputs"]["strength_model"] == 0.73
+    assert "strength_clip" not in result["10"]["inputs"]
+
+
+def test_extract_params_reads_lora_model_only() -> None:
+    """反解參數時也要能從 LoraLoaderModelOnly 讀回實際 LoRA。"""
+    wf = load_template("gen_txt2img_anima_lora_model_only")
+    applied = apply_params(
+        wf,
+        prompt="test prompt",
+        negative_prompt="bad",
+        lora="Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+    )
+
+    assert extract_params_from_workflow(applied)["lora"] == "Tactile_Verism-Anima-tcl-vrs-style.safetensors"
+
+
 def test_apply_params_replaces_width_height_sampler() -> None:
     """apply_params 正確替換 EmptyLatentImage 與 KSampler 的 width、height、sampler_name、scheduler"""
     wf = load_template("default")
@@ -197,9 +229,9 @@ def test_apply_params_sets_bbox_detector_on_dwpreprocessor() -> None:
 
 def test_apply_params_overrides_bbox_detector_when_provided() -> None:
     """apply_params 可覆寫 bbox_detector"""
-    wf = load_template("honoka_pose_controlnet")
-    result = apply_params(wf, prompt="test", bbox_detector="yolo_nas_s_fp16.onnx")
-    assert result["6"]["inputs"]["bbox_detector"] == "yolo_nas_s_fp16.onnx"
+    wf = load_template("controlnet_pose")
+    result = apply_params(wf, prompt="test", bbox_detector="custom_detector.onnx")
+    assert result["13"]["inputs"]["bbox_detector"] == "custom_detector.onnx"
 
 
 def test_extract_params_from_workflow_returns_all_params() -> None:

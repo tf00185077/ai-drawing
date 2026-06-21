@@ -1,0 +1,13 @@
+{
+  "id": "gen_txt2img_anima_lora_model_only_multi_lora",
+  "modality": "txt2img",
+  "model_family": "anima",
+  "conditioning": [
+    "lora_model_only",
+    "multi_lora"
+  ],
+  "io": [
+    "text"
+  ],
+  "description": "Anima txt2img workflow with chained LoraLoaderModelOnly nodes for multiple model-only LoRAs, created from Civitai image 131966887 source style."
+}

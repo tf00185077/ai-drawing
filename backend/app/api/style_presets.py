@@ -17,6 +17,7 @@ from app.core.resources import (
     list_vaes,
 )
 from app.core.style_presets import (
+    PresetExistsError,
     PresetNotFoundError,
     ProfileNotFoundError,
     ResourceInventory,
@@ -26,6 +27,7 @@ from app.core.style_presets import (
 from app.schemas.style_presets import (
     ComposeRequest,
     ComposeResponse,
+    CreatePresetRequest,
     MissingResourceItem,
     PresetValidationItem,
     StylePresetDetail,
@@ -63,21 +65,55 @@ def _current_inventory() -> ResourceInventory:
 async def list_style_presets(
     provider: StylePresetProvider = Depends(_provider),
 ):
-    """列出所有風格 preset（輕量條目，不需讀取 Obsidian / Markdown）。"""
+    """列出所有風格 preset（只讀輕量 index，不載入完整食譜或 Markdown）。"""
     items = [
         StylePresetSummary(
-            id=p.id,
-            name=p.name,
-            profiles=p.profile_names,
-            note_path=p.note_path,
-            template=p.template,
-            checkpoint=p.checkpoint,
-            lora=p.lora,
-            diffusion_model=p.diffusion_model,
+            id=s["id"],
+            name=s["name"],
+            chinese_name=s.get("chinese_name"),
+            profiles=s.get("profiles", []),
+            note_path=s.get("note_path"),
+            template=s.get("template"),
+            checkpoint=s.get("checkpoint"),
+            lora=s.get("lora"),
+            loras=s.get("loras", []),
+            diffusion_model=s.get("diffusion_model"),
         )
-        for p in provider.list_presets()
+        for s in provider.list_summaries()
     ]
     return StylePresetListResponse(items=items)
+
+
+@router.post("/reindex")
+async def reindex_style_presets(
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """重建輕量 index（掃描 presets/*.json）。手動／編輯 preset 後呼叫。"""
+    return provider.reindex()
+
+
+@router.post("/", status_code=201)
+async def create_style_preset(
+    body: CreatePresetRequest,
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """依欄位建立 preset：寫機器食譜 + 人類 note + reindex。id 重複回 409、id/name 不合法回 422。"""
+    fields = body.model_dump(exclude={"create_note", "overwrite"})
+    try:
+        result = provider.create_preset(
+            fields, create_note=body.create_note, overwrite=body.overwrite
+        )
+    except PresetExistsError:
+        raise HTTPException(409, f"preset 已存在：{body.id}（如要取代請設 overwrite=true）")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    # 非阻斷式驗證：回報缺少的資源讓呼叫端後續修正
+    v = provider.validate_preset(result["id"], _current_inventory())
+    result["validation"] = {
+        "valid": v.valid,
+        "missing": [{"resource_type": m.resource_type, "name": m.name} for m in v.missing],
+    }
+    return result
 
 
 @router.get("/validate", response_model=StylePresetValidationResponse)
@@ -113,11 +149,13 @@ async def get_style_preset(
     return StylePresetDetail(
         id=preset.id,
         name=preset.name,
+        chinese_name=preset.chinese_name,
         note_path=preset.note_path,
         template=preset.template,
         checkpoint=preset.checkpoint,
         lora=preset.lora,
         lora_strength=preset.lora_strength,
+        loras=[dict(x) for x in preset.loras],
         diffusion_model=preset.diffusion_model,
         text_encoder=preset.text_encoder,
         vae=preset.vae,

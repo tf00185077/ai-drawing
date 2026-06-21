@@ -1,0 +1,123 @@
+{
+  "presets": [
+    {
+      "id": "asagi-floral-pastel-anima",
+      "name": "Toosaka Asagi Floral Pastel Anima",
+      "chinese_name": "淺蔥花境粉彩 Anima",
+      "profiles": [
+        "source-color-style-neutral",
+        "source-image-130992277"
+      ],
+      "note_path": "style_presets/human/asagi-floral-pastel-anima.md",
+      "template": "anima",
+      "checkpoint": null,
+      "lora": null,
+      "loras": [],
+      "diffusion_model": "anima_baseV10.safetensors"
+    },
+    {
+      "id": "creator-a",
+      "name": "Creator A 柔光動漫",
+      "chinese_name": "柔光動漫創作者 A",
+      "profiles": [
+        "portrait",
+        "full-body"
+      ],
+      "note_path": "style_presets/human/creator-a.md",
+      "template": "default_lora",
+      "checkpoint": "novaAnimeXL_ilV190.safetensors",
+      "lora": "creatorA_style_v2.safetensors",
+      "loras": [],
+      "diffusion_model": null
+    },
+    {
+      "id": "digital-painting-a",
+      "name": "電繪A / Anima Masterpiece Digital Painting",
+      "chinese_name": "暖粉日系電繪 Anima",
+      "profiles": [
+        "warm-pastel"
+      ],
+      "note_path": "style_presets/human/digital-painting-a.md",
+      "template": "anima",
+      "checkpoint": null,
+      "lora": "anima-base-1-masterpiece-v51.safetensors",
+      "loras": [],
+      "diffusion_model": "anima_baseV10.safetensors"
+    },
+    {
+      "id": "hoseki-lustrousmix-anima",
+      "name": "Hoseki LustrousMix Anima / Abstract Gem Illustration",
+      "chinese_name": "寶石抽象插畫 Anima",
+      "profiles": [
+        "neutral-anime",
+        "source-image-132048670"
+      ],
+      "note_path": "style_presets/human/hoseki-lustrousmix-anima.md",
+      "template": "anima",
+      "checkpoint": null,
+      "lora": null,
+      "loras": [],
+      "diffusion_model": "hosekiLustrousmixAnima_animaV10.safetensors"
+    },
+    {
+      "id": "niji-moonlit-semi-real-anima",
+      "name": "Niji Moonlit Semi-real Anima",
+      "chinese_name": "月光半寫實 Niji Anima",
+      "profiles": [
+        "source-color-style-neutral",
+        "source-image-131966887"
+      ],
+      "note_path": "style_presets/human/niji-moonlit-semi-real-anima.md",
+      "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+      "checkpoint": null,
+      "lora": "anima-highres-aesthetic-boost.safetensors",
+      "loras": [
+        {
+          "name": "anima-highres-aesthetic-boost.safetensors",
+          "strength_model": 0.7
+        },
+        {
+          "name": "Niji Reol v1 EP11.safetensors",
+          "strength_model": 0.8
+        },
+        {
+          "name": "AnimaNSS4RE.safetensors",
+          "strength_model": 0.65
+        }
+      ],
+      "diffusion_model": "anima_baseV10.safetensors"
+    },
+    {
+      "id": "posing-dynamics-watercolor-silhouette-anima",
+      "name": "Posing Dynamics Watercolor Silhouette Anima",
+      "chinese_name": "水彩剪影動態姿勢 Anima",
+      "profiles": [
+        "source-color-style-neutral",
+        "source-image-130172482"
+      ],
+      "note_path": "style_presets/human/posing-dynamics-watercolor-silhouette-anima.md",
+      "template": "gen_txt2img_anima_lora_model_only",
+      "checkpoint": null,
+      "lora": "posing-dynamics-anima.safetensors",
+      "loras": [],
+      "diffusion_model": "anima_preview3Base.safetensors"
+    },
+    {
+      "id": "tactile-verism-city-noir-anima",
+      "name": "Tactile Verism City Noir Anima",
+      "chinese_name": "厚塗油彩城市夜景 Anima",
+      "profiles": [
+        "source-color-style-neutral",
+        "source-image-133592240",
+        "anime-oil-color-safe",
+        "anime-oil-character-preserving"
+      ],
+      "note_path": "style_presets/human/tactile-verism-city-noir-anima.md",
+      "template": "gen_txt2img_anima_lora_model_only",
+      "checkpoint": null,
+      "lora": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+      "loras": [],
+      "diffusion_model": "anima_baseV10.safetensors"
+    }
+  ]
+}

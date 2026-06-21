@@ -55,6 +55,7 @@ def apply_params(
     mask: str | None = None,
     denoise: float | None = None,
     lora_strength: float | None = None,
+    loras: list[dict] | None = None,
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
@@ -69,7 +70,7 @@ def apply_params(
     - UNETLoader.unet_name <- diffusion_model（退回 checkpoint）；diffusion-model 家族，如 Anima
     - CLIPLoader.clip_name <- text_encoder
     - VAELoader.vae_name <- vae
-    - LoraLoader.lora_name <- lora
+    - LoraLoader / LoraLoaderModelOnly.lora_name <- lora
     - CLIPTextEncode (接 KSampler.positive).text <- prompt
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
     - KSampler.seed, steps, cfg, sampler_name, scheduler, denoise
@@ -154,6 +155,12 @@ def apply_params(
         if isinstance(node, dict) and node.get("class_type") == "LoadImage"
     )
 
+    # 1c. 多 lora：依 workflow JSON 出現順序收集 LoraLoader 節點，供 loras 逐一對應。
+    lora_loader_ids = [
+        nid for nid, node in wf.items()
+        if isinstance(node, dict) and node.get("class_type") in ("LoraLoader", "LoraLoaderModelOnly")
+    ]
+
     # 2. 替換各類節點
     for nid, node in wf.items():
         if not isinstance(node, dict):
@@ -177,12 +184,17 @@ def apply_params(
         if ct == "VAELoader" and vae is not None:
             inputs["vae_name"] = vae
 
-        if ct == "LoraLoader":
+        # 單一 lora：僅在未提供 loras 時套用（維持「同一 lora 灌入所有 loader」舊行為）。
+        # 提供 loras 時走下方逐節點對應，loras 優先。
+        if loras is None and ct in ("LoraLoader", "LoraLoaderModelOnly"):
             if lora is not None:
                 inputs["lora_name"] = lora
             if lora_strength is not None:
                 inputs["strength_model"] = lora_strength
-                inputs["strength_clip"] = lora_strength
+                # LoraLoaderModelOnly only exposes strength_model; the regular
+                # LoraLoader also needs strength_clip for CLIP-side LoRAs.
+                if ct == "LoraLoader":
+                    inputs["strength_clip"] = lora_strength
 
         if ct == "KSampler":
             if seed is not None:
@@ -228,6 +240,23 @@ def apply_params(
             if nid in negative_node_ids and negative_prompt is not None:
                 inputs["text"] = negative_prompt
 
+    # 3. 多 lora 逐節點對應：loras[i] → 第 i 個 LoraLoader 節點（依 workflow JSON 順序）。
+    # zip 以較短者為準：loras 多於節點則忽略多出的；少於則其餘 loader 維持模板原值。
+    if loras:
+        for spec, nid in zip(loras, lora_loader_ids):
+            node = wf.get(nid)
+            if not isinstance(node, dict):
+                continue
+            inputs = node.setdefault("inputs", {})
+            name = spec.get("name")
+            if name is not None:
+                inputs["lora_name"] = name
+            strength_model = spec.get("strength_model", 1.0)
+            inputs["strength_model"] = strength_model
+            if node.get("class_type") == "LoraLoader":
+                strength_clip = spec.get("strength_clip")
+                inputs["strength_clip"] = strength_model if strength_clip is None else strength_clip
+
     return wf
 
 
@@ -255,7 +284,7 @@ def extract_model_files_from_workflow(workflow: dict) -> dict:
     Returns:
         {
             "checkpoint": str | None,        # CheckpointLoaderSimple.ckpt_name
-            "lora": str | None,              # LoraLoader.lora_name
+            "lora": str | None,              # LoraLoader / LoraLoaderModelOnly.lora_name
             "diffusion_model": str | None,   # UNETLoader.unet_name
             "text_encoder": str | None,      # CLIPLoader.clip_name
             "vae": str | None,               # VAELoader.vae_name
@@ -275,7 +304,7 @@ def extract_model_files_from_workflow(workflow: dict) -> dict:
         inputs = node.get("inputs", {})
         if ct == "CheckpointLoaderSimple":
             result["checkpoint"] = inputs.get("ckpt_name")
-        elif ct == "LoraLoader":
+        elif ct in ("LoraLoader", "LoraLoaderModelOnly"):
             result["lora"] = inputs.get("lora_name")
         elif ct == "UNETLoader":
             result["diffusion_model"] = inputs.get("unet_name")
@@ -378,7 +407,7 @@ def extract_params_from_workflow(workflow: dict) -> dict:
 
         if ct == "CheckpointLoaderSimple":
             result["checkpoint"] = inputs.get("ckpt_name")
-        if ct == "LoraLoader":
+        if ct in ("LoraLoader", "LoraLoaderModelOnly"):
             result["lora"] = inputs.get("lora_name")
         if ct == "KSampler":
             seed = inputs.get("seed")

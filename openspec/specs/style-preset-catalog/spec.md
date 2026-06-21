@@ -3,9 +3,7 @@
 ## Purpose
 
 A structured catalog of named "creator recipes" (style presets) that bundle ComfyUI resource references, prompt components, generation defaults, and optional profiles. Presets are exposed to backend clients and MCP tools so an agent can list, inspect, validate, and compose them with a user content prompt into a `generate_image`-compatible payload. The catalog supports both checkpoint-based and diffusion-model-family presets, validates referenced resources and project-local notes, and remains optional—manual resource selection through `generate_image` is always supported.
-
 ## Requirements
-
 ### Requirement: Style preset catalog exposes named creator recipes
 
 The system SHALL load a structured style preset catalog and expose named presets to backend clients and MCP tools. Each preset SHALL include a stable `id`, display `name`, resource references, prompt components, optional profiles, and optional human note metadata.
@@ -115,3 +113,82 @@ The MCP server SHALL expose preset list, detail, validation, and composition ope
 - **WHEN** an agent calls the preset validation MCP tool
 - **THEN** the returned JSON includes per-preset validity and missing-resource diagnostics
 - **AND** invalid presets are represented as data rather than as an unhandled tool failure
+
+### Requirement: Catalog is stored as a lightweight index plus per-preset detail
+
+The system SHALL store the style preset catalog as a lightweight `index` of entries (each with at least `id`, `name`, and available profile names) plus a separate full recipe per preset. Listing presets SHALL read only the index and SHALL NOT load full preset bodies.
+
+#### Scenario: Listing reads only the index
+
+- **WHEN** a client lists style presets
+- **THEN** the response is built from the index entries (id, name, profiles, summary resource refs)
+- **AND** full preset bodies (base/negative prompt, default params, profile bodies) are not loaded to produce the list
+
+#### Scenario: Detail is loaded per preset on demand
+
+- **WHEN** a client requests or composes a specific preset by id
+- **THEN** only that preset's full recipe is loaded, not the whole catalog
+
+### Requirement: Reindex rebuilds the index and the read path self-heals
+
+The system SHALL provide a reindex operation that rebuilds the index from the per-preset detail files. If the index is missing when the catalog is read, the system SHALL rebuild it rather than failing.
+
+#### Scenario: Reindex reflects added or edited presets
+
+- **WHEN** a preset detail file is added or edited and reindex is run
+- **THEN** the index entries match the current set of preset files
+
+#### Scenario: Missing index self-heals on read
+
+- **WHEN** the index is absent but preset detail files exist
+- **THEN** a list request rebuilds the index from the detail files and returns the current presets
+
+### Requirement: Validation reports index and detail drift
+
+`validate_style_presets` SHALL report drift between the index and the per-preset detail files, in addition to the existing resource and note checks.
+
+#### Scenario: Detail file without an index entry is reported
+
+- **WHEN** a preset detail file exists with no corresponding index entry (or an index entry references a missing detail file)
+- **THEN** validation reports the drift as data rather than silently ignoring it
+
+### Requirement: Presets can be authored from supplied fields
+
+The system SHALL provide a create operation that writes a new style preset from supplied fields: the machine recipe under the per-preset detail layer and a human note, then refreshes the index so the preset is listable. `id` and `name` SHALL be required.
+
+#### Scenario: Create writes both layers and indexes
+
+- **WHEN** a client creates a preset with an `id`, `name`, and recipe fields
+- **THEN** the system writes the machine recipe as the preset's detail file
+- **AND** writes a human note whose frontmatter `preset_id` equals the `id`
+- **AND** the new preset appears in a subsequent listing
+
+#### Scenario: Created preset passes note validation
+
+- **WHEN** a preset is created with its note
+- **THEN** validation finds the note present with matching frontmatter `preset_id` (no `note_path` / `note_preset_id` diagnostics for that preset)
+
+### Requirement: Create does not clobber an existing preset by default
+
+The create operation SHALL refuse to overwrite an existing preset of the same `id` unless an explicit overwrite flag is set.
+
+#### Scenario: Duplicate id is rejected
+
+- **WHEN** a client creates a preset whose `id` already has a detail file and overwrite is not set
+- **THEN** the system rejects the request and does not modify the existing files
+
+#### Scenario: Overwrite replaces when explicitly requested
+
+- **WHEN** a client creates a preset with an existing `id` and overwrite is set
+- **THEN** the system replaces the recipe and reindexes
+
+### Requirement: Create reports referenced-resource validity without blocking
+
+The create operation SHALL return the created preset's resource validation result, reporting missing referenced resources as data rather than refusing creation.
+
+#### Scenario: Missing resource is reported, not blocking
+
+- **WHEN** a preset references a checkpoint or LoRA that is not installed
+- **THEN** the preset is still created
+- **AND** the response reports the missing resource so the caller can fix it later
+

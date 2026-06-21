@@ -131,6 +131,16 @@ def test_generate_image_with_optional_params_returns_submitted_payload() -> None
     assert data["submitted"] == call_json
 
 
+def test_generate_image_forwards_loras() -> None:
+    """generate_image 將多 lora 清單帶入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "x", "status": "queued"}
+    loras = [{"name": "a.safetensors", "strength_model": 0.8}, {"name": "b.safetensors", "strength_model": 0.5}]
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        generate_image(prompt="t", loras=loras)
+    assert mock_client.post.call_args[1]["json"]["loras"] == loras
+
+
 def test_generate_image_backend_error_returns_structured_json() -> None:
     """generate_image backend 失敗時回傳 ok=false 的穩定 JSON"""
     mock_client = MagicMock()
@@ -238,8 +248,9 @@ def test_generate_image_custom_workflow_submits_workflow() -> None:
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
         result = generate_image_custom_workflow(workflow=wf_json, prompt="1girl")
 
-    assert "abc" in result
-    assert "error" not in result.lower()
+    parsed = json.loads(result)
+    assert parsed["ok"] is True
+    assert parsed["job_id"] == "abc"
     mock_client.post.assert_called_once()
     call_json = mock_client.post.call_args[1]["json"]
     assert "workflow" in call_json
@@ -362,6 +373,28 @@ def test_get_generation_status_completed_includes_image_info() -> None:
     assert data["image_path"] == "2026-06-11/ComfyUI_00007__job_0.png"
     assert "get_gallery_image" in data["next"]
     assert "free_comfyui_memory" in data["next"]
+
+
+def test_get_generation_status_failed_surfaces_node_errors() -> None:
+    """get_generation_status failed 時回 ok=false + 結構化 node_errors，引導自我修正"""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "status": "failed",
+        "job_id": "job-f1",
+        "error": "invalid prompt",
+        "node_errors": [
+            {"node_id": "7", "class_type": "KSampler", "reason": "Value not in list"}
+        ],
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-f1")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["status"] == "failed"
+    assert data["node_errors"][0]["class_type"] == "KSampler"
+    assert "resubmit" in data["next"]
 
 
 def test_get_generation_status_not_found_returns_ok_false() -> None:

@@ -1,0 +1,10 @@
+{
+  "id": "default_lora",
+  "modality": "txt2img",
+  "model_family": "sdxl",
+  "conditioning": [],
+  "io": [
+    "text"
+  ],
+  "description": "Text-to-image with a checkpoint plus a LoRA. Works with any checkpoint family."
+}

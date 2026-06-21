@@ -42,6 +42,7 @@ from mcp_server.tools import (  # noqa: E402, F401
     generate,
     lora_train,
     style_presets,
+    workflow_catalog,
 )
 
 

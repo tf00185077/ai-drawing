@@ -1,0 +1,44 @@
+{
+  "id": "hoseki-lustrousmix-anima",
+  "name": "Hoseki LustrousMix Anima / Abstract Gem Illustration",
+  "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, abstract multicolored background, refined character linework, clean polished digital rendering, contemplative mood",
+  "negative_prompt": "worst quality, low quality, bad anatomy, jpeg artifacts, signature, sepia, fewer digits, extra digits, bad hands, watermark, score_1, score_2, score_3, censored",
+  "template": "anima",
+  "checkpoint": null,
+  "lora": null,
+  "lora_strength": null,
+  "diffusion_model": "hosekiLustrousmixAnima_animaV10.safetensors",
+  "text_encoder": "qwen_3_06b_base.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "cfg": 4.0,
+    "sampler_name": "euler_ancestral",
+    "seed": 2374630006,
+    "steps": 24
+  },
+  "profiles": {
+    "neutral-anime": {
+      "negative_prompt": "gem, diamond, crystal, holding gem, holding diamond, gemstone, jewelry focus, houseki no kuni",
+      "params": {
+        "cfg": 4.0,
+        "sampler_name": "euler_ancestral",
+        "steps": 24
+      },
+      "prompt_prefix": "abstract multicolored background, refined character linework, clean polished digital rendering, calm atmospheric composition",
+      "prompt_suffix": "sharp silhouette, soft dramatic lighting, polished anime illustration, natural character-focused composition"
+    },
+    "source-image-132048670": {
+      "negative_prompt": "",
+      "params": {
+        "cfg": 4.0,
+        "sampler_name": "euler_ancestral",
+        "seed": 2374630006,
+        "steps": 24
+      },
+      "prompt_prefix": "abstract, multicolored background, jewel-like color accents, pensive expression, from side, looking at object, gem motif, holding gem",
+      "prompt_suffix": "pale skin, elegant uniform styling, sharp silhouette, calm dramatic composition"
+    }
+  },
+  "note_path": "style_presets/human/hoseki-lustrousmix-anima.md",
+  "chinese_name": "寶石抽象插畫 Anima"
+}

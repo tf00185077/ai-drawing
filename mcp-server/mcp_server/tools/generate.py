@@ -32,12 +32,13 @@ def generate_image(
     sampler_name: str | None = None,
     scheduler: str | None = None,
     lora_strength: float | None = None,
+    loras: list[dict] | None = None,
     denoise: float | None = None,
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
 ) -> str:
-    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima), injected into UNETLoader / CLIPLoader / VAELoader; include them only when needed (a composed style preset payload may already provide them). Call list_workflow_templates to see available names. Returns job_id or an error message."""
+    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima), injected into UNETLoader / CLIPLoader / VAELoader; include them only when needed (a composed style preset payload may already provide them). Call list_workflow_templates to see available names. loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows — mapped to the workflow's LoraLoader nodes in order and taking precedence over the single lora; use it for templates whose capability includes multi_lora. Returns job_id or an error message."""
     try:
         client = _get_client()
         final_prompt = prompt
@@ -81,6 +82,8 @@ def generate_image(
             body["scheduler"] = scheduler
         if lora_strength is not None:
             body["lora_strength"] = lora_strength
+        if loras is not None:
+            body["loras"] = loras
         if denoise is not None:
             body["denoise"] = denoise
         if diffusion_model is not None:
@@ -161,6 +164,7 @@ def generate_image_custom_workflow(
     sampler_name: str | None = None,
     scheduler: str | None = None,
     lora_strength: float | None = None,
+    loras: list[dict] | None = None,
     denoise: float | None = None,
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
@@ -244,6 +248,8 @@ def generate_image_custom_workflow(
             body["scheduler"] = scheduler
         if lora_strength is not None:
             body["lora_strength"] = lora_strength
+        if loras is not None:
+            body["loras"] = loras
         if denoise is not None:
             body["denoise"] = denoise
         if diffusion_model is not None:
@@ -255,11 +261,26 @@ def generate_image_custom_workflow(
         resp = client.post("generate/custom", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
-        return f"已加入生圖佇列（自訂 workflow）：job_id={job_id}, status={status}"
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_image_custom_workflow",
+                "job_id": job_id,
+                "status": status,
+                "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it",
+            },
+            ensure_ascii=False,
+        )
     except json.JSONDecodeError as e:
-        return f"error: workflow 必須為合法 JSON: {e}"
+        return json.dumps(
+            {"ok": False, "tool": "generate_image_custom_workflow", "error": f"workflow 必須為合法 JSON: {e}"},
+            ensure_ascii=False,
+        )
     except Exception as e:
-        return f"error: {e}"
+        return json.dumps(
+            {"ok": False, "tool": "generate_image_custom_workflow", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -364,7 +385,7 @@ def generate_queue_status() -> str:
 
 @mcp.tool()
 def get_generation_status(job_id: str) -> str:
-    """Query image generation job status, returns agent-friendly JSON. When status=completed, includes image_id and image_path."""
+    """Query image generation job status, returns agent-friendly JSON. When status=completed, includes image_id and image_path. When status=failed (e.g. a self-authored custom workflow rejected by ComfyUI), returns ok=false with structured node_errors ([{node_id, class_type, reason}]) so you can fix the workflow and resubmit."""
     try:
         client = _get_client()
         resp = client.get(f"generate/job/{job_id}")
@@ -379,6 +400,25 @@ def get_generation_status(job_id: str) -> str:
                     "image_id": resp.get("image_id"),
                     "image_path": resp.get("image_path", ""),
                     "next": "call get_gallery_image with image_id, then free_comfyui_memory",
+                },
+                ensure_ascii=False,
+            )
+        elif status == "failed":
+            node_errors = resp.get("node_errors", [])
+            return json.dumps(
+                {
+                    "ok": False,
+                    "tool": "get_generation_status",
+                    "where": "comfyui",
+                    "job_id": job_id,
+                    "status": "failed",
+                    "error": resp.get("error"),
+                    "node_errors": node_errors,
+                    "next": (
+                        "fix the offending nodes (check names/inputs via get_node_schema) and resubmit generate_image_custom_workflow"
+                        if node_errors
+                        else "generation failed; inspect error and resubmit"
+                    ),
                 },
                 ensure_ascii=False,
             )

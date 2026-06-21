@@ -64,6 +64,8 @@ async def trigger_generate(body: GenerateRequest):
             params["lora_strength"] = body.lora_strength
         if body.denoise is not None:
             params["denoise"] = body.denoise
+        if body.loras is not None:
+            params["loras"] = [lo.model_dump() for lo in body.loras]
         job_id = submit(params)
         return GenerateResponse(
             job_id=job_id,
@@ -117,6 +119,8 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
             params["vae"] = body.vae
         if body.lora_strength is not None:
             params["lora_strength"] = body.lora_strength
+        if body.loras is not None:
+            params["loras"] = [lo.model_dump() for lo in body.loras]
         if body.denoise is not None:
             params["denoise"] = body.denoise
         job_id = submit_custom(params)
@@ -209,15 +213,20 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
     """查詢單一 job 狀態（queued / running / completed）"""
     from app.db.models import GeneratedImage
 
-    # 1. 先查 in-memory queue（queued / running）
+    # 1. 先查 in-memory queue（queued / running / failed）
     queue_status = queue_get_job_status(job_id)
     if queue_status:
-        return {
+        resp = {
             "status": queue_status["status"],
             "job_id": job_id,
             "prompt_id": queue_status.get("prompt_id"),
             "submitted_at": queue_status.get("submitted_at"),
         }
+        if queue_status["status"] == "failed":
+            # 自訂 workflow 被 ComfyUI 拒絕時，回傳結構化 node_errors 供 agent 修正重送
+            resp["error"] = queue_status.get("error")
+            resp["node_errors"] = queue_status.get("node_errors", [])
+        return resp
 
     # 2. 查 DB（completed）
     image_record = db.query(GeneratedImage).filter_by(job_id=job_id).first()
