@@ -12,6 +12,7 @@
       "template": "anima",
       "checkpoint": null,
       "lora": null,
+      "loras": [],
       "diffusion_model": "anima_baseV10.safetensors"
     },
     {
@@ -26,6 +27,7 @@
       "template": "default_lora",
       "checkpoint": "novaAnimeXL_ilV190.safetensors",
       "lora": "creatorA_style_v2.safetensors",
+      "loras": [],
       "diffusion_model": null
     },
     {
@@ -39,6 +41,7 @@
       "template": "anima",
       "checkpoint": null,
       "lora": "anima-base-1-masterpiece-v51.safetensors",
+      "loras": [],
       "diffusion_model": "anima_baseV10.safetensors"
     },
     {
@@ -53,6 +56,7 @@
       "template": "anima",
       "checkpoint": null,
       "lora": null,
+      "loras": [],
       "diffusion_model": "hosekiLustrousmixAnima_animaV10.safetensors"
     },
     {
@@ -67,6 +71,20 @@
       "template": "gen_txt2img_anima_lora_model_only_multi_lora",
       "checkpoint": null,
       "lora": "anima-highres-aesthetic-boost.safetensors",
+      "loras": [
+        {
+          "name": "anima-highres-aesthetic-boost.safetensors",
+          "strength_model": 0.7
+        },
+        {
+          "name": "Niji Reol v1 EP11.safetensors",
+          "strength_model": 0.8
+        },
+        {
+          "name": "AnimaNSS4RE.safetensors",
+          "strength_model": 0.65
+        }
+      ],
       "diffusion_model": "anima_baseV10.safetensors"
     },
     {
@@ -81,6 +99,7 @@
       "template": "gen_txt2img_anima_lora_model_only",
       "checkpoint": null,
       "lora": "posing-dynamics-anima.safetensors",
+      "loras": [],
       "diffusion_model": "anima_preview3Base.safetensors"
     },
     {
@@ -97,6 +116,7 @@
       "template": "gen_txt2img_anima_lora_model_only",
       "checkpoint": null,
       "lora": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+      "loras": [],
       "diffusion_model": "anima_baseV10.safetensors"
     }
   ]

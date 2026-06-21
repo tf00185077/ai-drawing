@@ -75,5 +75,19 @@
     "required_workflow": "anima_txt2img_multi_lora_model_only",
     "note": "MCP StylePreset schema currently exposes one lora field; required_resources is agent-readable metadata. Actual generation must use a custom/workflow-template graph with all three LoraLoaderModelOnly nodes."
   },
-  "chinese_name": "月光半寫實 Niji Anima"
+  "chinese_name": "月光半寫實 Niji Anima",
+  "loras": [
+    {
+      "name": "anima-highres-aesthetic-boost.safetensors",
+      "strength_model": 0.7
+    },
+    {
+      "name": "Niji Reol v1 EP11.safetensors",
+      "strength_model": 0.8
+    },
+    {
+      "name": "AnimaNSS4RE.safetensors",
+      "strength_model": 0.65
+    }
+  ]
 }
