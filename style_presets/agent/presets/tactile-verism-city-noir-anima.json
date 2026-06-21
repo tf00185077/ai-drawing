@@ -1,0 +1,152 @@
+{
+  "id": "tactile-verism-city-noir-anima",
+  "name": "Tactile Verism City Noir Anima",
+  "base_prompt": "tactile oil painting finish, visible painterly brushwork, controlled impasto texture, atmospheric cinematic rendering",
+  "negative_prompt": "worst quality, low quality, bad anatomy, deformed, blurry, muddy details",
+  "template": "gen_txt2img_anima_lora_model_only",
+  "checkpoint": null,
+  "lora": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+  "lora_strength": 1.0,
+  "diffusion_model": "anima_baseV10.safetensors",
+  "text_encoder": "anima_baseV10_txt.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "cfg": 2.5,
+    "height": 1280,
+    "sampler_name": "euler",
+    "scheduler": "simple",
+    "seed": 344596877060857,
+    "steps": 35,
+    "width": 832
+  },
+  "profiles": {
+    "source-color-style-neutral": {
+      "negative_prompt": "exact arched bridge, exact skyline, exact yellow moon, no visible people lock, source composition lock",
+      "params": {
+        "cfg": 2.5,
+        "height": 1280,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "steps": 35,
+        "width": 832
+      },
+      "prompt_prefix": "expressionist oil painting, heavy impasto, visible thick brushstrokes, tactile paint texture, dark teal and gold color palette, moody noir atmosphere, atmospheric haze, mysterious cinematic nocturne lighting, shimmering wet reflections, glowing gold highlights, thick tactile oil-paint treatment, expressive impasto surface, dark teal shadows with gold illumination",
+      "prompt_suffix": "wet reflective surfaces, smoggy atmospheric depth, noir mysterious mood, high texture brushwork finish"
+    },
+    "source-image-133592240": {
+      "negative_prompt": "",
+      "params": {
+        "cfg": 2.5,
+        "height": 1280,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "seed": 344596877060857,
+        "steps": 35,
+        "width": 832
+      },
+      "prompt_prefix": "Expressionist oil painting, heavy impasto, visible thick brushstrokes, dark teal and gold color palette, a sprawling industrial city skyline at night, arched bridge over a shimmering river, glowing yellow moon, hazy smog, dense skyscrapers with scattered lights",
+      "prompt_suffix": "steam rises from buildings, wet streets reflecting city gold, no visible people, focus on vast urban scale, moody noir atmospheric mysterious"
+    },
+    "anime-oil-color-safe": {
+      "prompt_prefix": "anime oil painting hybrid, preserved anime character design, clean anime facial proportions, expressive anime eyes, soft anime face, warm natural key light on face, healthy soft peach skin, natural blush, non-metallic matte skin, oil painting brushwork visible on hair, clothes, and background, controlled impasto texture, dark teal noir background, teal shadows only in the background, restrained amber-gold rim light behind the character, subtle gold edge light on hair",
+      "prompt_suffix": "wet reflective background surfaces, smoggy atmospheric depth, high quality anime portrait with painterly oil finish, keep the character face anime and readable, oil paint texture on rendering not on skin material",
+      "negative_prompt": "photorealistic face, realistic old face, uncanny face, corpse-like skin, ghostly skin, green skin, blue skin, gray skin, sickly pale skin, metallic skin, golden skin, gold face, bronze face, statue, mask, robot, armor, chrome, reflective face, gold paint on skin, face covered in paint, heavy paint blobs on face, harsh teal light on face",
+      "params": {
+        "cfg": 3.2,
+        "height": 1280,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "steps": 35,
+        "width": 832,
+        "lora_strength": 0.5
+      },
+      "notes": "CTY approved this color direction from image_id=391: anime character preserved, warm natural face, teal/noir background, restrained amber-gold rim light, oil texture as brushwork rather than metallic/ghostly skin."
+    },
+    "anime-oil-character-preserving": {
+      "prompt_prefix": "anime oil painting hybrid, preserved anime character design, recognizable character identity, clean anime facial proportions, expressive anime eyes, soft anime face, readable character features, warm natural key light on face, healthy peach anime skin with subtle painterly shading, natural blush, non-metallic matte skin, avoid global color wash on face, painterly but readable anime portrait, oil brushwork as surface rendering rather than skin material, visible oil brush strokes on hair locks, painterly edges on hairstyle silhouette, visible oil brush texture on clothing fabric, broad oil-paint strokes on clothing folds and sleeve shadows, painterly strokes on collar and neck accessory, controlled impasto texture in the background, textured painterly background with visible canvas-like brush grain, teal and amber color grading constrained to background, atmosphere, rim light, and edge light, warm natural face color separated from the background palette",
+      "prompt_suffix": "bust portrait, chest-up portrait, cropped above waist, upper body only, hands out of frame, wet reflective background surfaces, smoggy atmospheric depth, high quality anime character portrait with stronger painterly oil finish, anime face preserved while hair, clothing, background, and silhouette edges carry the oil-paint texture, character details remain crisp and recognizable under the painterly finish",
+      "negative_prompt": "photorealistic face, realistic old face, uncanny face, distorted character identity, lost character identity, face obscured, face covered in paint, heavy paint blobs on face, overpainted face, color wash over face, teal face, blue face, green face, gray face, corpse-like skin, ghostly skin, sickly pale skin, metallic skin, golden skin, gold face, bronze face, chrome skin, reflective face, statue, mask, robot, armor, gold paint on skin, harsh teal light on face, excessive rim light on face, muddy facial details, belt, rope belt, cord around waist, yellow belt, waist rope, body tied, bindings, horizontal straps across torso, torso rope, peace sign, v sign, smile, grin",
+      "params": {
+        "cfg": 3.2,
+        "height": 1280,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "steps": 35,
+        "width": 832,
+        "lora_strength": 0.5
+      },
+      "notes": "CTY approved image_id=399 as the correction direction. The key method is not the yellow accessory itself: reduce Tactile Verism LoRA to 0.5, keep CFG 3.2, explicitly preserve anime face/identity, keep face lighting warm and natural, move teal/gold/noir/oil effects to background, rim/edge light, hair, clothing folds, and silhouette brushwork, and block global color/material contamination on skin. Chest-up crop helps keep the portrait focused and prevents body-area artifacts, but the durable rule is character-preserving color separation plus localized oil texture."
+    }
+  },
+  "note_path": "style_presets/human/tactile-verism-city-noir-anima.md",
+  "required_resources": {
+    "source_image_url": "https://civitai.com/images/133592240",
+    "source_image": {
+      "local_cache": "/tmp/civitai_133592240/source.jpg",
+      "width": 832,
+      "height": 1280,
+      "sha256": "D28A7BCFCEA85C0C0C5069895D0318DAA6E523D0C594E1BBAA4315AD1D5F5753"
+    },
+    "process": {
+      "tool": "ComfyUI",
+      "technique": "txt2img",
+      "external_generator": true
+    },
+    "base_model": {
+      "type": "anima_split_model",
+      "civitai_resource": "Anima / base-v1.0",
+      "model_version_id": 2945208,
+      "diffusion_model": "anima_baseV10.safetensors",
+      "text_encoder": "anima_baseV10_txt.safetensors",
+      "vae": "qwen_image_vae.safetensors"
+    },
+    "loras": [
+      {
+        "alias_from_external_metadata": "tactile_paint_3.5k_cl_1.0.safetensors",
+        "name": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+        "model": "Tactile Verism",
+        "model_id": 2616851,
+        "version_id": 2938169,
+        "strength_model": 1.0,
+        "sha256": "63CB6E25EB5CDBC1879B90B00DA05B7EB3CE66C08100FD3478D9B2DB8C29E084",
+        "local_path": "/Users/tf00185088/comfyui/models/loras/Tactile_Verism-Anima-tcl-vrs-style.safetensors"
+      }
+    ],
+    "required_workflow": "gen_txt2img_anima_lora_model_only",
+    "generation_params": {
+      "cfg": 2.5,
+      "steps": 35,
+      "sampler": "Euler",
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "seed": 344596877060857,
+      "width": 832,
+      "height": 1280
+    },
+    "source_prompt": "Expressionist oil painting, heavy impasto, visible thick brushstrokes, dark teal and gold color palette. A sprawling, industrial city skyline at night, arched bridge over a shimmering river, glowing yellow moon, hazy smog, dense skyscrapers with scattered lights. Steam rises from buildings, wet streets reflecting city gold. No visible people, focus on vast urban scale. Moody, noir, atmospheric, mysterious.",
+    "note": "External Generator metadata lists alias tactile_paint_3.5k_cl_1.0.safetensors with str_1; Civitai search resolves it to Tactile Verism Anima LoRA file Tactile_Verism-Anima-tcl-vrs-style.safetensors."
+  },
+  "derived_examples": {
+    "cty-approved-color-2026-06-20": {
+      "image_id": 391,
+      "job_id": "50a309e5-e4f4-44b5-80d5-071dd412f853",
+      "profile": "anime-oil-color-safe",
+      "lora_strength": 0.5,
+      "seed": 344596877060861,
+      "note": "User confirmed this round's color style is the desired direction; future character portraits should start from anime-oil-color-safe and then add character-detail tokens."
+    },
+    "cty-approved-character-preserving-oil-2026-06-20": {
+      "image_id": 399,
+      "job_id": "2542d05a-af63-420f-82f2-68cc638dcf69",
+      "profile": "anime-oil-character-preserving",
+      "seed": 3833842405,
+      "lora_strength": 0.5,
+      "note": "CTY approved this as the preset correction target: character remains recognizable with warm natural anime skin and crisp facial details, while oil-paint texture/color grading is localized to hair, clothing, background, rim light, and brushwork instead of covering the whole character with strange colors."
+    }
+  },
+  "migration_notes": [
+    "2026-06-20: CTY approved anime-oil-color-safe color direction. Moved broad unscoped dark teal/gold/highlight language out of base_prompt so anime portraits do not inherit metallic/ghostly face contamination; source profiles retain original source color language.",
+    "2026-06-20: Reframed image_id=399 correction as anime-oil-character-preserving: preserve character identity and warm natural face colors, constrain teal/gold/noir/oil effects to background/rim/hair/clothing brushwork, and block global color/material contamination on skin."
+  ],
+  "chinese_name": "厚塗油彩城市夜景 Anima"
+}

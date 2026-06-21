@@ -1,0 +1,44 @@
+{
+  "id": "asagi-floral-pastel-anima",
+  "name": "Toosaka Asagi Floral Pastel Anima",
+  "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, cinematic lighting, volumetric lighting, anime coloring, anime screenshot, delicate, dreamy, natural shadow, serene atmosphere, film grain, soft pastel colors, soft shading, detailed textures, clean outline, subtle geometric design accents",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name",
+  "template": "anima",
+  "checkpoint": null,
+  "lora": null,
+  "lora_strength": null,
+  "diffusion_model": "anima_baseV10.safetensors",
+  "text_encoder": "anima_baseV10_txt.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "cfg": 5.0,
+    "sampler_name": "er_sde",
+    "seed": 3797619011,
+    "steps": 30
+  },
+  "profiles": {
+    "source-color-style-neutral": {
+      "prompt_prefix": "soft cinematic color grading, airy pastel palette, delicate shadow transitions",
+      "prompt_suffix": "gentle film-grain finish, serene polished illustration look",
+      "negative_prompt": "kaela kovalskia, hololive, gown, burgundy dress, gossamer, swing, reading book, book, floral border, irregular border, floral background, tree, sitting, on swing, falling petals, from below, dutch angle, hair ribbon, red ribbon",
+      "params": {
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "steps": 30
+      }
+    },
+    "source-image-130992277": {
+      "prompt_prefix": "score_7, safe, anime screenshot, cloud, blue sky, film grain, floral background, irregular border, outline, geometry, from below, dutch angle",
+      "prompt_suffix": "kaela kovalskia, long hair, twintail, smile, parted lips, hair ribbon, red ribbon, gown, burgundy dress, gossamer, outdoors, swing, tree, reading book, sitting, on swing, falling petals, @toosaka asagi",
+      "negative_prompt": "",
+      "params": {
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "seed": 3797619011,
+        "steps": 30
+      }
+    }
+  },
+  "note_path": "style_presets/human/asagi-floral-pastel-anima.md",
+  "chinese_name": "淺蔥花境粉彩 Anima"
+}

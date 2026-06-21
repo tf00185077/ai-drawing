@@ -1,0 +1,39 @@
+{
+  "id": "creator-a",
+  "name": "Creator A 柔光動漫",
+  "note_path": "style_presets/human/creator-a.md",
+  "template": "default_lora",
+  "checkpoint": "novaAnimeXL_ilV190.safetensors",
+  "lora": "creatorA_style_v2.safetensors",
+  "lora_strength": 0.8,
+  "base_prompt": "masterpiece, best quality, 1girl, soft lighting",
+  "negative_prompt": "lowres, bad anatomy, worst quality, jpeg artifacts",
+  "default_params": {
+    "steps": 28,
+    "cfg": 6.5,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "width": 1024,
+    "height": 1024
+  },
+  "profiles": {
+    "portrait": {
+      "prompt_prefix": "close-up portrait",
+      "prompt_suffix": "detailed face",
+      "negative_prompt": "full body",
+      "params": {
+        "width": 896,
+        "height": 1152
+      }
+    },
+    "full-body": {
+      "prompt_prefix": "full body",
+      "prompt_suffix": "dynamic pose",
+      "params": {
+        "width": 832,
+        "height": 1216
+      }
+    }
+  },
+  "chinese_name": "柔光動漫創作者 A"
+}

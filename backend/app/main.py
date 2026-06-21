@@ -31,7 +31,9 @@ def _on_lora_complete(output_lora_path: str, folder: str) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """應用生命週期：啟動時開始監聽與佇列 worker，關閉時停止"""
+    """應用生命週期：啟動時建表/補欄、開始監聽與佇列 worker，關閉時停止"""
+    from app.db.database import init_db
+    init_db()
     lora_trainer.register_on_complete(_on_lora_complete)
     lora_trainer.ensure_worker()
     start_watching()
@@ -63,12 +65,14 @@ app.add_middleware(
 # 四大模組 API
 from app.api import (
     analytics,
+    comfyui,
     generate,
     gallery,
     lora_docs,
     lora_train,
     prompt_templates,
     style_presets,
+    workflow_catalog,
 )
 
 app.include_router(generate.router)
@@ -78,6 +82,8 @@ app.include_router(lora_train.router)
 app.include_router(prompt_templates.router)
 app.include_router(analytics.router)
 app.include_router(style_presets.router)
+app.include_router(comfyui.router)
+app.include_router(workflow_catalog.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)

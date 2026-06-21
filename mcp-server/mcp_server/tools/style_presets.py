@@ -12,12 +12,106 @@ job: the agent then forwards the composed `generation` payload to generate_image
 """
 import json
 
+import httpx
+
 from mcp_server.server import _get_client, mcp
 
 
 @mcp.tool()
+def create_style_preset(
+    id: str,
+    name: str,
+    base_prompt: str = "",
+    negative_prompt: str = "",
+    template: str | None = None,
+    checkpoint: str | None = None,
+    lora: str | None = None,
+    lora_strength: float | None = None,
+    loras: list[dict] | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+    default_params: dict | None = None,
+    profiles: dict | None = None,
+    overwrite: bool = False,
+) -> str:
+    """Create a new style preset from the fields the user describes, writing BOTH the machine recipe (style_presets/agent/presets/<id>.json) and a human note (style_presets/human/<id>.md, frontmatter preset_id matching id), then reindexing so it's listable. `id` (kebab-ish slug) and `name` are required; fill the recipe fields you know (template/checkpoint/lora/lora_strength, base_prompt/negative_prompt, default_params, and `profiles` as {name: {prompt_prefix, prompt_suffix, negative_prompt, params}}). For multiple LoRAs use `loras` = [{name, strength_model, strength_clip?}] (ordered to the template's LoraLoader nodes; takes precedence over single lora). Refuses to overwrite an existing preset unless `overwrite=true`. Missing referenced resources are reported in the result (validation) but do NOT block creation. Returns agent-friendly JSON with the created id and validation."""
+    try:
+        client = _get_client()
+        body = {
+            "id": id,
+            "name": name,
+            "base_prompt": base_prompt,
+            "negative_prompt": negative_prompt,
+            "template": template,
+            "checkpoint": checkpoint,
+            "lora": lora,
+            "lora_strength": lora_strength,
+            "loras": loras or [],
+            "diffusion_model": diffusion_model,
+            "text_encoder": text_encoder,
+            "vae": vae,
+            "default_params": default_params or {},
+            "profiles": profiles or {},
+            "overwrite": overwrite,
+        }
+        resp = client.post("style-presets/", json=body)
+        val = resp.get("validation", {})
+        missing = val.get("missing", [])
+        if missing:
+            nxt = f"created; but missing resources {[m['name'] for m in missing]} — install them or edit the preset"
+        else:
+            nxt = "created and valid; use compose_style_preset to generate with it"
+        return json.dumps(
+            {"ok": True, "tool": "create_style_preset", **resp, "next": nxt},
+            ensure_ascii=False,
+        )
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code if e.response is not None else None
+        if code == 409:
+            err, nxt = "already_exists", "set overwrite=true to replace, or choose a different id"
+        elif code == 422:
+            err, nxt = "invalid_request", "id must be a slug (letters/digits/_/-) and name is required"
+        else:
+            err, nxt = str(e), "check backend"
+        return json.dumps(
+            {"ok": False, "tool": "create_style_preset", "error": err, "next": nxt},
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {"ok": False, "tool": "create_style_preset", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
+def reindex_style_presets() -> str:
+    """Rebuild the style-preset lightweight index from the per-preset detail files. Call after manually adding/editing presets so list_style_presets reflects them. Returns the rebuilt index entries."""
+    try:
+        client = _get_client()
+        resp = client.post("style-presets/reindex")
+        presets = resp.get("presets", [])
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "reindex_style_presets",
+                "presets": presets,
+                "count": len(presets),
+                "next": "index rebuilt; list_style_presets now reflects current presets",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {"ok": False, "tool": "reindex_style_presets", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def list_style_presets() -> str:
-    """List available style presets (creator/style recipes). Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with compose_style_preset to build a generation payload."""
+    """List available style presets (creator/style recipes) from the lightweight index — does not load full preset bodies. Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with compose_style_preset to build a generation payload."""
     try:
         client = _get_client()
         resp = client.get("style-presets/")

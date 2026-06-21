@@ -1,12 +1,17 @@
 ---
 preset_id: creator-a
-catalog_path: backend/style_presets/catalog.json
+chinese_name: 柔光動漫創作者 A
+catalog_path: style_presets/agent/catalog.json
 checkpoint: novaAnimeXL_ilV190.safetensors
 lora: creatorA_style_v2.safetensors
 source_url:
 ---
 
 # Creator A 柔光動漫
+
+## 中文名稱
+
+柔光動漫創作者 A
 
 ## Resource Pairing
 

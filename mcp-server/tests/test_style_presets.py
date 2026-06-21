@@ -2,13 +2,55 @@
 import json
 from unittest.mock import MagicMock, patch
 
+import httpx
+
 from mcp_server.tools.generate import generate_image
 from mcp_server.tools.style_presets import (
     compose_style_preset,
+    create_style_preset,
     get_style_preset,
     list_style_presets,
+    reindex_style_presets,
     validate_style_presets,
 )
+
+
+def test_create_style_preset_forwards_and_reports() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"id": "cx", "created": True, "validation": {"valid": True, "missing": []}}
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        result = json.loads(create_style_preset("cx", "Name", checkpoint="m.safetensors"))
+    assert result["ok"] is True and result["created"] is True
+    body = mock_client.post.call_args[1]["json"]
+    assert body["id"] == "cx" and body["name"] == "Name" and body["checkpoint"] == "m.safetensors"
+
+
+def test_create_style_preset_forwards_loras() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"id": "mlx", "created": True, "validation": {"valid": True, "missing": []}}
+    loras = [{"name": "a.safetensors", "strength_model": 0.8}, {"name": "b.safetensors", "strength_model": 0.5}]
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        create_style_preset("mlx", "ML", template="multi", loras=loras)
+    assert mock_client.post.call_args[1]["json"]["loras"] == loras
+
+
+def test_create_style_preset_duplicate_409() -> None:
+    mock_client = MagicMock()
+    resp = httpx.Response(409, request=httpx.Request("POST", "http://x/style-presets/"))
+    mock_client.post.side_effect = httpx.HTTPStatusError("409", request=resp.request, response=resp)
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        result = json.loads(create_style_preset("dup", "Y"))
+    assert result["ok"] is False and result["error"] == "already_exists"
+
+
+def test_reindex_style_presets_rebuilds() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"presets": [{"id": "creator-a", "name": "x", "profiles": []}]}
+    with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
+        result = json.loads(reindex_style_presets())
+    assert result["ok"] is True
+    assert result["count"] == 1
+    mock_client.post.assert_called_once_with("style-presets/reindex")
 
 
 def test_list_style_presets_returns_agent_friendly_json() -> None:

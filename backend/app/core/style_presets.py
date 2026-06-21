@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Protocol
@@ -36,6 +37,22 @@ class ProfileNotFoundError(KeyError):
         super().__init__(profile)
 
 
+class PresetExistsError(Exception):
+    """建立時 preset id 已存在且未指定覆寫。"""
+
+    def __init__(self, preset_id: str) -> None:
+        self.preset_id = preset_id
+        super().__init__(preset_id)
+
+
+_ID_SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+
+
+def is_valid_preset_id(preset_id: str) -> bool:
+    """preset id 須為簡單 slug（英數開頭，僅含英數／底線／連字號，無路徑分隔或空白）。"""
+    return bool(preset_id) and bool(_ID_SLUG.match(preset_id))
+
+
 # --- 型別模型 -------------------------------------------------------------
 
 
@@ -56,11 +73,13 @@ class StylePreset:
 
     id: str
     name: str
+    chinese_name: str | None = None
     note_path: str | None = None
     template: str | None = None
     checkpoint: str | None = None
     lora: str | None = None
     lora_strength: float | None = None
+    loras: tuple[Mapping[str, Any], ...] = ()  # 多 lora：[{name, strength_model, strength_clip?}]，優先於單一 lora
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None
@@ -135,6 +154,10 @@ class StylePresetProvider(Protocol):
 
     def list_presets(self) -> list[StylePreset]: ...
 
+    def list_summaries(self) -> list[dict[str, Any]]: ...
+
+    def reindex(self) -> dict[str, Any]: ...
+
     def get_preset(self, preset_id: str) -> StylePreset | None: ...
 
     def validate_presets(
@@ -203,11 +226,13 @@ def _parse_preset(raw: Mapping[str, Any]) -> StylePreset:
     return StylePreset(
         id=str(raw["id"]),
         name=str(raw["name"]),
+        chinese_name=raw.get("chinese_name"),
         note_path=raw.get("note_path"),
         template=raw.get("template"),
         checkpoint=raw.get("checkpoint"),
         lora=raw.get("lora"),
         lora_strength=raw.get("lora_strength"),
+        loras=tuple(dict(x) for x in (raw.get("loras") or [])),
         diffusion_model=raw.get("diffusion_model"),
         text_encoder=raw.get("text_encoder"),
         vae=raw.get("vae"),
@@ -233,6 +258,154 @@ def _read_frontmatter_value(path: Path, key: str) -> str | None:
         if found_key.strip() == key:
             return value.strip().strip('"').strip("'") or None
     return None
+
+
+# --- 共用：摘要 / 驗證 / compose（兩種 provider 共用）---------------------
+
+_SUMMARY_REFS = ("template", "checkpoint", "lora", "diffusion_model")
+
+
+def _note_stub(preset: StylePreset) -> str:
+    """產生人類 note 初稿，frontmatter preset_id 對齊 catalog id（通過 note 驗證）。"""
+    return (
+        "---\n"
+        f"preset_id: {preset.id}\n"
+        f"catalog_path: style_presets/agent/presets/{preset.id}.json\n"
+        f"checkpoint: {preset.checkpoint or ''}\n"
+        f"lora: {preset.lora or ''}\n"
+        "source_url:\n"
+        "---\n\n"
+        f"# {preset.name}\n\n"
+        "（由 create_style_preset 產生的初始筆記，可自行補充來源 / 授權 / 試驗心得）\n\n"
+        "## Resource Pairing\n\n"
+        f"- Checkpoint: {preset.checkpoint or ''}\n"
+        f"- LoRA: {preset.lora or ''}\n"
+        f"- Template: {preset.template or ''}\n"
+    )
+
+
+def build_summary(preset: StylePreset) -> dict[str, Any]:
+    """由完整 preset 產生輕量索引條目（list 用，不含 prompt/params/profile 內文）。"""
+    return {
+        "id": preset.id,
+        "name": preset.name,
+        "chinese_name": preset.chinese_name,
+        "profiles": preset.profile_names,
+        "note_path": preset.note_path,
+        "template": preset.template,
+        "checkpoint": preset.checkpoint,
+        "lora": preset.lora,
+        "loras": [dict(x) for x in preset.loras],
+        "diffusion_model": preset.diffusion_model,
+    }
+
+
+def _validate_note(
+    preset: StylePreset, project_root: Path | None, missing: list[MissingResource]
+) -> None:
+    if not preset.note_path or project_root is None:
+        return
+    note_path = (project_root / preset.note_path).resolve()
+    try:
+        note_path.relative_to(project_root.resolve())
+    except ValueError:
+        missing.append(MissingResource(resource_type="note_path", name=preset.note_path))
+        return
+    if not note_path.exists():
+        missing.append(MissingResource(resource_type="note_path", name=preset.note_path))
+        return
+    note_preset_id = _read_frontmatter_value(note_path, "preset_id")
+    if note_preset_id != preset.id:
+        missing.append(
+            MissingResource(
+                resource_type="note_preset_id",
+                name=f"{preset.note_path}: expected {preset.id}, got {note_preset_id or '(missing)'}",
+            )
+        )
+
+
+def validate_preset_against(
+    preset: StylePreset, inventory: ResourceInventory, project_root: Path | None
+) -> PresetValidation:
+    """驗證單一 preset 的資源參照與 note（純函式，兩種 provider 共用）。"""
+    refs: list[tuple[str, str | None, tuple[str, ...]]] = [
+        ("checkpoint", preset.checkpoint, inventory.checkpoints),
+        ("lora", preset.lora, inventory.loras),
+        ("diffusion_model", preset.diffusion_model, inventory.diffusion_models),
+        ("text_encoder", preset.text_encoder, inventory.text_encoders),
+        ("vae", preset.vae, inventory.vaes),
+        ("template", preset.template, inventory.workflows),
+    ]
+    checked: dict[str, str] = {}
+    missing: list[MissingResource] = []
+    for rtype, value, available in refs:
+        if not value:
+            continue
+        checked[rtype] = value
+        if value not in available:
+            missing.append(MissingResource(resource_type=rtype, name=value))
+    _validate_note(preset, project_root, missing)
+    return PresetValidation(
+        preset_id=preset.id, valid=not missing, checked=checked, missing=tuple(missing)
+    )
+
+
+def compose_preset(
+    preset: StylePreset,
+    content_prompt: str,
+    profile: str | None = None,
+    overrides: Mapping[str, Any] | None = None,
+) -> ComposeResult:
+    """把 preset + content_prompt 組成 generate_image 相容的 generation payload（純函式）。"""
+    selected_profile: StyleProfile | None = None
+    if profile is not None:
+        selected_profile = preset.profiles.get(profile)
+        if selected_profile is None:
+            raise ProfileNotFoundError(preset.id, profile, preset.profile_names)
+
+    prompt_prefix = selected_profile.prompt_prefix if selected_profile else ""
+    prompt_suffix = selected_profile.prompt_suffix if selected_profile else ""
+    profile_negative = selected_profile.negative_prompt if selected_profile else ""
+
+    final_prompt = compose_prompt(
+        preset.base_prompt, prompt_prefix, content_prompt, prompt_suffix
+    )
+    final_negative = merge_negative_prompt(preset.negative_prompt, profile_negative)
+
+    generation: dict[str, Any] = {}
+    if preset.template:
+        generation["template"] = preset.template
+    if preset.checkpoint:
+        generation["checkpoint"] = preset.checkpoint
+    # 多 lora 優先：有 loras 就帶清單，否則退回單一 lora（維持相容）
+    if preset.loras:
+        generation["loras"] = [dict(x) for x in preset.loras]
+    elif preset.lora:
+        generation["lora"] = preset.lora
+        if preset.lora_strength is not None:
+            generation["lora_strength"] = preset.lora_strength
+    if preset.diffusion_model:
+        generation["diffusion_model"] = preset.diffusion_model
+    if preset.text_encoder:
+        generation["text_encoder"] = preset.text_encoder
+    if preset.vae:
+        generation["vae"] = preset.vae
+
+    generation["prompt"] = final_prompt
+    if final_negative:
+        generation["negative_prompt"] = final_negative
+
+    merged_params: dict[str, Any] = dict(preset.default_params)
+    if selected_profile:
+        merged_params.update(selected_profile.params)
+    generation.update(merged_params)
+
+    if overrides:
+        for key, value in overrides.items():
+            if value is not None:
+                generation[key] = value
+
+    return ComposeResult(preset_id=preset.id, profile=profile, generation=generation)
 
 
 # --- 檔案實作 -------------------------------------------------------------
@@ -267,6 +440,13 @@ class FileStylePresetProvider:
     def list_presets(self) -> list[StylePreset]:
         return list(self._presets)
 
+    def list_summaries(self) -> list[dict[str, Any]]:
+        return [build_summary(p) for p in self._presets]
+
+    def reindex(self) -> dict[str, Any]:
+        # 記憶體 provider 無檔案可掃，回傳目前摘要即可（no-op）
+        return {"presets": self.list_summaries()}
+
     def get_preset(self, preset_id: str) -> StylePreset | None:
         return self._by_id.get(preset_id)
 
@@ -279,65 +459,17 @@ class FileStylePresetProvider:
     def validate_presets(
         self, inventory: ResourceInventory
     ) -> list[PresetValidation]:
-        return [self._validate_one(p, inventory) for p in self._presets]
+        return [
+            validate_preset_against(p, inventory, self._project_root)
+            for p in self._presets
+        ]
 
     def validate_preset(
         self, preset_id: str, inventory: ResourceInventory
     ) -> PresetValidation:
-        return self._validate_one(self._require_preset(preset_id), inventory)
-
-    def _validate_one(
-        self, preset: StylePreset, inventory: ResourceInventory
-    ) -> PresetValidation:
-        # (resource_type, preset 值, 可用清單)
-        refs: list[tuple[str, str | None, tuple[str, ...]]] = [
-            ("checkpoint", preset.checkpoint, inventory.checkpoints),
-            ("lora", preset.lora, inventory.loras),
-            ("diffusion_model", preset.diffusion_model, inventory.diffusion_models),
-            ("text_encoder", preset.text_encoder, inventory.text_encoders),
-            ("vae", preset.vae, inventory.vaes),
-            ("template", preset.template, inventory.workflows),
-        ]
-        checked: dict[str, str] = {}
-        missing: list[MissingResource] = []
-        for rtype, value, available in refs:
-            if not value:
-                continue
-            checked[rtype] = value
-            if value not in available:
-                missing.append(MissingResource(resource_type=rtype, name=value))
-        self._validate_note(preset, missing)
-        return PresetValidation(
-            preset_id=preset.id,
-            valid=not missing,
-            checked=checked,
-            missing=tuple(missing),
+        return validate_preset_against(
+            self._require_preset(preset_id), inventory, self._project_root
         )
-
-    def _validate_note(
-        self,
-        preset: StylePreset,
-        missing: list[MissingResource],
-    ) -> None:
-        if not preset.note_path or self._project_root is None:
-            return
-        note_path = (self._project_root / preset.note_path).resolve()
-        try:
-            note_path.relative_to(self._project_root.resolve())
-        except ValueError:
-            missing.append(MissingResource(resource_type="note_path", name=preset.note_path))
-            return
-        if not note_path.exists():
-            missing.append(MissingResource(resource_type="note_path", name=preset.note_path))
-            return
-        note_preset_id = _read_frontmatter_value(note_path, "preset_id")
-        if note_preset_id != preset.id:
-            missing.append(
-                MissingResource(
-                    resource_type="note_preset_id",
-                    name=f"{preset.note_path}: expected {preset.id}, got {note_preset_id or '(missing)'}",
-                )
-            )
 
     def compose(
         self,
@@ -346,71 +478,188 @@ class FileStylePresetProvider:
         profile: str | None = None,
         overrides: Mapping[str, Any] | None = None,
     ) -> ComposeResult:
-        preset = self._require_preset(preset_id)
+        return compose_preset(
+            self._require_preset(preset_id), content_prompt, profile, overrides
+        )
 
-        selected_profile: StyleProfile | None = None
-        if profile is not None:
-            selected_profile = preset.profiles.get(profile)
-            if selected_profile is None:
-                raise ProfileNotFoundError(
-                    preset_id, profile, preset.profile_names
+
+# --- 目錄分層實作（index + 單檔 detail）----------------------------------
+
+
+def reindex(agent_dir: Path) -> dict[str, Any]:
+    """掃描 agent_dir/presets/*.json，重建 agent_dir/index.json（輕量摘要）。回傳寫入的 index。"""
+    presets_dir = agent_dir / "presets"
+    summaries: list[dict[str, Any]] = []
+    if presets_dir.exists():
+        for p in sorted(presets_dir.glob("*.json")):
+            with p.open(encoding="utf-8") as f:
+                preset = _parse_preset(json.load(f))
+            summaries.append(build_summary(preset))
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    index = {"presets": summaries}
+    with (agent_dir / "index.json").open("w", encoding="utf-8") as f:
+        json.dump(index, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    return index
+
+
+class DirStylePresetProvider:
+    """目錄分層 provider：index.json（輕量，list 用）+ presets/<id>.json（完整，detail 用）。"""
+
+    def __init__(self, agent_dir: Path, project_root: Path | None = None) -> None:
+        self._agent_dir = agent_dir
+        self._presets_dir = agent_dir / "presets"
+        self._index_path = agent_dir / "index.json"
+        self._project_root = project_root
+        self._cache: dict[str, StylePreset] = {}
+
+    # --- 索引（輕量）---
+    def list_summaries(self) -> list[dict[str, Any]]:
+        if not self._index_path.exists():
+            reindex(self._agent_dir)  # 自我修復：index 不存在時由 detail 重建
+        if not self._index_path.exists():
+            return []
+        with self._index_path.open(encoding="utf-8") as f:
+            return json.load(f).get("presets", [])
+
+    def reindex(self) -> dict[str, Any]:
+        self._cache.clear()
+        return reindex(self._agent_dir)
+
+    def validate_preset(
+        self, preset_id: str, inventory: ResourceInventory
+    ) -> PresetValidation:
+        return validate_preset_against(
+            self._require_preset(preset_id), inventory, self._project_root
+        )
+
+    def create_preset(
+        self,
+        fields: Mapping[str, Any],
+        *,
+        create_note: bool = True,
+        overwrite: bool = False,
+    ) -> dict[str, Any]:
+        """從欄位建立 preset：寫 detail JSON + 人類 note stub（frontmatter 對齊 id）+ reindex。
+        id/name 必填、id 須為合法 slug；detail 已存在且未 overwrite 則 raise PresetExistsError。"""
+        pid = str(fields.get("id", "")).strip()
+        name = str(fields.get("name", "")).strip()
+        if not is_valid_preset_id(pid):
+            raise ValueError(f"invalid preset id: {pid!r}（需英數開頭、僅含英數/底線/連字號）")
+        if not name:
+            raise ValueError("preset 需要 name")
+
+        detail_path = self._presets_dir / f"{pid}.json"
+        if detail_path.exists() and not overwrite:
+            raise PresetExistsError(pid)
+
+        recipe = dict(fields)
+        recipe["id"] = pid
+        recipe["name"] = name
+
+        note_rel: str | None = None
+        if create_note and self._project_root is not None:
+            human_dir = self._agent_dir.parent / "human"
+            note_abs = human_dir / f"{pid}.md"
+            note_rel = note_abs.resolve().relative_to(self._project_root.resolve()).as_posix()
+            recipe["note_path"] = note_rel
+
+        # 解析驗證（確保結構合法，並讓 None 欄位乾淨）
+        preset = _parse_preset(recipe)
+
+        self._presets_dir.mkdir(parents=True, exist_ok=True)
+        with detail_path.open("w", encoding="utf-8") as f:
+            json.dump(recipe, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+
+        if note_rel is not None:
+            human_dir.mkdir(parents=True, exist_ok=True)
+            note_abs.write_text(_note_stub(preset), encoding="utf-8")
+
+        self.reindex()
+        return {
+            "id": pid,
+            "created": True,
+            "overwritten": detail_path.exists() and overwrite,
+            "note_path": note_rel,
+        }
+
+    def _index_ids(self) -> set[str]:
+        return {e.get("id") for e in self.list_summaries() if e.get("id")}
+
+    def _file_ids(self) -> set[str]:
+        if not self._presets_dir.exists():
+            return set()
+        return {p.stem for p in self._presets_dir.glob("*.json")}
+
+    # --- detail（單檔，按需）---
+    def get_preset(self, preset_id: str) -> StylePreset | None:
+        if preset_id in self._cache:
+            return self._cache[preset_id]
+        path = self._presets_dir / f"{preset_id}.json"
+        if not path.exists():
+            return None
+        with path.open(encoding="utf-8") as f:
+            preset = _parse_preset(json.load(f))
+        self._cache[preset_id] = preset
+        return preset
+
+    def _require_preset(self, preset_id: str) -> StylePreset:
+        preset = self.get_preset(preset_id)
+        if preset is None:
+            raise PresetNotFoundError(preset_id)
+        return preset
+
+    def list_presets(self) -> list[StylePreset]:
+        # 完整載入（validate 等少數情境用），不在 list 熱路徑
+        return [p for pid in sorted(self._file_ids()) if (p := self.get_preset(pid))]
+
+    def validate_presets(self, inventory: ResourceInventory) -> list[PresetValidation]:
+        results: list[PresetValidation] = []
+        file_ids = self._file_ids()
+        index_ids = self._index_ids()
+        for pid in sorted(file_ids):
+            preset = self.get_preset(pid)
+            if preset is None:
+                continue
+            res = validate_preset_against(preset, inventory, self._project_root)
+            # index↔detail 漂移：detail 檔存在但 index 沒列
+            if pid not in index_ids:
+                missing = list(res.missing) + [MissingResource("index_entry", pid)]
+                res = PresetValidation(pid, False, res.checked, tuple(missing))
+            results.append(res)
+        # index 列了但 detail 檔不存在
+        for pid in sorted(index_ids - file_ids):
+            results.append(
+                PresetValidation(
+                    pid, False, {}, (MissingResource("detail_file", f"presets/{pid}.json"),)
                 )
+            )
+        return results
 
-        prompt_prefix = selected_profile.prompt_prefix if selected_profile else ""
-        prompt_suffix = selected_profile.prompt_suffix if selected_profile else ""
-        profile_negative = selected_profile.negative_prompt if selected_profile else ""
-
-        final_prompt = compose_prompt(
-            preset.base_prompt, prompt_prefix, content_prompt, prompt_suffix
-        )
-        final_negative = merge_negative_prompt(preset.negative_prompt, profile_negative)
-
-        generation: dict[str, Any] = {}
-        if preset.template:
-            generation["template"] = preset.template
-        if preset.checkpoint:
-            generation["checkpoint"] = preset.checkpoint
-        if preset.lora:
-            generation["lora"] = preset.lora
-        if preset.lora_strength is not None:
-            generation["lora_strength"] = preset.lora_strength
-        if preset.diffusion_model:
-            generation["diffusion_model"] = preset.diffusion_model
-        if preset.text_encoder:
-            generation["text_encoder"] = preset.text_encoder
-        if preset.vae:
-            generation["vae"] = preset.vae
-
-        generation["prompt"] = final_prompt
-        if final_negative:
-            generation["negative_prompt"] = final_negative
-
-        # 參數優先序：preset default_params < profile params < overrides
-        merged_params: dict[str, Any] = dict(preset.default_params)
-        if selected_profile:
-            merged_params.update(selected_profile.params)
-        generation.update(merged_params)
-
-        if overrides:
-            for key, value in overrides.items():
-                if value is not None:
-                    generation[key] = value
-
-        return ComposeResult(
-            preset_id=preset.id,
-            profile=profile,
-            generation=generation,
+    def compose(
+        self,
+        preset_id: str,
+        content_prompt: str,
+        profile: str | None = None,
+        overrides: Mapping[str, Any] | None = None,
+    ) -> ComposeResult:
+        return compose_preset(
+            self._require_preset(preset_id), content_prompt, profile, overrides
         )
 
 
-# --- 預設來源（執行期 catalog 檔） ----------------------------------------
+# --- 預設來源（執行期）----------------------------------------------------
 
-# backend/style_presets/catalog.json（backend 套件的上層目錄）
-DEFAULT_CATALOG_PATH = (
-    Path(__file__).resolve().parent.parent.parent / "style_presets" / "catalog.json"
+# 專案根目錄 style_presets/agent/（index.json + presets/<id>.json）；人類筆記在 style_presets/human/。
+# project_root = agent_dir.parent.parent = repo root，note_path 以 repo-root 相對解析。
+DEFAULT_AGENT_DIR = (
+    Path(__file__).resolve().parent.parent.parent.parent / "style_presets" / "agent"
 )
 
 
 def get_default_provider() -> StylePresetProvider:
-    """DI 工廠：回傳以執行期 catalog 檔為來源的 Provider，便於測試時 override。"""
-    return FileStylePresetProvider.from_file(DEFAULT_CATALOG_PATH)
+    """DI 工廠：回傳目錄分層 Provider，便於測試時 override。"""
+    return DirStylePresetProvider(
+        DEFAULT_AGENT_DIR, project_root=DEFAULT_AGENT_DIR.parent.parent
+    )

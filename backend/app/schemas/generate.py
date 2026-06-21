@@ -7,11 +7,23 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class LoraSpec(BaseModel):
+    """多 lora 的單一條目；strength_clip 省略時沿用 strength_model（model-only loader 忽略 clip）。"""
+
+    name: str
+    strength_model: float = Field(default=1.0, ge=0.0, le=2.0)
+    strength_clip: float | None = Field(default=None, ge=0.0, le=2.0)
+
+
 class GenerateRequest(BaseModel):
     """POST /api/generate/ 的 Request Body"""
 
     checkpoint: str | None = None
     lora: str | None = None
+    loras: list[LoraSpec] | None = Field(
+        default=None,
+        description="多 lora（依 workflow 內 LoraLoader 節點順序逐一對應）；提供時優先於單一 lora",
+    )
     template: str | None = Field(
         default=None,
         description="指定 workflow 模板名稱（如 anima）；省略時依是否有 lora 選 default / default_lora",
@@ -79,6 +91,10 @@ class GenerateCustomRequest(BaseModel):
     prompt: str = Field(default="1girl, solo", min_length=1)
     checkpoint: str | None = None
     lora: str | None = None
+    loras: list[LoraSpec] | None = Field(
+        default=None,
+        description="多 lora（依 workflow 內 LoraLoader 節點順序逐一對應）；提供時優先於單一 lora",
+    )
     negative_prompt: str | None = None
     seed: int | None = None
     steps: int | None = Field(default=None, ge=1, le=150)
