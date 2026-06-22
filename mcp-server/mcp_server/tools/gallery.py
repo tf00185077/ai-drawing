@@ -98,6 +98,55 @@ def get_gallery_image(image_id: int) -> str:
 
 
 @mcp.tool()
+def get_gallery_artifact(artifact_id: int) -> str:
+    """Get a recorded generated artifact, including video artifacts, and return stable JSON with local delivery metadata."""
+    try:
+        client = _get_client()
+        resp = client.get(f"gallery/artifacts/{artifact_id}")
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "get_gallery_artifact",
+                "artifact_id": resp.get("id", artifact_id),
+                "artifact_type": resp.get("artifact_type"),
+                "mime_type": resp.get("mime_type"),
+                "gallery_path": resp.get("gallery_path"),
+                "artifact_url": resp.get("artifact_url"),
+                "local_path": resp.get("local_path"),
+                "file_size": resp.get("file_size"),
+                "job_id": resp.get("job_id"),
+                "source_node_id": resp.get("source_node_id"),
+                "source_node_type": resp.get("source_node_type"),
+                "workflow_metadata": {
+                    "workflow_json": resp.get("workflow_json"),
+                    "prompt": resp.get("prompt"),
+                    "negative_prompt": resp.get("negative_prompt"),
+                    "metadata_json": resp.get("metadata_json"),
+                    "fps": resp.get("fps"),
+                    "frame_count": resp.get("frame_count"),
+                    "duration": resp.get("duration"),
+                    "width": resp.get("width"),
+                    "height": resp.get("height"),
+                    "created_at": resp.get("created_at"),
+                },
+                "next": "deliver artifact to user, then call free_comfyui_memory if not already called",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {
+                "ok": False,
+                "tool": "get_gallery_artifact",
+                "where": "backend",
+                "artifact_id": artifact_id,
+                "error": str(e),
+            },
+            ensure_ascii=False,
+        )
+
+
+@mcp.tool()
 def gallery_rerun(image_id: int) -> str:
     """One-click re-run: reload the image parameters and generate again, returns job_id."""
     try:

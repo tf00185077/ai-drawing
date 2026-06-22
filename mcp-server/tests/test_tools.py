@@ -14,7 +14,7 @@ from mcp_server.tools.generate import (
     list_workflow_templates,
     # suggest_workflow_from_description,  # 已停用，見 tools/generate.py 註解
 )
-from mcp_server.tools.gallery import gallery_list, gallery_rerun, get_gallery_image
+from mcp_server.tools.gallery import gallery_list, gallery_rerun, get_gallery_artifact, get_gallery_image
 from mcp_server.tools.lora_train import lora_train_start, lora_train_status
 
 
@@ -527,6 +527,53 @@ def test_get_gallery_image_backend_error_returns_structured_json() -> None:
     assert data["tool"] == "get_gallery_image"
     assert data["where"] == "backend"
     assert "not found" in data["error"]
+
+
+def test_get_gallery_artifact_returns_agent_friendly_json() -> None:
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "id": 9,
+        "artifact_type": "video",
+        "mime_type": "video/mp4",
+        "gallery_path": "2026-06-22/video.mp4",
+        "artifact_url": "/gallery/2026-06-22/video.mp4",
+        "local_path": "/tmp/gallery/2026-06-22/video.mp4",
+        "file_size": 123,
+        "job_id": "job-v1",
+        "source_node_id": "20",
+        "source_node_type": "VHS_VideoCombine",
+        "workflow_json": '{"20":{}}',
+        "prompt": "slow pan",
+        "created_at": "2026-06-22T00:00:00",
+    }
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_artifact(9)
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "get_gallery_artifact"
+    assert data["artifact_id"] == 9
+    assert data["artifact_type"] == "video"
+    assert data["mime_type"] == "video/mp4"
+    assert data["local_path"].endswith("video.mp4")
+    assert data["workflow_metadata"]["prompt"] == "slow pan"
+    mock_client.get.assert_called_once_with("gallery/artifacts/9")
+
+
+def test_get_gallery_artifact_backend_error_returns_structured_json() -> None:
+    mock_client = MagicMock()
+    mock_client.get.side_effect = RuntimeError("404 artifact_not_found")
+
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        result = get_gallery_artifact(999)
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "get_gallery_artifact"
+    assert data["where"] == "backend"
+    assert data["artifact_id"] == 999
+    assert "artifact_not_found" in data["error"]
 
 
 def test_free_comfyui_memory_success_returns_agent_friendly_json() -> None:

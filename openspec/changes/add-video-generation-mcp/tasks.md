@@ -17,7 +17,7 @@
 
 ## 3. MCP Video Workflow Tools
 
-- [ ] 3.1 Add `get_gallery_artifact(artifact_id)` MCP tool returning stable JSON with artifact type, mime type, gallery path, local path, file size, job id, and workflow metadata.
+- [x] 3.1 Add `get_gallery_artifact(artifact_id)` MCP tool returning stable JSON with artifact type, mime type, gallery path, local path, file size, job id, and workflow metadata.
 - [ ] 3.2 Add `generate_video_custom_workflow` MCP tool as a video-named wrapper over the custom workflow queue path; it accepts supplied ComfyUI workflow JSON and returns a normal queued job id.
 - [ ] 3.3 Support optional video input references for `generate_video_custom_workflow`: `image`, `first_frame`, `last_frame`, and `video_ref`, with safe gallery/input-root path handling and no injection for omitted values.
 - [ ] 3.4 Ensure MCP `get_generation_status` includes artifact-aware `next` instructions for completed video jobs.
