@@ -24,7 +24,7 @@ from app.core.workflow_manifest import (
     load_manifests,
 )
 from app.db.database import get_db
-from app.db.models import GeneratedImage
+from app.db.models import GeneratedArtifact, GeneratedImage
 
 router = APIRouter(prefix="/api/workflow-catalog", tags=["Workflow 模板目錄"])
 
@@ -116,6 +116,13 @@ async def backfill(body: BackfillRequest, db: Session = Depends(get_db)):
         .order_by(GeneratedImage.id.desc())
         .first()
     )
+    if row is None:
+        row = (
+            db.query(GeneratedArtifact)
+            .filter(GeneratedArtifact.job_id == body.job_id)
+            .order_by(GeneratedArtifact.id.desc())
+            .first()
+        )
     if row is None:
         raise HTTPException(404, f"找不到成功記錄：job_id={body.job_id}（未完成或未 recording，不可晉升）")
     if not row.workflow_json:

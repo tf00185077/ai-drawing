@@ -19,6 +19,7 @@ from app.core.workflow_manifest import (
     strip_workflow_to_shape,
 )
 from app.db.database import Base, get_db
+from app.db.models import GeneratedArtifact
 from app.main import app
 
 
@@ -143,6 +144,15 @@ def client_db(tmp_path, monkeypatch):
     with SL() as db:
         save(image_path="d/a.png", job_id="ok-job", prompt="p", workflow_json=_sample_wf(), db=db)
         save(image_path="d/b.png", job_id="legacy-job", prompt="p", db=db)  # 無 workflow_json
+        db.add(GeneratedArtifact(
+            job_id="video-job",
+            artifact_type="video",
+            gallery_path="d/a.mp4",
+            mime_type="video/mp4",
+            workflow_json=json.dumps(_sample_wf()),
+            prompt="p",
+        ))
+        db.commit()
     try:
         yield TestClient(app), tmp_path
     finally:
@@ -158,6 +168,20 @@ def test_backfill_endpoint_success(client_db) -> None:
     body = r.json()
     assert body["created"] is True
     assert (tmp_path / f"{body['template_id']}.json").exists()
+
+
+def test_backfill_endpoint_promotes_video_artifact(client_db) -> None:
+    client, tmp_path = client_db
+    r = client.post("/api/workflow-catalog/backfill", json={
+        "job_id": "video-job", "modality": "img2video", "model_family": "wan",
+        "conditioning": [], "io": ["text", "first_frame"], "description": "i2v"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["created"] is True
+    meta = json.loads((tmp_path / f"{body['template_id']}.meta.json").read_text())
+    assert meta["modality"] == "img2video"
+    assert meta["model_family"] == "wan"
+    assert "first_frame" in meta["io"]
 
 
 def test_backfill_endpoint_gate_unknown_job(client_db) -> None:
