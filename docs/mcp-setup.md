@@ -185,9 +185,11 @@ pip install -e .
 | `list_character_styles` | 可用角色／風格 | 有哪些角色和風格可選 |
 | `resolve_character_style_prompt` | 預覽 prompt | 初音+動漫會變成什麼 prompt |
 
-### 影片 MCP derivation loop
+### 影片 MCP MVP 邊界
 
 影片生成目前是 MCP-first 的 artifact lifecycle：agent 從 CTY 提供的 known-good 本機 ComfyUI video workflow 開始，用 `search_nodes` / `get_node_schema` 檢查本機節點，修改 schema-valid 欄位後呼叫 `generate_video_custom_workflow`，再用 `get_generation_status` 的 `artifacts[]` 和 `get_gallery_artifact` 取回影片檔。
+
+此 MVP 不包含：自動安裝 / 下載 ComfyUI nodes、第三方 partner/API video nodes、frontend video gallery UI、backend 從自然語言合成完整 video graph。未經本機成功驗證的 video workflow 不應寫成模板 manifest。
 
 ---
 
