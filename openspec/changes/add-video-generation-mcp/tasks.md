@@ -34,7 +34,7 @@
 
 ## 5. MVP Guardrails and Resource Inventory
 
-- [ ] 5.1 Add optional video resource categories to `list_available_resources` only for directories that are configured and discoverable locally.
+- [x] 5.1 Add optional video resource categories to `list_available_resources` only for directories that are configured and discoverable locally.
 - [ ] 5.2 Return empty arrays for absent video resource categories rather than failing the resource listing.
 - [ ] 5.3 Document that automatic node download/installation, partner/API video nodes, frontend video browsing, and backend prose-to-video-graph synthesis are out of scope for this MVP.
 
