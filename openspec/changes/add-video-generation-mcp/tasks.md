@@ -21,7 +21,7 @@
 - [x] 3.2 Add `generate_video_custom_workflow` MCP tool as a video-named wrapper over the custom workflow queue path; it accepts supplied ComfyUI workflow JSON and returns a normal queued job id.
 - [x] 3.3 Support optional video input references for `generate_video_custom_workflow`: `image`, `first_frame`, `last_frame`, and `video_ref`, with safe gallery/input-root path handling and no injection for omitted values.
 - [x] 3.4 Ensure MCP `get_generation_status` includes artifact-aware `next` instructions for completed video jobs.
-- [ ] 3.5 Add MCP tests for queued video custom workflow submission, completed video artifact retrieval, artifact-aware status, and structured not-found errors.
+- [x] 3.5 Add MCP tests for queued video custom workflow submission, completed video artifact retrieval, artifact-aware status, and structured not-found errors.
 
 ## 4. Workflow Derivation and Template Capabilities
 
