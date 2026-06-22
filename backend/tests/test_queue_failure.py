@@ -95,3 +95,30 @@ def test_job_status_api_passes_through_node_errors() -> None:
     assert body["status"] == "failed"
     assert body["error"] == "invalid prompt"
     assert body["node_errors"][0]["node_id"] == "7"
+
+
+def test_job_status_api_passes_through_recording_error() -> None:
+    """GET /api/generate/job/{id} exposes structured recording errors."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    q._reset_for_test()
+    job = q._Job(job_id="job-recording", params={}, submitted_at="t")
+    q._record_failure(
+        job,
+        RuntimeError("generation finished with no supported output artifact"),
+        recording_error={
+            "code": "no_supported_output_artifact",
+            "message": "generation finished with no supported output artifact",
+        },
+    )
+
+    r = TestClient(app).get("/api/generate/job/job-recording")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "failed"
+    assert body["recording_error"] == {
+        "code": "no_supported_output_artifact",
+        "message": "generation finished with no supported output artifact",
+    }
