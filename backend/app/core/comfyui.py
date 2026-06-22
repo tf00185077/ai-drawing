@@ -70,6 +70,7 @@ from typing import Any, Protocol, runtime_checkable
 import httpx
 
 from app.config import get_settings
+from app.core.artifacts import get_output_images as _get_output_images
 
 logger = logging.getLogger(__name__)
 
@@ -482,15 +483,4 @@ def get_output_images(history: dict[str, Any], prompt_id: str) -> list[dict[str,
     從 history 中萃取出所有輸出圖片
     Returns: [{"filename": str, "subfolder": str, "type": str}, ...]
     """
-    images: list[dict[str, Any]] = []
-    prompt_data = history.get(prompt_id, {})
-    outputs = prompt_data.get("outputs", {})
-
-    for node_out in outputs.values():
-        for img in node_out.get("images", []):
-            images.append({
-                "filename": img["filename"],
-                "subfolder": img.get("subfolder", ""),
-                "type": img.get("type", "output"),
-            })
-    return images
+    return _get_output_images(history, prompt_id)
