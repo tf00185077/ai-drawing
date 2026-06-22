@@ -11,7 +11,7 @@
 
 - [x] 2.1 Add artifact response schemas for artifact summary/detail, including id, artifact type, mime type, gallery path, local path or URL, size, job id, and workflow metadata.
 - [x] 2.2 Add `GET /api/gallery/artifacts/{artifact_id}` for recorded artifact lookup with structured not-found behavior.
-- [ ] 2.3 Extend generation status responses to include `artifacts[]` for completed jobs.
+- [x] 2.3 Extend generation status responses to include `artifacts[]` for completed jobs.
 - [ ] 2.4 Preserve legacy `image_id` and `image_path` fields for completed image jobs and keep `get_gallery_image` compatibility.
 - [ ] 2.5 Add backend tests for completed video status, artifact lookup, unknown artifact lookup, recording failure, and legacy image status compatibility.
 
