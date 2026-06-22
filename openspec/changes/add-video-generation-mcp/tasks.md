@@ -25,7 +25,7 @@
 
 ## 4. Workflow Derivation and Template Capabilities
 
-- [ ] 4.1 Extend controlled template capability vocabulary with video modalities `txt2video` and `img2video`.
+- [x] 4.1 Extend controlled template capability vocabulary with video modalities `txt2video` and `img2video`.
 - [ ] 4.2 Extend controlled IO tags with `first_frame`, `last_frame`, `video_ref`, and `audio_ref`.
 - [ ] 4.3 Update `validate_template_capabilities` and `match_workflow_template` tests to cover video modalities and IO tags.
 - [ ] 4.4 Allow `save_workflow_template` to promote successful video jobs that recorded at least one supported artifact.
