@@ -130,3 +130,12 @@ class GenerateCustomRequest(BaseModel):
         default=None,
         description="VAELoader.vae_name；省略時沿用 workflow JSON 既有值",
     )
+
+
+class GenerateVideoCustomRequest(GenerateCustomRequest):
+    """
+    POST /api/generate/video/custom 的 Request Body.
+    Video MVP still requires a complete supplied ComfyUI workflow JSON.
+    """
+
+    pass

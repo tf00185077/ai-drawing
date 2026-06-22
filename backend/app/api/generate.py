@@ -24,10 +24,55 @@ from app.schemas.generate import (
     GenerateCustomRequest,
     GenerateRequest,
     GenerateResponse,
+    GenerateVideoCustomRequest,
     QueueStatusResponse,
 )
 
 router = APIRouter(prefix="/api/generate", tags=["生圖"])
+
+
+def _custom_request_params(body: GenerateCustomRequest) -> dict:
+    params = {
+        "workflow": body.workflow,
+        "checkpoint": body.checkpoint,
+        "lora": body.lora,
+        "prompt": body.prompt,
+        "negative_prompt": body.negative_prompt,
+        "seed": body.seed,
+    }
+    if body.steps is not None:
+        params["steps"] = body.steps
+    if body.cfg is not None:
+        params["cfg"] = body.cfg
+    if body.width is not None:
+        params["width"] = body.width
+    if body.height is not None:
+        params["height"] = body.height
+    if body.batch_size is not None:
+        params["batch_size"] = body.batch_size
+    if body.sampler_name is not None:
+        params["sampler_name"] = body.sampler_name
+    if body.scheduler is not None:
+        params["scheduler"] = body.scheduler
+    if body.image is not None:
+        params["image"] = body.image
+    if body.image_pose is not None:
+        params["image_pose"] = body.image_pose
+    if body.mask is not None:
+        params["mask"] = body.mask
+    if body.diffusion_model is not None:
+        params["diffusion_model"] = body.diffusion_model
+    if body.text_encoder is not None:
+        params["text_encoder"] = body.text_encoder
+    if body.vae is not None:
+        params["vae"] = body.vae
+    if body.lora_strength is not None:
+        params["lora_strength"] = body.lora_strength
+    if body.loras is not None:
+        params["loras"] = [lo.model_dump() for lo in body.loras]
+    if body.denoise is not None:
+        params["denoise"] = body.denoise
+    return params
 
 
 @router.post("/", response_model=GenerateResponse, status_code=201)
@@ -84,51 +129,30 @@ async def trigger_generate_custom(body: GenerateCustomRequest):
     workflow 為 ComfyUI API 格式，可由 AI 根據使用者描述動態產生。
     """
     try:
-        params = {
-            "workflow": body.workflow,
-            "checkpoint": body.checkpoint,
-            "lora": body.lora,
-            "prompt": body.prompt,
-            "negative_prompt": body.negative_prompt,
-            "seed": body.seed,
-        }
-        if body.steps is not None:
-            params["steps"] = body.steps
-        if body.cfg is not None:
-            params["cfg"] = body.cfg
-        if body.width is not None:
-            params["width"] = body.width
-        if body.height is not None:
-            params["height"] = body.height
-        if body.batch_size is not None:
-            params["batch_size"] = body.batch_size
-        if body.sampler_name is not None:
-            params["sampler_name"] = body.sampler_name
-        if body.scheduler is not None:
-            params["scheduler"] = body.scheduler
-        if body.image is not None:
-            params["image"] = body.image
-        if body.image_pose is not None:
-            params["image_pose"] = body.image_pose
-        if body.mask is not None:
-            params["mask"] = body.mask
-        if body.diffusion_model is not None:
-            params["diffusion_model"] = body.diffusion_model
-        if body.text_encoder is not None:
-            params["text_encoder"] = body.text_encoder
-        if body.vae is not None:
-            params["vae"] = body.vae
-        if body.lora_strength is not None:
-            params["lora_strength"] = body.lora_strength
-        if body.loras is not None:
-            params["loras"] = [lo.model_dump() for lo in body.loras]
-        if body.denoise is not None:
-            params["denoise"] = body.denoise
+        params = _custom_request_params(body)
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,
             status="queued",
             message="已加入生圖佇列（自訂 workflow）",
+        )
+    except QueueFullError as e:
+        raise HTTPException(503, str(e))
+
+
+@router.post("/video/custom", response_model=GenerateResponse, status_code=201)
+async def trigger_generate_video_custom(body: GenerateVideoCustomRequest):
+    """
+    使用自訂 workflow 觸發影片生成。
+    MVP 不從自然語言合成影片 graph；呼叫端需提供完整 ComfyUI workflow JSON。
+    """
+    try:
+        params = _custom_request_params(body)
+        job_id = submit_custom(params)
+        return GenerateResponse(
+            job_id=job_id,
+            status="queued",
+            message="已加入影片生成佇列（自訂 workflow）",
         )
     except QueueFullError as e:
         raise HTTPException(503, str(e))
