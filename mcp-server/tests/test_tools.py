@@ -413,6 +413,32 @@ def test_get_generation_status_completed_includes_image_info() -> None:
     assert "free_comfyui_memory" in data["next"]
 
 
+def test_get_generation_status_completed_video_includes_artifacts_and_artifact_next() -> None:
+    """completed video jobs guide the agent to get_gallery_artifact."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "status": "completed",
+        "job_id": "job-v1",
+        "artifacts": [
+            {
+                "id": 9,
+                "artifact_type": "video",
+                "mime_type": "video/mp4",
+                "gallery_path": "2026-06-22/video.mp4",
+            }
+        ],
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = get_generation_status("job-v1")
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["status"] == "completed"
+    assert data["artifacts"][0]["artifact_type"] == "video"
+    assert "get_gallery_artifact" in data["next"]
+
+
 def test_get_generation_status_failed_surfaces_node_errors() -> None:
     """get_generation_status failed 時回 ok=false + 結構化 node_errors，引導自我修正"""
     mock_client = MagicMock()
