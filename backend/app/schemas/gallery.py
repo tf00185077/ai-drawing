@@ -54,3 +54,35 @@ class RerunResponse(BaseModel):
     job_id: str
     status: str = "queued"
     message: str | None = None
+
+
+class ArtifactSummary(BaseModel):
+    """GeneratedArtifact summary for job status responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    job_id: str | None = None
+    artifact_type: str
+    mime_type: str | None = None
+    gallery_path: str
+    artifact_url: str | None = None
+    file_size: int | None = None
+    source_node_id: str | None = None
+    source_node_type: str | None = None
+    created_at: datetime
+
+
+class ArtifactDetail(ArtifactSummary):
+    """GET /api/gallery/artifacts/{id} 的 Response."""
+
+    local_path: str | None = None
+    workflow_json: str | None = None
+    prompt: str | None = None
+    negative_prompt: str | None = None
+    metadata_json: str | None = None
+    fps: float | None = None
+    frame_count: int | None = None
+    duration: float | None = None
+    width: int | None = None
+    height: int | None = None
