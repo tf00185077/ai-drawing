@@ -1,7 +1,7 @@
 ## 1. Generic Artifact Lifecycle
 
 - [x] 1.1 Add a `GeneratedArtifact` model/table or equivalent artifact persistence layer with job id, artifact type, gallery-relative path, mime type, source node id/type, file size, workflow JSON, prompt metadata, and optional video metadata.
-- [ ] 1.2 Add an idempotent local DB initialization/migration path so SQLite creates the artifact table without changing existing `GeneratedImage` rows.
+- [x] 1.2 Add an idempotent local DB initialization/migration path so SQLite creates the artifact table without changing existing `GeneratedImage` rows.
 - [ ] 1.3 Implement artifact type and MIME detection for `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.mp4`, and `.webm`.
 - [ ] 1.4 Extend ComfyUI history/output parsing to collect image, video, and file artifacts from completed prompt outputs, including extension-based detection for video nodes with inconsistent output keys.
 - [ ] 1.5 Copy recorded video artifacts into the configured project gallery with job-id-safe filenames and record the final gallery-relative path.
