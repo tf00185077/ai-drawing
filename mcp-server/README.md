@@ -26,7 +26,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `generate_queue_status` | 取得生圖佇列狀態（執行中／等候中） |
 | `get_generation_status` | 查詢 job 狀態；完成帶 `artifacts[]`，圖片 job 仍帶 image_id / image_path；**失敗（含執行期）回 `node_errors` 或 `recording_error`** 供自我修正 |
 | `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
-| `list_available_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint |
+| `list_available_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint；影片資源類別目前只有本機可發現時才填入，否則回空陣列 |
 
 ### 影片 MCP derivation loop
 

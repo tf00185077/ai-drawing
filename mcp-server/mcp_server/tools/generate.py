@@ -561,7 +561,7 @@ def cancel_job(job_id: str) -> str:
 
 @mcp.tool()
 def list_available_resources() -> str:
-    """List available checkpoints, LoRAs, diffusion models (UNET, e.g. Anima), text encoders, VAEs, and workflow templates, returns agent-friendly JSON. diffusion_models / text_encoders / vaes are the components for diffusion-model families used by the anima template."""
+    """List available checkpoints, LoRAs, diffusion models, text encoders, VAEs, optional video resources, and workflow templates, returns agent-friendly JSON."""
     try:
         client = _get_client()
         resp = client.get("generate/available-resources")
@@ -570,6 +570,9 @@ def list_available_resources() -> str:
         diffusion_models = resp.get("diffusion_models", [])
         text_encoders = resp.get("text_encoders", [])
         vaes = resp.get("vaes", [])
+        video_models = resp.get("video_models", [])
+        video_loras = resp.get("video_loras", [])
+        video_inputs = resp.get("video_inputs", [])
         workflows = resp.get("workflows", [])
         default_checkpoint = resp.get("default_checkpoint")
         next_step = (
@@ -587,6 +590,9 @@ def list_available_resources() -> str:
                 "diffusion_models": diffusion_models,
                 "text_encoders": text_encoders,
                 "vaes": vaes,
+                "video_models": video_models,
+                "video_loras": video_loras,
+                "video_inputs": video_inputs,
                 "workflows": workflows,
                 "default_checkpoint": default_checkpoint,
                 "next": next_step,

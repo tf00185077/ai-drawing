@@ -37,6 +37,9 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     assert data["backend_base_url"] == "http://127.0.0.1:8001"
     assert data["checkpoints"] == ["novaAnimeXL_ilV190.safetensors", "v1-5-pruned-emaonly.ckpt"]
     assert data["loras"] == []
+    assert data["video_models"] == []
+    assert data["video_loras"] == []
+    assert data["video_inputs"] == []
     assert data["workflows"] == ["default", "default_lora"]
     assert "generate_image" in data["next"]
     mock_client.get.assert_called_once_with("generate/available-resources")
