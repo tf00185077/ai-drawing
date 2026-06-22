@@ -20,15 +20,15 @@ from typing import Any, TypedDict
 import httpx
 
 from app.config import get_settings
+from app.core.artifacts import gallery_output_filename, get_output_artifacts
 from app.core.comfyui import (
     ComfyUIClient,
     ComfyUIError,
     get_comfy_client,
-    get_output_images,
     structure_execution_error,
     structure_node_errors,
 )
-from app.core.recording import save as recording_save
+from app.core.recording import save as recording_save, save_artifact as recording_save_artifact
 from app.core.resources import default_checkpoint
 from app.core.workflow import (
     apply_params,
@@ -437,51 +437,70 @@ def _prompt_in_comfy_queue(queue_data: dict[str, Any], prompt_id: str) -> bool:
 
 
 def _save_job_outputs(
-    comfy: ComfyUIClient, job: "_Job", images_info: list[dict[str, Any]]
+    comfy: ComfyUIClient, job: "_Job", artifacts_info: list[dict[str, Any]]
 ) -> int:
-    """取圖、存檔、寫入 GeneratedImage。回傳成功記錄數。失敗會拋例外（由呼叫端轉 failed）。"""
+    """Fetch outputs, copy to gallery, and persist image/artifact records."""
     settings = get_settings()
     gallery_path = Path(settings.gallery_dir).resolve()
     date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out_dir = gallery_path / date_str
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    saved_infos: list[tuple[str, str]] = []  # (rel_path, out_name)
-    for i, img in enumerate(images_info):
+    saved_infos: list[tuple[str, dict[str, Any], int]] = []
+    for i, artifact in enumerate(artifacts_info):
         data = comfy.fetch_image(
-            img["filename"],
-            subfolder=img.get("subfolder", ""),
-            ftype=img.get("type", "output"),
+            artifact["filename"],
+            subfolder=artifact.get("subfolder", ""),
+            ftype=artifact.get("type", "output"),
         )
-        base = img["filename"].rsplit(".", 1)[0] if "." in img["filename"] else img["filename"]
-        ext = img["filename"].rsplit(".", 1)[-1] if "." in img["filename"] else "png"
-        out_name = f"{base}_{job.job_id[:8]}_{i}.{ext}"
+        out_name = gallery_output_filename(artifact["filename"], job.job_id, i)
         (out_dir / out_name).write_bytes(data)
-        saved_infos.append((str(Path(date_str) / out_name), out_name))
+        saved_infos.append((str(Path(date_str) / out_name), artifact, len(data)))
 
     count = 0
-    for rel_path, _out_name in saved_infos:
+    for rel_path, artifact, file_size in saved_infos:
         db = SessionLocal()
         try:
-            recording_save(
-                rel_path,
-                job_id=job.job_id,
-                checkpoint=job.params.get("checkpoint"),
-                lora=job.params.get("lora"),
-                template=job.params.get("template"),
-                diffusion_model=job.params.get("diffusion_model"),
-                text_encoder=job.params.get("text_encoder"),
-                vae=job.params.get("vae"),
-                seed=job.params.get("seed"),
-                steps=job.params.get("steps"),
-                cfg=job.params.get("cfg"),
-                prompt=job.params.get("prompt"),
-                negative_prompt=job.params.get("negative_prompt"),
-                workflow_json=job.params.get("workflow_json"),
-                source_image=job.params.get("source_image"),
-                source_mask=job.params.get("source_mask"),
-                db=db,
-            )
+            artifact_type = artifact.get("artifact_type")
+            if artifact_type == "image":
+                recording_save(
+                    rel_path,
+                    job_id=job.job_id,
+                    checkpoint=job.params.get("checkpoint"),
+                    lora=job.params.get("lora"),
+                    template=job.params.get("template"),
+                    diffusion_model=job.params.get("diffusion_model"),
+                    text_encoder=job.params.get("text_encoder"),
+                    vae=job.params.get("vae"),
+                    seed=job.params.get("seed"),
+                    steps=job.params.get("steps"),
+                    cfg=job.params.get("cfg"),
+                    prompt=job.params.get("prompt"),
+                    negative_prompt=job.params.get("negative_prompt"),
+                    workflow_json=job.params.get("workflow_json"),
+                    source_image=job.params.get("source_image"),
+                    source_mask=job.params.get("source_mask"),
+                    artifact_mime_type=artifact.get("mime_type"),
+                    artifact_source_node_id=artifact.get("source_node_id"),
+                    artifact_source_node_type=artifact.get("source_node_type"),
+                    artifact_file_size=file_size,
+                    db=db,
+                )
+            else:
+                recording_save_artifact(
+                    gallery_path=rel_path,
+                    artifact_type=str(artifact_type or "file"),
+                    mime_type=artifact.get("mime_type"),
+                    job_id=job.job_id,
+                    source_node_id=artifact.get("source_node_id"),
+                    source_node_type=artifact.get("source_node_type"),
+                    file_size=file_size,
+                    workflow_json=job.params.get("workflow_json"),
+                    prompt=job.params.get("prompt"),
+                    negative_prompt=job.params.get("negative_prompt"),
+                    metadata={"output_key": artifact.get("output_key")},
+                    db=db,
+                )
             count += 1
         finally:
             db.close()
@@ -531,7 +550,11 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
 
     status = entry.get("status", {}) or {}
     status_str = status.get("status_str")
-    images_info = get_output_images(history, job.prompt_id)
+    artifacts_info = get_output_artifacts(
+        history,
+        job.prompt_id,
+        workflow=job.params.get("workflow_json"),
+    )
 
     _release_running(job)  # 已是終局，先釋放槽
 
@@ -542,14 +565,14 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         logger.error("Job %s failed during ComfyUI execution: %s", job.job_id, reason)
         return
 
-    if not images_info:
-        _record_failure(job, RuntimeError("generation finished with no output images"))
-        logger.warning("Job %s finished with no output images", job.job_id)
+    if not artifacts_info:
+        _record_failure(job, RuntimeError("generation finished with no supported output artifact"))
+        logger.warning("Job %s finished with no supported output artifact", job.job_id)
         return
 
     try:
-        n = _save_job_outputs(comfy, job, images_info)
-        logger.info("Job %s completed, saved %d image(s)", job.job_id, n)
+        n = _save_job_outputs(comfy, job, artifacts_info)
+        logger.info("Job %s completed, saved %d artifact(s)", job.job_id, n)
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
         _record_failure(job, e)
