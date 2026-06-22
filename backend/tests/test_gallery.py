@@ -6,7 +6,7 @@ from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
 from app.db.database import Base, get_db
-from app.db.models import GeneratedImage
+from app.db.models import GeneratedArtifact, GeneratedImage
 from app.core.recording import save
 from app.main import app
 
@@ -32,6 +32,27 @@ def client():
     app.dependency_overrides[get_db] = override_get_db
 
     with TestSessionLocal() as session:
+        session.add(
+            GeneratedArtifact(
+                job_id="job-video",
+                artifact_type="video",
+                gallery_path="2024-01/video.mp4",
+                mime_type="video/mp4",
+                file_size=1234,
+                source_node_id="42",
+                source_node_type="VHS_VideoCombine",
+                workflow_json='{"42": {"class_type": "VHS_VideoCombine"}}',
+                prompt="slow pan",
+                negative_prompt="blur",
+                metadata_json='{"output_key": "gifs"}',
+                fps=12.0,
+                frame_count=24,
+                duration=2.0,
+                width=512,
+                height=512,
+            )
+        )
+        session.commit()
         save(image_path="2024-01/test1.png", checkpoint="model.safetensors", prompt="1girl", db=session)
         save(image_path="2024-01/test2.png", lora="lora.safetensors", seed=999, db=session)
 
@@ -75,6 +96,39 @@ def test_get_image_detail_returns_404_for_invalid_id(client) -> None:
     """GET /api/gallery/99999 回傳 404"""
     res = client.get("/api/gallery/99999")
     assert res.status_code == 404
+
+
+def test_get_artifact_detail_returns_video_metadata(client) -> None:
+    """GET /api/gallery/artifacts/{id} 回傳影片 artifact metadata"""
+    res = client.get("/api/gallery/artifacts/1")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["id"] == 1
+    assert data["job_id"] == "job-video"
+    assert data["artifact_type"] == "video"
+    assert data["mime_type"] == "video/mp4"
+    assert data["gallery_path"] == "2024-01/video.mp4"
+    assert data["artifact_url"] == "/gallery/2024-01/video.mp4"
+    assert data["local_path"].endswith("/2024-01/video.mp4")
+    assert data["file_size"] == 1234
+    assert data["source_node_id"] == "42"
+    assert data["source_node_type"] == "VHS_VideoCombine"
+    assert data["workflow_json"] == '{"42": {"class_type": "VHS_VideoCombine"}}'
+    assert data["prompt"] == "slow pan"
+    assert data["negative_prompt"] == "blur"
+    assert data["metadata_json"] == '{"output_key": "gifs"}'
+    assert data["fps"] == 12.0
+    assert data["frame_count"] == 24
+    assert data["duration"] == 2.0
+    assert data["width"] == 512
+    assert data["height"] == 512
+
+
+def test_get_artifact_detail_returns_structured_404(client) -> None:
+    """GET /api/gallery/artifacts/{id} 對未知 artifact 回傳結構化錯誤"""
+    res = client.get("/api/gallery/artifacts/9999")
+    assert res.status_code == 404
+    assert res.json()["detail"] == {"error": "artifact_not_found", "artifact_id": 9999}
 
 
 def test_rerun_returns_202_with_job_id(client) -> None:
