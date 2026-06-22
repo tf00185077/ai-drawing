@@ -40,7 +40,7 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Run backend unit tests covering artifact recording, status serialization, gallery artifact API behavior, and image compatibility.
+- [x] 6.1 Run backend unit tests covering artifact recording, status serialization, gallery artifact API behavior, and image compatibility.
 - [ ] 6.2 Run MCP server tests covering new tools and artifact-aware status responses.
 - [ ] 6.3 Validate OpenSpec with `openspec validate add-video-generation-mcp --strict` and `openspec validate --all`.
 - [ ] 6.4 Run one low-load local ComfyUI video job end to end with a known-good workflow: submit via `generate_video_custom_workflow`, poll with `get_generation_status`, confirm `artifacts[]`, retrieve via `get_gallery_artifact`, verify the local file exists, and free ComfyUI memory.
