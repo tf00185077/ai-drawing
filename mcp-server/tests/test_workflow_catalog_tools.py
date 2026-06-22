@@ -74,6 +74,31 @@ def test_match_hit_tells_agent_to_reuse() -> None:
     )
 
 
+def test_match_video_hit_tells_agent_to_derive_custom_workflow() -> None:
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "request": {"modality": "img2video"},
+        "matched": ["wan_i2v_base"],
+        "total": 1,
+    }
+    with patch("mcp_server.tools.workflow_catalog._get_client", return_value=mock_client):
+        result = json.loads(match_workflow_template("img2video", model_family="wan", io=["first_frame"]))
+
+    assert result["ok"] is True
+    assert result["matched"] == ["wan_i2v_base"]
+    assert "get_workflow_template" in result["next"]
+    assert "generate_video_custom_workflow" in result["next"]
+    mock_client.get.assert_called_once_with(
+        "workflow-catalog/match",
+        params={
+            "modality": "img2video",
+            "model_family": "wan",
+            "conditioning": "",
+            "io": "first_frame",
+        },
+    )
+
+
 def test_match_miss_tells_agent_to_self_author() -> None:
     mock_client = MagicMock()
     mock_client.get.return_value = {"request": {"modality": "txt2img"}, "matched": [], "total": 0}
