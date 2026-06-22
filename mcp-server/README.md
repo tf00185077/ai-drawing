@@ -28,9 +28,11 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
 | `list_available_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint；影片資源類別目前只有本機可發現時才填入，否則回空陣列 |
 
-### 影片 MCP derivation loop
+### 影片 MCP MVP
 
-建議的影片 derivation loop：
+影片 MVP 的責任邊界是「提交已知可用的本機 ComfyUI workflow、記錄輸出 artifact、讓 MCP 取回檔案」。它不會從自然語言合成完整影片 graph，也不會下載或安裝 ComfyUI custom nodes。
+
+建議 derivation loop：
 
 1. 從 CTY 提供的 known-good local ComfyUI video workflow 開始。
 2. 用 `list_node_categories` / `search_nodes` / `get_node_schema` 檢查本機節點與可接受 input。
@@ -39,6 +41,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 5. 用 `get_generation_status(job_id)` 輪詢；若失敗，讀 `node_errors` / `recording_error` 修正後重送。
 6. 完成時讀 `artifacts[]`，用 `get_gallery_artifact(artifact_id)` 取得 `local_path` / mime type / file size。
 7. 只有已完成且成功 recorded 的 video workflow，才可用 `save_workflow_template(job_id, modality="txt2video" 或 "img2video", ...)` 回填。
+
+Out of scope for this MVP：自動 node download/install、第三方 partner/API video nodes、frontend video browsing UI、backend prose-to-video-graph synthesis、未驗證 workflow 的 video template manifest。
 
 ### LoRA 訓練
 
