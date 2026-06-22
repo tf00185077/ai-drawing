@@ -31,6 +31,7 @@
 - [x] 4.4 Allow `save_workflow_template` to promote successful video jobs that recorded at least one supported artifact.
 - [x] 4.5 Document the agent-side derivation loop: start from a known-good video workflow, inspect schemas with MCP tools, submit a derived workflow through `generate_video_custom_workflow`, inspect structured failures, and save verified shapes.
 - [ ] 4.6 Add or document one minimal video template manifest only after a real local ComfyUI video workflow has been verified.
+  - Blocked 2026-06-22: no known-good local ComfyUI video workflow or verified video template manifest is present in this checkout; do not add a video template manifest until the live workflow is provided and passes end-to-end verification.
 
 ## 5. MVP Guardrails and Resource Inventory
 
@@ -44,6 +45,7 @@
 - [x] 6.2 Run MCP server tests covering new tools and artifact-aware status responses.
 - [x] 6.3 Validate OpenSpec with `openspec validate add-video-generation-mcp --strict` and `openspec validate --all`.
 - [ ] 6.4 Run one low-load local ComfyUI video job end to end with a known-good workflow: submit via `generate_video_custom_workflow`, poll with `get_generation_status`, confirm `artifacts[]`, retrieve via `get_gallery_artifact`, verify the local file exists, and free ComfyUI memory.
+  - Blocked 2026-06-22: local workflow search found no video workflow/template to submit; this remains pending CTY supplying a known-good ComfyUI video workflow with required local nodes/models installed.
 - [x] 6.5 Confirm existing image generation and `get_gallery_image` still pass their current tests.
 
 ## 7. Agent Assignment
