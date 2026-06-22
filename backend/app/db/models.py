@@ -33,3 +33,27 @@ class GeneratedImage(Base):
     source_image = Column(String(512), nullable=True)
     source_mask = Column(String(512), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class GeneratedArtifact(Base):
+    """Generic generated artifact record for images, videos, and future files."""
+    __tablename__ = "generated_artifacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(String(64), nullable=True, index=True)
+    artifact_type = Column(String(32), nullable=False, index=True)
+    gallery_path = Column(String(512), nullable=False)
+    mime_type = Column(String(128), nullable=True)
+    source_node_id = Column(String(64), nullable=True)
+    source_node_type = Column(String(256), nullable=True)
+    file_size = Column(Integer, nullable=True)
+    workflow_json = Column(Text, nullable=True)
+    prompt = Column(Text, nullable=True)
+    negative_prompt = Column(Text, nullable=True)
+    metadata_json = Column(Text, nullable=True)
+    fps = Column(Float, nullable=True)
+    frame_count = Column(Integer, nullable=True)
+    duration = Column(Float, nullable=True)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
