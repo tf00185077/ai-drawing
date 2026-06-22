@@ -1,6 +1,11 @@
 """Generated artifact helper tests."""
 
-from app.core.artifacts import detect_artifact_type, get_output_artifacts, get_output_images
+from app.core.artifacts import (
+    detect_artifact_type,
+    gallery_output_filename,
+    get_output_artifacts,
+    get_output_images,
+)
 
 
 def test_detect_artifact_type_for_supported_image_and_video_extensions() -> None:
@@ -105,3 +110,11 @@ def test_get_output_images_preserves_legacy_image_projection() -> None:
     assert get_output_images(history, "prompt-1") == [
         {"filename": "still.png", "subfolder": "images", "type": "output"}
     ]
+
+
+def test_gallery_output_filename_preserves_extension_and_sanitizes_name() -> None:
+    assert gallery_output_filename("video render.mp4", "abcdef123456", 2) == (
+        "video_render_abcdef12_2.mp4"
+    )
+    assert gallery_output_filename("../bad name.WEBM", "job", 0) == "bad_name_job_0.webm"
+    assert gallery_output_filename("???", "job", 1) == "artifact_job_1.bin"

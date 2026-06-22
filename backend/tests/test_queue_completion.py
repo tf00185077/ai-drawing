@@ -1,7 +1,14 @@
 """harden-queue-completion：終局狀態處理（不再靜默消失）"""
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from app.core import queue as q
+from app.db.database import Base
+from app.db.models import GeneratedArtifact, GeneratedImage
 
 
 def _set_running(prompt_id: str = "pid", **params) -> "q._Job":
@@ -106,3 +113,69 @@ def test_recording_failure_marks_failed_not_dropped() -> None:
     st = q.get_job_status("j1")
     assert st["status"] == "failed"
     assert "disk full" in st["error"]
+
+
+def test_save_job_outputs_copies_video_artifact_to_gallery(tmp_path, monkeypatch) -> None:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    gallery_dir = tmp_path / "gallery"
+
+    monkeypatch.setattr(q, "SessionLocal", session_factory)
+    monkeypatch.setattr(q, "get_settings", lambda: SimpleNamespace(gallery_dir=str(gallery_dir)))
+
+    fake = MagicMock()
+    fake.fetch_image.return_value = b"video bytes"
+    job = q._Job(
+        job_id="abcdef123456",
+        params={
+            "prompt": "slow pan",
+            "negative_prompt": "blur",
+            "workflow_json": {"9": {"class_type": "VHS_VideoCombine"}},
+        },
+        submitted_at="t",
+    )
+
+    count = q._save_job_outputs(
+        fake,
+        job,
+        [
+            {
+                "filename": "video render.mp4",
+                "subfolder": "clips",
+                "type": "output",
+                "artifact_type": "video",
+                "mime_type": "video/mp4",
+                "source_node_id": "9",
+                "source_node_type": "VHS_VideoCombine",
+                "output_key": "gifs",
+            }
+        ],
+    )
+
+    assert count == 1
+    fake.fetch_image.assert_called_once_with(
+        "video render.mp4",
+        subfolder="clips",
+        ftype="output",
+    )
+
+    with session_factory() as db:
+        artifact = db.query(GeneratedArtifact).one()
+        assert db.query(GeneratedImage).count() == 0
+
+    assert artifact.artifact_type == "video"
+    assert artifact.mime_type == "video/mp4"
+    assert artifact.job_id == "abcdef123456"
+    assert artifact.gallery_path.endswith("/video_render_abcdef12_0.mp4")
+    assert artifact.source_node_id == "9"
+    assert artifact.source_node_type == "VHS_VideoCombine"
+    assert artifact.file_size == len(b"video bytes")
+    assert artifact.prompt == "slow pan"
+    assert artifact.negative_prompt == "blur"
+    assert artifact.metadata_json == '{"output_key": "gifs"}'
+    assert (gallery_dir / artifact.gallery_path).read_bytes() == b"video bytes"

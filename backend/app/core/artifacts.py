@@ -6,6 +6,7 @@ extension-based detection and history extraction in one place.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -130,3 +131,12 @@ def get_output_images(history: Mapping[str, Any], prompt_id: str) -> list[dict[s
         for artifact in get_output_artifacts(history, prompt_id)
         if artifact.get("artifact_type") == "image"
     ]
+
+
+def gallery_output_filename(filename: str, job_id: str, index: int) -> str:
+    """Build a gallery filename that preserves extension and avoids path traversal."""
+    source = Path(filename)
+    stem = source.stem or "artifact"
+    ext = source.suffix.lower() or ".bin"
+    safe_stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem).strip("._") or "artifact"
+    return f"{safe_stem}_{job_id[:8]}_{index}{ext}"
