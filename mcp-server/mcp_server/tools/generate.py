@@ -283,6 +283,75 @@ def generate_image_custom_workflow(
         )
 
 
+@mcp.tool()
+def generate_video_custom_workflow(
+    workflow: str,
+    prompt: str = "1girl, solo",
+    negative_prompt: str | None = None,
+    seed: int | None = None,
+    steps: int | None = None,
+    cfg: float | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    batch_size: int | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
+    denoise: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+) -> str:
+    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, then poll get_generation_status."""
+    try:
+        client = _get_client()
+        wf_obj = json.loads(workflow)
+        body: dict[str, object] = {
+            "workflow": wf_obj,
+            "prompt": prompt,
+        }
+        optional_values = {
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "steps": steps,
+            "cfg": cfg,
+            "width": width,
+            "height": height,
+            "batch_size": batch_size,
+            "sampler_name": sampler_name,
+            "scheduler": scheduler,
+            "denoise": denoise,
+            "diffusion_model": diffusion_model,
+            "text_encoder": text_encoder,
+            "vae": vae,
+        }
+        for key, value in optional_values.items():
+            if value is not None:
+                body[key] = value
+        resp = client.post("generate/video/custom", json=body)
+        job_id = resp.get("job_id", "unknown")
+        status = resp.get("status", "queued")
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_video_custom_workflow",
+                "job_id": job_id,
+                "status": status,
+                "next": "poll get_generation_status(job_id); on completion use artifacts[] with get_gallery_artifact; if failed with node_errors, inspect schemas and resubmit a corrected workflow",
+            },
+            ensure_ascii=False,
+        )
+    except json.JSONDecodeError as e:
+        return json.dumps(
+            {"ok": False, "tool": "generate_video_custom_workflow", "error": f"workflow 必須為合法 JSON: {e}"},
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        return json.dumps(
+            {"ok": False, "tool": "generate_video_custom_workflow", "where": "backend", "error": str(e)},
+            ensure_ascii=False,
+        )
+
+
 # ---------------------------------------------------------------------------
 # 已停用：generate_image_from_description / suggest_workflow_from_description
 #

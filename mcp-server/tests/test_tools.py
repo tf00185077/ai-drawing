@@ -6,6 +6,7 @@ from mcp_server.tools.comfyui import free_comfyui_memory
 from mcp_server.tools.generate import (
     generate_image,
     generate_image_custom_workflow,
+    generate_video_custom_workflow,
     # generate_image_from_description,  # 已停用，見 tools/generate.py 註解
     generate_queue_status,
     get_generation_status,
@@ -316,6 +317,38 @@ def test_generate_image_custom_workflow_omits_new_params_when_not_provided() -> 
     call_json = mock_client.post.call_args[1]["json"]
     for key in ("image", "mask", "batch_size", "diffusion_model", "text_encoder", "vae"):
         assert key not in call_json
+
+
+def test_generate_video_custom_workflow_submits_video_endpoint() -> None:
+    """generate_video_custom_workflow posts supplied workflow JSON to the video custom endpoint."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "video-1", "status": "queued"}
+    wf_json = '{"20":{"class_type":"VHS_VideoCombine","inputs":{}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_video_custom_workflow(workflow=wf_json, prompt="slow pan")
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "generate_video_custom_workflow"
+    assert data["job_id"] == "video-1"
+    assert "get_generation_status" in data["next"]
+    mock_client.post.assert_called_once()
+    assert mock_client.post.call_args[0][0] == "generate/video/custom"
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["workflow"]["20"]["class_type"] == "VHS_VideoCombine"
+    assert call_json["prompt"] == "slow pan"
+    assert "first_frame" not in call_json
+    assert "last_frame" not in call_json
+    assert "video_ref" not in call_json
+
+
+def test_generate_video_custom_workflow_bad_json_returns_structured_error() -> None:
+    result = generate_video_custom_workflow(workflow="{bad")
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "generate_video_custom_workflow"
+    assert "JSON" in data["error"]
 
 
 def test_get_generation_status_queued_returns_agent_friendly_json() -> None:

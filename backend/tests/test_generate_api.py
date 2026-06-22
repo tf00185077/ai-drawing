@@ -71,6 +71,22 @@ def test_post_generate_custom_returns_201(client) -> None:
     assert "自訂" in (data.get("message") or "")
 
 
+def test_post_generate_video_custom_returns_201(client) -> None:
+    """POST /api/generate/video/custom accepts supplied workflow and queues a job."""
+    wf = {
+        "20": {"class_type": "VHS_VideoCombine", "inputs": {}},
+    }
+    r = client.post(
+        "/api/generate/video/custom",
+        json={"workflow": wf, "prompt": "slow pan"},
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert "job_id" in data
+    assert data["status"] == "queued"
+    assert "影片" in (data.get("message") or "")
+
+
 def test_get_job_status_returns_completed_video_artifacts() -> None:
     engine = create_engine(
         "sqlite:///:memory:",
