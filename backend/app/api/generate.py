@@ -225,6 +225,7 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
             # 自訂 workflow 被 ComfyUI 拒絕時，回傳結構化 node_errors 供 agent 修正重送
             resp["error"] = queue_status.get("error")
             resp["node_errors"] = queue_status.get("node_errors", [])
+            resp["recording_error"] = queue_status.get("recording_error")
         return resp
 
     # 2. 查 DB（completed）
