@@ -148,6 +148,12 @@ async def trigger_generate_video_custom(body: GenerateVideoCustomRequest):
     """
     try:
         params = _custom_request_params(body)
+        if body.first_frame is not None:
+            params["first_frame"] = body.first_frame
+        if body.last_frame is not None:
+            params["last_frame"] = body.last_frame
+        if body.video_ref is not None:
+            params["video_ref"] = body.video_ref
         job_id = submit_custom(params)
         return GenerateResponse(
             job_id=job_id,

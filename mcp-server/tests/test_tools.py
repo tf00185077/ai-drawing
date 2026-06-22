@@ -319,14 +319,19 @@ def test_generate_image_custom_workflow_omits_new_params_when_not_provided() -> 
         assert key not in call_json
 
 
-def test_generate_video_custom_workflow_submits_video_endpoint() -> None:
-    """generate_video_custom_workflow posts supplied workflow JSON to the video custom endpoint."""
+def test_generate_video_custom_workflow_submits_video_endpoint_with_refs() -> None:
+    """generate_video_custom_workflow posts to the video custom endpoint and forwards provided refs only."""
     mock_client = MagicMock()
     mock_client.post.return_value = {"job_id": "video-1", "status": "queued"}
     wf_json = '{"20":{"class_type":"VHS_VideoCombine","inputs":{}}}'
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        result = generate_video_custom_workflow(workflow=wf_json, prompt="slow pan")
+        result = generate_video_custom_workflow(
+            workflow=wf_json,
+            prompt="slow pan",
+            first_frame="2026-06-22/start.png",
+            video_ref="2026-06-22/ref.mp4",
+        )
 
     data = json.loads(result)
     assert data["ok"] is True
@@ -338,9 +343,9 @@ def test_generate_video_custom_workflow_submits_video_endpoint() -> None:
     call_json = mock_client.post.call_args[1]["json"]
     assert call_json["workflow"]["20"]["class_type"] == "VHS_VideoCombine"
     assert call_json["prompt"] == "slow pan"
-    assert "first_frame" not in call_json
+    assert call_json["first_frame"] == "2026-06-22/start.png"
+    assert call_json["video_ref"] == "2026-06-22/ref.mp4"
     assert "last_frame" not in call_json
-    assert "video_ref" not in call_json
 
 
 def test_generate_video_custom_workflow_bad_json_returns_structured_error() -> None:
