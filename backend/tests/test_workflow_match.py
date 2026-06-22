@@ -49,6 +49,12 @@ def test_model_family_constrains_only_when_given() -> None:
     assert manifest_covers(tmpl, CapabilityRequest(modality="txt2img", model_family="anima")) is True
 
 
+def test_img2video_first_frame_matches_and_last_frame_misses() -> None:
+    tmpl = _m(modality="img2video", model_family="wan", io=("text", "first_frame"))
+    assert manifest_covers(tmpl, CapabilityRequest(modality="img2video", io=("first_frame",))) is True
+    assert manifest_covers(tmpl, CapabilityRequest(modality="img2video", io=("last_frame",))) is False
+
+
 def test_invalid_manifest_is_not_matchable() -> None:
     good = LoadedManifest(manifest=_m(id="good", modality="txt2img", io=("text",)))
     bad = LoadedManifest(
