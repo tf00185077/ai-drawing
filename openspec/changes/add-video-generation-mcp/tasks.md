@@ -44,7 +44,7 @@
 - [x] 6.2 Run MCP server tests covering new tools and artifact-aware status responses.
 - [x] 6.3 Validate OpenSpec with `openspec validate add-video-generation-mcp --strict` and `openspec validate --all`.
 - [ ] 6.4 Run one low-load local ComfyUI video job end to end with a known-good workflow: submit via `generate_video_custom_workflow`, poll with `get_generation_status`, confirm `artifacts[]`, retrieve via `get_gallery_artifact`, verify the local file exists, and free ComfyUI memory.
-- [ ] 6.5 Confirm existing image generation and `get_gallery_image` still pass their current tests.
+- [x] 6.5 Confirm existing image generation and `get_gallery_image` still pass their current tests.
 
 ## 7. Agent Assignment
 
