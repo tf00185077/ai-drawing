@@ -87,6 +87,27 @@ def test_post_generate_video_custom_returns_201(client) -> None:
     assert "影片" in (data.get("message") or "")
 
 
+def test_post_generate_video_custom_forwards_optional_refs(client) -> None:
+    wf = {"20": {"class_type": "VHS_VideoCombine", "inputs": {}}}
+    with patch("app.api.generate.submit_custom", return_value="video-job") as mock_submit:
+        r = client.post(
+            "/api/generate/video/custom",
+            json={
+                "workflow": wf,
+                "prompt": "slow pan",
+                "first_frame": "2026-06-22/start.png",
+                "last_frame": "2026-06-22/end.png",
+                "video_ref": "2026-06-22/ref.mp4",
+            },
+        )
+
+    assert r.status_code == 201
+    params = mock_submit.call_args[0][0]
+    assert params["first_frame"] == "2026-06-22/start.png"
+    assert params["last_frame"] == "2026-06-22/end.png"
+    assert params["video_ref"] == "2026-06-22/ref.mp4"
+
+
 def test_get_job_status_returns_completed_video_artifacts() -> None:
     engine = create_engine(
         "sqlite:///:memory:",

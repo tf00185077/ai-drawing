@@ -200,6 +200,27 @@ def test_apply_params_image_pose_overrides_second_loadimage() -> None:
     assert result["11"]["inputs"]["image"] == "pose_ref.png"
 
 
+def test_apply_params_injects_video_frame_and_video_refs() -> None:
+    """first_frame/last_frame target LoadImage nodes; video_ref targets video-like loader inputs."""
+    wf = {
+        "1": {"class_type": "LoadImage", "inputs": {"image": "old_start.png"}},
+        "2": {"class_type": "LoadImage", "inputs": {"image": "old_end.png"}},
+        "3": {"class_type": "LoadVideo", "inputs": {"video": "old.mp4"}},
+    }
+
+    result = apply_params(
+        wf,
+        prompt="slow pan",
+        first_frame="start.png",
+        last_frame="end.png",
+        video_ref="/tmp/gallery/ref.mp4",
+    )
+
+    assert result["1"]["inputs"]["image"] == "start.png"
+    assert result["2"]["inputs"]["image"] == "end.png"
+    assert result["3"]["inputs"]["video"] == "/tmp/gallery/ref.mp4"
+
+
 def test_apply_params_controlnet_traces_prompt_to_clip_text_encode() -> None:
     """ControlNet 流程中，prompt/negative_prompt 應正確替換上游 CLIPTextEncode"""
     wf = load_template("controlnet_pose")

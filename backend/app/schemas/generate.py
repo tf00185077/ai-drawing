@@ -138,4 +138,15 @@ class GenerateVideoCustomRequest(GenerateCustomRequest):
     Video MVP still requires a complete supplied ComfyUI workflow JSON.
     """
 
-    pass
+    first_frame: str | None = Field(
+        default=None,
+        description="第一幀參考圖，gallery_dir 相對路徑。提供時上傳至 ComfyUI 並注入第一個 LoadImage",
+    )
+    last_frame: str | None = Field(
+        default=None,
+        description="最後一幀參考圖，gallery_dir 相對路徑。提供時上傳至 ComfyUI 並注入第二個 LoadImage（若存在）",
+    )
+    video_ref: str | None = Field(
+        default=None,
+        description="影片參考檔，gallery_dir 相對路徑。提供時會安全解析為本機檔案路徑並注入 video-like loader",
+    )

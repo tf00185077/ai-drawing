@@ -60,6 +60,9 @@ class GenerateParams(TypedDict, total=False):
     loras: list[dict]  # 多 lora：[{name, strength_model, strength_clip?}]，有則優先於單一 lora
     prompt: str
     image: str  # 主體圖路徑（img2img），相對於 gallery_dir
+    first_frame: str  # 影片 workflow 第一幀參考圖，gallery 相對路徑
+    last_frame: str  # 影片 workflow 最後一幀參考圖，gallery 相對路徑
+    video_ref: str  # 影片參考檔，gallery 相對路徑
     image_pose: str  # 姿態圖路徑，相對於 gallery_dir，會上傳至 ComfyUI
     mask: str  # 遮罩圖路徑（inpaint），相對於 gallery_dir，會上傳至 ComfyUI
     negative_prompt: str
@@ -293,12 +296,25 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         image_pose_for_wf: str | None = None
         gallery_path = Path(settings.gallery_dir).resolve()
 
-        def _upload_gallery_image(rel_path: str) -> str | None:
+        def _resolve_gallery_file(rel_path: str, *, strict: bool = False) -> Path | None:
             path = (gallery_path / rel_path).resolve()
             try:
                 path.relative_to(gallery_path)
             except ValueError:
                 logger.warning("Path traversal blocked: %s", rel_path)
+                if strict:
+                    raise FileNotFoundError(f"Unsafe gallery path: {rel_path}")
+                return None
+            if not path.exists() or not path.is_file():
+                logger.warning("Gallery file not found: %s", path)
+                if strict:
+                    raise FileNotFoundError(f"Gallery file not found: {rel_path}")
+                return None
+            return path
+
+        def _upload_gallery_image(rel_path: str) -> str | None:
+            path = _resolve_gallery_file(rel_path)
+            if path is None:
                 return None
             if path.exists():
                 uploaded = comfy.upload_image(path)
@@ -306,12 +322,19 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 if uploaded.get("subfolder"):
                     result = f"{uploaded['subfolder']}/{uploaded['name']}"
                 return result
-            logger.warning("Image not found: %s", path)
-            return None
 
         mask_for_wf: str | None = None
+        first_frame_for_wf: str | None = None
+        last_frame_for_wf: str | None = None
+        video_ref_for_wf: str | None = None
         if job.params.get("image"):
             image_for_wf = _upload_gallery_image(job.params["image"])
+        if job.params.get("first_frame"):
+            first_frame_for_wf = _upload_gallery_image(job.params["first_frame"])
+        if job.params.get("last_frame"):
+            last_frame_for_wf = _upload_gallery_image(job.params["last_frame"])
+        if job.params.get("video_ref"):
+            video_ref_for_wf = str(_resolve_gallery_file(job.params["video_ref"], strict=True))
         if job.params.get("mask"):
             mask_for_wf = _upload_gallery_image(job.params["mask"])
         if job.params.get("image_pose"):
@@ -351,6 +374,9 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             wf,
             checkpoint=effective_checkpoint,
             image=image_for_wf,
+            first_frame=first_frame_for_wf,
+            last_frame=last_frame_for_wf,
+            video_ref=video_ref_for_wf,
             image_pose=image_pose_for_wf,
             mask=mask_for_wf,
             lora=job.params.get("lora"),

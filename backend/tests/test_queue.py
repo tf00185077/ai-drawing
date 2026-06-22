@@ -281,3 +281,43 @@ def test_process_pending_rejects_gallery_escaping_mask_path(tmp_path) -> None:
 
     assert fake_comfy.submitted_prompt["11"]["inputs"]["image"] == "orig_mask.png"
     assert fake_comfy.uploaded_paths == []
+
+
+def test_process_pending_rejects_gallery_escaping_video_ref_path(tmp_path) -> None:
+    """video_ref 路徑逃出 gallery_dir 時任務失敗，且不提交至 ComfyUI。"""
+    gallery = tmp_path / "gallery"
+    gallery.mkdir()
+    outside = tmp_path / "outside.mp4"
+    outside.write_bytes(b"fake")
+    custom_wf = {
+        "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["4", 1], "text": ""}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {"seed": 1, "positive": ["6", 0], "negative": ["7", 0]},
+        },
+        "20": {"class_type": "LoadVideo", "inputs": {"video": "orig.mp4"}},
+    }
+    fake_comfy = _FakeComfy()
+    job_id = submit_custom({
+        "workflow": custom_wf,
+        "prompt": "slow pan",
+        "checkpoint": "x.safetensors",
+        "video_ref": "../outside.mp4",
+    })
+
+    settings = SimpleNamespace(
+        comfyui_checkpoints_dir=str(tmp_path),
+        lora_default_checkpoint="",
+        lora_sdxl=False,
+        gallery_dir=str(gallery),
+        controlnet_default_pose_image="",
+    )
+    with patch("app.core.queue.get_settings", return_value=settings):
+        _process_pending(fake_comfy)
+
+    status = get_job_status(job_id)
+    assert status["status"] == "failed"
+    assert "Unsafe gallery path" in status["error"]
+    assert fake_comfy.submitted_prompt is None

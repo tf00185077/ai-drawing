@@ -287,6 +287,10 @@ def generate_image_custom_workflow(
 def generate_video_custom_workflow(
     workflow: str,
     prompt: str = "1girl, solo",
+    image: str | None = None,
+    first_frame: str | None = None,
+    last_frame: str | None = None,
+    video_ref: str | None = None,
     negative_prompt: str | None = None,
     seed: int | None = None,
     steps: int | None = None,
@@ -301,7 +305,7 @@ def generate_video_custom_workflow(
     text_encoder: str | None = None,
     vae: str | None = None,
 ) -> str:
-    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, then poll get_generation_status."""
+    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, optionally inject gallery-relative image/first_frame/last_frame/video_ref inputs, then poll get_generation_status."""
     try:
         client = _get_client()
         wf_obj = json.loads(workflow)
@@ -310,6 +314,10 @@ def generate_video_custom_workflow(
             "prompt": prompt,
         }
         optional_values = {
+            "image": image,
+            "first_frame": first_frame,
+            "last_frame": last_frame,
+            "video_ref": video_ref,
             "negative_prompt": negative_prompt,
             "seed": seed,
             "steps": steps,

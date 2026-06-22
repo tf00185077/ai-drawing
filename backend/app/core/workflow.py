@@ -51,6 +51,9 @@ def apply_params(
     sampler_name: str | None = None,
     scheduler: str | None = None,
     image: str | None = None,
+    first_frame: str | None = None,
+    last_frame: str | None = None,
+    video_ref: str | None = None,
     image_pose: str | None = None,
     mask: str | None = None,
     denoise: float | None = None,
@@ -75,7 +78,8 @@ def apply_params(
     - CLIPTextEncode (接 KSampler.negative).text <- negative_prompt
     - KSampler.seed, steps, cfg, sampler_name, scheduler, denoise
     - EmptyLatentImage / EmptySD3LatentImage.width, height, batch_size
-    - LoadImage.image <- image / image_pose（依節點順序：第一為 subject，第二為 pose）
+    - LoadImage.image <- image / image_pose / first_frame / last_frame（依節點順序）
+    - video-like loader filename/video input <- video_ref
     - LoadImageMask.image <- mask（inpaint 遮罩，獨立 class_type，無位置衝突）
     - DWPreprocessor.bbox_detector <- bbox_detector（ControlNet 預處理器，預設 yolo_nas_s_fp16.onnx）
 
@@ -154,6 +158,35 @@ def apply_params(
         nid for nid, node in wf.items()
         if isinstance(node, dict) and node.get("class_type") == "LoadImage"
     )
+    load_image_values: dict[int, str] = {}
+    if image is not None:
+        load_image_values[0] = image
+    if image_pose is not None:
+        load_image_values[1 if len(load_image_ids) > 1 else 0] = image_pose
+    if first_frame is not None:
+        load_image_values[0] = first_frame
+    if last_frame is not None:
+        if len(load_image_ids) > 1:
+            load_image_values[1] = last_frame
+        elif 0 not in load_image_values:
+            load_image_values[0] = last_frame
+
+    video_input_names = ("video", "video_path", "video_ref", "filename", "file")
+    video_ref_target: tuple[str, str] | None = None
+    if video_ref is not None:
+        for nid, node in wf.items():
+            if not isinstance(node, dict):
+                continue
+            inputs = node.get("inputs", {})
+            if not isinstance(inputs, dict):
+                continue
+            class_type = str(node.get("class_type", "") or "").lower()
+            if "video" not in class_type:
+                continue
+            key = next((name for name in video_input_names if name in inputs), None)
+            if key is not None:
+                video_ref_target = (nid, key)
+                break
 
     # 1c. 多 lora：依 workflow JSON 出現順序收集 LoraLoader 節點，供 loras 逐一對應。
     lora_loader_ids = [
@@ -210,13 +243,16 @@ def apply_params(
             if denoise is not None:
                 inputs["denoise"] = denoise
 
-        if ct == "LoadImage" and (image is not None or image_pose is not None):
+        if ct == "LoadImage" and load_image_values:
             idx = load_image_ids.index(nid) if nid in load_image_ids else -1
-            # image_pose 用於第二個 LoadImage，或僅有一個 LoadImage（ControlNet pose）時
-            if image_pose is not None and (idx == 1 or len(load_image_ids) == 1):
-                inputs["image"] = image_pose
-            elif image is not None:
+            if idx in load_image_values:
+                inputs["image"] = load_image_values[idx]
+            elif image is not None and first_frame is None and last_frame is None and image_pose is None:
+                # Legacy ControlNet templates use one image reference for every LoadImage node.
                 inputs["image"] = image
+
+        if video_ref_target is not None and nid == video_ref_target[0]:
+            inputs[video_ref_target[1]] = video_ref
 
         if ct == "LoadImageMask" and mask is not None:
             inputs["image"] = mask
