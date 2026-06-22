@@ -462,12 +462,23 @@ def generate_queue_status() -> str:
 
 @mcp.tool()
 def get_generation_status(job_id: str) -> str:
-    """Query image generation job status, returns agent-friendly JSON. When status=completed, includes image_id and image_path. When status=failed (e.g. a self-authored custom workflow rejected by ComfyUI), returns ok=false with structured node_errors ([{node_id, class_type, reason}]) so you can fix the workflow and resubmit."""
+    """Query generation job status, returns agent-friendly JSON. Completed jobs include artifacts[]; image jobs keep image_id/image_path. Failed custom workflows return structured node_errors or recording_error."""
     try:
         client = _get_client()
         resp = client.get(f"generate/job/{job_id}")
         status = resp.get("status", "unknown")
         if status == "completed":
+            artifacts = resp.get("artifacts", [])
+            has_non_image_artifact = any(
+                artifact.get("artifact_type") != "image"
+                for artifact in artifacts
+                if isinstance(artifact, dict)
+            )
+            next_step = (
+                "call get_gallery_artifact with an artifact id from artifacts[], then free_comfyui_memory"
+                if has_non_image_artifact
+                else "call get_gallery_image with image_id, then free_comfyui_memory"
+            )
             return json.dumps(
                 {
                     "ok": True,
@@ -476,7 +487,8 @@ def get_generation_status(job_id: str) -> str:
                     "status": "completed",
                     "image_id": resp.get("image_id"),
                     "image_path": resp.get("image_path", ""),
-                    "next": "call get_gallery_image with image_id, then free_comfyui_memory",
+                    "artifacts": artifacts,
+                    "next": next_step,
                 },
                 ensure_ascii=False,
             )
@@ -491,6 +503,7 @@ def get_generation_status(job_id: str) -> str:
                     "status": "failed",
                     "error": resp.get("error"),
                     "node_errors": node_errors,
+                    "recording_error": resp.get("recording_error"),
                     "next": (
                         "fix the offending nodes (check names/inputs via get_node_schema) and resubmit generate_image_custom_workflow"
                         if node_errors
@@ -590,5 +603,4 @@ def list_available_resources() -> str:
             },
             ensure_ascii=False,
         )
-
 
