@@ -38,8 +38,30 @@ def test_out_of_vocabulary_tag_is_rejected() -> None:
 
 
 def test_unknown_modality_is_rejected() -> None:
-    m = parse_manifest("x", {"modality": "video"})
+    m = parse_manifest("x", {"modality": "txt2audio"})
     assert any("modality not in vocabulary" in p for p in validate_manifest(m))
+
+
+def test_video_modalities_and_io_tags_are_valid() -> None:
+    txt2video = parse_manifest(
+        "video_txt",
+        {
+            "modality": "txt2video",
+            "model_family": "wan",
+            "io": ["text", "video_ref", "audio_ref"],
+        },
+    )
+    img2video = parse_manifest(
+        "video_img",
+        {
+            "modality": "img2video",
+            "model_family": "wan",
+            "io": ["text", "first_frame", "last_frame"],
+        },
+    )
+
+    assert validate_manifest(txt2video, expected_id="video_txt") == []
+    assert validate_manifest(img2video, expected_id="video_img") == []
 
 
 def test_missing_modality_is_rejected() -> None:
