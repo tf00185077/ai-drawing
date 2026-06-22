@@ -53,6 +53,15 @@ def test_get_queue_returns_valid_structure(client) -> None:
     assert isinstance(data["queue_pending"], list)
 
 
+def test_available_resources_includes_empty_video_categories(client) -> None:
+    r = client.get("/api/generate/available-resources")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["video_models"] == []
+    assert data["video_loras"] == []
+    assert data["video_inputs"] == []
+
+
 def test_post_generate_custom_returns_201(client) -> None:
     """POST /api/generate/custom 接受 workflow 回傳 201"""
     wf = {

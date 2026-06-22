@@ -196,6 +196,9 @@ async def get_available_resources():
         "diffusion_models": diffusion_models,
         "text_encoders": text_encoders,
         "vaes": vaes,
+        "video_models": [],
+        "video_loras": [],
+        "video_inputs": [],
         "workflows": templates,
         "default_checkpoint": default_checkpoint(settings),
     }
