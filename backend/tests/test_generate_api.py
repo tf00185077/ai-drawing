@@ -1,7 +1,15 @@
 """生圖 API 端點測試"""
 from unittest.mock import patch
 
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from app.core.queue import _reset_for_test
+from app.db.database import Base, get_db
+from app.db.models import GeneratedArtifact
+from app.main import app
 
 
 def setup_function() -> None:
@@ -60,6 +68,61 @@ def test_post_generate_custom_returns_201(client) -> None:
     data = r.json()
     assert "job_id" in data
     assert "自訂" in (data.get("message") or "")
+
+
+def test_get_job_status_returns_completed_video_artifacts() -> None:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    def override_get_db():
+        db = session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    with session_factory() as db:
+        db.add(
+            GeneratedArtifact(
+                job_id="job-video",
+                artifact_type="video",
+                gallery_path="2026-06-22/video.mp4",
+                mime_type="video/mp4",
+                file_size=2048,
+                source_node_id="42",
+                source_node_type="VHS_VideoCombine",
+            )
+        )
+        db.commit()
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        r = TestClient(app).get("/api/generate/job/job-video")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    assert r.json() == {
+        "status": "completed",
+        "job_id": "job-video",
+        "artifacts": [
+            {
+                "id": 1,
+                "artifact_type": "video",
+                "mime_type": "video/mp4",
+                "gallery_path": "2026-06-22/video.mp4",
+                "file_size": 2048,
+                "job_id": "job-video",
+                "source_node_id": "42",
+                "source_node_type": "VHS_VideoCombine",
+            }
+        ],
+    }
 
 
 def test_get_workflow_templates_returns_list(client) -> None:

@@ -19,6 +19,7 @@ from app.core.resources import (
 )
 from app.core.queue import QueueFullError, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.db.database import get_db
+from app.db.models import GeneratedArtifact, GeneratedImage
 from app.schemas.generate import (
     GenerateCustomRequest,
     GenerateRequest,
@@ -211,8 +212,6 @@ async def get_queue_status():
 @router.get("/job/{job_id}")
 async def get_job_status(job_id: str, db: Session = Depends(get_db)):
     """查詢單一 job 狀態（queued / running / completed）"""
-    from app.db.models import GeneratedImage
-
     # 1. 先查 in-memory queue（queued / running / failed）
     queue_status = queue_get_job_status(job_id)
     if queue_status:
@@ -229,14 +228,36 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         return resp
 
     # 2. 查 DB（completed）
+    artifacts = (
+        db.query(GeneratedArtifact)
+        .filter(GeneratedArtifact.job_id == job_id)
+        .order_by(GeneratedArtifact.id.asc())
+        .all()
+    )
     image_record = db.query(GeneratedImage).filter_by(job_id=job_id).first()
-    if image_record:
-        return {
+    if artifacts or image_record:
+        artifact_items = [
+            {
+                "id": artifact.id,
+                "artifact_type": artifact.artifact_type,
+                "mime_type": artifact.mime_type,
+                "gallery_path": artifact.gallery_path,
+                "file_size": artifact.file_size,
+                "job_id": artifact.job_id,
+                "source_node_id": artifact.source_node_id,
+                "source_node_type": artifact.source_node_type,
+            }
+            for artifact in artifacts
+        ]
+        resp = {
             "status": "completed",
             "job_id": job_id,
-            "image_id": image_record.id,
-            "image_path": image_record.image_path,
+            "artifacts": artifact_items,
         }
+        if image_record:
+            resp["image_id"] = image_record.id
+            resp["image_path"] = image_record.image_path
+        return resp
 
     # 3. 找不到
     raise HTTPException(404, f"Job not found: {job_id}")
