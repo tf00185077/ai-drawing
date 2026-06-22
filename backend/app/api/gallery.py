@@ -16,8 +16,15 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.core.queue import QueueFullError, submit, submit_custom
 from app.db.database import get_db
-from app.db.models import GeneratedImage
-from app.schemas.gallery import GalleryItem, GalleryListResponse, ImageDetail, RerunRequest, RerunResponse
+from app.db.models import GeneratedArtifact, GeneratedImage
+from app.schemas.gallery import (
+    ArtifactDetail,
+    GalleryItem,
+    GalleryListResponse,
+    ImageDetail,
+    RerunRequest,
+    RerunResponse,
+)
 
 router = APIRouter(prefix="/api/gallery", tags=["圖庫"])
 
@@ -37,6 +44,45 @@ def _to_image_url(path: str) -> str:
     if not (path.startswith("/") or (len(path) > 1 and path[1] == ":")):
         return "/gallery/" + path.replace("\\", "/")
     return ""
+
+
+def _artifact_url(path: str) -> str:
+    return _to_image_url(path)
+
+
+def _artifact_local_path(path: str) -> str:
+    if not path:
+        return ""
+    gallery_dir = Path(get_settings().gallery_dir).resolve()
+    p = Path(path)
+    if p.is_absolute():
+        return str(p)
+    return str((gallery_dir / path).resolve())
+
+
+def _artifact_to_detail(row: GeneratedArtifact) -> ArtifactDetail:
+    return ArtifactDetail(
+        id=row.id,
+        job_id=row.job_id,
+        artifact_type=row.artifact_type,
+        mime_type=row.mime_type,
+        gallery_path=row.gallery_path,
+        artifact_url=_artifact_url(row.gallery_path) or None,
+        local_path=_artifact_local_path(row.gallery_path) or None,
+        file_size=row.file_size,
+        source_node_id=row.source_node_id,
+        source_node_type=row.source_node_type,
+        workflow_json=row.workflow_json,
+        prompt=row.prompt,
+        negative_prompt=row.negative_prompt,
+        metadata_json=row.metadata_json,
+        fps=row.fps,
+        frame_count=row.frame_count,
+        duration=row.duration,
+        width=row.width,
+        height=row.height,
+        created_at=row.created_at,
+    )
 
 
 def _image_to_item(row: GeneratedImage) -> GalleryItem:
@@ -102,6 +148,15 @@ async def list_images(
 
     items = [_image_to_item(r) for r in rows]
     return GalleryListResponse(items=items, total=total)
+
+
+@router.get("/artifacts/{artifact_id}", response_model=ArtifactDetail)
+async def get_artifact_detail(artifact_id: int, db: Session = Depends(get_db)):
+    """取得單一生成 artifact 的完整 metadata（含影片）。"""
+    row = db.query(GeneratedArtifact).filter(GeneratedArtifact.id == artifact_id).first()
+    if not row:
+        raise HTTPException(404, {"error": "artifact_not_found", "artifact_id": artifact_id})
+    return _artifact_to_detail(row)
 
 
 @router.get("/{image_id}", response_model=ImageDetail)
