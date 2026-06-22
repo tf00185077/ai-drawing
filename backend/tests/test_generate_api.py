@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.queue import _reset_for_test
+from app.core.recording import save
 from app.db.database import Base, get_db
 from app.db.models import GeneratedArtifact
 from app.main import app
@@ -123,6 +124,56 @@ def test_get_job_status_returns_completed_video_artifacts() -> None:
             }
         ],
     }
+
+
+def test_get_job_status_preserves_legacy_image_fields() -> None:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    def override_get_db():
+        db = session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    with session_factory() as db:
+        save(
+            image_path="2026-06-22/image.png",
+            job_id="job-image",
+            prompt="1girl",
+            db=db,
+        )
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        r = TestClient(app).get("/api/generate/job/job-image")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert r.status_code == 200
+    data = r.json()
+    assert data["status"] == "completed"
+    assert data["job_id"] == "job-image"
+    assert data["image_id"] == 1
+    assert data["image_path"] == "2026-06-22/image.png"
+    assert data["artifacts"] == [
+        {
+            "id": 1,
+            "artifact_type": "image",
+            "mime_type": "image/png",
+            "gallery_path": "2026-06-22/image.png",
+            "file_size": None,
+            "job_id": "job-image",
+            "source_node_id": None,
+            "source_node_type": None,
+        }
+    ]
 
 
 def test_get_workflow_templates_returns_list(client) -> None:
