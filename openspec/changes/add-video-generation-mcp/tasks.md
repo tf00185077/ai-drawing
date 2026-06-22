@@ -49,4 +49,4 @@
 ## 7. Agent Assignment
 
 - [x] 7.1 Preferred implementation agent: Codex using GPT-5.5.
-- [ ] 7.2 When assigning to an external agent, provide change id `add-video-generation-mcp` and require it to follow proposal, design, specs, and tasks before editing implementation code.
+- [x] 7.2 When assigning to an external agent, provide change id `add-video-generation-mcp` and require it to follow proposal, design, specs, and tasks before editing implementation code.
