@@ -100,7 +100,12 @@ def test_success_no_outputs_marks_failed() -> None:
     fake.get_history.return_value = {"pid": {"status": {"status_str": "success"}, "outputs": {}}}
     q._check_running_complete(fake)
     assert q._running is None
-    assert q.get_job_status("j1")["status"] == "failed"
+    st = q.get_job_status("j1")
+    assert st["status"] == "failed"
+    assert st["recording_error"] == {
+        "code": "no_supported_output_artifact",
+        "message": "generation finished with no supported output artifact",
+    }
 
 
 def test_recording_failure_marks_failed_not_dropped() -> None:
@@ -113,6 +118,10 @@ def test_recording_failure_marks_failed_not_dropped() -> None:
     st = q.get_job_status("j1")
     assert st["status"] == "failed"
     assert "disk full" in st["error"]
+    assert st["recording_error"] == {
+        "code": "recording_failed",
+        "message": "disk full",
+    }
 
 
 def test_save_job_outputs_copies_video_artifact_to_gallery(tmp_path, monkeypatch) -> None:

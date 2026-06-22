@@ -5,7 +5,7 @@
 - [x] 1.3 Implement artifact type and MIME detection for `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.mp4`, and `.webm`.
 - [x] 1.4 Extend ComfyUI history/output parsing to collect image, video, and file artifacts from completed prompt outputs, including extension-based detection for video nodes with inconsistent output keys.
 - [x] 1.5 Copy recorded video artifacts into the configured project gallery with job-id-safe filenames and record the final gallery-relative path.
-- [ ] 1.6 Mark jobs as `failed` with a structured recording error when ComfyUI reports success but no supported output artifact can be recorded.
+- [x] 1.6 Mark jobs as `failed` with a structured recording error when ComfyUI reports success but no supported output artifact can be recorded.
 
 ## 2. Backend API and Status Contract
 

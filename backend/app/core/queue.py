@@ -110,7 +110,10 @@ def _reset_for_test() -> None:
 
 
 def _record_failure(
-    job: "_Job", error: Exception, node_errors: list[dict[str, str]] | None = None
+    job: "_Job",
+    error: Exception,
+    node_errors: list[dict[str, str]] | None = None,
+    recording_error: dict[str, Any] | None = None,
 ) -> None:
     """記錄失敗任務（不重試）。validation 類錯誤帶 node_errors 供 agent 修正。"""
     with _lock:
@@ -120,6 +123,7 @@ def _record_failure(
             "submitted_at": job.submitted_at,
             "error": str(error),
             "node_errors": node_errors or [],
+            "recording_error": recording_error,
             "is_custom": bool(job.params.get("workflow")),
         }
         while len(_failed) > MAX_FAILED:
@@ -566,7 +570,15 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         return
 
     if not artifacts_info:
-        _record_failure(job, RuntimeError("generation finished with no supported output artifact"))
+        message = "generation finished with no supported output artifact"
+        _record_failure(
+            job,
+            RuntimeError(message),
+            recording_error={
+                "code": "no_supported_output_artifact",
+                "message": message,
+            },
+        )
         logger.warning("Job %s finished with no supported output artifact", job.job_id)
         return
 
@@ -575,7 +587,14 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         logger.info("Job %s completed, saved %d artifact(s)", job.job_id, n)
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
-        _record_failure(job, e)
+        _record_failure(
+            job,
+            e,
+            recording_error={
+                "code": "recording_failed",
+                "message": str(e),
+            },
+        )
 
 
 def _worker_loop() -> None:
