@@ -158,8 +158,9 @@ pip install -e .
 |------|------|
 | `list_available_resources` | 列出可用 checkpoints / LoRA / workflow，回傳 agent-friendly JSON |
 | `generate_image` | 送出生圖 job，回傳 job_id（agent 可解析 JSON） |
-| `get_generation_status` | 查詢 job 狀態（queued/running/completed），completed 時含 image_id |
+| `get_generation_status` | 查詢 job 狀態（queued/running/completed），completed 時含 `artifacts[]`；圖片 job 仍含 image_id |
 | `get_gallery_image` | 取得圖片完整資訊，含 image_url、local_path、metadata |
+| `get_gallery_artifact` | 取得生成 artifact 完整資訊，含影片 local_path、mime type、file size、workflow metadata |
 | `free_comfyui_memory` | 釋放 ComfyUI 顯示記憶體，生圖完成或失敗後必須呼叫 |
 
 ### 其他 Tools
@@ -170,6 +171,7 @@ pip install -e .
 | `generate_image_from_description` | 依描述自動選 workflow 生圖 | 穿和服的初音，動漫風格，1024 |
 | `suggest_workflow_from_description` | 預覽描述解析結果 | 穿和服初音會用什麼參數 |
 | `generate_image_custom_workflow` | 自訂 workflow 生圖 | 用 default 模板產生穿和服的初音 |
+| `generate_video_custom_workflow` | 送出已知可用的 ComfyUI video workflow JSON；可選 first_frame / last_frame / video_ref | 用提供的 Wan/I2V workflow 產生短片 |
 | `list_workflow_templates` | 列出 workflow 模板 | 有哪些 workflow 可選 |
 | `get_workflow_template` | 取得模板 JSON | 取得 default 模板 |
 | `generate_queue_status` | 生圖佇列狀態 | 查生圖佇列 |
@@ -182,6 +184,10 @@ pip install -e .
 | `gallery_rerun` | 一鍵重現 | 用 id=1 的參數再產一張 |
 | `list_character_styles` | 可用角色／風格 | 有哪些角色和風格可選 |
 | `resolve_character_style_prompt` | 預覽 prompt | 初音+動漫會變成什麼 prompt |
+
+### 影片 MCP derivation loop
+
+影片生成目前是 MCP-first 的 artifact lifecycle：agent 從 CTY 提供的 known-good 本機 ComfyUI video workflow 開始，用 `search_nodes` / `get_node_schema` 檢查本機節點，修改 schema-valid 欄位後呼叫 `generate_video_custom_workflow`，再用 `get_generation_status` 的 `artifacts[]` 和 `get_gallery_artifact` 取回影片檔。
 
 ---
 

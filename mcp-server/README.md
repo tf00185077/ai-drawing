@@ -4,9 +4,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 30 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除；NLP 解析版 `generate_image_from_description` / `suggest_workflow_from_description` 已停用——agent 自行解析後直接呼叫 `generate_image`）。
+> 共 32 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除；NLP 解析版 `generate_image_from_description` / `suggest_workflow_from_description` 已停用——agent 自行解析後直接呼叫 `generate_image`）。
 >
-> **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
+> **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)` 或取出影片模板後走 `generate_video_custom_workflow`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 或 `generate_video_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
 
 ### 連線檢查
 
@@ -20,12 +20,25 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 |------|------|
 | `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8、diffusion_model / text_encoder / vae）；可直接餵入 `compose_style_preset` 產出的 `generation` payload，或用 `match_workflow_template` 命中的模板 id |
 | `generate_image_custom_workflow` | 使用自訂 workflow 生圖（自組為主路徑）；支援 `image`（img2img 主體）/`image_pose`（ControlNet 姿勢）/`mask`（inpaint）；成功後可 `save_workflow_template` 晉升 |
+| `generate_video_custom_workflow` | 使用呼叫端提供的完整 ComfyUI video workflow JSON 送出影片 job；可選 `image` / `first_frame` / `last_frame` / `video_ref`，完成後用 `artifacts[]` + `get_gallery_artifact` 取影片 |
 | `list_workflow_templates` | 列出可用 workflow 模板名稱（default、default_lora 等） |
 | `get_workflow_template` | 取得指定模板的 workflow JSON（可當自組起手鷹架） |
 | `generate_queue_status` | 取得生圖佇列狀態（執行中／等候中） |
-| `get_generation_status` | 查詢 job 狀態；完成帶 image_id / image_path；**失敗（含執行期）回 `node_errors`** 供自我修正 |
+| `get_generation_status` | 查詢 job 狀態；完成帶 `artifacts[]`，圖片 job 仍帶 image_id / image_path；**失敗（含執行期）回 `node_errors` 或 `recording_error`** 供自我修正 |
 | `cancel_job` | 取消尚未開始（pending）的 job；執行中無法取消 |
 | `list_available_resources` | 列出 checkpoints / LoRA / diffusion_models（UNET，如 Anima）/ text_encoders / vaes / workflows，含 default_checkpoint |
+
+### 影片 MCP derivation loop
+
+建議的影片 derivation loop：
+
+1. 從 CTY 提供的 known-good local ComfyUI video workflow 開始。
+2. 用 `list_node_categories` / `search_nodes` / `get_node_schema` 檢查本機節點與可接受 input。
+3. 只修改 schema-grounded 的 workflow JSON 欄位。
+4. 用 `generate_video_custom_workflow(workflow=..., first_frame=..., last_frame=..., video_ref=...)` 送出。
+5. 用 `get_generation_status(job_id)` 輪詢；若失敗，讀 `node_errors` / `recording_error` 修正後重送。
+6. 完成時讀 `artifacts[]`，用 `get_gallery_artifact(artifact_id)` 取得 `local_path` / mime type / file size。
+7. 只有已完成且成功 recorded 的 video workflow，才可用 `save_workflow_template(job_id, modality="txt2video" 或 "img2video", ...)` 回填。
 
 ### LoRA 訓練
 
@@ -41,6 +54,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 |------|------|
 | `gallery_list` | 圖庫列表（可依 checkpoint / lora / 日期篩選） |
 | `get_gallery_image` | 單張圖片，含 image_url、local_path 與完整 metadata |
+| `get_gallery_artifact` | 單一 generated artifact，含影片 artifact 的 mime type、gallery_path、local_path、file_size、job_id 與 workflow metadata |
 | `gallery_rerun` | 一鍵重現該圖參數 |
 
 ### 角色／風格語意
@@ -83,7 +97,7 @@ prompt / 參數）供檢視，不會送出生圖；確認後再交給 `generate_
 
 ### Workflow 模板能力目錄（自組／reuse／回填）
 
-模板帶受控詞彙的能力標籤（modality 必填、model_family 必填、conditioning、io），agent 不必展開
+模板帶受控詞彙的能力標籤（modality 必填：`txt2img` / `img2img` / `inpaint` / `txt2video` / `img2video`，model_family 必填，conditioning、io），agent 不必展開
 整份 workflow 即可二元判斷可用性；成功的自組 workflow 可回填成可重用模板，模板庫自我擴充。
 
 | Tool | 說明 |

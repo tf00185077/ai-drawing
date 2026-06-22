@@ -47,7 +47,7 @@ def match_workflow_template(
     conditioning: list[str] | None = None,
     io: list[str] | None = None,
 ) -> str:
-    """Deterministically decide whether an existing template can satisfy a need, by the binary set test `template capabilities ⊇ required capabilities`. Supply the capabilities you need: `modality` is REQUIRED (txt2img | img2img | inpaint); `model_family` (e.g. sdxl, anima) constrains family only if given; `conditioning` (e.g. ["controlnet_pose"]) and `io` (e.g. ["text","image_ref","mask"]) are sets the template must cover. On a hit, apply a returned template id via generate_image(template=...). On a miss (empty list), self-author a workflow with search_nodes/get_node_schema — matching is strict (a differing modality is a miss even if other tags overlap). Returns agent-friendly JSON."""
+    """Deterministically decide whether an existing template can satisfy a need, by the binary set test `template capabilities ⊇ required capabilities`. Supply the capabilities you need: `modality` is REQUIRED (txt2img | img2img | inpaint | txt2video | img2video); `model_family` (e.g. sdxl, anima, wan) constrains family only if given; `conditioning` (e.g. ["controlnet_pose"]) and `io` (e.g. ["text","image_ref","mask","first_frame","last_frame","video_ref","audio_ref"]) are sets the template must cover. On a hit, apply a returned image template id via generate_image(template=...) or fetch/derive a video template and submit through generate_video_custom_workflow. On a miss (empty list), self-author a workflow with search_nodes/get_node_schema — matching is strict (a differing modality is a miss even if other tags overlap). Returns agent-friendly JSON."""
     try:
         client = _get_client()
         params = {
@@ -58,11 +58,16 @@ def match_workflow_template(
         }
         resp = client.get("workflow-catalog/match", params=params)
         matched = resp.get("matched", [])
-        next_step = (
-            f"reuse: call generate_image(template={matched[0]!r}, ...) (or pick among {matched})"
-            if matched
-            else "miss: no template covers this need; self-author a workflow via search_nodes/get_node_schema"
-        )
+        request_modality = str(resp.get("request", {}).get("modality") or modality)
+        if matched and request_modality in {"txt2video", "img2video"}:
+            next_step = (
+                f"reuse video base: call get_workflow_template({matched[0]!r}), inspect/derive with "
+                "search_nodes/get_node_schema, then submit via generate_video_custom_workflow"
+            )
+        elif matched:
+            next_step = f"reuse: call generate_image(template={matched[0]!r}, ...) (or pick among {matched})"
+        else:
+            next_step = "miss: no template covers this need; self-author a workflow via search_nodes/get_node_schema"
         return json.dumps(
             {
                 "ok": True,
@@ -94,7 +99,7 @@ def save_workflow_template(
     io: list[str] | None = None,
     description: str = "",
 ) -> str:
-    """Promote a self-authored workflow that SUCCEEDED into the reusable template catalog, so future needs match it (the library self-extends). Call this only after a custom-workflow job has completed successfully (get_generation_status returns completed). Pass that job's `job_id` plus the capability tags describing what the workflow does — `modality` (txt2img|img2img|inpaint), `model_family` (e.g. sdxl, anima), and optional `conditioning`/`io` sets — drawn from the controlled vocabulary. The backend gates on the DB success record (only a recorded success is promotable), reads the actual submitted workflow, strips one-off prompt/seed to store a reusable shape, dedupes on the capability tag-set (no duplicate if already covered), files it under its modality family, and versions rather than overwriting. Returns agent-friendly JSON: created (new template_id), reused (existing id covers it), or an error. Reserve this for genuinely new, reusable shapes — not one-off experiments."""
+    """Promote a self-authored workflow that SUCCEEDED into the reusable template catalog, so future needs match it (the library self-extends). Call this only after a custom-workflow job has completed successfully (get_generation_status returns completed with an image or artifact). Pass that job's `job_id` plus the capability tags describing what the workflow does — `modality` (txt2img|img2img|inpaint|txt2video|img2video), `model_family` (e.g. sdxl, anima, wan), and optional `conditioning`/`io` sets — drawn from the controlled vocabulary. The backend gates on the DB success record (only a recorded success is promotable), reads the actual submitted workflow, strips one-off prompt/seed to store a reusable shape, dedupes on the capability tag-set (no duplicate if already covered), files it under its modality family, and versions rather than overwriting. Returns agent-friendly JSON: created (new template_id), reused (existing id covers it), or an error. Reserve this for genuinely new, reusable shapes — not one-off experiments."""
     try:
         client = _get_client()
         body = {
