@@ -1,0 +1,7 @@
+schema: spec-driven
+created: 2026-06-22
+goal: "On the current ai-drawing MCP architecture, define the smallest MVP for
+  video generation support: what backend/API/MCP/template/artifact changes are
+  required so an agent can submit a ComfyUI video workflow, poll it, retrieve
+  the resulting video artifact, and deliver it. Preferred implementation agent:
+  codex gpt-5.5."
