@@ -1,0 +1,11 @@
+{
+  "id": "gen_img2video_wan_first_frame",
+  "modality": "img2video",
+  "model_family": "wan",
+  "conditioning": [],
+  "io": [
+    "text",
+    "first_frame"
+  ],
+  "description": "Verified local Wan2.2 TI2V 5B image-to-video workflow for macOS/MPS. Uses a first-frame image, text prompt, wan2.2_ti2v_5B_fp16.safetensors, wan2.2_vae.safetensors, umt5 text encoder, Wan22ImageToVideoLatent, KSampler, CreateVideo and SaveVideo."
+}
