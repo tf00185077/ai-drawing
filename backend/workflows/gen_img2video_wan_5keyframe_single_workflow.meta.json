@@ -1,0 +1,12 @@
+{
+  "id": "gen_img2video_wan_5keyframe_single_workflow",
+  "modality": "img2video",
+  "model_family": "wan",
+  "conditioning": [],
+  "io": [
+    "text",
+    "image_ref",
+    "audio_ref"
+  ],
+  "description": "Wan2.2 GGUF single-workflow multi-keyframe image-to-video using WanDancerPadKeyframes and WanDancerVideo. Multiple LoadImage keyframes are batched into one IMAGE batch and padded into one masked conditioning sequence. Uses a short silent audio file only to drive keyframe timing math; the generated video is saved by CreateVideo/SaveVideo."
+}
