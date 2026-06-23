@@ -1,0 +1,12 @@
+{
+  "id": "gen_img2video_wan_first_frame_last_frame",
+  "modality": "img2video",
+  "model_family": "wan",
+  "conditioning": [],
+  "io": [
+    "text",
+    "first_frame",
+    "last_frame"
+  ],
+  "description": "Verified local Wan2.2 I2V 14B GGUF high/low first-last-frame image-to-video workflow for macOS/MPS. Uses start and end keyframes, text prompt, GGUFLoaderKJ high/low models, LightX2V high/low LoRAs, WanFirstLastFrameToVideo, two-stage KSamplerAdvanced, CreateVideo and SaveVideo. Quantization variants should remain resource variants, not separate workflow families."
+}
