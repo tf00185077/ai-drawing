@@ -1,0 +1,328 @@
+{
+  "84": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    }
+  },
+  "90": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    }
+  },
+  "95": {
+    "class_type": "GGUFLoaderKJ",
+    "inputs": {
+      "model_name": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf",
+      "extra_model_name": "none",
+      "dequant_dtype": "default",
+      "patch_dtype": "default",
+      "patch_on_device": false,
+      "enable_fp16_accumulation": false,
+      "attention_override": "none"
+    }
+  },
+  "96": {
+    "class_type": "GGUFLoaderKJ",
+    "inputs": {
+      "model_name": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf",
+      "extra_model_name": "none",
+      "dequant_dtype": "default",
+      "patch_dtype": "default",
+      "patch_on_device": false,
+      "enable_fp16_accumulation": false,
+      "attention_override": "none"
+    }
+  },
+  "101": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "95",
+        0
+      ],
+      "lora_name": "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "102": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "96",
+        0
+      ],
+      "lora_name": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "104": {
+    "class_type": "ModelSamplingSD3",
+    "inputs": {
+      "model": [
+        "101",
+        0
+      ],
+      "shift": 5.0
+    }
+  },
+  "103": {
+    "class_type": "ModelSamplingSD3",
+    "inputs": {
+      "model": [
+        "102",
+        0
+      ],
+      "shift": 5.0
+    }
+  },
+  "93": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "84",
+        0
+      ],
+      "text": "anime cinematic multi-keyframe image-to-video, five provided keyframes form one continuous camera move, Asuka Langley Soryu in red plugsuit, full body, ruined city, Evangelion Unit-02 background, coherent orbit from front three-quarter to side profile to back three-quarter, preserve each supplied keyframe as timing anchors, smooth in-between motion, stable face, stable body, stable plugsuit, stable mecha silhouette, stable ruins, no sudden cuts"
+    }
+  },
+  "89": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "84",
+        0
+      ],
+      "text": "low quality, blurry, jitter, heavy flicker, morphing face, distorted face, extra limbs, duplicate character, cropped body, missing feet, wrong character, wrong plugsuit color, no mecha, background warping, camera shake, night, sunset, dark night sky, watermark, text"
+    }
+  },
+  "86": {
+    "class_type": "KSamplerAdvanced",
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 1041024401,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 0,
+      "end_at_step": 2,
+      "return_with_leftover_noise": "enable",
+      "model": [
+        "104",
+        0
+      ],
+      "positive": [
+        "98",
+        0
+      ],
+      "negative": [
+        "98",
+        1
+      ],
+      "latent_image": [
+        "98",
+        2
+      ]
+    }
+  },
+  "85": {
+    "class_type": "KSamplerAdvanced",
+    "inputs": {
+      "add_noise": "disable",
+      "noise_seed": 0,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "start_at_step": 2,
+      "end_at_step": 4,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "103",
+        0
+      ],
+      "positive": [
+        "98",
+        0
+      ],
+      "negative": [
+        "98",
+        1
+      ],
+      "latent_image": [
+        "86",
+        0
+      ]
+    }
+  },
+  "87": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "85",
+        0
+      ],
+      "vae": [
+        "90",
+        0
+      ]
+    }
+  },
+  "94": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "87",
+        0
+      ],
+      "fps": 16.1
+    }
+  },
+  "108": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "94",
+        0
+      ],
+      "filename_prefix": "video/asuka_wan22_gguf_5keyframes_single_workflow_10s",
+      "format": "auto",
+      "codec": "auto"
+    }
+  },
+  "110": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "asuka_5kf_single_workflow/kf01_front_3q_right_a2.png"
+    }
+  },
+  "111": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "asuka_5kf_single_workflow/kf02_front_3q_right_a6.png"
+    }
+  },
+  "112": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "asuka_5kf_single_workflow/kf03_side_profile_b6.png"
+    }
+  },
+  "113": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "asuka_5kf_single_workflow/kf04_back_3q_c1.png"
+    }
+  },
+  "114": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "asuka_5kf_single_workflow/kf05_back_3q_c6.png"
+    }
+  },
+  "115": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "110",
+        0
+      ],
+      "image2": [
+        "111",
+        0
+      ]
+    }
+  },
+  "116": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "115",
+        0
+      ],
+      "image2": [
+        "112",
+        0
+      ]
+    }
+  },
+  "117": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "116",
+        0
+      ],
+      "image2": [
+        "113",
+        0
+      ]
+    }
+  },
+  "118": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "117",
+        0
+      ],
+      "image2": [
+        "114",
+        0
+      ]
+    }
+  },
+  "119": {
+    "class_type": "LoadAudio",
+    "inputs": {
+      "audio": "asuka_5kf_single_workflow/silent_5p30s.wav"
+    }
+  },
+  "120": {
+    "class_type": "WanDancerPadKeyframes",
+    "inputs": {
+      "images": [
+        "118",
+        0
+      ],
+      "segment_length": 161,
+      "segment_index": 0,
+      "audio": [
+        "119",
+        0
+      ]
+    }
+  },
+  "98": {
+    "class_type": "WanDancerVideo",
+    "inputs": {
+      "positive": [
+        "93",
+        0
+      ],
+      "negative": [
+        "89",
+        0
+      ],
+      "vae": [
+        "90",
+        0
+      ],
+      "width": 320,
+      "height": 480,
+      "length": 161,
+      "start_image": [
+        "120",
+        0
+      ],
+      "mask": [
+        "120",
+        1
+      ]
+    }
+  }
+}
