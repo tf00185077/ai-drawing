@@ -1,0 +1,13 @@
+{
+  "id": "gen_img2img_anima_lora_model_only_image_ref",
+  "modality": "img2img",
+  "model_family": "anima",
+  "conditioning": [
+    "lora_model_only"
+  ],
+  "io": [
+    "text",
+    "image_ref"
+  ],
+  "description": "Anima img2img style-transfer workflow: LoadImage -> VAEEncode(qwen_image_vae) -> KSampler with chained LoraLoaderModelOnly multi-LoRA model patching -> VAEDecode. Verified with Niji Moonlit Semi-real Anima preset on input gallery image."
+}

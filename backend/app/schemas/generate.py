@@ -150,3 +150,30 @@ class GenerateVideoCustomRequest(GenerateCustomRequest):
         default=None,
         description="影片參考檔，gallery_dir 相對路徑。提供時會安全解析為本機檔案路徑並注入 video-like loader",
     )
+
+
+class GenerateWanKeyframesVideoRequest(BaseModel):
+    """POST /api/generate/video/wan-keyframes 的 Request Body."""
+
+    images: list[str] = Field(
+        ...,
+        min_length=2,
+        max_length=16,
+        description="多張 keyframe 圖片路徑，皆為 gallery_dir 相對路徑，會複製到 ComfyUI input 後組成單一 WanDancer workflow",
+    )
+    prompt: str = Field(..., min_length=1)
+    negative_prompt: str | None = Field(
+        default="low quality, blurry, jitter, heavy flicker, morphing face, distorted face, extra limbs, duplicate character, cropped body, text, watermark",
+    )
+    width: int = Field(default=320, ge=256, le=2048, multiple_of=16)
+    height: int = Field(default=480, ge=256, le=2048, multiple_of=16)
+    length: int = Field(default=161, ge=17, le=10000)
+    fps: float = Field(default=16.1, gt=0.0, le=120.0)
+    steps: int = Field(default=4, ge=1, le=150)
+    cfg: float = Field(default=1.0, ge=0.0, le=30.0)
+    seed: int | None = Field(default=None, ge=0)
+    filename_prefix: str = Field(
+        default="video/wan_keyframes",
+        min_length=1,
+        description="ComfyUI SaveVideo filename_prefix",
+    )

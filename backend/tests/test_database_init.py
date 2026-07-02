@@ -51,7 +51,20 @@ def test_init_db_adds_artifact_table_without_changing_image_rows(tmp_path: Path,
     database.init_db()
 
     inspector = inspect(engine)
-    assert "generated_artifacts" in inspector.get_table_names()
+    tables = inspector.get_table_names()
+    assert "generated_artifacts" in tables
+    assert "downloaded_resources" in tables
+    downloaded_columns = {c["name"] for c in inspector.get_columns("downloaded_resources")}
+    assert {
+        "resource_name",
+        "resource_type",
+        "source_url",
+        "local_path",
+        "storage_root",
+        "sha256",
+        "status",
+        "downloaded_at",
+    }.issubset(downloaded_columns)
     with engine.connect() as conn:
         row = conn.execute(
             text("SELECT id, job_id, image_path, prompt FROM generated_images")

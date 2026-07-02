@@ -1,0 +1,34 @@
+{
+  "prompt_id": "59a07a0a-62af-4bae-a912-ea8cd8b8d57f",
+  "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_fourth_test/anima_img2img_fourth_d035_api.json",
+  "status": "success",
+  "elapsed_seconds": 161.1,
+  "outputs": [
+    "/Users/tf00185088/comfyui/temp/ComfyUI_temp_qjaup_00001_.png",
+    "/Users/tf00185088/comfyui/output/anima_img2img_fourth_d035_00001_.png"
+  ],
+  "messages": [
+    [
+      "execution_start",
+      {
+        "prompt_id": "59a07a0a-62af-4bae-a912-ea8cd8b8d57f",
+        "timestamp": 1782439730997
+      }
+    ],
+    [
+      "execution_cached",
+      {
+        "nodes": [],
+        "prompt_id": "59a07a0a-62af-4bae-a912-ea8cd8b8d57f",
+        "timestamp": 1782439730999
+      }
+    ],
+    [
+      "execution_success",
+      {
+        "prompt_id": "59a07a0a-62af-4bae-a912-ea8cd8b8d57f",
+        "timestamp": 1782439882098
+      }
+    ]
+  ]
+}

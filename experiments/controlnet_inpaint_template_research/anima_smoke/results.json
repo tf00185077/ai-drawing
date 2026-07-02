@@ -1,0 +1,72 @@
+[
+  {
+    "label": "txt2img",
+    "prompt_id": "f0c7c184-b350-4b13-9e1f-a430f3154034",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_smoke/txt2img_api.json",
+    "status": "success",
+    "elapsed_seconds": 10.2,
+    "images": [
+      "/Users/tf00185088/comfyui/temp/ComfyUI_temp_mgeod_00001_.png",
+      "/Users/tf00185088/comfyui/output/anima_smoke_txt2img_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "f0c7c184-b350-4b13-9e1f-a430f3154034",
+          "timestamp": 1782435363138
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "f0c7c184-b350-4b13-9e1f-a430f3154034",
+          "timestamp": 1782435363139
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "f0c7c184-b350-4b13-9e1f-a430f3154034",
+          "timestamp": 1782435370702
+        }
+      ]
+    ]
+  },
+  {
+    "label": "img2img",
+    "prompt_id": "0acfae6f-92f4-42e3-821a-a8b711b2a6fd",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_smoke/img2img_api.json",
+    "status": "success",
+    "elapsed_seconds": 20.2,
+    "images": [
+      "/Users/tf00185088/comfyui/temp/ComfyUI_temp_crcel_00001_.png",
+      "/Users/tf00185088/comfyui/output/anima_smoke_img2img_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "0acfae6f-92f4-42e3-821a-a8b711b2a6fd",
+          "timestamp": 1782435378308
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "0acfae6f-92f4-42e3-821a-a8b711b2a6fd",
+          "timestamp": 1782435378310
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "0acfae6f-92f4-42e3-821a-a8b711b2a6fd",
+          "timestamp": 1782435389357
+        }
+      ]
+    ]
+  }
+]

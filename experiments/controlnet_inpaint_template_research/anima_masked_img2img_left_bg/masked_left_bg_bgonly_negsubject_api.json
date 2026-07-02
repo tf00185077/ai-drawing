@@ -1,0 +1,245 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Anima text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "background only, no subject, no character, no person, deep moonlit blue abstract cinematic background, dark navy gradient, glowing cyan rim light, misty atmosphere, luminous blue fog, distant soft city lights, visible blue light beams, dramatic night ambience, rich cool shadows, glossy high contrast moonlit lighting, empty atmospheric background, polished semi-real niji rendering",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "person, face, head, eyes, body, character, portrait, girl, woman, human, skin, hair, extra person, duplicate character, cropped face, close-up face, facial features, body parts, flat pastel background, bright daytime, white empty background, washed out, low contrast, muddy colors, text, watermark, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "anima-highres-aesthetic-boost.safetensors",
+      "strength_model": 0.7
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Anima Highres/Aesthetic Boost @0.7"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "lora_name": "Niji Reol v1 EP11.safetensors",
+      "strength_model": 0.8
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "NijiReol semi-realistic @0.8"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model": [
+        "11",
+        0
+      ],
+      "lora_name": "AnimaNSS4RE.safetensors",
+      "strength_model": 0.65
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Niji Sweet Spot @0.65"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 2606268203,
+      "steps": 24,
+      "cfg": 6.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "denoise": 0.88,
+      "model": [
+        "12",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_masked_img2img_left_bg_bgonly_negsubject",
+      "images": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  },
+  "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "anima_masked_input_placeholder.png"
+    },
+    "_meta": {
+      "title": "Load input #4"
+    }
+  },
+  "15": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "14",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode input #4"
+    }
+  },
+  "16": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "mask_left_background_soft_832x1216.png",
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Load repaint mask (white=repaint)"
+    }
+  },
+  "17": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": [
+        "15",
+        0
+      ],
+      "mask": [
+        "16",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Set latent noise mask"
+    }
+  },
+  "18": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "14",
+        0
+      ],
+      "source": [
+        "8",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "16",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Composite masked repaint onto original"
+    }
+  }
+}

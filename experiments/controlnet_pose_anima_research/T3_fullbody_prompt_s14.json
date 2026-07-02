@@ -1,0 +1,212 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Anima text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Portrait latent"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "1girl, solo, full body, complete head-to-toe character, entire body visible, feet visible, shoes visible, zoomed out camera, long shot, standing on ground, centered full-body composition, lots of empty space around character, orange hair, blue eyes, red futuristic plugsuit, dynamic asymmetrical standing pose, one arm raised high, one arm lowered, legs apart, clean anime illustration, detailed character, plain white background",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "half body, upper body, close-up, portrait, bust shot, cropped body, cropped legs, cropped feet, feet out of frame, head cut off, out of frame, low quality, worst quality, bad anatomy, extra limbs, extra fingers, distorted hands, multiple people, text, watermark, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "anima-highres-aesthetic-boost.safetensors",
+      "strength_model": 0.7
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Anima Highres/Aesthetic Boost @0.7"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "lora_name": "Niji Reol v1 EP11.safetensors",
+      "strength_model": 0.8
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "NijiReol semi-realistic @0.8"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model": [
+        "11",
+        0
+      ],
+      "lora_name": "AnimaNSS4RE.safetensors",
+      "strength_model": 0.65
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Niji Sweet Spot @0.65"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 2606269302,
+      "steps": 26,
+      "cfg": 5.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "15",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_lllite_pose_T3_fullbody_prompt_s14",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  },
+  "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "anima_lllite_pose_ref_asym_832x1216.png"
+    },
+    "_meta": {
+      "title": "Load pose reference"
+    }
+  },
+  "15": {
+    "class_type": "AnimaLLLiteApply",
+    "inputs": {
+      "model": [
+        "12",
+        0
+      ],
+      "lllite_name": "anima-lllite-pose-1.safetensors",
+      "image": [
+        "14",
+        0
+      ],
+      "strength": 1.4,
+      "start_percent": 0.0,
+      "end_percent": 1.0,
+      "preserve_wrapper": true
+    },
+    "_meta": {
+      "title": "Apply Anima pose LLLite strength 1.4"
+    }
+  }
+}

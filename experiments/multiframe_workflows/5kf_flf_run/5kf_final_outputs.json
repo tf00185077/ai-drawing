@@ -1,0 +1,40 @@
+{
+  "stitched": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/asuka_5kf_flf_stitched_16fps.mp4",
+  "stitched_ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 512,
+        "height": 512,
+        "r_frame_rate": "16/1",
+        "nb_frames": "324"
+      }
+    ],
+    "format": {
+      "duration": "20.250000",
+      "size": "4820575"
+    }
+  },
+  "stitched_contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/asuka_5kf_flf_stitched_16fps_contact.jpg",
+  "film_x4_62": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/asuka_5kf_flf_stitched_FILM_x4_62fps.mp4",
+  "film_x4_62_ffprobe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 512,
+        "height": 512,
+        "r_frame_rate": "62/1",
+        "nb_frames": "1293"
+      }
+    ],
+    "format": {
+      "duration": "20.854839",
+      "size": "9986969"
+    }
+  },
+  "film_x4_62_contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/asuka_5kf_flf_stitched_FILM_x4_62fps_contact.jpg"
+}

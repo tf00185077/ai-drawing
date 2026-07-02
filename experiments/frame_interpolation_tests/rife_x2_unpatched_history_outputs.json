@@ -1,0 +1,119 @@
+{
+  "prompt": [
+    0,
+    "bf41e1bd-ebc9-4b57-9afe-80e2fa2c8a59",
+    {
+      "1": {
+        "class_type": "VHS_LoadVideo",
+        "inputs": {
+          "video": "mac_i2v_best_quality_for_rife.mp4",
+          "force_rate": 0.0,
+          "custom_width": 0,
+          "custom_height": 0,
+          "frame_load_cap": 0,
+          "skip_first_frames": 0,
+          "select_every_nth": 1,
+          "format": "None"
+        }
+      },
+      "2": {
+        "class_type": "RIFE VFI",
+        "inputs": {
+          "ckpt_name": "rife49.pth",
+          "frames": [
+            "1",
+            0
+          ],
+          "clear_cache_after_n_frames": 10,
+          "multiplier": 2,
+          "fast_mode": true,
+          "ensemble": false,
+          "scale_factor": 1.0,
+          "dtype": "float32",
+          "torch_compile": false,
+          "batch_size": 1
+        }
+      },
+      "3": {
+        "class_type": "CreateVideo",
+        "inputs": {
+          "images": [
+            "2",
+            0
+          ],
+          "fps": 32.0,
+          "bit_depth": 8
+        }
+      },
+      "4": {
+        "class_type": "SaveVideo",
+        "inputs": {
+          "video": [
+            "3",
+            0
+          ],
+          "filename_prefix": "video/rife_vfi_x2_32fps_best_quality_unpatched",
+          "format": "auto",
+          "codec": "auto"
+        }
+      }
+    },
+    {
+      "client_id": "rife-vfi-unpatched-5b5e99e8-de9b-4796-b85d-93989c6d29a8",
+      "create_time": 1782384868636
+    },
+    [
+      "4"
+    ]
+  ],
+  "outputs": {
+    "4": {
+      "images": [
+        {
+          "filename": "rife_vfi_x2_32fps_best_quality_unpatched_00001_.mp4",
+          "subfolder": "video",
+          "type": "output"
+        }
+      ],
+      "animated": [
+        true
+      ]
+    }
+  },
+  "status": {
+    "status_str": "success",
+    "completed": true,
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "bf41e1bd-ebc9-4b57-9afe-80e2fa2c8a59",
+          "timestamp": 1782384868636
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "bf41e1bd-ebc9-4b57-9afe-80e2fa2c8a59",
+          "timestamp": 1782384868637
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "bf41e1bd-ebc9-4b57-9afe-80e2fa2c8a59",
+          "timestamp": 1782384874018
+        }
+      ]
+    ]
+  },
+  "meta": {
+    "4": {
+      "node_id": "4",
+      "display_node": "4",
+      "parent_node": null,
+      "real_node_id": "4"
+    }
+  }
+}

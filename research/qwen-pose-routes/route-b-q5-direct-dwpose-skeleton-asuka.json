@@ -1,0 +1,248 @@
+{
+  "37": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "qwen-image-Q5_K_M.gguf"
+    },
+    "_meta": {
+      "title": "Load Qwen Image Q2_K GGUF"
+    }
+  },
+  "38": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Load Qwen text encoder"
+    }
+  },
+  "39": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "_meta": {
+      "title": "Load Qwen VAE"
+    }
+  },
+  "69": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "37",
+        0
+      ],
+      "lora_name": "qwen_image_union_diffsynth_lora.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": {
+      "title": "Qwen Union DiffSynth OpenPose LoRA"
+    }
+  },
+  "79": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "69",
+        0
+      ],
+      "lora_name": "Qwen-Image-Lightning-8steps-V1.1.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": {
+      "title": "Qwen Image Lightning 8 steps"
+    }
+  },
+  "66": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "79",
+        0
+      ],
+      "shift": 4.0
+    },
+    "_meta": {
+      "title": "ModelSamplingAuraFlow"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "38",
+        0
+      ],
+      "text": "full body Asuka Langley Soryu, Evangelion red plugsuit, orange twin-tail hair, blue eyes, clean anime linework, detailed full body. Follow the provided OpenPose/DWPose skeleton exactly."
+    },
+    "_meta": {
+      "title": "Positive"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "38",
+        0
+      ],
+      "text": ""
+    },
+    "_meta": {
+      "title": "Negative"
+    }
+  },
+  "73": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "anypose_space_high_lunge_dwpose_skeleton_00001_f4f48696_0.png"
+    },
+    "_meta": {
+      "title": "Pose reference image"
+    }
+  },
+  "98": {
+    "class_type": "DWPreprocessor",
+    "inputs": {
+      "image": [
+        "73",
+        0
+      ],
+      "detect_hand": "enable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 1024,
+      "bbox_detector": "yolox_l.onnx",
+      "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+      "scale_stick_for_xinsr_cn": "disable"
+    },
+    "_meta": {
+      "title": "DWPose Estimator"
+    }
+  },
+  "77": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "73",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 0.35,
+      "resolution_steps": 1
+    },
+    "_meta": {
+      "title": "Scale pose image"
+    }
+  },
+  "72": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "77",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode pose/reference latent"
+    }
+  },
+  "70": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "6",
+        0
+      ],
+      "latent": [
+        "72",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Positive reference latent"
+    }
+  },
+  "71": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "7",
+        0
+      ],
+      "latent": [
+        "72",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Negative reference latent"
+    }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "66",
+        0
+      ],
+      "seed": 26062631,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "70",
+        0
+      ],
+      "negative": [
+        "71",
+        0
+      ],
+      "latent_image": [
+        "72",
+        0
+      ],
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "60": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "filename_prefix": "qwen_route_b_q5_direct_dwpose_skeleton_asuka"
+    },
+    "_meta": {
+      "title": "Save"
+    }
+  }
+}

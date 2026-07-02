@@ -1,0 +1,114 @@
+[
+  {
+    "segment": 1,
+    "label": "seg01_01_to_02",
+    "prompt_id": "eed03663-7627-49f4-b49a-7c45c7697d4c",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg01_01_to_02_api.json",
+    "status": "success",
+    "elapsed_seconds": 6434.7,
+    "video": "/Users/tf00185088/comfyui/output/video/5kf_flf_seg01_flf5_keyframe_01_to_flf5_keyframe_02_00001_.mp4",
+    "contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg01_01_to_02_contact.jpg",
+    "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 512,
+          "height": 512,
+          "r_frame_rate": "16/1",
+          "nb_frames": "81"
+        }
+      ],
+      "format": {
+        "duration": "5.062500",
+        "size": "1179247"
+      }
+    },
+    "error": null
+  },
+  {
+    "segment": 2,
+    "label": "seg02_02_to_03",
+    "prompt_id": "e451846f-17fb-451d-9e1d-ed4ece4cb6ca",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg02_02_to_03_api.json",
+    "status": "success",
+    "elapsed_seconds": 6254.2,
+    "video": "/Users/tf00185088/comfyui/output/video/5kf_flf_seg02_flf5_keyframe_02_to_flf5_keyframe_03_00001_.mp4",
+    "contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg02_02_to_03_contact.jpg",
+    "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 512,
+          "height": 512,
+          "r_frame_rate": "16/1",
+          "nb_frames": "81"
+        }
+      ],
+      "format": {
+        "duration": "5.062500",
+        "size": "1179248"
+      }
+    },
+    "error": null
+  },
+  {
+    "segment": 3,
+    "label": "seg03_03_to_04",
+    "prompt_id": "f66bf1c7-bf7d-42d4-8bf5-0aa59095508f",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg03_03_to_04_api.json",
+    "status": "success",
+    "elapsed_seconds": 6434.7,
+    "video": "/Users/tf00185088/comfyui/output/video/5kf_flf_seg03_flf5_keyframe_03_to_flf5_keyframe_04_00001_.mp4",
+    "contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg03_03_to_04_contact.jpg",
+    "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 512,
+          "height": 512,
+          "r_frame_rate": "16/1",
+          "nb_frames": "81"
+        }
+      ],
+      "format": {
+        "duration": "5.062500",
+        "size": "1290512"
+      }
+    },
+    "error": null
+  },
+  {
+    "segment": 4,
+    "label": "seg04_04_to_05",
+    "prompt_id": "3bbfd918-c0c2-4b47-b96e-6be4cb2fd296",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg04_04_to_05_api.json",
+    "status": "success",
+    "elapsed_seconds": 6314.8,
+    "video": "/Users/tf00185088/comfyui/output/video/5kf_flf_seg04_flf5_keyframe_04_to_flf5_keyframe_05_00001_.mp4",
+    "contact": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run/seg04_04_to_05_contact.jpg",
+    "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "codec_name": "h264",
+          "width": 512,
+          "height": 512,
+          "r_frame_rate": "16/1",
+          "nb_frames": "81"
+        }
+      ],
+      "format": {
+        "duration": "5.062500",
+        "size": "1186994"
+      }
+    },
+    "error": null
+  }
+]

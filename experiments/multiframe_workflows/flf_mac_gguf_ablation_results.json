@@ -1,0 +1,130 @@
+[
+  {
+    "id": "B0",
+    "description": "baseline FLF Mac GGUF: 512² length41 steps10 CFG1.5, keyframe_01→02",
+    "prompt_id": "ac6d2ba6-a32a-4e39-ad39-fe391edbdedf",
+    "api_path": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/flf_mac_gguf_2kf_test_api.json",
+    "status": "success",
+    "elapsed_seconds": 2465.8,
+    "artifacts": [
+      {
+        "video": "/Users/tf00185088/comfyui/output/video/flf_mac_gguf_2kf_test_512_41f_00001_.mp4",
+        "contact": "/tmp/b0_est_512_41f_00001__contact.jpg",
+        "ffprobe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 512,
+              "height": 512,
+              "r_frame_rate": "16/1",
+              "nb_frames": "41"
+            }
+          ],
+          "format": {
+            "duration": "2.562500",
+            "size": "658700"
+          }
+        }
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "V1",
+    "description": "length 41→81, other settings unchanged",
+    "prompt_id": "c12ea862-0453-46f2-af08-7aac71a92099",
+    "api_path": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/flf_mac_gguf_v1_len81_api.json",
+    "status": "success",
+    "elapsed_seconds": 6194.1,
+    "artifacts": [
+      {
+        "video": "/Users/tf00185088/comfyui/output/video/flf_mac_gguf_v1_len81_512_00001_.mp4",
+        "contact": "/tmp/v1_1_len81_512_00001__contact.jpg",
+        "ffprobe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 512,
+              "height": 512,
+              "r_frame_rate": "16/1",
+              "nb_frames": "81"
+            }
+          ],
+          "format": {
+            "duration": "5.062500",
+            "size": "1059720"
+          }
+        }
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "V2",
+    "description": "steps 10→6, length41 unchanged",
+    "prompt_id": "96465d84-8496-4536-b894-1fe27c4d5510",
+    "api_path": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/flf_mac_gguf_v2_steps6_api.json",
+    "status": "success",
+    "elapsed_seconds": 1623.8,
+    "artifacts": [
+      {
+        "video": "/Users/tf00185088/comfyui/output/video/flf_mac_gguf_v2_steps6_41f_00001_.mp4",
+        "contact": "/tmp/v2__steps6_41f_00001__contact.jpg",
+        "ffprobe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 512,
+              "height": 512,
+              "r_frame_rate": "16/1",
+              "nb_frames": "41"
+            }
+          ],
+          "format": {
+            "duration": "2.562500",
+            "size": "672021"
+          }
+        }
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "V3",
+    "description": "CFG 1.5→1.0, length41 unchanged",
+    "prompt_id": "41e3a4e7-d5a7-4ec9-a84e-c916989120c0",
+    "api_path": "/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/flf_mac_gguf_v3_cfg10_api.json",
+    "status": "success",
+    "elapsed_seconds": 1383.3,
+    "artifacts": [
+      {
+        "video": "/Users/tf00185088/comfyui/output/video/flf_mac_gguf_v3_cfg10_41f_00001_.mp4",
+        "contact": "/tmp/v3_3_cfg10_41f_00001__contact.jpg",
+        "ffprobe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 512,
+              "height": 512,
+              "r_frame_rate": "16/1",
+              "nb_frames": "41"
+            }
+          ],
+          "format": {
+            "duration": "2.562500",
+            "size": "677080"
+          }
+        }
+      }
+    ],
+    "error": null
+  }
+]

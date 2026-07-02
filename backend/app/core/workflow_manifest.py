@@ -29,9 +29,9 @@ CONTROLLED_VOCABULARY: dict[str, set[str]] = {
     # LoRA is injected into MODEL via LoraLoaderModelOnly without touching CLIP.
     # `multi_lora` distinguishes chained LoRA graphs from single-LoRA templates;
     # use it when a preset/source page requires multiple LoRAs to be wired in order.
-    "conditioning": {"controlnet_pose", "lora_model_only", "multi_lora"},
-    "io": {"text", "image_ref", "mask", "first_frame", "last_frame", "video_ref", "audio_ref"},
-    "model_family": {"sdxl", "sd15", "anima", "wan", "ltx_video", "hunyuan_video", "animatediff", "svd", "mochi"},
+    "conditioning": {"controlnet_pose", "lora_model_only", "multi_lora", "pose_transfer"},
+    "io": {"text", "image_ref", "pose_ref", "mask", "first_frame", "last_frame", "video_ref", "audio_ref"},
+    "model_family": {"sdxl", "sd15", "anima", "qwen_image", "qwen_image_edit", "wan", "ltx_video", "hunyuan_video", "animatediff", "svd", "mochi"},
 }
 SINGLE_VALUED = {"modality", "model_family"}  # 其餘為集合
 SET_VALUED = {"conditioning", "io"}

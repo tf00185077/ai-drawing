@@ -1,0 +1,196 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Anima text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "masterpiece, best quality, high-quality Anima illustration, semi-realistic anime rendering, dark cinematic color grading, moonlit atmosphere, cool blue rim lighting, deep shadow contrast, glossy highlight rendering, sharp detailed hair, polished high-resolution finish, dramatic portrait lighting, semi-realistic niji anime style, cool moonlit color palette, high-contrast glossy lighting, sharp specular highlights, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, visible boots, red plugsuit, orange hair, blue eyes, hair clips, confident expression, clean readable full-body silhouette, preserve character identity and full-body framing, style transfer from watercolor pastel into moonlit semi-real niji anime rendering, cinematic dark background separation, refined semi-real rendering, cool blue edge light on hair and plugsuit, subtle glossy red suit highlights",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, bright daytime, washed out, low contrast, black armor, sword, moon, night sky, black hair, woman, armor, medieval costume, source character, exact source pose, cropped body, cropped head, cropped feet, feet out of frame, legs out of frame, close-up, portrait crop, out of frame, bad anatomy, deformed hands, extra fingers, extra limbs, broken legs, distorted face, text, watermark, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "anima-highres-aesthetic-boost.safetensors",
+      "strength_model": 0.7
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Anima Highres/Aesthetic Boost @0.7"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "lora_name": "Niji Reol v1 EP11.safetensors",
+      "strength_model": 0.8
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "NijiReol semi-realistic @0.8"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model": [
+        "11",
+        0
+      ],
+      "lora_name": "AnimaNSS4RE.safetensors",
+      "strength_model": 0.65
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Niji Sweet Spot @0.65"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 2606266501,
+      "steps": 24,
+      "cfg": 5.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "denoise": 0.65,
+      "model": [
+        "12",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_img2img_niji_moonlit_d065",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  },
+  "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "anima_img2img_niji_input4.png"
+    },
+    "_meta": {
+      "title": "Load input #4"
+    }
+  },
+  "15": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "14",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode input #4"
+    }
+  }
+}

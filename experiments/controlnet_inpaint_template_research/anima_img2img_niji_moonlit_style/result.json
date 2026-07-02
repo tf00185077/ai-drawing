@@ -1,0 +1,11 @@
+{
+  "prompt_id": "ef6a2c2a-863e-44dd-a16f-51d86473cfb3",
+  "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_niji_moonlit_style/niji_moonlit_img2img_d065_api.json",
+  "status": "success",
+  "elapsed_seconds": 201.3,
+  "outputs": [
+    "/Users/tf00185088/comfyui/output/anima_img2img_niji_moonlit_d065_00001_.png"
+  ],
+  "prompt": "masterpiece, best quality, high-quality Anima illustration, semi-realistic anime rendering, dark cinematic color grading, moonlit atmosphere, cool blue rim lighting, deep shadow contrast, glossy highlight rendering, sharp detailed hair, polished high-resolution finish, dramatic portrait lighting, semi-realistic niji anime style, cool moonlit color palette, high-contrast glossy lighting, sharp specular highlights, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, visible boots, red plugsuit, orange hair, blue eyes, hair clips, confident expression, clean readable full-body silhouette, preserve character identity and full-body framing, style transfer from watercolor pastel into moonlit semi-real niji anime rendering, cinematic dark background separation, refined semi-real rendering, cool blue edge light on hair and plugsuit, subtle glossy red suit highlights",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, bright daytime, washed out, low contrast, black armor, sword, moon, night sky, black hair, woman, armor, medieval costume, source character, exact source pose, cropped body, cropped head, cropped feet, feet out of frame, legs out of frame, close-up, portrait crop, out of frame, bad anatomy, deformed hands, extra fingers, extra limbs, broken legs, distorted face, text, watermark, logo"
+}

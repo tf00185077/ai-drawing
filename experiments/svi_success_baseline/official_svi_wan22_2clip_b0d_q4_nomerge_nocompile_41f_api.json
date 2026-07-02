@@ -1,0 +1,1122 @@
+{
+  "11": {
+    "class_type": "LoadWanVideoT5TextEncoder",
+    "inputs": {
+      "model_name": "umt5-xxl-enc-bf16.safetensors",
+      "precision": "bf16",
+      "load_device": "offload_device",
+      "quantization": "disabled"
+    }
+  },
+  "16": {
+    "class_type": "WanVideoTextEncode",
+    "inputs": {
+      "t5": [
+        "11",
+        0
+      ],
+      "positive_prompt": "The woman leaves the room quickly.",
+      "negative_prompt": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "force_offload": true,
+      "use_disk_cache": false,
+      "device": "gpu"
+    }
+  },
+  "22": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+      "lora": [
+        "107",
+        0
+      ],
+      "model": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf",
+      "base_precision": "bf16",
+      "quantization": "disabled",
+      "load_device": "offload_device",
+      "attention_mode": "sdpa",
+      "rms_norm_function": "default"
+    }
+  },
+  "27": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "92",
+        0
+      ],
+      "image_embeds": [
+        "89",
+        0
+      ],
+      "text_embeds": [
+        "16",
+        0
+      ],
+      "steps": [
+        "94",
+        0
+      ],
+      "end_step": [
+        "91",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 1,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "start_step": 0
+    }
+  },
+  "28": {
+    "class_type": "WanVideoDecode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "samples": [
+        "90",
+        0
+      ],
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "normalization": "default"
+    }
+  },
+  "35": {
+    "class_type": "WanVideoTorchCompileSettings",
+    "inputs": {
+      "backend": "inductor",
+      "fullgraph": false,
+      "mode": "default",
+      "dynamic": false,
+      "dynamo_cache_size_limit": 64,
+      "compile_transformer_blocks_only": true,
+      "dynamo_recompile_limit": 128,
+      "force_parameter_static_shapes": false
+    }
+  },
+  "38": {
+    "class_type": "WanVideoVAELoader",
+    "inputs": {
+      "model_name": "Wan2_1_VAE_bf16.safetensors",
+      "precision": "bf16"
+    }
+  },
+  "39": {
+    "class_type": "WanVideoBlockSwap",
+    "inputs": {
+      "blocks_to_swap": 20,
+      "offload_img_emb": false,
+      "offload_txt_emb": false,
+      "use_non_blocking": false,
+      "vace_blocks_to_swap": 1,
+      "prefetch_blocks": 0,
+      "block_swap_debug": false
+    }
+  },
+  "56": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+      "lora": "Wan22_Lightx2v/Wan2.2-Lightning_I2V-A14B-4steps-lora_HIGH_fp16.safetensors",
+      "strength": 0.5,
+      "low_mem_load": true,
+      "merge_loras": false
+    }
+  },
+  "67": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "svi_success_baseline/woman.jpg",
+      "upload": "image"
+    }
+  },
+  "68": {
+    "class_type": "ImageResizeKJv2",
+    "inputs": {
+      "image": [
+        "67",
+        0
+      ],
+      "width": 832,
+      "height": 480,
+      "upscale_method": "lanczos",
+      "keep_proportion": "total_pixels",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 32,
+      "device": "cpu"
+    }
+  },
+  "71": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+      "lora": [
+        "108",
+        0
+      ],
+      "model": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf",
+      "base_precision": "bf16",
+      "quantization": "disabled",
+      "load_device": "offload_device",
+      "attention_mode": "sdpa",
+      "rms_norm_function": "default"
+    }
+  },
+  "89": {
+    "class_type": "WanVideoImageToVideoEncode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "start_image": [
+        "162",
+        0
+      ],
+      "temporal_mask": [
+        "163",
+        0
+      ],
+      "width": [
+        "68",
+        1
+      ],
+      "height": [
+        "68",
+        2
+      ],
+      "num_frames": 41,
+      "noise_aug_strength": 0,
+      "start_latent_strength": 1,
+      "end_latent_strength": 1,
+      "force_offload": true,
+      "fun_or_fl2v_model": false,
+      "tiled_vae": false
+    }
+  },
+  "90": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "93",
+        0
+      ],
+      "image_embeds": [
+        "89",
+        0
+      ],
+      "text_embeds": [
+        "16",
+        0
+      ],
+      "samples": [
+        "27",
+        0
+      ],
+      "steps": [
+        "94",
+        0
+      ],
+      "start_step": [
+        "91",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 1,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "end_step": -1
+    }
+  },
+  "91": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 3
+    }
+  },
+  "92": {
+    "class_type": "WanVideoSetBlockSwap",
+    "inputs": {
+      "model": [
+        "22",
+        0
+      ],
+      "block_swap_args": [
+        "39",
+        0
+      ]
+    }
+  },
+  "93": {
+    "class_type": "WanVideoSetBlockSwap",
+    "inputs": {
+      "model": [
+        "71",
+        0
+      ],
+      "block_swap_args": [
+        "39",
+        0
+      ]
+    }
+  },
+  "94": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 6
+    }
+  },
+  "97": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+      "lora": "Wan22_Lightx2v/Wan2.2-Lightning_I2V-A14B-4steps-lora_LOW_fp16.safetensors",
+      "strength": 1,
+      "low_mem_load": true,
+      "merge_loras": false
+    }
+  },
+  "107": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+      "prev_lora": [
+        "56",
+        0
+      ],
+      "lora": "SVI/SVI_Wan2.2-I2V-A14B_high_noise_lora_v2.0.safetensors",
+      "strength": 1,
+      "low_mem_load": true,
+      "merge_loras": false
+    }
+  },
+  "108": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+      "prev_lora": [
+        "97",
+        0
+      ],
+      "lora": "SVI/SVI_Wan2.2-I2V-A14B_low_noise_lora_v2.0.safetensors",
+      "strength": 1,
+      "low_mem_load": true,
+      "merge_loras": false
+    }
+  },
+  "124": {
+    "class_type": "WanVideoImageToVideoEncode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "start_image": [
+        "136",
+        0
+      ],
+      "temporal_mask": [
+        "137",
+        0
+      ],
+      "width": [
+        "131",
+        1
+      ],
+      "height": [
+        "131",
+        2
+      ],
+      "num_frames": 41,
+      "noise_aug_strength": 0,
+      "start_latent_strength": 1,
+      "end_latent_strength": 1,
+      "force_offload": true,
+      "fun_or_fl2v_model": false,
+      "tiled_vae": false
+    }
+  },
+  "129": {
+    "class_type": "ImageBatchMulti",
+    "inputs": {
+      "image_1": [
+        "132",
+        0
+      ],
+      "image_2": [
+        "130",
+        0
+      ],
+      "inputcount": 2
+    }
+  },
+  "130": {
+    "class_type": "WanVideoDecode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "samples": [
+        "157",
+        0
+      ],
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "normalization": "default"
+    }
+  },
+  "131": {
+    "class_type": "GetImageSizeAndCount",
+    "inputs": {
+      "image": [
+        "28",
+        0
+      ]
+    }
+  },
+  "132": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "131",
+        0
+      ],
+      "num_frames": [
+        "143",
+        0
+      ],
+      "start_index": 0
+    }
+  },
+  "134": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "131",
+        0
+      ],
+      "num_frames": [
+        "141",
+        0
+      ],
+      "start_index": -1
+    }
+  },
+  "136": {
+    "class_type": "WanVideoVACEStartToEndFrame",
+    "inputs": {
+      "start_image": [
+        "134",
+        0
+      ],
+      "control_images": [
+        "145",
+        0
+      ],
+      "num_frames": 41,
+      "empty_frame_level": 0,
+      "start_index": 0,
+      "end_index": -1
+    }
+  },
+  "137": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "136",
+        1
+      ]
+    }
+  },
+  "140": {
+    "class_type": "WanVideoTextEncode",
+    "inputs": {
+      "t5": [
+        "11",
+        0
+      ],
+      "positive_prompt": "The woman goes back and sips from her black mug of coffee, enjoying the warmth.",
+      "negative_prompt": "bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards",
+      "force_offload": true,
+      "use_disk_cache": true,
+      "device": "gpu"
+    }
+  },
+  "141": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 1
+    }
+  },
+  "143": {
+    "class_type": "SimpleMath+",
+    "inputs": {
+      "a": [
+        "131",
+        3
+      ],
+      "b": [
+        "141",
+        0
+      ],
+      "value": "a - b"
+    }
+  },
+  "145": {
+    "class_type": "RepeatImageBatch",
+    "inputs": {
+      "image": [
+        "68",
+        0
+      ],
+      "amount": 41
+    }
+  },
+  "154": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 6
+    }
+  },
+  "155": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 3
+    }
+  },
+  "156": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "92",
+        0
+      ],
+      "image_embeds": [
+        "124",
+        0
+      ],
+      "text_embeds": [
+        "140",
+        0
+      ],
+      "steps": [
+        "154",
+        0
+      ],
+      "end_step": [
+        "155",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 2,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "start_step": 0
+    }
+  },
+  "157": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "93",
+        0
+      ],
+      "image_embeds": [
+        "124",
+        0
+      ],
+      "text_embeds": [
+        "140",
+        0
+      ],
+      "samples": [
+        "156",
+        0
+      ],
+      "steps": [
+        "154",
+        0
+      ],
+      "start_step": [
+        "155",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 2,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "end_step": -1
+    }
+  },
+  "162": {
+    "class_type": "WanVideoVACEStartToEndFrame",
+    "inputs": {
+      "start_image": [
+        "68",
+        0
+      ],
+      "control_images": [
+        "145",
+        0
+      ],
+      "num_frames": 41,
+      "empty_frame_level": 0,
+      "start_index": 0,
+      "end_index": -1
+    }
+  },
+  "163": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "162",
+        1
+      ]
+    }
+  },
+  "166": {
+    "class_type": "GetImageSizeAndCount",
+    "inputs": {
+      "image": [
+        "129",
+        0
+      ]
+    }
+  },
+  "167": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "166",
+        0
+      ],
+      "num_frames": [
+        "181",
+        0
+      ],
+      "start_index": -1
+    }
+  },
+  "170": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 6
+    }
+  },
+  "171": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 3
+    }
+  },
+  "174": {
+    "class_type": "WanVideoDecode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "samples": [
+        "183",
+        0
+      ],
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "normalization": "default"
+    }
+  },
+  "175": {
+    "class_type": "ImageBatchMulti",
+    "inputs": {
+      "image_1": [
+        "187",
+        0
+      ],
+      "image_2": [
+        "174",
+        0
+      ],
+      "inputcount": 2
+    }
+  },
+  "178": {
+    "class_type": "WanVideoImageToVideoEncode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "start_image": [
+        "186",
+        0
+      ],
+      "temporal_mask": [
+        "188",
+        0
+      ],
+      "width": [
+        "166",
+        1
+      ],
+      "height": [
+        "166",
+        2
+      ],
+      "num_frames": 41,
+      "noise_aug_strength": 0,
+      "start_latent_strength": 1,
+      "end_latent_strength": 1,
+      "force_offload": true,
+      "fun_or_fl2v_model": false,
+      "tiled_vae": false
+    }
+  },
+  "180": {
+    "class_type": "SimpleMath+",
+    "inputs": {
+      "a": [
+        "166",
+        3
+      ],
+      "b": [
+        "181",
+        0
+      ],
+      "value": "a - b"
+    }
+  },
+  "181": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 1
+    }
+  },
+  "182": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "92",
+        0
+      ],
+      "image_embeds": [
+        "178",
+        0
+      ],
+      "text_embeds": [
+        "184",
+        0
+      ],
+      "steps": [
+        "170",
+        0
+      ],
+      "end_step": [
+        "171",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 3,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "start_step": 0
+    }
+  },
+  "183": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "93",
+        0
+      ],
+      "image_embeds": [
+        "178",
+        0
+      ],
+      "text_embeds": [
+        "184",
+        0
+      ],
+      "samples": [
+        "182",
+        0
+      ],
+      "steps": [
+        "170",
+        0
+      ],
+      "start_step": [
+        "171",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 3,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "end_step": -1
+    }
+  },
+  "184": {
+    "class_type": "WanVideoTextEncode",
+    "inputs": {
+      "t5": [
+        "11",
+        0
+      ],
+      "positive_prompt": "Her hand hovers over the keyboard, fingers poised to type.",
+      "negative_prompt": "bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards",
+      "force_offload": true,
+      "use_disk_cache": true,
+      "device": "gpu"
+    }
+  },
+  "186": {
+    "class_type": "WanVideoVACEStartToEndFrame",
+    "inputs": {
+      "start_image": [
+        "167",
+        0
+      ],
+      "control_images": [
+        "145",
+        0
+      ],
+      "num_frames": 41,
+      "empty_frame_level": 0,
+      "start_index": 0,
+      "end_index": -1
+    }
+  },
+  "187": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "166",
+        0
+      ],
+      "num_frames": [
+        "180",
+        0
+      ],
+      "start_index": 0
+    }
+  },
+  "188": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "186",
+        1
+      ]
+    }
+  },
+  "190": {
+    "class_type": "GetImageSizeAndCount",
+    "inputs": {
+      "image": [
+        "175",
+        0
+      ]
+    }
+  },
+  "191": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "190",
+        0
+      ],
+      "num_frames": [
+        "205",
+        0
+      ],
+      "start_index": -1
+    }
+  },
+  "194": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 6
+    }
+  },
+  "195": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 3
+    }
+  },
+  "198": {
+    "class_type": "WanVideoDecode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "samples": [
+        "206",
+        0
+      ],
+      "enable_vae_tiling": false,
+      "tile_x": 272,
+      "tile_y": 272,
+      "tile_stride_x": 144,
+      "tile_stride_y": 128,
+      "normalization": "default"
+    }
+  },
+  "199": {
+    "class_type": "ImageBatchMulti",
+    "inputs": {
+      "image_1": [
+        "208",
+        0
+      ],
+      "image_2": [
+        "198",
+        0
+      ],
+      "inputcount": 2
+    }
+  },
+  "200": {
+    "class_type": "GetImageSizeAndCount",
+    "inputs": {
+      "image": [
+        "199",
+        0
+      ]
+    }
+  },
+  "202": {
+    "class_type": "WanVideoImageToVideoEncode",
+    "inputs": {
+      "vae": [
+        "38",
+        0
+      ],
+      "start_image": [
+        "212",
+        0
+      ],
+      "temporal_mask": [
+        "209",
+        0
+      ],
+      "width": [
+        "190",
+        1
+      ],
+      "height": [
+        "190",
+        2
+      ],
+      "num_frames": 41,
+      "noise_aug_strength": 0,
+      "start_latent_strength": 1,
+      "end_latent_strength": 1,
+      "force_offload": true,
+      "fun_or_fl2v_model": false,
+      "tiled_vae": false
+    }
+  },
+  "204": {
+    "class_type": "SimpleMath+",
+    "inputs": {
+      "a": [
+        "190",
+        3
+      ],
+      "b": [
+        "205",
+        0
+      ],
+      "value": "a - b"
+    }
+  },
+  "205": {
+    "class_type": "INTConstant",
+    "inputs": {
+      "value": 1
+    }
+  },
+  "206": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "93",
+        0
+      ],
+      "image_embeds": [
+        "202",
+        0
+      ],
+      "text_embeds": [
+        "211",
+        0
+      ],
+      "samples": [
+        "213",
+        0
+      ],
+      "steps": [
+        "194",
+        0
+      ],
+      "start_step": [
+        "195",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 4,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "end_step": -1
+    }
+  },
+  "208": {
+    "class_type": "GetImageRangeFromBatch",
+    "inputs": {
+      "images": [
+        "190",
+        0
+      ],
+      "num_frames": [
+        "204",
+        0
+      ],
+      "start_index": 0
+    }
+  },
+  "209": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "212",
+        1
+      ]
+    }
+  },
+  "210": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "200",
+        0
+      ],
+      "frame_rate": 16,
+      "loop_count": 0,
+      "filename_prefix": "svi_success_b0d_q4_nomerge_nocompile_41f_2clip",
+      "format": "video/h264-mp4",
+      "pingpong": true,
+      "save_output": true
+    }
+  },
+  "211": {
+    "class_type": "WanVideoTextEncode",
+    "inputs": {
+      "t5": [
+        "11",
+        0
+      ],
+      "positive_prompt": "She smiles softly as she reads something on the screen.",
+      "negative_prompt": "bright tones, overexposed, static, blurred details, subtitles, style, works, paintings, images, static, overall gray, worst quality, low quality, JPEG compression residue, ugly, incomplete, extra fingers, poorly drawn hands, poorly drawn faces, deformed, disfigured, misshapen limbs, fused fingers, still picture, messy background, three legs, many people in the background, walking backwards",
+      "force_offload": true,
+      "use_disk_cache": true,
+      "device": "gpu"
+    }
+  },
+  "212": {
+    "class_type": "WanVideoVACEStartToEndFrame",
+    "inputs": {
+      "start_image": [
+        "191",
+        0
+      ],
+      "control_images": [
+        "145",
+        0
+      ],
+      "num_frames": 41,
+      "empty_frame_level": 0,
+      "start_index": 0,
+      "end_index": -1
+    }
+  },
+  "213": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+      "model": [
+        "92",
+        0
+      ],
+      "image_embeds": [
+        "202",
+        0
+      ],
+      "text_embeds": [
+        "211",
+        0
+      ],
+      "steps": [
+        "194",
+        0
+      ],
+      "end_step": [
+        "195",
+        0
+      ],
+      "cfg": 1.5,
+      "shift": 8,
+      "seed": 4,
+      "force_offload": true,
+      "scheduler": "dpm++_sde",
+      "riflex_freq_index": 0,
+      "denoise_strength": 1,
+      "batched_cfg": false,
+      "rope_function": "comfy",
+      "start_step": 0
+    }
+  }
+}

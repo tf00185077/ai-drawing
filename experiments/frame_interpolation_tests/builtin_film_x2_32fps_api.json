@@ -1,0 +1,58 @@
+{
+  "1": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "mac_i2v_best_quality_for_interp.mp4",
+      "force_rate": 0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    }
+  },
+  "2": {
+    "class_type": "FrameInterpolationModelLoader",
+    "inputs": {
+      "model_name": "film_net_fp16.pt"
+    }
+  },
+  "3": {
+    "class_type": "FrameInterpolate",
+    "inputs": {
+      "interp_model": [
+        "2",
+        0
+      ],
+      "images": [
+        "1",
+        0
+      ],
+      "multiplier": 2
+    }
+  },
+  "4": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "fps": 32,
+      "bit_depth": 8
+    }
+  },
+  "5": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "4",
+        0
+      ],
+      "filename_prefix": "video/interp_builtin_film_x2_32fps_best_quality",
+      "format": "auto",
+      "codec": "auto"
+    }
+  }
+}

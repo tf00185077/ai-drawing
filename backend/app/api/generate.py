@@ -4,6 +4,7 @@ ComfyUI API 串接、Workflow 模板、批次排程
 契約：docs/api-contract.md
 """
 from pathlib import Path
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -17,7 +18,8 @@ from app.core.resources import (
     list_text_encoders,
     list_vaes,
 )
-from app.core.queue import QueueFullError, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
+from app.core.queue import QueueFullError, GenerateParams, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
+from app.core.wan_keyframes import build_wan_keyframe_workflow
 from app.db.database import get_db
 from app.db.models import GeneratedArtifact, GeneratedImage
 from app.schemas.generate import (
@@ -25,6 +27,7 @@ from app.schemas.generate import (
     GenerateRequest,
     GenerateResponse,
     GenerateVideoCustomRequest,
+    GenerateWanKeyframesVideoRequest,
     QueueStatusResponse,
 )
 
@@ -162,6 +165,48 @@ async def trigger_generate_video_custom(body: GenerateVideoCustomRequest):
         )
     except QueueFullError as e:
         raise HTTPException(503, str(e))
+
+
+@router.post("/video/wan-keyframes", response_model=GenerateResponse, status_code=201)
+async def trigger_generate_video_wan_keyframes(body: GenerateWanKeyframesVideoRequest):
+    """用 WanDancer 單一 workflow 將多張 gallery keyframes 生成一支影片。"""
+    try:
+        settings = get_settings()
+        workflow = build_wan_keyframe_workflow(
+            settings=settings,
+            image_paths=body.images,
+            prompt=body.prompt,
+            negative_prompt=body.negative_prompt,
+            width=body.width,
+            height=body.height,
+            length=body.length,
+            fps=body.fps,
+            steps=body.steps,
+            cfg=body.cfg,
+            seed=body.seed,
+            filename_prefix=body.filename_prefix,
+        )
+        params = {
+            "workflow": workflow,
+            "prompt": body.prompt,
+            "negative_prompt": body.negative_prompt,
+            "width": body.width,
+            "height": body.height,
+            "steps": body.steps,
+            "cfg": body.cfg,
+            "seed": body.seed,
+            "template": "gen_img2video_wan_5keyframe_single_workflow",
+        }
+        job_id = submit_custom(cast(GenerateParams, params))
+        return GenerateResponse(
+            job_id=job_id,
+            status="queued",
+            message="已加入影片生成佇列（Wan 多 keyframe 單 workflow）",
+        )
+    except QueueFullError as e:
+        raise HTTPException(503, str(e))
+    except (FileNotFoundError, ValueError) as e:
+        raise HTTPException(400, {"error": "wan_keyframes_invalid_request", "detail": str(e)})
 
 
 def _list_model_files(dir_path: Path, exts: tuple[str, ...] = (".safetensors", ".ckpt", ".pth")) -> list[str]:

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "v1_d055_sameprompt",
+    "label": "V1 denoise 0.55 / same prompt",
+    "denoise": 0.55,
+    "cfg": 4.5,
+    "steps": 18,
+    "prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, red plugsuit, orange hair, blue eyes, hair clips, confident expression, dynamic standing pose, clean character silhouette, preserve original full-body composition, refined anime lineart, airy watercolor anime illustration, translucent watercolor blooms, wet-on-wet color bleeding, soft pastel gradient wash, luminous backlit silhouette, floating petals, broad white negative space",
+    "seed": 2606265501,
+    "prompt_id": "e6457083-77b3-4bdf-bf67-9c8a25acbf54",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_fourth_ablation/v1_d055_sameprompt_api.json",
+    "status": "success",
+    "elapsed_seconds": 161.1,
+    "outputs": [
+      "/Users/tf00185088/comfyui/output/anima_img2img_fourth_v1_d055_sameprompt_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "e6457083-77b3-4bdf-bf67-9c8a25acbf54",
+          "timestamp": 1782440408108
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "e6457083-77b3-4bdf-bf67-9c8a25acbf54",
+          "timestamp": 1782440408110
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "e6457083-77b3-4bdf-bf67-9c8a25acbf54",
+          "timestamp": 1782440556203
+        }
+      ]
+    ]
+  },
+  {
+    "id": "v2_d075_sameprompt",
+    "label": "V2 denoise 0.75 / same prompt",
+    "denoise": 0.75,
+    "cfg": 4.5,
+    "steps": 18,
+    "prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, red plugsuit, orange hair, blue eyes, hair clips, confident expression, dynamic standing pose, clean character silhouette, preserve original full-body composition, refined anime lineart, airy watercolor anime illustration, translucent watercolor blooms, wet-on-wet color bleeding, soft pastel gradient wash, luminous backlit silhouette, floating petals, broad white negative space",
+    "seed": 2606265501,
+    "prompt_id": "76bb380c-8ceb-4e01-82c4-f4c93d3acdcb",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_fourth_ablation/v2_d075_sameprompt_api.json",
+    "status": "success",
+    "elapsed_seconds": 161.1,
+    "outputs": [
+      "/Users/tf00185088/comfyui/output/anima_img2img_fourth_v2_d075_sameprompt_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "76bb380c-8ceb-4e01-82c4-f4c93d3acdcb",
+          "timestamp": 1782440574390
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "76bb380c-8ceb-4e01-82c4-f4c93d3acdcb",
+          "timestamp": 1782440574392
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "76bb380c-8ceb-4e01-82c4-f4c93d3acdcb",
+          "timestamp": 1782440720871
+        }
+      ]
+    ]
+  },
+  {
+    "id": "v3_d055_strongprompt",
+    "label": "V3 denoise 0.55 / stronger prompt",
+    "denoise": 0.55,
+    "cfg": 4.5,
+    "steps": 18,
+    "prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, visible boots, red plugsuit, orange hair, blue eyes, hair clips, confident smirk, dramatic contrapposto action pose, one arm raised, one hand on hip, flowing hair, sharper anime face, stronger character redraw, large wet watercolor splash behind the body, broad cyan pink yellow watercolor wash, big translucent blooms, ink splatter particles, soft silhouette glow, clean readable full-body outline, more expressive painterly transformation, preserve full body framing but redraw colors and pose details",
+    "seed": 2606265501,
+    "prompt_id": "03af7600-3dd2-4015-b1d1-948e9966a9a3",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_fourth_ablation/v3_d055_strongprompt_api.json",
+    "status": "success",
+    "elapsed_seconds": 161.1,
+    "outputs": [
+      "/Users/tf00185088/comfyui/output/anima_img2img_fourth_v3_d055_strongprompt_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "03af7600-3dd2-4015-b1d1-948e9966a9a3",
+          "timestamp": 1782440740533
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "03af7600-3dd2-4015-b1d1-948e9966a9a3",
+          "timestamp": 1782440740535
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "03af7600-3dd2-4015-b1d1-948e9966a9a3",
+          "timestamp": 1782440894722
+        }
+      ]
+    ]
+  },
+  {
+    "id": "v4_d055_strongprompt_cfg7",
+    "label": "V4 denoise 0.55 / stronger prompt / CFG 7.0",
+    "denoise": 0.55,
+    "cfg": 7.0,
+    "steps": 18,
+    "prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, Asuka Langley Soryu from Evangelion, 1girl, solo, full body, entire body in frame, head-to-toe, visible boots, red plugsuit, orange hair, blue eyes, hair clips, confident smirk, dramatic contrapposto action pose, one arm raised, one hand on hip, flowing hair, sharper anime face, stronger character redraw, large wet watercolor splash behind the body, broad cyan pink yellow watercolor wash, big translucent blooms, ink splatter particles, soft silhouette glow, clean readable full-body outline, more expressive painterly transformation, preserve full body framing but redraw colors and pose details",
+    "seed": 2606265501,
+    "prompt_id": "59742d29-081e-4942-be00-15d49002743e",
+    "api": "/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_inpaint_template_research/anima_img2img_fourth_ablation/v4_d055_strongprompt_cfg7_api.json",
+    "status": "success",
+    "elapsed_seconds": 342.4,
+    "outputs": [
+      "/Users/tf00185088/comfyui/output/anima_img2img_fourth_v4_d055_strongprompt_cfg7_00001_.png"
+    ],
+    "messages": [
+      [
+        "execution_start",
+        {
+          "prompt_id": "59742d29-081e-4942-be00-15d49002743e",
+          "timestamp": 1782440906766
+        }
+      ],
+      [
+        "execution_cached",
+        {
+          "nodes": [],
+          "prompt_id": "59742d29-081e-4942-be00-15d49002743e",
+          "timestamp": 1782440906768
+        }
+      ],
+      [
+        "execution_success",
+        {
+          "prompt_id": "59742d29-081e-4942-be00-15d49002743e",
+          "timestamp": 1782441241532
+        }
+      ]
+    ]
+  }
+]

@@ -7,6 +7,7 @@ from mcp_server.tools.generate import (
     generate_image,
     generate_image_custom_workflow,
     generate_video_custom_workflow,
+    generate_video_wan_keyframes,
     # generate_image_from_description,  # 已停用，見 tools/generate.py 註解
     generate_queue_status,
     get_generation_status,
@@ -692,3 +693,46 @@ def test_free_comfyui_memory_connection_error_returns_structured_json() -> None:
     assert data["tool"] == "free_comfyui_memory"
     assert data["where"] == "comfyui"
     assert "connection refused" in data["error"]
+
+
+def test_generate_video_wan_keyframes_posts_dedicated_endpoint() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "wan-job", "status": "queued"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_video_wan_keyframes(
+            images=["2026-06-23/a.png", "2026-06-23/b.png"],
+            prompt="smooth orbit",
+            negative_prompt="bad",
+            width=320,
+            height=480,
+            length=33,
+            fps=8.0,
+            steps=4,
+            cfg=1.0,
+            seed=123,
+            filename_prefix="video/unit",
+        )
+
+    mock_client.post.assert_called_once_with(
+        "generate/video/wan-keyframes",
+        json={
+            "images": ["2026-06-23/a.png", "2026-06-23/b.png"],
+            "prompt": "smooth orbit",
+            "width": 320,
+            "height": 480,
+            "length": 33,
+            "fps": 8.0,
+            "steps": 4,
+            "cfg": 1.0,
+            "filename_prefix": "video/unit",
+            "negative_prompt": "bad",
+            "seed": 123,
+        },
+    )
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "generate_video_wan_keyframes"
+    assert data["job_id"] == "wan-job"
+    assert data["keyframe_count"] == 2
+    assert data["workflow_family"] == "wan_dancer_multi_keyframe"

@@ -1,0 +1,232 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "ComfyUI_temp_gdhqb_00001_e86e7595_0.png"
+    },
+    "_meta": {
+      "title": "Image 1 subject"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "anypose_space_high_lunge_andrew_clark.jpg"
+    },
+    "_meta": {
+      "title": "Image 2 pose reference"
+    }
+  },
+  "146": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+  "161": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "qwen-image-edit-2511-Q5_K_M.gguf"
+    },
+    "_meta": {
+      "title": "Load Qwen Image Edit 2511 Q2_K GGUF"
+    }
+  },
+  "162": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "160": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ]
+    }
+  },
+  "151": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "162",
+        0
+      ],
+      "vae": [
+        "146",
+        0
+      ],
+      "image1": [
+        "160",
+        0
+      ],
+      "image2": [
+        "2",
+        0
+      ],
+      "prompt": "Make the character in image 1 keep her identity, red plugsuit, orange hair, face and style, but change her body to match exactly the high lunge yoga pose in image 2. Preserve the character design and full-body framing. Do not change into a different person. Match arms reaching upward, front knee bend, back leg extension, torso angle, head tilt and gaze to the pose reference. Remove the background of image 2, and replace it with the background/style of image 1."
+    }
+  },
+  "149": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "162",
+        0
+      ],
+      "vae": [
+        "146",
+        0
+      ],
+      "image1": [
+        "160",
+        0
+      ],
+      "image2": [
+        "2",
+        0
+      ],
+      "prompt": ""
+    }
+  },
+  "148": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "151",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "147": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "149",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "145": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "161",
+        0
+      ],
+      "shift": 3.1
+    }
+  },
+  "152": {
+    "class_type": "CFGNorm",
+    "inputs": {
+      "model": [
+        "145",
+        0
+      ],
+      "strength": 1.0
+    }
+  },
+  "153": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "152",
+        0
+      ],
+      "lora_name": "2511-AnyPose-base-000006250.safetensors",
+      "strength_model": 0.7
+    }
+  },
+  "154": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "153",
+        0
+      ],
+      "lora_name": "2511-AnyPose-helper-00006000.safetensors",
+      "strength_model": 0.7
+    }
+  },
+  "155": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "154",
+        0
+      ],
+      "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "156": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "160",
+        0
+      ],
+      "vae": [
+        "146",
+        0
+      ]
+    }
+  },
+  "169": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "155",
+        0
+      ],
+      "seed": 0,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": [
+        "148",
+        0
+      ],
+      "negative": [
+        "147",
+        0
+      ],
+      "latent_image": [
+        "156",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+  "158": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "169",
+        0
+      ],
+      "vae": [
+        "146",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "158",
+        0
+      ],
+      "filename_prefix": "qwen_route_c_q5_anypose_space_high_lunge_asuka_transfer"
+    }
+  }
+}
