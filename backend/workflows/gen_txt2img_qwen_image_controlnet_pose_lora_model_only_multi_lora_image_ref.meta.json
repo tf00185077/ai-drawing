@@ -1,0 +1,15 @@
+{
+  "id": "gen_txt2img_qwen_image_controlnet_pose_lora_model_only_multi_lora_image_ref",
+  "modality": "txt2img",
+  "model_family": "qwen_image",
+  "conditioning": [
+    "controlnet_pose",
+    "lora_model_only",
+    "multi_lora"
+  ],
+  "io": [
+    "text",
+    "image_ref"
+  ],
+  "description": "Route B Qwen Image Union + DiffSynth OpenPose pose-conditioned generation workflow: prompt plus pose reference image, DWPose preprocessing, Q5_K_M GGUF UNET, Union DiffSynth OpenPose LoRA and Lightning LoRA. Useful for rough pose-inspired new-image generation, not precise pose transfer."
+}

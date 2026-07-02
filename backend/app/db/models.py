@@ -3,7 +3,7 @@
 欄位：圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, BigInteger
 
 from app.db.database import Base
 
@@ -57,3 +57,30 @@ class GeneratedArtifact(Base):
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DownloadedResource(Base):
+    """Downloaded model/resource ledger kept in the local database.
+
+    Files may live on local or external storage, but this metadata remains in the
+    local SQLite DB so a missing external disk can be audited and resources can
+    be re-downloaded from their original URLs.
+    """
+    __tablename__ = "downloaded_resources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resource_name = Column(String(512), nullable=False, index=True)
+    resource_type = Column(String(64), nullable=False, index=True)
+    provider = Column(String(64), nullable=True, index=True)
+    source_url = Column(Text, nullable=False)
+    resolved_download_url = Column(Text, nullable=True)
+    local_path = Column(String(1024), nullable=True)
+    storage_root = Column(String(256), nullable=True, index=True)
+    file_size = Column(BigInteger, nullable=True)
+    sha256 = Column(String(64), nullable=True, index=True)
+    model_id = Column(String(128), nullable=True)
+    version_id = Column(String(128), nullable=True)
+    status = Column(String(64), nullable=False, default="planned", index=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    downloaded_at = Column(DateTime, nullable=True)

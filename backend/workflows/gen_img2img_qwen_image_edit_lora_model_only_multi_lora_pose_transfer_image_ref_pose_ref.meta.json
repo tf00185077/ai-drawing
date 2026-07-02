@@ -1,0 +1,16 @@
+{
+  "id": "gen_img2img_qwen_image_edit_lora_model_only_multi_lora_pose_transfer_image_ref_pose_ref",
+  "modality": "img2img",
+  "model_family": "qwen_image_edit",
+  "conditioning": [
+    "pose_transfer",
+    "lora_model_only",
+    "multi_lora"
+  ],
+  "io": [
+    "text",
+    "image_ref",
+    "pose_ref"
+  ],
+  "description": "Route C Qwen Image Edit 2511 + AnyPose pose transfer workflow: subject image plus pose reference image, Q5_K_M GGUF UNET, AnyPose base/helper LoRAs, 4-step Lightning LoRA."
+}

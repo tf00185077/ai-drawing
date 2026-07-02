@@ -16,6 +16,16 @@ class ResourceSettings(Protocol):
     lora_default_checkpoint: str
 
 
+def _split_dirs(paths: str) -> list[Path]:
+    """Return configured model directories.
+
+    Settings may contain a single path or comma-separated paths so ai-drawing can
+    list both the existing local ComfyUI model folders and an external-disk model
+    library configured through ComfyUI extra_model_paths.yaml.
+    """
+    return [Path(part.strip()).expanduser() for part in paths.split(",") if part.strip()]
+
+
 def list_model_files(
     dir_path: Path,
     exts: tuple[str, ...] = MODEL_EXTENSIONS,
@@ -29,27 +39,42 @@ def list_model_files(
     )
 
 
+def list_model_files_in_dirs(
+    dir_paths: str,
+    exts: tuple[str, ...] = MODEL_EXTENSIONS,
+) -> list[str]:
+    """List model filenames from one or more directories, de-duplicated.
+
+    ComfyUI model selectors use filenames, not absolute paths. If the same file
+    exists in local and external roots, return it once.
+    """
+    names: set[str] = set()
+    for dir_path in _split_dirs(dir_paths):
+        names.update(list_model_files(dir_path, exts=exts))
+    return sorted(names)
+
+
 def list_checkpoints(settings: ResourceSettings) -> list[str]:
-    return list_model_files(Path(settings.comfyui_checkpoints_dir))
+    return list_model_files_in_dirs(settings.comfyui_checkpoints_dir)
 
 
 def list_loras(settings: ResourceSettings) -> list[str]:
-    return list_model_files(Path(settings.comfyui_loras_dir))
+    return list_model_files_in_dirs(settings.comfyui_loras_dir)
 
 
 def list_diffusion_models(settings: ResourceSettings) -> list[str]:
     """diffusion-model 家族（如 Anima）的 UNET 檔，供 UNETLoader 使用"""
-    return list_model_files(Path(settings.comfyui_diffusion_models_dir))
+    return list_model_files_in_dirs(settings.comfyui_diffusion_models_dir)
 
 
 def list_text_encoders(settings: ResourceSettings) -> list[str]:
     """text encoder 檔，供 CLIPLoader 使用"""
-    return list_model_files(Path(settings.comfyui_text_encoders_dir))
+    return list_model_files_in_dirs(settings.comfyui_text_encoders_dir)
 
 
 def list_vaes(settings: ResourceSettings) -> list[str]:
     """VAE 檔，供 VAELoader 使用"""
-    return list_model_files(Path(settings.comfyui_vae_dir))
+    return list_model_files_in_dirs(settings.comfyui_vae_dir)
 
 
 def first_available_checkpoint(settings: ResourceSettings) -> str | None:

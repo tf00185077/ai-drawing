@@ -37,6 +37,15 @@ def _resolve_sqlite_url(url: str) -> str:
     return f"sqlite:///{resolved}"
 
 
+def _resolve_path_list(paths: str) -> str:
+    """Resolve a comma-separated list of filesystem paths."""
+    return ",".join(
+        _resolve_project_path(part.strip())
+        for part in paths.split(",")
+        if part.strip()
+    )
+
+
 # 最早載入 .env 至 os.environ，確保不論從何處啟動都能讀到
 load_dotenv(_ENV_PATH)
 
@@ -54,6 +63,9 @@ class Settings(BaseSettings):
     comfyui_diffusion_models_dir: str = "D:/AI/ComfyUI/models/diffusion_models"
     comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
     comfyui_vae_dir: str = "D:/AI/ComfyUI/models/vae"
+    # ComfyUI LoadImage/LoadAudio input directory. Wan multi-keyframe video
+    # workflows stage gallery images and generated silent wavs here.
+    comfyui_input_dir: str = "~/comfyui/input"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
@@ -111,13 +123,15 @@ class Settings(BaseSettings):
         self.database_url = _resolve_sqlite_url(self.database_url)
         self.output_dir = _resolve_project_path(self.output_dir)
         self.gallery_dir = _resolve_project_path(self.gallery_dir)
+        self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
+        self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)
+        self.comfyui_diffusion_models_dir = _resolve_path_list(self.comfyui_diffusion_models_dir)
+        self.comfyui_text_encoders_dir = _resolve_path_list(self.comfyui_text_encoders_dir)
+        self.comfyui_vae_dir = _resolve_path_list(self.comfyui_vae_dir)
+        self.comfyui_input_dir = _resolve_project_path(self.comfyui_input_dir)
         self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
         self.sd_scripts_path = _resolve_project_path(self.sd_scripts_path)
-        self.watch_dirs = ",".join(
-            _resolve_project_path(part.strip())
-            for part in self.watch_dirs.split(",")
-            if part.strip()
-        )
+        self.watch_dirs = _resolve_path_list(self.watch_dirs)
         return self
 
     class Config:

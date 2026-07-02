@@ -1,0 +1,15 @@
+{
+  "id": "gen_inpaint_anima_lora_model_only_multi_lora_image_ref_mask",
+  "modality": "inpaint",
+  "model_family": "anima",
+  "conditioning": [
+    "lora_model_only",
+    "multi_lora"
+  ],
+  "io": [
+    "text",
+    "image_ref",
+    "mask"
+  ],
+  "description": "Anima masked img2img local repaint workflow: LoadImage + LoadImageMask -> VAEEncode(qwen_image_vae) -> SetLatentNoiseMask -> KSampler with chained LoraLoaderModelOnly multi-LoRA -> VAEDecode -> ImageCompositeMasked over original so only the mask region changes."
+}
