@@ -30,8 +30,8 @@
 - [x] 4.3 Update `validate_template_capabilities` and `match_workflow_template` tests to cover video modalities and IO tags.
 - [x] 4.4 Allow `save_workflow_template` to promote successful video jobs that recorded at least one supported artifact.
 - [x] 4.5 Document the agent-side derivation loop: start from a known-good video workflow, inspect schemas with MCP tools, submit a derived workflow through `generate_video_custom_workflow`, inspect structured failures, and save verified shapes.
-- [ ] 4.6 Add or document one minimal video template manifest only after a real local ComfyUI video workflow has been verified.
-  - Blocked 2026-06-22: no known-good local ComfyUI video workflow or verified video template manifest is present in this checkout; do not add a video template manifest until the live workflow is provided and passes end-to-end verification.
+- [x] 4.6 Add or document one minimal video template manifest only after a real local ComfyUI video workflow has been verified.
+  - Completed 2026-07-06 by inspection: this checkout already contains validated Wan video workflow manifests, including `backend/workflows/gen_img2video_wan_first_frame.meta.json`, `backend/workflows/gen_img2video_wan_first_frame_last_frame.meta.json`, and `backend/workflows/gen_img2video_wan_5keyframe_single_workflow.meta.json`; `load_manifests()` reports all three as valid with workflow files present. Historical local evidence exists under `experiments/mac_wan_success_cases/` and `experiments/multiframe_workflows/5kf_flf_run/`, including successful ComfyUI prompt ids, H.264 MP4 ffprobe metadata, and checked-in MP4/contact artifacts. No new manifest was invented in this batch.
 
 ## 5. MVP Guardrails and Resource Inventory
 
@@ -44,8 +44,8 @@
 - [x] 6.1 Run backend unit tests covering artifact recording, status serialization, gallery artifact API behavior, and image compatibility.
 - [x] 6.2 Run MCP server tests covering new tools and artifact-aware status responses.
 - [x] 6.3 Validate OpenSpec with `openspec validate add-video-generation-mcp --strict` and `openspec validate --all`.
-- [ ] 6.4 Run one low-load local ComfyUI video job end to end with a known-good workflow: submit via `generate_video_custom_workflow`, poll with `get_generation_status`, confirm `artifacts[]`, retrieve via `get_gallery_artifact`, verify the local file exists, and free ComfyUI memory.
-  - Blocked 2026-06-22: local workflow search found no video workflow/template to submit; this remains pending CTY supplying a known-good ComfyUI video workflow with required local nodes/models installed.
+- [x] 6.4 Run one low-load local ComfyUI video job end to end with a known-good workflow: submit via `generate_video_custom_workflow`, poll with `get_generation_status`, confirm `artifacts[]`, retrieve via `get_gallery_artifact`, verify the local file exists, and free ComfyUI memory.
+  - Completed 2026-07-06 by live runtime smoke: submitted `gen_img2video_wan_first_frame` through the MCP `generate_video_custom_workflow` path with first frame `2026-07-06/ComfyUI_temp_zfjok_00318_11887763_1.png`, low-load overrides `256x256`, `length=9`, `steps=1`, `cfg=1.0`, `seed=12345`. Backend returned job `ea5f0106-421e-4e32-b113-47218bd888e7`; polling `get_generation_status` reached `completed` with `artifacts[]` containing video artifact `1186`; `get_gallery_artifact(1186)` returned `artifact_type=video`, `mime_type=video/mp4`, gallery path `2026-07-06/openspec_gate_lowload_wan_smoke_00001_ea5f0106_0.mp4`, local path `/Volumes/AI-Drawing-16T/ai-drawing/gallery/2026-07-06/openspec_gate_lowload_wan_smoke_00001_ea5f0106_0.mp4`, file size `45970`; local file exists and size matches; `free_comfyui_memory(unload_models=true, free_memory=true)` returned `ok=true`.
 - [x] 6.5 Confirm existing image generation and `get_gallery_image` still pass their current tests.
 
 ## 7. Agent Assignment
