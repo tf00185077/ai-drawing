@@ -327,6 +327,74 @@ class DatasetAgentInspectionResponse(BaseModel):
     validation: DatasetValidateResponse | None = None
 
 
+class DatasetCurationFileChange(BaseModel):
+    """One deterministic curation decision for a dataset caption file."""
+
+    path: str
+    image_path: str
+    before: str
+    after: str
+    changed: bool
+    status: Literal["changed", "unchanged", "skipped", "review_required", "restored"]
+    reasons: list[str] = Field(default_factory=list)
+    blocked: bool = False
+    review_required: bool = False
+    manual: bool = False
+    manual_reason: str | None = None
+    manual_overwrite_approved: bool = False
+    outlier_flags: list[str] = Field(default_factory=list)
+    removed_tags: list[str] = Field(default_factory=list)
+    duplicate_tags: list[str] = Field(default_factory=list)
+    protected_tags: list[str] = Field(default_factory=list)
+
+
+class DatasetCurationSummary(BaseModel):
+    """Summary counts for a dataset curation plan or operation."""
+
+    total_files: int = 0
+    changed_count: int = 0
+    unchanged_count: int = 0
+    skipped_count: int = 0
+    blocked_count: int = 0
+    review_required_count: int = 0
+    manual_count: int = 0
+    outlier_count: int = 0
+
+
+class DatasetCurationRequest(BaseModel):
+    """Dataset curation dry-run, apply, or rollback request."""
+
+    folder: str = Field(..., min_length=1)
+    mode: Literal["dry_run", "apply", "rollback"] = "dry_run"
+    trigger_token: str | None = None
+    protected_tags: list[str] | None = None
+    removable_tags: list[str] | None = None
+    expected_dataset_hash: str | None = None
+    expected_profile_hash: str | None = None
+    backup_id: str | None = None
+    approved_manual_overwrite_paths: list[str] = Field(default_factory=list)
+
+
+class DatasetCurationResponse(BaseModel):
+    """Dataset curation plan/apply/rollback response."""
+
+    ok: bool = True
+    mode: Literal["dry_run", "apply", "rollback"]
+    folder: str
+    normalized_trigger_token: str | None = None
+    dataset_hash: str | None = None
+    profile_hash: str | None = None
+    dataset_hash_before: str | None = None
+    dataset_hash_after: str | None = None
+    backup_id: str | None = None
+    changes: list[DatasetCurationFileChange] = Field(default_factory=list)
+    summary: DatasetCurationSummary = Field(default_factory=DatasetCurationSummary)
+    changed_files: list[str] = Field(default_factory=list)
+    skipped_files: list[str] = Field(default_factory=list)
+    manually_overwritten_files: list[str] = Field(default_factory=list)
+    restored_files: list[str] = Field(default_factory=list)
+
+
 class CaptionChange(BaseModel):
     """Caption preparation diff."""
 

@@ -243,6 +243,43 @@ def lora_dataset_caption_assess(folder: str, trigger_token: str | None = None) -
 
 
 @mcp.tool()
+def lora_dataset_curate(
+    folder: str,
+    mode: str = "dry_run",
+    trigger_token: str | None = None,
+    protected_tags: list[str] | None = None,
+    removable_tags: list[str] | None = None,
+    expected_dataset_hash: str | None = None,
+    expected_profile_hash: str | None = None,
+    backup_id: str | None = None,
+    approved_manual_overwrite_paths: list[str] | None = None,
+) -> dict[str, Any]:
+    """Dry-run, apply, or roll back deterministic LoRA dataset caption curation."""
+    tool = "lora_dataset_curate"
+    body = _compact(
+        {
+            "folder": folder,
+            "mode": mode,
+            "trigger_token": trigger_token,
+            "protected_tags": protected_tags,
+            "removable_tags": removable_tags,
+            "expected_dataset_hash": expected_dataset_hash,
+            "expected_profile_hash": expected_profile_hash,
+            "backup_id": backup_id,
+            "approved_manual_overwrite_paths": approved_manual_overwrite_paths or None,
+        }
+    )
+    try:
+        return _backend_result(
+            tool,
+            _get_client().post("lora-train/datasets/curate", json=body),
+            submitted=body,
+        )
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
 def lora_train_start(
     folder: str,
     checkpoint: str | None = None,

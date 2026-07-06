@@ -150,7 +150,7 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 48 個 server-side registered tool。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 49 個 server-side registered tool。
 >
 > `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
 
@@ -188,6 +188,7 @@ pip install -e .
 | `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
 | `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
 | `lora_dataset_caption_assess` | `dict` | POST /api/lora-train/datasets/caption-assessment |
+| `lora_dataset_curate` | `dict` | POST /api/lora-train/datasets/curate |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
 | `lora_train_status` | `dict` | GET /api/lora-train/status |
 | `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |

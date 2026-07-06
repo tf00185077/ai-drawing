@@ -8,6 +8,7 @@ import httpx
 from mcp_server.tools.lora_train import (
     lora_dataset_caption_assess,
     lora_dataset_agent_inspect,
+    lora_dataset_curate,
     lora_dataset_inspect,
     lora_dataset_list,
     lora_dataset_metadata_get,
@@ -333,6 +334,135 @@ def test_lora_dataset_agent_inspect_returns_profile_states_as_payloads() -> None
     )
     mock_client.get.assert_any_call("lora-train/datasets/character/missing/agent-inspect", params=None)
     mock_client.get.assert_any_call("lora-train/datasets/character/invalid/agent-inspect", params=None)
+
+
+def test_lora_dataset_curate_dry_run_keeps_blocked_edits_as_payload() -> None:
+    """Curation dry-run forwards backend blocked/review-required edits as a successful structured payload."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "ok": True,
+        "mode": "dry_run",
+        "folder": "character/miku",
+        "dataset_hash": "hash-a",
+        "profile_hash": "profile-hash-a",
+        "changes": [
+            {
+                "path": "character/miku/a.txt",
+                "before": "solo, lowres",
+                "after": "miku_token, solo",
+                "changed": True,
+                "status": "review_required",
+                "blocked": True,
+                "review_required": True,
+                "manual": True,
+                "outlier_flags": [],
+            }
+        ],
+        "summary": {"total_files": 1, "blocked_count": 1, "review_required_count": 1},
+        "skipped_files": ["character/miku/a.txt"],
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_curate("character/miku", mode="dry_run", trigger_token="miku_token")
+
+    assert result["ok"] is True
+    assert result["tool"] == "lora_dataset_curate"
+    assert result["summary"]["blocked_count"] == 1
+    assert result["changes"][0]["status"] == "review_required"
+    assert "error" not in result
+    mock_client.post.assert_called_once_with(
+        "lora-train/datasets/curate",
+        json={"folder": "character/miku", "mode": "dry_run", "trigger_token": "miku_token"},
+    )
+
+
+def test_lora_dataset_curate_apply_and_rollback_payloads() -> None:
+    """Curation apply and rollback include reviewed hashes, backup ids, and manual approvals."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = [
+        {
+            "ok": True,
+            "mode": "apply",
+            "folder": "character/miku",
+            "backup_id": "backup-1",
+            "changed_files": ["character/miku/a.txt"],
+            "skipped_files": [],
+            "manually_overwritten_files": ["character/miku/a.txt"],
+            "dataset_hash_after": "hash-b",
+        },
+        {
+            "ok": True,
+            "mode": "rollback",
+            "folder": "character/miku",
+            "backup_id": "backup-1",
+            "restored_files": ["character/miku/a.txt"],
+            "dataset_hash_after": "hash-a",
+        },
+    ]
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        applied = lora_dataset_curate(
+            "character/miku",
+            mode="apply",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            approved_manual_overwrite_paths=["character/miku/a.txt"],
+        )
+        rolled_back = lora_dataset_curate(
+            "character/miku",
+            mode="rollback",
+            backup_id="backup-1",
+        )
+
+    assert applied["ok"] is True
+    assert applied["tool"] == "lora_dataset_curate"
+    assert applied["backup_id"] == "backup-1"
+    assert applied["manually_overwritten_files"] == ["character/miku/a.txt"]
+    assert applied["submitted"]["expected_dataset_hash"] == "hash-a"
+    assert applied["submitted"]["approved_manual_overwrite_paths"] == ["character/miku/a.txt"]
+    assert rolled_back["ok"] is True
+    assert rolled_back["restored_files"] == ["character/miku/a.txt"]
+    mock_client.post.assert_any_call(
+        "lora-train/datasets/curate",
+        json={
+            "folder": "character/miku",
+            "mode": "apply",
+            "expected_dataset_hash": "hash-a",
+            "expected_profile_hash": "profile-hash-a",
+            "approved_manual_overwrite_paths": ["character/miku/a.txt"],
+        },
+    )
+    mock_client.post.assert_any_call(
+        "lora-train/datasets/curate",
+        json={"folder": "character/miku", "mode": "rollback", "backup_id": "backup-1"},
+    )
+
+
+def test_lora_dataset_curate_surfaces_stale_hash_conflict() -> None:
+    """Curation stale hash backend failures stay structured for agents."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        409,
+        {
+            "code": "dataset_hash_mismatch",
+            "message": "dataset hash does not match expected hash",
+            "details": {"current_dataset_hash": "hash-new"},
+        },
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_curate(
+            "character/miku",
+            mode="apply",
+            expected_dataset_hash="hash-old",
+            expected_profile_hash="profile-hash-a",
+        )
+
+    assert result["ok"] is False
+    assert result["tool"] == "lora_dataset_curate"
+    assert result["status_code"] == 409
+    assert result["error"]["code"] == "dataset_hash_mismatch"
+    assert result["error"]["details"]["current_dataset_hash"] == "hash-new"
 
 
 def test_lora_train_start_and_status_return_structured_success() -> None:
