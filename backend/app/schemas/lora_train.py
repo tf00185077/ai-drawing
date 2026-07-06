@@ -2,7 +2,7 @@
 LoRA 訓練 API 的 Request/Response 結構
 對應 docs/api-contract.md 模組 4
 """
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -207,6 +207,55 @@ class DatasetInspectResponse(BaseModel):
     validation: DatasetValidateResponse | None = None
 
 
+class DatasetMetadataRequest(BaseModel):
+    """Proposed dataset metadata profile payload."""
+
+    profile: Any = Field(default_factory=dict)
+
+
+class DatasetMetadataUpdateRequest(DatasetMetadataRequest):
+    """Dataset metadata update request with optimistic conflict protection."""
+
+    expected_profile_hash: str | None = None
+
+
+class DatasetMetadataResponse(BaseModel):
+    """Dataset metadata get/validate/update response."""
+
+    ok: bool = True
+    folder: str
+    valid: bool
+    profile_hash: str | None = None
+    profile: DatasetProfileSummary = Field(default_factory=DatasetProfileSummary)
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    errors: list[ValidationIssue] = Field(default_factory=list)
+
+
+class DatasetMetadataUpdateResponse(DatasetMetadataResponse):
+    """Dataset metadata update response."""
+
+    updated: bool = False
+
+
+class DatasetAgentSummary(BaseModel):
+    """Dataset-level summary for agent inspection."""
+
+    folder: str
+    image_count: int
+    caption_count: int
+    missing_caption_count: int
+    locked: bool = False
+    trigger_token_candidates: list[str] = Field(default_factory=list)
+
+
+class DatasetProfileValidationSummary(BaseModel):
+    """Profile validation fields for agent inspection."""
+
+    valid: bool
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    errors: list[ValidationIssue] = Field(default_factory=list)
+
+
 class CaptionTagStat(BaseModel):
     """Caption tag frequency and coverage."""
 
@@ -262,6 +311,20 @@ class DatasetCaptionAssessmentResponse(BaseModel):
     metrics: CaptionAssessmentMetrics = Field(default_factory=CaptionAssessmentMetrics)
     warnings: list[ValidationIssue] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)
+
+
+class DatasetAgentInspectionResponse(BaseModel):
+    """Agent-ready LoRA dataset inspection summary."""
+
+    ok: bool = True
+    folder: str
+    dataset_hash: str
+    profile_hash: str | None = None
+    dataset: DatasetAgentSummary
+    profile: DatasetProfileSummary = Field(default_factory=DatasetProfileSummary)
+    profile_validation: DatasetProfileValidationSummary
+    caption_suitability: DatasetCaptionAssessmentResponse
+    validation: DatasetValidateResponse | None = None
 
 
 class CaptionChange(BaseModel):

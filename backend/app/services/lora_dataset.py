@@ -15,6 +15,8 @@ from typing import Any, Iterator
 from app.config import get_settings
 from app.schemas.lora_train import (
     CaptionChange,
+    DatasetMetadataResponse,
+    DatasetMetadataUpdateResponse,
     DatasetFileItem,
     DatasetInspectResponse,
     DatasetItem,
@@ -424,32 +426,17 @@ def _default_profile(
     )
 
 
-def _load_dataset_profile(dataset_dir: Path, trigger_token_candidates: list[str]) -> DatasetProfileSummary:
+def _profile_from_raw(
+    dataset_dir: Path,
+    raw_profile: Any,
+    *,
+    profile_hash: str | None,
+    trigger_token_candidates: list[str],
+) -> DatasetProfileSummary:
     detected_trigger = trigger_token_candidates[0] if trigger_token_candidates else None
-    profile_path = dataset_dir / PROFILE_FILENAME
-    if not profile_path.exists():
-        return _default_profile(present=False, profile_hash=None, trigger_token=detected_trigger)
-
     profile_rel_path = _profile_rel_path(dataset_dir)
-    profile_hash = _hash_file(profile_path)
     errors: list[ValidationIssue] = []
     warnings: list[ValidationIssue] = []
-    try:
-        raw_profile = json.loads(profile_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        return _default_profile(
-            present=True,
-            profile_hash=profile_hash,
-            trigger_token=detected_trigger,
-            errors=[
-                _issue(
-                    "invalid_profile_json",
-                    "metadata profile is not valid JSON",
-                    profile_rel_path,
-                    {"error": str(exc)},
-                )
-            ],
-        )
 
     if not isinstance(raw_profile, dict):
         return _default_profile(
@@ -536,6 +523,39 @@ def _load_dataset_profile(dataset_dir: Path, trigger_token_candidates: list[str]
     )
 
 
+def _load_dataset_profile(dataset_dir: Path, trigger_token_candidates: list[str]) -> DatasetProfileSummary:
+    detected_trigger = trigger_token_candidates[0] if trigger_token_candidates else None
+    profile_path = dataset_dir / PROFILE_FILENAME
+    if not profile_path.exists():
+        return _default_profile(present=False, profile_hash=None, trigger_token=detected_trigger)
+
+    profile_rel_path = _profile_rel_path(dataset_dir)
+    profile_hash = _hash_file(profile_path)
+    try:
+        raw_profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return _default_profile(
+            present=True,
+            profile_hash=profile_hash,
+            trigger_token=detected_trigger,
+            errors=[
+                _issue(
+                    "invalid_profile_json",
+                    "metadata profile is not valid JSON",
+                    profile_rel_path,
+                    {"error": str(exc)},
+                )
+            ],
+        )
+
+    return _profile_from_raw(
+        dataset_dir,
+        raw_profile,
+        profile_hash=profile_hash,
+        trigger_token_candidates=trigger_token_candidates,
+    )
+
+
 def _summary_from_dir(dataset_dir: Path) -> DatasetItem:
     files = _collect_files(dataset_dir)
     folder = _folder_for_path(dataset_dir)
@@ -591,6 +611,126 @@ def inspect_dataset(folder: str) -> DatasetInspectResponse:
         trigger_token_candidates=trigger_token_candidates,
         validation=None,
     )
+
+
+def _metadata_response(folder: str, profile: DatasetProfileSummary, profile_hash: str | None) -> DatasetMetadataResponse:
+    return DatasetMetadataResponse(
+        folder=folder,
+        valid=profile.valid,
+        profile_hash=profile_hash,
+        profile=profile,
+        warnings=profile.warnings,
+        errors=profile.errors,
+    )
+
+
+def _current_profile_hash(dataset_dir: Path) -> str | None:
+    profile_path = dataset_dir / PROFILE_FILENAME
+    return _hash_file(profile_path) if profile_path.exists() else None
+
+
+def _profile_context(dataset_dir: Path) -> tuple[str, list[str]]:
+    files = _collect_files(dataset_dir)
+    return _folder_for_path(dataset_dir), _trigger_candidates(files)
+
+
+def get_metadata_profile(folder: str) -> DatasetMetadataResponse:
+    """Return the normalized dataset metadata profile without writing files."""
+    dataset_dir = resolve_dataset_dir(folder)
+    if not dataset_dir.exists() or not dataset_dir.is_dir():
+        raise DatasetServiceError("dataset_not_found", "dataset folder not found")
+    resolved_folder, trigger_token_candidates = _profile_context(dataset_dir)
+    profile = _load_dataset_profile(dataset_dir, trigger_token_candidates)
+    return _metadata_response(resolved_folder, profile, profile.profile_hash)
+
+
+def validate_metadata_profile(folder: str, profile_payload: Any) -> DatasetMetadataResponse:
+    """Validate a proposed metadata profile without writing .lora-dataset.json."""
+    dataset_dir = resolve_dataset_dir(folder)
+    if not dataset_dir.exists() or not dataset_dir.is_dir():
+        raise DatasetServiceError("dataset_not_found", "dataset folder not found")
+    resolved_folder, trigger_token_candidates = _profile_context(dataset_dir)
+    profile = _profile_from_raw(
+        dataset_dir,
+        profile_payload,
+        profile_hash=None,
+        trigger_token_candidates=trigger_token_candidates,
+    )
+    return _metadata_response(resolved_folder, profile, _current_profile_hash(dataset_dir))
+
+
+def _canonical_profile_payload(profile: DatasetProfileSummary) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "dataset_type": profile.dataset_type,
+        "caption_profile": profile.caption_profile,
+        "model_family": profile.model_family,
+        "protected_tags": profile.protected_tags,
+        "removable_tags": profile.removable_tags,
+        "auto_train": profile.auto_train,
+    }
+    if profile.trigger_token:
+        payload["trigger_token"] = profile.trigger_token
+    return payload
+
+
+def _check_expected_profile_hash(dataset_dir: Path, expected_profile_hash: str | None) -> str | None:
+    current_hash = _current_profile_hash(dataset_dir)
+    if expected_profile_hash != current_hash:
+        raise DatasetServiceError(
+            "profile_hash_mismatch",
+            "profile hash does not match expected hash",
+            {
+                "expected_profile_hash": expected_profile_hash,
+                "current_profile_hash": current_hash,
+            },
+        )
+    return current_hash
+
+
+def update_metadata_profile(
+    folder: str,
+    profile_payload: Any,
+    *,
+    expected_profile_hash: str | None,
+) -> DatasetMetadataUpdateResponse:
+    """Validate and write dataset metadata when the expected profile hash matches."""
+    dataset_dir = resolve_dataset_dir(folder)
+    if not dataset_dir.exists() or not dataset_dir.is_dir():
+        raise DatasetServiceError("dataset_not_found", "dataset folder not found")
+    resolved_folder = _folder_for_path(dataset_dir)
+    with dataset_lock(resolved_folder, owner="metadata_update"):
+        current_hash = _check_expected_profile_hash(dataset_dir, expected_profile_hash)
+        validated = validate_metadata_profile(resolved_folder, profile_payload)
+        if not validated.valid:
+            return DatasetMetadataUpdateResponse(
+                folder=resolved_folder,
+                valid=False,
+                updated=False,
+                profile_hash=current_hash,
+                profile=validated.profile,
+                warnings=validated.warnings,
+                errors=validated.errors,
+            )
+
+        profile_path = dataset_dir / PROFILE_FILENAME
+        tmp_path = dataset_dir / f"{PROFILE_FILENAME}.tmp"
+        payload = _canonical_profile_payload(validated.profile)
+        tmp_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(profile_path)
+        _, trigger_token_candidates = _profile_context(dataset_dir)
+        updated_profile = _load_dataset_profile(dataset_dir, trigger_token_candidates)
+        return DatasetMetadataUpdateResponse(
+            folder=resolved_folder,
+            valid=updated_profile.valid,
+            updated=True,
+            profile_hash=updated_profile.profile_hash,
+            profile=updated_profile,
+            warnings=updated_profile.warnings,
+            errors=updated_profile.errors,
+        )
 
 
 def _cleanup_caption_with_ai(caption: str, settings) -> str:

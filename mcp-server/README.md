@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 44 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 共 48 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
@@ -37,6 +37,10 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
 | `lora_dataset_list` | `dict` | GET /api/lora-train/datasets |
 | `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder} |
+| `lora_dataset_metadata_get` | `dict` | GET /api/lora-train/datasets/{folder}/metadata |
+| `lora_dataset_metadata_update` | `dict` | PUT /api/lora-train/datasets/{folder}/metadata |
+| `lora_dataset_metadata_validate` | `dict` | POST /api/lora-train/datasets/{folder}/metadata/validate |
+| `lora_dataset_agent_inspect` | `dict` | GET /api/lora-train/datasets/{folder}/agent-inspect |
 | `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
 | `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
 | `lora_dataset_caption_assess` | `dict` | POST /api/lora-train/datasets/caption-assessment |
@@ -111,6 +115,10 @@ Out of scope for this MVP：自動 node download/install、第三方 partner/API
 | Tool | 說明 |
 |------|------|
 | `caption_image` | 對訓練資料夾的圖呼叫 LLM 自動產生 caption，寫入同名 .txt |
+| `lora_dataset_metadata_get` | 讀取 dataset-local `.lora-dataset.json` normalized metadata profile 與 `profile_hash` |
+| `lora_dataset_metadata_validate` | 驗證 proposed metadata profile；不寫入檔案 |
+| `lora_dataset_metadata_update` | 以 expected `profile_hash` 更新 metadata profile；stale hash 回 structured conflict |
+| `lora_dataset_agent_inspect` | 組合 dataset/profile/caption suitability/validation signals；不啟動訓練 |
 | `lora_dataset_caption_assess` | 評估 dataset caption 覆蓋率、trigger token 覆蓋、常見/稀有 tags 與 coherence verdict；不會啟動訓練 |
 | `lora_train_start` | 手動觸發 LoRA 訓練（folder 必填，可帶 epochs、resolution、network_dim 等） |
 | `lora_train_status` | 取得 LoRA 訓練進度與佇列狀態 |

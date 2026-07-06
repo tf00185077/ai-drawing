@@ -17,6 +17,10 @@ class BackendApiClient(Protocol):
         """POST 請求"""
         ...
 
+    def put(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        """PUT 請求"""
+        ...
+
 
 class HttpBackendClient:
     """以 httpx 實作的 Backend API Client"""
@@ -44,5 +48,14 @@ class HttpBackendClient:
         url = self._url(path)
         with httpx.Client(timeout=self._timeout) as client:
             resp = client.post(url, json=json or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
+    def put(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout) as client:
+            resp = client.put(url, json=json or {})
             resp.raise_for_status()
             return resp.json() if resp.content else {}

@@ -88,6 +88,14 @@ def _dataset_path(folder: str) -> str:
     return f"lora-train/datasets/{quote(cleaned, safe='/')}"
 
 
+def _metadata_path(folder: str) -> str:
+    return f"{_dataset_path(folder)}/metadata"
+
+
+def _agent_inspection_path(folder: str) -> str:
+    return f"{_dataset_path(folder)}/agent-inspect"
+
+
 @mcp.tool()
 def caption_image(image_path: str) -> dict[str, Any]:
     """Generate one caption through the backend LLM caption endpoint."""
@@ -120,6 +128,53 @@ def lora_dataset_inspect(folder: str, trigger_token: str | None = None) -> dict[
     try:
         params = _compact({"trigger_token": trigger_token})
         return _backend_result(tool, _get_client().get(_dataset_path(folder), params=params or None))
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_metadata_get(folder: str) -> dict[str, Any]:
+    """Read one dataset's normalized .lora-dataset.json metadata profile."""
+    tool = "lora_dataset_metadata_get"
+    try:
+        return _backend_result(tool, _get_client().get(_metadata_path(folder)))
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_metadata_validate(folder: str, profile: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Validate proposed LoRA dataset metadata without writing files."""
+    tool = "lora_dataset_metadata_validate"
+    body = {"profile": profile or {}}
+    try:
+        return _backend_result(tool, _get_client().post(f"{_metadata_path(folder)}/validate", json=body), submitted=body)
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_metadata_update(
+    folder: str,
+    profile: dict[str, Any] | None = None,
+    expected_profile_hash: str | None = None,
+) -> dict[str, Any]:
+    """Update LoRA dataset metadata using expected profile_hash conflict protection."""
+    tool = "lora_dataset_metadata_update"
+    body = _compact({"profile": profile or {}, "expected_profile_hash": expected_profile_hash})
+    try:
+        return _backend_result(tool, _get_client().put(_metadata_path(folder), json=body), submitted=body)
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_agent_inspect(folder: str, trigger_token: str | None = None) -> dict[str, Any]:
+    """Return agent-ready dataset/profile/caption suitability inspection without starting training."""
+    tool = "lora_dataset_agent_inspect"
+    params = _compact({"trigger_token": trigger_token})
+    try:
+        return _backend_result(tool, _get_client().get(_agent_inspection_path(folder), params=params or None))
     except Exception as exc:
         return _backend_error(tool, exc)
 
