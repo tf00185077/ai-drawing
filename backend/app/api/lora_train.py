@@ -35,11 +35,19 @@ from app.schemas.lora_train import (
     TrainStartRequest,
     TrainStartResponse,
     TrainStatusResponse,
+    TrainingDecisionPreflightRequest,
+    TrainingDecisionPreflightResponse,
     TriggerCandidate,
     TriggerCheckResponse,
 )
 from app.config import get_settings
-from app.services import lora_dataset, lora_dataset_assessment, lora_dataset_curation, lora_trainer
+from app.services import (
+    lora_dataset,
+    lora_dataset_assessment,
+    lora_dataset_curation,
+    lora_trainer,
+    lora_training_decision,
+)
 from app.services.lora_dataset import DatasetServiceError
 
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
@@ -191,6 +199,23 @@ async def curate_dataset(body: DatasetCurationRequest):
             body.folder,
             body.backup_id,
             approved_manual_overwrite_paths=body.approved_manual_overwrite_paths,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post(
+    "/datasets/training-decision-preflight",
+    response_model=TrainingDecisionPreflightResponse,
+)
+async def training_decision_preflight(body: TrainingDecisionPreflightRequest):
+    """Deterministic agent decision preflight; never starts or enqueues training."""
+    try:
+        return lora_training_decision.decide_training_preflight(
+            body.folder,
+            trigger_token=body.trigger_token,
+            expected_dataset_hash=body.expected_dataset_hash,
+            expected_profile_hash=body.expected_profile_hash,
         )
     except DatasetServiceError as exc:
         raise _dataset_error(exc)
