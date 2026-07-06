@@ -1,5 +1,7 @@
 """LoRA dataset preparation and validation service tests."""
 
+import hashlib
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -35,6 +37,12 @@ def _settings(base: Path) -> MagicMock:
     return settings
 
 
+def _write_profile(dataset_dir: Path, payload: dict) -> Path:
+    profile_path = dataset_dir / ".lora-dataset.json"
+    profile_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    return profile_path
+
+
 def test_dataset_list_inspect_hash_and_path_traversal(dataset_root: Path) -> None:
     """列出/檢查 dataset，雜湊會因 caption 內容改變，且拒絕 traversal。"""
     with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
@@ -55,6 +63,153 @@ def test_dataset_list_inspect_hash_and_path_traversal(dataset_root: Path) -> Non
 
         with pytest.raises(lora_dataset.DatasetServiceError, match="invalid_dataset_folder"):
             lora_dataset.inspect_dataset("../outside")
+
+
+def test_missing_dataset_profile_uses_conservative_defaults(dataset_root: Path) -> None:
+    """Missing metadata is valid, keeps discovery working, and defaults auto_train off."""
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
+        inspected = lora_dataset.inspect_dataset("character/miku")
+
+    assert inspected.profile_hash is None
+    assert inspected.profile.present is False
+    assert inspected.profile.valid is True
+    assert inspected.profile.dataset_type == "unknown"
+    assert inspected.profile.trigger_token == "miku_token"
+    assert inspected.profile.caption_profile == "unknown"
+    assert inspected.profile.model_family == "unknown"
+    assert inspected.profile.protected_tags == []
+    assert inspected.profile.removable_tags == []
+    assert inspected.profile.auto_train is False
+    assert inspected.profile.errors == []
+    assert inspected.profile.warnings == []
+
+
+def test_valid_dataset_profile_is_normalized_and_hashed(dataset_root: Path) -> None:
+    """Valid .lora-dataset.json values are normalized without entering dataset_hash."""
+    dataset_dir = dataset_root / "character" / "miku"
+    before_settings = _settings(dataset_root)
+    with patch("app.services.lora_dataset.get_settings", return_value=before_settings):
+        before_hash = lora_dataset.inspect_dataset("character/miku").dataset_hash
+
+    profile_path = _write_profile(
+        dataset_dir,
+        {
+            "type": "character",
+            "trigger_token": "Miku Token!",
+            "caption_profile": "wd_tags",
+            "model_family": "sdxl",
+            "protected_tags": ["miku_token", " solo ", ""],
+            "remove_tags": ["bad anatomy"],
+            "removable_tags": ["lowres", "bad anatomy"],
+        },
+    )
+    expected_profile_hash = hashlib.sha256(profile_path.read_bytes()).hexdigest()
+
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
+        listed = lora_dataset.list_datasets()[0]
+        inspected = lora_dataset.inspect_dataset("character/miku")
+
+    assert inspected.dataset_hash == before_hash
+    assert listed.dataset_hash == before_hash
+    assert inspected.profile_hash == expected_profile_hash
+    assert listed.profile_hash == expected_profile_hash
+    assert inspected.profile.present is True
+    assert inspected.profile.valid is True
+    assert inspected.profile.dataset_type == "character"
+    assert inspected.profile.trigger_token == "miku_token"
+    assert inspected.profile.caption_profile == "wd_tags"
+    assert inspected.profile.model_family == "sdxl"
+    assert inspected.profile.protected_tags == ["miku_token", "solo"]
+    assert inspected.profile.removable_tags == ["bad anatomy", "lowres"]
+    assert inspected.profile.auto_train is False
+    assert inspected.profile.errors == []
+
+    profile_path.write_text(
+        json.dumps({"dataset_type": "style", "trigger_token": "style_token"}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
+        changed_profile = lora_dataset.inspect_dataset("character/miku")
+    assert changed_profile.dataset_hash == before_hash
+    assert changed_profile.profile_hash != expected_profile_hash
+
+
+def test_malformed_dataset_profile_reports_error_without_breaking_discovery(dataset_root: Path) -> None:
+    """Invalid JSON is reported structurally while raw image/caption discovery remains usable."""
+    dataset_dir = dataset_root / "character" / "miku"
+    profile_path = dataset_dir / ".lora-dataset.json"
+    profile_path.write_text("{not json", encoding="utf-8")
+    expected_profile_hash = hashlib.sha256(profile_path.read_bytes()).hexdigest()
+
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
+        listed = lora_dataset.list_datasets()[0]
+        inspected = lora_dataset.inspect_dataset("character/miku")
+
+    assert listed.image_count == 2
+    assert listed.caption_count == 2
+    assert listed.profile_hash == expected_profile_hash
+    assert listed.profile.valid is False
+    assert inspected.files[0].caption == "solo, blue hair"
+    assert inspected.profile.profile_hash == expected_profile_hash
+    assert [error.code for error in inspected.profile.errors] == ["invalid_profile_json"]
+    assert inspected.profile.errors[0].path == "character/miku/.lora-dataset.json"
+
+
+def test_unsupported_dataset_profile_values_return_structured_errors(dataset_root: Path) -> None:
+    """Unsupported enum values and invalid list fields do not abort dataset inspection."""
+    dataset_dir = dataset_root / "character" / "miku"
+    _write_profile(
+        dataset_dir,
+        {
+            "dataset_type": "vehicle",
+            "caption_profile": "html",
+            "model_family": "wan",
+            "protected_tags": "miku_token",
+            "removable_tags": ["bad anatomy"],
+        },
+    )
+
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)):
+        inspected = lora_dataset.inspect_dataset("character/miku")
+
+    assert inspected.image_count == 2
+    assert inspected.profile.valid is False
+    assert inspected.profile.dataset_type == "unknown"
+    assert inspected.profile.caption_profile == "unknown"
+    assert inspected.profile.model_family == "unknown"
+    assert inspected.profile.removable_tags == ["bad anatomy"]
+    assert {error.code for error in inspected.profile.errors} == {
+        "unsupported_dataset_type",
+        "unsupported_caption_profile",
+        "unsupported_model_family",
+        "invalid_profile_field",
+    }
+
+
+def test_auto_train_profile_metadata_does_not_enqueue_training(dataset_root: Path) -> None:
+    """auto_train may be reported from metadata but list/inspect/validate do not start training."""
+    dataset_dir = dataset_root / "character" / "miku"
+    _write_profile(
+        dataset_dir,
+        {
+            "dataset_type": "character",
+            "trigger_token": "miku_token",
+            "auto_train": True,
+        },
+    )
+
+    with patch("app.services.lora_dataset.get_settings", return_value=_settings(dataset_root)), patch(
+        "app.services.lora_trainer.enqueue"
+    ) as enqueue:
+        listed = lora_dataset.list_datasets()[0]
+        inspected = lora_dataset.inspect_dataset("character/miku")
+        validated = lora_dataset.validate_dataset("character/miku", trigger_token="miku_token")
+
+    assert listed.profile.auto_train is True
+    assert inspected.profile.auto_train is True
+    assert any(warning.code == "auto_train_descriptive_only" for warning in inspected.profile.warnings)
+    assert validated.folder == "character/miku"
+    enqueue.assert_not_called()
 
 
 def test_normalize_trigger_token_and_caption() -> None:
