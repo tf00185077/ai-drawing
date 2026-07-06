@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import database
 from app.db.models import LoraTrainingJob
 from app.main import app
-from app.services import lora_dataset, lora_trainer
+from app.services import lora_dataset, lora_dataset_assessment, lora_trainer
 
 
 def _settings(tmp_path: Path, lora_train_dir: Path) -> SimpleNamespace:
@@ -103,6 +103,20 @@ def test_dataset_endpoints_list_inspect_prepare_restore_and_validate(tmp_path: P
     )
     assert valid.status_code == 200
     assert valid.json()["ok"] is True
+
+    monkeypatch.setattr(lora_dataset_assessment.lora_dataset, "get_settings", lambda: settings)
+    assessed = client.post(
+        "/api/lora-train/datasets/caption-assessment",
+        json={"folder": "character/miku", "trigger_token": "miku_token"},
+    )
+    assert assessed.status_code == 200
+    assessed_payload = assessed.json()
+    assert assessed_payload["ok"] is True
+    assert assessed_payload["folder"] == "character/miku"
+    assert assessed_payload["image_count"] == 2
+    assert assessed_payload["txt_count"] == 2
+    assert assessed_payload["verdict"] in {"suitable", "needs_review"}
+    assert assessed_payload["trigger_token_coverage"]["normalized_trigger_token"] == "miku_token"
 
     stale = client.post(
         "/api/lora-train/datasets/prepare",

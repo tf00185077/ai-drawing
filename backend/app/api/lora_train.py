@@ -6,6 +6,8 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.lora_train import (
+    DatasetCaptionAssessmentRequest,
+    DatasetCaptionAssessmentResponse,
     DatasetInspectResponse,
     DatasetListResponse,
     DatasetPrepareRequest,
@@ -28,7 +30,7 @@ from app.schemas.lora_train import (
     TriggerCheckResponse,
 )
 from app.config import get_settings
-from app.services import lora_dataset, lora_trainer
+from app.services import lora_dataset, lora_dataset_assessment, lora_trainer
 from app.services.lora_dataset import DatasetServiceError
 
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
@@ -128,6 +130,18 @@ async def validate_dataset(body: DatasetValidateRequest):
             body.folder,
             trigger_token=body.trigger_token,
             expected_dataset_hash=body.expected_dataset_hash,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/caption-assessment", response_model=DatasetCaptionAssessmentResponse)
+async def assess_dataset_captions(body: DatasetCaptionAssessmentRequest):
+    """以 deterministic 統計評估 dataset captions 是否適合訓練。"""
+    try:
+        return lora_dataset_assessment.assess_caption_suitability(
+            body.folder,
+            trigger_token=body.trigger_token,
         )
     except DatasetServiceError as exc:
         raise _dataset_error(exc)

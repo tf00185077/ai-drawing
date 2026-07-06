@@ -2,6 +2,8 @@
 LoRA 訓練 API 的 Request/Response 結構
 對應 docs/api-contract.md 模組 4
 """
+from typing import Literal
+
 from pydantic import AliasChoices, BaseModel, Field
 
 
@@ -182,6 +184,63 @@ class DatasetInspectResponse(BaseModel):
     files: list[DatasetFileItem] = Field(default_factory=list)
     trigger_token_candidates: list[str] = Field(default_factory=list)
     validation: DatasetValidateResponse | None = None
+
+
+class CaptionTagStat(BaseModel):
+    """Caption tag frequency and coverage."""
+
+    tag: str
+    count: int
+    coverage: float
+
+
+class CaptionAssessmentMetrics(BaseModel):
+    """Deterministic caption dispersion/coherence metrics."""
+
+    total_tag_count: int = 0
+    unique_tag_count: int = 0
+    repeated_tag_count: int = 0
+    rare_tag_count: int = 0
+    singleton_tag_ratio: float = 0.0
+    repeated_tag_ratio: float = 0.0
+    average_tags_per_caption: float = 0.0
+    mean_pairwise_jaccard: float = 0.0
+
+
+class TriggerTokenCoverage(BaseModel):
+    """Trigger-token coverage across non-empty caption files."""
+
+    normalized_trigger_token: str | None = None
+    covered_count: int = 0
+    total_count: int = 0
+    coverage: float = 0.0
+
+
+class DatasetCaptionAssessmentRequest(BaseModel):
+    """Dataset caption suitability assessment request."""
+
+    folder: str = Field(..., min_length=1)
+    trigger_token: str | None = None
+
+
+class DatasetCaptionAssessmentResponse(BaseModel):
+    """Agent-readable LoRA caption suitability assessment."""
+
+    ok: bool = True
+    folder: str
+    verdict: Literal["suitable", "needs_review", "not_suitable"]
+    reasons: list[str] = Field(default_factory=list)
+    dataset_hash: str
+    image_count: int
+    txt_count: int
+    missing_txt_count: int
+    empty_txt_count: int
+    trigger_token_coverage: TriggerTokenCoverage = Field(default_factory=TriggerTokenCoverage)
+    top_tags: list[CaptionTagStat] = Field(default_factory=list)
+    rare_tags: list[CaptionTagStat] = Field(default_factory=list)
+    metrics: CaptionAssessmentMetrics = Field(default_factory=CaptionAssessmentMetrics)
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
 
 
 class CaptionChange(BaseModel):

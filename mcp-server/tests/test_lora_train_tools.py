@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 
 from mcp_server.tools.lora_train import (
+    lora_dataset_caption_assess,
     lora_dataset_inspect,
     lora_dataset_list,
     lora_dataset_prepare,
@@ -113,6 +114,63 @@ def test_lora_dataset_validate_surfaces_stale_hash_conflict() -> None:
     assert result["status_code"] == 409
     assert result["error"]["code"] == "dataset_hash_mismatch"
     assert result["error"]["details"]["current_dataset_hash"] == "hash-new"
+
+
+def test_lora_dataset_caption_assess_returns_structured_success() -> None:
+    """Caption assessment forwards to backend and keeps not_suitable as a successful report."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "ok": True,
+        "folder": "character/miku",
+        "verdict": "not_suitable",
+        "reasons": ["1 image(s) are missing .txt captions"],
+        "image_count": 3,
+        "txt_count": 2,
+        "missing_txt_count": 1,
+        "empty_txt_count": 0,
+        "dataset_hash": "hash-a",
+        "trigger_token_coverage": {
+            "normalized_trigger_token": "miku_token",
+            "covered_count": 2,
+            "total_count": 2,
+            "coverage": 1.0,
+        },
+        "top_tags": [],
+        "rare_tags": [],
+        "metrics": {"unique_tag_count": 0},
+        "warnings": [{"code": "missing_txt", "message": "missing"}],
+        "recommendations": ["Generate captions."],
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_caption_assess("character/miku", trigger_token="miku_token")
+
+    assert result["ok"] is True
+    assert result["tool"] == "lora_dataset_caption_assess"
+    assert result["verdict"] == "not_suitable"
+    assert result["missing_txt_count"] == 1
+    assert "error" not in result
+    mock_client.post.assert_called_once_with(
+        "lora-train/datasets/caption-assessment",
+        json={"folder": "character/miku", "trigger_token": "miku_token"},
+    )
+
+
+def test_lora_dataset_caption_assess_surfaces_backend_error() -> None:
+    """Invalid assessment folders are returned as structured MCP errors."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        404,
+        {"code": "dataset_not_found", "message": "dataset folder not found", "details": {}},
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_caption_assess("character/missing")
+
+    assert result["ok"] is False
+    assert result["tool"] == "lora_dataset_caption_assess"
+    assert result["status_code"] == 404
+    assert result["error"]["code"] == "dataset_not_found"
 
 
 def test_lora_train_start_and_status_return_structured_success() -> None:
