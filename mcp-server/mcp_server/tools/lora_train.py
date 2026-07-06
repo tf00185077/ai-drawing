@@ -280,6 +280,33 @@ def lora_dataset_curate(
 
 
 @mcp.tool()
+def lora_training_decision_preflight(
+    folder: str,
+    trigger_token: str | None = None,
+    expected_dataset_hash: str | None = None,
+    expected_profile_hash: str | None = None,
+) -> dict[str, Any]:
+    """Run backend LoRA training decision preflight without starting training."""
+    tool = "lora_training_decision_preflight"
+    body = _compact(
+        {
+            "folder": folder,
+            "trigger_token": trigger_token,
+            "expected_dataset_hash": expected_dataset_hash,
+            "expected_profile_hash": expected_profile_hash,
+        }
+    )
+    try:
+        return _backend_result(
+            tool,
+            _get_client().post("lora-train/datasets/training-decision-preflight", json=body),
+            submitted=body,
+        )
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
 def lora_train_start(
     folder: str,
     checkpoint: str | None = None,

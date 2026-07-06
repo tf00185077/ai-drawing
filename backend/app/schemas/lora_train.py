@@ -395,6 +395,38 @@ class DatasetCurationResponse(BaseModel):
     restored_files: list[str] = Field(default_factory=list)
 
 
+class TrainingParameterSuggestion(BaseModel):
+    """Advisory LoRA training parameters with deterministic rationale."""
+
+    params: dict[str, Any] = Field(default_factory=dict)
+    rationale: list[str] = Field(default_factory=list)
+
+
+class TrainingDecisionPreflightRequest(BaseModel):
+    """Side-effect-free training decision preflight request."""
+
+    folder: str = Field(..., min_length=1)
+    trigger_token: str | None = None
+    expected_dataset_hash: str | None = None
+    expected_profile_hash: str | None = None
+
+
+class TrainingDecisionPreflightResponse(BaseModel):
+    """Agent-readable deterministic LoRA training decision."""
+
+    ok: bool = True
+    folder: str
+    decision: Literal["train", "needs_review", "do_not_train"]
+    reasons: list[str] = Field(default_factory=list)
+    blocking_issues: list[ValidationIssue] = Field(default_factory=list)
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    next_actions: list[str] = Field(default_factory=list)
+    dataset_hash: str | None = None
+    profile_hash: str | None = None
+    normalized_trigger_token: str | None = None
+    suggested_params: TrainingParameterSuggestion | None = None
+
+
 class CaptionChange(BaseModel):
     """Caption preparation diff."""
 

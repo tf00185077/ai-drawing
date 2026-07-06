@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 49 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 共 50 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
@@ -45,6 +45,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
 | `lora_dataset_caption_assess` | `dict` | POST /api/lora-train/datasets/caption-assessment |
 | `lora_dataset_curate` | `dict` | POST /api/lora-train/datasets/curate |
+| `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
 | `lora_train_status` | `dict` | GET /api/lora-train/status |
 | `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |
@@ -122,6 +123,7 @@ Out of scope for this MVP：自動 node download/install、第三方 partner/API
 | `lora_dataset_agent_inspect` | 組合 dataset/profile/caption suitability/validation signals；不啟動訓練 |
 | `lora_dataset_caption_assess` | 評估 dataset caption 覆蓋率、trigger token 覆蓋、常見/稀有 tags 與 coherence verdict；不會啟動訓練 |
 | `lora_dataset_curate` | deterministic caption curation：dry-run 預覽 trigger/tag cleanup/outlier/manual blocks；apply 需 expected hashes 並建立 backup；rollback 依 backup id 還原 |
+| `lora_training_decision_preflight` | deterministic training decision：回 `train` / `needs_review` / `do_not_train`、reasons、hashes、next actions 與 advisory suggested params；不啟動訓練 |
 | `lora_train_start` | 手動觸發 LoRA 訓練（folder 必填，可帶 epochs、resolution、network_dim 等） |
 | `lora_train_status` | 取得 LoRA 訓練進度與佇列狀態 |
 
