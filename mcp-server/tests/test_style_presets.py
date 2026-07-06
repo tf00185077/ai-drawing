@@ -57,8 +57,9 @@ def test_reindex_style_presets_rebuilds() -> None:
 def test_list_style_presets_returns_agent_friendly_json() -> None:
     """list_style_presets 回傳 agent 可解析 JSON，含 presets 與 next"""
     mock_client = MagicMock()
+    loras = [{"name": "line.safetensors", "strength_model": 0.8}]
     mock_client.get.return_value = {
-        "items": [{"id": "creator-a", "name": "Creator A", "profiles": ["portrait"]}]
+        "items": [{"id": "creator-a", "name": "Creator A", "profiles": ["portrait"], "loras": loras}]
     }
 
     with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
@@ -68,6 +69,7 @@ def test_list_style_presets_returns_agent_friendly_json() -> None:
     assert data["ok"] is True
     assert data["tool"] == "list_style_presets"
     assert data["presets"][0]["id"] == "creator-a"
+    assert data["presets"][0]["loras"] == loras
     assert "compose_style_preset" in data["next"]
     mock_client.get.assert_called_once_with("style-presets/")
 

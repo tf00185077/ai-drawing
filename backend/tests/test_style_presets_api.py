@@ -5,7 +5,7 @@ import pytest
 
 from app.api import style_presets as style_presets_api
 from app.core.queue import _reset_for_test
-from app.core.style_presets import FileStylePresetProvider, ResourceInventory
+from app.core.style_presets import DirStylePresetProvider, FileStylePresetProvider, ResourceInventory
 from app.main import app
 
 SAMPLE_CATALOG = {
@@ -111,6 +111,51 @@ class TestStylePresetEndpoints:
         missing_types = {m["resource_type"] for m in items[0]["missing"]}
         assert "checkpoint" in missing_types
         assert "lora" in missing_types
+
+    def test_create_detail_list_and_compose_preserve_loras(self, client, tmp_path) -> None:
+        agent_dir = tmp_path / "style_presets" / "agent"
+        provider = DirStylePresetProvider(agent_dir, project_root=tmp_path)
+        app.dependency_overrides[style_presets_api._provider] = lambda: provider
+        loras = [
+            {"name": "line.safetensors", "strength_model": 0.8},
+            {"name": "color.safetensors", "strength_model": 0.5, "strength_clip": 0.4},
+        ]
+        try:
+            inventory = ResourceInventory(loras=("line.safetensors", "color.safetensors"), workflows=("multi",))
+            with patch.object(style_presets_api, "_current_inventory", return_value=inventory):
+                r = client.post(
+                    "/api/style-presets/",
+                    json={
+                        "id": "multi-a",
+                        "name": "Multi A",
+                        "template": "multi",
+                        "lora": "legacy.safetensors",
+                        "lora_strength": 0.7,
+                        "loras": loras,
+                        "base_prompt": "multi style",
+                    },
+                )
+            assert r.status_code == 201
+
+            detail = client.get("/api/style-presets/multi-a").json()
+            assert detail["lora"] == "legacy.safetensors"
+            assert detail["lora_strength"] == 0.7
+            assert detail["loras"] == loras
+
+            items = client.get("/api/style-presets/").json()["items"]
+            assert items[0]["id"] == "multi-a"
+            assert items[0]["loras"] == loras
+
+            composed = client.post(
+                "/api/style-presets/multi-a/compose",
+                json={"content_prompt": "a girl"},
+            ).json()["generation"]
+            assert composed["template"] == "multi"
+            assert composed["loras"] == loras
+            assert "lora" not in composed
+            assert "lora_strength" not in composed
+        finally:
+            app.dependency_overrides.pop(style_presets_api._provider, None)
 
 
 class TestGenerateForwardsDiffusionFields:

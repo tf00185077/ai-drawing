@@ -331,6 +331,33 @@ def test_generate_image_custom_workflow_forwards_new_params_when_provided() -> N
     assert call_json["vae"] == "anima_vae.safetensors"
 
 
+def test_generate_image_custom_workflow_forwards_loras() -> None:
+    """generate_image_custom_workflow forwards ordered multi-LoRA payloads and keeps legacy fields."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"10":{"class_type":"LoraLoader","inputs":{}},"11":{"class_type":"LoraLoaderModelOnly","inputs":{}}}'
+    loras = [
+        {"name": "style.safetensors", "strength_model": 0.8},
+        {"name": "detail.safetensors", "strength_model": 0.6, "strength_clip": 0.4},
+    ]
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(
+            workflow=wf_json,
+            prompt="1girl",
+            lora="legacy.safetensors",
+            lora_strength=0.7,
+            loras=loras,
+        )
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["lora"] == "legacy.safetensors"
+    assert call_json["lora_strength"] == 0.7
+    assert call_json["loras"] == loras
+
+
 def test_generate_image_custom_workflow_omits_new_params_when_not_provided() -> None:
     """generate_image_custom_workflow 未提供 image/mask/batch_size/diffusion_model/text_encoder/vae 時不放入 body"""
     mock_client = MagicMock()

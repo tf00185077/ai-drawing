@@ -110,6 +110,62 @@ def test_post_generate_custom_returns_201(client) -> None:
     assert "自訂" in (data.get("message") or "")
 
 
+def test_post_generate_forwards_loras_to_queue(client) -> None:
+    """POST /api/generate/ forwards ordered multi-LoRA payloads without dropping single-LoRA compatibility fields."""
+    loras = [
+        {"name": "style.safetensors", "strength_model": 0.8},
+        {"name": "character.safetensors", "strength_model": 0.6, "strength_clip": 0.4},
+    ]
+    with patch("app.api.generate.submit", return_value="job-loras") as mock_submit:
+        r = client.post(
+            "/api/generate/",
+            json={
+                "prompt": "1girl",
+                "template": "multi_lora",
+                "lora": "legacy.safetensors",
+                "lora_strength": 0.7,
+                "loras": loras,
+            },
+        )
+
+    assert r.status_code == 201
+    params = mock_submit.call_args[0][0]
+    assert params["template"] == "multi_lora"
+    assert params["lora"] == "legacy.safetensors"
+    assert params["lora_strength"] == 0.7
+    assert params["loras"] == loras
+
+
+def test_post_generate_custom_forwards_loras_to_queue(client) -> None:
+    """POST /api/generate/custom forwards ordered multi-LoRA payloads to the custom queue path."""
+    wf = {
+        "10": {"class_type": "LoraLoader", "inputs": {}},
+        "11": {"class_type": "LoraLoaderModelOnly", "inputs": {}},
+    }
+    loras = [
+        {"name": "detail.safetensors", "strength_model": 0.5},
+        {"name": "motion.safetensors", "strength_model": 0.9, "strength_clip": 0.2},
+    ]
+    with patch("app.api.generate.submit_custom", return_value="custom-loras") as mock_submit:
+        r = client.post(
+            "/api/generate/custom",
+            json={
+                "workflow": wf,
+                "prompt": "1girl",
+                "lora": "legacy.safetensors",
+                "lora_strength": 0.4,
+                "loras": loras,
+            },
+        )
+
+    assert r.status_code == 201
+    params = mock_submit.call_args[0][0]
+    assert params["workflow"] == wf
+    assert params["lora"] == "legacy.safetensors"
+    assert params["lora_strength"] == 0.4
+    assert params["loras"] == loras
+
+
 def test_post_generate_video_custom_returns_201(client) -> None:
     """POST /api/generate/video/custom accepts supplied workflow and queues a job."""
     wf = {

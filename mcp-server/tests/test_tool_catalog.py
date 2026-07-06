@@ -58,6 +58,23 @@ async def test_video_custom_workflow_is_registered_with_lora_schema() -> None:
 
 
 @pytest.mark.asyncio
+async def test_supported_lora_tools_expose_loras_input_schema() -> None:
+    """Supported generation and preset-authoring tools expose ordered multi-LoRA fields to agents."""
+    registered = {tool.name: tool for tool in await mcp.list_tools()}
+    expected_fields = {
+        "generate_image": ("lora", "lora_strength", "loras"),
+        "generate_image_custom_workflow": ("lora", "lora_strength", "loras"),
+        "generate_video_custom_workflow": ("lora", "lora_strength", "loras"),
+        "create_style_preset": ("lora", "lora_strength", "loras"),
+    }
+
+    for tool_name, fields in expected_fields.items():
+        properties = registered[tool_name].inputSchema["properties"]
+        for field in fields:
+            assert field in properties, f"{tool_name} missing {field}"
+
+
+@pytest.mark.asyncio
 async def test_response_categories_match_fastmcp_output_schema() -> None:
     """Structured dict tools expose object output; transitional string tools expose result strings."""
     registered = {tool.name: tool for tool in await mcp.list_tools()}
