@@ -52,16 +52,16 @@ Civitai 把 Anima 顯示為 `Checkpoint`，但本機以 split-model workflow 處
 Installed files and hashes:
 
 ```text
-/Users/tf00185088/comfyui/models/diffusion_models/anima_baseV10.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/diffusion_models/anima_baseV10.safetensors
 sha256=BD43B7CFFE1ED1153D9C41E7BEB2F18CB1273EAFBAA3AF3EDD6A173DC90A006E
 
-/Users/tf00185088/comfyui/models/text_encoders/anima_baseV10_txt.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/text_encoders/anima_baseV10_txt.safetensors
 sha256=CD2A512003E2F9F3CD3C32A9C3573F820BB28C940F73C57B1DDAA983D9223EBA
 
-/Users/tf00185088/comfyui/models/vae/qwen_image_vae.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/vae/qwen_image_vae.safetensors
 sha256=A70580F0213E67967EE9C95F05BB400E8FB08307E017A924BF3441223E023D1F
 
-/Users/tf00185088/comfyui/models/upscale_models/realesrganX4plusAnime_v1.pt
+/Volumes/AI-Drawing-16T/ai-drawing/models/upscale_models/realesrganX4plusAnime_v1.pt
 sha256=F872D837D3C90ED2E05227BED711AF5671A6FD1C9F7D7E91C911A61F155E99DA
 ```
 

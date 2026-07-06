@@ -48,7 +48,7 @@ source_url: https://civitai.com/images/132048670
 Installed file:
 
 ```text
-/Users/tf00185088/comfyui/models/diffusion_models/hosekiLustrousmixAnima_animaV10.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/diffusion_models/hosekiLustrousmixAnima_animaV10.safetensors
 ```
 
 Verification:

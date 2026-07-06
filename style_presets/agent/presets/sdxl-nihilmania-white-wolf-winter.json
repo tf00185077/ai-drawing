@@ -1,0 +1,40 @@
+{
+  "id": "sdxl-nihilmania-white-wolf-winter",
+  "name": "SDXL NihilMania White Wolf Winter",
+  "chinese_name": null,
+  "base_prompt": "girl with white hair and bright blue eyes looking at viewer, white wolf with bright blue eyes, snowy landscape, close up, 8k, uhd, masterpiece, ultra-detailed, hyper realistic art, high-resolution details, photographic realism, fine texture, cinematic cold light, crisp snow, icy blue eyes, fantasy winter atmosphere",
+  "negative_prompt": "bad quality, bad anatomy, worst quality, low quality, low resolution, extra fingers, blur, blurry, ugly, wrong proportions, watermark, image artifacts, lowres, jpeg artifacts, deformed, noisy image, deformation, skin moles",
+  "template": "default",
+  "checkpoint": "sdxlUnstableDiffusers_nihilmania.safetensors",
+  "lora": null,
+  "lora_strength": null,
+  "loras": [],
+  "diffusion_model": null,
+  "text_encoder": null,
+  "vae": "sdxl_vae.safetensors",
+  "default_params": {
+    "steps": 50,
+    "cfg": 9.0,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "width": 768,
+    "height": 1368,
+    "seed": 1288624888
+  },
+  "profiles": {
+    "portrait": {
+      "prompt_prefix": "hyper realistic SDXL fantasy portrait, ",
+      "prompt_suffix": ", snowy landscape, white wolf companion, bright blue eyes, ultra detailed, UHD, cinematic winter light",
+      "negative_prompt": "bad quality, bad anatomy, worst quality, low quality, low resolution, extra fingers, blur, blurry, ugly, wrong proportions, watermark, image artifacts, lowres, jpeg artifacts, deformed, noisy image, deformation, skin moles",
+      "params": {
+        "steps": 50,
+        "cfg": 9.0,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras",
+        "width": 768,
+        "height": 1368
+      }
+    }
+  },
+  "note_path": "style_presets/human/sdxl-nihilmania-white-wolf-winter.md"
+}

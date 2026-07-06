@@ -1,8 +1,8 @@
 {
   "id": "niji-moonlit-semi-real-anima",
   "name": "Niji Moonlit Semi-real Anima",
-  "base_prompt": "masterpiece, best quality, high-quality Anima illustration, semi-realistic anime rendering, dark cinematic color grading, moonlit atmosphere, cool blue rim lighting, deep shadow contrast, glossy highlight rendering, sharp detailed hair, polished high-resolution finish, dramatic portrait lighting",
-  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, bright daytime, washed out, low contrast",
+  "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, clean Niji anime color separation, cool blue accent lighting, cool clean rim light, controlled contrast, refined anime hair detail, crisp 2D anime line clarity, balanced luminous color palette",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, washed out, low contrast",
   "template": "gen_txt2img_anima_lora_model_only_multi_lora",
   "checkpoint": null,
   "lora": "anima-highres-aesthetic-boost.safetensors",
@@ -19,8 +19,8 @@
   },
   "profiles": {
     "source-color-style-neutral": {
-      "prompt_prefix": "semi-realistic niji anime style, cool moonlit color palette, high-contrast glossy lighting, sharp specular highlights",
-      "prompt_suffix": "polished high-resolution finish, cinematic dark background separation, refined semi-real rendering",
+      "prompt_prefix": "Niji anime coloring, cool blue accent palette, clean color separation, cool rim light, controlled anime contrast",
+      "prompt_suffix": "refined 2D anime finish, crisp anime hair detail, balanced luminous background separation",
       "negative_prompt": "black armor, sword, moon, night sky, black hair, woman, armor, medieval costume, source character, exact source pose",
       "params": {
         "steps": 30,
@@ -30,8 +30,8 @@
       }
     },
     "source-image-131966887": {
-      "prompt_prefix": "black hair, woman, solo, armor, moon, night, dark fantasy portrait, upper body, cool moonlight, glossy metal armor",
-      "prompt_suffix": "semi-realistic niji anime style, highres aesthetic boost, sharp detailed hair, cinematic dark background",
+      "prompt_prefix": "Niji anime color reference, cool blue accent palette, clean color separation, cool rim light, controlled anime contrast",
+      "prompt_suffix": "refined 2D anime finish, crisp anime hair detail, balanced luminous color palette",
       "negative_prompt": "",
       "params": {
         "steps": 30,
@@ -39,6 +39,17 @@
         "sampler_name": "er_sde",
         "scheduler": "simple",
         "seed": 375618583377335
+      }
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "daylight niji lock: clear blue sky, cool clean rim light, soft crisp anime shadows, bright school campus; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, hand-painted background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, glossy highlight rendering, sharp specular highlights, plastic skin, game cg, dark background, night, moonlit, dark cinematic color grading, deep shadow contrast",
+      "params": {
+        "steps": 30,
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "scheduler": "simple"
       }
     }
   },

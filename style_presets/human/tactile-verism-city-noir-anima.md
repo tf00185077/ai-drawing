@@ -48,7 +48,7 @@ source_url: https://civitai.com/images/133592240
 Installed local path:
 
 ```text
-/Users/tf00185088/comfyui/models/loras/Tactile_Verism-Anima-tcl-vrs-style.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/loras/Tactile_Verism-Anima-tcl-vrs-style.safetensors
 ```
 
 ## Workflow requirement
