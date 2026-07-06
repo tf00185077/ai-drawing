@@ -5,6 +5,7 @@ from app.schemas.lora_train import (
     DatasetInspectResponse,
     DatasetItem,
     DatasetListResponse,
+    DatasetProfileSummary,
     DatasetPrepareRequest,
     DatasetPrepareResponse,
     DatasetValidateRequest,
@@ -21,18 +22,34 @@ from app.schemas.lora_train import (
 
 def test_lora_workflow_schemas_serialize_expected_fields() -> None:
     """新 workflow schemas 保留 MCP/API 所需的結構化欄位。"""
+    profile = DatasetProfileSummary(
+        present=True,
+        valid=True,
+        dataset_type="character",
+        trigger_token="miku_token",
+        caption_profile="wd_tags",
+        model_family="sdxl",
+        protected_tags=["miku_token"],
+        removable_tags=["lowres"],
+        auto_train=False,
+        profile_hash="profile-hash-a",
+    )
     item = DatasetItem(
         folder="character/miku",
         image_count=2,
         caption_count=1,
         missing_caption_count=1,
         dataset_hash="hash-a",
+        profile_hash="profile-hash-a",
+        profile=profile,
         locked=False,
         trigger_token_candidates=["miku_token"],
     )
     listed = DatasetListResponse(datasets=[item]).model_dump()
     assert listed["datasets"][0]["folder"] == "character/miku"
     assert listed["datasets"][0]["dataset_hash"] == "hash-a"
+    assert listed["datasets"][0]["profile_hash"] == "profile-hash-a"
+    assert listed["datasets"][0]["profile"]["auto_train"] is False
 
     inspected = DatasetInspectResponse(
         folder="character/miku",
@@ -40,6 +57,8 @@ def test_lora_workflow_schemas_serialize_expected_fields() -> None:
         caption_count=1,
         missing_caption_count=1,
         dataset_hash="hash-a",
+        profile_hash="profile-hash-a",
+        profile=profile,
         locked=False,
         files=[],
         trigger_token_candidates=["miku_token"],

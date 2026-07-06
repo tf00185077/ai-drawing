@@ -10,7 +10,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 from app.config import get_settings
 from app.schemas.lora_train import (
@@ -18,6 +18,7 @@ from app.schemas.lora_train import (
     DatasetFileItem,
     DatasetInspectResponse,
     DatasetItem,
+    DatasetProfileSummary,
     DatasetPrepareResponse,
     DatasetValidateResponse,
     ValidationIssue,
@@ -25,6 +26,10 @@ from app.schemas.lora_train import (
 from app.services.caption_filter import filter_caption
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
+PROFILE_FILENAME = ".lora-dataset.json"
+SUPPORTED_DATASET_TYPES = {"unknown", "character", "style", "object", "costume", "background", "concept"}
+SUPPORTED_CAPTION_PROFILES = {"unknown", "wd_tags", "natural_language", "mixed"}
+SUPPORTED_MODEL_FAMILIES = {"unknown", "sd15", "sdxl", "anima"}
 _TOKEN_RE = re.compile(r"[^A-Za-z0-9_]+")
 _LOCK_GUARD = threading.Lock()
 _LOCKS: dict[Path, threading.Lock] = {}
@@ -205,18 +210,348 @@ def _trigger_candidates(files: list[DatasetFileItem]) -> list[str]:
     return [token for token, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
 
 
+def _profile_rel_path(dataset_dir: Path) -> str:
+    return (dataset_dir / PROFILE_FILENAME).relative_to(_base_dir()).as_posix()
+
+
+def _hash_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _issue(code: str, message: str, path: str, details: dict | None = None) -> ValidationIssue:
+    return ValidationIssue(code=code, message=message, path=path, details=details)
+
+
+def _clean_string_list(
+    value: Any,
+    *,
+    field_name: str,
+    profile_path: str,
+    errors: list[ValidationIssue],
+) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        errors.append(
+            _issue(
+                "invalid_profile_field",
+                f"{field_name} must be a list of strings",
+                profile_path,
+                {"field": field_name},
+            )
+        )
+        return []
+
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for index, item in enumerate(value):
+        if not isinstance(item, str):
+            errors.append(
+                _issue(
+                    "invalid_profile_field",
+                    f"{field_name} entries must be strings",
+                    profile_path,
+                    {"field": field_name, "index": index},
+                )
+            )
+            continue
+        tag = item.strip()
+        if not tag:
+            continue
+        key = tag.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(tag)
+    return cleaned
+
+
+def _merge_unique_tags(*tag_lists: list[str]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for tags in tag_lists:
+        for tag in tags:
+            key = tag.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(tag)
+    return merged
+
+
+def _string_field(
+    data: dict[str, Any],
+    field_name: str,
+    *,
+    profile_path: str,
+    errors: list[ValidationIssue],
+) -> str | None:
+    value = data.get(field_name)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        errors.append(
+            _issue(
+                "invalid_profile_field",
+                f"{field_name} must be a string",
+                profile_path,
+                {"field": field_name},
+            )
+        )
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _enum_field(
+    value: Any,
+    *,
+    field_name: str,
+    supported: set[str],
+    unsupported_code: str,
+    profile_path: str,
+    errors: list[ValidationIssue],
+) -> str:
+    if value is None:
+        return "unknown"
+    if not isinstance(value, str):
+        errors.append(
+            _issue(
+                "invalid_profile_field",
+                f"{field_name} must be a string",
+                profile_path,
+                {"field": field_name, "supported": sorted(supported)},
+            )
+        )
+        return "unknown"
+    normalized = value.strip().lower()
+    if not normalized:
+        return "unknown"
+    if normalized not in supported:
+        errors.append(
+            _issue(
+                unsupported_code,
+                f"unsupported {field_name}: {value}",
+                profile_path,
+                {"field": field_name, "value": value, "supported": sorted(supported)},
+            )
+        )
+        return "unknown"
+    return normalized
+
+
+def _dataset_type_value(
+    data: dict[str, Any],
+    *,
+    profile_path: str,
+    warnings: list[ValidationIssue],
+) -> Any:
+    has_dataset_type = "dataset_type" in data
+    has_type = "type" in data
+    if has_dataset_type and has_type and data.get("dataset_type") != data.get("type"):
+        warnings.append(
+            _issue(
+                "conflicting_dataset_type_alias",
+                "dataset_type and type differ; dataset_type was used",
+                profile_path,
+                {"dataset_type": data.get("dataset_type"), "type": data.get("type")},
+            )
+        )
+    if has_dataset_type:
+        return data.get("dataset_type")
+    return data.get("type")
+
+
+def _auto_train_value(
+    data: dict[str, Any],
+    *,
+    profile_path: str,
+    errors: list[ValidationIssue],
+    warnings: list[ValidationIssue],
+) -> bool:
+    if "auto_train" not in data:
+        return False
+    value = data.get("auto_train")
+    if not isinstance(value, bool):
+        errors.append(
+            _issue(
+                "invalid_profile_field",
+                "auto_train must be a boolean",
+                profile_path,
+                {"field": "auto_train"},
+            )
+        )
+        return False
+    if value:
+        warnings.append(
+            _issue(
+                "auto_train_descriptive_only",
+                "auto_train is descriptive metadata only; training still requires an explicit start request",
+                profile_path,
+                {"field": "auto_train"},
+            )
+        )
+    return value
+
+
+def _default_profile(
+    *,
+    present: bool,
+    profile_hash: str | None,
+    trigger_token: str | None,
+    errors: list[ValidationIssue] | None = None,
+    warnings: list[ValidationIssue] | None = None,
+) -> DatasetProfileSummary:
+    errors = errors or []
+    warnings = warnings or []
+    return DatasetProfileSummary(
+        present=present,
+        valid=not errors,
+        dataset_type="unknown",
+        trigger_token=trigger_token,
+        caption_profile="unknown",
+        model_family="unknown",
+        protected_tags=[],
+        removable_tags=[],
+        auto_train=False,
+        profile_hash=profile_hash,
+        warnings=warnings,
+        errors=errors,
+    )
+
+
+def _load_dataset_profile(dataset_dir: Path, trigger_token_candidates: list[str]) -> DatasetProfileSummary:
+    detected_trigger = trigger_token_candidates[0] if trigger_token_candidates else None
+    profile_path = dataset_dir / PROFILE_FILENAME
+    if not profile_path.exists():
+        return _default_profile(present=False, profile_hash=None, trigger_token=detected_trigger)
+
+    profile_rel_path = _profile_rel_path(dataset_dir)
+    profile_hash = _hash_file(profile_path)
+    errors: list[ValidationIssue] = []
+    warnings: list[ValidationIssue] = []
+    try:
+        raw_profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return _default_profile(
+            present=True,
+            profile_hash=profile_hash,
+            trigger_token=detected_trigger,
+            errors=[
+                _issue(
+                    "invalid_profile_json",
+                    "metadata profile is not valid JSON",
+                    profile_rel_path,
+                    {"error": str(exc)},
+                )
+            ],
+        )
+
+    if not isinstance(raw_profile, dict):
+        return _default_profile(
+            present=True,
+            profile_hash=profile_hash,
+            trigger_token=detected_trigger,
+            errors=[
+                _issue(
+                    "invalid_profile_schema",
+                    "metadata profile must be a JSON object",
+                    profile_rel_path,
+                    {"actual_type": type(raw_profile).__name__},
+                )
+            ],
+        )
+
+    data: dict[str, Any] = raw_profile
+    dataset_type = _enum_field(
+        _dataset_type_value(data, profile_path=profile_rel_path, warnings=warnings),
+        field_name="dataset_type",
+        supported=SUPPORTED_DATASET_TYPES,
+        unsupported_code="unsupported_dataset_type",
+        profile_path=profile_rel_path,
+        errors=errors,
+    )
+    caption_profile = _enum_field(
+        data.get("caption_profile"),
+        field_name="caption_profile",
+        supported=SUPPORTED_CAPTION_PROFILES,
+        unsupported_code="unsupported_caption_profile",
+        profile_path=profile_rel_path,
+        errors=errors,
+    )
+    model_family = _enum_field(
+        data.get("model_family"),
+        field_name="model_family",
+        supported=SUPPORTED_MODEL_FAMILIES,
+        unsupported_code="unsupported_model_family",
+        profile_path=profile_rel_path,
+        errors=errors,
+    )
+    trigger_value = _string_field(data, "trigger_token", profile_path=profile_rel_path, errors=errors)
+    trigger_token = normalize_trigger_token(trigger_value) if trigger_value else detected_trigger
+    protected_tags = _clean_string_list(
+        data.get("protected_tags"),
+        field_name="protected_tags",
+        profile_path=profile_rel_path,
+        errors=errors,
+    )
+    removable_tags = _merge_unique_tags(
+        _clean_string_list(
+            data.get("remove_tags"),
+            field_name="remove_tags",
+            profile_path=profile_rel_path,
+            errors=errors,
+        ),
+        _clean_string_list(
+            data.get("removable_tags"),
+            field_name="removable_tags",
+            profile_path=profile_rel_path,
+            errors=errors,
+        ),
+    )
+    auto_train = _auto_train_value(
+        data,
+        profile_path=profile_rel_path,
+        errors=errors,
+        warnings=warnings,
+    )
+
+    return DatasetProfileSummary(
+        present=True,
+        valid=not errors,
+        dataset_type=dataset_type,
+        trigger_token=trigger_token,
+        caption_profile=caption_profile,
+        model_family=model_family,
+        protected_tags=protected_tags,
+        removable_tags=removable_tags,
+        auto_train=auto_train,
+        profile_hash=profile_hash,
+        warnings=warnings,
+        errors=errors,
+    )
+
+
 def _summary_from_dir(dataset_dir: Path) -> DatasetItem:
     files = _collect_files(dataset_dir)
     folder = _folder_for_path(dataset_dir)
     caption_count = sum(1 for item in files if item.has_caption)
+    trigger_token_candidates = _trigger_candidates(files)
+    profile = _load_dataset_profile(dataset_dir, trigger_token_candidates)
     return DatasetItem(
         folder=folder,
         image_count=len(files),
         caption_count=caption_count,
         missing_caption_count=len(files) - caption_count,
         dataset_hash=compute_dataset_hash(folder),
+        profile_hash=profile.profile_hash,
+        profile=profile,
         locked=is_path_locked(dataset_dir),
-        trigger_token_candidates=_trigger_candidates(files),
+        trigger_token_candidates=trigger_token_candidates,
     )
 
 
@@ -241,15 +576,19 @@ def inspect_dataset(folder: str) -> DatasetInspectResponse:
         raise DatasetServiceError("dataset_not_found", "dataset folder not found")
     files = _collect_files(dataset_dir)
     caption_count = sum(1 for item in files if item.has_caption)
+    trigger_token_candidates = _trigger_candidates(files)
+    profile = _load_dataset_profile(dataset_dir, trigger_token_candidates)
     return DatasetInspectResponse(
         folder=_folder_for_path(dataset_dir),
         image_count=len(files),
         caption_count=caption_count,
         missing_caption_count=len(files) - caption_count,
         dataset_hash=compute_dataset_hash(_folder_for_path(dataset_dir)),
+        profile_hash=profile.profile_hash,
+        profile=profile,
         locked=is_path_locked(dataset_dir),
         files=files,
-        trigger_token_candidates=_trigger_candidates(files),
+        trigger_token_candidates=trigger_token_candidates,
         validation=None,
     )
 

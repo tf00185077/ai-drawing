@@ -1,8 +1,10 @@
 """LoRA training workflow API tests."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -136,6 +138,54 @@ def test_dataset_endpoints_list_inspect_prepare_restore_and_validate(tmp_path: P
     )
     assert restored.status_code == 200
     assert restored.json()["restored_files"] == ["character/miku/a.txt", "character/miku/b.txt"]
+
+
+def test_dataset_profile_fields_are_returned_without_starting_training(tmp_path: Path, monkeypatch) -> None:
+    """List/inspect/validate expose profile metadata and never enqueue training."""
+    lora_train_dir = tmp_path / "lora_train"
+    dataset = _make_dataset(lora_train_dir)
+    (dataset / ".lora-dataset.json").write_text(
+        json.dumps(
+            {
+                "dataset_type": "character",
+                "trigger_token": "miku_token",
+                "caption_profile": "wd_tags",
+                "model_family": "sd15",
+                "auto_train": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    settings = _settings(tmp_path, lora_train_dir)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+
+    client = _client()
+    with patch("app.api.lora_train.lora_trainer.enqueue") as enqueue:
+        listed = client.get("/api/lora-train/datasets")
+        inspected = client.get("/api/lora-train/datasets/character/miku?trigger_token=miku_token")
+        validated = client.post(
+            "/api/lora-train/datasets/validate",
+            json={"folder": "character/miku", "trigger_token": "miku_token"},
+        )
+
+    assert listed.status_code == 200
+    listed_profile = listed.json()["datasets"][0]["profile"]
+    assert listed_profile["present"] is True
+    assert listed_profile["dataset_type"] == "character"
+    assert listed_profile["auto_train"] is True
+    assert listed_profile["profile_hash"] == listed.json()["datasets"][0]["profile_hash"]
+
+    assert inspected.status_code == 200
+    inspected_payload = inspected.json()
+    assert inspected_payload["image_count"] == 2
+    assert inspected_payload["caption_count"] == 2
+    assert inspected_payload["profile"]["trigger_token"] == "miku_token"
+    assert inspected_payload["profile"]["warnings"][0]["code"] == "auto_train_descriptive_only"
+    assert inspected_payload["profile_hash"] != inspected_payload["dataset_hash"]
+
+    assert validated.status_code == 200
+    assert validated.json()["folder"] == "character/miku"
+    enqueue.assert_not_called()
 
 
 def test_start_status_logs_cancel_and_aggregate_status(tmp_path: Path, monkeypatch) -> None:

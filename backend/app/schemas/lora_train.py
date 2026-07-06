@@ -130,6 +130,23 @@ class DatasetFileItem(BaseModel):
     caption_empty: bool = False
 
 
+class DatasetProfileSummary(BaseModel):
+    """Normalized dataset-local .lora-dataset.json metadata profile."""
+
+    present: bool = False
+    valid: bool = True
+    dataset_type: str = "unknown"
+    trigger_token: str | None = None
+    caption_profile: str = "unknown"
+    model_family: str = "unknown"
+    protected_tags: list[str] = Field(default_factory=list)
+    removable_tags: list[str] = Field(default_factory=list)
+    auto_train: bool = False
+    profile_hash: str | None = None
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    errors: list[ValidationIssue] = Field(default_factory=list)
+
+
 class DatasetItem(BaseModel):
     """LoRA dataset summary."""
 
@@ -138,6 +155,8 @@ class DatasetItem(BaseModel):
     caption_count: int
     missing_caption_count: int
     dataset_hash: str
+    profile_hash: str | None = None
+    profile: DatasetProfileSummary = Field(default_factory=DatasetProfileSummary)
     locked: bool = False
     trigger_token_candidates: list[str] = Field(default_factory=list)
 
@@ -180,6 +199,8 @@ class DatasetInspectResponse(BaseModel):
     caption_count: int
     missing_caption_count: int
     dataset_hash: str
+    profile_hash: str | None = None
+    profile: DatasetProfileSummary = Field(default_factory=DatasetProfileSummary)
     locked: bool = False
     files: list[DatasetFileItem] = Field(default_factory=list)
     trigger_token_candidates: list[str] = Field(default_factory=list)
