@@ -12,6 +12,12 @@ from mcp_server.config import get_mcp_settings
 # parse_description 僅供下方已停用的 *_from_description 工具使用，連同一併註解。
 # from mcp_server.description_parser import parse_description
 from mcp_server.server import _get_client, mcp
+from mcp_server.tools.responses import error_json, exception_error_json
+
+
+def _resource_list(resp: dict, key: str) -> list:
+    value = resp.get(key)
+    return value if isinstance(value, list) else []
 
 
 @mcp.tool()
@@ -107,15 +113,7 @@ def generate_image(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "generate_image",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("generate_image", e, where="backend")
 
 
 @mcp.tool()
@@ -272,21 +270,22 @@ def generate_image_custom_workflow(
             ensure_ascii=False,
         )
     except json.JSONDecodeError as e:
-        return json.dumps(
-            {"ok": False, "tool": "generate_image_custom_workflow", "error": f"workflow 必須為合法 JSON: {e}"},
-            ensure_ascii=False,
+        return error_json(
+            "generate_image_custom_workflow",
+            "invalid_json",
+            f"workflow 必須為合法 JSON: {e}",
+            details={"where": "validation"},
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "generate_image_custom_workflow", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("generate_image_custom_workflow", e, where="backend")
 
 
 @mcp.tool()
 def generate_video_custom_workflow(
     workflow: str,
     prompt: str = "1girl, solo",
+    checkpoint: str | None = None,
+    lora: str | None = None,
     image: str | None = None,
     first_frame: str | None = None,
     last_frame: str | None = None,
@@ -300,6 +299,8 @@ def generate_video_custom_workflow(
     batch_size: int | None = None,
     sampler_name: str | None = None,
     scheduler: str | None = None,
+    lora_strength: float | None = None,
+    loras: list[dict] | None = None,
     denoise: float | None = None,
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
@@ -314,6 +315,8 @@ def generate_video_custom_workflow(
             "prompt": prompt,
         }
         optional_values = {
+            "checkpoint": checkpoint,
+            "lora": lora,
             "image": image,
             "first_frame": first_frame,
             "last_frame": last_frame,
@@ -327,6 +330,8 @@ def generate_video_custom_workflow(
             "batch_size": batch_size,
             "sampler_name": sampler_name,
             "scheduler": scheduler,
+            "lora_strength": lora_strength,
+            "loras": loras,
             "denoise": denoise,
             "diffusion_model": diffusion_model,
             "text_encoder": text_encoder,
@@ -344,20 +349,20 @@ def generate_video_custom_workflow(
                 "tool": "generate_video_custom_workflow",
                 "job_id": job_id,
                 "status": status,
+                "submitted": body,
                 "next": "poll get_generation_status(job_id); on completion use artifacts[] with get_gallery_artifact; if failed with node_errors, inspect schemas and resubmit a corrected workflow",
             },
             ensure_ascii=False,
         )
     except json.JSONDecodeError as e:
-        return json.dumps(
-            {"ok": False, "tool": "generate_video_custom_workflow", "error": f"workflow 必須為合法 JSON: {e}"},
-            ensure_ascii=False,
+        return error_json(
+            "generate_video_custom_workflow",
+            "invalid_json",
+            f"workflow 必須為合法 JSON: {e}",
+            details={"where": "validation"},
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "generate_video_custom_workflow", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("generate_video_custom_workflow", e, where="backend")
 
 
 @mcp.tool()
@@ -411,10 +416,7 @@ def generate_video_wan_keyframes(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "generate_video_wan_keyframes", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("generate_video_wan_keyframes", e, where="backend")
 
 
 # ---------------------------------------------------------------------------
@@ -555,10 +557,13 @@ def get_generation_status(job_id: str) -> str:
                 {
                     "ok": False,
                     "tool": "get_generation_status",
-                    "where": "comfyui",
                     "job_id": job_id,
                     "status": "failed",
-                    "error": resp.get("error"),
+                    "error": {
+                        "code": "generation_failed",
+                        "message": str(resp.get("error") or "generation failed"),
+                        "details": {"where": "comfyui"},
+                    },
                     "node_errors": node_errors,
                     "recording_error": resp.get("recording_error"),
                     "next": (
@@ -582,27 +587,15 @@ def get_generation_status(job_id: str) -> str:
                 ensure_ascii=False,
             )
         else:
-            return json.dumps(
-                {
-                    "ok": False,
-                    "tool": "get_generation_status",
-                    "where": "backend",
-                    "job_id": job_id,
-                    "error": f"Job not found or unexpected status: {status}",
-                },
-                ensure_ascii=False,
+            return error_json(
+                "get_generation_status",
+                "job_not_found",
+                f"Job not found or unexpected status: {status}",
+                details={"where": "backend"},
+                job_id=job_id,
             )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_generation_status",
-                "where": "backend",
-                "job_id": job_id,
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("get_generation_status", e, where="backend", job_id=job_id)
 
 
 @mcp.tool()
@@ -622,15 +615,15 @@ def list_available_resources() -> str:
     try:
         client = _get_client()
         resp = client.get("generate/available-resources")
-        checkpoints = resp.get("checkpoints", [])
-        loras = resp.get("loras", [])
-        diffusion_models = resp.get("diffusion_models", [])
-        text_encoders = resp.get("text_encoders", [])
-        vaes = resp.get("vaes", [])
-        video_models = resp.get("video_models", [])
-        video_loras = resp.get("video_loras", [])
-        video_inputs = resp.get("video_inputs", [])
-        workflows = resp.get("workflows", [])
+        checkpoints = _resource_list(resp, "checkpoints")
+        loras = _resource_list(resp, "loras")
+        diffusion_models = _resource_list(resp, "diffusion_models")
+        text_encoders = _resource_list(resp, "text_encoders")
+        vaes = _resource_list(resp, "vaes")
+        video_models = _resource_list(resp, "video_models")
+        video_loras = _resource_list(resp, "video_loras")
+        video_inputs = _resource_list(resp, "video_inputs")
+        workflows = _resource_list(resp, "workflows")
         default_checkpoint = resp.get("default_checkpoint")
         next_step = (
             "choose a checkpoint, then call generate_image"
@@ -657,13 +650,4 @@ def list_available_resources() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "list_available_resources",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
-
+        return exception_error_json("list_available_resources", e, where="backend")

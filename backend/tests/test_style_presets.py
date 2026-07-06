@@ -179,6 +179,29 @@ class TestValidation:
         assert "checkpoint" in missing_types
         assert "lora" in missing_types
 
+    def test_multi_lora_entries_are_validated_individually(self) -> None:
+        provider = FileStylePresetProvider.from_data(
+            {
+                "presets": [
+                    {
+                        "id": "multi-a",
+                        "name": "Multi A",
+                        "loras": [
+                            {"name": "present.safetensors", "strength_model": 0.8},
+                            {"name": "missing.safetensors", "strength_model": 0.5},
+                        ],
+                    }
+                ]
+            }
+        )
+        inventory = ResourceInventory(loras=("present.safetensors",))
+
+        result = provider.validate_presets(inventory)[0]
+
+        assert result.valid is False
+        missing = {(m.resource_type, m.name) for m in result.missing}
+        assert ("lora", "missing.safetensors") in missing
+
     def test_missing_note_path_is_reported(self, tmp_path) -> None:
         provider = FileStylePresetProvider.from_data(
             {

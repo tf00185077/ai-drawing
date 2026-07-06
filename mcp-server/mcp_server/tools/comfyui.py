@@ -11,6 +11,7 @@ import httpx
 
 from mcp_server.config import get_mcp_settings
 from mcp_server.server import _get_client, mcp
+from mcp_server.tools.responses import error_json, exception_error_json
 
 
 @mcp.tool()
@@ -40,29 +41,19 @@ def free_comfyui_memory(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "free_comfyui_memory",
-                "where": "comfyui",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("free_comfyui_memory", e, where="comfyui")
 
 
 @mcp.tool()
 def search_nodes(query: str = "", category: str = "", limit: int = 50, offset: int = 0) -> str:
     """Search the live ComfyUI node catalog by name and/or category, returning matching node types as {name, category} (not full schemas). Use when self-authoring a workflow to discover which nodes this instance actually has, then call get_node_schema for the ones you need. You MUST supply at least one of `query` or `category` (calling with neither is rejected to avoid dumping the whole catalog) — call list_node_categories first to browse categories, then narrow. `query` matches the node name (e.g. "ksampler"); `category` matches the functional category (e.g. "loaders", "conditioning") — both are case-insensitive substring filters combined with AND. Results are paged: each call returns at most `limit` (default 50) entries to protect context. `total` is the real match count; when `truncated=true`, prefer narrowing `query`/`category`, but you can reach the rest by calling again with `offset=next_offset`. Returns agent-friendly JSON."""
     if not query.strip() and not category.strip():
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "search_nodes",
-                "error": "missing_filter",
-                "next": "supply query or category; call list_node_categories to browse available categories first",
-            },
-            ensure_ascii=False,
+        return error_json(
+            "search_nodes",
+            "missing_filter",
+            "supply query or category",
+            details={"where": "validation"},
+            next="supply query or category; call list_node_categories to browse available categories first",
         )
     try:
         client = _get_client()
@@ -97,10 +88,7 @@ def search_nodes(query: str = "", category: str = "", limit: int = 50, offset: i
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "search_nodes", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("search_nodes", e, where="backend")
 
 
 @mcp.tool()
@@ -121,15 +109,7 @@ def list_node_categories() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "list_node_categories",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("list_node_categories", e, where="backend")
 
 
 @mcp.tool()
@@ -150,29 +130,17 @@ def get_node_schema(node_type: str) -> str:
         )
     except httpx.HTTPStatusError as e:
         not_found = e.response is not None and e.response.status_code == 404
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_node_schema",
-                "where": "backend",
-                "node_type": node_type,
-                "error": "not_found" if not_found else str(e),
-                "next": (
-                    "call search_nodes to find the correct node type name"
-                    if not_found
-                    else "check backend/ComfyUI status"
-                ),
-            },
-            ensure_ascii=False,
+        return error_json(
+            "get_node_schema",
+            "not_found" if not_found else "HTTPStatusError",
+            "node type not found" if not_found else str(e),
+            details={"where": "backend"},
+            node_type=node_type,
+            next=(
+                "call search_nodes to find the correct node type name"
+                if not_found
+                else "check backend/ComfyUI status"
+            ),
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_node_schema",
-                "where": "backend",
-                "node_type": node_type,
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("get_node_schema", e, where="backend", node_type=node_type)

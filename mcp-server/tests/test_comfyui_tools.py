@@ -58,7 +58,7 @@ def test_search_nodes_rejects_empty_filter_without_calling_backend() -> None:
         result = json.loads(search_nodes())
 
     assert result["ok"] is False
-    assert result["error"] == "missing_filter"
+    assert result["error"]["code"] == "missing_filter"
     assert "list_node_categories" in result["next"]
     mock_client.get.assert_not_called()
 
@@ -112,4 +112,4 @@ def test_get_node_schema_unknown_node_reports_not_found() -> None:
         result = json.loads(get_node_schema("Nope"))
 
     assert result["ok"] is False
-    assert result["error"] == "not_found"
+    assert result["error"]["code"] == "not_found"

@@ -9,6 +9,7 @@ Workflow 模板能力目錄 MCP Tools
 import json
 
 from mcp_server.server import _get_client, mcp
+from mcp_server.tools.responses import exception_error_json
 
 
 @mcp.tool()
@@ -29,15 +30,7 @@ def list_template_capabilities() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "list_template_capabilities",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("list_template_capabilities", e, where="backend")
 
 
 @mcp.tool()
@@ -79,15 +72,7 @@ def match_workflow_template(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "match_workflow_template",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("match_workflow_template", e, where="backend")
 
 
 @mcp.tool()
@@ -122,15 +107,7 @@ def save_workflow_template(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "save_workflow_template",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("save_workflow_template", e, where="backend")
 
 
 @mcp.tool()
@@ -151,15 +128,7 @@ def consolidate_workflow_templates() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "consolidate_workflow_templates",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("consolidate_workflow_templates", e, where="backend")
 
 
 @mcp.tool()
@@ -186,12 +155,4 @@ def validate_template_capabilities() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "validate_template_capabilities",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("validate_template_capabilities", e, where="backend")

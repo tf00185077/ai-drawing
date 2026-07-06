@@ -1,4 +1,6 @@
 """生圖 API 端點測試"""
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -62,6 +64,34 @@ def test_available_resources_includes_empty_video_categories(client) -> None:
     assert data["video_inputs"] == []
 
 
+def test_available_resources_exposes_loras_from_inventory(client, tmp_path: Path) -> None:
+    checkpoint_dir = tmp_path / "checkpoints"
+    lora_dir = tmp_path / "loras"
+    checkpoint_dir.mkdir()
+    lora_dir.mkdir()
+    (checkpoint_dir / "base.safetensors").write_text("x", encoding="utf-8")
+    (lora_dir / "artist.safetensors").write_text("x", encoding="utf-8")
+    (lora_dir / "character.ckpt").write_text("x", encoding="utf-8")
+    (lora_dir / "ignore.txt").write_text("x", encoding="utf-8")
+    settings = SimpleNamespace(
+        comfyui_checkpoints_dir=str(checkpoint_dir),
+        comfyui_loras_dir=str(lora_dir),
+        comfyui_diffusion_models_dir="",
+        comfyui_text_encoders_dir="",
+        comfyui_vae_dir="",
+        lora_default_checkpoint="fallback.safetensors",
+    )
+
+    with patch("app.api.generate.get_settings", return_value=settings):
+        r = client.get("/api/generate/available-resources")
+
+    assert r.status_code == 200
+    data = r.json()
+    assert data["checkpoints"] == ["base.safetensors"]
+    assert data["loras"] == ["artist.safetensors", "character.ckpt"]
+    assert isinstance(data["loras"], list)
+
+
 def test_post_generate_custom_returns_201(client) -> None:
     """POST /api/generate/custom 接受 workflow 回傳 201"""
     wf = {
@@ -115,6 +145,30 @@ def test_post_generate_video_custom_forwards_optional_refs(client) -> None:
     assert params["first_frame"] == "2026-06-22/start.png"
     assert params["last_frame"] == "2026-06-22/end.png"
     assert params["video_ref"] == "2026-06-22/ref.mp4"
+
+
+def test_post_generate_video_custom_forwards_lora_payloads(client) -> None:
+    wf = {"20": {"class_type": "VHS_VideoCombine", "inputs": {}}}
+    loras = [{"name": "motion.safetensors", "strength_model": 0.7}]
+    with patch("app.api.generate.submit_custom", return_value="video-lora") as mock_submit:
+        r = client.post(
+            "/api/generate/video/custom",
+            json={
+                "workflow": wf,
+                "prompt": "slow pan",
+                "checkpoint": "wan.safetensors",
+                "lora": "style.safetensors",
+                "lora_strength": 0.45,
+                "loras": loras,
+            },
+        )
+
+    assert r.status_code == 201
+    params = mock_submit.call_args[0][0]
+    assert params["checkpoint"] == "wan.safetensors"
+    assert params["lora"] == "style.safetensors"
+    assert params["lora_strength"] == 0.45
+    assert params["loras"] == loras
 
 
 def test_get_job_status_returns_completed_video_artifacts() -> None:

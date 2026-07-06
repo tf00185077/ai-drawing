@@ -40,7 +40,8 @@ def test_create_style_preset_duplicate_409() -> None:
     mock_client.post.side_effect = httpx.HTTPStatusError("409", request=resp.request, response=resp)
     with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
         result = json.loads(create_style_preset("dup", "Y"))
-    assert result["ok"] is False and result["error"] == "already_exists"
+    assert result["ok"] is False
+    assert result["error"]["code"] == "already_exists"
 
 
 def test_reindex_style_presets_rebuilds() -> None:
@@ -86,11 +87,16 @@ def test_list_style_presets_empty_tells_agent_alternative() -> None:
 
 
 def test_get_style_preset_returns_full_recipe() -> None:
+    loras = [
+        {"name": "line.safetensors", "strength_model": 0.8},
+        {"name": "color.safetensors", "strength_model": 0.5, "strength_clip": 0.4},
+    ]
     mock_client = MagicMock()
     mock_client.get.return_value = {
         "id": "creator-a",
         "name": "Creator A",
         "checkpoint": "model.safetensors",
+        "loras": loras,
     }
 
     with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
@@ -100,6 +106,7 @@ def test_get_style_preset_returns_full_recipe() -> None:
     assert data["ok"] is True
     assert data["tool"] == "get_style_preset"
     assert data["preset"]["checkpoint"] == "model.safetensors"
+    assert data["preset"]["loras"] == loras
     assert "compose_style_preset" in data["next"]
     mock_client.get.assert_called_once_with("style-presets/creator-a")
 
@@ -114,9 +121,10 @@ def test_get_style_preset_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_style_preset"
-    assert data["where"] == "backend"
     assert data["preset_id"] == "nope"
-    assert "not found" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "not found"
+    assert data["error"]["details"]["where"] == "backend"
 
 
 def test_validate_style_presets_returns_repairable_diagnostics() -> None:
@@ -149,12 +157,13 @@ def test_validate_style_presets_returns_repairable_diagnostics() -> None:
 def test_compose_style_preset_returns_next_action() -> None:
     """compose 成功時回傳 generation payload 與呼叫 generate_image 的 next 指示"""
     mock_client = MagicMock()
+    loras = [{"name": "ordered.safetensors", "strength_model": 0.8}]
     mock_client.post.return_value = {
         "preset_id": "creator-a",
         "profile": "portrait",
         "generation": {
             "checkpoint": "model.safetensors",
-            "lora": "creator-a.safetensors",
+            "loras": loras,
             "prompt": "creator_a_style, upper body, a girl in a raincoat",
             "steps": 32,
         },
@@ -171,6 +180,7 @@ def test_compose_style_preset_returns_next_action() -> None:
     assert data["preset_id"] == "creator-a"
     assert data["profile"] == "portrait"
     assert data["generation"]["prompt"].startswith("creator_a_style")
+    assert data["generation"]["loras"] == loras
     assert "generate_image" in data["next"]
     mock_client.post.assert_called_once_with(
         "style-presets/creator-a/compose",
@@ -206,9 +216,10 @@ def test_compose_style_preset_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "compose_style_preset"
-    assert data["where"] == "backend"
     assert data["preset_id"] == "creator-a"
-    assert "unknown profile" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "unknown profile"
+    assert data["error"]["details"]["where"] == "backend"
 
 
 def test_generate_image_forwards_composed_diffusion_fields() -> None:

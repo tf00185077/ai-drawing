@@ -344,6 +344,14 @@ def validate_preset_against(
         checked[rtype] = value
         if value not in available:
             missing.append(MissingResource(resource_type=rtype, name=value))
+    for index, lora_entry in enumerate(preset.loras):
+        name = str(lora_entry.get("name") or "").strip()
+        if not name:
+            missing.append(MissingResource(resource_type="lora", name=f"loras[{index}].name"))
+            continue
+        checked[f"lora[{index}]"] = name
+        if name not in inventory.loras:
+            missing.append(MissingResource(resource_type="lora", name=name))
     _validate_note(preset, project_root, missing)
     return PresetValidation(
         preset_id=preset.id, valid=not missing, checked=checked, missing=tuple(missing)
