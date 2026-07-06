@@ -10,6 +10,8 @@ from app.schemas.lora_train import (
     DatasetAgentSummary,
     DatasetCaptionAssessmentRequest,
     DatasetCaptionAssessmentResponse,
+    DatasetCurationRequest,
+    DatasetCurationResponse,
     DatasetInspectResponse,
     DatasetListResponse,
     DatasetMetadataRequest,
@@ -37,7 +39,7 @@ from app.schemas.lora_train import (
     TriggerCheckResponse,
 )
 from app.config import get_settings
-from app.services import lora_dataset, lora_dataset_assessment, lora_trainer
+from app.services import lora_dataset, lora_dataset_assessment, lora_dataset_curation, lora_trainer
 from app.services.lora_dataset import DatasetServiceError
 
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
@@ -149,6 +151,46 @@ async def assess_dataset_captions(body: DatasetCaptionAssessmentRequest):
         return lora_dataset_assessment.assess_caption_suitability(
             body.folder,
             trigger_token=body.trigger_token,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/curate", response_model=DatasetCurationResponse)
+async def curate_dataset(body: DatasetCurationRequest):
+    """Dry-run/apply/rollback deterministic dataset caption curation."""
+    try:
+        if body.mode == "dry_run":
+            return lora_dataset_curation.plan_curation(
+                body.folder,
+                trigger_token=body.trigger_token,
+                protected_tags=body.protected_tags,
+                removable_tags=body.removable_tags,
+                approved_manual_overwrite_paths=body.approved_manual_overwrite_paths,
+            )
+        if body.mode == "apply":
+            return lora_dataset_curation.apply_curation(
+                body.folder,
+                expected_dataset_hash=body.expected_dataset_hash,
+                expected_profile_hash=body.expected_profile_hash,
+                trigger_token=body.trigger_token,
+                protected_tags=body.protected_tags,
+                removable_tags=body.removable_tags,
+                approved_manual_overwrite_paths=body.approved_manual_overwrite_paths,
+            )
+        if not body.backup_id:
+            raise HTTPException(
+                400,
+                detail={
+                    "code": "backup_id_required",
+                    "message": "backup_id is required for curation rollback",
+                    "details": {},
+                },
+            )
+        return lora_dataset_curation.rollback_curation(
+            body.folder,
+            body.backup_id,
+            approved_manual_overwrite_paths=body.approved_manual_overwrite_paths,
         )
     except DatasetServiceError as exc:
         raise _dataset_error(exc)
