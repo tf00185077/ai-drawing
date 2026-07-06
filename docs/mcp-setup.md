@@ -150,40 +150,68 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 43 個 server-side registered tool。
+>
+> `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
 
-### 最小閉環 Tools（繪圖 MVP）
+<!-- MCP-CATALOG:START -->
+| Tool | Response | Backend/API |
+|------|----------|-------------|
+| `mcp_ping` | `plain_text` | GET /health |
+| `list_character_styles` | `plain_text` | local helper |
+| `resolve_character_style_prompt` | `plain_text` | local helper |
+| `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
+| `search_nodes` | `json_string` | GET /api/comfyui/nodes |
+| `list_node_categories` | `json_string` | GET /api/comfyui/node-categories |
+| `get_node_schema` | `json_string` | GET /api/comfyui/nodes/{node_type} |
+| `gallery_list` | `plain_text` | GET /api/gallery/ |
+| `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
+| `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
+| `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
+| `generate_image` | `json_string` | POST /api/generate/ |
+| `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |
+| `get_workflow_template` | `json_string` | GET /api/generate/workflow-templates/{name} |
+| `generate_image_custom_workflow` | `json_string` | POST /api/generate/custom |
+| `generate_video_custom_workflow` | `json_string` | POST /api/generate/video/custom |
+| `generate_video_wan_keyframes` | `json_string` | POST /api/generate/video/wan-keyframes |
+| `generate_queue_status` | `plain_text` | GET /api/generate/queue |
+| `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
+| `cancel_job` | `plain_text` | DELETE /api/generate/queue/{job_id} |
+| `list_available_resources` | `json_string` | GET /api/generate/available-resources |
+| `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
+| `lora_dataset_list` | `dict` | GET /api/lora-train/datasets |
+| `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder} |
+| `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
+| `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
+| `lora_train_start` | `dict` | POST /api/lora-train/start |
+| `lora_train_status` | `dict` | GET /api/lora-train/status |
+| `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |
+| `lora_train_logs` | `dict` | GET /api/lora-train/jobs/{job_id}/logs |
+| `lora_train_cancel` | `dict` | POST /api/lora-train/jobs/{job_id}/cancel |
+| `lora_train_smoke_test` | `dict` | POST /api/lora-train/jobs/{job_id}/smoke-test |
+| `create_style_preset` | `json_string` | POST /api/style-presets/ |
+| `reindex_style_presets` | `json_string` | POST /api/style-presets/reindex |
+| `list_style_presets` | `json_string` | GET /api/style-presets/ |
+| `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
+| `validate_style_presets` | `json_string` | GET /api/style-presets/validate |
+| `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
+| `list_template_capabilities` | `json_string` | GET /api/workflow-catalog/ |
+| `match_workflow_template` | `json_string` | GET /api/workflow-catalog/match |
+| `save_workflow_template` | `json_string` | POST /api/workflow-catalog/backfill |
+| `consolidate_workflow_templates` | `json_string` | POST /api/workflow-catalog/consolidate |
+| `validate_template_capabilities` | `json_string` | GET /api/workflow-catalog/validate |
+<!-- MCP-CATALOG:END -->
 
-| Tool | 說明 |
-|------|------|
-| `list_available_resources` | 列出可用 checkpoints / LoRA / workflow，回傳 agent-friendly JSON |
-| `generate_image` | 送出生圖 job，回傳 job_id（agent 可解析 JSON） |
-| `get_generation_status` | 查詢 job 狀態（queued/running/completed），completed 時含 `artifacts[]`；圖片 job 仍含 image_id |
-| `get_gallery_image` | 取得圖片完整資訊，含 image_url、local_path、metadata |
-| `get_gallery_artifact` | 取得生成 artifact 完整資訊，含影片 local_path、mime type、file size、workflow metadata |
-| `free_comfyui_memory` | 釋放 ComfyUI 顯示記憶體，生圖完成或失敗後必須呼叫 |
-
-### 其他 Tools
-
-| Tool | 說明 | 範例指令 |
-|------|------|----------|
-| `mcp_ping` | 檢查 Backend 連線 | 檢查 ai-drawing 連線 |
-| `generate_image_from_description` | 依描述自動選 workflow 生圖 | 穿和服的初音，動漫風格，1024 |
-| `suggest_workflow_from_description` | 預覽描述解析結果 | 穿和服初音會用什麼參數 |
-| `generate_image_custom_workflow` | 自訂 workflow 生圖 | 用 default 模板產生穿和服的初音 |
-| `generate_video_custom_workflow` | 送出已知可用的 ComfyUI video workflow JSON；可選 first_frame / last_frame / video_ref | 用提供的 Wan/I2V workflow 產生短片 |
-| `list_workflow_templates` | 列出 workflow 模板 | 有哪些 workflow 可選 |
-| `get_workflow_template` | 取得模板 JSON | 取得 default 模板 |
-| `generate_queue_status` | 生圖佇列狀態 | 查生圖佇列 |
-| `get_job_status` | 查詢 job 狀態（文字回傳，相容舊用法） | 查 job-123 狀態 |
-| `get_available_resources` | 列出可用資源（文字回傳，相容舊用法） | 有哪些 checkpoint |
-| `lora_train_start` | 手動觸發 LoRA 訓練 | 開始訓練 my_lora 資料夾 |
-| `lora_train_status` | 訓練進度 | 查 LoRA 訓練進度 |
-| `gallery_list` | 圖庫列表 | 列出最近的圖 |
-| `gallery_detail` | 單張圖片參數（文字回傳，相容舊用法） | 查 id=1 的圖片參數 |
-| `gallery_rerun` | 一鍵重現 | 用 id=1 的參數再產一張 |
-| `list_character_styles` | 可用角色／風格 | 有哪些角色和風格可選 |
-| `resolve_character_style_prompt` | 預覽 prompt | 初音+動漫會變成什麼 prompt |
+<!-- MCP-OMISSIONS:START -->
+| Omitted name | Replacement | Reason |
+|--------------|-------------|--------|
+| `list_resources` | `list_available_resources` | Removed because the name collided with the MCP resources/list primitive. |
+| `get_available_resources` | `list_available_resources` | Removed legacy human-readable duplicate. |
+| `get_job_status` | `get_generation_status` | Removed legacy human-readable duplicate. |
+| `gallery_detail` | `get_gallery_image` | Removed legacy human-readable duplicate. |
+| `generate_image_from_description` | `generate_image` | Disabled regex/NLP fallback; LLM agents should submit structured generation fields directly. |
+| `suggest_workflow_from_description` | `list_template_capabilities` | Disabled regex/NLP fallback; agents should inspect catalog/schema tools directly. |
+<!-- MCP-OMISSIONS:END -->
 
 ### 影片 MCP MVP 邊界
 

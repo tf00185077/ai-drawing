@@ -8,6 +8,7 @@ import os
 
 from mcp_server.config import get_mcp_settings
 from mcp_server.server import _get_client, mcp
+from mcp_server.tools.responses import exception_error_json
 
 
 @mcp.tool()
@@ -86,15 +87,7 @@ def get_gallery_image(image_id: int) -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_gallery_image",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("get_gallery_image", e, where="backend")
 
 
 @mcp.tool()
@@ -134,15 +127,11 @@ def get_gallery_artifact(artifact_id: int) -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_gallery_artifact",
-                "where": "backend",
-                "artifact_id": artifact_id,
-                "error": str(e),
-            },
-            ensure_ascii=False,
+        return exception_error_json(
+            "get_gallery_artifact",
+            e,
+            where="backend",
+            artifact_id=artifact_id,
         )
 
 

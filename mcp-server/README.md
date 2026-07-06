@@ -4,9 +4,70 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 32 個 tool，全部回傳 agent-friendly 結構化輸出（早期的純文字重複版 `get_job_status` / `get_available_resources` / `gallery_detail` 已移除；NLP 解析版 `generate_image_from_description` / `suggest_workflow_from_description` 已停用——agent 自行解析後直接呼叫 `generate_image`）。
+> 共 43 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+>
+> 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
 > **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)` 或取出影片模板後走 `generate_video_custom_workflow`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 或 `generate_video_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
+
+<!-- MCP-CATALOG:START -->
+| Tool | Response | Backend/API |
+|------|----------|-------------|
+| `mcp_ping` | `plain_text` | GET /health |
+| `list_character_styles` | `plain_text` | local helper |
+| `resolve_character_style_prompt` | `plain_text` | local helper |
+| `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
+| `search_nodes` | `json_string` | GET /api/comfyui/nodes |
+| `list_node_categories` | `json_string` | GET /api/comfyui/node-categories |
+| `get_node_schema` | `json_string` | GET /api/comfyui/nodes/{node_type} |
+| `gallery_list` | `plain_text` | GET /api/gallery/ |
+| `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
+| `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
+| `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
+| `generate_image` | `json_string` | POST /api/generate/ |
+| `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |
+| `get_workflow_template` | `json_string` | GET /api/generate/workflow-templates/{name} |
+| `generate_image_custom_workflow` | `json_string` | POST /api/generate/custom |
+| `generate_video_custom_workflow` | `json_string` | POST /api/generate/video/custom |
+| `generate_video_wan_keyframes` | `json_string` | POST /api/generate/video/wan-keyframes |
+| `generate_queue_status` | `plain_text` | GET /api/generate/queue |
+| `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
+| `cancel_job` | `plain_text` | DELETE /api/generate/queue/{job_id} |
+| `list_available_resources` | `json_string` | GET /api/generate/available-resources |
+| `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
+| `lora_dataset_list` | `dict` | GET /api/lora-train/datasets |
+| `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder} |
+| `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
+| `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
+| `lora_train_start` | `dict` | POST /api/lora-train/start |
+| `lora_train_status` | `dict` | GET /api/lora-train/status |
+| `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |
+| `lora_train_logs` | `dict` | GET /api/lora-train/jobs/{job_id}/logs |
+| `lora_train_cancel` | `dict` | POST /api/lora-train/jobs/{job_id}/cancel |
+| `lora_train_smoke_test` | `dict` | POST /api/lora-train/jobs/{job_id}/smoke-test |
+| `create_style_preset` | `json_string` | POST /api/style-presets/ |
+| `reindex_style_presets` | `json_string` | POST /api/style-presets/reindex |
+| `list_style_presets` | `json_string` | GET /api/style-presets/ |
+| `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
+| `validate_style_presets` | `json_string` | GET /api/style-presets/validate |
+| `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
+| `list_template_capabilities` | `json_string` | GET /api/workflow-catalog/ |
+| `match_workflow_template` | `json_string` | GET /api/workflow-catalog/match |
+| `save_workflow_template` | `json_string` | POST /api/workflow-catalog/backfill |
+| `consolidate_workflow_templates` | `json_string` | POST /api/workflow-catalog/consolidate |
+| `validate_template_capabilities` | `json_string` | GET /api/workflow-catalog/validate |
+<!-- MCP-CATALOG:END -->
+
+<!-- MCP-OMISSIONS:START -->
+| Omitted name | Replacement | Reason |
+|--------------|-------------|--------|
+| `list_resources` | `list_available_resources` | Removed because the name collided with the MCP resources/list primitive. |
+| `get_available_resources` | `list_available_resources` | Removed legacy human-readable duplicate. |
+| `get_job_status` | `get_generation_status` | Removed legacy human-readable duplicate. |
+| `gallery_detail` | `get_gallery_image` | Removed legacy human-readable duplicate. |
+| `generate_image_from_description` | `generate_image` | Disabled regex/NLP fallback; LLM agents should submit structured generation fields directly. |
+| `suggest_workflow_from_description` | `list_template_capabilities` | Disabled regex/NLP fallback; agents should inspect catalog/schema tools directly. |
+<!-- MCP-OMISSIONS:END -->
 
 ### 連線檢查
 
@@ -144,6 +205,24 @@ uv run ai-drawing-mcp
 | `MCP_GALLERY_DIR` | Backend gallery 實體檔案根目錄 | `/Users/tf00185088/Desktop/ai-drawing/outputs/gallery` |
 
 > 本機 OpenClaw / ai-drawing 驗證路徑使用 backend `8001`。不要把 `8000` 當成 ai-drawing backend；本機 `8000` 可能是其他 LLM / MLX 服務。
+
+## LoRA training MCP workflow
+
+LoRA training tools now return structured JSON dictionaries with `ok`, `tool`, payload fields, and a structured `error` object on failure.
+
+Recommended agent flow:
+
+1. `lora_dataset_list()` — list folders under the backend `lora_train_dir`, including image/caption counts and dataset hash.
+2. `lora_dataset_inspect(folder, trigger_token?)` — inspect image/caption pairs and trigger-token candidates.
+3. `lora_dataset_prepare(folder, trigger_token, dry_run=True)` — preview caption rewrites without writing files.
+4. `lora_dataset_prepare(folder, trigger_token, dry_run=False, expected_dataset_hash=...)` — apply trigger-token normalization with backup.
+5. `lora_dataset_validate(folder, trigger_token, expected_dataset_hash=...)` — preflight dataset readiness before training.
+6. `lora_train_start(folder, trigger_token, expected_dataset_hash, checkpoint?, epochs?, ...)` — create a durable training job only after runtime preflight passes.
+7. `lora_train_job_status(job_id)` / `lora_train_logs(job_id)` — poll progress, stage, epoch fields, output, errors, and bounded logs.
+8. `lora_train_cancel(job_id)` — cancel queued/running jobs; terminal jobs are idempotent.
+9. `lora_train_smoke_test(job_id, prompt?)` — after successful registration, submit a generation smoke test with the registered LoRA.
+
+Training runtime preflight checks `sd_scripts_path` before enqueueing. If Kohya `sd-scripts` or the expected train script is missing, `lora_train_start` returns `ok=false` immediately instead of creating a job that instantly fails.
 
 ## 依賴
 

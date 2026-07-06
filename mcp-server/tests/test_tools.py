@@ -25,7 +25,7 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     mock_client = MagicMock()
     mock_client.get.return_value = {
         "checkpoints": ["novaAnimeXL_ilV190.safetensors", "v1-5-pruned-emaonly.ckpt"],
-        "loras": [],
+        "loras": ["artist.safetensors", "character.ckpt"],
         "workflows": ["default", "default_lora"],
     }
 
@@ -37,7 +37,8 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     assert data["tool"] == "list_available_resources"
     assert data["backend_base_url"] == "http://127.0.0.1:8001"
     assert data["checkpoints"] == ["novaAnimeXL_ilV190.safetensors", "v1-5-pruned-emaonly.ckpt"]
-    assert data["loras"] == []
+    assert data["loras"] == ["artist.safetensors", "character.ckpt"]
+    assert isinstance(data["loras"], list)
     assert data["video_models"] == []
     assert data["video_loras"] == []
     assert data["video_inputs"] == []
@@ -72,8 +73,28 @@ def test_list_resources_backend_error_returns_structured_error() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "list_available_resources"
-    assert data["where"] == "backend"
-    assert "backend down" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "backend down"
+    assert data["error"]["details"]["where"] == "backend"
+
+
+def test_list_resources_normalizes_missing_lora_lists() -> None:
+    """list_available_resources always exposes loras/video_loras as lists."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "checkpoints": [],
+        "loras": None,
+        "video_loras": None,
+        "workflows": [],
+    }
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = list_available_resources()
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["loras"] == []
+    assert data["video_loras"] == []
 
 
 def test_generate_image_returns_agent_friendly_json() -> None:
@@ -157,8 +178,9 @@ def test_generate_image_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "generate_image"
-    assert data["where"] == "backend"
-    assert "queue full" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "queue full"
+    assert data["error"]["details"]["where"] == "backend"
 
 
 def test_generate_queue_status_formats_output() -> None:
@@ -352,12 +374,39 @@ def test_generate_video_custom_workflow_submits_video_endpoint_with_refs() -> No
     assert "last_frame" not in call_json
 
 
+def test_generate_video_custom_workflow_forwards_lora_payloads() -> None:
+    """Video custom workflow forwards single and ordered multi-LoRA payloads."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "video-lora", "status": "queued"}
+    wf_json = '{"20":{"class_type":"VHS_VideoCombine","inputs":{}}}'
+    loras = [{"name": "motion.safetensors", "strength_model": 0.7}]
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_video_custom_workflow(
+            workflow=wf_json,
+            prompt="slow pan",
+            checkpoint="wan.safetensors",
+            lora="style.safetensors",
+            lora_strength=0.45,
+            loras=loras,
+        )
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["checkpoint"] == "wan.safetensors"
+    assert call_json["lora"] == "style.safetensors"
+    assert call_json["lora_strength"] == 0.45
+    assert call_json["loras"] == loras
+
+
 def test_generate_video_custom_workflow_bad_json_returns_structured_error() -> None:
     result = generate_video_custom_workflow(workflow="{bad")
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "generate_video_custom_workflow"
-    assert "JSON" in data["error"]
+    assert data["error"]["code"] == "invalid_json"
+    assert "JSON" in data["error"]["message"]
 
 
 def test_get_generation_status_queued_returns_agent_friendly_json() -> None:
@@ -476,9 +525,9 @@ def test_get_generation_status_not_found_returns_ok_false() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_generation_status"
-    assert data["where"] == "backend"
     assert data["job_id"] == "job-missing"
-    assert "not_found" in data["error"]
+    assert data["error"]["code"] == "job_not_found"
+    assert "not_found" in data["error"]["message"]
 
 
 def test_get_generation_status_backend_error_returns_structured_json() -> None:
@@ -492,9 +541,10 @@ def test_get_generation_status_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_generation_status"
-    assert data["where"] == "backend"
     assert data["job_id"] == "job-err2"
-    assert "connection refused" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "connection refused"
+    assert data["error"]["details"]["where"] == "backend"
 
 
 def test_gallery_list_returns_summary() -> None:
@@ -593,8 +643,9 @@ def test_get_gallery_image_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_gallery_image"
-    assert data["where"] == "backend"
-    assert "not found" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "not found"
+    assert data["error"]["details"]["where"] == "backend"
 
 
 def test_get_gallery_artifact_returns_agent_friendly_json() -> None:
@@ -639,9 +690,9 @@ def test_get_gallery_artifact_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_gallery_artifact"
-    assert data["where"] == "backend"
     assert data["artifact_id"] == 999
-    assert "artifact_not_found" in data["error"]
+    assert data["error"]["code"] == "RuntimeError"
+    assert "artifact_not_found" in data["error"]["message"]
 
 
 def test_free_comfyui_memory_success_returns_agent_friendly_json() -> None:
@@ -691,8 +742,9 @@ def test_free_comfyui_memory_connection_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "free_comfyui_memory"
-    assert data["where"] == "comfyui"
-    assert "connection refused" in data["error"]
+    assert data["error"]["code"] == "Exception"
+    assert data["error"]["message"] == "connection refused"
+    assert data["error"]["details"]["where"] == "comfyui"
 
 
 def test_generate_video_wan_keyframes_posts_dedicated_endpoint() -> None:

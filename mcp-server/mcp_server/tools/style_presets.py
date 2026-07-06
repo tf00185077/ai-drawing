@@ -15,6 +15,7 @@ import json
 import httpx
 
 from mcp_server.server import _get_client, mcp
+from mcp_server.tools.responses import error_json, exception_error_json
 
 
 @mcp.tool()
@@ -74,15 +75,15 @@ def create_style_preset(
             err, nxt = "invalid_request", "id must be a slug (letters/digits/_/-) and name is required"
         else:
             err, nxt = str(e), "check backend"
-        return json.dumps(
-            {"ok": False, "tool": "create_style_preset", "error": err, "next": nxt},
-            ensure_ascii=False,
+        return error_json(
+            "create_style_preset",
+            err,
+            err,
+            details={"where": "backend", "status_code": code},
+            next=nxt,
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "create_style_preset", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("create_style_preset", e, where="backend")
 
 
 @mcp.tool()
@@ -103,10 +104,7 @@ def reindex_style_presets() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {"ok": False, "tool": "reindex_style_presets", "where": "backend", "error": str(e)},
-            ensure_ascii=False,
-        )
+        return exception_error_json("reindex_style_presets", e, where="backend")
 
 
 @mcp.tool()
@@ -131,15 +129,7 @@ def list_style_presets() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "list_style_presets",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("list_style_presets", e, where="backend")
 
 
 @mcp.tool()
@@ -158,15 +148,11 @@ def get_style_preset(preset_id: str) -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "get_style_preset",
-                "where": "backend",
-                "preset_id": preset_id,
-                "error": str(e),
-            },
-            ensure_ascii=False,
+        return exception_error_json(
+            "get_style_preset",
+            e,
+            where="backend",
+            preset_id=preset_id,
         )
 
 
@@ -194,15 +180,7 @@ def validate_style_presets() -> str:
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "validate_style_presets",
-                "where": "backend",
-                "error": str(e),
-            },
-            ensure_ascii=False,
-        )
+        return exception_error_json("validate_style_presets", e, where="backend")
 
 
 @mcp.tool()
@@ -243,13 +221,9 @@ def compose_style_preset(
             ensure_ascii=False,
         )
     except Exception as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "tool": "compose_style_preset",
-                "where": "backend",
-                "preset_id": preset_id,
-                "error": str(e),
-            },
-            ensure_ascii=False,
+        return exception_error_json(
+            "compose_style_preset",
+            e,
+            where="backend",
+            preset_id=preset_id,
         )
