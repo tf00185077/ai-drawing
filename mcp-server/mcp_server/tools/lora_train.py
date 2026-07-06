@@ -173,6 +173,21 @@ def lora_dataset_validate(
 
 
 @mcp.tool()
+def lora_dataset_caption_assess(folder: str, trigger_token: str | None = None) -> dict[str, Any]:
+    """Assess caption coverage and coherence before an explicit LoRA training decision."""
+    tool = "lora_dataset_caption_assess"
+    body = _compact({"folder": folder, "trigger_token": trigger_token})
+    try:
+        return _backend_result(
+            tool,
+            _get_client().post("lora-train/datasets/caption-assessment", json=body),
+            submitted=body,
+        )
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
 def lora_train_start(
     folder: str,
     checkpoint: str | None = None,

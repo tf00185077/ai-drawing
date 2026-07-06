@@ -183,6 +183,7 @@ pip install -e .
 | `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder} |
 | `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
 | `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
+| `lora_dataset_caption_assess` | `dict` | POST /api/lora-train/datasets/caption-assessment |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
 | `lora_train_status` | `dict` | GET /api/lora-train/status |
 | `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |

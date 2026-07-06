@@ -23,6 +23,10 @@ from app.schemas.lora_docs import (
 )
 from app.schemas.lora_train import (
     CaptionChange,
+    CaptionAssessmentMetrics,
+    CaptionTagStat,
+    DatasetCaptionAssessmentRequest,
+    DatasetCaptionAssessmentResponse,
     DatasetFileItem,
     DatasetInspectResponse,
     DatasetItem,
@@ -43,6 +47,7 @@ from app.schemas.lora_train import (
     TrainStatusResponse,
     TriggerCandidate,
     TriggerCheckResponse,
+    TriggerTokenCoverage,
     ValidationIssue,
 )
 
@@ -62,6 +67,10 @@ __all__ = [
     "BatchPrefixRequest",
     "BatchPrefixResponse",
     "CaptionChange",
+    "CaptionAssessmentMetrics",
+    "CaptionTagStat",
+    "DatasetCaptionAssessmentRequest",
+    "DatasetCaptionAssessmentResponse",
     "DatasetFileItem",
     "DatasetInspectResponse",
     "DatasetItem",
@@ -82,5 +91,6 @@ __all__ = [
     "TrainStatusResponse",
     "TriggerCandidate",
     "TriggerCheckResponse",
+    "TriggerTokenCoverage",
     "ValidationIssue",
 ]
