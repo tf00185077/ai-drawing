@@ -15,7 +15,7 @@ source_url: https://civitai.com/images/131966887
 
 來源圖：<https://civitai.com/images/131966887>
 
-這個 preset 捕捉 131966887 的暗色月光、半寫實 Niji anime、強對比高光與 polished high-resolution 質感。
+這個 preset 來源於 131966887 的 Niji/Anima 多 LoRA 配方；目前只保留冷藍 Niji 上色、乾淨色彩分離、cool rim light 與受控 anime 對比，不再預設夜晚、月亮、暗背景、半寫實或 glossy/立體高光。來源圖內容線索也已從一般 prompt 中移除。
 
 ## Required resources
 
@@ -55,8 +55,8 @@ io = ["text"]
 
 ### source-color-style-neutral
 
-Reusable style profile. Keeps dark cinematic color grading, semi-realistic Niji rendering, cool rim light, glossy highlights, sharp details, high contrast, and polished finish. Excludes source subject objects such as black armor, moon, exact night sky, and original character composition.
+Reusable style profile. Keeps the usable color identity only: cool blue Niji anime palette, clean color separation, cool rim light, controlled anime contrast, refined 2D anime finish, and crisp anime hair detail. It intentionally removes night/moon/dark-background defaults and semi-real/glossy/specular positive terms; do not rely on negative prompts alone to suppress those effects.
 
 ### source-image-131966887
 
-Source reconstruction profile. Keeps source content tokens such as black hair, armor, moon, night, dark fantasy portrait, and upper-body composition.
+Former source reconstruction profile. It no longer keeps source content tokens such as black hair, armor, moon, night, or dark fantasy portrait; it now preserves only the reusable Niji color reference and cool-blue anime color separation.

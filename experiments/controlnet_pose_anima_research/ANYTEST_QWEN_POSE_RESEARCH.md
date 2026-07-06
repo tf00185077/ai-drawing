@@ -11,7 +11,7 @@ Goal: abandon the legacy Anima pose-1 route for now and test Anima-Base v1.0 `an
 Downloaded:
 
 ```text
-/Users/tf00185088/comfyui/models/controlnet/anima-lllite-any-test-like-v2.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/controlnet/anima-lllite-any-test-like-v2.safetensors
 ```
 
 Generated lineart-like control image from the earlier pose skeleton:

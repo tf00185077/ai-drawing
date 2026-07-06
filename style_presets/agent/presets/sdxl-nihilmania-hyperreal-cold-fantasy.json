@@ -1,0 +1,39 @@
+{
+  "id": "sdxl-nihilmania-hyperreal-cold-fantasy",
+  "name": "SDXL NihilMania Hyperreal Cold Fantasy",
+  "chinese_name": null,
+  "base_prompt": "hyper realistic SDXL fantasy illustration, ultra-detailed, UHD, 8K, high-resolution details, photographic realism pushed to stylized fantasy, fine texture, crisp high-frequency detail, cinematic cold color grading, icy blue highlights, luminous eye catchlights, soft depth of field, dramatic contrast, polished digital painting, detailed matte painting, clean composition, premium fantasy concept art rendering",
+  "negative_prompt": "bad quality, bad anatomy, worst quality, low quality, low resolution, extra fingers, blur, blurry, ugly, wrong proportions, watermark, image artifacts, lowres, jpeg artifacts, deformed, noisy image, deformation",
+  "template": "default",
+  "checkpoint": "sdxlUnstableDiffusers_nihilmania.safetensors",
+  "lora": null,
+  "lora_strength": null,
+  "loras": [],
+  "diffusion_model": null,
+  "text_encoder": null,
+  "vae": "sdxl_vae.safetensors",
+  "default_params": {
+    "steps": 50,
+    "cfg": 9.0,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "width": 768,
+    "height": 1368
+  },
+  "profiles": {
+    "portrait": {
+      "prompt_prefix": "hyper realistic fantasy portrait rendering, cinematic cold blue color grading, ultra-detailed skin and hair texture, ",
+      "prompt_suffix": ", UHD, crisp detail, premium fantasy concept art, dramatic depth of field, polished SDXL rendering",
+      "negative_prompt": "bad quality, bad anatomy, worst quality, low quality, low resolution, extra fingers, blur, blurry, ugly, wrong proportions, watermark, image artifacts, lowres, jpeg artifacts, deformed, noisy image, deformation",
+      "params": {
+        "steps": 50,
+        "cfg": 9.0,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras",
+        "width": 768,
+        "height": 1368
+      }
+    }
+  },
+  "note_path": "style_presets/human/sdxl-nihilmania-hyperreal-cold-fantasy.md"
+}

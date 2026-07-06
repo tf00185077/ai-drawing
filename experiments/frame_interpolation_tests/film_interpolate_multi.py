@@ -50,7 +50,7 @@ def main():
     ap.add_argument("--input", required=True)
     ap.add_argument("--outputs", nargs="+", required=True, help="Pairs output.mp4:fps, e.g. out60.mp4:60 out62.mp4:62")
     ap.add_argument("--multiplier", type=int, default=4)
-    ap.add_argument("--model", default="/Users/tf00185088/comfyui/models/frame_interpolation/film_net_fp16.pt")
+    ap.add_argument("--model", default="/Volumes/AI-Drawing-16T/ai-drawing/models/frame_interpolation/film_net_fp16.pt")
     ap.add_argument("--workdir", default=None)
     args = ap.parse_args()
     if args.multiplier < 2:

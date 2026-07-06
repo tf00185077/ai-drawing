@@ -76,6 +76,19 @@
         "lora_strength": 0.5
       },
       "notes": "CTY approved image_id=399 as the correction direction. The key method is not the yellow accessory itself: reduce Tactile Verism LoRA to 0.5, keep CFG 3.2, explicitly preserve anime face/identity, keep face lighting warm and natural, move teal/gold/noir/oil effects to background, rim/edge light, hair, clothing folds, and silhouette brushwork, and block global color/material contamination on skin. Chest-up crop helps keep the portrait focused and prevents body-area artifacts, but the durable rule is character-preserving color separation plus localized oil texture."
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "oil-anime lock: visible brushwork on hair/clothes/background, warm rim light, painterly texture; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel face, clean ink line, painterly background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, plastic skin, game cg, dark noir, black background, underexposed, metallic face",
+      "params": {
+        "cfg": 2.5,
+        "height": 1280,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "steps": 35,
+        "width": 832
+      }
     }
   },
   "note_path": "style_presets/human/tactile-verism-city-noir-anima.md",
@@ -109,7 +122,7 @@
         "version_id": 2938169,
         "strength_model": 1.0,
         "sha256": "63CB6E25EB5CDBC1879B90B00DA05B7EB3CE66C08100FD3478D9B2DB8C29E084",
-        "local_path": "/Users/tf00185088/comfyui/models/loras/Tactile_Verism-Anima-tcl-vrs-style.safetensors"
+        "local_path": "/Volumes/AI-Drawing-16T/ai-drawing/models/loras/Tactile_Verism-Anima-tcl-vrs-style.safetensors"
       }
     ],
     "required_workflow": "gen_txt2img_anima_lora_model_only",

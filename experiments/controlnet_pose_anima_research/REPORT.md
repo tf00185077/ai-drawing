@@ -425,7 +425,7 @@ https://huggingface.co/kohya-ss/Anima-LLLite/resolve/main/anima-lllite-pose-1.sa
 Destination:
 
 ```text
-/Users/tf00185088/comfyui/models/controlnet/anima-lllite-pose-1.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/controlnet/anima-lllite-pose-1.safetensors
 ```
 
 Optional related weights:

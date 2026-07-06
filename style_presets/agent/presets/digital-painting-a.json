@@ -26,6 +26,17 @@
         "cfg": 4.0,
         "steps": 30
       }
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "digital anime lock: warm pastel light, refined painterly linework, decorative key visual; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, hand-painted background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, plastic skin, game cg, harsh contrast, muddy colors, dark background",
+      "params": {
+        "steps": 30,
+        "cfg": 4.0,
+        "sampler_name": "sa_solver_pece",
+        "scheduler": "simple"
+      }
     }
   },
   "note_path": "style_presets/human/digital-painting-a.md",

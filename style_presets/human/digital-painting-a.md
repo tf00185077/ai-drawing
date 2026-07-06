@@ -34,7 +34,7 @@ source_url: https://civitai.com/models/929497/aesthetic-quality-modifiers-master
 - Selected version: `v5.1 [anima-base-1]`
 - Version id: `2961717`
 - File id: `2841058`
-- Downloaded file: `/Users/tf00185088/comfyui/models/loras/anima-base-1-masterpiece-v51.safetensors`
+- Downloaded file: `/Volumes/AI-Drawing-16T/ai-drawing/models/loras/anima-base-1-masterpiece-v51.safetensors`
 - SHA256: `B330B46DF1C71E4409D7B60ECF45DF4EE26310FA914C398226C7800CC2912936`
 
 ## 從使用者 prompt 提煉出的風格元素

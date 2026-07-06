@@ -37,6 +37,16 @@
         "seed": 3797619011,
         "steps": 30
       }
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "pastel lock: airy pastel palette, soft cinematic color, gentle film grain; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, hand-painted background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, plastic skin, game cg, dark background, gloomy, underexposed",
+      "params": {
+        "cfg": 5.0,
+        "sampler_name": "er_sde",
+        "steps": 30
+      }
     }
   },
   "note_path": "style_presets/human/asagi-floral-pastel-anima.md",

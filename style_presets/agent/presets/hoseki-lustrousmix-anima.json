@@ -37,6 +37,16 @@
       },
       "prompt_prefix": "abstract, multicolored background, jewel-like color accents, pensive expression, from side, looking at object, gem motif, holding gem",
       "prompt_suffix": "pale skin, elegant uniform styling, sharp silhouette, calm dramatic composition"
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "gem-color lock: abstract multicolor, translucent highlights, sharp silhouette; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, hand-painted background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, plastic skin, game cg, dark background, gemstone focus, jewelry focus",
+      "params": {
+        "cfg": 4.0,
+        "sampler_name": "euler_ancestral",
+        "steps": 24
+      }
     }
   },
   "note_path": "style_presets/human/hoseki-lustrousmix-anima.md",

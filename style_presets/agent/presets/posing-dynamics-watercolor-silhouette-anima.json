@@ -37,6 +37,19 @@
         "width": 832,
         "height": 1152
       }
+    },
+    "anime-2d-default": {
+      "prompt_prefix": "watercolor lock: pastel wash, wet-on-wet bleeding, speckles/petals, airy white space; pure hand-drawn 2D Japanese anime",
+      "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, keep watercolor background, no 3D lighting",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, plastic skin, game cg, hard flat cel background, dark background, muddy colors",
+      "params": {
+        "steps": 30,
+        "cfg": 7,
+        "width": 832,
+        "height": 1152,
+        "sampler_name": "er_sde",
+        "scheduler": "simple"
+      }
     }
   },
   "note_path": "style_presets/human/posing-dynamics-watercolor-silhouette-anima.md",

@@ -40,7 +40,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
-    ap.add_argument("--model", default="/Users/tf00185088/comfyui/models/frame_interpolation/film_net_fp16.pt")
+    ap.add_argument("--model", default="/Volumes/AI-Drawing-16T/ai-drawing/models/frame_interpolation/film_net_fp16.pt")
     ap.add_argument("--fps", type=float, default=32.0, help="Output fps. For 16fps source x2, use 32 to preserve duration; use 30 for target 30fps with slight slow-down.")
     ap.add_argument("--workdir", default=None)
     args = ap.parse_args()

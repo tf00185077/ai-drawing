@@ -75,8 +75,8 @@ This confirms the local ComfyUI build has native Qwen edit/multi-image condition
 Local model inventory found only:
 
 ```text
-/Users/tf00185088/comfyui/models/text_encoders/qwen_3_06b_base.safetensors
-/Users/tf00185088/comfyui/models/vae/qwen_image_vae.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/text_encoders/qwen_3_06b_base.safetensors
+/Volumes/AI-Drawing-16T/ai-drawing/models/vae/qwen_image_vae.safetensors
 ```
 
 Missing for Route B Qwen-Image Union/DiffSynth:
