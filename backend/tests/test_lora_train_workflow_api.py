@@ -1,6 +1,7 @@
 """LoRA training workflow API tests."""
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -185,6 +186,136 @@ def test_dataset_profile_fields_are_returned_without_starting_training(tmp_path:
 
     assert validated.status_code == 200
     assert validated.json()["folder"] == "character/miku"
+    enqueue.assert_not_called()
+
+
+def test_dataset_metadata_endpoints_validate_update_and_conflict(tmp_path: Path, monkeypatch) -> None:
+    """Metadata endpoints validate proposed profiles, write explicitly, and reject stale hashes."""
+    lora_train_dir = tmp_path / "lora_train"
+    dataset = _make_dataset(lora_train_dir)
+    profile_path = dataset / ".lora-dataset.json"
+    settings = _settings(tmp_path, lora_train_dir)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+
+    client = _client()
+    missing = client.get("/api/lora-train/datasets/character/miku/metadata")
+    assert missing.status_code == 200
+    missing_payload = missing.json()
+    assert missing_payload["ok"] is True
+    assert missing_payload["valid"] is True
+    assert missing_payload["profile_hash"] is None
+    assert missing_payload["profile"]["present"] is False
+    assert missing_payload["profile"]["trigger_token"] == "miku_token"
+
+    invalid = client.post(
+        "/api/lora-train/datasets/character/miku/metadata/validate",
+        json={"profile": {"dataset_type": "vehicle", "protected_tags": "miku_token"}},
+    )
+    assert invalid.status_code == 200
+    invalid_payload = invalid.json()
+    assert invalid_payload["ok"] is True
+    assert invalid_payload["valid"] is False
+    assert {error["code"] for error in invalid_payload["errors"]} == {
+        "unsupported_dataset_type",
+        "invalid_profile_field",
+    }
+    assert not profile_path.exists()
+
+    updated = client.put(
+        "/api/lora-train/datasets/character/miku/metadata",
+        json={
+            "expected_profile_hash": None,
+            "profile": {
+                "dataset_type": "character",
+                "trigger_token": "Miku Token!",
+                "caption_profile": "wd_tags",
+                "model_family": "sd15",
+                "protected_tags": [" solo ", ""],
+                "remove_tags": ["bad anatomy"],
+                "auto_train": True,
+            },
+        },
+    )
+    assert updated.status_code == 200
+    updated_payload = updated.json()
+    assert updated_payload["ok"] is True
+    assert updated_payload["updated"] is True
+    assert updated_payload["valid"] is True
+    assert updated_payload["profile"]["trigger_token"] == "miku_token"
+    assert updated_payload["profile"]["removable_tags"] == ["bad anatomy"]
+    assert updated_payload["profile"]["warnings"][0]["code"] == "auto_train_descriptive_only"
+    current_hash = updated_payload["profile_hash"]
+    assert current_hash == hashlib.sha256(profile_path.read_bytes()).hexdigest()
+    written_profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    assert written_profile["dataset_type"] == "character"
+    assert written_profile["removable_tags"] == ["bad anatomy"]
+
+    before_bytes = profile_path.read_bytes()
+    validate_after_update = client.post(
+        "/api/lora-train/datasets/character/miku/metadata/validate",
+        json={"profile": {"dataset_type": "style", "trigger_token": "style_token"}},
+    )
+    assert validate_after_update.status_code == 200
+    assert validate_after_update.json()["valid"] is True
+    assert profile_path.read_bytes() == before_bytes
+
+    stale = client.put(
+        "/api/lora-train/datasets/character/miku/metadata",
+        json={"expected_profile_hash": "old-hash", "profile": {"dataset_type": "style"}},
+    )
+    assert stale.status_code == 409
+    assert stale.json()["detail"]["code"] == "profile_hash_mismatch"
+    assert stale.json()["detail"]["details"]["current_profile_hash"] == current_hash
+
+
+def test_dataset_metadata_get_reports_malformed_profile_as_payload(tmp_path: Path, monkeypatch) -> None:
+    """Malformed metadata is a structured profile state, not a backend transport failure."""
+    lora_train_dir = tmp_path / "lora_train"
+    dataset = _make_dataset(lora_train_dir)
+    profile_path = dataset / ".lora-dataset.json"
+    profile_path.write_text("{not json", encoding="utf-8")
+    settings = _settings(tmp_path, lora_train_dir)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+
+    client = _client()
+    response = client.get("/api/lora-train/datasets/character/miku/metadata")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["valid"] is False
+    assert payload["profile_hash"] == hashlib.sha256(profile_path.read_bytes()).hexdigest()
+    assert payload["profile"]["present"] is True
+    assert payload["errors"][0]["code"] == "invalid_profile_json"
+
+
+def test_dataset_agent_inspect_composes_profile_caption_and_validation(tmp_path: Path, monkeypatch) -> None:
+    """Agent inspection bundles profile, caption suitability, hashes, and validation without training."""
+    lora_train_dir = tmp_path / "lora_train"
+    dataset = _make_dataset(lora_train_dir)
+    (dataset / ".lora-dataset.json").write_text(
+        json.dumps({"dataset_type": "vehicle", "trigger_token": "miku_token"}),
+        encoding="utf-8",
+    )
+    settings = _settings(tmp_path, lora_train_dir)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+
+    client = _client()
+    with patch("app.api.lora_train.lora_trainer.enqueue") as enqueue:
+        response = client.get("/api/lora-train/datasets/character/miku/agent-inspect")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["folder"] == "character/miku"
+    assert payload["dataset"]["image_count"] == 2
+    assert payload["dataset_hash"]
+    assert payload["profile_hash"]
+    assert payload["profile"]["valid"] is False
+    assert payload["profile_validation"]["errors"][0]["code"] == "unsupported_dataset_type"
+    assert payload["caption_suitability"]["verdict"] in {"suitable", "needs_review", "not_suitable"}
+    assert payload["caption_suitability"]["trigger_token_coverage"]["normalized_trigger_token"] == "miku_token"
+    assert payload["validation"]["normalized_trigger_token"] == "miku_token"
     enqueue.assert_not_called()
 
 

@@ -6,10 +6,17 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.lora_train import (
+    DatasetAgentInspectionResponse,
+    DatasetAgentSummary,
     DatasetCaptionAssessmentRequest,
     DatasetCaptionAssessmentResponse,
     DatasetInspectResponse,
     DatasetListResponse,
+    DatasetMetadataRequest,
+    DatasetMetadataResponse,
+    DatasetMetadataUpdateRequest,
+    DatasetMetadataUpdateResponse,
+    DatasetProfileValidationSummary,
     DatasetPrepareRequest,
     DatasetPrepareResponse,
     DatasetValidateRequest,
@@ -38,7 +45,7 @@ router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
 
 def _dataset_error(exc: DatasetServiceError) -> HTTPException:
     detail = {"code": exc.code, "message": exc.message, "details": exc.details}
-    if exc.code in {"dataset_locked", "dataset_hash_mismatch"}:
+    if exc.code in {"dataset_locked", "dataset_hash_mismatch", "profile_hash_mismatch"}:
         return HTTPException(409, detail=detail)
     if exc.code in {"dataset_not_found", "backup_not_found"}:
         return HTTPException(404, detail=detail)
@@ -142,6 +149,79 @@ async def assess_dataset_captions(body: DatasetCaptionAssessmentRequest):
         return lora_dataset_assessment.assess_caption_suitability(
             body.folder,
             trigger_token=body.trigger_token,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.get("/datasets/{folder:path}/metadata", response_model=DatasetMetadataResponse)
+async def get_dataset_metadata(folder: str):
+    """讀取 dataset-local .lora-dataset.json metadata profile。"""
+    try:
+        return lora_dataset.get_metadata_profile(folder)
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/{folder:path}/metadata/validate", response_model=DatasetMetadataResponse)
+async def validate_dataset_metadata(folder: str, body: DatasetMetadataRequest):
+    """驗證 proposed metadata profile；不寫入 .lora-dataset.json。"""
+    try:
+        return lora_dataset.validate_metadata_profile(folder, body.profile)
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.put("/datasets/{folder:path}/metadata", response_model=DatasetMetadataUpdateResponse)
+async def update_dataset_metadata(folder: str, body: DatasetMetadataUpdateRequest):
+    """以 profile_hash conflict protection 更新 dataset metadata profile。"""
+    try:
+        return lora_dataset.update_metadata_profile(
+            folder,
+            body.profile,
+            expected_profile_hash=body.expected_profile_hash,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.get("/datasets/{folder:path}/agent-inspect", response_model=DatasetAgentInspectionResponse)
+async def agent_inspect_dataset(folder: str, trigger_token: str | None = Query(default=None)):
+    """組合 dataset/profile/caption suitability signals 給 agent 做 pre-training review。"""
+    try:
+        inspected = lora_dataset.inspect_dataset(folder)
+        token = trigger_token or inspected.profile.trigger_token
+        if not token and inspected.trigger_token_candidates:
+            token = inspected.trigger_token_candidates[0]
+        validation = (
+            lora_dataset.validate_dataset(inspected.folder, trigger_token=token)
+            if token
+            else None
+        )
+        caption_suitability = lora_dataset_assessment.assess_caption_suitability(
+            inspected.folder,
+            trigger_token=token,
+        )
+        return DatasetAgentInspectionResponse(
+            folder=inspected.folder,
+            dataset_hash=inspected.dataset_hash,
+            profile_hash=inspected.profile_hash,
+            dataset=DatasetAgentSummary(
+                folder=inspected.folder,
+                image_count=inspected.image_count,
+                caption_count=inspected.caption_count,
+                missing_caption_count=inspected.missing_caption_count,
+                locked=inspected.locked,
+                trigger_token_candidates=inspected.trigger_token_candidates,
+            ),
+            profile=inspected.profile,
+            profile_validation=DatasetProfileValidationSummary(
+                valid=inspected.profile.valid,
+                warnings=inspected.profile.warnings,
+                errors=inspected.profile.errors,
+            ),
+            caption_suitability=caption_suitability,
+            validation=validation,
         )
     except DatasetServiceError as exc:
         raise _dataset_error(exc)

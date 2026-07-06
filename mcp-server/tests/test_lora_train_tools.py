@@ -7,8 +7,12 @@ import httpx
 
 from mcp_server.tools.lora_train import (
     lora_dataset_caption_assess,
+    lora_dataset_agent_inspect,
     lora_dataset_inspect,
     lora_dataset_list,
+    lora_dataset_metadata_get,
+    lora_dataset_metadata_update,
+    lora_dataset_metadata_validate,
     lora_dataset_prepare,
     lora_dataset_validate,
     lora_train_cancel,
@@ -171,6 +175,164 @@ def test_lora_dataset_caption_assess_surfaces_backend_error() -> None:
     assert result["tool"] == "lora_dataset_caption_assess"
     assert result["status_code"] == 404
     assert result["error"]["code"] == "dataset_not_found"
+
+
+def test_lora_dataset_metadata_tools_return_structured_payloads() -> None:
+    """Metadata get/validate/update forward backend payloads without treating invalid profiles as transport errors."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "ok": True,
+        "folder": "character/miku",
+        "valid": True,
+        "profile_hash": "profile-hash-a",
+        "profile": {"present": True, "valid": True, "dataset_type": "character"},
+        "warnings": [],
+        "errors": [],
+    }
+    mock_client.post.return_value = {
+        "ok": True,
+        "folder": "character/miku",
+        "valid": False,
+        "profile_hash": "profile-hash-a",
+        "profile": {"present": True, "valid": False, "dataset_type": "unknown"},
+        "warnings": [],
+        "errors": [{"code": "unsupported_dataset_type", "message": "unsupported"}],
+    }
+    mock_client.put.return_value = {
+        "ok": True,
+        "folder": "character/miku",
+        "valid": True,
+        "updated": True,
+        "profile_hash": "profile-hash-b",
+        "profile": {"present": True, "valid": True, "dataset_type": "style"},
+        "warnings": [],
+        "errors": [],
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        got = lora_dataset_metadata_get("character/miku")
+        validated = lora_dataset_metadata_validate("character/miku", {"dataset_type": "vehicle"})
+        updated = lora_dataset_metadata_update(
+            "character/miku",
+            {"dataset_type": "style"},
+            expected_profile_hash="profile-hash-a",
+        )
+
+    assert got["ok"] is True
+    assert got["tool"] == "lora_dataset_metadata_get"
+    assert got["profile_hash"] == "profile-hash-a"
+    assert validated["ok"] is True
+    assert validated["tool"] == "lora_dataset_metadata_validate"
+    assert validated["valid"] is False
+    assert "error" not in validated
+    assert updated["ok"] is True
+    assert updated["tool"] == "lora_dataset_metadata_update"
+    assert updated["updated"] is True
+    assert updated["submitted"]["expected_profile_hash"] == "profile-hash-a"
+    mock_client.get.assert_called_once_with("lora-train/datasets/character/miku/metadata")
+    mock_client.post.assert_called_once_with(
+        "lora-train/datasets/character/miku/metadata/validate",
+        json={"profile": {"dataset_type": "vehicle"}},
+    )
+    mock_client.put.assert_called_once_with(
+        "lora-train/datasets/character/miku/metadata",
+        json={
+            "profile": {"dataset_type": "style"},
+            "expected_profile_hash": "profile-hash-a",
+        },
+    )
+
+
+def test_lora_dataset_metadata_update_surfaces_profile_hash_conflict() -> None:
+    """Stale profile hashes are forwarded as structured MCP conflicts."""
+    mock_client = MagicMock()
+    mock_client.put.side_effect = _http_error(
+        409,
+        {
+            "code": "profile_hash_mismatch",
+            "message": "profile hash does not match expected hash",
+            "details": {"current_profile_hash": "profile-hash-new"},
+        },
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_metadata_update(
+            "character/miku",
+            {"dataset_type": "style"},
+            expected_profile_hash="profile-hash-old",
+        )
+
+    assert result["ok"] is False
+    assert result["tool"] == "lora_dataset_metadata_update"
+    assert result["status_code"] == 409
+    assert result["error"]["code"] == "profile_hash_mismatch"
+    assert result["error"]["details"]["current_profile_hash"] == "profile-hash-new"
+
+
+def test_lora_dataset_agent_inspect_returns_profile_states_as_payloads() -> None:
+    """Agent inspection keeps valid, missing, and invalid profile states as successful structured payloads."""
+    mock_client = MagicMock()
+    mock_client.get.side_effect = [
+        {
+            "ok": True,
+            "folder": "character/valid",
+            "dataset_hash": "dataset-hash-a",
+            "profile_hash": "profile-hash-a",
+            "dataset": {"folder": "character/valid", "image_count": 2},
+            "profile": {"present": True, "valid": True, "dataset_type": "character"},
+            "profile_validation": {"valid": True, "warnings": [], "errors": []},
+            "caption_suitability": {"verdict": "suitable", "reasons": [], "recommendations": []},
+            "validation": {"ok": True},
+        },
+        {
+            "ok": True,
+            "folder": "character/missing",
+            "dataset_hash": "dataset-hash-b",
+            "profile_hash": None,
+            "dataset": {"folder": "character/missing", "image_count": 2},
+            "profile": {"present": False, "valid": True, "dataset_type": "unknown"},
+            "profile_validation": {"valid": True, "warnings": [], "errors": []},
+            "caption_suitability": {"verdict": "needs_review", "reasons": ["low coverage"]},
+            "validation": {"ok": False},
+        },
+        {
+            "ok": True,
+            "folder": "character/invalid",
+            "dataset_hash": "dataset-hash-c",
+            "profile_hash": "profile-hash-c",
+            "dataset": {"folder": "character/invalid", "image_count": 2},
+            "profile": {"present": True, "valid": False, "dataset_type": "unknown"},
+            "profile_validation": {
+                "valid": False,
+                "warnings": [],
+                "errors": [{"code": "invalid_profile_json", "message": "invalid"}],
+            },
+            "caption_suitability": {"verdict": "not_suitable", "reasons": ["missing captions"]},
+            "validation": {"ok": False},
+        },
+    ]
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        valid = lora_dataset_agent_inspect("character/valid", trigger_token="valid_token")
+        missing = lora_dataset_agent_inspect("character/missing")
+        invalid = lora_dataset_agent_inspect("character/invalid")
+
+    assert valid["ok"] is True
+    assert valid["tool"] == "lora_dataset_agent_inspect"
+    assert valid["profile_validation"]["valid"] is True
+    assert missing["ok"] is True
+    assert missing["profile"]["present"] is False
+    assert missing["caption_suitability"]["verdict"] == "needs_review"
+    assert invalid["ok"] is True
+    assert invalid["profile_validation"]["valid"] is False
+    assert invalid["caption_suitability"]["verdict"] == "not_suitable"
+    assert "error" not in invalid
+    mock_client.get.assert_any_call(
+        "lora-train/datasets/character/valid/agent-inspect",
+        params={"trigger_token": "valid_token"},
+    )
+    mock_client.get.assert_any_call("lora-train/datasets/character/missing/agent-inspect", params=None)
+    mock_client.get.assert_any_call("lora-train/datasets/character/invalid/agent-inspect", params=None)
 
 
 def test_lora_train_start_and_status_return_structured_success() -> None:
