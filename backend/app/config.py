@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
     lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
     lora_checkpoint_dirs: str = ""  # 逗號分隔，純檔名 checkpoint 在此搜尋
+    lora_model_family: str = ""  # sd15 | sdxl | anima；未設定時沿用 lora_sdxl
+    lora_anima_qwen3: str = ""  # Anima/Qwen3 text encoder path；model_family=anima 時必填
+    lora_anima_vae: str = ""  # Anima/Qwen-Image VAE path；可由 API 覆寫
+    lora_anima_t5_tokenizer_path: str = ""  # Anima T5 tokenizer path；空值使用 sd-scripts bundled configs/t5_old
     lora_sdxl: bool = False  # True 時使用 sdxl_train_network.py（SDXL/PDXL 模型）
     lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
     sd_scripts_path: str = _project_root_path("sd-scripts")
@@ -139,6 +143,12 @@ class Settings(BaseSettings):
         self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
         self.lora_train_logs_dir = _resolve_project_path(self.lora_train_logs_dir)
         self.sd_scripts_path = _resolve_project_path(self.sd_scripts_path)
+        if self.lora_anima_qwen3:
+            self.lora_anima_qwen3 = _resolve_project_path(self.lora_anima_qwen3)
+        if self.lora_anima_vae:
+            self.lora_anima_vae = _resolve_project_path(self.lora_anima_vae)
+        if self.lora_anima_t5_tokenizer_path:
+            self.lora_anima_t5_tokenizer_path = _resolve_project_path(self.lora_anima_t5_tokenizer_path)
         self.watch_dirs = _resolve_path_list(self.watch_dirs)
         return self
 

@@ -228,6 +228,7 @@ pip install -e .
 - **「產生初音、動漫風格的圖」** → 呼叫 `generate_image(character="初音", style="動漫")`
 - **「用 default 模板產生穿和服的初音」** → 呼叫 `list_workflow_templates` → `get_workflow_template("default")` → `generate_image_custom_workflow(workflow=..., character="初音", prompt="1girl, kimono")`
 - **「開始訓練 my_char 資料夾的 LoRA」** → 呼叫 `lora_train_start(folder="my_char")`
+- **「用 Anima 訓練 my_char」** → 呼叫 `lora_train_start(folder="my_char", model_family="anima", anima_qwen3="...", anima_vae="...")`，或先在 backend `.env` 設定 `LORA_ANIMA_QWEN3` / `LORA_ANIMA_VAE`；未指定 `network_module` 時會使用 `networks.lora_anima`
 - **「列出最近 5 張圖」** → 呼叫 `gallery_list(limit=5)`
 - **「用第 3 張的參數再產一張」** → 呼叫 `gallery_rerun(image_id=3)`
 

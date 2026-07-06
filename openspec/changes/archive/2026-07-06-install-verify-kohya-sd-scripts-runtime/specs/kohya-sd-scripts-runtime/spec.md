@@ -7,6 +7,9 @@ The project runtime SHALL be configured with a local Kohya `sd-scripts` checkout
 - **WHEN** the runtime preflight resolves `SD_SCRIPTS_PATH`
 - **THEN** that path contains `train_network.py`
 - **AND** it contains `sdxl_train_network.py`
+- **AND** it contains `anima_train_network.py`
+- **AND** it contains `anima_train.py`
+- **AND** it contains `library/anima_train_utils.py`
 - **AND** it contains `finetune/tag_images_by_wd14_tagger.py`
 
 #### Scenario: Training launcher is available
@@ -29,9 +32,27 @@ The project SHALL keep machine-local runtime values and generated model artifact
 ### Requirement: Full LoRA training happy path is verified against real runtime
 The project SHALL verify the implemented LoRA workflow against a real bounded Kohya training run instead of a mocked completion.
 
+#### Scenario: Anima model routes through Anima trainer
+- **WHEN** `lora_train_start` is called with `model_family=anima`
+- **THEN** the backend validates `anima_train_network.py` under `SD_SCRIPTS_PATH`
+- **AND** the backend validates a configured or request-provided Qwen3 text encoder path before creating a durable job
+- **AND** the durable job params record `model_family=anima`
+- **AND** the durable job params record `trainer_script=anima_train_network.py`
+- **AND** the durable job params record the resolved `network_module`
+- **AND** the default resolved `network_module` is `networks.lora_anima` unless the request explicitly provides a different `network_module`
+- **AND** the durable job params record the resolved Anima Qwen3 path and any resolved Anima VAE or T5 tokenizer path
+- **AND** the launched command includes `--qwen3` and includes `--vae` when an Anima VAE path is configured or provided
+- **AND** the launched command includes `--network_module networks.lora_anima` unless the request explicitly provides a different `network_module`
+- **AND** the backend does not launch `train_network.py` or `sdxl_train_network.py` for that job
+
+#### Scenario: Unsupported trainer family is rejected
+- **WHEN** `lora_train_start` is called with a `model_family` outside `sd15`, `sdxl`, or `anima`
+- **THEN** the backend returns a structured `unsupported_model_family` error
+- **AND** it does not create or queue a durable training job
+
 #### Scenario: Small dataset trains through backend workflow
 - **WHEN** a small LoRA dataset is inspected, prepared with dry-run, applied, and validated through the backend or MCP workflow
-- **THEN** `lora_train_start` can queue a durable job
+- **THEN** `lora_train_start` can queue a durable Anima job with `model_family=anima`
 - **AND** polling status and logs shows the job moving through training stages
 - **AND** the job reaches a terminal status based on the real Kohya subprocess result
 
