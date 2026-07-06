@@ -1,0 +1,155 @@
+## ADDED Requirements
+
+### Requirement: Dataset folders are discoverable and inspectable
+The backend SHALL expose LoRA dataset discovery for folders under `lora_train_dir`, including trainable image counts, caption coverage, dataset hash, lock state, and detected trigger-token consistency.
+
+#### Scenario: List datasets with summary fields
+- **WHEN** a client requests the LoRA dataset list
+- **THEN** the response includes each dataset folder under `lora_train_dir`
+- **AND** each item includes image count, caption count, missing caption count, dataset hash, and lock state
+
+#### Scenario: Inspect one dataset with file-level details
+- **WHEN** a client inspects a dataset folder
+- **THEN** the response includes image/caption pairs, missing captions, current caption text or caption path metadata, detected trigger-token candidates, dataset hash, and validation summary
+
+### Requirement: Dataset preparation supports dry-run, apply, backup, and restore
+The backend SHALL prepare LoRA captions with deterministic trigger-token normalization and optional AI-assisted cleanup. Preparation SHALL support dry-run without writes, apply with backup creation, and restore from a previous backup.
+
+#### Scenario: Dry-run previews deterministic trigger-token changes
+- **WHEN** a client prepares a dataset with `dry_run=true` and a requested trigger token
+- **THEN** no caption files are modified
+- **AND** the response includes the normalized trigger token, proposed per-file changes, counts of changed/unchanged captions, and dataset hash before changes
+
+#### Scenario: Apply writes normalized captions with backup
+- **WHEN** a client prepares a dataset with `dry_run=false`
+- **THEN** the backend creates a restorable backup before modifying captions
+- **AND** every trainable caption begins with the normalized trigger token exactly once
+- **AND** the response includes the backup id, dataset hash before changes, and dataset hash after changes
+
+#### Scenario: AI-assisted cleanup is deterministic after post-filtering
+- **WHEN** AI-assisted cleanup is requested and an AI caption provider is configured
+- **THEN** the backend applies deterministic caption filtering and trigger-token normalization after AI output
+- **AND** the final proposed or written captions remain comma-separated caption text
+
+#### Scenario: Restore reverts an applied preparation
+- **WHEN** a client restores a dataset using a valid backup id
+- **THEN** caption files are restored from that backup
+- **AND** the response includes the restored dataset hash
+
+### Requirement: Dataset validation blocks unsafe training starts
+The backend SHALL validate a dataset before training and return structured errors and warnings. Training start SHALL reject invalid datasets.
+
+#### Scenario: Valid dataset passes preflight
+- **WHEN** a dataset has enough trainable image/caption pairs and each caption contains the normalized trigger token
+- **THEN** validation returns `ok=true`
+- **AND** includes image count, caption count, normalized trigger token, dataset hash, and no blocking errors
+
+#### Scenario: Missing captions fail validation
+- **WHEN** one or more trainable images have no matching `.txt` caption
+- **THEN** validation returns `ok=false`
+- **AND** includes blocking errors identifying the affected image paths
+
+#### Scenario: Stale dataset hash is rejected
+- **WHEN** a client validates or starts training with an `expected_dataset_hash` that no longer matches the dataset
+- **THEN** the backend returns a conflict-style failure
+- **AND** includes the current dataset hash so the client can re-inspect or re-validate
+
+### Requirement: Dataset locks prevent watcher and training races
+The backend SHALL coordinate dataset preparation, validation, watcher caption writes, and training with per-dataset locks and hash checks.
+
+#### Scenario: Preparation holds a dataset lock
+- **WHEN** dataset preparation is applying caption changes
+- **THEN** concurrent preparation, validation-for-start, or training start for the same folder is rejected or waits according to the API timeout
+- **AND** the response identifies the dataset as locked when it cannot proceed
+
+#### Scenario: Watcher does not overwrite locked caption edits
+- **WHEN** the watcher detects a new image in a folder that is locked for preparation or training
+- **THEN** watcher caption generation does not overwrite in-flight caption edits
+- **AND** the watcher retries or defers according to the backend lock policy
+
+### Requirement: LoRA training jobs are durable and queryable by job id
+The backend SHALL persist every LoRA training job with job id, folder, status, stage, progress, current epoch, total epochs, log path, log tail metadata, output path, registered LoRA name, error, dataset hash, parameters, and timestamps.
+
+#### Scenario: Training start creates a persistent queued job
+- **WHEN** a client starts training for a validated dataset
+- **THEN** the backend returns a `job_id`
+- **AND** a persistent job record is created with status `queued`, dataset hash, normalized trigger token, and submitted parameters
+
+#### Scenario: Running job exposes progress and stage
+- **WHEN** the Kohya subprocess emits parseable epoch or step output
+- **THEN** the backend updates the job progress, current epoch, total epochs, and stage in persistent storage
+
+#### Scenario: Completed job remains queryable after worker restart
+- **WHEN** a training job reaches a terminal status
+- **THEN** querying by `job_id` returns the terminal status, output or error fields, timestamps, and log metadata even after the process restarts
+
+#### Scenario: Failed job records structured error
+- **WHEN** training fails before output registration
+- **THEN** the job is marked `failed`
+- **AND** the job stores an error message and recent log tail for diagnosis
+
+### Requirement: Training logs are persisted and retrievable
+The backend SHALL write each LoRA training job's stdout and stderr to a per-job log file and expose bounded log retrieval.
+
+#### Scenario: Log tail returns recent output
+- **WHEN** a client requests logs for a job with a line limit
+- **THEN** the response includes at most that many recent log lines
+- **AND** indicates whether earlier output was truncated
+
+#### Scenario: Missing log is reported without hiding job state
+- **WHEN** a job exists but its log file cannot be read
+- **THEN** the log endpoint returns a structured error for log retrieval
+- **AND** job status remains queryable from persistent job state
+
+### Requirement: LoRA training jobs can be cancelled
+The backend SHALL support cancellation for queued and running LoRA training jobs.
+
+#### Scenario: Queued job is cancelled before subprocess start
+- **WHEN** a client cancels a queued job
+- **THEN** the job is removed from the execution queue
+- **AND** the persistent job status becomes `cancelled`
+
+#### Scenario: Running job termination is tracked
+- **WHEN** a client cancels a running job
+- **THEN** the backend requests subprocess termination
+- **AND** the persistent job status becomes `cancelled` after the process exits
+- **AND** dataset locks and worker slots are released
+
+#### Scenario: Cancelling a terminal job is idempotent
+- **WHEN** a client cancels a completed, failed, or already-cancelled job
+- **THEN** the backend returns the existing terminal state without starting new work
+
+### Requirement: Successful LoRA outputs are registered for ComfyUI
+The backend SHALL register successful `.safetensors` LoRA outputs into the configured ComfyUI LoRA directory and record the registered LoRA name on the job.
+
+#### Scenario: Output file is registered atomically
+- **WHEN** training succeeds and a `.safetensors` output is found
+- **THEN** the backend copies or links it into the ComfyUI LoRA directory using an atomic completion step
+- **AND** records `output_path` and `registered_lora_name` on the job
+
+#### Scenario: Registration failure preserves training output
+- **WHEN** training succeeds but registration fails
+- **THEN** the job records the output path and registration error
+- **AND** the failure is visible in job status without deleting the trained file
+
+### Requirement: Registered LoRAs can be smoke-tested through generation
+The backend SHALL provide a smoke test operation for a completed LoRA training job that submits a generation using the registered LoRA and records the generation result through the existing generation/recording path.
+
+#### Scenario: Smoke test starts generation for a registered LoRA
+- **WHEN** a client requests a smoke test for a completed job with a registered LoRA
+- **THEN** the backend submits a generation request using that LoRA and the normalized trigger token
+- **AND** returns the generation job id or recorded artifact reference
+
+#### Scenario: Smoke test failure is attached to the LoRA job
+- **WHEN** smoke test generation fails or cannot be submitted
+- **THEN** the LoRA job remains completed if training and registration succeeded
+- **AND** the smoke test error is recorded separately on the job status
+
+### Requirement: LoRA training API and trainer schema are aligned
+The backend SHALL keep LoRA training API request schemas and trainer enqueue parameters aligned so start requests do not reference removed fields.
+
+#### Scenario: Start request does not read missing generate-after field
+- **WHEN** a valid `TrainStartRequest` without `generate_after` is submitted
+- **THEN** the API does not raise an attribute error for `generate_after`
+- **AND** the request is validated and queued or rejected for dataset-specific reasons only
+

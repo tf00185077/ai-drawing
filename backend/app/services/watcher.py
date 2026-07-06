@@ -10,6 +10,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from app.config import get_settings
+from app.services.lora_dataset import is_path_locked
 from app.services.wd_tagger import run_wd_tagger
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,11 @@ def on_new_image(image_path: Path) -> None:
     parent_dir = path.parent
 
     def _do_tag() -> None:
+        if is_path_locked(parent_dir):
+            logger.info("略過 WD Tagger：dataset 鎖定中 %s", parent_dir)
+            with _debounce_lock:
+                _debounce_timers.pop(parent_dir, None)
+            return
         run_wd_tagger(parent_dir)
         with _debounce_lock:
             _debounce_timers.pop(parent_dir, None)

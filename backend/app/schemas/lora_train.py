@@ -10,6 +10,8 @@ class TrainStartRequest(BaseModel):
 
     folder: str = Field(..., min_length=1)
     checkpoint: str | None = None
+    trigger_token: str | None = None
+    expected_dataset_hash: str | None = None
     sdxl: bool | None = None  # True: SDXL 腳本；False: SD1.x；None: 用 config
     epochs: int = Field(default=10, ge=1, le=500)
     # 以下未帶入時使用 config 預設值
@@ -29,6 +31,9 @@ class TrainStartResponse(BaseModel):
 
     job_id: str
     status: str = "queued"
+    stage: str | None = None
+    dataset_hash: str | None = None
+    normalized_trigger_token: str | None = None
     message: str | None = None
 
 
@@ -85,3 +90,196 @@ class TriggerCheckResponse(BaseModel):
 
     should_trigger: bool
     candidates: list[TriggerCandidate] = Field(default_factory=list)
+
+
+class ValidationIssue(BaseModel):
+    """Dataset validation issue."""
+
+    code: str
+    message: str
+    path: str | None = None
+    details: dict | None = None
+
+
+class DatasetFileItem(BaseModel):
+    """One image and its matching caption metadata."""
+
+    image_path: str
+    caption_path: str | None = None
+    caption: str | None = None
+    has_caption: bool
+    caption_empty: bool = False
+
+
+class DatasetItem(BaseModel):
+    """LoRA dataset summary."""
+
+    folder: str
+    image_count: int
+    caption_count: int
+    missing_caption_count: int
+    dataset_hash: str
+    locked: bool = False
+    trigger_token_candidates: list[str] = Field(default_factory=list)
+
+
+class DatasetListResponse(BaseModel):
+    """GET /api/lora-train/datasets response."""
+
+    datasets: list[DatasetItem] = Field(default_factory=list)
+
+
+class DatasetValidateRequest(BaseModel):
+    """Dataset validation request."""
+
+    folder: str = Field(..., min_length=1)
+    trigger_token: str = Field(..., min_length=1)
+    expected_dataset_hash: str | None = None
+    require_lock: bool = False
+
+
+class DatasetValidateResponse(BaseModel):
+    """Dataset validation response."""
+
+    ok: bool
+    folder: str
+    normalized_trigger_token: str
+    dataset_hash: str
+    image_count: int
+    caption_count: int
+    missing_caption_count: int
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    errors: list[ValidationIssue] = Field(default_factory=list)
+    locked: bool = False
+
+
+class DatasetInspectResponse(BaseModel):
+    """Detailed dataset inspection response."""
+
+    folder: str
+    image_count: int
+    caption_count: int
+    missing_caption_count: int
+    dataset_hash: str
+    locked: bool = False
+    files: list[DatasetFileItem] = Field(default_factory=list)
+    trigger_token_candidates: list[str] = Field(default_factory=list)
+    validation: DatasetValidateResponse | None = None
+
+
+class CaptionChange(BaseModel):
+    """Caption preparation diff."""
+
+    path: str
+    before: str
+    after: str
+    changed: bool
+
+
+class DatasetPrepareRequest(BaseModel):
+    """Dataset caption preparation request."""
+
+    folder: str = Field(..., min_length=1)
+    trigger_token: str | None = None
+    dry_run: bool = True
+    use_ai_cleanup: bool = False
+    expected_dataset_hash: str | None = None
+    restore_backup_id: str | None = None
+
+
+class DatasetPrepareResponse(BaseModel):
+    """Dataset caption preparation or restore response."""
+
+    ok: bool
+    folder: str
+    normalized_trigger_token: str | None = None
+    changes: list[CaptionChange] = Field(default_factory=list)
+    changed_count: int = 0
+    unchanged_count: int = 0
+    dataset_hash_before: str | None = None
+    dataset_hash_after: str | None = None
+    backup_id: str | None = None
+    restored_files: list[str] = Field(default_factory=list)
+
+
+class LoraTrainJobStatusResponse(BaseModel):
+    """Durable LoRA training job status."""
+
+    ok: bool = True
+    job_id: str
+    folder: str
+    status: str
+    stage: str
+    progress: float = 0.0
+    current_epoch: int | None = None
+    total_epochs: int | None = None
+    dataset_hash: str | None = None
+    normalized_trigger_token: str | None = None
+    log_path: str | None = None
+    log_tail_lines: int | None = None
+    log_truncated: bool | None = None
+    output_path: str | None = None
+    registered_lora_name: str | None = None
+    registration_error: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+    params: dict | None = None
+    smoke_test_status: str | None = None
+    smoke_test_job_id: str | None = None
+    smoke_test_artifact: str | None = None
+    smoke_test_error: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    cancel_requested_at: str | None = None
+
+
+class LoraTrainLogsResponse(BaseModel):
+    """Bounded LoRA training logs."""
+
+    ok: bool
+    job_id: str
+    lines: list[str] = Field(default_factory=list)
+    truncated: bool = False
+    log_path: str | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+
+
+class LoraTrainCancelResponse(BaseModel):
+    """LoRA training cancellation response."""
+
+    ok: bool
+    job_id: str
+    status: str
+
+
+class LoraRegistrationResponse(BaseModel):
+    """LoRA output registration response."""
+
+    ok: bool
+    job_id: str
+    output_path: str | None = None
+    registered_lora_name: str | None = None
+    error: str | None = None
+
+
+class LoraSmokeTestRequest(BaseModel):
+    """LoRA smoke-test request."""
+
+    prompt: str | None = None
+    negative_prompt: str | None = None
+    checkpoint: str | None = None
+
+
+class LoraSmokeTestResponse(BaseModel):
+    """LoRA smoke-test response."""
+
+    ok: bool
+    job_id: str
+    registered_lora_name: str | None = None
+    smoke_test_status: str
+    generation_job_id: str | None = None
+    artifact: str | None = None
+    error: str | None = None

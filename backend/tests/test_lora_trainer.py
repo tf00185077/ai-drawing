@@ -74,6 +74,8 @@ def valid_train_dir(tmp_path: Path):
     (folder / "a.txt").write_text("1girl", encoding="utf-8")
     (folder / "b.jpg").write_bytes(b"fake")
     (folder / "b.txt").write_text("solo", encoding="utf-8")
+    (tmp_path / "train_network.py").write_text("# kohya train script\n", encoding="utf-8")
+    (tmp_path / "sdxl_train_network.py").write_text("# kohya sdxl train script\n", encoding="utf-8")
     return tmp_path
 
 
@@ -105,6 +107,37 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     assert len(st["queue"]) == 1
     assert st["queue"][0]["job_id"] == job_id
     assert st["queue"][0]["folder"] == "my_lora"
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_missing_sd_scripts_path_raises_trainer_error_without_queueing(
+    mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
+) -> None:
+    """enqueue 在缺少 sd-scripts 目錄時應入列前失敗。"""
+    mock_settings.return_value.lora_train_dir = str(valid_train_dir / "lora_train")
+    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
+    mock_settings.return_value.lora_train_threshold = 10
+    mock_settings.return_value.sd_scripts_path = str(tmp_path / "missing-sd-scripts")
+    mock_settings.return_value.lora_resolution = 512
+    mock_settings.return_value.lora_batch_size = 4
+    mock_settings.return_value.lora_learning_rate = "1e-4"
+    mock_settings.return_value.lora_class_tokens = "sks"
+    mock_settings.return_value.lora_keep_tokens = 1
+    mock_settings.return_value.lora_num_repeats = 10
+    mock_settings.return_value.lora_mixed_precision = "fp16"
+    mock_settings.return_value.lora_network_dim = 16
+    mock_settings.return_value.lora_network_alpha = 16
+
+    with patch("app.services.lora_trainer._create_persistent_job") as mock_create:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc:
+            lora_trainer.enqueue("my_lora", checkpoint="model.ckpt", epochs=5)
+
+    assert exc.value.code == "sd_scripts_path_missing"
+    assert exc.value.details["sd_scripts_path"].endswith("missing-sd-scripts")
+    mock_create.assert_not_called()
+    st = lora_trainer.get_status()
+    assert st["status"] == "idle"
+    assert st["queue"] == []
 
 
 @patch("app.services.lora_trainer.get_settings")
@@ -197,6 +230,23 @@ def test_api_start_returns_202_and_job_id(
     assert data["status"] == "queued"
 
 
+def test_api_start_does_not_reference_removed_generate_after() -> None:
+    """POST /start 不應讀取或轉送已移除的 generate_after 欄位"""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    with patch("app.api.lora_train.lora_trainer.enqueue", return_value="job-123") as mock_enqueue:
+        res = client.post(
+            "/api/lora-train/start",
+            json={"folder": "my_lora", "checkpoint": "model.ckpt", "epochs": 5},
+        )
+
+    assert res.status_code == 202
+    assert res.json()["job_id"] == "job-123"
+    assert "generate_after" not in mock_enqueue.call_args.kwargs
+
+
 @patch("app.services.lora_trainer.get_settings")
 def test_trigger_check_returns_candidates_when_folder_meets_threshold(
     mock_settings: MagicMock, valid_train_dir: Path
@@ -275,6 +325,7 @@ def test_api_trigger_check_returns_candidates(
     mock_settings.return_value.lora_mixed_precision = "fp16"
     mock_settings.return_value.lora_network_dim = 16
     mock_settings.return_value.lora_network_alpha = 16
+    mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
 
     client = TestClient(app)
     res = client.post("/api/lora-train/trigger-check")
@@ -343,10 +394,10 @@ def test_api_folders_returns_list(mock_settings: MagicMock, valid_train_dir: Pat
 
 @patch("app.main.queue_submit")
 @patch("app.main.get_settings")
-def test_on_lora_complete_submits_to_queue(
+def test_on_lora_complete_does_not_submit_to_queue(
     mock_settings: MagicMock, mock_queue_submit: MagicMock
 ) -> None:
-    """LoRA 訓練完成 callback 會提交產圖至 queue"""
+    """LoRA 訓練完成 callback 不再自動提交生圖，改由 smoke-test endpoint 處理。"""
     mock_settings.return_value.lora_auto_prompt = "1girl"
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
 
@@ -354,8 +405,4 @@ def test_on_lora_complete_submits_to_queue(
 
     _on_lora_complete("/path/to/lora.safetensors", "my_lora")
 
-    mock_queue_submit.assert_called_once()
-    call_args = mock_queue_submit.call_args[0][0]
-    assert call_args["lora"] == "lora.safetensors"  # ComfyUI 用檔名，依 extra_model_paths 解析
-    assert call_args["prompt"] == "1girl"
-    assert call_args["checkpoint"] == "model.ckpt"
+    mock_queue_submit.assert_not_called()

@@ -59,6 +59,38 @@ class GeneratedArtifact(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class LoraTrainingJob(Base):
+    """Durable LoRA training job state."""
+    __tablename__ = "lora_training_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(String(64), nullable=False, unique=True, index=True)
+    folder = Column(String(512), nullable=False, index=True)
+    status = Column(String(32), nullable=False, default="queued", index=True)
+    stage = Column(String(64), nullable=False, default="queued")
+    progress = Column(Float, nullable=False, default=0.0)
+    current_epoch = Column(Integer, nullable=True)
+    total_epochs = Column(Integer, nullable=True)
+    log_path = Column(String(1024), nullable=True)
+    output_path = Column(String(1024), nullable=True)
+    registered_lora_name = Column(String(512), nullable=True)
+    registration_error = Column(Text, nullable=True)
+    error_code = Column(String(128), nullable=True)
+    error_message = Column(Text, nullable=True)
+    dataset_hash = Column(String(64), nullable=True, index=True)
+    normalized_trigger_token = Column(String(128), nullable=True)
+    params_json = Column(Text, nullable=True)
+    smoke_test_status = Column(String(64), nullable=True)
+    smoke_test_job_id = Column(String(64), nullable=True)
+    smoke_test_artifact = Column(String(512), nullable=True)
+    smoke_test_error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    cancel_requested_at = Column(DateTime, nullable=True)
+
+
 class DownloadedResource(Base):
     """Downloaded model/resource ledger kept in the local database.
 

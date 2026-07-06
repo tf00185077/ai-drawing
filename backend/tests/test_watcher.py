@@ -5,7 +5,37 @@ from unittest.mock import patch
 
 import pytest
 
+from app.services import watcher
 from app.services.watcher import on_new_image, start_watching, stop_watching
+
+
+@pytest.fixture(autouse=True)
+def clear_debounce_timers():
+    """避免背景 debounce Timer 跨測試污染 patch 狀態。"""
+    _cancel_pending_timers()
+    yield
+    _cancel_pending_timers()
+
+
+def _cancel_pending_timers() -> None:
+    with watcher._debounce_lock:
+        timers = list(watcher._debounce_timers.values())
+        watcher._debounce_timers.clear()
+    for timer in timers:
+        timer.cancel()
+        timer.join(timeout=0.2)
+
+
+def _wait_for_debounce(parent_dir: Path) -> None:
+    deadline = time.monotonic() + 1.0
+    parent_dir = parent_dir.resolve()
+    while time.monotonic() < deadline:
+        with watcher._debounce_lock:
+            timer = watcher._debounce_timers.get(parent_dir)
+        if timer is None:
+            return
+        timer.join(timeout=0.05)
+    pytest.fail(f"debounce timer did not finish for {parent_dir}")
 
 
 def test_on_new_image_ignores_non_image_extensions(tmp_path: Path) -> None:
@@ -24,7 +54,7 @@ def test_on_new_image_triggers_wd_tagger_for_image(tmp_path: Path) -> None:
         img = tmp_path / "test.png"
         img.touch()
         on_new_image(img.resolve())
-        time.sleep(0.05)  # 等待防抖 Timer 執行
+        _wait_for_debounce(tmp_path)
 
         mock_run.assert_called_once()
         call_dir = mock_run.call_args[0][0]
@@ -44,12 +74,26 @@ def test_on_new_image_in_nested_folder_triggers_wd_tagger_with_subdir(
         "app.services.watcher.DEBOUNCE_SECONDS", 0.01
     ):
         on_new_image(img.resolve())
-        time.sleep(0.05)
+        _wait_for_debounce(nested)
 
         mock_run.assert_called_once()
         call_dir = mock_run.call_args[0][0]
         assert call_dir == nested.resolve()
         assert "pose_1" in str(call_dir)
+
+
+def test_on_new_image_skips_wd_tagger_when_dataset_locked(tmp_path: Path) -> None:
+    """dataset lock 期間 watcher 不覆寫 caption。"""
+    img = tmp_path / "test.png"
+    img.touch()
+
+    with patch("app.services.watcher.run_wd_tagger") as mock_run, patch(
+        "app.services.watcher.is_path_locked", return_value=True
+    ), patch("app.services.watcher.DEBOUNCE_SECONDS", 0.01):
+        on_new_image(img.resolve())
+        _wait_for_debounce(tmp_path)
+
+        mock_run.assert_not_called()
 
 
 def test_start_watching_with_empty_dirs_does_not_crash() -> None:

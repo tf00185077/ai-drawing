@@ -3,10 +3,21 @@
 訓練執行器、觸發邏輯、Pipeline 自動產圖、佇列管理
 契約：docs/api-contract.md
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.lora_train import (
+    DatasetInspectResponse,
+    DatasetListResponse,
+    DatasetPrepareRequest,
+    DatasetPrepareResponse,
+    DatasetValidateRequest,
+    DatasetValidateResponse,
     FolderItem,
+    LoraSmokeTestRequest,
+    LoraSmokeTestResponse,
+    LoraTrainCancelResponse,
+    LoraTrainJobStatusResponse,
+    LoraTrainLogsResponse,
     TrainFoldersResponse,
     TrainJobInfo,
     TrainLastResult,
@@ -17,9 +28,28 @@ from app.schemas.lora_train import (
     TriggerCheckResponse,
 )
 from app.config import get_settings
-from app.services import lora_trainer
+from app.services import lora_dataset, lora_trainer
+from app.services.lora_dataset import DatasetServiceError
 
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
+
+
+def _dataset_error(exc: DatasetServiceError) -> HTTPException:
+    detail = {"code": exc.code, "message": exc.message, "details": exc.details}
+    if exc.code in {"dataset_locked", "dataset_hash_mismatch"}:
+        return HTTPException(409, detail=detail)
+    if exc.code in {"dataset_not_found", "backup_not_found"}:
+        return HTTPException(404, detail=detail)
+    return HTTPException(400, detail=detail)
+
+
+def _trainer_error(exc: lora_trainer.TrainerServiceError) -> HTTPException:
+    detail = {"code": exc.code, "message": exc.message, "details": exc.details}
+    if exc.code in {"dataset_locked", "dataset_hash_mismatch", "job_not_cancellable"}:
+        return HTTPException(409, detail=detail)
+    if exc.code in {"job_not_found", "log_not_found"}:
+        return HTTPException(404, detail=detail)
+    return HTTPException(400, detail=detail)
 
 
 @router.get("/config")
@@ -38,13 +68,82 @@ async def list_training_folders():
     )
 
 
+@router.get("/datasets", response_model=DatasetListResponse)
+async def list_datasets():
+    """列出 LoRA dataset，含圖片/caption/hash/lock 摘要。"""
+    try:
+        return DatasetListResponse(datasets=lora_dataset.list_datasets())
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/prepare", response_model=DatasetPrepareResponse)
+async def prepare_dataset(body: DatasetPrepareRequest):
+    """Dry-run/apply caption preparation；也可用 restore_backup_id 還原。"""
+    try:
+        return lora_dataset.prepare_dataset(
+            body.folder,
+            trigger_token=body.trigger_token,
+            dry_run=body.dry_run,
+            use_ai_cleanup=body.use_ai_cleanup,
+            expected_dataset_hash=body.expected_dataset_hash,
+            restore_backup_id=body.restore_backup_id,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/restore", response_model=DatasetPrepareResponse)
+async def restore_dataset(body: DatasetPrepareRequest):
+    """還原指定 dataset preparation backup。"""
+    if not body.restore_backup_id:
+        raise HTTPException(
+            400,
+            detail={
+                "code": "backup_id_required",
+                "message": "restore_backup_id is required",
+                "details": {},
+            },
+        )
+    try:
+        return lora_dataset.restore_dataset(body.folder, body.restore_backup_id)
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.post("/datasets/validate", response_model=DatasetValidateResponse)
+async def validate_dataset(body: DatasetValidateRequest):
+    """訓練前 dataset validation。"""
+    try:
+        return lora_dataset.validate_dataset(
+            body.folder,
+            trigger_token=body.trigger_token,
+            expected_dataset_hash=body.expected_dataset_hash,
+        )
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
+@router.get("/datasets/{folder:path}", response_model=DatasetInspectResponse)
+async def inspect_dataset(folder: str, trigger_token: str | None = Query(default=None)):
+    """檢查單一 dataset 檔案、hash、trigger token 與可選 validation。"""
+    try:
+        inspected = lora_dataset.inspect_dataset(folder)
+        token = trigger_token or (inspected.trigger_token_candidates[0] if inspected.trigger_token_candidates else None)
+        if token:
+            inspected.validation = lora_dataset.validate_dataset(
+                inspected.folder,
+                trigger_token=token,
+            )
+        return inspected
+    except DatasetServiceError as exc:
+        raise _dataset_error(exc)
+
+
 @router.post("/start", response_model=TrainStartResponse, status_code=202)
 async def start_training(body: TrainStartRequest):
-    """手動觸發 LoRA 訓練。可附 generate_after：訓練完成後才自動生圖。"""
+    """手動觸發 LoRA 訓練。訓練完成後如需生圖，請另行呼叫生圖 API。"""
     try:
-        gen_after = None
-        if body.generate_after:
-            gen_after = body.generate_after.model_dump()
         job_id = lora_trainer.enqueue(
             body.folder,
             checkpoint=body.checkpoint,
@@ -59,8 +158,15 @@ async def start_training(body: TrainStartRequest):
             mixed_precision=body.mixed_precision,
             network_dim=body.network_dim,
             network_alpha=body.network_alpha,
-            generate_after=gen_after,
+            trigger_token=body.trigger_token,
+            expected_dataset_hash=body.expected_dataset_hash,
         )
+        try:
+            job_status = lora_trainer.get_job_status(job_id)
+        except lora_trainer.TrainerServiceError:
+            job_status = {"status": "queued", "stage": "queued", "dataset_hash": None, "normalized_trigger_token": None}
+    except lora_trainer.TrainerServiceError as e:
+        raise _trainer_error(e)
     except ValueError as e:
         msg = str(e)
         if "已在佇列" in msg or "訓練中" in msg:
@@ -68,7 +174,10 @@ async def start_training(body: TrainStartRequest):
         raise HTTPException(400, msg)
     return TrainStartResponse(
         job_id=job_id,
-        status="queued",
+        status=job_status["status"] if job_status else "queued",
+        stage=job_status.get("stage") if job_status else "queued",
+        dataset_hash=job_status.get("dataset_hash") if job_status else None,
+        normalized_trigger_token=job_status.get("normalized_trigger_token") if job_status else None,
         message="已加入訓練佇列",
     )
 
@@ -106,6 +215,46 @@ async def get_training_status():
         queue=queue_list,
         last_result=last_result,
     )
+
+
+@router.get("/jobs/{job_id}", response_model=LoraTrainJobStatusResponse)
+async def get_training_job(job_id: str):
+    """以 job_id 查詢 durable LoRA training job。"""
+    try:
+        result = lora_trainer.get_job_status(job_id)
+    except lora_trainer.TrainerServiceError as exc:
+        raise _trainer_error(exc)
+    return LoraTrainJobStatusResponse(**result)
+
+
+@router.get("/jobs/{job_id}/logs", response_model=LoraTrainLogsResponse)
+async def get_training_job_logs(
+    job_id: str,
+    lines: int = Query(default=100, ge=1, le=1000),
+):
+    """取得 bounded per-job log tail。"""
+    try:
+        return LoraTrainLogsResponse(**lora_trainer.get_job_logs(job_id, line_limit=lines))
+    except lora_trainer.TrainerServiceError as exc:
+        raise _trainer_error(exc)
+
+
+@router.post("/jobs/{job_id}/cancel", response_model=LoraTrainCancelResponse)
+async def cancel_training_job(job_id: str):
+    """取消 queued/running LoRA training job。"""
+    try:
+        return LoraTrainCancelResponse(**lora_trainer.cancel_job(job_id))
+    except lora_trainer.TrainerServiceError as exc:
+        raise _trainer_error(exc)
+
+
+@router.post("/jobs/{job_id}/smoke-test", response_model=LoraSmokeTestResponse)
+async def smoke_test_training_job(job_id: str, body: LoraSmokeTestRequest | None = None):
+    """使用已註冊 LoRA 提交一筆 smoke-test generation。"""
+    try:
+        return LoraSmokeTestResponse(**lora_trainer.smoke_test_job(job_id, body or LoraSmokeTestRequest()))
+    except lora_trainer.TrainerServiceError as exc:
+        raise _trainer_error(exc)
 
 
 @router.post("/trigger-check", response_model=TriggerCheckResponse)
