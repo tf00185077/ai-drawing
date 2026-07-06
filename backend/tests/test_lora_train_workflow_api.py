@@ -1,0 +1,333 @@
+"""LoRA training workflow API tests."""
+from __future__ import annotations
+
+from pathlib import Path
+from types import SimpleNamespace
+
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.db import database
+from app.db.models import LoraTrainingJob
+from app.main import app
+from app.services import lora_dataset, lora_trainer
+
+
+def _settings(tmp_path: Path, lora_train_dir: Path) -> SimpleNamespace:
+    return SimpleNamespace(
+        lora_train_dir=str(lora_train_dir),
+        lora_train_logs_dir=str(tmp_path / "logs"),
+        comfyui_lora_dir=str(tmp_path / "comfyui_loras"),
+        llm_caption_url=None,
+        lora_train_threshold=2,
+        lora_default_checkpoint="model.safetensors",
+        lora_checkpoint_dirs="",
+        lora_sdxl=False,
+        lora_resolution=512,
+        lora_batch_size=1,
+        lora_learning_rate="1e-4",
+        lora_class_tokens="miku_token",
+        lora_keep_tokens=1,
+        lora_num_repeats=10,
+        lora_mixed_precision="fp16",
+        lora_network_dim=16,
+        lora_network_alpha=16,
+        lora_save_every_n_epochs=None,
+        sd_scripts_path=str(tmp_path / "sd-scripts"),
+        sd_scripts_python="",
+    )
+
+
+def _make_dataset(base: Path) -> Path:
+    dataset = base / "character" / "miku"
+    dataset.mkdir(parents=True)
+    (dataset / "a.png").write_bytes(b"a")
+    (dataset / "a.txt").write_text("solo, blue hair", encoding="utf-8")
+    (dataset / "b.jpg").write_bytes(b"b")
+    (dataset / "b.txt").write_text("miku_token, smiling", encoding="utf-8")
+    return dataset
+
+
+def _client() -> TestClient:
+    return TestClient(app)
+
+
+def test_dataset_endpoints_list_inspect_prepare_restore_and_validate(tmp_path: Path, monkeypatch) -> None:
+    """Dataset API endpoints expose list/inspect/prepare/restore/validate workflow."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+
+    client = _client()
+    listed = client.get("/api/lora-train/datasets")
+    assert listed.status_code == 200
+    assert listed.json()["datasets"][0]["folder"] == "character/miku"
+
+    inspected = client.get("/api/lora-train/datasets/character/miku?trigger_token=miku_token")
+    assert inspected.status_code == 200
+    before_hash = inspected.json()["dataset_hash"]
+    assert inspected.json()["validation"]["ok"] is False
+
+    dry_run = client.post(
+        "/api/lora-train/datasets/prepare",
+        json={"folder": "character/miku", "trigger_token": "Miku Token", "dry_run": True},
+    )
+    assert dry_run.status_code == 200
+    assert dry_run.json()["backup_id"] is None
+    assert dry_run.json()["dataset_hash_before"] == before_hash
+    assert dry_run.json()["changed_count"] == 1
+    assert dry_run.json()["unchanged_count"] == 1
+
+    applied = client.post(
+        "/api/lora-train/datasets/prepare",
+        json={"folder": "character/miku", "trigger_token": "Miku Token", "dry_run": False},
+    )
+    assert applied.status_code == 200
+    backup_id = applied.json()["backup_id"]
+    assert backup_id
+    prepared_hash = applied.json()["dataset_hash_after"]
+
+    valid = client.post(
+        "/api/lora-train/datasets/validate",
+        json={
+            "folder": "character/miku",
+            "trigger_token": "miku_token",
+            "expected_dataset_hash": prepared_hash,
+        },
+    )
+    assert valid.status_code == 200
+    assert valid.json()["ok"] is True
+
+    stale = client.post(
+        "/api/lora-train/datasets/prepare",
+        json={
+            "folder": "character/miku",
+            "trigger_token": "miku_token",
+            "dry_run": False,
+            "expected_dataset_hash": "old-hash",
+        },
+    )
+    assert stale.status_code == 409
+    assert stale.json()["detail"]["code"] == "dataset_hash_mismatch"
+
+    restored = client.post(
+        "/api/lora-train/datasets/restore",
+        json={"folder": "character/miku", "restore_backup_id": backup_id},
+    )
+    assert restored.status_code == 200
+    assert restored.json()["restored_files"] == ["character/miku/a.txt", "character/miku/b.txt"]
+
+
+def test_start_status_logs_cancel_and_aggregate_status(tmp_path: Path, monkeypatch) -> None:
+    """Start creates durable queued job, logs are readable, cancel persists, aggregate status stays compatible."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    sd_scripts = Path(settings.sd_scripts_path)
+    sd_scripts.mkdir()
+    (sd_scripts / "train_network.py").write_text("# kohya train script\n", encoding="utf-8")
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    prepared = lora_dataset.prepare_dataset("character/miku", trigger_token="miku_token", dry_run=False)
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "model.safetensors",
+            "trigger_token": "miku_token",
+            "expected_dataset_hash": prepared.dataset_hash_after,
+            "epochs": 2,
+        },
+    )
+    assert started.status_code == 202
+    job_id = started.json()["job_id"]
+    assert started.json()["status"] == "queued"
+
+    status = client.get(f"/api/lora-train/jobs/{job_id}")
+    assert status.status_code == 200
+    assert status.json()["status"] == "queued"
+    assert status.json()["dataset_hash"] == prepared.dataset_hash_after
+
+    logs = client.get(f"/api/lora-train/jobs/{job_id}/logs?lines=10")
+    assert logs.status_code == 200
+    assert logs.json()["ok"] is True
+    assert any("queued" in line for line in logs.json()["lines"])
+
+    aggregate = client.get("/api/lora-train/status")
+    assert aggregate.status_code == 200
+    assert aggregate.json()["status"] == "queued"
+    assert aggregate.json()["queue"][0]["job_id"] == job_id
+
+    cancelled = client.post(f"/api/lora-train/jobs/{job_id}/cancel")
+    assert cancelled.status_code == 200
+    assert cancelled.json() == {"ok": True, "job_id": job_id, "status": "cancelled"}
+
+    terminal = client.get(f"/api/lora-train/jobs/{job_id}")
+    assert terminal.status_code == 200
+    assert terminal.json()["status"] == "cancelled"
+    assert terminal.json()["cancel_requested_at"]
+    lora_trainer._reset_for_test()
+
+
+def test_start_rejects_missing_sd_scripts_before_persisting_job(tmp_path: Path, monkeypatch) -> None:
+    """Missing sd-scripts is reported as structured API 400 before any job is queued."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    assert not Path(settings.sd_scripts_path).exists()
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    prepared = lora_dataset.prepare_dataset("character/miku", trigger_token="miku_token", dry_run=False)
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "model.safetensors",
+            "trigger_token": "miku_token",
+            "expected_dataset_hash": prepared.dataset_hash_after,
+            "epochs": 2,
+        },
+    )
+
+    assert started.status_code == 400
+    assert started.json()["detail"]["code"] == "sd_scripts_path_missing"
+    assert started.json()["detail"]["details"]["sd_scripts_path"] == settings.sd_scripts_path
+    db = session_local()
+    try:
+        assert db.query(LoraTrainingJob).count() == 0
+    finally:
+        db.close()
+    assert lora_trainer.get_status()["status"] == "idle"
+
+
+def test_terminal_job_status_and_log_errors_are_durable(tmp_path: Path, monkeypatch) -> None:
+    """Terminal job rows remain queryable even when the in-memory queue is empty."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    lora_trainer._reset_for_test()
+
+    db = session_local()
+    db.add(
+        LoraTrainingJob(
+            job_id="job-terminal",
+            folder="character/miku",
+            status="completed",
+            stage="completed",
+            progress=1.0,
+            log_path=str(tmp_path / "missing.log"),
+            output_path=str(tmp_path / "out.safetensors"),
+            registered_lora_name="out.safetensors",
+            dataset_hash="hash-a",
+            normalized_trigger_token="miku_token",
+            params_json='{"checkpoint": "model.safetensors"}',
+        )
+    )
+    db.commit()
+    db.close()
+
+    client = _client()
+    status = client.get("/api/lora-train/jobs/job-terminal")
+    assert status.status_code == 200
+    assert status.json()["registered_lora_name"] == "out.safetensors"
+
+    logs = client.get("/api/lora-train/jobs/job-terminal/logs")
+    assert logs.status_code == 200
+    assert logs.json()["ok"] is False
+    assert logs.json()["error_code"] == "log_not_found"
+
+    missing = client.get("/api/lora-train/jobs/job-missing")
+    assert missing.status_code == 404
+    assert missing.json()["detail"]["code"] == "job_not_found"
+
+
+def test_register_output_lora_success_and_not_configured(tmp_path: Path, monkeypatch) -> None:
+    """Registration copies safetensors atomically and reports missing config clearly."""
+    source = tmp_path / "output" / "miku.safetensors"
+    source.parent.mkdir()
+    source.write_bytes(b"model")
+    settings = _settings(tmp_path, tmp_path / "lora_train")
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    name, target = lora_trainer._register_output_lora(source, "job-1")
+    assert name == "miku.safetensors"
+    assert Path(target).read_bytes() == b"model"
+
+    settings.comfyui_lora_dir = ""
+    try:
+        lora_trainer._register_output_lora(source, "job-2")
+    except lora_trainer.TrainerServiceError as exc:
+        assert exc.code == "lora_registration_not_configured"
+    else:
+        raise AssertionError("expected TrainerServiceError")
+
+
+def test_smoke_test_endpoint_success_and_precondition_failure(tmp_path: Path, monkeypatch) -> None:
+    """Smoke-test endpoint submits generation for completed registered LoRA and rejects unmet preconditions."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_trainer, "submit_generation", lambda params: "gen-1")
+    lora_trainer._reset_for_test()
+
+    db = session_local()
+    db.add(
+        LoraTrainingJob(
+            job_id="job-completed",
+            folder="character/miku",
+            status="completed",
+            stage="completed",
+            progress=1.0,
+            registered_lora_name="miku.safetensors",
+            normalized_trigger_token="miku_token",
+            params_json='{"checkpoint": "model.safetensors"}',
+        )
+    )
+    db.add(
+        LoraTrainingJob(
+            job_id="job-no-lora",
+            folder="character/miku",
+            status="completed",
+            stage="completed",
+            progress=1.0,
+        )
+    )
+    db.commit()
+    db.close()
+
+    client = _client()
+    smoke = client.post("/api/lora-train/jobs/job-completed/smoke-test", json={"prompt": "portrait"})
+    assert smoke.status_code == 200
+    assert smoke.json()["generation_job_id"] == "gen-1"
+    assert smoke.json()["smoke_test_status"] == "submitted"
+
+    status = client.get("/api/lora-train/jobs/job-completed")
+    assert status.json()["smoke_test_job_id"] == "gen-1"
+
+    precondition = client.post("/api/lora-train/jobs/job-no-lora/smoke-test")
+    assert precondition.status_code == 400
+    assert precondition.json()["detail"]["code"] == "smoke_test_precondition_failed"

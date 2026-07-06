@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     # ComfyUI 模型目錄，用於列出可用 checkpoint / lora（!查可用資源 指令）
     comfyui_checkpoints_dir: str = "D:/AI/ComfyUI/models/checkpoints"
     comfyui_loras_dir: str = "D:/AI/ComfyUI/models/loras"
+    # LoRA 訓練完成後註冊到 ComfyUI 的目標目錄；未設定時使用 comfyui_loras_dir 第一個路徑。
+    comfyui_lora_dir: str = ""
     # diffusion-model 家族（如 Anima）的元件目錄：UNET / text encoder / VAE 分開存放
     comfyui_diffusion_models_dir: str = "D:/AI/ComfyUI/models/diffusion_models"
     comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
@@ -82,6 +84,7 @@ class Settings(BaseSettings):
 
     # LoRA 訓練
     lora_train_dir: str = _project_root_path("backend", "lora_train")
+    lora_train_logs_dir: str = _project_root_path("backend", "lora_train", "logs")
     # 建議資料夾結構（WD Tagger 依路徑選用不同 blacklist）：
     #   lora_train/character/10_角色名/  → 人物訓練
     #   lora_train/style/10_畫師名/      → 畫風訓練
@@ -125,11 +128,16 @@ class Settings(BaseSettings):
         self.gallery_dir = _resolve_project_path(self.gallery_dir)
         self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
         self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)
+        if self.comfyui_lora_dir:
+            self.comfyui_lora_dir = _resolve_project_path(self.comfyui_lora_dir)
+        else:
+            self.comfyui_lora_dir = self.comfyui_loras_dir.split(",")[0] if self.comfyui_loras_dir else ""
         self.comfyui_diffusion_models_dir = _resolve_path_list(self.comfyui_diffusion_models_dir)
         self.comfyui_text_encoders_dir = _resolve_path_list(self.comfyui_text_encoders_dir)
         self.comfyui_vae_dir = _resolve_path_list(self.comfyui_vae_dir)
         self.comfyui_input_dir = _resolve_project_path(self.comfyui_input_dir)
         self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
+        self.lora_train_logs_dir = _resolve_project_path(self.lora_train_logs_dir)
         self.sd_scripts_path = _resolve_project_path(self.sd_scripts_path)
         self.watch_dirs = _resolve_path_list(self.watch_dirs)
         return self
