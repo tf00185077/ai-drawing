@@ -217,12 +217,12 @@ Recommended agent flow:
 3. `lora_dataset_prepare(folder, trigger_token, dry_run=True)` — preview caption rewrites without writing files.
 4. `lora_dataset_prepare(folder, trigger_token, dry_run=False, expected_dataset_hash=...)` — apply trigger-token normalization with backup.
 5. `lora_dataset_validate(folder, trigger_token, expected_dataset_hash=...)` — preflight dataset readiness before training.
-6. `lora_train_start(folder, trigger_token, expected_dataset_hash, checkpoint?, epochs?, ...)` — create a durable training job only after runtime preflight passes.
+6. `lora_train_start(folder, trigger_token, expected_dataset_hash, checkpoint?, epochs?, model_family?, network_module?, anima_qwen3?, anima_vae?, ...)` — create a durable training job only after runtime preflight passes.
 7. `lora_train_job_status(job_id)` / `lora_train_logs(job_id)` — poll progress, stage, epoch fields, output, errors, and bounded logs.
 8. `lora_train_cancel(job_id)` — cancel queued/running jobs; terminal jobs are idempotent.
 9. `lora_train_smoke_test(job_id, prompt?)` — after successful registration, submit a generation smoke test with the registered LoRA.
 
-Training runtime preflight checks `sd_scripts_path` before enqueueing. If Kohya `sd-scripts` or the expected train script is missing, `lora_train_start` returns `ok=false` immediately instead of creating a job that instantly fails.
+Training runtime preflight checks `sd_scripts_path` before enqueueing. If Kohya `sd-scripts` or the expected train script is missing, `lora_train_start` returns `ok=false` immediately instead of creating a job that instantly fails. For `model_family="anima"`, pass `anima_qwen3` or configure `LORA_ANIMA_QWEN3`; missing qwen3 returns structured `anima_qwen3_missing` before job creation. Anima defaults `network_module` to `networks.lora_anima`; SD1.x/SDXL default to `networks.lora`, and callers may override the field explicitly.
 
 ## 依賴
 

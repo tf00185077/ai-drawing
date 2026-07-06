@@ -1,5 +1,6 @@
 """LoRA 訓練執行器單元測試"""
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -46,6 +47,203 @@ def test_set_and_get_pending_generate() -> None:
     assert lora_trainer.get_and_clear_pending_generate("lovelive") is None
 
 
+def _mixed_precision_arg(cmd: list[str]) -> str:
+    return cmd[cmd.index("--mixed_precision") + 1]
+
+
+def _network_module_arg(cmd: list[str]) -> str:
+    return cmd[cmd.index("--network_module") + 1]
+
+
+def _arg_after(cmd: list[str], name: str) -> str:
+    return cmd[cmd.index(name) + 1]
+
+
+def _train_script_arg(cmd: list[str]) -> str:
+    script_names = {"train_network.py", "sdxl_train_network.py", "anima_train_network.py"}
+    for item in cmd:
+        name = Path(item).name
+        if name in script_names:
+            return name
+    raise AssertionError(f"train script not found in command: {cmd}")
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected_script", "expected_network_module"),
+    [
+        ({"model_family": "sd15"}, "train_network.py", "networks.lora"),
+        ({"model_family": "sdxl"}, "sdxl_train_network.py", "networks.lora"),
+        ({"model_family": "anima"}, "anima_train_network.py", "networks.lora_anima"),
+        ({"sdxl": True}, "sdxl_train_network.py", "networks.lora"),
+    ],
+)
+def test_run_training_subprocess_routes_model_families_to_expected_train_script(
+    tmp_path: Path, monkeypatch, kwargs: dict, expected_script: str, expected_network_module: str
+) -> None:
+    """SD1.x, SDXL, and Anima families use their dedicated Kohya entrypoints and LoRA modules."""
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    if kwargs.get("model_family") == "anima":
+        qwen3 = tmp_path / "qwen_3_06b_base.safetensors"
+        qwen3.write_bytes(b"qwen3")
+        kwargs = {**kwargs, "anima_qwen3": str(qwen3)}
+    settings = SimpleNamespace(sd_scripts_python="", lora_save_every_n_epochs=None)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            image_dir=image_dir,
+            output_dir=output_dir,
+            output_name="probe",
+            checkpoint="model.safetensors",
+            epochs=1,
+            sd_scripts_path=sd_scripts,
+            **kwargs,
+        )
+
+    cmd = mock_popen.call_args.args[0]
+    assert _train_script_arg(cmd) == expected_script
+    assert _network_module_arg(cmd) == expected_network_module
+
+
+def test_run_training_subprocess_appends_anima_runtime_args(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Anima command includes the required Qwen3/VAE flags and Kohya full-precision value."""
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    qwen3 = tmp_path / "qwen_3_06b_base.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    vae = tmp_path / "qwen_image_vae.safetensors"
+    vae.write_bytes(b"vae")
+    t5 = tmp_path / "t5_old"
+    t5.mkdir()
+    settings = SimpleNamespace(sd_scripts_python="", lora_save_every_n_epochs=None)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            image_dir=image_dir,
+            output_dir=output_dir,
+            output_name="probe",
+            checkpoint="anima_baseV10.safetensors",
+            epochs=1,
+            sd_scripts_path=sd_scripts,
+            model_family="anima",
+            mixed_precision="fp32",
+            anima_qwen3=str(qwen3),
+            anima_vae=str(vae),
+            anima_t5_tokenizer_path=str(t5),
+        )
+
+    cmd = mock_popen.call_args.args[0]
+    assert _train_script_arg(cmd) == "anima_train_network.py"
+    assert _network_module_arg(cmd) == "networks.lora_anima"
+    assert _arg_after(cmd, "--qwen3") == str(qwen3.resolve())
+    assert _arg_after(cmd, "--vae") == str(vae.resolve())
+    assert _arg_after(cmd, "--t5_tokenizer_path") == str(t5.resolve())
+    assert _mixed_precision_arg(cmd) == "no"
+
+
+def test_run_training_subprocess_respects_explicit_network_module_override(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Callers can override the family default network module when needed."""
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    qwen3 = tmp_path / "qwen_3_06b_base.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    settings = SimpleNamespace(sd_scripts_python="", lora_save_every_n_epochs=None)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            image_dir=image_dir,
+            output_dir=output_dir,
+            output_name="probe",
+            checkpoint="anima_baseV10.safetensors",
+            epochs=1,
+            sd_scripts_path=sd_scripts,
+            model_family="anima",
+            network_module="networks.custom_anima_lora",
+            anima_qwen3=str(qwen3),
+        )
+
+    cmd = mock_popen.call_args.args[0]
+    assert _train_script_arg(cmd) == "anima_train_network.py"
+    assert _network_module_arg(cmd) == "networks.custom_anima_lora"
+
+
+def test_run_training_subprocess_maps_requested_fp32_to_kohya_no(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Kohya full precision uses CLI value `no`, never the API-compatible `fp32`."""
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    settings = SimpleNamespace(sd_scripts_python="", lora_save_every_n_epochs=None)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            image_dir=image_dir,
+            output_dir=output_dir,
+            output_name="probe",
+            checkpoint="model.safetensors",
+            epochs=1,
+            sd_scripts_path=sd_scripts,
+            mixed_precision="fp32",
+        )
+
+    cmd = mock_popen.call_args.args[0]
+    assert _mixed_precision_arg(cmd) == "no"
+    assert "--mixed_precision" in cmd
+    assert "fp32" not in cmd
+
+
+def test_run_training_subprocess_accepts_kohya_no_for_full_precision(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Callers may pass Kohya's native `no` full-precision value directly."""
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    settings = SimpleNamespace(sd_scripts_python="", lora_save_every_n_epochs=None)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            image_dir=image_dir,
+            output_dir=output_dir,
+            output_name="probe",
+            checkpoint="model.safetensors",
+            epochs=1,
+            sd_scripts_path=sd_scripts,
+            mixed_precision="no",
+        )
+
+    cmd = mock_popen.call_args.args[0]
+    assert _mixed_precision_arg(cmd) == "no"
+
+
 def test_get_pending_generate_nonexistent_returns_none() -> None:
     """不存在的 folder 呼叫 get_and_clear_pending_generate 回傳 None"""
     assert lora_trainer.get_and_clear_pending_generate("nonexistent") is None
@@ -76,6 +274,7 @@ def valid_train_dir(tmp_path: Path):
     (folder / "b.txt").write_text("solo", encoding="utf-8")
     (tmp_path / "train_network.py").write_text("# kohya train script\n", encoding="utf-8")
     (tmp_path / "sdxl_train_network.py").write_text("# kohya sdxl train script\n", encoding="utf-8")
+    (tmp_path / "anima_train_network.py").write_text("# kohya anima train script\n", encoding="utf-8")
     return tmp_path
 
 

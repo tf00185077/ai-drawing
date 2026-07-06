@@ -23,6 +23,10 @@ def _settings(tmp_path: Path, lora_train_dir: Path) -> SimpleNamespace:
         lora_train_threshold=2,
         lora_default_checkpoint="model.safetensors",
         lora_checkpoint_dirs="",
+        lora_model_family="",
+        lora_anima_qwen3="",
+        lora_anima_vae="",
+        lora_anima_t5_tokenizer_path="",
         lora_sdxl=False,
         lora_resolution=512,
         lora_batch_size=1,
@@ -148,6 +152,7 @@ def test_start_status_logs_cancel_and_aggregate_status(tmp_path: Path, monkeypat
             "trigger_token": "miku_token",
             "expected_dataset_hash": prepared.dataset_hash_after,
             "epochs": 2,
+            "mixed_precision": "fp32",
         },
     )
     assert started.status_code == 202
@@ -158,6 +163,11 @@ def test_start_status_logs_cancel_and_aggregate_status(tmp_path: Path, monkeypat
     assert status.status_code == 200
     assert status.json()["status"] == "queued"
     assert status.json()["dataset_hash"] == prepared.dataset_hash_after
+    assert status.json()["params"]["model_family"] == "sd15"
+    assert status.json()["params"]["trainer_script"] == "train_network.py"
+    assert status.json()["params"]["mixed_precision"] == "fp32"
+    assert status.json()["params"]["kohya_mixed_precision"] == "no"
+    assert status.json()["params"]["network_module"] == "networks.lora"
 
     logs = client.get(f"/api/lora-train/jobs/{job_id}/logs?lines=10")
     assert logs.status_code == 200
@@ -212,6 +222,176 @@ def test_start_rejects_missing_sd_scripts_before_persisting_job(tmp_path: Path, 
     assert started.status_code == 400
     assert started.json()["detail"]["code"] == "sd_scripts_path_missing"
     assert started.json()["detail"]["details"]["sd_scripts_path"] == settings.sd_scripts_path
+    db = session_local()
+    try:
+        assert db.query(LoraTrainingJob).count() == 0
+    finally:
+        db.close()
+    assert lora_trainer.get_status()["status"] == "idle"
+
+
+def test_start_anima_records_model_family_and_trainer_script(tmp_path: Path, monkeypatch) -> None:
+    """Anima requests are queued with anima_train_network.py instead of SD1.x/SDXL scripts."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    sd_scripts = Path(settings.sd_scripts_path)
+    sd_scripts.mkdir()
+    (sd_scripts / "anima_train_network.py").write_text("# kohya anima train script\n", encoding="utf-8")
+    qwen3 = tmp_path / "qwen_3_06b_base.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    vae = tmp_path / "qwen_image_vae.safetensors"
+    vae.write_bytes(b"vae")
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "anima_baseV10.safetensors",
+            "model_family": "anima",
+            "qwen3": str(qwen3),
+            "vae": str(vae),
+            "epochs": 1,
+            "mixed_precision": "fp32",
+        },
+    )
+    assert started.status_code == 202
+    job_id = started.json()["job_id"]
+
+    status = client.get(f"/api/lora-train/jobs/{job_id}")
+    assert status.status_code == 200
+    assert status.json()["params"]["model_family"] == "anima"
+    assert status.json()["params"]["trainer_script"] == "anima_train_network.py"
+    assert status.json()["params"]["network_module"] == "networks.lora_anima"
+    assert status.json()["params"]["sdxl"] is False
+    assert status.json()["params"]["kohya_mixed_precision"] == "no"
+    assert status.json()["params"]["anima_qwen3"] == str(qwen3.resolve())
+    assert status.json()["params"]["anima_vae"] == str(vae.resolve())
+    assert status.json()["params"]["anima_t5_tokenizer_path"] is None
+    lora_trainer._reset_for_test()
+
+
+def test_start_network_module_override_is_persisted(tmp_path: Path, monkeypatch) -> None:
+    """Explicit network_module overrides are preserved in durable job params."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    sd_scripts = Path(settings.sd_scripts_path)
+    sd_scripts.mkdir()
+    (sd_scripts / "anima_train_network.py").write_text("# kohya anima train script\n", encoding="utf-8")
+    qwen3 = tmp_path / "qwen_3_06b_base.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "anima_baseV10.safetensors",
+            "model_family": "anima",
+            "network_module": "networks.custom_anima_lora",
+            "qwen3": str(qwen3),
+            "epochs": 1,
+        },
+    )
+    assert started.status_code == 202
+    job_id = started.json()["job_id"]
+
+    status = client.get(f"/api/lora-train/jobs/{job_id}")
+    assert status.status_code == 200
+    assert status.json()["params"]["model_family"] == "anima"
+    assert status.json()["params"]["trainer_script"] == "anima_train_network.py"
+    assert status.json()["params"]["network_module"] == "networks.custom_anima_lora"
+    lora_trainer._reset_for_test()
+
+
+def test_start_anima_rejects_missing_qwen3_before_persisting_job(tmp_path: Path, monkeypatch) -> None:
+    """Anima requests require qwen3 before a durable training job is created."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    sd_scripts = Path(settings.sd_scripts_path)
+    sd_scripts.mkdir()
+    (sd_scripts / "anima_train_network.py").write_text("# kohya anima train script\n", encoding="utf-8")
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "anima_baseV10.safetensors",
+            "model_family": "anima",
+            "epochs": 1,
+        },
+    )
+
+    assert started.status_code == 400
+    assert started.json()["detail"]["code"] == "anima_qwen3_missing"
+    db = session_local()
+    try:
+        assert db.query(LoraTrainingJob).count() == 0
+    finally:
+        db.close()
+    assert lora_trainer.get_status()["status"] == "idle"
+
+
+def test_start_rejects_unsupported_model_family_before_persisting_job(tmp_path: Path, monkeypatch) -> None:
+    """Unsupported model families return structured API 400 and do not create jobs."""
+    lora_train_dir = tmp_path / "lora_train"
+    _make_dataset(lora_train_dir)
+    settings = _settings(tmp_path, lora_train_dir)
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
+    monkeypatch.setattr(lora_trainer, "_ensure_worker", lambda: None)
+    lora_trainer._reset_for_test()
+
+    client = _client()
+    started = client.post(
+        "/api/lora-train/start",
+        json={
+            "folder": "character/miku",
+            "checkpoint": "model.safetensors",
+            "model_family": "wan",
+            "epochs": 1,
+        },
+    )
+
+    assert started.status_code == 400
+    assert started.json()["detail"]["code"] == "unsupported_model_family"
+    assert started.json()["detail"]["details"]["accepted"] == ["anima", "sd15", "sdxl"]
     db = session_local()
     try:
         assert db.query(LoraTrainingJob).count() == 0

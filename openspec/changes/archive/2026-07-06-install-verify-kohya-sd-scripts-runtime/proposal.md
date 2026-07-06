@@ -4,9 +4,9 @@ The LoRA training MCP workflow can be locally verified through dataset preparati
 
 ## What Changes
 
-- Install or point the project at a working Kohya `sd-scripts` checkout that contains `train_network.py`, `sdxl_train_network.py`, and the WD Tagger script used by the watcher.
+- Install or point the project at a working Kohya `sd-scripts` checkout that contains `train_network.py`, `sdxl_train_network.py`, `anima_train_network.py`, and the WD Tagger script used by the watcher.
 - Configure the runtime Python/accelerate environment needed by Kohya without committing secrets, generated models, or large external dependency trees to this repo.
-- Run a bounded small-dataset LoRA training verification through the existing backend/MCP workflow: inspect, prepare dry-run, prepare apply, validate, start, poll status/logs, register the produced `.safetensors`, and run a generation smoke test.
+- Run a bounded small-dataset LoRA training verification with an Anima checkpoint through the backend/MCP workflow: inspect, prepare dry-run, prepare apply, validate, start with `model_family=anima`, poll status/logs, register the produced `.safetensors`, and run a generation smoke test.
 - Document the machine-local setup and verification evidence so future agents can distinguish implemented control-plane behavior from external runtime readiness.
 
 ## Capabilities
@@ -23,5 +23,5 @@ The LoRA training MCP workflow can be locally verified through dataset preparati
 
 - Affected runtime dependencies: Kohya `sd-scripts`, `accelerate`, training Python environment, WD Tagger dependencies, and local model/checkpoint paths.
 - Affected configuration: `SD_SCRIPTS_PATH`, optional `SD_SCRIPTS_PYTHON`, `COMFYUI_LORA_DIR`, checkpoint settings, and local `.env` values.
-- Affected verification: full LoRA training happy-path runtime check using existing backend APIs and MCP tools.
-- No backend or MCP API contract changes are intended.
+- Affected verification: full LoRA training happy-path runtime check using backend APIs and MCP tools with explicit trainer family selection.
+- Affected API/MCP contract: `lora_train_start` accepts an explicit `model_family` selector so Anima checkpoints route to `anima_train_network.py` instead of SD1.x/SDXL trainers.

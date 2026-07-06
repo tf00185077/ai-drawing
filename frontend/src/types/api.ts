@@ -91,6 +91,10 @@ export interface TrainFoldersResponse {
 export interface TrainStartRequest {
   folder: string;
   checkpoint?: string;
+  model_family?: string;
+  anima_qwen3?: string;
+  anima_vae?: string;
+  anima_t5_tokenizer_path?: string;
   sdxl?: boolean;
   epochs?: number;
   resolution?: number;
@@ -100,6 +104,7 @@ export interface TrainStartRequest {
   keep_tokens?: number;
   num_repeats?: number;
   mixed_precision?: string;
+  network_module?: string;
   network_dim?: number;
   network_alpha?: number;
 }

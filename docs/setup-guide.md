@@ -48,6 +48,10 @@
 | `LORA_TRAIN_DIR` | `./lora_train` | 是 | 訓練圖片與 LoRA 輸出根目錄 |
 | `LORA_TRAIN_THRESHOLD` | `10` | 否 | 自動觸發訓練門檻（圖片數） |
 | `LORA_DEFAULT_CHECKPOINT` | *(空)* | **是** | 預設 checkpoint 路徑或檔名 |
+| `LORA_MODEL_FAMILY` | *(空)* | 否 | sd15 / sdxl / anima；未設定時沿用 `LORA_SDXL` |
+| `LORA_ANIMA_QWEN3` | *(空)* | Anima 必填 | Qwen3 text encoder 路徑；可由 API `anima_qwen3` / `qwen3` 覆寫 |
+| `LORA_ANIMA_VAE` | *(空)* | Anima 建議 | Qwen-Image VAE 路徑；可由 API `anima_vae` / `vae` 覆寫 |
+| `LORA_ANIMA_T5_TOKENIZER_PATH` | *(空)* | 否 | Anima T5 tokenizer 目錄；空值使用 `sd-scripts/configs/t5_old` |
 | `LORA_AUTO_PROMPT` | `1girl, solo, high quality` | 否 | 訓練完成後自動產圖的 prompt |
 | `SD_SCRIPTS_PATH` | `./sd-scripts` | **是** | Kohya sd-scripts 目錄的絕對或相對路徑 |
 | `LORA_RESOLUTION` | `512` | 否 | 訓練解析度，API 未帶入時使用 |
@@ -56,7 +60,7 @@
 | `LORA_CLASS_TOKENS` | `sks` | 否 | 觸發詞 |
 | `LORA_KEEP_TOKENS` | `1` | 否 | caption 保留 token 數 |
 | `LORA_NUM_REPEATS` | `10` | 否 | 每張圖重複次數 |
-| `LORA_MIXED_PRECISION` | `fp16` | 否 | fp16 / bf16 / fp32 |
+| `LORA_MIXED_PRECISION` | `fp16` | 否 | fp16 / bf16 / fp32 / no（fp32 會轉為 Kohya CLI 的 no） |
 | **watchdog** | | | |
 | `WATCH_DIRS` | `./lora_train` | 否 | 監聽目錄，逗號分隔 |
 
@@ -231,6 +235,12 @@ curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: applic
 |------|------|------|
 | folder | 必填，相對 lora_train 的子資料夾 | my_char |
 | checkpoint | 選填，未填用 .env 預設 | v1-5-pruned-emaonly.safetensors |
+| model_family | 訓練器家族；sd15 使用 `train_network.py`，sdxl 使用 `sdxl_train_network.py`，anima 使用 `anima_train_network.py` | sd15、sdxl、anima |
+| network_module | 選填；未填時 sd15/sdxl 使用 `networks.lora`，anima 使用 `networks.lora_anima` | networks.lora_anima |
+| anima_qwen3 / qwen3 | Anima 必填，未填用 `LORA_ANIMA_QWEN3`；建立 job 前會驗證路徑存在 | /path/to/qwen_3_06b_base.safetensors |
+| anima_vae / vae | Anima VAE，未填用 `LORA_ANIMA_VAE` | /path/to/qwen_image_vae.safetensors |
+| anima_t5_tokenizer_path / t5_tokenizer_path | Anima T5 tokenizer；未填使用 sd-scripts bundled `configs/t5_old` | /path/to/t5_old |
+| sdxl | 舊版相容欄位；未提供 model_family 時才用來選 SDXL | true |
 | epochs | 訓練輪數 | 10 |
 | resolution | 解析度 (256–2048) | 512、768 |
 | batch_size | 每批圖片數 | 4 |
@@ -238,7 +248,7 @@ curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: applic
 | class_tokens | 觸發詞 | sks、ohwx |
 | keep_tokens | caption 保留 token 數 | 1 |
 | num_repeats | 每張圖重複次數 | 10 |
-| mixed_precision | fp16 / bf16 / fp32 | fp16 |
+| mixed_precision | fp16 / bf16 / fp32 / no；fp32 會轉為 Kohya CLI 的 no | fp16 |
 
 ### 步驟 5：查看訓練進度
 
@@ -334,6 +344,10 @@ curl -X POST http://127.0.0.1:8000/api/generate/ -H "Content-Type: application/j
 - [ ] `.env` 已設定 `LORA_DEFAULT_CHECKPOINT`
 - [ ] `.env` 已設定 `SD_SCRIPTS_PATH` 指向正確 Kohya 目錄
 - [ ] `SD_SCRIPTS_PATH/train_network.py` 存在
+- [ ] `SD_SCRIPTS_PATH/sdxl_train_network.py` 存在
+- [ ] `SD_SCRIPTS_PATH/anima_train_network.py` 存在（Anima checkpoint 必須使用 `model_family=anima`）
+- [ ] Anima 訓練時已設定 `LORA_ANIMA_QWEN3` 或 request `anima_qwen3` / `qwen3`
+- [ ] Anima 訓練時已設定 `LORA_ANIMA_VAE` 或 request `anima_vae` / `vae`
 - [ ] `SD_SCRIPTS_PATH/finetune/tag_images_by_wd14_tagger.py` 存在
 - [ ] `accelerate` 已安裝
 - [ ] ComfyUI 的 `extra_model_paths.yaml` 已加入 `lora_train/output`（或已處理 LoRA 路徑）
@@ -350,7 +364,6 @@ curl -X POST http://127.0.0.1:8000/api/generate/ -H "Content-Type: application/j
 
 | 項目 | 寫死值 | 位置 |
 |------|--------|------|
-| network_module | `networks.lora` | `lora_trainer.py` |
 | save_model_as | `safetensors` | `lora_trainer.py` |
 | cache_latents | 固定啟用 | `lora_trainer.py` |
 | gradient_checkpointing | 固定啟用 | `lora_trainer.py` |

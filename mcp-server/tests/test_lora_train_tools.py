@@ -139,6 +139,10 @@ def test_lora_train_start_and_status_return_structured_success() -> None:
             epochs=2,
             trigger_token="miku_token",
             expected_dataset_hash="hash-a",
+            model_family="anima",
+            network_module="networks.custom_anima_lora",
+            anima_qwen3="/models/text_encoders/qwen_3_06b_base.safetensors",
+            anima_vae="/models/vae/qwen_image_vae.safetensors",
         )
         status = lora_train_status()
 
@@ -146,6 +150,10 @@ def test_lora_train_start_and_status_return_structured_success() -> None:
     assert started["tool"] == "lora_train_start"
     assert started["job_id"] == "job-1"
     assert started["submitted"]["expected_dataset_hash"] == "hash-a"
+    assert started["submitted"]["model_family"] == "anima"
+    assert started["submitted"]["network_module"] == "networks.custom_anima_lora"
+    assert started["submitted"]["anima_qwen3"] == "/models/text_encoders/qwen_3_06b_base.safetensors"
+    assert started["submitted"]["anima_vae"] == "/models/vae/qwen_image_vae.safetensors"
     assert status["ok"] is True
     assert status["queue"][0]["job_id"] == "job-1"
 

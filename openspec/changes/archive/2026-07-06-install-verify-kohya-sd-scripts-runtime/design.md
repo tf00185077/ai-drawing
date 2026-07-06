@@ -9,15 +9,15 @@ The missing pieces are external to this repo: a Kohya `sd-scripts` checkout, a c
 **Goals:**
 
 - Configure this machine with a working Kohya `sd-scripts` runtime for the existing trainer.
-- Verify that the configured runtime exposes `train_network.py`, `sdxl_train_network.py`, and `finetune/tag_images_by_wd14_tagger.py`.
-- Run one bounded small-dataset LoRA training verification through the existing backend/MCP workflow.
+- Verify that the configured runtime exposes `train_network.py`, `sdxl_train_network.py`, `anima_train_network.py`, `anima_train.py`, `library/anima_train_utils.py`, and `finetune/tag_images_by_wd14_tagger.py`.
+- Run one bounded small-dataset LoRA training verification with an Anima checkpoint through the backend/MCP workflow.
 - Confirm the produced `.safetensors` is registered into the configured ComfyUI LoRA directory.
 - Submit one smoke-test generation through the existing backend smoke-test endpoint or MCP tool.
 - Document runtime settings and verification evidence without committing generated models or secrets.
 
 **Non-Goals:**
 
-- Changing the backend/MCP LoRA workflow API contract.
+- Reworking the backend/MCP LoRA workflow beyond the minimal explicit trainer family selector needed for SD1.x, SDXL, and Anima.
 - Vendoring Kohya `sd-scripts` or model weights into this repository.
 - Running long, high-quality production training.
 - Replacing WD Tagger, Kohya, or ComfyUI.
@@ -34,13 +34,13 @@ Alternatives considered:
 - Mock the training process: useful for unit tests, but does not satisfy runtime verification.
 - Local external install: keeps the repo clean while proving the real integration.
 
-### Verify both SD1.x and SDXL entrypoints
+### Verify SD1.x, SDXL, and Anima entrypoints
 
-The runtime preflight must check for both `train_network.py` and `sdxl_train_network.py`, even if the bounded smoke run uses only one model family. The backend chooses between those scripts via `lora_sdxl`.
+The runtime preflight must check `train_network.py`, `sdxl_train_network.py`, and `anima_train_network.py`, even if a given smoke run uses only one model family. The backend chooses among those scripts with an explicit `model_family` selector: `sd15` -> `train_network.py`, `sdxl` -> `sdxl_train_network.py`, and `anima` -> `anima_train_network.py`. The legacy `sdxl` boolean remains a compatibility input for older callers when `model_family` is absent.
 
 ### Run bounded verification
 
-Use a small dataset and conservative parameters such as one epoch, low resolution, low network dimension, and batch size one. This verifies wiring and output lifecycle without claiming model quality.
+Use a small dataset and conservative parameters such as one epoch, low resolution, low network dimension, and batch size one. CTY requested the bounded runtime verification use an Anima model, so the start request must pass `model_family=anima` with the Anima checkpoint. This verifies wiring and output lifecycle without claiming model quality.
 
 ### Use existing APIs and MCP tools
 
@@ -56,7 +56,7 @@ The runtime check should call the implemented backend endpoints and MCP tools ra
 ## Migration Plan
 
 1. Install or select a local Kohya `sd-scripts` checkout and compatible Python environment.
-2. Update local `.env` values for `SD_SCRIPTS_PATH`, optional `SD_SCRIPTS_PYTHON`, checkpoint path, and `COMFYUI_LORA_DIR`.
+2. Update local `.env` values for `SD_SCRIPTS_PATH`, optional `SD_SCRIPTS_PYTHON`, checkpoint path, `LORA_MODEL_FAMILY=anima` if using config defaults, Anima runtime paths (`LORA_ANIMA_QWEN3`, `LORA_ANIMA_VAE`, optional `LORA_ANIMA_T5_TOKENIZER_PATH`), and `COMFYUI_LORA_DIR`.
 3. Run preflight checks for required scripts and Python/accelerate availability.
 4. Run the bounded backend/MCP LoRA workflow verification on a small dataset.
 5. Preserve command output and job/log evidence in docs or OpenSpec task notes without committing generated artifacts.

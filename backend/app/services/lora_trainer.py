@@ -35,6 +35,28 @@ logger = logging.getLogger(__name__)
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 # 訓練所需最少圖片數（含 .txt caption）
 _MIN_IMAGES = 1
+_KOHYA_MIXED_PRECISION_BY_REQUEST = {
+    "fp16": "fp16",
+    "bf16": "bf16",
+    "no": "no",
+    "fp32": "no",
+}
+_TRAIN_SCRIPT_BY_MODEL_FAMILY = {
+    "sd15": "train_network.py",
+    "sdxl": "sdxl_train_network.py",
+    "anima": "anima_train_network.py",
+}
+_NETWORK_MODULE_BY_MODEL_FAMILY = {
+    "sd15": "networks.lora",
+    "sdxl": "networks.lora",
+    "anima": "networks.lora_anima",
+}
+_MODEL_FAMILY_ALIASES = {
+    "sd1": "sd15",
+    "sd1.5": "sd15",
+    "sd-1.5": "sd15",
+    "sd_1_5": "sd15",
+}
 
 OnCompleteCallback = Callable[[str, str], None]
 TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
@@ -57,6 +79,7 @@ class _TrainJob:
     job_id: str
     folder: str
     checkpoint: str
+    model_family: str
     sdxl: bool
     epochs: int
     submitted_at: str
@@ -67,8 +90,12 @@ class _TrainJob:
     keep_tokens: int
     num_repeats: int
     mixed_precision: str
+    network_module: str
     network_dim: int
     network_alpha: int
+    anima_qwen3: str | None = None
+    anima_vae: str | None = None
+    anima_t5_tokenizer_path: str | None = None
     dataset_hash: str | None = None
     normalized_trigger_token: str | None = None
     log_path: str | None = None
@@ -147,6 +174,8 @@ def _log_path(job_id: str) -> str:
 def _params_json(job: _TrainJob) -> str:
     params = {
         "checkpoint": job.checkpoint,
+        "model_family": job.model_family,
+        "trainer_script": _train_script_name(job.model_family),
         "sdxl": job.sdxl,
         "epochs": job.epochs,
         "resolution": job.resolution,
@@ -156,8 +185,13 @@ def _params_json(job: _TrainJob) -> str:
         "keep_tokens": job.keep_tokens,
         "num_repeats": job.num_repeats,
         "mixed_precision": job.mixed_precision,
+        "kohya_mixed_precision": _normalize_kohya_mixed_precision(job.mixed_precision),
+        "network_module": job.network_module,
         "network_dim": job.network_dim,
         "network_alpha": job.network_alpha,
+        "anima_qwen3": job.anima_qwen3,
+        "anima_vae": job.anima_vae,
+        "anima_t5_tokenizer_path": job.anima_t5_tokenizer_path,
     }
     return json.dumps(params, ensure_ascii=False, sort_keys=True)
 
@@ -367,15 +401,153 @@ def _resolve_checkpoint_path(checkpoint: str) -> str:
     return s
 
 
-def _train_script_name(sdxl: bool) -> str:
-    return "sdxl_train_network.py" if sdxl else "train_network.py"
+def _normalize_model_family(model_family: str | None) -> str:
+    value = (model_family or "").strip().lower()
+    value = _MODEL_FAMILY_ALIASES.get(value, value)
+    if value in _TRAIN_SCRIPT_BY_MODEL_FAMILY:
+        return value
+    raise TrainerServiceError(
+        "unsupported_model_family",
+        "model_family must be one of: sd15, sdxl, anima",
+        {
+            "model_family": model_family,
+            "accepted": sorted(_TRAIN_SCRIPT_BY_MODEL_FAMILY),
+        },
+    )
 
 
-def _validate_trainer_runtime(sd_scripts_path: str | None, *, sdxl: bool) -> Path:
+def _resolve_model_family(
+    *,
+    model_family: str | None,
+    sdxl: bool | None,
+    configured_model_family: str | None,
+    configured_sdxl: bool | None,
+) -> str:
+    if model_family is not None and model_family.strip():
+        return _normalize_model_family(model_family)
+    if sdxl is not None:
+        return "sdxl" if sdxl else "sd15"
+    if configured_model_family is not None and configured_model_family.strip():
+        return _normalize_model_family(configured_model_family)
+    return "sdxl" if configured_sdxl is True else "sd15"
+
+
+def _train_script_name(model_family: str) -> str:
+    return _TRAIN_SCRIPT_BY_MODEL_FAMILY[_normalize_model_family(model_family)]
+
+
+def _resolve_network_module(model_family: str, network_module: str | None) -> str:
+    """Resolve the Kohya network module, defaulting Anima to its architecture-specific LoRA."""
+    cleaned = _clean_optional_str(network_module)
+    if cleaned:
+        return cleaned
+    return _NETWORK_MODULE_BY_MODEL_FAMILY[_normalize_model_family(model_family)]
+
+
+def _normalize_kohya_mixed_precision(mixed_precision: str | None) -> str:
+    """Map API/config precision values to current Kohya CLI choices."""
+    value = (mixed_precision or "fp16").strip().lower()
+    if value in _KOHYA_MIXED_PRECISION_BY_REQUEST:
+        return _KOHYA_MIXED_PRECISION_BY_REQUEST[value]
+    raise TrainerServiceError(
+        "unsupported_mixed_precision",
+        "mixed_precision must be one of: fp16, bf16, fp32, no",
+        {
+            "mixed_precision": mixed_precision,
+            "accepted": sorted(_KOHYA_MIXED_PRECISION_BY_REQUEST),
+            "kohya_cli_choices": ["no", "fp16", "bf16"],
+        },
+    )
+
+
+def _clean_optional_str(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    return cleaned or None
+
+
+def _resolve_runtime_path(value: str) -> str:
+    try:
+        return str(Path(value).expanduser().resolve())
+    except (OSError, RuntimeError):
+        return value
+
+
+def _validate_runtime_path(
+    value: str | None,
+    *,
+    code: str,
+    label: str,
+    required: bool = False,
+) -> str | None:
+    cleaned = _clean_optional_str(value)
+    if not cleaned:
+        if required:
+            raise TrainerServiceError(
+                code,
+                f"model_family=anima requires {label}",
+                {"model_family": "anima", label: value},
+            )
+        return None
+
+    resolved = _resolve_runtime_path(cleaned)
+    if not Path(resolved).exists():
+        raise TrainerServiceError(
+            code,
+            f"{label} does not exist: {resolved}",
+            {"model_family": "anima", label: resolved},
+        )
+    return resolved
+
+
+def _resolve_anima_runtime_args(
+    *,
+    model_family: str,
+    anima_qwen3: str | None,
+    anima_vae: str | None,
+    anima_t5_tokenizer_path: str | None,
+    settings: Any,
+) -> dict[str, str | None]:
+    """Resolve and validate Anima-only runtime paths before queueing or launching."""
+    if _normalize_model_family(model_family) != "anima":
+        return {
+            "anima_qwen3": None,
+            "anima_vae": None,
+            "anima_t5_tokenizer_path": None,
+        }
+
+    qwen3_value = _clean_optional_str(anima_qwen3) or _clean_optional_str(getattr(settings, "lora_anima_qwen3", ""))
+    vae_value = _clean_optional_str(anima_vae) or _clean_optional_str(getattr(settings, "lora_anima_vae", ""))
+    t5_value = _clean_optional_str(anima_t5_tokenizer_path) or _clean_optional_str(
+        getattr(settings, "lora_anima_t5_tokenizer_path", "")
+    )
+    return {
+        "anima_qwen3": _validate_runtime_path(
+            qwen3_value,
+            code="anima_qwen3_missing",
+            label="anima_qwen3",
+            required=True,
+        ),
+        "anima_vae": _validate_runtime_path(
+            vae_value,
+            code="anima_vae_missing",
+            label="anima_vae",
+        ),
+        "anima_t5_tokenizer_path": _validate_runtime_path(
+            t5_value,
+            code="anima_t5_tokenizer_path_missing",
+            label="anima_t5_tokenizer_path",
+        ),
+    }
+
+
+def _validate_trainer_runtime(sd_scripts_path: str | None, *, model_family: str) -> Path:
     """Validate Kohya sd-scripts runtime before creating a durable job."""
-    script_name = _train_script_name(sdxl)
+    family = _normalize_model_family(model_family)
+    script_name = _train_script_name(family)
     raw_path = (sd_scripts_path or "").strip()
-    details = {"sd_scripts_path": raw_path, "expected_script": script_name}
+    details = {"sd_scripts_path": raw_path, "model_family": family, "expected_script": script_name}
     if not raw_path:
         raise TrainerServiceError(
             "sd_scripts_path_missing",
@@ -480,6 +652,7 @@ def _run_training_subprocess(
     checkpoint: str,
     epochs: int,
     sd_scripts_path: Path,
+    model_family: str | None = None,
     sdxl: bool = False,
     resolution: int = 512,
     batch_size: int = 4,
@@ -488,10 +661,20 @@ def _run_training_subprocess(
     keep_tokens: int = 1,
     num_repeats: int = 10,
     mixed_precision: str = "fp16",
+    network_module: str | None = None,
     network_dim: int = 16,
     network_alpha: int = 16,
+    anima_qwen3: str | None = None,
+    anima_vae: str | None = None,
+    anima_t5_tokenizer_path: str | None = None,
 ) -> subprocess.Popen[str]:
     """啟動 Kohya train_network.py subprocess"""
+    family = _resolve_model_family(
+        model_family=model_family,
+        sdxl=sdxl,
+        configured_model_family=None,
+        configured_sdxl=False,
+    )
     toml_path = _write_dataset_config(
         image_dir,
         output_name,
@@ -502,6 +685,15 @@ def _run_training_subprocess(
         num_repeats=num_repeats,
     )
     settings = get_settings()
+    kohya_mixed_precision = _normalize_kohya_mixed_precision(mixed_precision)
+    resolved_network_module = _resolve_network_module(family, network_module)
+    anima_args = _resolve_anima_runtime_args(
+        model_family=family,
+        anima_qwen3=anima_qwen3,
+        anima_vae=anima_vae,
+        anima_t5_tokenizer_path=anima_t5_tokenizer_path,
+        settings=settings,
+    )
     python_exe = (settings.sd_scripts_python or "").strip()
     env = os.environ.copy()
     env["PYTHONPATH"] = str(sd_scripts_path) + os.pathsep + env.get("PYTHONPATH", "")
@@ -514,7 +706,7 @@ def _run_training_subprocess(
         cmd_head = [python_exe, "-m", "accelerate", "launch"]
     else:
         cmd_head = ["accelerate", "launch"]
-    train_script = _train_script_name(sdxl)
+    train_script = _train_script_name(family)
     cmd = [
         *cmd_head,
         "--num_cpu_threads_per_process",
@@ -529,7 +721,7 @@ def _run_training_subprocess(
         "--output_name",
         output_name,
         "--network_module",
-        "networks.lora",
+        resolved_network_module,
         "--network_dim",
         str(network_dim),
         "--network_alpha",
@@ -539,13 +731,19 @@ def _run_training_subprocess(
         "--learning_rate",
         learning_rate,
     ]
+    if family == "anima":
+        cmd.extend(["--qwen3", str(anima_args["anima_qwen3"])])
+        if anima_args["anima_vae"]:
+            cmd.extend(["--vae", str(anima_args["anima_vae"])])
+        if anima_args["anima_t5_tokenizer_path"]:
+            cmd.extend(["--t5_tokenizer_path", str(anima_args["anima_t5_tokenizer_path"])])
     if settings.lora_save_every_n_epochs and settings.lora_save_every_n_epochs >= 1:
         cmd.extend(["--save_every_n_epochs", str(settings.lora_save_every_n_epochs)])
     cmd += [
         "--save_model_as",
         "safetensors",
         "--mixed_precision",
-        mixed_precision,
+        kohya_mixed_precision,
         "--cache_latents",
         "--gradient_checkpointing",
     ]
@@ -652,6 +850,7 @@ def _worker_loop() -> None:
                     checkpoint=job.checkpoint,
                     epochs=job.epochs,
                     sd_scripts_path=sd_scripts,
+                    model_family=job.model_family,
                     sdxl=job.sdxl,
                     resolution=job.resolution,
                     batch_size=job.batch_size,
@@ -660,8 +859,12 @@ def _worker_loop() -> None:
                     keep_tokens=job.keep_tokens,
                     num_repeats=job.num_repeats,
                     mixed_precision=job.mixed_precision,
+                    network_module=job.network_module,
                     network_dim=job.network_dim,
                     network_alpha=job.network_alpha,
+                    anima_qwen3=job.anima_qwen3,
+                    anima_vae=job.anima_vae,
+                    anima_t5_tokenizer_path=job.anima_t5_tokenizer_path,
                 )
 
                 running_job = _RunningJob(
@@ -889,6 +1092,10 @@ def enqueue(
     folder: str,
     *,
     checkpoint: str | None = None,
+    model_family: str | None = None,
+    anima_qwen3: str | None = None,
+    anima_vae: str | None = None,
+    anima_t5_tokenizer_path: str | None = None,
     sdxl: bool | None = None,
     epochs: int = 10,
     resolution: int | None = None,
@@ -898,6 +1105,7 @@ def enqueue(
     keep_tokens: int | None = None,
     num_repeats: int | None = None,
     mixed_precision: str | None = None,
+    network_module: str | None = None,
     network_dim: int | None = None,
     network_alpha: int | None = None,
     trigger_token: str | None = None,
@@ -925,8 +1133,25 @@ def enqueue(
         raise ValueError("未指定 checkpoint 且 config 無 lora_default_checkpoint")
     ckpt = _resolve_checkpoint_path(ckpt)
 
+    configured_model_family = getattr(settings, "lora_model_family", "")
+    if not isinstance(configured_model_family, str):
+        configured_model_family = ""
     configured_sdxl = getattr(settings, "lora_sdxl", False)
-    use_sdxl = sdxl if sdxl is not None else (configured_sdxl if isinstance(configured_sdxl, bool) else False)
+    use_model_family = _resolve_model_family(
+        model_family=model_family,
+        sdxl=sdxl,
+        configured_model_family=configured_model_family,
+        configured_sdxl=configured_sdxl if isinstance(configured_sdxl, bool) else False,
+    )
+    use_sdxl = use_model_family == "sdxl"
+    resolved_network_module = _resolve_network_module(use_model_family, network_module)
+    anima_args = _resolve_anima_runtime_args(
+        model_family=use_model_family,
+        anima_qwen3=anima_qwen3,
+        anima_vae=anima_vae,
+        anima_t5_tokenizer_path=anima_t5_tokenizer_path,
+        settings=settings,
+    )
     class_token_value = class_tokens or settings.lora_class_tokens
     normalized_token = lora_dataset.normalize_trigger_token(trigger_token or class_token_value)
     dataset_hash: str | None = None
@@ -947,7 +1172,7 @@ def enqueue(
                 "dataset validation failed",
                 {"errors": [issue.model_dump() for issue in validation.errors], "dataset_hash": validation.dataset_hash},
             )
-    _validate_trainer_runtime(settings.sd_scripts_path, sdxl=use_sdxl)
+    _validate_trainer_runtime(settings.sd_scripts_path, model_family=use_model_family)
 
     job_id = str(uuid.uuid4())
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -956,6 +1181,7 @@ def enqueue(
         job_id=job_id,
         folder=folder,
         checkpoint=ckpt,
+        model_family=use_model_family,
         sdxl=use_sdxl,
         epochs=epochs,
         submitted_at=submitted_at,
@@ -966,8 +1192,12 @@ def enqueue(
         keep_tokens=keep_tokens if keep_tokens is not None else settings.lora_keep_tokens,
         num_repeats=num_repeats if num_repeats is not None else settings.lora_num_repeats,
         mixed_precision=mixed_precision or settings.lora_mixed_precision,
+        network_module=resolved_network_module,
         network_dim=network_dim if network_dim is not None else settings.lora_network_dim,
         network_alpha=network_alpha if network_alpha is not None else settings.lora_network_alpha,
+        anima_qwen3=anima_args["anima_qwen3"],
+        anima_vae=anima_args["anima_vae"],
+        anima_t5_tokenizer_path=anima_args["anima_t5_tokenizer_path"],
         dataset_hash=dataset_hash,
         normalized_trigger_token=normalized_token,
         log_path=log_path,

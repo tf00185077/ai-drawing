@@ -2,7 +2,7 @@
 LoRA 訓練 API 的 Request/Response 結構
 對應 docs/api-contract.md 模組 4
 """
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class TrainStartRequest(BaseModel):
@@ -12,6 +12,22 @@ class TrainStartRequest(BaseModel):
     checkpoint: str | None = None
     trigger_token: str | None = None
     expected_dataset_hash: str | None = None
+    model_family: str | None = None  # sd15 | sdxl | anima；指定時優先於 sdxl
+    anima_qwen3: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("anima_qwen3", "qwen3"),
+        description="Anima/Qwen3 text encoder path；也接受 qwen3 alias",
+    )
+    anima_vae: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("anima_vae", "vae"),
+        description="Anima/Qwen-Image VAE path；也接受 vae alias",
+    )
+    anima_t5_tokenizer_path: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("anima_t5_tokenizer_path", "t5_tokenizer_path"),
+        description="Anima T5 tokenizer path；也接受 t5_tokenizer_path alias",
+    )
     sdxl: bool | None = None  # True: SDXL 腳本；False: SD1.x；None: 用 config
     epochs: int = Field(default=10, ge=1, le=500)
     # 以下未帶入時使用 config 預設值
@@ -21,7 +37,8 @@ class TrainStartRequest(BaseModel):
     class_tokens: str | None = None
     keep_tokens: int | None = Field(default=None, ge=0, le=10)
     num_repeats: int | None = Field(default=None, ge=1, le=100)
-    mixed_precision: str | None = None  # fp16 | bf16 | fp32
+    mixed_precision: str | None = None  # fp16 | bf16 | fp32 | no; fp32 maps to Kohya CLI no
+    network_module: str | None = None
     network_dim: int | None = Field(default=None, ge=1, le=128)
     network_alpha: int | None = Field(default=None, ge=1, le=128)
 

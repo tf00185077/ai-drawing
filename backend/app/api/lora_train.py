@@ -56,7 +56,16 @@ def _trainer_error(exc: lora_trainer.TrainerServiceError) -> HTTPException:
 async def get_train_config():
     """取得訓練預設設定（供前端 checkbox 預設值）"""
     settings = get_settings()
-    return {"sdxl": settings.lora_sdxl}
+    model_family = (getattr(settings, "lora_model_family", "") or "").strip().lower()
+    if not model_family:
+        model_family = "sdxl" if settings.lora_sdxl else "sd15"
+    return {
+        "sdxl": settings.lora_sdxl,
+        "model_family": model_family,
+        "anima_qwen3": getattr(settings, "lora_anima_qwen3", "") or None,
+        "anima_vae": getattr(settings, "lora_anima_vae", "") or None,
+        "anima_t5_tokenizer_path": getattr(settings, "lora_anima_t5_tokenizer_path", "") or None,
+    }
 
 
 @router.get("/folders", response_model=TrainFoldersResponse)
@@ -147,6 +156,10 @@ async def start_training(body: TrainStartRequest):
         job_id = lora_trainer.enqueue(
             body.folder,
             checkpoint=body.checkpoint,
+            model_family=body.model_family,
+            anima_qwen3=body.anima_qwen3,
+            anima_vae=body.anima_vae,
+            anima_t5_tokenizer_path=body.anima_t5_tokenizer_path,
             sdxl=body.sdxl,
             epochs=body.epochs,
             resolution=body.resolution,
@@ -156,6 +169,7 @@ async def start_training(body: TrainStartRequest):
             keep_tokens=body.keep_tokens,
             num_repeats=body.num_repeats,
             mixed_precision=body.mixed_precision,
+            network_module=body.network_module,
             network_dim=body.network_dim,
             network_alpha=body.network_alpha,
             trigger_token=body.trigger_token,
