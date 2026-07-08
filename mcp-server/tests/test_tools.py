@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from mcp_server.tools.comfyui import free_comfyui_memory
 from mcp_server.tools.generate import (
+    cancel_job,
     generate_image,
     generate_image_custom_workflow,
     generate_video_custom_workflow,
@@ -158,13 +159,21 @@ def test_generate_image_with_optional_params_returns_submitted_payload() -> None
 
 
 def test_generate_image_forwards_loras() -> None:
-    """generate_image 將多 lora 清單帶入 body"""
+    """generate_image forwards ordered multi-LoRA payloads and keeps legacy fields."""
     mock_client = MagicMock()
     mock_client.post.return_value = {"job_id": "x", "status": "queued"}
     loras = [{"name": "a.safetensors", "strength_model": 0.8}, {"name": "b.safetensors", "strength_model": 0.5}]
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
-        generate_image(prompt="t", loras=loras)
-    assert mock_client.post.call_args[1]["json"]["loras"] == loras
+        generate_image(
+            prompt="t",
+            lora="legacy.safetensors",
+            lora_strength=0.7,
+            loras=loras,
+        )
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["lora"] == "legacy.safetensors"
+    assert call_json["lora_strength"] == 0.7
+    assert call_json["loras"] == loras
 
 
 def test_generate_image_backend_error_returns_structured_json() -> None:
@@ -571,6 +580,42 @@ def test_get_generation_status_backend_error_returns_structured_json() -> None:
     assert data["job_id"] == "job-err2"
     assert data["error"]["code"] == "RuntimeError"
     assert data["error"]["message"] == "connection refused"
+    assert data["error"]["details"]["where"] == "backend"
+
+
+def test_cancel_job_uses_delete_and_returns_structured_json() -> None:
+    """cancel_job uses the backend DELETE path and returns agent-parseable JSON."""
+    mock_client = MagicMock()
+    mock_client.delete.return_value = {"message": "已取消", "job_id": "job-1"}
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = cancel_job("job-1")
+
+    data = json.loads(result)
+    assert data == {
+        "ok": True,
+        "tool": "cancel_job",
+        "job_id": "job-1",
+        "status": "cancelled",
+        "message": "已取消",
+    }
+    mock_client.delete.assert_called_once_with("generate/queue/job-1")
+
+
+def test_cancel_job_backend_error_returns_structured_json() -> None:
+    """cancel_job failures stay structured and no longer surface missing client.delete."""
+    mock_client = MagicMock()
+    mock_client.delete.side_effect = RuntimeError("backend rejected cancel")
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = cancel_job("job-err")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "cancel_job"
+    assert data["job_id"] == "job-err"
+    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["message"] == "backend rejected cancel"
     assert data["error"]["details"]["where"] == "backend"
 
 

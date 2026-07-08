@@ -1,4 +1,6 @@
 """批次生圖排程器單元測試"""
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -13,6 +15,10 @@ from app.core.queue import (
     submit,
     submit_custom,
 )
+from app.core.style_presets import _parse_preset, compose_preset
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def setup_function() -> None:
@@ -203,6 +209,48 @@ def test_process_pending_custom_path_two_ksamplers_keep_independent_values(tmp_p
     assert fake_comfy.submitted_prompt["3"]["inputs"]["cfg"] == 5.5
     assert fake_comfy.submitted_prompt["20"]["inputs"]["steps"] == 12
     assert fake_comfy.submitted_prompt["20"]["inputs"]["cfg"] == 9.0
+
+
+def test_process_pending_smoke_composed_multi_lora_preset_keeps_distinct_nodes(tmp_path) -> None:
+    """compose preset payload -> queue processing keeps distinct LoRA nodes in submitted workflow."""
+    preset_path = (
+        PROJECT_ROOT
+        / "style_presets"
+        / "agent"
+        / "presets"
+        / "niji-moonlit-semi-real-anima.json"
+    )
+    preset = _parse_preset(json.loads(preset_path.read_text(encoding="utf-8")))
+    generation = compose_preset(
+        preset,
+        "Honoka Kousaka standing in a bright school courtyard",
+        profile="anime-2d-default",
+    ).generation
+    fake_comfy = _FakeComfy()
+
+    submit(generation)
+
+    with patch("app.core.queue.get_settings", return_value=_settings_for_checkpoint_dir(tmp_path)):
+        _process_pending(fake_comfy)
+
+    prompt = fake_comfy.submitted_prompt
+    assert prompt is not None
+    expected_loras = generation["loras"]
+    submitted_loras = [
+        (
+            node["inputs"]["lora_name"],
+            node["inputs"]["strength_model"],
+        )
+        for node in prompt.values()
+        if isinstance(node, dict)
+        and node.get("class_type") in ("LoraLoader", "LoraLoaderModelOnly")
+    ]
+    assert submitted_loras == [
+        (expected_loras[0]["name"], expected_loras[0]["strength_model"]),
+        (expected_loras[1]["name"], expected_loras[1]["strength_model"]),
+        (expected_loras[2]["name"], expected_loras[2]["strength_model"]),
+    ]
+    assert len({name for name, _strength in submitted_loras}) == 3
 
 
 def test_process_pending_uploads_subject_image_and_mask(tmp_path) -> None:

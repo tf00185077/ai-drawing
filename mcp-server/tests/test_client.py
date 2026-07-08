@@ -34,3 +34,26 @@ def test_client_get_calls_httpx_with_correct_url() -> None:
         call_args = mock_http.get.call_args
         assert "api/gallery/" in call_args[0][0] or "gallery" in call_args[0][0]
         assert call_args[1]["params"] == {"limit": 5}
+
+
+def test_client_delete_calls_httpx_with_correct_url() -> None:
+    """Client.delete 呼叫正確的 URL 並回傳 JSON"""
+    import httpx  # 確保模組已載入，供 patch 使用
+
+    client = HttpBackendClient(base_url="http://test:9000")
+    mock_response = MagicMock()
+    mock_response.content = b'{"message": "cancelled", "job_id": "job-1"}'
+    mock_response.json.return_value = {"message": "cancelled", "job_id": "job-1"}
+    mock_response.raise_for_status = MagicMock()
+
+    mock_http = MagicMock()
+    mock_http.delete.return_value = mock_response
+
+    with patch.object(httpx, "Client") as MockClient:
+        MockClient.return_value.__enter__.return_value = mock_http
+        MockClient.return_value.__exit__.return_value = None
+
+        result = client.delete("api/generate/queue/job-1")
+
+        assert result == {"message": "cancelled", "job_id": "job-1"}
+        mock_http.delete.assert_called_once_with("http://test:9000/api/generate/queue/job-1")
