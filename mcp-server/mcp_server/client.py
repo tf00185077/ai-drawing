@@ -21,6 +21,10 @@ class BackendApiClient(Protocol):
         """PUT 請求"""
         ...
 
+    def delete(self, path: str) -> dict[str, Any]:
+        """DELETE 請求"""
+        ...
+
 
 class HttpBackendClient:
     """以 httpx 實作的 Backend API Client"""
@@ -57,5 +61,14 @@ class HttpBackendClient:
         url = self._url(path)
         with httpx.Client(timeout=self._timeout) as client:
             resp = client.put(url, json=json or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
+    def delete(self, path: str) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout) as client:
+            resp = client.delete(url)
             resp.raise_for_status()
             return resp.json() if resp.content else {}
