@@ -207,10 +207,15 @@ def harvest(s,notes):
    try:os.killpg(r['pid'],signal.SIGTERM)
    except OSError:pass
    failure(s,r,'timeout',notes);continue
-  if hit(r):rate_limited(s,r,notes);continue
   try:o=readj(ROOT/r['result_file'])
-  except Exception:failure(s,r,'no parseable machine result',notes);continue
-  if not valid(r,o):failure(s,r,'invalid machine result schema',notes);continue
+  except Exception:
+   if hit(r):rate_limited(s,r,notes)
+   else:failure(s,r,'no parseable machine result',notes)
+   continue
+  if not valid(r,o):
+   if hit(r):rate_limited(s,r,notes)
+   else:failure(s,r,'invalid machine result schema',notes)
+   continue
   r['status']='COMPLETED';st=stage(s,r.get('stage'));close_rate_episode(s,r)
   if r['action']=='plan':
    if o.get('blocked_reason'):s['goal']['status']='PAUSED';event(s,r['run_id']+':BLOCKED','planning blocked: '+o['blocked_reason'],notes)
@@ -250,11 +255,19 @@ def reconcile():
  try:
   s=load_state();roles=readj(ROOT/s.get('roles_file','pipeline/roles.json'))
   if s['rate_limit'].get('active'):
-   if now()<dt.datetime.fromisoformat(s['rate_limit']['resume_at']):return []
-   s['rate_limit']['active']=False
-   pending=s['rate_limit'].get('pending') or {};st=stage(s,pending.get('stage'))
-   if st and st.get('status') not in ('COMMITTED','FAILED','BLOCKED'):st['status']='AWAITING_REVIEW' if pending.get('action')=='review' else 'READY'
-   s['rate_limit']['last_resumed_at']=stamp()
+   pending=s['rate_limit'].get('pending') or {};pending_run=s.get('runs',{}).get(pending.get('run_id'))
+   recovered=False
+   if pending_run and pending_run.get('status')=='RATE_LIMITED':
+    try:recovered=valid(pending_run,readj(ROOT/pending_run['result_file']))
+    except Exception:recovered=False
+   if recovered:
+    pending_run['status']='RUNNING';s['rate_limit']['active']=False
+   elif now()<dt.datetime.fromisoformat(s['rate_limit']['resume_at']):return []
+   else:
+    s['rate_limit']['active']=False
+    st=stage(s,pending.get('stage'))
+    if st and st.get('status') not in ('COMMITTED','FAILED','BLOCKED'):st['status']='AWAITING_REVIEW' if pending.get('action')=='review' else 'READY'
+    s['rate_limit']['last_resumed_at']=stamp()
   if s['goal']['status']!='ACTIVE':save(s);return notes
   harvest(s,notes)
   if s['rate_limit'].get('active'):
