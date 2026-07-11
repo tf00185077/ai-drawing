@@ -1,0 +1,310 @@
+"""Offline CIV-B acquisition contract tests."""
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import dataclass
+import json
+from pathlib import Path
+
+import pytest
+
+from app.schemas.generation_recipe import GenerationRecipe, ResourceKind, assess_reproduction
+from app.services.civitai_acquisition import (
+    AcquisitionError,
+    AcquisitionResult,
+    CivitaiTransportResponse,
+    acquire_civitai_recipe,
+    parse_civitai_locator,
+)
+from app.services.civitai_embedded_metadata import extract_embedded_metadata
+
+
+FIXTURES = Path(__file__).parent / "fixtures" / "civitai"
+
+
+def _json_fixture(name: str) -> dict:
+    return json.loads((FIXTURES / "api" / name).read_text(encoding="utf-8"))
+
+
+@dataclass
+class FakeTransport:
+    responses: list[CivitaiTransportResponse]
+
+    def __post_init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def get_json(self, url: str, *, params: dict | None = None, headers: dict | None = None) -> CivitaiTransportResponse:
+        self.calls.append({"url": url, "params": dict(params or {}), "headers": dict(headers or {})})
+        if not self.responses:
+            raise AssertionError("unexpected transport call")
+        return self.responses.pop(0)
+
+
+def test_supported_locators_are_canonicalized_and_unsafe_or_conflicting_locators_are_rejected() -> None:
+    image = parse_civitai_locator("123")
+    assert image.kind == "image"
+    assert image.image_id == 123
+    assert image.canonical_url == "https://civitai.com/images/123"
+
+    post = parse_civitai_locator("https://www.civitai.com/posts/777")
+    assert post.kind == "post"
+    assert post.post_id == 777
+    assert post.canonical_url == "https://civitai.com/posts/777"
+
+    model = parse_civitai_locator("https://civitai.com/models/999/a-model?modelVersionId=456")
+    assert model.kind == "model"
+    assert model.model_id == 999
+    assert model.model_version_id == 456
+    assert model.canonical_url == "https://civitai.com/models/999/a-model?modelVersionId=456"
+
+    cdn = parse_civitai_locator("https://images.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/example/width=832/example.webp")
+    assert cdn.kind == "cdn"
+    assert cdn.media_url == "https://images.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/example/width=832/example.webp"
+
+    for unsafe in (
+        "http://civitai.com/images/123",
+        "https://user:secret@civitai.com/images/123",
+        "https://evil.example/images/123",
+        "0",
+        "https://civitai.com/images/123?imageId=999",
+    ):
+        with pytest.raises(AcquisitionError) as exc_info:
+            parse_civitai_locator(unsafe)
+        assert exc_info.value.code == "unsupported_locator"
+
+
+@pytest.mark.parametrize(
+    "locator",
+    [
+        "0",
+        "-1",
+        "12.3",
+        "http://civitai.com/images/123",
+        "https://user:secret@civitai.com/images/123",
+        "https://civitai.com:443/images/123",
+        "https://evil.example/images/123",
+        "https://civitai.com.evil/images/123",
+        "https://civitai.com/images/not-an-id",
+        "https://civitai.com/images/123?imageId=999",
+        "https://civitai.com/images/123?postId=777",
+        "https://civitai.com/posts/777?imageId=123",
+        "https://civitai.com/models/999/a-model?imageId=123",
+        "https://civitai.com/models/999/a-model?modelId=123",
+        "https://civitai.com/models/999/a-model?modelVersionId=0",
+        "https://civitai.com/models/999/a-model?modelVersionId=456&modelVersionId=789",
+        "https://images.civitai.com/",
+    ],
+)
+def test_strict_locator_parser_rejects_unsafe_or_conflicting_identity(locator: str) -> None:
+    with pytest.raises(AcquisitionError) as exc_info:
+        parse_civitai_locator(locator)
+    assert exc_info.value.code == "unsupported_locator"
+
+
+def test_images_requests_force_with_meta_and_ambiguous_post_or_model_fails_closed() -> None:
+    transport = FakeTransport(
+        [CivitaiTransportResponse(200, _json_fixture("post_777_images.json"), {})]
+    )
+    assert acquire_civitai_recipe("https://civitai.com/posts/777", transport=transport).image_id == 123
+    assert [call["params"]["withMeta"] for call in transport.calls] == ["true"]
+
+    model_transport = FakeTransport(
+        [CivitaiTransportResponse(200, _json_fixture("model_999_images_unique.json"), {})]
+    )
+    assert acquire_civitai_recipe("https://civitai.com/models/999/a-model", transport=model_transport).image_id == 124
+    assert [call["params"]["withMeta"] for call in model_transport.calls] == ["true"]
+
+    for locator, fixture, code in (
+        ("https://civitai.com/posts/888", "empty_images.json", "not_found"),
+        ("https://civitai.com/models/999/a-model", "model_999_images_ambiguous.json", "ambiguous_locator"),
+    ):
+        with pytest.raises(AcquisitionError) as exc_info:
+            acquire_civitai_recipe(locator, transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture(fixture), {})]))
+        assert exc_info.value.code == code
+
+
+def test_retry_policy_is_bounded_and_authorization_is_redacted(caplog: pytest.LogCaptureFixture) -> None:
+    secret = "TEST_AUTHORIZATION_SECRET"
+    for status in (429, 500, 503):
+        sleeps: list[float] = []
+        transport = FakeTransport([
+            CivitaiTransportResponse(status, {"error": secret}, {"Retry-After": "2"}),
+            CivitaiTransportResponse(status, {"error": secret}, {}),
+            CivitaiTransportResponse(200, _json_fixture("image_123.json"), {}),
+        ])
+        result = acquire_civitai_recipe(
+            "123", transport=transport, authorization=f"Bearer {secret}",
+            backoff=lambda attempt, response: attempt / 2, sleep=sleeps.append,
+        )
+        assert result.status == "ok"
+        assert len(transport.calls) == 3
+        assert sleeps == [2.0, 1.0]
+        assert secret not in json.dumps(result.to_dict(), sort_keys=True)
+
+    exhausted = FakeTransport([CivitaiTransportResponse(503, {"error": secret}, {})] * 3)
+    with pytest.raises(AcquisitionError) as exc_info:
+        acquire_civitai_recipe("123", transport=exhausted, authorization=f"Bearer {secret}", sleep=lambda _: None)
+    assert exc_info.value.code == "retry_exhausted"
+    assert len(exhausted.calls) == 3
+    assert [entry["attempt"] for entry in exc_info.value.provenance["requests"]] == [1, 2, 3]
+
+    for status in (400, 401, 403, 404):
+        transport = FakeTransport([CivitaiTransportResponse(status, {"error": secret}, {})])
+        with pytest.raises(AcquisitionError) as non_retry:
+            acquire_civitai_recipe("123", transport=transport, authorization=f"Bearer {secret}", sleep=lambda _: None)
+        assert len(transport.calls) == 1
+        assert secret not in str(non_retry.value)
+        assert secret not in json.dumps(non_retry.value.provenance, sort_keys=True)
+    assert secret not in caplog.text
+
+
+def test_post_and_model_resolution_fail_closed_without_unique_candidate() -> None:
+    post_result = acquire_civitai_recipe(
+        "https://civitai.com/posts/777",
+        transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture("post_777_images.json"), {})]),
+    )
+    assert post_result.image_id == 123
+
+    with pytest.raises(AcquisitionError) as not_found:
+        acquire_civitai_recipe(
+            "https://civitai.com/posts/888",
+            transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture("empty_images.json"), {})]),
+        )
+    assert not_found.value.code == "not_found"
+
+    with pytest.raises(AcquisitionError) as ambiguous:
+        acquire_civitai_recipe(
+            "https://civitai.com/models/999/a-model",
+            transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture("model_999_images_ambiguous.json"), {})]),
+        )
+    assert ambiguous.value.code == "ambiguous_locator"
+
+
+def test_api_meta_maps_to_ordered_recipe_fields_without_losing_raw_payload() -> None:
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture("image_123.json"), {})]),
+    )
+
+    recipe = result.recipe
+    assert recipe is not None
+    assert recipe.source.image_id == 123
+    assert recipe.base_prompt == "masterpiece, 1girl, blue dress, <lora:blue-style:0.75>"
+    assert recipe.negative_prompt == "lowres, bad anatomy"
+    assert recipe.sampling is not None
+    assert recipe.sampling.seed == 9223372036854775807
+    assert recipe.sampling.width == 832
+    assert recipe.sampling.height == 1216
+    assert [(resource.kind, resource.name) for resource in recipe.resources] == [
+        (ResourceKind.CHECKPOINT, "illustriousXL_v10.safetensors"),
+        (ResourceKind.LORA, "blue-style.safetensors"),
+        (ResourceKind.LORA, "detail-line.safetensors"),
+    ]
+    assert [resource.strength_model for resource in recipe.resources[1:]] == [0.75, 0.4]
+    assert recipe.raw["civitai_api"]["payload"]["unknown_vendor_field"] == {
+        "nested": ["preserve", 2],
+    }
+    assert recipe.raw["civitai_api"]["payload"]["extraTopLevel"] == "preserved raw"
+    assert recipe.confirmed
+    assert assess_reproduction(recipe).requirements["confirmed_source_identity"] is True
+
+    public_roundtrip = GenerationRecipe.model_validate(recipe.model_dump())
+    assert public_roundtrip.confirmed == []
+    assert public_roundtrip.inferred
+
+
+def test_api_and_embedded_conflicts_record_both_values_without_overwrite() -> None:
+    embedded = extract_embedded_metadata(FIXTURES / "images" / "a1111_parameters.png")
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([CivitaiTransportResponse(200, _json_fixture("image_123.json"), {})]),
+        embedded_metadata=embedded,
+    )
+
+    assert result.recipe is not None
+    assert result.recipe.base_prompt == "masterpiece, 1girl, blue dress, <lora:blue-style:0.75>"
+    conflict = result.conflicts[0]
+    assert conflict["field"] == "base_prompt"
+    assert conflict["kept"]["reference"] == "civitai_api:images:123:/meta/prompt"
+    assert conflict["incoming"]["reference"] == "embedded_metadata:png_text:parameters:/a1111/prompt"
+    assert "red dress" in conflict["incoming"]["value"]
+    assert result.recipe.raw["normalization"]["conflicts"] == result.conflicts
+    assert any(item.canonical_field == "base_prompt" for item in result.recipe.missing)
+
+
+@dataclass
+class FakeMediaTransport(FakeTransport):
+    media: bytes = b""
+
+    def get_bytes(self, url: str) -> CivitaiTransportResponse:
+        self.calls.append({"url": url, "params": {}, "headers": {}})
+        return CivitaiTransportResponse(200, self.media, {})
+
+
+def test_only_digest_bound_boundary_evidence_can_be_confirmed() -> None:
+    embedded = extract_embedded_metadata(FIXTURES / "images" / "comfyui_workflow.png")
+    api_payload = _json_fixture("image_123.json")
+
+    unbound = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([CivitaiTransportResponse(200, deepcopy(api_payload), {})]),
+        embedded_metadata=embedded,
+    )
+    assert unbound.recipe is not None
+    assert not any(item.canonical_field == "workflow" for item in unbound.recipe.confirmed)
+
+    acquired = acquire_civitai_recipe(
+        "123",
+        transport=FakeMediaTransport(
+            [CivitaiTransportResponse(200, deepcopy(api_payload), {})],
+            (FIXTURES / "images" / "comfyui_workflow.png").read_bytes(),
+        ),
+        embedded_metadata=embedded,
+    )
+    assert acquired.recipe is not None
+    assert acquired.media_sha256 == embedded.image_sha256
+    assert any(item.canonical_field == "workflow" for item in acquired.recipe.confirmed)
+    assert acquired.recipe.evidence_manifest
+    acquired.recipe.evidence_manifest[0].payload["response"]["id"] = 999
+    assert assess_reproduction(acquired.recipe).requirements["confirmed_source_identity"] is False
+
+
+def test_conflicting_api_and_embedded_values_are_audited_and_not_exact_ready() -> None:
+    api_payload = _json_fixture("image_123.json")
+    api_payload["meta"].update({
+        "workflow": {"1": {"class_type": "KSampler", "inputs": {"seed": 7}}},
+    })
+    media = (FIXTURES / "images" / "conflicting_a1111_comfyui.png").read_bytes()
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeMediaTransport([CivitaiTransportResponse(200, api_payload, {})], media),
+    )
+    assert result.recipe is not None
+    fields = {item["field"] for item in result.conflicts}
+    assert "base_prompt" in fields
+    assert "sampling.seed" in fields
+    assert "workflow" in fields
+    assert any(item.canonical_field == "workflow" for item in result.recipe.missing)
+    assert assess_reproduction(result.recipe).level != "exact_ready"
+
+
+def test_jpeg_conflict_references_name_the_actual_embedded_container_and_key() -> None:
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeMediaTransport(
+            [CivitaiTransportResponse(200, _json_fixture("image_123.json"), {})],
+            (FIXTURES / "images" / "jpeg_metadata.jpg").read_bytes(),
+        ),
+    )
+
+    assert result.recipe is not None
+    by_field = {item["field"]: item for item in result.conflicts}
+    prompt_conflict = by_field["base_prompt"]
+    assert prompt_conflict["kept"] == {
+        "value": "masterpiece, 1girl, blue dress, <lora:blue-style:0.75>",
+        "reference": "civitai_api:images:123:/meta/prompt",
+    }
+    assert prompt_conflict["incoming"] == {
+        "value": "masterpiece, 1girl, red dress, <lora:red-style:0.65>",
+        "reference": "embedded_metadata:jpeg_exif:ImageDescription:/a1111/prompt",
+    }

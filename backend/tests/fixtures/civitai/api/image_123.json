@@ -1,0 +1,54 @@
+{
+  "extraTopLevel": "preserved raw",
+  "unknown_vendor_field": {
+    "nested": ["preserve", 2]
+  },
+  "height": 1216,
+  "id": 123,
+  "meta": {
+    "Clip skip": 2,
+    "Size": "832x1216",
+    "cfgScale": 6.5,
+    "negativePrompt": "lowres, bad anatomy",
+    "prompt": "masterpiece, 1girl, blue dress, <lora:blue-style:0.75>",
+    "resources": [
+      {
+        "fileId": 111,
+        "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "modelId": 999,
+        "modelVersionId": 456,
+        "name": "illustriousXL_v10.safetensors",
+        "type": "checkpoint"
+      },
+      {
+        "fileId": 2003,
+        "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "modelId": 2001,
+        "modelVersionId": 2002,
+        "name": "blue-style.safetensors",
+        "type": "lora",
+        "weight": 0.75
+      },
+      {
+        "fileId": 3003,
+        "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "modelId": 3001,
+        "modelVersionId": 3002,
+        "name": "detail-line.safetensors",
+        "type": "lora",
+        "weight": 0.4
+      }
+    ],
+    "sampler": "DPM++ 2M Karras",
+    "seed": "9223372036854775807",
+    "steps": 28,
+    "vendorExtra": {
+      "kept": true
+    }
+  },
+  "modelId": 999,
+  "modelVersionId": 456,
+  "postId": 777,
+  "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/abc/width=832/12345.jpeg",
+  "width": 832
+}
