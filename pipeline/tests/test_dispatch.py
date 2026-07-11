@@ -19,12 +19,14 @@ class DispatchTests(unittest.TestCase):
  def get(self):return json.loads((self.root/'pipeline/state.json').read_text())
  def tick(self):
   with patch('dispatch.subprocess.Popen',P),patch('dispatch.alive',lambda p:p in self.live):return dispatch.reconcile()
- def st(self):return {'id':'X','title':'x','status':'READY','depends_on':[],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'fix_notes':[],'runs':[]}
+ def st(self):return {'id':'X','title':'x','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'required_tests':['unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':3,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
  def dead(self,s,r):r['status']='RUNNING';r['pid']=999;s['runs'][r['run_id']]=r;self.s=s;self.put()
  def result(self,r,status='done'):
   (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.result.v1.1','run_id':r['run_id'],'status':status,'summary':'ok','files_changed':[],'how_verified':'x','blocked_reason':None,'notes_for_review':'x'}))
- def review(self,r,verdict='reject'):
-  (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.decision.v1.1','run_id':r['run_id'],'decision_type':'review','stage':'X','verdict':verdict,'summary':'no','fixes':['fix'] if verdict!='accept' else [],'blocked_reason':None,'needs_from_owner':None,'commit':{'message':'x'}}))
+ def review(self,r,verdict='reject',criterion_ids=None):
+  criterion_ids=['AC-1'] if criterion_ids is None and verdict!='accept' else (criterion_ids or [])
+  fixes=[{'criterion_id':x,'instruction':'fix'} for x in criterion_ids]
+  (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.decision.v1.1','run_id':r['run_id'],'decision_type':'review','stage':'X','verdict':verdict,'summary':'no','fixes':fixes,'blocking_criterion_ids':criterion_ids,'deferred_findings':[],'blocked_reason':None,'needs_from_owner':None,'commit':{'message':'x'}}))
  # retained original cases
  def test_atomic_lock_single_flight(self):a=dispatch.lock();self.assertIsNotNone(a);self.assertIsNone(dispatch.lock());dispatch.unlock(a)
  def test_same_run_and_notification_not_duplicated(self):
@@ -111,4 +113,15 @@ class DispatchTests(unittest.TestCase):
  def test_planning_failure_caps_at_three(self):
   for _ in range(3):self.tick();s=self.get();r=list(s['runs'].values())[-1];self.dead(s,r);self.tick()
   self.assertEqual(self.get()['goal']['status'],'PAUSED');self.assertEqual(self.get()['planning']['failures'],3)
+ def test_plan_requires_frozen_stage_contract(self):
+  decision={'schema':'hermes.decision.v1.1','run_id':'plan.1','decision_type':'plan','summary':'x','new_stages':[{'id':'CIV-B','title':'b','depends_on':['CIV-A'],'kind':'implement','acceptance':['vague'],'executor_brief':'x'}],'goal_done':False,'blocked_reason':None,'needs_from_owner':None}
+  with self.assertRaisesRegex(ValueError,'frozen contract'):dispatch.contracts.decision_ok(decision)
+ def test_review_unknown_criterion_pauses_instead_of_expanding_scope(self):
+  st=self.st();self.s['stages']=[st];r={'run_id':'X.review.1.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j.json','log_file':'agent_runs/j.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['NEW-99'])
+  with patch('dispatch.alive',return_value=False):dispatch.harvest(self.s,[])
+  self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertIn('NEW-99',st['scope_violation'])
+ def test_third_review_rejection_pauses_without_fourth_execute(self):
+  st=self.st();st['review_rejections']=2;self.s['stages']=[st];r={'run_id':'X.review.3.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j3.json','log_file':'agent_runs/j3.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['AC-1'])
+  with patch('dispatch.alive',return_value=False):dispatch.harvest(self.s,[])
+  self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertEqual(st['review_rejections'],3)
 if __name__=='__main__':unittest.main()

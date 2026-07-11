@@ -132,7 +132,7 @@ def dispatch(s,roles,name,st=None,action='execute',notes=None):
  else:s['planning']['counter']=s['planning'].get('counter',0)+1;n=s['planning']['counter'];rid=f'plan.{n:03d}.{name}'
  RUNS.mkdir(exist_ok=True);out=RUNS/(rid+('.decision.json' if name=='judge' else '.result.json'));pf=RUNS/(rid+'.prompt.txt');log=RUNS/(rid+'.log')
  last_exec=next((r for r in reversed([s['runs'][x] for x in st.get('runs',[])]) if r['role']=='executor'),None) if st else None
- v={'project_root':str(ROOT),'goal_title':s['goal']['title'],'run_id':rid,'stage_id':st['id'] if st else 'planning','stage_title':st['title'] if st else 'Next-stage planning','executor_brief':st.get('executor_brief','') if st else '','acceptance':json.dumps(st.get('acceptance',[]) if st else s['goal'].get('acceptance',[]),ensure_ascii=False),'fix_notes':json.dumps(st.get('fix_notes',[]) if st else [],ensure_ascii=False),'existing_worktree_scope':json.dumps(st.get('worktree_scope',[]) if st else [],ensure_ascii=False),'result_file':str(out),'decision_file':str(out),'committed_stages':json.dumps([x['id'] for x in s['stages'] if x['status']=='COMMITTED']),'goal_acceptance':json.dumps(s['goal'].get('acceptance',[]),ensure_ascii=False),'committed_stage_details':json.dumps([{'id':x['id'],'title':x.get('title',''),'commit':x.get('commit')} for x in s['stages'] if x['status']=='COMMITTED'],ensure_ascii=False),'recent_commits':recent_commits(),'worker_result':text(ROOT/last_exec['result_file']) if last_exec else ''}
+ v={'project_root':str(ROOT),'goal_title':s['goal']['title'],'run_id':rid,'stage_id':st['id'] if st else 'planning','stage_title':st['title'] if st else 'Next-stage planning','executor_brief':st.get('executor_brief','') if st else '','acceptance':json.dumps(st.get('acceptance',[]) if st else s['goal'].get('acceptance',[]),ensure_ascii=False),'inputs':json.dumps(st.get('inputs',[]) if st else [],ensure_ascii=False),'outputs':json.dumps(st.get('outputs',[]) if st else [],ensure_ascii=False),'in_scope':json.dumps(st.get('in_scope',[]) if st else [],ensure_ascii=False),'out_of_scope':json.dumps(st.get('out_of_scope',[]) if st else [],ensure_ascii=False),'required_tests':json.dumps(st.get('required_tests',[]) if st else [],ensure_ascii=False),'allowed_files':json.dumps(st.get('allowed_files',[]) if st else [],ensure_ascii=False),'review_rejections':st.get('review_rejections',0) if st else 0,'max_review_rejections':st.get('max_review_rejections',3) if st else 3,'fix_notes':json.dumps(st.get('fix_notes',[]) if st else [],ensure_ascii=False),'existing_worktree_scope':json.dumps(st.get('worktree_scope',[]) if st else [],ensure_ascii=False),'result_file':str(out),'decision_file':str(out),'committed_stages':json.dumps([x['id'] for x in s['stages'] if x['status']=='COMMITTED']),'goal_acceptance':json.dumps(s['goal'].get('acceptance',[]),ensure_ascii=False),'committed_stage_details':json.dumps([{'id':x['id'],'title':x.get('title',''),'commit':x.get('commit')} for x in s['stages'] if x['status']=='COMMITTED'],ensure_ascii=False),'recent_commits':recent_commits(),'worker_result':text(ROOT/last_exec['result_file']) if last_exec else ''}
  pf.write_text(render('executor.txt' if name=='executor' else ('judge_review.txt' if action=='review' else 'judge_plan.txt'),v),encoding='utf-8')
  run={'run_id':rid,'role':name,'stage':st['id'] if st else None,'action':action,'dispatch_ordinal':n if st else s['planning']['counter'],'status':'DISPATCHED','prompt_file':str(pf.relative_to(ROOT)),'log_file':str(log.relative_to(ROOT)),'result_file':str(out.relative_to(ROOT)),'started_at':stamp(),'deadline_at':stamp(now()+dt.timedelta(minutes=role['timeout_min']))};s['runs'][rid]=run
  if st:st['status']='REVIEWING' if action=='review' else 'DISPATCHED';st.setdefault('runs',[]).append(rid)
@@ -218,7 +218,7 @@ def harvest(s,notes):
    elif not o['new_stages']:failure(s,r,'plan has goal_done=false and no new_stages',notes)
    else:
     for ns in o['new_stages']:
-     if ns.get('id') and not stage(s,ns['id']):ns.update(status='READY',created_by='run:'+r['run_id'],attempts={'execute':0,'review':0,'validate':0},dispatch_ordinals={},max_attempts=3,fix_notes=[],artifacts=[],runs=[]);s['stages'].append(ns)
+     if ns.get('id') and not stage(s,ns['id']):ns.update(status='READY',created_by='run:'+r['run_id'],attempts={'execute':0,'review':0,'validate':0},dispatch_ordinals={},max_attempts=3,max_review_rejections=3,review_rejections=0,deferred_findings=[],fix_notes=[],artifacts=[],runs=[]);s['stages'].append(ns)
     event(s,r['run_id']+':PLANNED',o.get('notify_owner',o.get('summary','planning completed')),notes)
   elif r['action']=='execute':
    declared=set(o['files_changed']);declared.discard(r.get('result_file'))
@@ -229,9 +229,19 @@ def harvest(s,notes):
    if o['status']=='blocked':st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,r['run_id']+':BLOCKED',o.get('blocked_reason','executor blocked'),notes)
    else:st['status']='AWAITING_REVIEW';event(s,r['run_id']+':AWAITING_REVIEW',o['summary'],notes)
   else:
-   v=o['verdict']
-   if v=='accept':st['status']='ACCEPTED';st['review_decision']=o;event(s,r['run_id']+':ACCEPTED',o.get('notify_owner',o['summary']),notes)
-   elif v in ('accept_with_fixes','reject'):st['fix_notes']=o.get('fixes',[]);st['status']='READY';event(s,r['run_id']+':READY',o.get('notify_owner',o['summary']),notes)
+   v=o['verdict'];st.setdefault('deferred_findings',[]).extend(o.get('deferred_findings',[]))
+   valid_ids={a['id'] for a in st.get('acceptance',[]) if isinstance(a,dict) and a.get('id')};blocking=set(o.get('blocking_criterion_ids',[]));unknown=blocking-valid_ids
+   if unknown:
+    st['scope_violation']='review cited criteria outside frozen contract: '+', '.join(sorted(unknown));st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,r['run_id']+':SCOPE_VIOLATION',st['scope_violation'],notes)
+   elif v=='accept':st['status']='ACCEPTED';st['review_decision']=o;event(s,r['run_id']+':ACCEPTED',o.get('notify_owner',o['summary']),notes)
+   elif v in ('accept_with_fixes','reject'):
+    if not blocking:
+     st['scope_violation']='reject/accept_with_fixes requires at least one frozen acceptance criterion';st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,r['run_id']+':SCOPE_VIOLATION',st['scope_violation'],notes)
+    else:
+     st['review_rejections']=st.get('review_rejections',0)+1;st['fix_notes']=o.get('fixes',[])
+     if st['review_rejections']>=st.get('max_review_rejections',3):
+      st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,r['run_id']+':REVIEW_LIMIT',f"{st['id']} reached frozen review rejection limit; owner scope decision required",notes)
+     else:st['status']='READY';event(s,r['run_id']+':READY',o.get('notify_owner',o['summary']),notes)
    else:st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,r['run_id']+':BLOCKED',o.get('blocked_reason','judge blocked'),notes)
 def reconcile():
  l=lock()

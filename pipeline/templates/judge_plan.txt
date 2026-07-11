@@ -2,9 +2,12 @@
 專案：{project_root}
 目標：{goal_title}
 目標驗收：{goal_acceptance}
-已提交 stages：{committed_stage_ids}
+已提交 stages：{committed_stages}
 已提交 stage 詳情：{committed_stage_details}
 最近 git commits：{recent_commits}
 必讀：AGENTS.md、SPEC.md、docs/task-specs/CIVITAI_RECIPE_WORKFLOW.md、docs/PROGRESS.md。
+
+SCOPE FREEZE（硬性）：每個 new stage 必須是 frozen contract，包含 inputs、outputs、in_scope、out_of_scope、具唯一 ID 的 acceptance、required_tests、allowed_files。只規劃一個最小 stage。後續 reviewer 只能依 acceptance ID reject；未列入的強化必須 deferred，不可阻擋該 stage。不得使用 TBD/TODO/模糊「完整支援」描述。
+
 必須寫入 {decision_file}：
-{"schema":"hermes.decision.v1.1","run_id":"{run_id}","decision_type":"plan","summary":"...","new_stages":[{"id":"...","title":"...","depends_on":[],"kind":"implement","acceptance":["..."],"executor_brief":"..."}],"goal_done":false,"blocked_reason":null,"needs_from_owner":null,"notify_owner":"..."}
+{"schema":"hermes.decision.v1.1","run_id":"{run_id}","decision_type":"plan","summary":"...","new_stages":[{"id":"CIV-B","title":"...","depends_on":["CIV-A"],"kind":"implement","contract_version":"1.0","inputs":["..."],"outputs":["..."],"in_scope":["..."],"out_of_scope":["..."],"acceptance":[{"id":"CIV-B-AC1","text":"可二元驗收的條件"}],"required_tests":["精確測試命令/案例"],"allowed_files":["backend/app/...","backend/tests/..."],"executor_brief":"只實作 frozen contract；不得處理 out_of_scope"}],"goal_done":false,"blocked_reason":null,"needs_from_owner":null,"notify_owner":"..."}
