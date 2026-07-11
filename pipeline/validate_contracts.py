@@ -28,11 +28,18 @@ def decision_ok(x):
  if x['decision_type']=='plan':
   require(x,['new_stages','goal_done','blocked_reason','needs_from_owner'],'plan decision')
   if not isinstance(x['new_stages'],list) or not isinstance(x['goal_done'],bool):raise ValueError('bad plan fields')
-  for s in x['new_stages']:require(s,['id','title','depends_on','kind','acceptance','executor_brief'],'new stage')
+  for s in x['new_stages']:
+   require(s,['id','title','depends_on','kind','contract_version','inputs','outputs','in_scope','out_of_scope','acceptance','required_tests','allowed_files','executor_brief'],'new stage frozen contract')
+   lists=('inputs','outputs','in_scope','out_of_scope','acceptance','required_tests','allowed_files')
+   if any(not isinstance(s[k],list) for k in lists):raise ValueError('frozen contract fields must be lists')
+   if not s['acceptance'] or not all(isinstance(a,dict) and isinstance(a.get('id'),str) and a['id'] and isinstance(a.get('text'),str) and a['text'] for a in s['acceptance']):raise ValueError('frozen contract acceptance requires id/text objects')
+   ids=[a['id'] for a in s['acceptance']]
+   if len(ids)!=len(set(ids)):raise ValueError('frozen contract acceptance ids must be unique')
  elif x['decision_type']=='review':
-  require(x,['stage','verdict','fixes','blocked_reason','needs_from_owner','commit'],'review decision')
+  require(x,['stage','verdict','fixes','blocking_criterion_ids','deferred_findings','blocked_reason','needs_from_owner','commit'],'review decision')
   if x['verdict'] not in ('accept','accept_with_fixes','reject','blocked'):raise ValueError('bad verdict')
-  if not isinstance(x['fixes'],list) or not isinstance(x['commit'],dict):raise ValueError('bad review fields')
+  if not isinstance(x['fixes'],list) or not isinstance(x['blocking_criterion_ids'],list) or not isinstance(x['deferred_findings'],list) or not isinstance(x['commit'],dict):raise ValueError('bad review fields')
+  if not all(isinstance(f,dict) and isinstance(f.get('criterion_id'),str) and isinstance(f.get('instruction'),str) for f in x['fixes']):raise ValueError('review fixes must reference criterion_id')
  else:raise ValueError('bad decision_type')
 def result_ok(x):
  require(x,['schema','run_id','status','summary','files_changed','how_verified','blocked_reason','notes_for_review'],'result')
