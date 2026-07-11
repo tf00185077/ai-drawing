@@ -27,6 +27,9 @@ class DispatchTests(unittest.TestCase):
   criterion_ids=['AC-1'] if criterion_ids is None and verdict!='accept' else (criterion_ids or [])
   fixes=[{'criterion_id':x,'instruction':'fix'} for x in criterion_ids]
   (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.decision.v1.1','run_id':r['run_id'],'decision_type':'review','stage':'X','verdict':verdict,'summary':'no','fixes':fixes,'blocking_criterion_ids':criterion_ids,'deferred_findings':[],'blocked_reason':None,'needs_from_owner':None,'commit':{'message':'x'}}))
+ def plan(self,r):
+  ns=dict(self.st(),id='Y',title='next',kind='implement',executor_brief='bounded next stage');ns.pop('status');ns.pop('attempts');ns.pop('dispatch_ordinals');ns.pop('max_attempts');ns.pop('max_review_rejections');ns.pop('review_rejections');ns.pop('deferred_findings');ns.pop('fix_notes');ns.pop('runs')
+  (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.decision.v1.1','run_id':r['run_id'],'decision_type':'plan','summary':'planned','new_stages':[ns],'goal_done':False,'blocked_reason':None,'needs_from_owner':None}))
  # retained original cases
  def test_atomic_lock_single_flight(self):a=dispatch.lock();self.assertIsNotNone(a);self.assertIsNone(dispatch.lock());dispatch.unlock(a)
  def test_same_run_and_notification_not_duplicated(self):
@@ -37,6 +40,13 @@ class DispatchTests(unittest.TestCase):
   s=self.get();self.assertEqual(s['goal']['status'],'PAUSED');self.assertEqual(s['stages'][0]['attempts']['execute'],3)
  def test_hit_limit_does_not_consume_attempt(self):
   self.s['stages']=[self.st()];self.put();self.tick();s=self.get();r=list(s['runs'].values())[-1];(self.root/r['log_file']).write_text('usage limit resets 11:59pm');self.dead(s,r);self.tick();s=self.get();self.assertEqual(s['stages'][0]['attempts']['execute'],0);self.assertTrue(s['rate_limit']['active'])
+ def test_valid_machine_result_wins_over_late_rate_limit_log(self):
+  self.tick();s=self.get();r=s['runs']['plan.001.judge'];self.plan(r);(self.root/r['log_file']).write_text('completed decision\nHTTP 429: usage limit reached');self.dead(s,r);self.tick();s=self.get()
+  self.assertFalse(s['rate_limit']['active']);self.assertEqual(s['runs'][r['run_id']]['status'],'COMPLETED');self.assertEqual(s['stages'][0]['id'],'Y');self.assertEqual(s['stages'][0]['status'],'RUNNING')
+ def test_rate_limited_pending_run_recovers_when_valid_result_exists(self):
+  self.tick();s=self.get();r=s['runs']['plan.001.judge'];(self.root/r['log_file']).write_text('HTTP 429: usage limit reached');self.dead(s,r);self.tick();s=self.get();self.assertTrue(s['rate_limit']['active'])
+  r=s['runs']['plan.001.judge'];self.plan(r);self.s=s;self.put();self.tick();s=self.get()
+  self.assertFalse(s['rate_limit']['active']);self.assertEqual(s['runs'][r['run_id']]['status'],'COMPLETED');self.assertEqual(s['stages'][0]['id'],'Y');self.assertEqual(s['stages'][0]['status'],'RUNNING')
  def test_rate_limit_episode_notifies_once_and_due_tick_dispatches_retry(self):
   self.s['stages']=[self.st()];self.put();t0=dispatch.dt.datetime(2026,7,11,1,0,tzinfo=dispatch.dt.timezone.utc)
   with patch('dispatch.now',return_value=t0):self.tick()
