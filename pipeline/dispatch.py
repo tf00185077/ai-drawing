@@ -160,7 +160,7 @@ def validators(st,before=None):
  commands=[
   [sys.executable,'pipeline/validate_contracts.py'],
   ['uv','run','--python','3.11','pytest','backend/tests/','-x','-q'],
-  ['uv','run','--python','3.11','pytest','mcp-server/tests/','-x','-q'],
+  ['uv','run','--project','mcp-server','pytest','mcp-server/tests/','-x','-q'],
  ]
  out=[]
  for cmd in commands:
