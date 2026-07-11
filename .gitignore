@@ -3,6 +3,18 @@
 .env.local
 .env.*.local
 
+# Hermes autonomous pipeline runtime
+agent_runs/*.log
+agent_runs/*.txt
+agent_runs/*.json
+agent_runs/*.exitcode
+pipeline/state.json
+pipeline/events.jsonl
+pipeline/notified.jsonl
+pipeline/lock/
+pipeline/__pycache__/
+pipeline/tests/__pycache__/
+
 # ===== Python =====
 __pycache__/
 *.py[cod]
