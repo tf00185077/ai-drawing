@@ -90,6 +90,7 @@ def _image_to_item(row: GeneratedImage) -> GalleryItem:
     """GeneratedImage 轉 GalleryItem"""
     return GalleryItem(
         id=row.id,
+        job_id=row.job_id,
         image_path=row.image_path,
         image_url=_to_image_url(row.image_path) or None,
         checkpoint=row.checkpoint,

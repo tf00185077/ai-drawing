@@ -92,7 +92,7 @@ def _submission_failure(exc: Exception) -> dict[str, str]:
 
 def _identity_from_result(result: Any) -> dict[str, Any]:
     raw = result.model_dump(mode="json") if hasattr(result, "model_dump") else dict(result)
-    keys = ("variant_id", "job_id", "derived_recipe_sha256", "built_child_recipe_sha256", "workflow_sha256", "resource_lock_sha256", "parent_recipe_sha256")
+    keys = ("variant_id", "job_id", "derived_recipe_sha256", "built_child_recipe_sha256", "workflow_sha256", "resource_lock_sha256", "parent_recipe_sha256", "provenance_components")
     identity = {key: raw[key] for key in keys if raw.get(key) is not None}
     if "variant_id" not in identity or "job_id" not in identity:
         raise VariationSetError("submission", "variant_response_invalid")
@@ -214,6 +214,12 @@ def _gallery_lookup(db: Any, job_id: str) -> Any:
     return db.query(GeneratedImage).filter_by(job_id=job_id).first() if not isinstance(db, InMemoryVariationSetStore) else None
 
 
+def _gallery_identity(record: Any) -> dict[str, Any] | None:
+    if record is None:
+        return None
+    return {"id": record.id, "job_id": record.job_id, "image_path": record.image_path}
+
+
 def create_variation_set(request: Any, *, db: Any, variation_set_id_factory: Callable[[], str] | None = None) -> dict[str, Any]:
     factory = variation_set_id_factory or (lambda: secrets.token_urlsafe(24))
     set_id = factory()
@@ -280,12 +286,16 @@ def cancel_variation_set(variation_set_id: str, *, db: Any, queue_status: Callab
     return get_variation_set(variation_set_id, db=db, queue_status=queue_status, gallery_lookup=gallery_lookup)
 
 
-def export_variation_set(variation_set_id: str, *, db: Any, queue_status: Callable[[str], Any] | None = None, gallery_export: Callable[[str], Any] | None = None) -> dict[str, Any]:
+def export_variation_set(variation_set_id: str, *, db: Any, queue_status: Callable[[str], Any] | None = None, gallery_export: Callable[[str], Any] | None = None, gallery_identity: Callable[[str], Any] | None = None) -> dict[str, Any]:
     view = get_variation_set(variation_set_id, db=db, queue_status=queue_status)
     gallery_export = gallery_export or (lambda job: bundle_from_record(_gallery_lookup(db, job), verify_files=True) if _gallery_lookup(db, job) is not None else None)
+    gallery_identity = gallery_identity or (lambda job: _gallery_identity(_gallery_lookup(db, job)))
     members = []
     for member in view["members"]:
-        item = deepcopy(member); item["gallery_export"] = gallery_export(member["job_id"]) if member.get("job_id") else None; members.append(item)
+        item = deepcopy(member)
+        item["gallery_identity"] = gallery_identity(member["job_id"]) if member.get("job_id") else None
+        item["gallery_export"] = gallery_export(member["job_id"]) if member.get("job_id") else None
+        members.append(item)
     document = _safe({
         "schema_version": "1.0", "variation_set_id": view["variation_set_id"],
         "parent_recipe_sha256": view["parent_recipe_sha256"], "created_at": view["created_at"],
