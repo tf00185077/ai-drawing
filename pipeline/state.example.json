@@ -1,0 +1,9 @@
+{
+  "schema":"hermes.pipeline.v1.1",
+  "goal":{"id":"ai-drawing-civitai-recipe-v1","title":"讓 ai-drawing MCP 可稽核地導入並重現 Civitai 高品質圖片 recipe","status":"ACTIVE","acceptance":["完成 SPEC.md 全部功能要求","backend 與 MCP regression tests 通過","至少一張公開 Civitai 圖完成 import-to-ComfyUI smoke 與 recipe export","每張 runtime 圖直接交付 CTY 且不自行做視覺判定"],"created_at":"2026-07-11T12:40:00+00:00"},
+  "roles_file":"pipeline/roles.json",
+  "stages":[
+    {"id":"CIV-A","title":"GenerationRecipe schema 與重現等級基座","created_by":"owner-spec","depends_on":[],"status":"READY","kind":"implement","acceptance":["新增 versioned GenerationRecipe schema，保留 raw/confirmed/inferred/missing 欄位","涵蓋 source、resources、多 LoRA、sampling、passes、controls、detailers、postprocess","提供 normalization/validation 與離線 unit tests","不破壞既有 generate schema"],"executor_brief":"閱讀 SPEC.md、AGENTS.md、backend/app/schemas/generate.py、backend/app/core/workflow.py 與既有 tests。先以 TDD 建立最小可擴充 GenerationRecipe schema、reproduction level/report 與 normalization primitives；本 stage 不做網路呼叫、不做 DB migration、不做 runtime 生圖。更新 docs/PROGRESS.md。","attempts":{"execute":0,"review":0,"validate":0},"max_attempts":3,"fix_notes":[],"artifacts":[],"runs":[]}
+  ],
+  "runs":{},"rate_limit":{"active":false,"resume_at":null,"hit_count_today":0},"planning":{"counter":0,"failures":0,"max_failures":3},"updated_at":"2026-07-11T12:40:00+00:00"
+}

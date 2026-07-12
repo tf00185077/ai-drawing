@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.core.queue import QueueFullError, submit, submit_custom
 from app.db.database import get_db
 from app.db.models import GeneratedArtifact, GeneratedImage
+from app.services.civitai_recipe_gallery import ProvenanceValidationError, bundle_from_record, rerun_input_params
 from app.schemas.gallery import (
     ArtifactDetail,
     GalleryItem,
@@ -102,6 +103,12 @@ def _image_to_item(row: GeneratedImage) -> GalleryItem:
         cfg=row.cfg,
         prompt=row.prompt,
         negative_prompt=row.negative_prompt,
+        recipe_provenance_available=all(getattr(row, field, None) is not None for field in (
+            "recipe_json", "recipe_sha256", "recipe_workflow_json", "recipe_workflow_sha256",
+            "recipe_input_hashes_json", "recipe_resource_locks_json", "recipe_runtime_provenance_json",
+            "recipe_reproduction_level",
+        )),
+        recipe_reproduction_level=row.recipe_reproduction_level,
         created_at=row.created_at,
     )
 
@@ -183,7 +190,32 @@ async def rerun_image(
     if not row:
         raise HTTPException(404, "找不到該圖片")
 
-    # 忠實重現路徑：有存完整 workflow
+    # CIV-E provenance path owns rerun whenever any recipe field exists. It never falls
+    # back to template reconstruction after validation failure.
+    recipe_columns = (
+        "recipe_json", "recipe_sha256", "recipe_workflow_json", "recipe_workflow_sha256",
+        "recipe_input_hashes_json", "recipe_resource_locks_json", "recipe_runtime_provenance_json",
+        "recipe_reproduction_level",
+    )
+    if any(getattr(row, field, None) is not None for field in recipe_columns):
+        try:
+            bundle = bundle_from_record(row, verify_files=True)
+            verified_inputs = rerun_input_params(bundle, Path(get_settings().gallery_dir))
+        except ProvenanceValidationError as exc:
+            raise HTTPException(409, exc.detail())
+        params = {
+            "workflow": bundle["workflow"],
+            "prompt": row.prompt or "",
+            **verified_inputs,
+        }
+        # Do not pass seed: stored workflow is the only recipe authority.
+        try:
+            job_id = submit_custom(params)
+            return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列（recipe 稽核重現）")
+        except QueueFullError as e:
+            raise HTTPException(503, str(e))
+
+    # Existing custom workflow path is retained for pre-CIV-E records.
     if row.workflow_json:
         try:
             wf = json.loads(row.workflow_json)
@@ -193,7 +225,6 @@ async def rerun_image(
             gallery_dir = Path(get_settings().gallery_dir).resolve()
 
             def _require_source(rel: str, label: str) -> None:
-                # 來源圖被刪則無法重新上傳，明確報錯而非送出壞圖
                 if not (gallery_dir / rel).resolve().is_file():
                     raise HTTPException(409, f"無法重現：{label} 來源檔已不存在（{rel}）")
 
@@ -204,7 +235,6 @@ async def rerun_image(
             if row.source_mask:
                 _require_source(row.source_mask, "mask")
                 params["mask"] = row.source_mask
-            # 不傳 seed：custom 路徑省略時保留 workflow 原值 → 忠實重現
             try:
                 job_id = submit_custom(params)
                 return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列（忠實重現）")
@@ -249,6 +279,23 @@ async def export_params(
         raise HTTPException(404, "找不到該圖片")
 
     fmt = format.lower().strip()
+    if fmt == "recipe":
+        try:
+            bundle = bundle_from_record(row, verify_files=True)
+        except ProvenanceValidationError as exc:
+            raise HTTPException(409, exc.detail())
+        return {
+            "schema_version": bundle["schema_version"],
+            "gallery": {"id": row.id, "image_path": row.image_path, "job_id": row.job_id},
+            "recipe": bundle["recipe"],
+            "recipe_sha256": bundle["recipe_sha256"],
+            "workflow": bundle["workflow"],
+            "workflow_sha256": bundle["workflow_sha256"],
+            "input_hashes": bundle["input_hashes"],
+            "resource_locks": bundle["resource_locks"],
+            "runtime_provenance": bundle["runtime_provenance"],
+            "reproduction_level": bundle["reproduction_level"],
+        }
     if fmt == "csv":
         buf = io.StringIO()
         writer = csv.writer(buf)

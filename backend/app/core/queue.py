@@ -76,6 +76,7 @@ class GenerateParams(TypedDict, total=False):
     scheduler: str
     lora_strength: float
     denoise: float
+    recipe_provenance: dict[str, Any]  # CIV-F verified CIV-E bundle, persisted on completion
 
 
 class _Job:
@@ -272,7 +273,7 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             isinstance(n, dict) and n.get("class_type") == "CheckpointLoaderSimple"
             for n in wf.values()
         )
-        if has_checkpoint_loader:
+        if has_checkpoint_loader and not custom_wf:
             effective_checkpoint = (
                 job.params.get("checkpoint")
                 or default_checkpoint(settings)
@@ -284,7 +285,8 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             if not job.params.get("checkpoint"):
                 job.params["checkpoint"] = effective_checkpoint
         else:
-            # 模板自帶模型；僅在呼叫端明確指定時才覆寫（apply_params 寫入 UNETLoader.unet_name）
+            # Custom workflows and diffusion-model templates already bind their model files.
+            # Only an explicit caller override may replace those audited bindings.
             effective_checkpoint = job.params.get("checkpoint")
 
         width = job.params.get("width")
@@ -514,6 +516,7 @@ def _save_job_outputs(
                     artifact_source_node_id=artifact.get("source_node_id"),
                     artifact_source_node_type=artifact.get("source_node_type"),
                     artifact_file_size=file_size,
+                    recipe_provenance=job.params.get("recipe_provenance"),
                     db=db,
                 )
             else:

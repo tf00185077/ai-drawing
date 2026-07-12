@@ -55,6 +55,17 @@ def test_init_db_adds_artifact_table_without_changing_image_rows(tmp_path: Path,
     assert "generated_artifacts" in tables
     assert "downloaded_resources" in tables
     assert "lora_training_jobs" in tables
+    image_columns = {c["name"] for c in inspector.get_columns("generated_images")}
+    assert {
+        "recipe_json",
+        "recipe_sha256",
+        "recipe_workflow_json",
+        "recipe_workflow_sha256",
+        "recipe_input_hashes_json",
+        "recipe_resource_locks_json",
+        "recipe_runtime_provenance_json",
+        "recipe_reproduction_level",
+    }.issubset(image_columns)
     downloaded_columns = {c["name"] for c in inspector.get_columns("downloaded_resources")}
     assert {
         "resource_name",

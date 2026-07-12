@@ -60,6 +60,27 @@ def test_invalid_custom_workflow_marked_failed_not_requeued(monkeypatch) -> None
     assert q._running is None
 
 
+def test_custom_workflow_uses_its_locked_checkpoint_without_inventory_default(monkeypatch) -> None:
+    """A compiled recipe workflow must not depend on mutable backend inventory."""
+    q._reset_for_test()
+    workflow = {
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "locked-recipe.safetensors"},
+        }
+    }
+    q.submit_custom({"workflow": workflow})
+    monkeypatch.setattr(q, "default_checkpoint", lambda settings: None)
+    comfy = MagicMock()
+    comfy.submit_prompt.return_value = "prompt-1"
+
+    q._process_pending(comfy)
+
+    comfy.submit_prompt.assert_called_once()
+    submitted = comfy.submit_prompt.call_args.args[0]
+    assert submitted["4"]["inputs"]["ckpt_name"] == "locked-recipe.safetensors"
+
+
 def test_connection_failure_marked_failed_without_node_errors(monkeypatch) -> None:
     import httpx
 
