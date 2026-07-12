@@ -22,6 +22,14 @@ _ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "workflow_json": "TEXT",
         "source_image": "VARCHAR(512)",
         "source_mask": "VARCHAR(512)",
+        "recipe_json": "TEXT",
+        "recipe_sha256": "VARCHAR(64)",
+        "recipe_workflow_json": "TEXT",
+        "recipe_workflow_sha256": "VARCHAR(64)",
+        "recipe_input_hashes_json": "TEXT",
+        "recipe_resource_locks_json": "TEXT",
+        "recipe_runtime_provenance_json": "TEXT",
+        "recipe_reproduction_level": "VARCHAR(64)",
     },
 }
 
