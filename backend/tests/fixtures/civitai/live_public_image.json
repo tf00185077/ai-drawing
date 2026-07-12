@@ -1,0 +1,82 @@
+{
+  "source": {
+    "image_id": 130519340,
+    "url": "https://civitai.com/images/130519340",
+    "media_url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+    "model_family": "illustrious"
+  },
+  "images_api_with_meta": {
+    "items": [
+      {
+        "id": 130519340,
+        "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+        "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+        "width": 1152,
+        "height": 2016,
+        "nsfwLevel": "None",
+        "type": "image",
+        "nsfw": false,
+        "browsingLevel": 1,
+        "createdAt": "2026-05-12T22:23:07.379Z",
+        "postId": 28552423,
+        "unknown_top_level": {"preserve": ["live", 1]},
+        "stats": {"cryCount": 9, "laughCount": 12, "likeCount": 193, "dislikeCount": 0, "heartCount": 88, "commentCount": 0},
+        "meta": {
+          "id": 130519340,
+          "outerVendorField": {"preserve": true},
+          "meta": {
+            "": {},
+            "seed": 3282307999,
+            "Model": "NovaAnimeILV19",
+            "steps": 20,
+            "width": 768,
+            "hashes": {"model": "fa486caafc"},
+            "height": 1344,
+            "middle": "[0",
+            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+            "(shadow": "[0",
+            "sampler": "Euler a",
+            "cfgScale": 4.5,
+            "clipSkip": 2,
+            "highlight": "[20",
+            "resources": [{"hash": "fa486caafc", "name": "NovaAnimeILV19", "type": "model", "unmatched": true}],
+            "Model hash": "fa486caafc",
+            "Global Seed": "428649103",
+            "Hires steps": "40",
+            "Hires Adjust": {},
+            "Hires upscale": "1.5",
+            "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+            "Hires CFG Scale": "4",
+            "Denoising strength": "0.4",
+            "unknown_metadata": {"must": "survive"}
+          }
+        },
+        "username": "Crody",
+        "baseModel": "Illustrious",
+        "modelVersionIds": [2940478]
+      }
+    ],
+    "metadata": {}
+  },
+  "model_version": {
+    "id": 2940478,
+    "modelId": 376130,
+    "baseModel": "Illustrious",
+    "files": [{
+      "id": 2819621,
+      "name": "novaAnimeXL_ilV190.safetensors",
+      "hashes": {"SHA256": "FA486CAAFC330F133605D3C18B418D183812F14946631C6544BFB28730DB6D6F"},
+      "metadata": {"format": "SafeTensor", "fp": "fp16", "size": "pruned"},
+      "primary": true,
+      "type": "Model"
+    }]
+  },
+  "expected": {
+    "seed": 3282307999,
+    "checkpoint_name": "NovaAnimeILV19",
+    "checkpoint_sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+    "model_version_id": 2940478,
+    "file_id": 2819621,
+    "reproduction_level": "approximate_only"
+  }
+}
