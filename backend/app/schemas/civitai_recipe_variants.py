@@ -110,3 +110,4 @@ class CivitaiRecipeVariantGenerateResponse(_StrictModel):
     status: Literal["queued"]
     derivation: dict[str, Any]
     compatibility: dict[str, Any]
+    provenance_components: dict[str, Any]

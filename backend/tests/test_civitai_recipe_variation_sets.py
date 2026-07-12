@@ -211,3 +211,28 @@ def test_export_redacts_gallery_signed_url_before_hashing_and_remains_self_verif
     tampered = json.loads(json.dumps(document))
     tampered["members"][0]["gallery_export"]["signed_url"] = "https://cdn.example/file?X-Amz-Signature=forged"
     assert sets.verify_variation_set_export(tampered) is False
+
+
+def test_export_preserves_job_bound_gallery_identity_and_audited_component_documents() -> None:
+    """Owner RED: a completed set export must carry independently recomputable evidence."""
+    from app.services import civitai_recipe_variation_sets as sets
+
+    components = {
+        "parent_recipe": {"parent": True}, "derived_recipe": {"child": True},
+        "built_child_recipe": {"built": True}, "workflow": {"1": {"class_type": "SaveImage"}},
+        "resource_locks": [{"sha256": "a" * 64}], "strict_resolution_snapshot": {"ready": True},
+        "compatibility_snapshot": {"status": "compatible"},
+        "invalidated_evidence": [{"field": "base_prompt"}],
+    }
+    store = sets.InMemoryVariationSetStore()
+    store.create("set-proof", "a" * 64, [{"ordinal": 0, "client_child_key": "one", "variant_id": "v", "job_id": "job-one", "provenance_components": components}])
+    store.append_event("set-proof", 0, "submission_succeeded", {"status": "queued"})
+    document = sets.export_variation_set(
+        "set-proof", db=store, queue_status=lambda _job: {"status": "queued"},
+        gallery_export=lambda _job: {"recipe": {"built": True}},
+        gallery_identity=lambda _job: {"id": 42, "job_id": "job-one", "image_path": "day/result.png"},
+    )
+    member = document["members"][0]
+    assert member["gallery_identity"] == {"id": 42, "job_id": "job-one", "image_path": "day/result.png"}
+    assert member["provenance_components"] == components
+    assert sets.verify_variation_set_export(document) is True

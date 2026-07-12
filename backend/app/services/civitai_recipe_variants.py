@@ -109,7 +109,7 @@ def _build_validated_provenance(
     workflow: Mapping[str, Any],
     variant_id_factory: Callable[[], str],
     job_id_factory: Callable[[], str],
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, str]]:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, str], dict[str, Any]]:
     """Construct and validate every formal lineage binding in one fail-closed boundary."""
     try:
         child_recipe = derivation.child_recipe
@@ -196,7 +196,7 @@ def _build_validated_provenance(
 
     queue_bundle = deepcopy(bundle)
     queue_bundle["variant_lineage"] = deepcopy(lineage)
-    return queue_bundle, lineage, digests
+    return queue_bundle, lineage, digests, components
 
 
 def _fresh_execution_recipe(derived_recipe: Any, runtime: Any) -> Any:
@@ -284,7 +284,7 @@ def generate_one_variant(
     workflow = build.get("workflow")
     validate_single_child_batch(workflow)
     try:
-        queue_bundle, lineage, digests = _build_validated_provenance(
+        queue_bundle, lineage, digests, components = _build_validated_provenance(
             request=request,
             derivation=derivation,
             snapshot=snapshot,
@@ -317,4 +317,5 @@ def generate_one_variant(
         resource_lock_sha256=digests["resource_lock_sha256"], job_id=job_id, status="queued",
         derivation={"applied_directives": lineage["applied_directives"], "invalidated_evidence_sha256": lineage["invalidated_evidence_sha256"]},
         compatibility={"status": compatibility.get("status"), "snapshot_sha256": lineage["compatibility_snapshot_sha256"]},
+        provenance_components=components,
     )
