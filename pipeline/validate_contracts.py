@@ -35,6 +35,9 @@ def decision_ok(x):
    if not s['acceptance'] or not all(isinstance(a,dict) and isinstance(a.get('id'),str) and a['id'] and isinstance(a.get('text'),str) and a['text'] for a in s['acceptance']):raise ValueError('frozen contract acceptance requires id/text objects')
    ids=[a['id'] for a in s['acceptance']]
    if len(ids)!=len(set(ids)):raise ValueError('frozen contract acceptance ids must be unique')
+   for command in s['required_tests']:
+    if isinstance(command,str) and 'pytest' in command and 'backend/tests' in command and 'mcp-server/tests' in command:
+     raise ValueError('cross-project pytest command must split backend and mcp-server uv projects')
  elif x['decision_type']=='review':
   require(x,['stage','verdict','fixes','blocking_criterion_ids','deferred_findings','blocked_reason','needs_from_owner','commit'],'review decision')
   if x['verdict'] not in ('accept','accept_with_fixes','reject','blocked'):raise ValueError('bad verdict')
