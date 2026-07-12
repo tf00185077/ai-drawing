@@ -63,10 +63,19 @@ class CivitaiRecipeResolveLocalRequest(_StrictModel):
 
 class ResolutionExpectedIdentityPayload(_StrictModel):
     sha256: str | None = None
+    civitai_model_id: int | None = None
+    civitai_model_version_id: int | None = None
+    civitai_file_id: int | None = None
+    air: str | None = None
 
 
 class ResolutionActualIdentityPayload(_StrictModel):
     actual_sha256: str | None = None
+    sha256: str | None = None
+    civitai_model_id: int | None = None
+    civitai_model_version_id: int | None = None
+    civitai_file_id: int | None = None
+    air: str | None = None
 
 
 class ResolutionEntryPayload(_StrictModel):
@@ -86,6 +95,10 @@ class ResourceLockPayload(_StrictModel):
     sha256: str | None = None
     local_path: str | None = None
     model_family: str | None = None
+    civitai_model_id: int | None = None
+    civitai_model_version_id: int | None = None
+    civitai_file_id: int | None = None
+    air: str | None = None
 
 
 class ResourceResolutionReportPayload(_StrictModel):
