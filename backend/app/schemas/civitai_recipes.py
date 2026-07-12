@@ -72,6 +72,7 @@ class ResolutionExpectedIdentityPayload(_StrictModel):
 class ResolutionActualIdentityPayload(_StrictModel):
     actual_sha256: str | None = None
     sha256: str | None = None
+    model_family: str | None = None
     civitai_model_id: int | None = None
     civitai_model_version_id: int | None = None
     civitai_file_id: int | None = None

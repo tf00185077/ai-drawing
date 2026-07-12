@@ -481,6 +481,34 @@ def test_successful_install_is_visible_in_backend_owned_ledger(tmp_path: Path) -
         assert entry["availability"] is True
 
 
+def test_installed_audited_model_family_reaches_strict_resolution_lock(tmp_path: Path) -> None:
+    """Provider metadata persisted at install remains audited compatibility evidence."""
+    from app.schemas.generation_recipe import RecipeResource
+    from app.services.civitai_local_identity_ledger import local_identity_ledger
+    from app.services.civitai_resource_install import install_civitai_resource
+    from app.services.civitai_resource_resolution import resolve_recipe_resources
+
+    data = b"audited illustrious checkpoint"
+    selected = {**_selected(data), "resource_kind": "checkpoint", "model_family": "Illustrious"}
+    with _session(tmp_path)() as db:
+        result = install_civitai_resource(
+            selected, "checkpoints", db=db,
+            storage_roots={"checkpoints": tmp_path / "checkpoints"}, transport=_Transport(data),
+        )
+        report = resolve_recipe_resources([
+            RecipeResource.model_validate({
+                "kind": "checkpoint", "name": selected["name"], "sha256": selected["sha256"],
+                "civitai_model_id": selected["civitai_model_id"],
+                "civitai_model_version_id": selected["civitai_model_version_id"],
+                "civitai_file_id": selected["civitai_file_id"], "air": selected["air"],
+            })
+        ], local_identity_ledger(db).entries, strict=True).to_dict()
+
+    assert result["status"] == "completed"
+    assert report["entries"][0]["actual_identity"]["model_family"] == "illustrious"
+    assert report["resource_lock"][0]["model_family"] == "illustrious"
+
+
 def test_install_updates_one_existing_ledger_identity_then_strict_resolver_consumes_it(tmp_path: Path) -> None:
     """CIV-V-D-AC8: guarded install updates, then CIV-V-C reads and strictly locks it."""
     from app.schemas.generation_recipe import RecipeResource
@@ -524,7 +552,7 @@ def test_install_updates_one_existing_ledger_identity_then_strict_resolver_consu
             "index": 0, "kind": "lora", "local_path": result["final_path"],
             "sha256": selected["sha256"], "civitai_model_id": 101,
             "civitai_model_version_id": 201, "civitai_file_id": 11,
-            "air": selected["air"],
+            "air": selected["air"], "model_family": "sdxl",
         }]
 
 

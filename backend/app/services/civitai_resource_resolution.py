@@ -28,6 +28,7 @@ class LocalResourceLedgerEntry:
     civitai_model_version_id: int | None = None
     civitai_file_id: int | None = None
     air: str | None = None
+    model_family: str | None = None
     availability: bool = True
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
@@ -123,6 +124,8 @@ def _entry_for(index: int, resource: RecipeResource, ledger: Iterable[LocalResou
         )
     candidate = matches[0]
     actual = _identity(candidate)
+    if candidate.model_family is not None:
+        actual["model_family"] = candidate.model_family
     path = Path(candidate.local_path)
     base_diagnostics = redact_secrets(dict(candidate.diagnostics))
     if not candidate.availability:
@@ -175,6 +178,8 @@ def resolve_recipe_resources(
             "sha256": resource_list[entry.index].sha256,
             **{field: getattr(resource_list[entry.index], field) for field in _IDENTITY_FIELDS[:-1]
                if getattr(resource_list[entry.index], field) is not None},
+            **({"model_family": entry.actual_identity["model_family"]}
+               if entry.actual_identity is not None and entry.actual_identity.get("model_family") is not None else {}),
         }
         for entry in entries
         if entry.status == "resolved" and entry.hash_verified

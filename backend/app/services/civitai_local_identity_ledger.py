@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -43,12 +44,37 @@ def _availability(row: DownloadedResource) -> bool:
     return str(row.status or "").strip().lower() in _AVAILABLE_STATUSES
 
 
+def _audited_model_family(row: DownloadedResource, errors: list[dict[str, str]]) -> str | None:
+    """Read only the installer's redacted provider snapshot; never infer from names."""
+    if not row.notes:
+        return None
+    try:
+        snapshot = json.loads(row.notes)
+    except (TypeError, json.JSONDecodeError):
+        errors.append({"field": "notes.model_family", "code": "malformed_persisted_model_family"})
+        return None
+    value = snapshot.get("model_family") if isinstance(snapshot, dict) else None
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        errors.append({"field": "notes.model_family", "code": "malformed_persisted_model_family"})
+        return None
+    normalized = value.strip().casefold()
+    if normalized == "illustrious" or normalized.startswith("illustrious "):
+        return "illustrious"
+    if normalized == "sdxl" or normalized.startswith("sdxl "):
+        return "sdxl"
+    errors.append({"field": "notes.model_family", "code": "unsupported_persisted_model_family"})
+    return None
+
+
 def _entry_from_row(row: DownloadedResource) -> LocalResourceLedgerEntry:
     errors: list[dict[str, str]] = []
     identities = {
         target: _numeric_identity(getattr(row, source), source, errors)
         for source, target in _ID_FIELDS
     }
+    model_family = _audited_model_family(row, errors)
     diagnostics: dict[str, Any] = {"database_id": row.id, "status": row.status}
     if errors:
         diagnostics["identity_errors"] = errors
@@ -58,6 +84,7 @@ def _entry_from_row(row: DownloadedResource) -> LocalResourceLedgerEntry:
         sha256=row.sha256,
         air=row.air,
         availability=_availability(row),
+        model_family=model_family,
         diagnostics=diagnostics,
         **identities,
     )
@@ -124,6 +151,7 @@ def ledger_payload(snapshot: LocalLedgerSnapshot) -> dict[str, Any]:
             "civitai_model_version_id": entry.civitai_model_version_id,
             "civitai_file_id": entry.civitai_file_id,
             "air": entry.air,
+            "model_family": entry.model_family,
             "availability": entry.availability,
             "diagnostics": dict(entry.diagnostics),
         })
