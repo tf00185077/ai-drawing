@@ -121,6 +121,9 @@ class DownloadedResource(Base):
     sha256 = Column(String(64), nullable=True, index=True)
     model_id = Column(String(128), nullable=True)
     version_id = Column(String(128), nullable=True)
+    # Civitai immutable file/AIR identities are nullable for historical rows.
+    civitai_file_id = Column(String(128), nullable=True, index=True)
+    air = Column(String(512), nullable=True, index=True)
     status = Column(String(64), nullable=False, default="planned", index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
