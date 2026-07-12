@@ -54,6 +54,45 @@ def test_four_variation_set_wrappers_forward_exact_method_path(monkeypatch) -> N
     }
 
 
+def test_generate_wrapper_omits_absent_preserve_values_at_backend_boundary(monkeypatch) -> None:
+    """Regression: omitted directive values must not become JSON null."""
+    captured = {}
+
+    class Client:
+        def post(self, endpoint, json):
+            captured.update(endpoint=endpoint, body=json)
+            return {"variation_set_id": "set"}
+
+    monkeypatch.setattr(civitai_recipes, "_get_client", lambda: Client())
+    child = civitai_recipes.CivitaiVariationSetChild(
+        client_child_key="child-1",
+        directives=[
+            civitai_recipes.CivitaiVariantDirective(
+                field="base_prompt", policy="replace", value="different prompt"
+            ),
+            civitai_recipes.CivitaiVariantDirective(
+                field="negative_prompt", policy="preserve"
+            ),
+        ],
+    )
+
+    civitai_recipes.civitai_recipe_variation_set_generate(
+        parent_recipe={"schema_version": "1.0", "source": {"provider": "civitai", "image_id": 1}},
+        parent_recipe_sha256="a" * 64,
+        children=[child],
+        model_family="sdxl",
+        runtime_capabilities={"engine": "comfyui", "engine_version": "1", "node_types": [], "sampler_names": [], "scheduler_names": [], "snapshot_sha256": "b" * 64},
+        runtime_provenance={"engine": "comfyui", "engine_version": "1", "reference": "runtime:1"},
+        input_bindings={},
+    )
+
+    assert captured["endpoint"] == "civitai-recipes/variation-sets"
+    assert captured["body"]["children"][0]["directives"] == [
+        {"field": "base_prompt", "policy": "replace", "value": "different prompt"},
+        {"field": "negative_prompt", "policy": "preserve"},
+    ]
+
+
 def test_catalog_has_four_variation_set_tools() -> None:
     from mcp_server.tool_catalog import INTENDED_TOOLS
     names = {item.name for item in INTENDED_TOOLS}

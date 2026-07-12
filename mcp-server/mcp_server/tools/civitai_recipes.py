@@ -481,6 +481,18 @@ class CivitaiVariationSetChild(_StrictResourceModel):
     directives: list[CivitaiVariantDirective]
 
 
+def _variant_directive_payload(directive: CivitaiVariantDirective) -> dict[str, Any]:
+    """Preserve field absence across MCP JSON instead of inventing ``value: null``."""
+    return directive.model_dump(exclude_none=True)
+
+
+def _variation_set_child_payload(child: CivitaiVariationSetChild) -> dict[str, Any]:
+    return {
+        "client_child_key": child.client_child_key,
+        "directives": [_variant_directive_payload(item) for item in child.directives],
+    }
+
+
 def _validate_variation_set_children(children: list[CivitaiVariationSetChild]) -> None:
     keys = [child.client_child_key for child in children]
     if len(keys) != len(set(keys)):
@@ -493,7 +505,7 @@ def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, p
     return _post(
         "civitai_recipe_variant_generate", "civitai-recipes/variants/generate-one",
         {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256,
-         "directives": [_resource_payload(item) for item in directives], "model_family": model_family,
+         "directives": [_variant_directive_payload(item) for item in directives], "model_family": model_family,
          "runtime_capabilities": _resource_payload(runtime_capabilities),
          "runtime_provenance": _resource_payload(runtime_provenance),
          "input_bindings": {reference: _resource_payload(binding) for reference, binding in input_bindings.items()}},
@@ -505,7 +517,7 @@ def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, p
 def civitai_recipe_variation_set_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, children: Annotated[list[CivitaiVariationSetChild], Field(min_length=1, max_length=8)], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
     """Create one durable ordered set of independently immutable Child submissions."""
     _validate_variation_set_children(children)
-    return _post("civitai_recipe_variation_set_generate", "civitai-recipes/variation-sets", {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256, "children": [_resource_payload(child) for child in children], "model_family": model_family, "runtime_capabilities": _resource_payload(runtime_capabilities), "runtime_provenance": _resource_payload(runtime_provenance), "input_bindings": {key: _resource_payload(value) for key, value in input_bindings.items()}}, "use civitai_recipe_variation_set_status with the returned variation_set_id")
+    return _post("civitai_recipe_variation_set_generate", "civitai-recipes/variation-sets", {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256, "children": [_variation_set_child_payload(child) for child in children], "model_family": model_family, "runtime_capabilities": _resource_payload(runtime_capabilities), "runtime_provenance": _resource_payload(runtime_provenance), "input_bindings": {key: _resource_payload(value) for key, value in input_bindings.items()}}, "use civitai_recipe_variation_set_status with the returned variation_set_id")
 
 
 @ mcp.tool()
