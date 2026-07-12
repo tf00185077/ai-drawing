@@ -17,5 +17,5 @@ Allowed files：{allowed_files}
 SCOPE FREEZE（硬性）：只實作 in_scope 與 acceptance；不得處理 out_of_scope 或自行增加後續階段能力。發現額外問題只寫入 notes_for_review，不能擴大 dirty scope。遵守 TDD，更新 docs/PROGRESS.md。不要執行昂貴 ComfyUI 生圖；只有 live-smoke stage 才可產圖。
 
 完成後寫入 {result_file}（這個machine result與其他允許的agent_runs證據是上方禁止修改agent_runs的唯一例外）：
-{"schema":"hermes.result.v1.1","run_id":"{run_id}","status":"done|partial|blocked","summary":"...","files_changed":["Git-visible project-relative path"],"evidence_files":["agent_runs/... evidence path", "{result_file}"],"how_verified":"...","blocked_reason":null,"notes_for_review":"..."}
+{"schema":"hermes.result.v1.1","run_id":"{run_id}","status":"done|partial|blocked","summary":"...","files_changed":["Git-visible project-relative path"],"evidence_files":["agent_runs/... evidence path"],"how_verified":"...","blocked_reason":null,"notes_for_review":"..."}
 files_changed 必須精確等於 git status 可見的實際 dirty scope，並落在 allowed_files；不得包含被gitignore的agent_runs路徑。evidence_files僅列實際存在、位於agent_runs且符合allowed_files的稽核證據與本result，Dispatcher會分開驗證且不commit。

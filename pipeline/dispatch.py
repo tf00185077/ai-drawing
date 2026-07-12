@@ -32,7 +32,8 @@ def dirty_paths():
 def scope_ok(paths):return all(isinstance(p,str) and safe_file(p) for p in paths)
 def evidence_ok(st,paths,own_result):
  if not isinstance(paths,list) or not all(isinstance(p,str) for p in paths):return False
- for p in paths:
+ for raw in paths:
+  p=own_result if raw==str(ROOT/own_result) else raw
   q=Path(p)
   if q.is_absolute() or '..' in q.parts or not q.parts or q.parts[0]!='agent_runs':return False
   try:(ROOT/q).resolve().relative_to(RUNS.resolve())
