@@ -216,6 +216,46 @@ def test_compatibility_returns_incompatible_as_structured_success_without_queue(
     submit.assert_not_called()
 
 
+def test_compatibility_accepts_backend_owned_resolver_identity_fields() -> None:
+    """The compatibility boundary must accept the exact identity-rich CIV-C report shape."""
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe).to_dict()
+    identity = {
+        "civitai_model_id": 376130,
+        "civitai_model_version_id": 2940478,
+        "civitai_file_id": 2819621,
+        "sha256": "a" * 64,
+    }
+    report["entries"][0]["expected_identity"].update(identity)
+    report["entries"][0]["actual_identity"].update(identity)
+    report["resource_lock"][0].update({key: value for key, value in identity.items() if key != "sha256"})
+
+    snapshot_document = {
+        "engine": "comfyui",
+        "engine_version": "1",
+        "node_types": sorted(["CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage"]),
+        "sampler_names": ["euler"],
+        "scheduler_names": ["normal"],
+    }
+    runtime_capabilities = {
+        **snapshot_document,
+        "snapshot_sha256": hashlib.sha256(
+            json.dumps(snapshot_document, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+    }
+    response = TestClient(app).post(
+        "/api/civitai-recipes/compatibility",
+        json={
+            "recipe": recipe.model_dump(mode="json"),
+            "resource_report": report,
+            "model_family": "sdxl",
+            "runtime_capabilities": runtime_capabilities,
+        },
+    )
+
+    assert response.status_code == 200
+
+
 def test_compatibility_validation_errors_are_structured_and_redact_secret_sentinels() -> None:
     response = TestClient(app).post("/api/civitai-recipes/compatibility", json={
         "recipe": recipe_payload(),
