@@ -76,6 +76,7 @@ class GenerateParams(TypedDict, total=False):
     scheduler: str
     lora_strength: float
     denoise: float
+    recipe_provenance: dict[str, Any]  # CIV-F verified CIV-E bundle, persisted on completion
 
 
 class _Job:
@@ -514,6 +515,7 @@ def _save_job_outputs(
                     artifact_source_node_id=artifact.get("source_node_id"),
                     artifact_source_node_type=artifact.get("source_node_type"),
                     artifact_file_size=file_size,
+                    recipe_provenance=job.params.get("recipe_provenance"),
                     db=db,
                 )
             else:
