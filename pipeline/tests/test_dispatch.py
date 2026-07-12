@@ -101,6 +101,19 @@ class DispatchTests(unittest.TestCase):
   with patch('dispatch.alive',return_value=False),patch('dispatch.dirty_paths',return_value={'backend/app/example.py'}):
    data=json.loads((self.root/r['result_file']).read_text());data['files_changed']=['backend/app/example.py',r['result_file']];(self.root/r['result_file']).write_text(json.dumps(data));dispatch.harvest(self.s,[])
   self.assertEqual(st['status'],'AWAITING_REVIEW');self.assertEqual(st['worktree_scope'],['backend/app/example.py']);self.assertEqual(st['attempts']['execute'],0)
+ def test_executor_scope_accepts_ignored_evidence_separate_from_git_dirty(self):
+  st=self.st();st['allowed_files'].append('agent_runs/X.*');self.s['stages']=[st];r={'run_id':'X.execute.1.executor','role':'executor','stage':'X','action':'execute','status':'RUNNING','pid':999,'result_file':'agent_runs/x.result.json','log_file':'agent_runs/x.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.result(r);e='agent_runs/X.evidence.json';(self.root/e).write_text('{}');data=json.loads((self.root/r['result_file']).read_text());data['files_changed']=['backend/app/example.py'];data['evidence_files']=[e,r['result_file']];(self.root/r['result_file']).write_text(json.dumps(data))
+  with patch('dispatch.alive',return_value=False),patch('dispatch.dirty_paths',return_value={'backend/app/example.py'}):dispatch.harvest(self.s,[])
+  self.assertEqual(st['status'],'AWAITING_REVIEW');self.assertEqual(st['worktree_scope'],['backend/app/example.py'])
+ def test_executor_scope_rejects_missing_or_unsafe_evidence(self):
+  for evidence in (['agent_runs/missing.json'],['agent_runs/../pipeline/state.json']):
+   st=self.st();st['allowed_files'].append('agent_runs/X.*');self.s['stages']=[st];r={'run_id':'X.execute.1.executor','role':'executor','stage':'X','action':'execute','status':'RUNNING','pid':999,'result_file':'agent_runs/x.result.json','log_file':'agent_runs/x.log'};self.s['runs']={r['run_id']:r};st['runs']=[r['run_id']];self.result(r);data=json.loads((self.root/r['result_file']).read_text());data['evidence_files']=evidence;(self.root/r['result_file']).write_text(json.dumps(data))
+   with patch('dispatch.alive',return_value=False),patch('dispatch.dirty_paths',return_value=set()):dispatch.harvest(self.s,[])
+   self.assertEqual(r['status'],'FAILED')
+ def test_executor_scope_legacy_agent_run_evidence_is_not_git_dirty(self):
+  st=self.st();st['allowed_files'].append('agent_runs/X.*');self.s['stages']=[st];r={'run_id':'X.execute.1.executor','role':'executor','stage':'X','action':'execute','status':'RUNNING','pid':999,'result_file':'agent_runs/x.result.json','log_file':'agent_runs/x.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.result(r);e='agent_runs/X.evidence.json';(self.root/e).write_text('{}');data=json.loads((self.root/r['result_file']).read_text());data['files_changed']=['backend/app/example.py',e,r['result_file']];(self.root/r['result_file']).write_text(json.dumps(data))
+  with patch('dispatch.alive',return_value=False),patch('dispatch.dirty_paths',return_value={'backend/app/example.py'}):dispatch.harvest(self.s,[])
+  self.assertEqual(st['status'],'AWAITING_REVIEW')
  def test_validator_tracked_churn_restores_only_new_path(self):
   st=self.st();ok,msg,restored=None,None,None
   with patch('dispatch.subprocess.run',return_value=type('R',(),{'returncode':0,'stdout':''})()) as run,patch('dispatch.dirty_paths',side_effect=[{'worker.cs','churn.cs'},{'worker.cs'}, {'worker.cs'}, {'worker.cs'}, {'worker.cs'}]),patch('dispatch.tracked_path',return_value=True):ok,msg,restored=dispatch.validators(st,{'worker.cs'})
