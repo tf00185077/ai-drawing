@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.schemas.generation_recipe import GenerationRecipe
+from app.services.civitai_recipe_pipeline import CivitaiHttpTransport
 from app.services.civitai_resource_resolution import (
     ResolutionEntry,
     ResourceResolutionReport,
@@ -63,6 +64,20 @@ def test_import_uses_existing_acquisition_with_meta_raw_payload_and_redaction() 
     assert "secret" not in str(body)
 
 
+def test_production_civitai_transport_follows_api_and_media_redirects() -> None:
+    response = Mock(status_code=200, content=b"image-bytes", headers={})
+    response.json.return_value = {"items": []}
+    response.text = ""
+
+    with patch("app.services.civitai_recipe_pipeline.httpx.get", return_value=response) as get:
+        transport = CivitaiHttpTransport()
+        transport.get_json("https://civitai.com/api/v1/images", params={"imageId": 123})
+        transport.get_bytes("https://image.civitai.com/example.jpeg")
+
+    assert get.call_args_list[0].kwargs["follow_redirects"] is True
+    assert get.call_args_list[1].kwargs["follow_redirects"] is True
+
+
 def test_mcp_import_base64_encodes_embedded_bytes_over_real_http_client_and_merges_metadata(monkeypatch) -> None:
     """The MCP boundary serializes image bytes explicitly before the API decodes them."""
     project_root = Path(__file__).resolve().parents[2]
@@ -108,7 +123,7 @@ def test_mcp_import_base64_encodes_embedded_bytes_over_real_http_client_and_merg
 
     class OfflineTransport:
         def get_json(self, url, *, params=None, headers=None):
-            assert params == {"withMeta": "true"}
+            assert params == {"withMeta": "true", "imageId": 123}
             fixture = project_root / "backend/tests/fixtures/civitai/api/image_123.json"
             return (200, json.loads(fixture.read_text()), {})
 

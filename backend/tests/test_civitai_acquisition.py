@@ -101,6 +101,23 @@ def test_strict_locator_parser_rejects_unsafe_or_conflicting_identity(locator: s
     assert exc_info.value.code == "unsupported_locator"
 
 
+def test_image_locator_uses_public_images_query_endpoint_with_image_id() -> None:
+    transport = FakeTransport(
+        [CivitaiTransportResponse(200, {"items": [_json_fixture("image_123.json")]}, {})]
+    )
+
+    result = acquire_civitai_recipe("123", transport=transport)
+
+    assert result.image_id == 123
+    assert transport.calls == [
+        {
+            "url": "https://civitai.com/api/v1/images",
+            "params": {"withMeta": "true", "imageId": 123},
+            "headers": {},
+        }
+    ]
+
+
 def test_images_requests_force_with_meta_and_ambiguous_post_or_model_fails_closed() -> None:
     transport = FakeTransport(
         [CivitaiTransportResponse(200, _json_fixture("post_777_images.json"), {})]

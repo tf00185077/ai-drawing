@@ -431,7 +431,8 @@ def _fetch_media_evidence(
 def _api_request_for(locator: CivitaiLocator) -> tuple[str, dict[str, Any]]:
     params: dict[str, Any] = {"withMeta": "true"}
     if locator.kind == "image" and locator.image_id is not None:
-        return f"https://civitai.com/api/v1/images/{locator.image_id}", params
+        params["imageId"] = locator.image_id
+        return "https://civitai.com/api/v1/images", params
     if locator.kind == "post" and locator.post_id is not None:
         params["postId"] = locator.post_id
     elif locator.kind == "model":

@@ -23,7 +23,7 @@ class CivitaiHttpTransport:
     """The smallest production transport adapter; acquisition owns retry/redaction."""
 
     def get_json(self, url: str, *, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> CivitaiTransportResponse:
-        response = httpx.get(url, params=params, headers=headers, timeout=20.0)
+        response = httpx.get(url, params=params, headers=headers, timeout=20.0, follow_redirects=True)
         try:
             payload: Any = response.json()
         except ValueError:
@@ -31,7 +31,7 @@ class CivitaiHttpTransport:
         return CivitaiTransportResponse(response.status_code, payload, dict(response.headers))
 
     def get_bytes(self, url: str) -> CivitaiTransportResponse:
-        response = httpx.get(url, timeout=20.0)
+        response = httpx.get(url, timeout=20.0, follow_redirects=True)
         return CivitaiTransportResponse(response.status_code, response.content, dict(response.headers))
 
 
