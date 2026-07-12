@@ -1,16 +1,22 @@
 """CIV-F HTTP contracts: only orchestration over CIV-A through CIV-E services."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
 import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from sqlalchemy.orm import Session
 
 from app.core.queue import QueueFullError, submit_custom
 from app.schemas.civitai_recipes import (
+    CivitaiRecipeCompatibilityRequest,
+    CivitaiRecipeCompatibilityResponse,
     CivitaiRecipeBuildRequest,
     CivitaiRecipeImportRequest,
     CivitaiRecipeInspectRequest,
@@ -42,6 +48,39 @@ router = APIRouter(prefix="/api/civitai-recipes", tags=["civitai-recipes"])
 
 def _detail(code: str, message: str, **extra: Any) -> dict[str, Any]:
     return redact_secrets({"code": code, "message": message, **extra})
+
+
+_BEARER_VALUE = re.compile(r"\bBearer\s+[^\s,;]+", re.IGNORECASE)
+_TOKEN_QUERY_VALUE = re.compile(r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password)=)[^&#\s]*", re.IGNORECASE)
+
+
+def _compatibility_safe(value: Any) -> Any:
+    """Validation errors may echo rejected scalar input outside sensitive-key maps."""
+    redacted = redact_secrets(value)
+    if isinstance(redacted, list):
+        return [_compatibility_safe(item) for item in redacted]
+    if isinstance(redacted, tuple):
+        return tuple(_compatibility_safe(item) for item in redacted)
+    if isinstance(redacted, dict):
+        return {key: _compatibility_safe(item) for key, item in redacted.items()}
+    if isinstance(redacted, str):
+        return _BEARER_VALUE.sub("Bearer [REDACTED]", _TOKEN_QUERY_VALUE.sub(r"\1[REDACTED]", redacted))
+    return redacted
+
+
+class _CompatibilityValidationRoute(APIRoute):
+    """Retain FastAPI's validation diagnostics while removing untrusted secrets."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError as exc:
+                return JSONResponse(status_code=422, content={"detail": _compatibility_safe(exc.errors())})
+
+        return redacted_handler
 
 
 @router.post("/resource-inspect")
@@ -164,10 +203,29 @@ def resolve_local_civitai_recipe(
     return {**result, "snapshot": ledger_payload(snapshot)["snapshot"]}
 
 
+_default_route_class = router.route_class
+router.route_class = _CompatibilityValidationRoute
+
+
+@router.post("/compatibility", response_model=CivitaiRecipeCompatibilityResponse)
+def compatibility_civitai_recipe(request: CivitaiRecipeCompatibilityRequest) -> CivitaiRecipeCompatibilityResponse:
+    """Pure CIV-V-E decision endpoint; incompatible is successful structured data."""
+    from app.services.civitai_recipe_compatibility import preflight_recipe_compatibility
+    decision = preflight_recipe_compatibility(
+        request.recipe, request.resource_report.model_dump(),
+        requested_model_family=request.model_family,
+        runtime_capabilities=request.runtime_capabilities.model_dump(),
+    )
+    return CivitaiRecipeCompatibilityResponse.model_validate(decision)
+
+
+router.route_class = _default_route_class
+
+
 @router.post("/build")
 def build_civitai_recipe(request: CivitaiRecipeBuildRequest) -> dict[str, Any]:
     try:
-        return build_recipe(request.recipe, resource_report=report_from_payload(request.resource_report.model_dump()), model_family=request.model_family, input_bindings=request.input_bindings)
+        return build_recipe(request.recipe, resource_report=report_from_payload(request.resource_report.model_dump(exclude_none=True)), model_family=request.model_family, input_bindings=request.input_bindings)
     except RecipeCompileError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.diagnostic) from exc
 
