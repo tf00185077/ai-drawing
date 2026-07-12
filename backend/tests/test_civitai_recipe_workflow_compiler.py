@@ -139,6 +139,27 @@ def test_checkpoint_loader_uses_strict_lock_filename_not_recipe_display_name() -
     assert checkpoint["inputs"]["ckpt_name"] == "verified-local-file.safetensors"
 
 
+def test_a1111_euler_a_sampler_is_compiled_to_comfyui_runtime_identifier() -> None:
+    recipe = _recipe()
+    assert recipe.sampling is not None
+    recipe.sampling.sampler = "Euler a"
+
+    result = compile_generation_recipe_workflow(
+        recipe, _report(recipe), model_family="illustrious", input_bindings={}
+    )
+
+    sampler = next(
+        node for node in result.workflow.values() if node["class_type"] == "KSampler"
+    )
+    assert sampler["inputs"]["sampler_name"] == "euler_ancestral"
+    assert {
+        "canonical_field": "passes[0].sampling.sampler",
+        "node_id": "5",
+        "input_name": "sampler_name",
+        "value": "euler_ancestral",
+    } in result.manifest["field_bindings"]
+
+
 def test_compilation_is_deterministic_and_does_not_mutate_inputs() -> None:
     recipe = _recipe(extras=True)
     report = _report(recipe)
