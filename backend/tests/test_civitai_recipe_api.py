@@ -1,0 +1,222 @@
+"""CIV-F offline backend API contracts; no network, ComfyUI, or GPU."""
+from __future__ import annotations
+
+import base64
+import hashlib
+import importlib.util
+import json
+import sys
+import types
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+from app.schemas.generation_recipe import GenerationRecipe
+from app.services.civitai_resource_resolution import (
+    ResolutionEntry,
+    ResourceResolutionReport,
+)
+
+SHA = "a" * 64
+
+
+def recipe_payload(*, runtime: bool = True) -> dict:
+    payload = {
+        "schema_version": "1.0",
+        "source": {"provider": "civitai", "image_id": 123},
+        "base_prompt": "positive",
+        "negative_prompt": "negative",
+        "resources": [{"kind": "checkpoint", "name": "base.safetensors", "sha256": SHA}],
+        "sampling": {"seed": 42, "steps": 20, "cfg": 7.0, "sampler": "euler", "scheduler": "normal", "denoise": 1.0, "width": 512, "height": 512},
+        "passes": [{"name": "base", "inherits_from": "recipe.sampling"}],
+    }
+    if runtime:
+        payload["runtime"] = {"engine": "ComfyUI", "engine_version": "1", "reference": "runtime:1"}
+    return payload
+
+
+def report_for(recipe: GenerationRecipe, *, ready: bool = True) -> ResourceResolutionReport:
+    locks = [{"index": i, "kind": resource.kind.value, "local_path": f"/models/{resource.name}", "sha256": resource.sha256} for i, resource in enumerate(recipe.resources)]
+    return ResourceResolutionReport(
+        strict=True,
+        ready=ready,
+        entries=[ResolutionEntry(index=item["index"], status="resolved", matched_by=["sha256"], expected_identity={"sha256": SHA}, actual_identity={"actual_sha256": SHA}, local_path=item["local_path"], diagnostics={}, hash_verified=True) for item in locks],
+        resource_lock=locks,
+    )
+
+
+def test_import_uses_existing_acquisition_with_meta_raw_payload_and_redaction() -> None:
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    acquisition = Mock()
+    acquisition.to_dict.return_value = {"raw_api_payload": {"id": 123}, "recipe": recipe.model_dump(mode="json"), "provenance": {"requests": [{"params": {"withMeta": "true"}}]}}
+    acquisition.recipe = recipe
+    with patch("app.services.civitai_recipe_pipeline.acquire_civitai_recipe", return_value=acquisition) as acquire:
+        response = TestClient(app).post("/api/civitai-recipes/import", json={"locator": "https://civitai.com/images/123"})
+    assert response.status_code == 200
+    assert acquire.call_args.args[0] == "https://civitai.com/images/123"
+    body = response.json()
+    assert body["raw_acquisition_payload"] == {"id": 123}
+    assert body["recipe"]["schema_version"] == "1.0"
+    assert body["reproduction_report"]["level"]
+    assert "secret" not in str(body)
+
+
+def test_mcp_import_base64_encodes_embedded_bytes_over_real_http_client_and_merges_metadata(monkeypatch) -> None:
+    """The MCP boundary serializes image bytes explicitly before the API decodes them."""
+    project_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(project_root / "mcp-server"))
+    from mcp_server.client import HttpBackendClient
+
+    class FakeMcp:
+        @staticmethod
+        def tool():
+            return lambda function: function
+
+    server_module = types.ModuleType("mcp_server.server")
+    server_module._get_client = lambda: None
+    server_module.mcp = FakeMcp()
+    monkeypatch.setitem(sys.modules, "mcp_server.server", server_module)
+    tool_spec = importlib.util.spec_from_file_location(
+        "civ_f_mcp_tools", project_root / "mcp-server/mcp_server/tools/civitai_recipes.py"
+    )
+    assert tool_spec is not None and tool_spec.loader is not None
+    civitai_recipes = importlib.util.module_from_spec(tool_spec)
+    tool_spec.loader.exec_module(civitai_recipes)
+
+    image = (project_root / "backend/tests/fixtures/civitai/images/a1111_parameters.png").read_bytes()
+    backend = TestClient(app)
+    captured: dict[str, object] = {}
+
+    class BackendBridge:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, url, json=None):
+            captured["url"] = url
+            captured["json"] = json
+            assert isinstance(json["embedded_image_base64"], str)
+            assert base64.b64decode(json["embedded_image_base64"], validate=True) == image
+            return backend.post("/api/civitai-recipes/import", json=json)
+
+    class OfflineTransport:
+        def get_json(self, url, *, params=None, headers=None):
+            assert params == {"withMeta": "true"}
+            fixture = project_root / "backend/tests/fixtures/civitai/api/image_123.json"
+            return (200, json.loads(fixture.read_text()), {})
+
+    monkeypatch.setattr("httpx.Client", BackendBridge)
+    monkeypatch.setattr("app.services.civitai_recipe_pipeline.CivitaiHttpTransport", OfflineTransport)
+    monkeypatch.setattr(civitai_recipes, "_get_client", lambda: HttpBackendClient("http://offline/api"))
+    try:
+        result = civitai_recipes.civitai_recipe_import(locator=123, embedded_image=image)
+    finally:
+        backend.close()
+
+    assert captured["url"] == "http://offline/api/civitai-recipes/import"
+    assert result["ok"] is True
+    assert result["data"]["recipe"]["raw"]["embedded_metadata"]["format"] == "PNG"
+    assert result["data"]["recipe"]["raw"]["embedded_metadata"]["a1111"]["prompt"].startswith("masterpiece, 1girl, red dress")
+
+
+def test_inspect_is_pure_and_returns_canonical_evidence_diagnostics() -> None:
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/inspect", json={"recipe": recipe_payload()})
+    assert response.status_code == 200
+    assert submit.not_called
+    body = response.json()
+    assert {"reproduction_report", "confirmed", "inferred", "missing"} <= body.keys()
+
+
+def test_resolve_strict_failure_returns_full_structured_report_and_non_strict_is_not_exact_ready(tmp_path: Path) -> None:
+    response = TestClient(app).post("/api/civitai-recipes/resolve", json={"recipe": recipe_payload(), "ledger": [], "strict": True})
+    assert response.status_code >= 400
+    detail = response.json()["detail"]
+    assert detail["code"] == "resource_resolution_failed"
+    assert detail["report"]["entries"][0]["status"] == "missing"
+
+    response = TestClient(app).post("/api/civitai-recipes/resolve", json={"recipe": recipe_payload(), "ledger": [], "strict": False})
+    assert response.status_code == 200
+    assert response.json()["report"]["strict"] is False
+    assert response.json()["reproduction_report"]["level"] != "exact_ready"
+
+
+def test_non_strict_resolve_downgrades_an_intrinsically_exact_report_when_ledger_entries_are_missing_ambiguous_or_mismatched(monkeypatch, tmp_path: Path) -> None:
+    """A permissive ledger report is diagnostic, never evidence for an exact replay claim."""
+    recipe = GenerationRecipe.model_validate({
+        **recipe_payload(),
+        "resources": [
+            {"kind": "checkpoint", "name": "missing.safetensors", "sha256": "1" * 64},
+            {"kind": "lora", "name": "ambiguous.safetensors", "sha256": "2" * 64},
+            {"kind": "vae", "name": "mismatch.safetensors", "sha256": "3" * 64},
+        ],
+    })
+    ambiguous = tmp_path / "ambiguous.safetensors"
+    ambiguous.write_bytes(b"ambiguous")
+    mismatched = tmp_path / "mismatch.vae"
+    mismatched.write_bytes(b"mismatched")
+    exact = {
+        "level": "exact_ready", "missing": [], "critical_missing": [],
+        "caveats": [], "requirements": {"all_intrinsic_recipe_evidence": True},
+    }
+    monkeypatch.setattr("app.services.civitai_recipe_pipeline.inspect_recipe", lambda _: {"reproduction_report": exact})
+
+    response = TestClient(app).post("/api/civitai-recipes/resolve", json={
+        "recipe": recipe.model_dump(mode="json"),
+        "strict": False,
+        "ledger": [
+            {"kind": "lora", "local_path": str(ambiguous), "sha256": "2" * 64},
+            {"kind": "lora", "local_path": str(ambiguous), "sha256": "2" * 64},
+            {"kind": "vae", "local_path": str(mismatched), "sha256": "3" * 64},
+        ],
+    })
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [entry["status"] for entry in body["report"]["entries"]] == ["missing", "ambiguous", "mismatch"]
+    assert body["reproduction_report"]["level"] != "exact_ready"
+    assert body["reproduction_report"]["requirements"]["resource_resolution"] is False
+    assert "resource_resolution" in body["reproduction_report"]["caveats"]
+
+
+def test_build_is_fail_closed_before_queue_and_returns_canonical_workflow_hash() -> None:
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe)
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/build", json={"recipe": recipe.model_dump(mode="json"), "resource_report": report.to_dict(), "model_family": "sdxl", "input_bindings": {}})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["workflow_sha256"] == hashlib.sha256(__import__("json").dumps(body["workflow"], ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert body["resource_locks"] == report.resource_lock
+    submit.assert_not_called()
+
+    bad = TestClient(app).post("/api/civitai-recipes/build", json={"recipe": recipe.model_dump(mode="json"), "resource_report": report.to_dict(), "model_family": "unsupported", "input_bindings": {}})
+    assert bad.status_code >= 400
+    assert bad.json()["detail"]["code"] == "unsupported_model_family"
+
+
+def test_run_accepts_only_a_provenance_valid_build_and_forwards_its_bundle_to_queue() -> None:
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe)
+    built = TestClient(app).post("/api/civitai-recipes/build", json={"recipe": recipe.model_dump(mode="json"), "resource_report": report.to_dict(), "model_family": "sdxl", "input_bindings": {}})
+    assert built.status_code == 200
+    build = built.json()
+    with patch("app.api.civitai_recipes.submit_custom", return_value="recipe-job") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/run", json={"build": build, "runtime_provenance": recipe_payload()["runtime"]})
+    assert response.status_code == 202
+    assert response.json()["job_id"] == "recipe-job"
+    assert submit.call_args.args[0]["recipe_provenance"]["workflow_sha256"] == build["workflow_sha256"]
+
+
+def test_run_rejects_invalid_bundle_without_queue_submit() -> None:
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/run", json={"build": {"recipe": recipe_payload(), "workflow": {"1": {"class_type": "KSampler", "inputs": {}}}, "input_hashes": [], "resource_locks": [], "reproduction_report": {"level": "not_reproducible"}}, "runtime_provenance": {"engine": "different", "engine_version": "1", "reference": "runtime:1"}})
+    assert response.status_code >= 400
+    submit.assert_not_called()
