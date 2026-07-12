@@ -703,6 +703,17 @@ def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: Ci
     cfg = _as_float(meta.get("cfgScale") or meta.get("cfg_scale") or meta.get("CFG scale"))
     sampler = _first_text(meta, "sampler", "Sampler")
     scheduler = _first_text(meta, "scheduler", "Schedule type")
+    # A1111 omits these values when they are implicit.  A base txt2img pass has
+    # no input latent to preserve, so its executable denoise is deterministically
+    # 1.0.  A sampler without an explicit schedule suffix uses the normal sigma
+    # schedule; a trailing " Karras" is the A1111 encoding of that scheduler.
+    if scheduler is None and sampler:
+        if sampler.casefold().endswith(" karras"):
+            scheduler = "karras"
+            sampler = sampler[: -len(" Karras")]
+        else:
+            scheduler = "normal"
+    base_denoise = 1.0 if sampler is not None else None
     width = _as_int(image_payload.get("width")) or _as_int(meta.get("width"))
     height = _as_int(image_payload.get("height")) or _as_int(meta.get("height"))
     if width is None or height is None:
@@ -715,6 +726,7 @@ def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: Ci
         ("cfg", cfg),
         ("sampler", sampler),
         ("scheduler", scheduler),
+        ("denoise", base_denoise),
         ("width", width),
         ("height", height),
     ):
