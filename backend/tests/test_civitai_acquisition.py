@@ -197,6 +197,28 @@ def test_post_and_model_resolution_fail_closed_without_unique_candidate() -> Non
     assert ambiguous.value.code == "ambiguous_locator"
 
 
+def test_nested_live_api_meta_is_normalized_without_losing_raw_payload() -> None:
+    image = _json_fixture("image_123.json")
+    generation_meta = image["meta"]
+    image["meta"] = {"id": image["id"], "meta": generation_meta, "outerVendorField": "preserved"}
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([CivitaiTransportResponse(200, {"items": [image]}, {})]),
+    )
+
+    recipe = result.recipe
+    assert recipe is not None
+    assert recipe.base_prompt == generation_meta["prompt"]
+    assert recipe.sampling is not None
+    assert recipe.sampling.seed == 9223372036854775807
+    assert len(recipe.resources) == 3
+    assert recipe.passes
+    assert result.raw_api_payload is not None
+    assert result.raw_api_payload == image
+    assert result.raw_api_payload["meta"]["outerVendorField"] == "preserved"
+
+
 def test_api_meta_maps_to_ordered_recipe_fields_without_losing_raw_payload() -> None:
     result = acquire_civitai_recipe(
         "123",
