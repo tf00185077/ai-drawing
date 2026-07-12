@@ -34,6 +34,8 @@ _ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "recipe_resource_locks_json": "TEXT",
         "recipe_runtime_provenance_json": "TEXT",
         "recipe_reproduction_level": "VARCHAR(64)",
+        "recipe_variant_lineage_json": "TEXT",
+        "recipe_variant_lineage_sha256": "VARCHAR(64)",
     },
 }
 

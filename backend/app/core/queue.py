@@ -177,6 +177,22 @@ def submit_custom(params: GenerateParams) -> str:
     return submit(params)
 
 
+def submit_audited_recipe(params: GenerateParams, *, job_id: str) -> str:
+    """Queue one already-validated immutable recipe under its pre-bound opaque job id.
+
+    This is deliberately internal-only: callers cannot select a job id through HTTP/MCP.
+    """
+    if "workflow" not in params or "recipe_provenance" not in params or not isinstance(job_id, str) or not job_id:
+        raise ValueError("audited recipe submission requires immutable workflow, provenance, and job id")
+    submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    with _lock:
+        if len(_pending) >= MAX_PENDING:
+            raise QueueFullError("生圖佇列已滿，請稍後再試")
+        _pending.append(_Job(job_id=job_id, params=dict(params), submitted_at=submitted_at))
+    logger.info("Audited recipe job %s queued", job_id)
+    return job_id
+
+
 def get_status() -> dict[str, Any]:
     """
     取得佇列狀態。

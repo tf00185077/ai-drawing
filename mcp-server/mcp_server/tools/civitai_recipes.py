@@ -256,7 +256,235 @@ def civitai_recipe_run(build: dict[str, Any], runtime_provenance: dict[str, Any]
     return _post("civitai_recipe_run", "civitai-recipes/run", {"build": build, "runtime_provenance": runtime_provenance, "queue_params": queue_params or {}}, "call get_generation_status with the returned job_id")
 
 
+class CivitaiVariantDirective(_StrictResourceModel):
+    field: Literal["base_prompt", "negative_prompt", "sampling.seed", "sampling.steps", "sampling.cfg", "sampling.sampler", "sampling.scheduler", "sampling.denoise", "sampling.width", "sampling.height"]
+    policy: Literal["preserve", "replace", "randomize"]
+    value: str | int | float | bool | None = None
+
+
+VariantResourceKind = Literal["checkpoint", "diffusion_model", "text_encoder", "vae", "lora", "embedding", "controlnet", "upscaler", "detailer", "other"]
+VariantEvidenceSource = Literal["civitai_api", "embedded_metadata", "workflow_snapshot", "runtime_inspection", "importer", "user_supplied"]
+
+
+class CivitaiVariantSource(_StrictResourceModel):
+    provider: Literal["civitai"]
+    url: str | None = None
+    image_id: PositiveInt | None = None
+    post_id: PositiveInt | None = None
+    model_id: PositiveInt | None = None
+    model_version_id: PositiveInt | None = None
+    media_url: str | None = None
+
+
+class CivitaiVariantResourceReference(_StrictResourceModel):
+    kind: VariantResourceKind
+    sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    civitai_model_id: PositiveInt | None = None
+    civitai_model_version_id: PositiveInt | None = None
+    civitai_file_id: PositiveInt | None = None
+    air: str | None = Field(default=None, min_length=1)
+
+    @model_validator(mode="after")
+    def require_identity(self):
+        if not any((self.sha256, self.civitai_model_id, self.civitai_model_version_id, self.civitai_file_id, self.air)):
+            raise ValueError("resource reference requires immutable identity")
+        return self
+
+
+class CivitaiVariantResource(CivitaiVariantResourceReference):
+    name: str = Field(min_length=1)
+    strength_model: float | None = Field(default=None, ge=0, le=2)
+    strength_clip: float | None = Field(default=None, ge=0, le=2)
+    clip_skip: int | None = Field(default=None, ge=1, le=24)
+
+
+class CivitaiVariantSampling(_StrictResourceModel):
+    seed: int | None = Field(default=None, ge=0, le=2**63 - 1)
+    steps: int | None = Field(default=None, ge=1, le=1000)
+    cfg: float | None = Field(default=None, ge=0, le=100)
+    sampler: str | None = None
+    scheduler: str | None = None
+    denoise: float | None = Field(default=None, ge=0, le=1)
+    width: int | None = Field(default=None, gt=0)
+    height: int | None = Field(default=None, gt=0)
+
+
+class CivitaiVariantPass(_StrictResourceModel):
+    name: str = Field(min_length=1)
+    ksampler_node_id: str | None = Field(default=None, min_length=1)
+    sampling: CivitaiVariantSampling = Field(default_factory=CivitaiVariantSampling)
+    scale: float | None = Field(default=None, gt=0)
+    upscale_model: str | None = None
+    upscale_resource: CivitaiVariantResourceReference | None = None
+    inherits_from: str | None = None
+    notes: str | None = None
+
+
+class CivitaiVariantInput(_StrictResourceModel):
+    reference: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    kind: str = Field(min_length=1)
+
+
+class CivitaiVariantControl(_StrictResourceModel):
+    kind: str = Field(min_length=1)
+    input_ref: str | None = None
+    model: str | None = None
+    resource: CivitaiVariantResourceReference | None = None
+    preprocessor: str | None = None
+    weight: float | None = Field(default=None, ge=0, le=2)
+    start_percent: float | None = Field(default=None, ge=0, le=1)
+    end_percent: float | None = Field(default=None, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_window(self):
+        if self.start_percent is not None and self.end_percent is not None and self.start_percent > self.end_percent:
+            raise ValueError("control window is invalid")
+        return self
+
+
+class CivitaiVariantDetailer(_StrictResourceModel):
+    kind: str = Field(min_length=1)
+    model: str | None = None
+    resource: CivitaiVariantResourceReference | None = None
+    prompt: str | None = None
+    negative_prompt: str | None = None
+    denoise: float | None = Field(default=None, ge=0, le=1)
+
+
+class CivitaiVariantPostprocess(_StrictResourceModel):
+    kind: str = Field(min_length=1)
+    model: str | None = None
+    resource: CivitaiVariantResourceReference | None = None
+    scale: float | None = Field(default=None, gt=0)
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class CivitaiVariantWorkflowBinding(_StrictResourceModel):
+    canonical_field: str = Field(min_length=1)
+    node_id: str = Field(min_length=1)
+    input_name: str = Field(min_length=1)
+    resource: CivitaiVariantResourceReference
+
+
+class CivitaiVariantWorkflow(_StrictResourceModel):
+    reference: str = Field(min_length=1)
+    snapshot: dict[str, Any] = Field(min_length=1)
+    snapshot_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    operation_bindings: list[CivitaiVariantWorkflowBinding] = Field(default_factory=list)
+
+
+class CivitaiVariantRuntimeLock(_StrictResourceModel):
+    node_id: str = Field(min_length=1)
+    input_name: str = Field(min_length=1)
+    resource: CivitaiVariantResourceReference
+
+    @model_validator(mode="after")
+    def require_sha(self):
+        if self.resource.sha256 is None:
+            raise ValueError("runtime lock requires sha256")
+        return self
+
+
+class CivitaiVariantEvidenceAssertion(_StrictResourceModel):
+    canonical_field: str = Field(min_length=1)
+    path: str = ""
+    extractor: Literal["json_pointer"] = "json_pointer"
+    value: Any | None = None
+
+
+class CivitaiVariantEvidenceManifest(_StrictResourceModel):
+    identity: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+    payload: dict[str, Any]
+    sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    assertions: list[CivitaiVariantEvidenceAssertion] = Field(default_factory=list)
+
+
+class CivitaiVariantEvidenceRecord(_StrictResourceModel):
+    canonical_field: str = Field(min_length=1)
+    source: VariantEvidenceSource
+    reference: str = Field(min_length=1)
+    snapshot_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    note: str | None = None
+
+
+class CivitaiVariantMissing(_StrictResourceModel):
+    canonical_field: str = Field(min_length=1)
+    criticality: Literal["critical", "important", "optional"]
+    reason: str = Field(min_length=1)
+
+
+class CivitaiVariantInspectionSnapshot(_StrictResourceModel):
+    snapshot_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    engine: str = Field(min_length=1)
+    engine_version: str = Field(min_length=1)
+    node_types: list[str]
+
+
+class CivitaiVariantRuntimeProvenance(_StrictResourceModel):
+    engine: str = Field(min_length=1)
+    engine_version: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+    runtime_lock_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    node_versions: dict[str, str]
+    package_versions: dict[str, str] = Field(default_factory=dict)
+    runtime_settings: dict[str, Any] = Field(default_factory=dict)
+    inspection_snapshot: CivitaiVariantInspectionSnapshot
+    resource_locks: list[CivitaiVariantRuntimeLock] = Field(default_factory=list)
+
+
+class CivitaiVariantParentRecipe(_StrictResourceModel):
+    schema_version: Literal["1.0"]
+    source: CivitaiVariantSource
+    base_prompt: str | None = None
+    negative_prompt: str | None = None
+    resources: list[CivitaiVariantResource] = Field(default_factory=list)
+    sampling: CivitaiVariantSampling | None = None
+    passes: list[CivitaiVariantPass] = Field(default_factory=list)
+    inputs: list[CivitaiVariantInput] = Field(default_factory=list)
+    controls: list[CivitaiVariantControl] = Field(default_factory=list)
+    detailers: list[CivitaiVariantDetailer] = Field(default_factory=list)
+    postprocess: list[CivitaiVariantPostprocess] = Field(default_factory=list)
+    workflow: CivitaiVariantWorkflow | None = None
+    runtime: CivitaiVariantRuntimeProvenance | None = None
+    raw: dict[str, Any] = Field(default_factory=dict)
+    confirmed: list[CivitaiVariantEvidenceRecord] = Field(default_factory=list)
+    inferred: list[CivitaiVariantEvidenceRecord] = Field(default_factory=list)
+    missing: list[CivitaiVariantMissing] = Field(default_factory=list)
+    evidence_manifest: list[CivitaiVariantEvidenceManifest] = Field(default_factory=list)
+
+
+class CivitaiVariantRuntimeCapabilities(_StrictResourceModel):
+    engine: str = Field(min_length=1)
+    engine_version: str = Field(min_length=1)
+    node_types: list[str]
+    sampler_names: list[str]
+    scheduler_names: list[str]
+    snapshot_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+
+
+class CivitaiVariantInputBinding(_StrictResourceModel):
+    filename: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    local_path: str = Field(min_length=1)
+
+
 @mcp.tool()
+def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, directives: list[CivitaiVariantDirective], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
+    """Derive, fresh-resolve, compatibility-check, build, validate, and queue exactly one immutable Child variant."""
+    return _post(
+        "civitai_recipe_variant_generate", "civitai-recipes/variants/generate-one",
+        {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256,
+         "directives": [_resource_payload(item) for item in directives], "model_family": model_family,
+         "runtime_capabilities": _resource_payload(runtime_capabilities),
+         "runtime_provenance": _resource_payload(runtime_provenance),
+         "input_bindings": {reference: _resource_payload(binding) for reference, binding in input_bindings.items()}},
+        "call get_generation_status using the returned immutable child job_id",
+    )
+
+
+@ mcp.tool()
 def civitai_recipe_export(image_id: int) -> dict[str, Any]:
     """Export the existing gallery recipe bundle with recipe/workflow/input/resource/runtime hashes intact."""
     tool = "civitai_recipe_export"
