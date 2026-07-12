@@ -235,3 +235,35 @@ def test_run_rejects_invalid_bundle_without_queue_submit() -> None:
         response = TestClient(app).post("/api/civitai-recipes/run", json={"build": {"recipe": recipe_payload(), "workflow": {"1": {"class_type": "KSampler", "inputs": {}}}, "input_hashes": [], "resource_locks": [], "reproduction_report": {"level": "not_reproducible"}}, "runtime_provenance": {"engine": "different", "engine_version": "1", "reference": "runtime:1"}})
     assert response.status_code >= 400
     submit.assert_not_called()
+
+
+def test_run_rejects_every_nonempty_queue_params_without_submit() -> None:
+    """CIV-V-A-AC1: audited submissions accept no queue-time overrides."""
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe)
+    built = TestClient(app).post("/api/civitai-recipes/build", json={
+        "recipe": recipe.model_dump(mode="json"),
+        "resource_report": report.to_dict(),
+        "model_family": "sdxl",
+        "input_bindings": {},
+    })
+    assert built.status_code == 200
+    queue_param_keys = [
+        "prompt", "negative_prompt", "seed", "steps", "cfg", "sampler_name", "scheduler",
+        "denoise", "width", "height", "batch_size", "checkpoint", "lora", "loras",
+        "lora_strength", "diffusion_model", "text_encoder", "vae", "image", "image_pose",
+        "mask", "first_frame", "last_frame", "video_ref", "template", "unexpected",
+    ]
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/run", json={
+            "build": built.json(),
+            "runtime_provenance": recipe_payload()["runtime"],
+            "queue_params": {key: "override" for key in reversed(queue_param_keys)},
+        })
+    assert response.status_code == 422
+    assert response.json()["detail"] == {
+        "code": "audited_queue_overrides_forbidden",
+        "message": "audited recipe submissions do not permit queue-time overrides",
+        "rejected_keys": sorted(queue_param_keys),
+    }
+    submit.assert_not_called()

@@ -72,6 +72,16 @@ def build_civitai_recipe(request: CivitaiRecipeBuildRequest) -> dict[str, Any]:
 
 @router.post("/run", status_code=status.HTTP_202_ACCEPTED)
 def run_civitai_recipe(request: CivitaiRecipeRunRequest) -> dict[str, Any]:
+    if request.queue_params:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=_detail(
+                "audited_queue_overrides_forbidden",
+                "audited recipe submissions do not permit queue-time overrides",
+                rejected_keys=sorted(request.queue_params),
+            ),
+        )
+
     build = request.build
     try:
         bundle = build_recipe_provenance_bundle(
