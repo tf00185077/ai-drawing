@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Deterministic stdlib-only Hermes pipeline reconciler; stable from any cwd."""
-import datetime as dt,json,os,re,signal,subprocess,sys,tempfile,time
+import datetime as dt,fnmatch,json,os,re,signal,subprocess,sys,tempfile,time
 from pathlib import Path
 import validate_contracts as contracts
 ROOT=Path(__file__).resolve().parent.parent; PIPE=ROOT/'pipeline'; RUNS=ROOT/'agent_runs'
@@ -30,6 +30,16 @@ def dirty_paths():
   if path:out.add(path)
  return out
 def scope_ok(paths):return all(isinstance(p,str) and safe_file(p) for p in paths)
+def evidence_ok(st,paths,own_result):
+ if not isinstance(paths,list) or not all(isinstance(p,str) for p in paths):return False
+ for p in paths:
+  q=Path(p)
+  if q.is_absolute() or '..' in q.parts or not q.parts or q.parts[0]!='agent_runs':return False
+  try:(ROOT/q).resolve().relative_to(RUNS.resolve())
+  except ValueError:return False
+  if not (ROOT/q).is_file():return False
+  if p!=own_result and not any(fnmatch.fnmatch(p,pat) for pat in st.get('allowed_files',[])):return False
+ return True
 def load_state():
  p=PIPE/'state.json'
  if not p.exists():writej(p,readj(PIPE/'state.example.json'))
@@ -228,7 +238,12 @@ def harvest(s,notes):
     event(s,r['run_id']+':PLANNED',o.get('notify_owner',o.get('summary','planning completed')),notes)
   elif r['action']=='execute':
    declared=set(o['files_changed']);declared.discard(r.get('result_file'))
+   legacy_evidence={p for p in declared if isinstance(p,str) and Path(p).parts and Path(p).parts[0]=='agent_runs'};declared-=legacy_evidence
+   evidence=list(dict.fromkeys([*o.get('evidence_files',[]),*sorted(legacy_evidence)]));own=r.get('result_file')
+   if own not in evidence:evidence.append(own)
    actual=dirty_paths()
+   if not evidence_ok(st,evidence,own):
+    failure(s,r,'executor evidence scope invalid',notes);continue
    if not scope_ok(declared) or actual!=declared:
     failure(s,r,'executor dirty scope mismatch declared='+repr(sorted(declared))+' actual='+repr(sorted(actual)),notes);continue
    st['worktree_scope']=sorted(declared)

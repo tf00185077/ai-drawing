@@ -48,6 +48,7 @@ def result_ok(x):
  require(x,['schema','run_id','status','summary','files_changed','how_verified','blocked_reason','notes_for_review'],'result')
  if x['schema']!='hermes.result.v1.1' or x['status'] not in ('done','partial','blocked'):raise ValueError('bad result')
  if not isinstance(x['files_changed'],list) or not all(isinstance(p,str) for p in x['files_changed']):raise ValueError('bad files_changed')
+ if 'evidence_files' in x and (not isinstance(x['evidence_files'],list) or not all(isinstance(p,str) for p in x['evidence_files'])):raise ValueError('bad evidence_files')
 def main():
  try:
   roles_ok(load(ROOT/'pipeline/roles.json'));p=ROOT/'pipeline/state.json';state_ok(load(p if p.exists() else ROOT/'pipeline/state.example.json'))
