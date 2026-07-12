@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "id": 124,
+      "modelId": 999,
+      "modelVersionId": 456,
+      "url": "https://images.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/example/unique.png",
+      "meta": {
+        "prompt": "unique model candidate",
+        "negativePrompt": "lowres",
+        "seed": 42,
+        "steps": 20,
+        "cfgScale": 7,
+        "sampler": "Euler",
+        "Size": "512x512"
+      }
+    }
+  ]
+}

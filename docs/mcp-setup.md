@@ -153,6 +153,8 @@ pip install -e .
 > MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 50 個 server-side registered tool。
 >
 > `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
+>
+> `civitai_recipe_import` 的 optional `embedded_image` 在 MCP 端會以標準 base64 JSON 欄位 `embedded_image_base64` 傳給 backend；backend 嚴格驗證／解碼，不能傳 raw Python bytes 到 HTTP JSON body。
 
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
@@ -168,6 +170,12 @@ pip install -e .
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
+| `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
+| `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
+| `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
+| `civitai_recipe_build` | `dict` | POST /api/civitai-recipes/build |
+| `civitai_recipe_run` | `dict` | POST /api/civitai-recipes/run |
+| `civitai_recipe_export` | `dict` | GET /api/gallery/{image_id}/export?format=recipe |
 | `generate_image` | `json_string` | POST /api/generate/ |
 | `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |
 | `get_workflow_template` | `json_string` | GET /api/generate/workflow-templates/{name} |

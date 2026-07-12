@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db.models import GeneratedArtifact, GeneratedImage
+from app.services.civitai_recipe_gallery import persistable_bundle
 
 
 def _json_or_none(value: dict[str, Any] | str | None) -> str | None:
@@ -80,6 +81,7 @@ def save(
     workflow_json: dict[str, Any] | str | None = None,
     source_image: str | None = None,
     source_mask: str | None = None,
+    recipe_provenance: dict[str, Any] | None = None,
     artifact_mime_type: str | None = "image/png",
     artifact_source_node_id: str | None = None,
     artifact_source_node_type: str | None = None,
@@ -95,6 +97,8 @@ def save(
         新增的 GeneratedImage 實例
     """
     workflow_json = _json_or_none(workflow_json)
+    # Validate/canonicalize before adding either image or artifact: invalid bundles leave no partial provenance.
+    provenance_columns = persistable_bundle(recipe_provenance) if recipe_provenance is not None else {}
     record = GeneratedImage(
         image_path=image_path,
         job_id=job_id,
@@ -112,6 +116,7 @@ def save(
         workflow_json=workflow_json,
         source_image=source_image,
         source_mask=source_mask,
+        **provenance_columns,
     )
     db.add(record)
     db.flush()

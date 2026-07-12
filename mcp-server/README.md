@@ -8,6 +8,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
+> **Civitai recipe 匯入 bytes contract**：`civitai_recipe_import(embedded_image=...)` 對 MCP caller 保持 bytes 介面，但在 HTTP JSON 邊界一律轉為標準 base64 的 `embedded_image_base64`；backend 只接受嚴格 base64，解碼失敗會拒絕 request。這避免把 Python `bytes` 放進 `httpx json=`，而 metadata 合併仍完全委派 CIV-B。
+>
 > **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)` 或取出影片模板後走 `generate_video_custom_workflow`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 或 `generate_video_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
 
 <!-- MCP-CATALOG:START -->
@@ -24,6 +26,12 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
+| `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
+| `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
+| `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
+| `civitai_recipe_build` | `dict` | POST /api/civitai-recipes/build |
+| `civitai_recipe_run` | `dict` | POST /api/civitai-recipes/run |
+| `civitai_recipe_export` | `dict` | GET /api/gallery/{image_id}/export?format=recipe |
 | `generate_image` | `json_string` | POST /api/generate/ |
 | `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |
 | `get_workflow_template` | `json_string` | GET /api/generate/workflow-templates/{name} |

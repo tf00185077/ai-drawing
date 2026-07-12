@@ -32,6 +32,15 @@ class GeneratedImage(Base):
     workflow_json = Column(Text, nullable=True)
     source_image = Column(String(512), nullable=True)
     source_mask = Column(String(512), nullable=True)
+    # CIV-E immutable recipe-provenance bundle. All fields remain nullable for legacy rows.
+    recipe_json = Column(Text, nullable=True)
+    recipe_sha256 = Column(String(64), nullable=True)
+    recipe_workflow_json = Column(Text, nullable=True)
+    recipe_workflow_sha256 = Column(String(64), nullable=True)
+    recipe_input_hashes_json = Column(Text, nullable=True)
+    recipe_resource_locks_json = Column(Text, nullable=True)
+    recipe_runtime_provenance_json = Column(Text, nullable=True)
+    recipe_reproduction_level = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
