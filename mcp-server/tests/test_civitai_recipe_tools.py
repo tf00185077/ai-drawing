@@ -1,6 +1,8 @@
 """CIV-F MCP forwarding, error, and schema contracts without backend network calls."""
 from __future__ import annotations
 
+import base64
+
 import httpx
 import pytest
 
@@ -45,6 +47,23 @@ def test_recipe_tools_forward_all_frozen_inputs_and_return_structured_success(mo
     assert result["data"]["data"]["accepted"] is True
     assert result["next"]
     assert client.calls[0][1] == path
+
+
+def test_recipe_import_decodes_formal_stdio_base64_without_changing_http_contract(monkeypatch) -> None:
+    client = Client({"ok": True})
+    monkeypatch.setattr(civitai_recipes, "_get_client", lambda: client)
+    raw = b"\x89PNG\r\n\x1a\nembedded"
+    encoded = base64.b64encode(raw).decode("ascii")
+
+    result = civitai_recipes.civitai_recipe_import(locator=123, embedded_image=encoded)
+
+    assert result["ok"] is True
+    assert client.calls == [
+        ("post", "civitai-recipes/import", {
+            "locator": 123,
+            "embedded_image_base64": encoded,
+        })
+    ]
 
 
 def test_recipe_export_wraps_existing_gallery_recipe_export(monkeypatch) -> None:

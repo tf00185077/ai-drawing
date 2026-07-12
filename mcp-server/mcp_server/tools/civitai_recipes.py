@@ -49,11 +49,22 @@ def _post(tool: str, endpoint: str, body: dict[str, Any], next_step: str) -> dic
 
 
 @mcp.tool()
-def civitai_recipe_import(locator: int | str, embedded_image: bytes | None = None) -> dict[str, Any]:
+def civitai_recipe_import(locator: int | str, embedded_image: bytes | str | None = None) -> dict[str, Any]:
     """Acquire a Civitai locator into raw acquisition evidence, GenerationRecipe 1.0, and reproduction diagnostics."""
     body: dict[str, Any] = {"locator": locator}
     if embedded_image is not None:
-        body["embedded_image_base64"] = base64.b64encode(embedded_image).decode("ascii")
+        if isinstance(embedded_image, str):
+            try:
+                image_bytes = base64.b64decode(embedded_image, validate=True)
+            except (ValueError, TypeError) as exc:
+                return _error(
+                    "civitai_recipe_import", "invalid_embedded_image_base64",
+                    "embedded_image must be valid base64 when sent over JSON/MCP",
+                    {"where": "mcp_input", "error_type": exc.__class__.__name__},
+                )
+        else:
+            image_bytes = embedded_image
+        body["embedded_image_base64"] = base64.b64encode(image_bytes).decode("ascii")
     return _post("civitai_recipe_import", "civitai-recipes/import", body, "inspect the recipe, then resolve its local resources")
 
 
