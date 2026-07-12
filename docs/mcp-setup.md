@@ -179,6 +179,7 @@ pip install -e .
 | `civitai_recipe_compatibility` | `dict` | POST /api/civitai-recipes/compatibility |
 | `civitai_recipe_build` | `dict` | POST /api/civitai-recipes/build |
 | `civitai_recipe_run` | `dict` | POST /api/civitai-recipes/run |
+| `civitai_recipe_variant_generate` | `dict` | POST /api/civitai-recipes/variants/generate-one |
 | `civitai_recipe_export` | `dict` | GET /api/gallery/{image_id}/export?format=recipe |
 | `generate_image` | `json_string` | POST /api/generate/ |
 | `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |

@@ -14,6 +14,8 @@ from fastapi.routing import APIRoute
 from sqlalchemy.orm import Session
 
 from app.core.queue import QueueFullError, submit_custom
+from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequest, CivitaiRecipeVariantGenerateResponse
+from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
 from app.schemas.civitai_recipes import (
     CivitaiRecipeCompatibilityRequest,
     CivitaiRecipeCompatibilityResponse,
@@ -79,6 +81,27 @@ class _CompatibilityValidationRoute(APIRoute):
                 return await handler(request)
             except RequestValidationError as exc:
                 return JSONResponse(status_code=422, content={"detail": _compatibility_safe(exc.errors())})
+
+        return redacted_handler
+
+
+class _VariantFacadeValidationRoute(APIRoute):
+    """Fail closed with one stable, redacted facade diagnostic before orchestration."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError as exc:
+                # The detailed Pydantic tree can contain raw rejected values.  This
+                # frozen submission endpoint intentionally exposes only stable phase/code.
+                _compatibility_safe(exc.errors())
+                return JSONResponse(status_code=422, content={"detail": {
+                    "phase": "validation", "code": "request_invalid",
+                    "message": "variant request validation failed",
+                }})
 
         return redacted_handler
 
@@ -217,6 +240,26 @@ def compatibility_civitai_recipe(request: CivitaiRecipeCompatibilityRequest) -> 
         runtime_capabilities=request.runtime_capabilities.model_dump(),
     )
     return CivitaiRecipeCompatibilityResponse.model_validate(decision)
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _VariantFacadeValidationRoute
+@router.post("/variants/generate-one", response_model=CivitaiRecipeVariantGenerateResponse, status_code=status.HTTP_202_ACCEPTED)
+def generate_one_civitai_recipe_variant(
+    request: CivitaiRecipeVariantGenerateRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiRecipeVariantGenerateResponse:
+    """Create exactly one fresh, immutable Child submission from a canonical Parent."""
+    try:
+        return generate_one_variant(request, db=db)
+    except VariantFacadeError as exc:
+        code = status.HTTP_503_SERVICE_UNAVAILABLE if exc.code == "queue_full" else status.HTTP_422_UNPROCESSABLE_ENTITY
+        raise HTTPException(
+            status_code=code,
+            detail=_compatibility_safe(_detail(exc.code, exc.message, phase=exc.phase)),
+        ) from exc
 
 
 router.route_class = _default_route_class

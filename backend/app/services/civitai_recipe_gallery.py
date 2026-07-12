@@ -238,7 +238,20 @@ def bundle_from_record(record: Any, *, verify_files: bool = False) -> dict[str, 
             raw[key] = json.loads(value) if isinstance(value, str) else value
         except (TypeError, ValueError):
             _fail("provenance_invalid", column, "stored provenance JSON is invalid")
-    return _validate_bundle(raw, verify_files=verify_files)
+    normalized = _validate_bundle(raw, verify_files=verify_files)
+    lineage_json, lineage_sha = getattr(record, "recipe_variant_lineage_json", None), getattr(record, "recipe_variant_lineage_sha256", None)
+    if lineage_json is not None or lineage_sha is not None:
+        if lineage_json is None or lineage_sha is None:
+            _fail("variant_lineage_incomplete", "recipe_variant_lineage", "gallery row has partial variant lineage")
+        try:
+            lineage = json.loads(lineage_json) if isinstance(lineage_json, str) else lineage_json
+        except (TypeError, ValueError):
+            _fail("variant_lineage_invalid", "recipe_variant_lineage_json", "stored variant lineage JSON is invalid")
+        lineage = _validate_variant_lineage(normalized, lineage, job_id=getattr(record, "job_id", None))
+        if lineage["lineage_sha256"] != lineage_sha:
+            _fail("variant_lineage_digest_mismatch", "recipe_variant_lineage_sha256", "stored variant lineage digest differs")
+        normalized["variant_lineage"] = lineage
+    return normalized
 
 
 def rerun_input_params(bundle: Mapping[str, Any], gallery_dir: Path) -> dict[str, str]:
@@ -283,10 +296,33 @@ def rerun_input_params(bundle: Mapping[str, Any], gallery_dir: Path) -> dict[str
     return params
 
 
+def _validate_variant_lineage(bundle: Mapping[str, Any], lineage: Any, *, job_id: str | None = None) -> dict[str, Any]:
+    """Validate the optional CIV-V-F immutable lineage without changing legacy rows."""
+    if not isinstance(lineage, Mapping):
+        _fail("variant_lineage_invalid", "variant_lineage", "variant lineage must be an object")
+    try:
+        # Keep the frozen, strict contract independent of gallery's permissive legacy
+        # decoding: a lineage claim must contain every canonical field and no extras.
+        from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantLineage
+        value = CivitaiRecipeVariantLineage.model_validate(dict(lineage)).model_dump(mode="json")
+    except (ImportError, ValidationError):
+        _fail("variant_lineage_invalid", "variant_lineage", "variant lineage does not match the strict CIV-V-F schema")
+    declared = value["lineage_sha256"]
+    if canonical_sha256({key: item for key, item in value.items() if key != "lineage_sha256"}) != declared:
+        _fail("variant_lineage_digest_mismatch", "variant_lineage.lineage_sha256", "lineage digest does not match canonical lineage")
+    if value["built_child_recipe_sha256"] != bundle["recipe_sha256"] or value["workflow_sha256"] != bundle["workflow_sha256"]:
+        _fail("variant_lineage_binding_mismatch", "variant_lineage", "lineage child/workflow does not bind persisted bundle")
+    if value["resource_lock_sha256"] != canonical_sha256(bundle["resource_locks"]):
+        _fail("variant_lineage_binding_mismatch", "variant_lineage.resource_lock_sha256", "lineage locks do not bind persisted bundle")
+    if job_id is not None and value["job_id"] != job_id:
+        _fail("variant_lineage_binding_mismatch", "variant_lineage.job_id", "lineage job does not bind gallery row")
+    return value
+
+
 def persistable_bundle(bundle: Mapping[str, Any]) -> dict[str, str]:
     """Canonical DB column values, validated before the transaction is opened."""
     normalized = _validate_bundle(bundle)
-    return {
+    result = {
         "recipe_json": canonical_json(normalized["recipe"]),
         "recipe_sha256": normalized["recipe_sha256"],
         "recipe_workflow_json": canonical_json(normalized["workflow"]),
@@ -296,3 +332,8 @@ def persistable_bundle(bundle: Mapping[str, Any]) -> dict[str, str]:
         "recipe_runtime_provenance_json": canonical_json(normalized["runtime_provenance"]),
         "recipe_reproduction_level": normalized["reproduction_level"],
     }
+    if "variant_lineage" in bundle:
+        lineage = _validate_variant_lineage(normalized, bundle["variant_lineage"])
+        result["recipe_variant_lineage_json"] = canonical_json(lineage)
+        result["recipe_variant_lineage_sha256"] = lineage["lineage_sha256"]
+    return result

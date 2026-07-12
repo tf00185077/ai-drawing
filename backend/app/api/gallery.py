@@ -284,7 +284,7 @@ async def export_params(
             bundle = bundle_from_record(row, verify_files=True)
         except ProvenanceValidationError as exc:
             raise HTTPException(409, exc.detail())
-        return {
+        exported = {
             "schema_version": bundle["schema_version"],
             "gallery": {"id": row.id, "image_path": row.image_path, "job_id": row.job_id},
             "recipe": bundle["recipe"],
@@ -296,6 +296,9 @@ async def export_params(
             "runtime_provenance": bundle["runtime_provenance"],
             "reproduction_level": bundle["reproduction_level"],
         }
+        if "variant_lineage" in bundle:
+            exported["variant_lineage"] = bundle["variant_lineage"]
+        return exported
     if fmt == "csv":
         buf = io.StringIO()
         writer = csv.writer(buf)

@@ -56,6 +56,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("civitai_recipe_compatibility", "mcp_server.tools.civitai_recipes", "civitai_recipe_compatibility", "dict", ("POST /api/civitai-recipes/compatibility",)),
     ToolCatalogEntry("civitai_recipe_build", "mcp_server.tools.civitai_recipes", "civitai_recipe_build", "dict", ("POST /api/civitai-recipes/build",)),
     ToolCatalogEntry("civitai_recipe_run", "mcp_server.tools.civitai_recipes", "civitai_recipe_run", "dict", ("POST /api/civitai-recipes/run",)),
+    ToolCatalogEntry("civitai_recipe_variant_generate", "mcp_server.tools.civitai_recipes", "civitai_recipe_variant_generate", "dict", ("POST /api/civitai-recipes/variants/generate-one",)),
     ToolCatalogEntry("civitai_recipe_export", "mcp_server.tools.civitai_recipes", "civitai_recipe_export", "dict", ("GET /api/gallery/{image_id}/export?format=recipe",)),
     ToolCatalogEntry("generate_image", "mcp_server.tools.generate", "generate_image", "json_string", ("POST /api/generate/",)),
     ToolCatalogEntry("list_workflow_templates", "mcp_server.tools.generate", "list_workflow_templates", "plain_text", ("GET /api/generate/workflow-templates",)),

@@ -41,6 +41,9 @@ class GeneratedImage(Base):
     recipe_resource_locks_json = Column(Text, nullable=True)
     recipe_runtime_provenance_json = Column(Text, nullable=True)
     recipe_reproduction_level = Column(String(64), nullable=True)
+    # CIV-V-F immutable Parent/Child lineage; both remain null for legacy rows.
+    recipe_variant_lineage_json = Column(Text, nullable=True)
+    recipe_variant_lineage_sha256 = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
