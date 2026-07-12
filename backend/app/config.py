@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     comfyui_diffusion_models_dir: str = "D:/AI/ComfyUI/models/diffusion_models"
     comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
     comfyui_vae_dir: str = "D:/AI/ComfyUI/models/vae"
+    # CIV-V-D backend-only resource installation settings. Never accepted from MCP.
+    civitai_authorization: str | None = None
+    comfyui_embeddings_dir: str = "D:/AI/ComfyUI/models/embeddings"
+    comfyui_controlnet_dir: str = "D:/AI/ComfyUI/models/controlnet"
+    comfyui_upscale_models_dir: str = "D:/AI/ComfyUI/models/upscale_models"
     # ComfyUI LoadImage/LoadAudio input directory. Wan multi-keyframe video
     # workflows stage gallery images and generated silent wavs here.
     comfyui_input_dir: str = "~/comfyui/input"
@@ -139,6 +144,9 @@ class Settings(BaseSettings):
         self.comfyui_diffusion_models_dir = _resolve_path_list(self.comfyui_diffusion_models_dir)
         self.comfyui_text_encoders_dir = _resolve_path_list(self.comfyui_text_encoders_dir)
         self.comfyui_vae_dir = _resolve_path_list(self.comfyui_vae_dir)
+        self.comfyui_embeddings_dir = _resolve_path_list(self.comfyui_embeddings_dir)
+        self.comfyui_controlnet_dir = _resolve_path_list(self.comfyui_controlnet_dir)
+        self.comfyui_upscale_models_dir = _resolve_path_list(self.comfyui_upscale_models_dir)
         self.comfyui_input_dir = _resolve_project_path(self.comfyui_input_dir)
         self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
         self.lora_train_logs_dir = _resolve_project_path(self.lora_train_logs_dir)
