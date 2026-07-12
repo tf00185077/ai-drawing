@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from app.core.queue import QueueFullError, submit_custom
 from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequest, CivitaiRecipeVariantGenerateResponse
+from app.schemas.civitai_recipe_variation_sets import CivitaiRecipeVariationSetCreateRequest
+from app.services.civitai_recipe_variation_sets import VariationSetError, cancel_variation_set, create_variation_set, export_variation_set, get_variation_set
 from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
 from app.schemas.civitai_recipes import (
     CivitaiRecipeCompatibilityRequest,
@@ -260,6 +262,49 @@ def generate_one_civitai_recipe_variant(
             status_code=code,
             detail=_compatibility_safe(_detail(exc.code, exc.message, phase=exc.phase)),
         ) from exc
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _VariantFacadeValidationRoute
+
+
+def _variation_error(exc: VariationSetError) -> HTTPException:
+    code = status.HTTP_404_NOT_FOUND if exc.code == "not_found" else status.HTTP_422_UNPROCESSABLE_ENTITY
+    return HTTPException(status_code=code, detail=_compatibility_safe(_detail(exc.code, exc.message, phase=exc.phase)))
+
+
+@router.post("/variation-sets", status_code=status.HTTP_202_ACCEPTED)
+def create_civitai_recipe_variation_set(request: CivitaiRecipeVariationSetCreateRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        return create_variation_set(request, db=db)
+    except VariationSetError as exc:
+        raise _variation_error(exc) from exc
+
+
+@router.get("/variation-sets/{variation_set_id}")
+def get_civitai_recipe_variation_set(variation_set_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        return get_variation_set(variation_set_id, db=db)
+    except VariationSetError as exc:
+        raise _variation_error(exc) from exc
+
+
+@router.post("/variation-sets/{variation_set_id}/cancel")
+def cancel_civitai_recipe_variation_set(variation_set_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        return cancel_variation_set(variation_set_id, db=db)
+    except VariationSetError as exc:
+        raise _variation_error(exc) from exc
+
+
+@router.get("/variation-sets/{variation_set_id}/export")
+def export_civitai_recipe_variation_set(variation_set_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    try:
+        return export_variation_set(variation_set_id, db=db)
+    except VariationSetError as exc:
+        raise _variation_error(exc) from exc
 
 
 router.route_class = _default_route_class

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import base64
 import re
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, model_validator
@@ -79,10 +79,14 @@ class CivitaiResourceSelectedDescriptor(_StrictResourceModel):
 
 
 _SECRET_KEY_NAMES = frozenset({
-    "authorization", "api_key", "apikey", "access_token", "token", "secret", "password",
+    "authorization", "api_key", "apikey", "access_token", "token", "secret", "password", "cookie",
 })
 _SECRET_QUERY_VALUE = re.compile(
-    r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password)=)[^&#\s]*",
+    r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password|cookie|signature|sig|policy|expires|x-amz-[^=&#\s]+)=)[^&#\s]*",
+    re.IGNORECASE,
+)
+_SECRET_INLINE_VALUE = re.compile(
+    r"\b(authorization|api[_-]?key|access[_-]?token|token|secret|password|cookie)\s*[:=]\s*[^,;\s]+",
     re.IGNORECASE,
 )
 _BEARER_VALUE = re.compile(r"\bBearer\s+[^\s,;]+", re.IGNORECASE)
@@ -101,7 +105,9 @@ def _redact_secrets(value: Any) -> Any:
     if isinstance(value, tuple):
         return tuple(_redact_secrets(item) for item in value)
     if isinstance(value, str):
-        return _BEARER_VALUE.sub("Bearer [REDACTED]", _SECRET_QUERY_VALUE.sub(r"\1[REDACTED]", value))
+        value = _SECRET_QUERY_VALUE.sub(r"\1[REDACTED]", value)
+        value = _SECRET_INLINE_VALUE.sub(lambda match: f"{match.group(1)}: [REDACTED]", value)
+        return _BEARER_VALUE.sub("Bearer [REDACTED]", value)
     return value
 
 
@@ -470,7 +476,18 @@ class CivitaiVariantInputBinding(_StrictResourceModel):
     local_path: str = Field(min_length=1)
 
 
-@mcp.tool()
+class CivitaiVariationSetChild(_StrictResourceModel):
+    client_child_key: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_.-]+$")
+    directives: list[CivitaiVariantDirective]
+
+
+def _validate_variation_set_children(children: list[CivitaiVariationSetChild]) -> None:
+    keys = [child.client_child_key for child in children]
+    if len(keys) != len(set(keys)):
+        raise ValueError("client_child_key must be unique within a variation set request")
+
+
+@ mcp.tool()
 def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, directives: list[CivitaiVariantDirective], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
     """Derive, fresh-resolve, compatibility-check, build, validate, and queue exactly one immutable Child variant."""
     return _post(
@@ -482,6 +499,35 @@ def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, p
          "input_bindings": {reference: _resource_payload(binding) for reference, binding in input_bindings.items()}},
         "call get_generation_status using the returned immutable child job_id",
     )
+
+
+@ mcp.tool()
+def civitai_recipe_variation_set_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, children: Annotated[list[CivitaiVariationSetChild], Field(min_length=1, max_length=8)], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
+    """Create one durable ordered set of independently immutable Child submissions."""
+    _validate_variation_set_children(children)
+    return _post("civitai_recipe_variation_set_generate", "civitai-recipes/variation-sets", {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256, "children": [_resource_payload(child) for child in children], "model_family": model_family, "runtime_capabilities": _resource_payload(runtime_capabilities), "runtime_provenance": _resource_payload(runtime_provenance), "input_bindings": {key: _resource_payload(value) for key, value in input_bindings.items()}}, "use civitai_recipe_variation_set_status with the returned variation_set_id")
+
+
+@ mcp.tool()
+def civitai_recipe_variation_set_status(variation_set_id: str) -> dict[str, Any]:
+    """Read a durable variation-set aggregate and append-only member evidence."""
+    try:
+        return _result("civitai_recipe_variation_set_status", _get_client().get(f"civitai-recipes/variation-sets/{variation_set_id}"), "inspect the aggregate and per-member evidence")
+    except Exception as exc: return _backend_error("civitai_recipe_variation_set_status", exc)
+
+
+@ mcp.tool()
+def civitai_recipe_variation_set_cancel(variation_set_id: str) -> dict[str, Any]:
+    """Cancel only active members of a durable variation set."""
+    return _post("civitai_recipe_variation_set_cancel", f"civitai-recipes/variation-sets/{variation_set_id}/cancel", {}, "read status to observe the append-only cancel outcomes")
+
+
+@ mcp.tool()
+def civitai_recipe_variation_set_export(variation_set_id: str) -> dict[str, Any]:
+    """Export canonical Parent/Child provenance, evidence history, and aggregate snapshot."""
+    try:
+        return _result("civitai_recipe_variation_set_export", _get_client().get(f"civitai-recipes/variation-sets/{variation_set_id}/export"), "verify export_sha256 before consuming the export")
+    except Exception as exc: return _backend_error("civitai_recipe_variation_set_export", exc)
 
 
 @ mcp.tool()
