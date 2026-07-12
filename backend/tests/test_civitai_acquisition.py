@@ -219,6 +219,27 @@ def test_nested_live_api_meta_is_normalized_without_losing_raw_payload() -> None
     assert result.raw_api_payload["meta"]["outerVendorField"] == "preserved"
 
 
+def test_base_txt2img_sampling_uses_auditable_execution_semantics_when_metadata_omits_them() -> None:
+    image = _json_fixture("image_123.json")
+    image["meta"].pop("scheduler", None)
+    image["meta"].pop("Schedule type", None)
+    image["meta"]["sampler"] = "Euler a"
+    image["meta"]["Denoising strength"] = "0.4"
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([CivitaiTransportResponse(200, image, {})]),
+    )
+
+    assert result.recipe is not None
+    assert result.recipe.sampling is not None
+    assert result.recipe.sampling.scheduler == "normal"
+    assert result.recipe.sampling.denoise == 1.0
+    assert result.recipe.passes[0].sampling.denoise is None
+    assert result.raw_api_payload is not None
+    assert result.raw_api_payload["meta"]["Denoising strength"] == "0.4"
+
+
 def test_single_image_model_version_identity_is_bound_to_sole_checkpoint() -> None:
     image = _json_fixture("image_123.json")
     image["modelVersionIds"] = [2940478]
