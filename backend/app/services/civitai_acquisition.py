@@ -602,8 +602,20 @@ def _resources_from_api_meta(meta: Mapping[str, Any]) -> list[dict[str, Any]]:
     return resources
 
 
+def _api_generation_meta(image_payload: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+    """Return generation fields while preserving the live API's nested meta shape raw."""
+
+    outer = _first_mapping(image_payload.get("meta"))
+    nested = _first_mapping(outer.get("meta"))
+    if nested:
+        merged = dict(outer)
+        merged.update(nested)
+        return merged, "/meta/meta"
+    return dict(outer), "/meta"
+
+
 def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: CivitaiLocator) -> dict[str, Any]:
-    meta = _first_mapping(image_payload.get("meta"))
+    meta, meta_path = _api_generation_meta(image_payload)
     image_id = _as_int(image_payload.get("id")) or locator.image_id
     source: dict[str, Any] = {"provider": "civitai"}
     if image_id is not None:
@@ -663,13 +675,14 @@ def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: Ci
             sampling[key] = value
     if sampling:
         payload["sampling"] = sampling
+        payload["passes"] = [{"name": "base", "inherits_from": "recipe.sampling"}]
     resources = _resources_from_api_meta(meta)
     if resources:
         payload["resources"] = resources
     api_workflow = _first_mapping(meta.get("workflow"), meta.get("Workflow"), image_payload.get("workflow"))
     if api_workflow:
         payload["workflow"] = {
-            "reference": f"civitai_api:images:{image_id or 'unknown'}:/meta/workflow",
+            "reference": f"civitai_api:images:{image_id or 'unknown'}:{meta_path}/workflow",
             "snapshot": deepcopy(dict(api_workflow)),
             "snapshot_sha256": _canonical_json_sha256(api_workflow),
         }
@@ -678,7 +691,7 @@ def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: Ci
 
 def _api_field_references(image_payload: Mapping[str, Any]) -> dict[str, str]:
     """Point conflicts at the actual Civitai response key selected during mapping."""
-    meta = _first_mapping(image_payload.get("meta"))
+    meta, meta_path = _api_generation_meta(image_payload)
     image_id = _as_int(image_payload.get("id")) or "unknown"
     prefix = f"civitai_api:images:{image_id}:"
     references: dict[str, str] = {}
@@ -694,13 +707,13 @@ def _api_field_references(image_payload: Mapping[str, Any]) -> dict[str, str]:
     ):
         for key in keys:
             if key in meta and meta[key] is not None:
-                references[canonical_field] = f"{prefix}/meta/{key}"
+                references[canonical_field] = f"{prefix}{meta_path}/{key}"
                 break
     for canonical_field, key in (("sampling.width", "width"), ("sampling.height", "height")):
         if image_payload.get(key) is not None:
             references[canonical_field] = f"{prefix}/{key}"
         elif meta.get(key) is not None:
-            references[canonical_field] = f"{prefix}/meta/{key}"
+            references[canonical_field] = f"{prefix}{meta_path}/{key}"
     if "workflow" not in references and image_payload.get("workflow") is not None:
         references["workflow"] = f"{prefix}/workflow"
     return references
