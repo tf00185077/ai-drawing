@@ -33,6 +33,77 @@ def test_resource_inspect_is_canonical_and_redacts_secret_url() -> None:
     assert [(item["civitai_model_id"], item["civitai_model_version_id"], item["civitai_file_id"]) for item in first["candidates"]] == [(101, 201, 11), (101, 201, 12)]
 
 
+def test_resource_inspect_normalizes_authoritative_public_model_policy_fields() -> None:
+    """CIV-V-H-R2: normalize the fields emitted by Civitai's real model API."""
+    from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource
+
+    payload = _fixture()
+    candidate = payload["modelVersions"][0]["files"][0]
+    candidate.pop("availability")
+    candidate.pop("license")
+    candidate.pop("usage")
+    payload.update({
+        "availability": "Public",
+        "allowNoCredit": True,
+        "allowCommercialUse": "{RentCivit,Image,Rent}",
+        "allowDerivatives": True,
+        "allowDifferentLicense": True,
+    })
+
+    inspected = inspect_civitai_resource(payload)
+    normalized = inspected["candidates"][0]
+
+    assert normalized["availability"] is True
+    assert normalized["license"] == {
+        "source": "civitai_model_permissions",
+        "allow_no_credit": True,
+        "allow_different_license": True,
+    }
+    assert normalized["usage_restrictions"] == {
+        "allow_commercial_use": ["Image", "Rent", "RentCivit"],
+        "allow_derivatives": True,
+    }
+    assert select_civitai_resource(inspected, {"civitai_file_id": 11})["status"] == "completed"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("allowNoCredit", None),
+    ("allowNoCredit", "true"),
+    ("allowCommercialUse", []),
+    ("allowCommercialUse", "Image"),
+    ("allowCommercialUse", [" "]),
+    ("allowCommercialUse", ["Image", 1]),
+    ("allowDerivatives", "true"),
+    ("allowDifferentLicense", None),
+])
+def test_resource_inspect_model_policy_requires_explicit_complete_typed_values(field: str, value: object) -> None:
+    """CIV-V-H-R2-AC1: absent/malformed model policy cannot satisfy selection gates."""
+    from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource
+
+    payload = _fixture()
+    candidate = payload["modelVersions"][0]["files"][0]
+    candidate.pop("availability")
+    candidate.pop("license")
+    candidate.pop("usage")
+    payload.update({
+        "availability": "Public",
+        "allowNoCredit": True,
+        "allowCommercialUse": ["Image"],
+        "allowDerivatives": True,
+        "allowDifferentLicense": True,
+        field: value,
+    })
+
+    inspected = inspect_civitai_resource(payload)
+    normalized = inspected["candidates"][0]
+
+    assert normalized["availability"] is True
+    assert normalized["license"] is None
+    assert normalized["usage_restrictions"] is None
+    result = select_civitai_resource(inspected, {"civitai_file_id": 11})
+    assert result == {"status": "blocked", "diagnostic": {"code": "unsafe_metadata", "reason": "unsafe_metadata"}}
+
+
 def test_model_version_payload_preserves_distinct_model_version_and_file_ids() -> None:
     from app.services.civitai_resource_install import inspect_civitai_resource
 
@@ -193,6 +264,134 @@ def test_existing_final_blocks_before_transport_and_database_mutation(tmp_path: 
         assert final.read_bytes() == b"existing-final"
         assert transport.calls == []
         assert db.query(DownloadedResource).count() == 0
+
+
+def test_existing_exact_file_is_adopted_without_transport_and_is_idempotent(tmp_path: Path) -> None:
+    """CIV-V-H-R1-AC1: an exact canonical final is ledger-adopted, never downloaded."""
+    from app.services.civitai_resource_install import install_civitai_resource
+
+    data = b"existing physical Civitai file"
+    selected = _selected(data)
+    root = tmp_path / "loras"
+    final = root / selected["name"]
+    final.parent.mkdir()
+    final.write_bytes(data)
+    transport = _Transport(b"transport must never be read")
+    Session = _session(tmp_path)
+
+    with Session() as db:
+        first = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
+        first_row = db.query(DownloadedResource).one()
+        second = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
+        rows = db.query(DownloadedResource).all()
+
+    assert first["status"] == second["status"] == "completed"
+    assert first["final_path"] == second["final_path"] == str(final)
+    assert first["sha256"] == second["sha256"] == selected["sha256"]
+    assert first["byte_size"] == second["byte_size"] == len(data)
+    assert transport.calls == []
+    assert final.read_bytes() == data
+    assert len(rows) == 1
+    assert rows[0].id == first_row.id
+    assert (rows[0].provider, rows[0].model_id, rows[0].version_id, rows[0].civitai_file_id, rows[0].sha256, rows[0].local_path) == (
+        "civitai", "101", "201", "11", selected["sha256"], str(final),
+    )
+
+
+@pytest.mark.parametrize("existing_kind,contents", [
+    ("mismatch", b"wrong existing bytes"),
+    ("symlink", b""),
+    ("directory", b""),
+])
+def test_existing_adverse_targets_have_zero_transport_file_or_ledger_side_effects(
+    tmp_path: Path, existing_kind: str, contents: bytes,
+) -> None:
+    """CIV-V-H-R1-AC2: non-adoptable finals retain the old already_exists fail-closed result."""
+    from app.services.civitai_resource_install import install_civitai_resource
+
+    data = b"expected existing physical file"
+    selected = _selected(data)
+    root = tmp_path / "loras"
+    final = root / selected["name"]
+    root.mkdir()
+    outside = tmp_path / "outside"
+    if existing_kind == "symlink":
+        outside.write_bytes(b"outside must remain unchanged")
+        final.symlink_to(outside)
+    elif existing_kind == "directory":
+        final.mkdir()
+    else:
+        final.write_bytes(contents)
+    before = outside.read_bytes() if outside.exists() else None
+    transport = _Transport(b"transport must never be read")
+
+    with _session(tmp_path)() as db:
+        result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
+        assert result == {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+        assert transport.calls == []
+        assert db.query(DownloadedResource).count() == 0
+
+    assert final.is_symlink() if existing_kind == "symlink" else final.exists()
+    if before is not None:
+        assert outside.read_bytes() == before
+
+
+@pytest.mark.parametrize("field,value", [
+    ("scan_status", "unknown"),
+    ("availability", False),
+    ("license", None),
+    ("download_url_identity", "https://civitai.com/api/download/models/11?token=TOKEN_SENTINEL"),
+])
+def test_existing_unsafe_metadata_remains_redacted_and_side_effect_free(tmp_path: Path, field: str, value: object) -> None:
+    """CIV-V-H-R1-AC2: descriptor gates run before any existing-file adoption."""
+    from app.services.civitai_resource_install import install_civitai_resource
+
+    data = b"expected existing physical file"
+    selected = {**_selected(data), field: value}
+    root = tmp_path / "loras"
+    final = root / selected["name"]
+    final.parent.mkdir()
+    final.write_bytes(data)
+    transport = _Transport(b"transport must never be read")
+
+    with _session(tmp_path)() as db:
+        result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
+        assert result["status"] == "blocked"
+        assert transport.calls == []
+        assert db.query(DownloadedResource).count() == 0
+
+    assert final.read_bytes() == data
+    assert "TOKEN_SENTINEL" not in json.dumps(result)
+
+
+def test_existing_exact_file_with_conflicting_ledger_identity_is_side_effect_free(tmp_path: Path) -> None:
+    """CIV-V-H-R1-AC2: adoption never launders a pre-existing conflicting identity."""
+    from app.services.civitai_resource_install import install_civitai_resource
+
+    data = b"expected existing physical file"
+    selected = _selected(data)
+    root = tmp_path / "loras"
+    final = root / selected["name"]
+    final.parent.mkdir()
+    final.write_bytes(data)
+    transport = _Transport(b"transport must never be read")
+    with _session(tmp_path)() as db:
+        conflict = DownloadedResource(
+            resource_name="conflict.safetensors", resource_type="lora", provider="civitai",
+            source_url="https://civitai.com/api/download/models/999", status="installed",
+            civitai_file_id=str(selected["civitai_file_id"]), model_id="999", version_id="998",
+            sha256="f" * 64, local_path=str(tmp_path / "elsewhere"),
+        )
+        db.add(conflict)
+        db.commit()
+        before = (conflict.model_id, conflict.version_id, conflict.sha256, conflict.local_path)
+        result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
+        after = db.query(DownloadedResource).one()
+
+    assert result == {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+    assert transport.calls == []
+    assert (after.model_id, after.version_id, after.sha256, after.local_path) == before
+    assert final.read_bytes() == data
 
 
 def test_ledger_commit_failure_removes_only_new_publication_and_row(tmp_path: Path, monkeypatch) -> None:

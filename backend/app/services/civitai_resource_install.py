@@ -5,6 +5,7 @@ The service deliberately has no caller credentials or caller destination paths.
 from __future__ import annotations
 
 from datetime import datetime
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -77,6 +78,35 @@ def _availability(value: Any) -> bool:
     return value is True or str(value or "").strip().lower() in {"public", "available", "true"}
 
 
+def _model_policy(payload: Mapping[str, Any]) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """Normalize Civitai model-level permission fields without inventing policy."""
+    no_credit = payload.get("allowNoCredit")
+    different_license = payload.get("allowDifferentLicense")
+    derivatives = payload.get("allowDerivatives")
+    commercial = payload.get("allowCommercialUse")
+    if not all(isinstance(value, bool) for value in (no_credit, different_license, derivatives)):
+        return None, None
+    if isinstance(commercial, str):
+        text = commercial.strip()
+        if text.startswith("{") and text.endswith("}"):
+            commercial = sorted(part.strip() for part in text[1:-1].split(",") if part.strip())
+    if not isinstance(commercial, list) or not commercial or not all(
+        isinstance(value, str) and value.strip() for value in commercial
+    ):
+        return None, None
+    return (
+        {
+            "source": "civitai_model_permissions",
+            "allow_no_credit": no_credit,
+            "allow_different_license": different_license,
+        },
+        {
+            "allow_commercial_use": list(commercial),
+            "allow_derivatives": derivatives,
+        },
+    )
+
+
 def _size(file: Mapping[str, Any]) -> int | None:
     raw = file.get("size")
     if isinstance(raw, (int, float)) and not isinstance(raw, bool) and raw > 0:
@@ -103,6 +133,7 @@ def inspect_civitai_resource(payload: Mapping[str, Any]) -> dict[str, Any]:
     is_model_payload = isinstance(model_versions, list)
     declared_model_id = _number(payload.get("id")) if is_model_payload else _model_id(payload)
     versions = model_versions if is_model_payload else ([payload] if payload.get("files") else [])
+    policy_license, policy_usage = _model_policy(payload)
     candidates: list[dict[str, Any]] = []
     for version in versions:
         if not isinstance(version, Mapping):
@@ -125,10 +156,10 @@ def inspect_civitai_resource(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "download_url_identity": _download_url_identity(file.get("downloadUrl") or file.get("download_url")),
                 "sha256": sha,
                 "byte_size": _size(file),
-                "availability": _availability(file.get("availability")),
+                "availability": _availability(file.get("availability", version.get("availability", payload.get("availability")))),
                 "scan_status": _scan(file.get("virusScanResult") or file.get("scanStatus")),
-                "license": file.get("license") or payload.get("license"),
-                "usage_restrictions": file.get("usage") or payload.get("usage"),
+                "license": file.get("license") or payload.get("license") or policy_license,
+                "usage_restrictions": file.get("usage") or payload.get("usage") or policy_usage,
                 "air": file.get("air") or version.get("air"),
                 "model_family": version.get("baseModel") or payload.get("baseModel"),
             }
@@ -230,6 +261,69 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
     return descriptor, ""
 
 
+def _stream_file_identity(path: Path) -> tuple[int, str]:
+    """Read a regular final once; callers must have rejected symlinks first."""
+    digest = hashlib.sha256()
+    byte_size = 0
+    with path.open("rb") as source:
+        while chunk := source.read(1024 * 1024):
+            byte_size += len(chunk)
+            digest.update(chunk)
+    return byte_size, digest.hexdigest()
+
+
+def _has_conflicting_ledger_identity(descriptor: Mapping[str, Any], target: Path, *, db: Session) -> bool:
+    """Do not overwrite an installed identity that contradicts this exact file."""
+    by_file = db.query(DownloadedResource).filter_by(
+        provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"]),
+    ).all()
+    by_path = db.query(DownloadedResource).filter_by(local_path=str(target)).all()
+    expected = {
+        "provider": "civitai", "resource_type": descriptor["resource_kind"],
+        "model_id": str(descriptor["civitai_model_id"]),
+        "version_id": str(descriptor["civitai_model_version_id"]),
+        "civitai_file_id": str(descriptor["civitai_file_id"]), "sha256": descriptor["sha256"],
+        "local_path": str(target),
+    }
+    for row in {row.id: row for row in [*by_file, *by_path]}.values():
+        if row.status != "installed":
+            continue
+        if any(getattr(row, field) != value for field, value in expected.items()):
+            return True
+    return False
+
+
+def _persist_ledger_identity(
+    descriptor: Mapping[str, Any], storage_root: str, target: Path, byte_size: int, sha256: str,
+    *, db: Session, authorization: str | None,
+) -> int:
+    """Persist only an exact Civitai file identity; no file operation is performed here."""
+    row = db.query(DownloadedResource).filter_by(
+        provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"]),
+    ).one_or_none()
+    metadata_snapshot = redact_secrets({
+        "source_identity": descriptor["download_url_identity"], "license": descriptor["license"],
+        "usage_restrictions": descriptor["usage_restrictions"], "model_family": descriptor["model_family"],
+    }, secrets=tuple((authorization or "").split()))
+    values = {
+        "resource_name": descriptor["name"], "resource_type": descriptor["resource_kind"], "provider": "civitai",
+        "source_url": descriptor["download_url_identity"], "resolved_download_url": descriptor["download_url_identity"],
+        "local_path": str(target), "storage_root": storage_root, "file_size": byte_size,
+        "sha256": sha256, "model_id": str(descriptor["civitai_model_id"]),
+        "version_id": str(descriptor["civitai_model_version_id"]), "civitai_file_id": str(descriptor["civitai_file_id"]),
+        "air": descriptor["air"], "status": "installed", "notes": json.dumps(metadata_snapshot, sort_keys=True),
+        "downloaded_at": datetime.utcnow(),
+    }
+    if row is None:
+        row = DownloadedResource(**values)
+        db.add(row)
+    else:
+        for key, value in values.items():
+            setattr(row, key, value)
+    db.commit()
+    return row.id
+
+
 def install_civitai_resource(
     selected: Mapping[str, Any], storage_root: str, *, db: Session, storage_roots: Mapping[str, Path],
     transport: Any, authorization: str | None = None,
@@ -244,12 +338,39 @@ def install_civitai_resource(
     if storage_root != expected_root or storage_root not in storage_roots:
         return {"status": "blocked", "diagnostic": {"code": "unsafe_destination"}}
     root = Path(storage_roots[storage_root]).resolve()
-    target = (root / descriptor["name"]).resolve()
+    candidate_target = root / descriptor["name"]
+    if candidate_target.parent != root:
+        return {"status": "blocked", "diagnostic": {"code": "unsafe_destination"}}
+    # Never resolve/follow a final symlink.  Existing non-regular finals retain the
+    # original already_exists result without transport, filesystem, or ledger effects.
+    if candidate_target.is_symlink() or (candidate_target.exists() and not candidate_target.is_file()):
+        return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+    target = candidate_target.resolve()
     if target.parent != root:
         return {"status": "blocked", "diagnostic": {"code": "unsafe_destination"}}
-    # overwrite=false is enforced before download so a previous final can never be replaced.
-    if target.exists() or target.is_symlink():
-        return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+    if target.exists():
+        try:
+            actual_size, actual_sha256 = _stream_file_identity(target)
+        except OSError:
+            return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+        if actual_size != descriptor["byte_size"] or actual_sha256 != descriptor["sha256"]:
+            return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+        if _has_conflicting_ledger_identity(descriptor, target, db=db):
+            return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+        try:
+            ledger_id = _persist_ledger_identity(
+                descriptor, storage_root, target, actual_size, actual_sha256,
+                db=db, authorization=authorization,
+            )
+        except Exception:
+            db.rollback()
+            # This final predates the invocation and must never be compensated away.
+            return {"status": "failed", "diagnostic": {"code": "ledger_persistence_failed"}}
+        return redact_secrets({
+            "status": "completed", "final_path": str(target), "byte_size": actual_size,
+            "sha256": actual_sha256, "ledger_id": ledger_id,
+            "diagnostic": {"code": "adopted_existing"},
+        }, secrets=tuple((authorization or "").split()))
 
     metadata = CivitaiFileMetadata(
         download_url=descriptor["download_url_identity"], sha256=descriptor["sha256"], size=descriptor["byte_size"],
@@ -265,30 +386,10 @@ def install_civitai_resource(
 
     # safe_download only returns completed after os.replace; this invocation established target absent above.
     try:
-        row = db.query(DownloadedResource).filter_by(
-            provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"]),
-        ).one_or_none()
-        metadata_snapshot = redact_secrets({
-            "source_identity": descriptor["download_url_identity"], "license": descriptor["license"],
-            "usage_restrictions": descriptor["usage_restrictions"], "model_family": descriptor["model_family"],
-        }, secrets=tuple((authorization or "").split()))
-        values = {
-            "resource_name": descriptor["name"], "resource_type": descriptor["resource_kind"], "provider": "civitai",
-            "source_url": descriptor["download_url_identity"], "resolved_download_url": descriptor["download_url_identity"],
-            "local_path": str(target), "storage_root": storage_root, "file_size": result.bytes,
-            "sha256": result.actual_sha256, "model_id": str(descriptor["civitai_model_id"]),
-            "version_id": str(descriptor["civitai_model_version_id"]), "civitai_file_id": str(descriptor["civitai_file_id"]),
-            "air": descriptor["air"], "status": "installed", "notes": json.dumps(metadata_snapshot, sort_keys=True),
-            "downloaded_at": datetime.utcnow(),
-        }
-        if row is None:
-            row = DownloadedResource(**values)
-            db.add(row)
-        else:
-            for key, value in values.items():
-                setattr(row, key, value)
-        db.commit()
-        ledger_id = row.id
+        ledger_id = _persist_ledger_identity(
+            descriptor, storage_root, target, result.bytes, cast(str, result.actual_sha256),
+            db=db, authorization=authorization,
+        )
     except Exception:
         db.rollback()
         # Compensation is limited to this invocation's newly atomically published file.
