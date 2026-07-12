@@ -71,6 +71,38 @@ class GeneratedArtifact(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CivitaiVariationSet(Base):
+    """CIV-V-G immutable variation-set identity; members/events are append-only."""
+    __tablename__ = "civitai_variation_sets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, unique=True, index=True)
+    parent_recipe_sha256 = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class CivitaiVariationSetMember(Base):
+    __tablename__ = "civitai_variation_set_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, index=True)
+    ordinal = Column(Integer, nullable=False)
+    client_child_key = Column(String(128), nullable=False)
+    identity_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class CivitaiVariationSetEvent(Base):
+    __tablename__ = "civitai_variation_set_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, index=True)
+    member_ordinal = Column(Integer, nullable=False, index=True)
+    event_type = Column(String(64), nullable=False)
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class LoraTrainingJob(Base):
     """Durable LoRA training job state."""
     __tablename__ = "lora_training_jobs"
