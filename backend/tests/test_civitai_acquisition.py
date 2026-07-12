@@ -219,6 +219,35 @@ def test_nested_live_api_meta_is_normalized_without_losing_raw_payload() -> None
     assert result.raw_api_payload["meta"]["outerVendorField"] == "preserved"
 
 
+def test_single_image_model_version_identity_is_bound_to_sole_checkpoint() -> None:
+    image = _json_fixture("image_123.json")
+    image["modelVersionIds"] = [2940478]
+    image["meta"]["resources"] = [
+        {"name": "illustriousXL_v10.safetensors", "type": "model", "hash": "fa486caafc"}
+    ]
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([
+            CivitaiTransportResponse(200, {"items": [image]}, {}),
+            CivitaiTransportResponse(200, {
+                "id": 2940478,
+                "files": [{
+                    "id": 7654321,
+                    "hashes": {"SHA256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"},
+                }],
+            }, {}),
+        ]),
+    )
+
+    assert result.recipe is not None
+    assert len(result.recipe.resources) == 1
+    assert result.recipe.resources[0].kind == ResourceKind.CHECKPOINT
+    assert result.recipe.resources[0].civitai_model_version_id == 2940478
+    assert result.recipe.resources[0].civitai_file_id == 7654321
+    assert result.recipe.resources[0].sha256 == "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
+
+
 def test_api_meta_maps_to_ordered_recipe_fields_without_losing_raw_payload() -> None:
     result = acquire_civitai_recipe(
         "123",
