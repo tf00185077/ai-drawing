@@ -26,6 +26,8 @@ class GalleryItem(BaseModel):
     cfg: float | None = None
     prompt: str | None = None
     negative_prompt: str | None = None
+    recipe_provenance_available: bool = False
+    recipe_reproduction_level: str | None = None
     created_at: datetime
 
 
