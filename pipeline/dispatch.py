@@ -37,8 +37,9 @@ def load_state():
 def save(s):s['updated_at']=stamp();writej(PIPE/'state.json',s)
 def stage(s,i):return next((x for x in s['stages'] if x['id']==i),None)
 def alive(pid):
+ if not isinstance(pid,int) or isinstance(pid,bool) or pid<=0:return False
  try:os.kill(pid,0);return True
- except OSError:return False
+ except (OSError,TypeError,ValueError):return False
 def event(s,e,d,notes):
  append(PIPE/'events.jsonl',{'event_id':e,'ts':stamp(),'detail':d});p=PIPE/'notified.jsonl';seen=set()
  if p.exists():

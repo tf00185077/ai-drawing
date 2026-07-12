@@ -38,6 +38,9 @@ class DispatchTests(unittest.TestCase):
   self.s['stages']=[self.st()];self.put()
   for _ in range(3):self.tick();s=self.get();self.dead(s,list(s['runs'].values())[-1]);self.tick()
   s=self.get();self.assertEqual(s['goal']['status'],'PAUSED');self.assertEqual(s['stages'][0]['attempts']['execute'],3)
+ def test_alive_rejects_missing_or_invalid_pid_without_crashing(self):
+  self.assertFalse(dispatch.alive(None))
+  self.assertFalse(dispatch.alive('not-a-pid'))
  def test_hit_limit_does_not_consume_attempt(self):
   self.s['stages']=[self.st()];self.put();self.tick();s=self.get();r=list(s['runs'].values())[-1];(self.root/r['log_file']).write_text('usage limit resets 11:59pm');self.dead(s,r);self.tick();s=self.get();self.assertEqual(s['stages'][0]['attempts']['execute'],0);self.assertTrue(s['rate_limit']['active'])
  def test_valid_machine_result_wins_over_late_rate_limit_log(self):
