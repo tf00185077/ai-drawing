@@ -14,6 +14,16 @@ from app.schemas.generation_recipe import GenerationRecipe, ResourceKind, Resour
 from app.services.civitai_resource_resolution import ResourceResolutionReport
 
 
+_A1111_TO_COMFYUI_SAMPLER = {
+    "euler a": "euler_ancestral",
+}
+
+
+def _runtime_sampler_name(source_name: str) -> str:
+    """Translate audited source labels to ComfyUI's stable sampler identifiers."""
+    return _A1111_TO_COMFYUI_SAMPLER.get(source_name.strip().casefold(), source_name)
+
+
 @dataclass(frozen=True)
 class RecipeCompileError(Exception):
     """Stable, machine-readable failure with no partially compiled workflow."""
@@ -352,10 +362,11 @@ def compile_generation_recipe_workflow(
             graph.field_binding(f"{field}.sampling.height", resized, "height", sampling["height"])
             encoded_pass = graph.node("VAEEncode", {"pixels": [resized, 0], "vae": vae_link})
             latent_link = [encoded_pass, 0]
+        runtime_sampler = _runtime_sampler_name(sampling["sampler"])
         sampler = graph.node("KSampler", {
             "model": model_link, "positive": positive_link, "negative": negative_link, "latent_image": latent_link,
             "seed": sampling["seed"], "steps": sampling["steps"], "cfg": sampling["cfg"],
-            "sampler_name": sampling["sampler"], "scheduler": sampling["scheduler"], "denoise": sampling["denoise"],
+            "sampler_name": runtime_sampler, "scheduler": sampling["scheduler"], "denoise": sampling["denoise"],
         })
         sampler_link = [sampler, 0]
         for sampling_field, input_name in (
@@ -363,7 +374,8 @@ def compile_generation_recipe_workflow(
             ("sampler", "sampler_name"), ("scheduler", "scheduler"), ("denoise", "denoise"),
         ):
             graph.field_binding(
-                f"{field}.sampling.{sampling_field}", sampler, input_name, sampling[sampling_field]
+                f"{field}.sampling.{sampling_field}", sampler, input_name,
+                runtime_sampler if sampling_field == "sampler" else sampling[sampling_field]
             )
 
     assert sampler_link is not None
