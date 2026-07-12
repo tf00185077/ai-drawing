@@ -614,6 +614,53 @@ def _api_generation_meta(image_payload: Mapping[str, Any]) -> tuple[dict[str, An
     return dict(outer), "/meta"
 
 
+def _enrich_single_checkpoint_identity(
+    image_payload: dict[str, Any],
+    *,
+    transport: CivitaiTransport,
+    authorization: str | None,
+    provenance: dict[str, Any],
+    backoff: Callable[[int, CivitaiTransportResponse], float | int | None] | None,
+    sleep: Callable[[float], None],
+    secrets: tuple[str, ...],
+) -> None:
+    """Resolve an API-supplied short hash only through its sole model version."""
+    version_ids = image_payload.get("modelVersionIds")
+    meta, _ = _api_generation_meta(image_payload)
+    resources = [item for item in meta.get("resources") or [] if isinstance(item, dict)]
+    checkpoints = [
+        item for item in resources
+        if _resource_kind(item.get("type") or item.get("kind")) == ResourceKind.CHECKPOINT.value
+    ]
+    if not (isinstance(version_ids, list) and len(version_ids) == 1 and len(checkpoints) == 1):
+        return
+    version_id = _as_int(version_ids[0])
+    short_hash = checkpoints[0].get("hash")
+    if version_id is None or not isinstance(short_hash, str) or not re.fullmatch(r"[0-9a-fA-F]{10,63}", short_hash.strip()):
+        return
+    payload = _request_json(
+        f"https://civitai.com/api/v1/model-versions/{version_id}",
+        params={}, transport=transport, authorization=authorization, provenance=provenance,
+        backoff=backoff, sleep=sleep, secrets=secrets,
+    )
+    files = payload.get("files") if isinstance(payload, Mapping) else None
+    matches: list[tuple[Mapping[str, Any], str]] = []
+    for item in files if isinstance(files, list) else []:
+        if not isinstance(item, Mapping):
+            continue
+        digest = _as_sha256(_first_mapping(item.get("hashes")).get("SHA256") or item.get("sha256"))
+        if digest and digest.startswith(short_hash.strip().lower()):
+            matches.append((item, digest))
+    if len(matches) != 1:
+        return
+    matched, digest = matches[0]
+    checkpoints[0]["hash"] = digest
+    checkpoints[0]["modelVersionId"] = version_id
+    file_id = _as_int(matched.get("id"))
+    if file_id is not None:
+        checkpoints[0]["fileId"] = file_id
+
+
 def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: CivitaiLocator) -> dict[str, Any]:
     meta, meta_path = _api_generation_meta(image_payload)
     image_id = _as_int(image_payload.get("id")) or locator.image_id
@@ -677,6 +724,19 @@ def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: Ci
         payload["sampling"] = sampling
         payload["passes"] = [{"name": "base", "inherits_from": "recipe.sampling"}]
     resources = _resources_from_api_meta(meta)
+    model_version_ids = image_payload.get("modelVersionIds")
+    checkpoint_resources = [
+        resource for resource in resources if resource["kind"] == ResourceKind.CHECKPOINT.value
+    ]
+    if (
+        isinstance(model_version_ids, list)
+        and len(model_version_ids) == 1
+        and len(checkpoint_resources) == 1
+        and "civitai_model_version_id" not in checkpoint_resources[0]
+    ):
+        model_version_id = _as_int(model_version_ids[0])
+        if model_version_id is not None:
+            checkpoint_resources[0]["civitai_model_version_id"] = model_version_id
     if resources:
         payload["resources"] = resources
     api_workflow = _first_mapping(meta.get("workflow"), meta.get("Workflow"), image_payload.get("workflow"))
@@ -1058,6 +1118,15 @@ def acquire_civitai_recipe(
     except AcquisitionError as exc:
         exc.provenance = redact_secrets({**provenance, **exc.provenance}, secrets=secrets)
         raise
+    _enrich_single_checkpoint_identity(
+        image_payload,
+        transport=transport,
+        authorization=authorization,
+        provenance=provenance,
+        backoff=backoff,
+        sleep=sleep,
+        secrets=secrets,
+    )
     media_url = _first_text(image_payload, "url")
     media_sha256, acquired_embedded_metadata = _fetch_media_evidence(
         transport, media_url, provenance=provenance, secrets=secrets
