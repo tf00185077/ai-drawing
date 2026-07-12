@@ -18,6 +18,10 @@ Base = declarative_base()
 # 既有 SQLite DB 缺少的可為空欄位 → 啟動時以 ALTER TABLE 補上（此專案無 migration 框架）。
 # 僅新增 nullable 欄位，對既有資料無破壞性。
 _ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
+    "downloaded_resources": {
+        "civitai_file_id": "VARCHAR(128)",
+        "air": "VARCHAR(512)",
+    },
     "generated_images": {
         "workflow_json": "TEXT",
         "source_image": "VARCHAR(512)",

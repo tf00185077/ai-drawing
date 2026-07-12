@@ -56,6 +56,11 @@ class CivitaiRecipeResolveRequest(_StrictModel):
     strict: bool
 
 
+class CivitaiRecipeResolveLocalRequest(_StrictModel):
+    """Strict backend-owned resolver input: callers never provide a ledger."""
+    recipe: GenerationRecipe
+
+
 class ResolutionEntryPayload(_StrictModel):
     index: int
     status: str

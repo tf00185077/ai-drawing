@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.core.queue import QueueFullError, submit_custom
 from app.schemas.civitai_recipes import (
@@ -11,8 +12,11 @@ from app.schemas.civitai_recipes import (
     CivitaiRecipeImportRequest,
     CivitaiRecipeInspectRequest,
     CivitaiRecipeResolveRequest,
+    CivitaiRecipeResolveLocalRequest,
     CivitaiRecipeRunRequest,
 )
+from app.db.database import get_db
+from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
 from app.services.civitai_acquisition import AcquisitionError, redact_secrets
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle
 from app.services.civitai_recipe_pipeline import (
@@ -60,6 +64,48 @@ def resolve_civitai_recipe(request: CivitaiRecipeResolveRequest) -> dict[str, An
     if request.strict and not report["ready"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_detail("resource_resolution_failed", "strict resource resolution did not produce verified locks", report=report))
     return result
+
+
+@router.get("/local-ledger")
+def query_local_civitai_ledger(
+    kind: str | None = None,
+    civitai_model_id: int | None = None,
+    civitai_model_version_id: int | None = None,
+    civitai_file_id: int | None = None,
+    air: str | None = None,
+    sha256: str | None = None,
+    availability: bool | None = None,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Read a deterministic backend-owned local Civitai identity snapshot."""
+    snapshot = local_identity_ledger(
+        db, kind=kind, civitai_model_id=civitai_model_id,
+        civitai_model_version_id=civitai_model_version_id, civitai_file_id=civitai_file_id,
+        air=air, sha256=sha256, availability=availability,
+    )
+    return ledger_payload(snapshot)
+
+
+@router.post("/resolve-local")
+def resolve_local_civitai_recipe(
+    request: CivitaiRecipeResolveLocalRequest,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Strictly resolve against one backend-owned ledger snapshot only."""
+    snapshot = local_identity_ledger(db)
+    result = resolve_recipe(request.recipe, ledger=snapshot.entries, strict=True)
+    report = result["report"]
+    if not report["ready"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=_detail(
+                "local_resource_resolution_failed",
+                "strict local resource resolution did not produce verified locks",
+                report=report,
+                snapshot=ledger_payload(snapshot)["snapshot"],
+            ),
+        )
+    return {**result, "snapshot": ledger_payload(snapshot)["snapshot"]}
 
 
 @router.post("/build")

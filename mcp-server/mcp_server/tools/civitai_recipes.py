@@ -81,6 +81,41 @@ def civitai_recipe_resolve(recipe: dict[str, Any], ledger: list[dict[str, Any]],
 
 
 @mcp.tool()
+def civitai_recipe_local_ledger(
+    kind: str | None = None,
+    civitai_model_id: int | None = None,
+    civitai_model_version_id: int | None = None,
+    civitai_file_id: int | None = None,
+    air: str | None = None,
+    sha256: str | None = None,
+    availability: bool | None = None,
+) -> dict[str, Any]:
+    """Query the backend-owned local Civitai identity ledger with exact-match filters only."""
+    params = {
+        key: value for key, value in {
+            "kind": kind,
+            "civitai_model_id": civitai_model_id,
+            "civitai_model_version_id": civitai_model_version_id,
+            "civitai_file_id": civitai_file_id,
+            "air": air,
+            "sha256": sha256,
+            "availability": availability,
+        }.items() if value is not None
+    }
+    tool = "civitai_recipe_local_ledger"
+    try:
+        return _result(tool, _get_client().get("civitai-recipes/local-ledger", params=params), "resolve a recipe strictly against this backend-owned local ledger")
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def civitai_recipe_resolve_local(recipe: dict[str, Any]) -> dict[str, Any]:
+    """Strictly resolve a recipe using only one backend-owned local ledger snapshot."""
+    return _post("civitai_recipe_resolve_local", "civitai-recipes/resolve-local", {"recipe": recipe}, "if strict resolution succeeds, build the SDXL/Illustrious workflow")
+
+
+@mcp.tool()
 def civitai_recipe_build(recipe: dict[str, Any], resource_report: dict[str, Any], model_family: str, input_bindings: dict[str, Any]) -> dict[str, Any]:
     """Compile a strict resolved SDXL/Illustrious recipe into a locked ComfyUI workflow."""
     return _post("civitai_recipe_build", "civitai-recipes/build", {"recipe": recipe, "resource_report": resource_report, "model_family": model_family, "input_bindings": input_bindings}, "submit the returned build artifact with runtime provenance")
