@@ -1,7 +1,10 @@
 """CIV-F HTTP contracts: only orchestration over CIV-A through CIV-E services."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+import httpx
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -14,10 +17,15 @@ from app.schemas.civitai_recipes import (
     CivitaiRecipeResolveRequest,
     CivitaiRecipeResolveLocalRequest,
     CivitaiRecipeRunRequest,
+    CivitaiResourceInspectRequest,
+    CivitaiResourceSelectRequest,
+    CivitaiResourceInstallRequest,
 )
 from app.db.database import get_db
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
-from app.services.civitai_acquisition import AcquisitionError, redact_secrets
+from app.services.civitai_acquisition import AcquisitionError, redact_secrets, parse_civitai_locator
+from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource, install_civitai_resource
+from app.config import get_settings
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle
 from app.services.civitai_recipe_pipeline import (
     build_recipe,
@@ -34,6 +42,54 @@ router = APIRouter(prefix="/api/civitai-recipes", tags=["civitai-recipes"])
 
 def _detail(code: str, message: str, **extra: Any) -> dict[str, Any]:
     return redact_secrets({"code": code, "message": message, **extra})
+
+
+@router.post("/resource-inspect")
+def inspect_civitai_resource_route(request: CivitaiResourceInspectRequest) -> dict[str, Any]:
+    try:
+        locator = parse_civitai_locator(request.locator)
+        if locator.kind != "model" or (locator.model_id is None and locator.model_version_id is None):
+            raise AcquisitionError("unsupported_locator", "resource inspect requires a Civitai model or model-version locator")
+        endpoint = f"https://civitai.com/api/v1/model-versions/{locator.model_version_id}" if locator.model_version_id else f"https://civitai.com/api/v1/models/{locator.model_id}"
+        headers = {"Authorization": get_settings().civitai_authorization} if get_settings().civitai_authorization else {}
+        response = httpx.get(endpoint, headers=headers, timeout=30.0)
+        if response.status_code == 404:
+            raise AcquisitionError("not_found", "Civitai resource was not found")
+        response.raise_for_status()
+        return inspect_civitai_resource(response.json())
+    except AcquisitionError as exc:
+        raise HTTPException(status_code=422, detail=_detail(exc.code, str(exc), provenance=exc.provenance)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=_detail("resource_inspect_failed", exc.__class__.__name__)) from exc
+
+
+@router.post("/resource-select")
+def select_civitai_resource_route(request: CivitaiResourceSelectRequest) -> dict[str, Any]:
+    result = select_civitai_resource(request.inspect.model_dump(), request.selectors.model_dump(exclude_none=True))
+    if result["status"] != "completed":
+        raise HTTPException(status_code=409, detail=_detail(result["diagnostic"]["code"], "resource selection failed closed", diagnostic=result["diagnostic"]))
+    return result
+
+
+class _CivitaiDownloadTransport:
+    def get(self, url: str, *, headers: dict[str, str] | None = None) -> Any:
+        return httpx.get(url, headers=headers, timeout=60.0)
+
+
+@router.post("/resource-install")
+def install_civitai_resource_route(request: CivitaiResourceInstallRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
+    if request.overwrite:
+        raise HTTPException(status_code=422, detail=_detail("overwrite_forbidden", "CIV-V-D accepts overwrite=false only"))
+    settings = get_settings()
+    roots = {
+        "checkpoints": Path(settings.comfyui_checkpoints_dir.split(",")[0]), "loras": Path(settings.comfyui_loras_dir.split(",")[0]),
+        "vae": Path(settings.comfyui_vae_dir.split(",")[0]), "embeddings": Path(settings.comfyui_embeddings_dir.split(",")[0]),
+        "controlnet": Path(settings.comfyui_controlnet_dir.split(",")[0]), "upscale_models": Path(settings.comfyui_upscale_models_dir.split(",")[0]),
+    }
+    result = install_civitai_resource(request.selected.model_dump(), request.storage_root, db=db, storage_roots=roots, transport=_CivitaiDownloadTransport(), authorization=settings.civitai_authorization)
+    if result["status"] != "completed":
+        raise HTTPException(status_code=409 if result["status"] == "blocked" else 500, detail=_detail(result.get("diagnostic", {}).get("code", "resource_install_failed"), "resource installation did not complete", diagnostic=result.get("diagnostic", {})))
+    return redact_secrets(result)
 
 
 @router.post("/import")

@@ -2,15 +2,115 @@
 from __future__ import annotations
 
 import base64
-from typing import Any
+import re
+from typing import Any, Literal
 
 import httpx
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, model_validator
 
 from mcp_server.server import _get_client, mcp
 
 
+class _StrictResourceModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+ResourceKind = Literal["checkpoint", "lora", "vae", "embedding", "controlnet", "upscaler"]
+
+
+class CivitaiResourceSource(_StrictResourceModel):
+    provider: Literal["civitai"]
+    civitai_model_id: PositiveInt | None = None
+
+
+class CivitaiResourceCandidate(_StrictResourceModel):
+    civitai_model_id: PositiveInt | None = None
+    civitai_model_version_id: PositiveInt | None = None
+    civitai_file_id: PositiveInt | None = None
+    resource_kind: ResourceKind | Literal["other"]
+    name: str
+    download_url_identity: str | None = None
+    sha256: str | None = None
+    byte_size: int | None = None
+    availability: bool
+    scan_status: str
+    license: JsonValue | None = None
+    usage_restrictions: JsonValue | None = None
+    air: str | None = None
+    model_family: str | None = None
+
+
+class CivitaiResourceInspectResponse(_StrictResourceModel):
+    status: Literal["completed"]
+    source: CivitaiResourceSource
+    model_family: str | None = None
+    candidates: list[CivitaiResourceCandidate]
+
+
+class ResourceSelectors(_StrictResourceModel):
+    civitai_model_id: PositiveInt | None = None
+    civitai_model_version_id: PositiveInt | None = None
+    civitai_file_id: PositiveInt | None = None
+    sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    resource_kind: ResourceKind | None = None
+
+    @model_validator(mode="after")
+    def require_one_selector(self) -> "ResourceSelectors":
+        if not any(value is not None for value in self.__dict__.values()):
+            raise ValueError("at least one exact selector is required")
+        return self
+
+
+class CivitaiResourceSelectedDescriptor(_StrictResourceModel):
+    civitai_model_id: PositiveInt
+    civitai_model_version_id: PositiveInt
+    civitai_file_id: PositiveInt
+    resource_kind: ResourceKind
+    name: str
+    download_url_identity: str
+    sha256: str
+    byte_size: PositiveInt
+    availability: bool
+    scan_status: str
+    license: JsonValue
+    usage_restrictions: JsonValue
+    air: str | None
+    model_family: str | None
+
+
+_SECRET_KEY_NAMES = frozenset({
+    "authorization", "api_key", "apikey", "access_token", "token", "secret", "password",
+})
+_SECRET_QUERY_VALUE = re.compile(
+    r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password)=)[^&#\s]*",
+    re.IGNORECASE,
+)
+_BEARER_VALUE = re.compile(r"\bBearer\s+[^\s,;]+", re.IGNORECASE)
+
+
+def _redact_secrets(value: Any) -> Any:
+    """Treat backend payloads as untrusted: retain their shape but never forward credentials."""
+    if isinstance(value, dict):
+        return {
+            key: "[REDACTED]" if str(key).lower().replace("-", "_") in _SECRET_KEY_NAMES
+            else _redact_secrets(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_secrets(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_secrets(item) for item in value)
+    if isinstance(value, str):
+        return _BEARER_VALUE.sub("Bearer [REDACTED]", _SECRET_QUERY_VALUE.sub(r"\1[REDACTED]", value))
+    return value
+
+
 def _error(tool: str, code: str, message: str, details: dict[str, Any] | None = None, *, status_code: int | None = None) -> dict[str, Any]:
-    result: dict[str, Any] = {"ok": False, "tool": tool, "error": {"code": code, "message": message, "details": details or {}}}
+    result: dict[str, Any] = {
+        "ok": False,
+        "tool": tool,
+        "error": _redact_secrets({"code": code, "message": message, "details": details or {}}),
+    }
     if status_code is not None:
         result["status_code"] = status_code
     return result
@@ -36,6 +136,7 @@ def _backend_error(tool: str, exc: Exception) -> dict[str, Any]:
 
 
 def _result(tool: str, payload: dict[str, Any], next_step: str) -> dict[str, Any]:
+    payload = _redact_secrets(payload)
     if payload.get("ok") is False:
         return _error(tool, str(payload.get("error_code") or "backend_failed"), str(payload.get("error_message") or payload.get("message") or "backend returned ok=false"), {"response": payload})
     return {"ok": True, "tool": tool, "data": payload, "next": next_step}
@@ -46,6 +147,28 @@ def _post(tool: str, endpoint: str, body: dict[str, Any], next_step: str) -> dic
         return _result(tool, _get_client().post(endpoint, json=body), next_step)
     except Exception as exc:
         return _backend_error(tool, exc)
+
+
+def _resource_payload(value: Any) -> Any:
+    return value.model_dump() if isinstance(value, BaseModel) else value
+
+
+@mcp.tool()
+def civitai_resource_inspect(locator: int | str) -> dict[str, Any]:
+    """Inspect one Civitai model/version locator into redacted deterministic candidate files."""
+    return _post("civitai_resource_inspect", "civitai-recipes/resource-inspect", {"locator": locator}, "select one exact candidate before guarded installation")
+
+
+@mcp.tool()
+def civitai_resource_select(inspect: CivitaiResourceInspectResponse, selectors: ResourceSelectors) -> dict[str, Any]:
+    """Fail closed unless exact Civitai identity selectors select exactly one inspected file."""
+    return _post("civitai_resource_select", "civitai-recipes/resource-select", {"inspect": _resource_payload(inspect), "selectors": _resource_payload(selectors)}, "install the selected descriptor into its compatible backend storage root")
+
+
+@mcp.tool()
+def civitai_resource_install(selected: CivitaiResourceSelectedDescriptor, storage_root: Literal["checkpoints", "loras", "vae", "embeddings", "controlnet", "upscale_models"], overwrite: Literal[False] = False) -> dict[str, Any]:
+    """Guardedly install one selected descriptor; caller paths and credentials are never accepted."""
+    return _post("civitai_resource_install", "civitai-recipes/resource-install", {"selected": _resource_payload(selected), "storage_root": storage_root, "overwrite": overwrite}, "query local ledger then resolve recipes strictly")
 
 
 @mcp.tool()
