@@ -201,6 +201,34 @@ def test_non_strict_resolve_downgrades_an_intrinsically_exact_report_when_ledger
     assert "resource_resolution" in body["reproduction_report"]["caveats"]
 
 
+
+def test_compatibility_returns_incompatible_as_structured_success_without_queue() -> None:
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe).to_dict()
+    # Existing CIV-C locks intentionally lack audited family evidence: incompatible is data, not an HTTP/build error.
+    snapshot_document = {"engine": "comfyui", "engine_version": "1", "node_types": sorted(["CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage"]), "sampler_names": ["euler"], "scheduler_names": ["normal"]}
+    snapshot = {**snapshot_document, "snapshot_sha256": hashlib.sha256(json.dumps(snapshot_document, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/compatibility", json={"recipe": recipe.model_dump(mode="json"), "resource_report": report, "model_family": "sdxl", "runtime_capabilities": snapshot})
+    assert response.status_code == 200
+    assert response.json()["compatible"] is False
+    assert response.json()["status"] == "incompatible"
+    submit.assert_not_called()
+
+
+def test_compatibility_validation_errors_are_structured_and_redact_secret_sentinels() -> None:
+    response = TestClient(app).post("/api/civitai-recipes/compatibility", json={
+        "recipe": recipe_payload(),
+        "resource_report": {"strict": True, "ready": True},
+        "model_family": "sdxl",
+        "runtime_capabilities": {"engine": "comfyui", "authorization": "Bearer PRIVATE-COMPATIBILITY-SENTINEL"},
+    })
+
+    assert response.status_code == 422
+    assert isinstance(response.json()["detail"], list)
+    assert "PRIVATE-COMPATIBILITY-SENTINEL" not in json.dumps(response.json())
+
+
 def test_build_is_fail_closed_before_queue_and_returns_canonical_workflow_hash() -> None:
     recipe = GenerationRecipe.model_validate(recipe_payload())
     report = report_for(recipe)

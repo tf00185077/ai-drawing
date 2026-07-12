@@ -32,6 +32,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
 | `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
+| `civitai_recipe_compatibility` | `dict` | POST /api/civitai-recipes/compatibility |
 | `civitai_recipe_build` | `dict` | POST /api/civitai-recipes/build |
 | `civitai_recipe_run` | `dict` | POST /api/civitai-recipes/run |
 | `civitai_recipe_export` | `dict` | GET /api/gallery/{image_id}/export?format=recipe |

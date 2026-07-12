@@ -239,6 +239,12 @@ def civitai_recipe_resolve_local(recipe: dict[str, Any]) -> dict[str, Any]:
 
 
 @mcp.tool()
+def civitai_recipe_compatibility(recipe: dict[str, Any], resource_report: dict[str, Any], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: dict[str, Any]) -> dict[str, Any]:
+    """Pure fail-closed CIV-V-E compatibility preflight; incompatible is structured data, not a build."""
+    return _post("civitai_recipe_compatibility", "civitai-recipes/compatibility", {"recipe": recipe, "resource_report": resource_report, "model_family": model_family, "runtime_capabilities": runtime_capabilities}, "build only after compatible=true; incompatible results require audited evidence repair")
+
+
+@mcp.tool()
 def civitai_recipe_build(recipe: dict[str, Any], resource_report: dict[str, Any], model_family: str, input_bindings: dict[str, Any]) -> dict[str, Any]:
     """Compile a strict resolved SDXL/Illustrious recipe into a locked ComfyUI workflow."""
     return _post("civitai_recipe_build", "civitai-recipes/build", {"recipe": recipe, "resource_report": resource_report, "model_family": model_family, "input_bindings": input_bindings}, "submit the returned build artifact with runtime provenance")

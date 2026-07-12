@@ -61,22 +61,86 @@ class CivitaiRecipeResolveLocalRequest(_StrictModel):
     recipe: GenerationRecipe
 
 
+class ResolutionExpectedIdentityPayload(_StrictModel):
+    sha256: str | None = None
+
+
+class ResolutionActualIdentityPayload(_StrictModel):
+    actual_sha256: str | None = None
+
+
 class ResolutionEntryPayload(_StrictModel):
     index: int
     status: str
     matched_by: list[str] = Field(default_factory=list)
-    expected_identity: dict[str, Any] = Field(default_factory=dict)
-    actual_identity: dict[str, Any] | None = None
+    expected_identity: ResolutionExpectedIdentityPayload = Field(default_factory=ResolutionExpectedIdentityPayload)
+    actual_identity: ResolutionActualIdentityPayload | None = None
     local_path: str | None = None
-    diagnostics: dict[str, Any] = Field(default_factory=dict)
+    diagnostics: dict[str, JsonValue] = Field(default_factory=dict)
     hash_verified: bool = False
+
+
+class ResourceLockPayload(_StrictModel):
+    index: int
+    kind: str
+    sha256: str | None = None
+    local_path: str | None = None
+    model_family: str | None = None
 
 
 class ResourceResolutionReportPayload(_StrictModel):
     strict: bool
     ready: bool
     entries: list[ResolutionEntryPayload] = Field(default_factory=list)
-    resource_lock: list[dict[str, Any]] = Field(default_factory=list)
+    resource_lock: list[ResourceLockPayload] = Field(default_factory=list)
+
+
+class RuntimeCapabilitiesPayload(_StrictModel):
+    engine: str
+    engine_version: str
+    node_types: list[str]
+    sampler_names: list[str]
+    scheduler_names: list[str]
+    snapshot_sha256: str
+
+
+class CompatibilityDiagnosticPayload(_StrictModel):
+    canonical_field: str
+    code: str
+    message: str
+
+
+class CompatibilityLocalIdentityPayload(_StrictModel):
+    local_path: str | None = None
+
+
+class CompatibilityResourceDecisionPayload(_StrictModel):
+    recipe_index: int
+    kind: str
+    sha256: str | None = None
+    resolved_local_identity: CompatibilityLocalIdentityPayload
+    declared_model_family: Literal["sdxl", "illustrious", "unknown"]
+    required_node_types: list[str]
+    compatible: bool
+    diagnostics: list[CompatibilityDiagnosticPayload]
+
+
+class CivitaiRecipeCompatibilityResponse(_StrictModel):
+    status: Literal["compatible", "incompatible"]
+    compatible: bool
+    requested_model_family: Literal["sdxl", "illustrious"]
+    compiler_contract: str
+    runtime_snapshot_sha256: str | None = None
+    resources: list[CompatibilityResourceDecisionPayload]
+    diagnostics: list[CompatibilityDiagnosticPayload]
+
+
+class CivitaiRecipeCompatibilityRequest(_StrictModel):
+    """Frozen CIV-V-E preflight input; deliberately excludes build/queue/path controls."""
+    recipe: GenerationRecipe
+    resource_report: ResourceResolutionReportPayload
+    model_family: Literal["sdxl", "illustrious"]
+    runtime_capabilities: RuntimeCapabilitiesPayload
 
 
 class CivitaiRecipeBuildRequest(_StrictModel):
