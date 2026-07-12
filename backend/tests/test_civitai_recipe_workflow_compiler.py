@@ -121,6 +121,24 @@ def test_base_graph_is_a_serializable_checkpoint_conditioning_sample_decode_save
     assert expected_sampling_bindings <= actual_sampling_bindings
 
 
+def test_checkpoint_loader_uses_strict_lock_filename_not_recipe_display_name() -> None:
+    recipe = _recipe()
+    recipe.resources[0].name = "Mutable Display Name"
+    report = _report(recipe)
+    report.resource_lock[0]["local_path"] = "/models/checkpoints/verified-local-file.safetensors"
+    report.entries[0].local_path = report.resource_lock[0]["local_path"]
+
+    result = compile_generation_recipe_workflow(
+        recipe, report, model_family="illustrious", input_bindings={}
+    )
+
+    checkpoint = next(
+        node for node in result.workflow.values()
+        if node["class_type"] == "CheckpointLoaderSimple"
+    )
+    assert checkpoint["inputs"]["ckpt_name"] == "verified-local-file.safetensors"
+
+
 def test_compilation_is_deterministic_and_does_not_mutate_inputs() -> None:
     recipe = _recipe(extras=True)
     report = _report(recipe)

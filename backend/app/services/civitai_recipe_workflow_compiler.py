@@ -7,6 +7,7 @@ hash-verified ``ResourceResolutionReport`` lock.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import PurePath
 from typing import Any, Mapping, NoReturn, cast
 
 from app.schemas.generation_recipe import GenerationRecipe, ResourceKind, ResourceReference
@@ -219,8 +220,9 @@ def compile_generation_recipe_workflow(
 
     graph = _Graph()
     checkpoint_index = checkpoint_indexes[0]
-    checkpoint = recipe.resources[checkpoint_index]
-    checkpoint_node = graph.node("CheckpointLoaderSimple", {"ckpt_name": checkpoint.name})
+    checkpoint_lock_path = cast(str, locks[checkpoint_index]["local_path"])
+    checkpoint_filename = PurePath(checkpoint_lock_path).name
+    checkpoint_node = graph.node("CheckpointLoaderSimple", {"ckpt_name": checkpoint_filename})
     graph.binding(f"resources[{checkpoint_index}]", checkpoint_node, "ckpt_name", checkpoint_index)
     model_link: list[Any] = [checkpoint_node, 0]
     clip_link: list[Any] = [checkpoint_node, 1]
