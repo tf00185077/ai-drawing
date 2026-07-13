@@ -144,6 +144,13 @@ class CivitaiSourceAliasRepointRequest(_StrictModel):
     expected_registry_version: Annotated[int, Field(strict=True, ge=1)]
     replacement: CivitaiSourceAliasRepointTarget
 
+    @field_validator("current_primary_alias")
+    @classmethod
+    def require_nonblank_primary_alias(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("current_primary_alias must not be blank")
+        return value
+
 
 class CivitaiSourceAliasView(_StrictModel):
     original_alias: str
@@ -184,6 +191,10 @@ class CivitaiSourceAliasRepointResult(_StrictModel):
     from_record: CivitaiSourceAliasRegistryView | None = None
     to_record: CivitaiSourceAliasRegistryView | None = None
     event: CivitaiSourceAliasRepointTransitionEventView | None = None
+
+
+class CivitaiSourceAliasRepointResponse(CivitaiSourceAliasRepointResult):
+    """CIV-SA-O typed HTTP representation of one audited repoint transition."""
 
 
 class CivitaiSourceAliasDomainResult(_StrictModel):
