@@ -797,10 +797,81 @@ if _variant_tool_manager is not None:
 
 
 @ mcp.tool()
-def civitai_recipe_variation_set_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, children: Annotated[list[CivitaiVariationSetChild], Field(min_length=1, max_length=8)], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
-    """Create one durable ordered set of independently immutable Child submissions."""
-    _validate_variation_set_children(children)
-    return _post("civitai_recipe_variation_set_generate", "civitai-recipes/variation-sets", {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256, "children": [_variation_set_child_payload(child) for child in children], "model_family": model_family, "runtime_capabilities": _resource_payload(runtime_capabilities), "runtime_provenance": _resource_payload(runtime_provenance), "input_bindings": {key: _resource_payload(value) for key, value in input_bindings.items()}}, "use civitai_recipe_variation_set_status with the returned variation_set_id")
+def civitai_recipe_variation_set_generate(
+    children: Annotated[list[CivitaiVariationSetChild], Field(min_length=1, max_length=8)],
+    model_family: Literal["sdxl", "illustrious"],
+    runtime_capabilities: CivitaiVariantRuntimeCapabilities,
+    runtime_provenance: CivitaiVariantRuntimeProvenance,
+    input_bindings: dict[str, CivitaiVariantInputBinding],
+    parent_recipe: CivitaiVariantParentRecipe | None = None,
+    parent_recipe_sha256: Annotated[str | None, Field(strict=True, pattern=r"^[0-9a-fA-F]{64}$")] = None,
+    source_alias: CivitaiVariantSourceAliasSelector | None = None,
+) -> dict[str, Any]:
+    """Create one durable ordered set from one direct Parent or opaque source-alias selector."""
+    has_parent_recipe = parent_recipe is not None
+    has_parent_sha256 = parent_recipe_sha256 is not None
+    has_source_alias = source_alias is not None
+    if has_parent_recipe != has_parent_sha256 or has_source_alias == (has_parent_recipe and has_parent_sha256):
+        return _error(
+            "civitai_recipe_variation_set_generate", "invalid_parent_source",
+            "provide exactly one complete parent source: direct parent_recipe plus parent_recipe_sha256, or source_alias",
+            {"where": "mcp_input"},
+        )
+    try:
+        typed_children = [CivitaiVariationSetChild.model_validate(child) for child in children]
+        _validate_variation_set_children(typed_children)
+    except Exception as exc:
+        return _error("civitai_recipe_variation_set_generate", "invalid_children", str(exc), {"where": "mcp_input"})
+    body: dict[str, Any] = {
+        "children": [_variation_set_child_payload(child) for child in typed_children],
+        "model_family": model_family,
+        "runtime_capabilities": _resource_payload(runtime_capabilities),
+        "runtime_provenance": _resource_payload(runtime_provenance),
+        "input_bindings": {key: _resource_payload(value) for key, value in input_bindings.items()},
+    }
+    if has_source_alias:
+        try:
+            selector = CivitaiVariantSourceAliasSelector.model_validate(source_alias)
+        except Exception as exc:
+            return _error("civitai_recipe_variation_set_generate", "invalid_source_alias", str(exc), {"where": "mcp_input"})
+        body["source_alias"] = selector.model_dump(exclude_none=True)
+    else:
+        body["parent_recipe"] = _resource_payload(parent_recipe)
+        body["parent_recipe_sha256"] = parent_recipe_sha256
+    return _post(
+        "civitai_recipe_variation_set_generate", "civitai-recipes/variation-sets", body,
+        "use civitai_recipe_variation_set_status with the returned variation_set_id",
+    )
+
+
+# FastMCP's generated function-argument base otherwise permits extra keys and
+# cannot express the parent-source XOR. Keep the public tool typed while making
+# both the formal boundary and direct wrapper fail closed before transport.
+_variation_set_tool_manager = getattr(mcp, "_tool_manager", None)
+if _variation_set_tool_manager is not None:
+    _variation_set_tool = _variation_set_tool_manager._tools["civitai_recipe_variation_set_generate"]
+
+    class _VariationSetArguments(_variation_set_tool.fn_metadata.arg_model):
+        model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+        @model_validator(mode="after")
+        def require_exactly_one_parent_source(self) -> "_VariationSetArguments":
+            has_parent_recipe = self.parent_recipe is not None
+            has_parent_sha256 = self.parent_recipe_sha256 is not None
+            has_source_alias = self.source_alias is not None
+            if has_parent_recipe != has_parent_sha256 or has_source_alias == (has_parent_recipe and has_parent_sha256):
+                raise ValueError("provide exactly one complete parent source")
+            return self
+
+    _variation_set_tool.fn_metadata.arg_model = _VariationSetArguments
+    _variation_set_schema = _VariationSetArguments.model_json_schema()
+    _variation_set_schema["additionalProperties"] = False
+    _variation_set_schema["required"] = ["children", "model_family", "runtime_capabilities", "runtime_provenance", "input_bindings"]
+    _variation_set_schema["oneOf"] = [
+        {"required": ["parent_recipe", "parent_recipe_sha256"], "not": {"required": ["source_alias"]}},
+        {"required": ["source_alias"], "not": {"anyOf": [{"required": ["parent_recipe"]}, {"required": ["parent_recipe_sha256"]}]}},
+    ]
+    _variation_set_tool.parameters = _variation_set_schema
 
 
 @ mcp.tool()
