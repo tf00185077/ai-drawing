@@ -165,7 +165,7 @@ class CivitaiResourceSelectedDescriptor(_StrictResourceModel):
 
 
 _SECRET_KEY_NAMES = frozenset({
-    "authorization", "api_key", "apikey", "access_token", "token", "secret", "password", "cookie",
+    "authorization", "api_key", "apikey", "access_token", "token", "secret", "password", "cookie", "signature", "sig",
 })
 _SECRET_QUERY_VALUE = re.compile(
     r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password|cookie|signature|sig|policy|expires|x-amz-[^=&#\s]+)=)[^&#\s]*",
@@ -308,6 +308,36 @@ def civitai_source_alias_resolve_explicit_version(
         {"alias": alias, "registry_version": registry_version},
         "use the caller-selected immutable audited registry binding as-is; do not search, build, queue, or generate",
     )
+
+
+@mcp.tool()
+def civitai_source_alias_backfill_gallery(
+    gallery_image_id: Annotated[int, Field(strict=True, ge=1)],
+    primary_alias: Annotated[str | None, Field(strict=True, min_length=1, max_length=512, pattern=r".*\S.*")] = None,
+) -> dict[str, Any]:
+    """Backfill one eligible Gallery source into the backend-owned audited alias registry once."""
+    return _post(
+        "civitai_source_alias_backfill_gallery",
+        "civitai-recipes/source-aliases/backfill-gallery",
+        {"gallery_image_id": gallery_image_id, "primary_alias": primary_alias},
+        "only named results may be exact resolve targets separately selected by the caller; pending_name is only a candidate and must not be remembered, resolved, built, or queued",
+    )
+
+
+# FastMCP's generated function-argument base otherwise ignores extra keys. This
+# facade must reject them at the formal MCP boundary before any transport call.
+_backfill_tool_manager = getattr(mcp, "_tool_manager", None)
+if _backfill_tool_manager is not None:
+    _backfill_gallery_tool = _backfill_tool_manager._tools["civitai_source_alias_backfill_gallery"]
+
+    class _GalleryBackfillArguments(_backfill_gallery_tool.fn_metadata.arg_model):
+        model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    _backfill_gallery_tool.fn_metadata.arg_model = _GalleryBackfillArguments
+    _backfill_gallery_schema = _GalleryBackfillArguments.model_json_schema()
+    _backfill_gallery_schema["additionalProperties"] = False
+    _backfill_gallery_schema["required"] = ["gallery_image_id"]
+    _backfill_gallery_tool.parameters = _backfill_gallery_schema
 
 
 # FastMCP's generated function-argument base otherwise ignores extra keys. This

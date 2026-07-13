@@ -4,15 +4,16 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 55 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 共 75 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
-> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後以本頁的 55 為準。
+> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
 > **Civitai recipe 匯入 bytes contract**：`civitai_recipe_import(embedded_image=...)` 對 MCP caller 保持 bytes 介面，但在 HTTP JSON 邊界一律轉為標準 base64 的 `embedded_image_base64`；backend 只接受嚴格 base64，解碼失敗會拒絕 request。這避免把 Python `bytes` 放進 `httpx json=`，而 metadata 合併仍完全委派 CIV-B。
 > `civitai_recipe_import` 可選 `remember_alias` 會原樣隨同一次 import POST 交給 backend；以 `civitai_source_alias_resolve(alias=...)` 精確取得既有、不可變且可稽核的來源綁定。MCP 不正規化、建議或持久化 alias。
 > `civitai_source_alias_resolve_explicit_version(alias, registry_version)` 只以一次 POST 解析 caller 明確指定的目前或歷史 immutable audited binding；MCP 不正規化、選版、搜尋、重建 evidence，且不自動 build/queue。
+> `civitai_source_alias_backfill_gallery(gallery_image_id, primary_alias=None)` 只以一次 POST 將 eligible Gallery 來源委派給 backend backfill；`pending_name` 只回候選，不自動 remember、resolve、build 或 queue。
 > `civitai_source_alias_list(limit=50, offset=0)` 僅以一次 GET 列出 backend 稽核記錄；`civitai_source_alias_search(query, limit=50, offset=0)` 僅以一次 POST 回傳 backend 排名 candidates。兩者不在 MCP 端搜尋、計分、選定或 exact resolve。
 > `civitai_source_alias_rename(current_primary_alias, new_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；改名的稽核 lifecycle evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫或重建它。
 > `civitai_source_alias_archive(current_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；terminal audited archive evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫、重建、unarchive 或改綁它。
@@ -39,6 +40,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
 | `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
+| `civitai_source_alias_backfill_gallery` | `dict` | POST /api/civitai-recipes/source-aliases/backfill-gallery |
 | `civitai_source_alias_resolve_explicit_version` | `dict` | POST /api/civitai-recipes/source-aliases/resolve-explicit-version |
 | `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
 | `civitai_source_alias_archive` | `dict` | POST /api/civitai-recipes/source-aliases/archive |
