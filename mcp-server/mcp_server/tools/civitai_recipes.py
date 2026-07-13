@@ -655,6 +655,13 @@ class CivitaiVariantRuntimeProvenance(_StrictResourceModel):
     resource_locks: list[CivitaiVariantRuntimeLock] = Field(default_factory=list)
 
 
+class CivitaiVariantSourceAliasSelector(_StrictResourceModel):
+    """Opaque backend-owned source-alias selector for a single Child variant."""
+
+    alias: str = Field(min_length=1, max_length=512, pattern=r".*\S.*")
+    registry_version: int | None = Field(default=None, ge=1)
+
+
 class CivitaiVariantParentRecipe(_StrictResourceModel):
     schema_version: Literal["1.0"]
     source: CivitaiVariantSource
@@ -696,9 +703,9 @@ class CivitaiVariationSetChild(_StrictResourceModel):
     directives: list[CivitaiVariantDirective]
 
 
-def _variant_directive_payload(directive: CivitaiVariantDirective) -> dict[str, Any]:
+def _variant_directive_payload(directive: CivitaiVariantDirective | dict[str, Any]) -> dict[str, Any]:
     """Preserve field absence across MCP JSON instead of inventing ``value: null``."""
-    return directive.model_dump(exclude_none=True)
+    return CivitaiVariantDirective.model_validate(directive).model_dump(exclude_none=True)
 
 
 def _variation_set_child_payload(child: CivitaiVariationSetChild) -> dict[str, Any]:
@@ -715,17 +722,78 @@ def _validate_variation_set_children(children: list[CivitaiVariationSetChild]) -
 
 
 @ mcp.tool()
-def civitai_recipe_variant_generate(parent_recipe: CivitaiVariantParentRecipe, parent_recipe_sha256: str, directives: list[CivitaiVariantDirective], model_family: Literal["sdxl", "illustrious"], runtime_capabilities: CivitaiVariantRuntimeCapabilities, runtime_provenance: CivitaiVariantRuntimeProvenance, input_bindings: dict[str, CivitaiVariantInputBinding]) -> dict[str, Any]:
+def civitai_recipe_variant_generate(
+    directives: list[CivitaiVariantDirective],
+    model_family: Literal["sdxl", "illustrious"],
+    runtime_capabilities: CivitaiVariantRuntimeCapabilities,
+    runtime_provenance: CivitaiVariantRuntimeProvenance,
+    input_bindings: dict[str, CivitaiVariantInputBinding],
+    parent_recipe: CivitaiVariantParentRecipe | None = None,
+    parent_recipe_sha256: Annotated[str | None, Field(strict=True, pattern=r"^[0-9a-fA-F]{64}$")] = None,
+    source_alias: CivitaiVariantSourceAliasSelector | None = None,
+) -> dict[str, Any]:
     """Derive, fresh-resolve, compatibility-check, build, validate, and queue exactly one immutable Child variant."""
+    has_parent_recipe = parent_recipe is not None
+    has_parent_sha256 = parent_recipe_sha256 is not None
+    has_source_alias = source_alias is not None
+    if has_parent_recipe != has_parent_sha256 or has_source_alias == (has_parent_recipe and has_parent_sha256):
+        return _error(
+            "civitai_recipe_variant_generate", "invalid_parent_source",
+            "provide exactly one complete parent source: direct parent_recipe plus parent_recipe_sha256, or source_alias",
+            {"where": "mcp_input"},
+        )
+    if directives is None or model_family is None or runtime_capabilities is None or runtime_provenance is None or input_bindings is None:
+        return _error("civitai_recipe_variant_generate", "invalid_generation_inputs", "all generation inputs are required", {"where": "mcp_input"})
+    body: dict[str, Any] = {
+        "directives": [_variant_directive_payload(item) for item in directives],
+        "model_family": model_family,
+        "runtime_capabilities": _resource_payload(runtime_capabilities),
+        "runtime_provenance": _resource_payload(runtime_provenance),
+        "input_bindings": {reference: _resource_payload(binding) for reference, binding in input_bindings.items()},
+    }
+    if has_source_alias:
+        try:
+            selector = CivitaiVariantSourceAliasSelector.model_validate(source_alias)
+        except Exception as exc:
+            return _error("civitai_recipe_variant_generate", "invalid_source_alias", str(exc), {"where": "mcp_input"})
+        body["source_alias"] = selector.model_dump(exclude_none=True)
+    else:
+        body["parent_recipe"] = _resource_payload(parent_recipe)
+        body["parent_recipe_sha256"] = parent_recipe_sha256
     return _post(
-        "civitai_recipe_variant_generate", "civitai-recipes/variants/generate-one",
-        {"parent_recipe": _resource_payload(parent_recipe), "parent_recipe_sha256": parent_recipe_sha256,
-         "directives": [_variant_directive_payload(item) for item in directives], "model_family": model_family,
-         "runtime_capabilities": _resource_payload(runtime_capabilities),
-         "runtime_provenance": _resource_payload(runtime_provenance),
-         "input_bindings": {reference: _resource_payload(binding) for reference, binding in input_bindings.items()}},
+        "civitai_recipe_variant_generate", "civitai-recipes/variants/generate-one", body,
         "call get_generation_status using the returned immutable child job_id",
     )
+
+
+# FastMCP's generated function-argument base otherwise permits extra keys and
+# cannot express the parent-source XOR. Keep the public tool typed while making
+# both the formal boundary and direct wrapper fail closed before transport.
+_variant_tool_manager = getattr(mcp, "_tool_manager", None)
+if _variant_tool_manager is not None:
+    _single_variant_tool = _variant_tool_manager._tools["civitai_recipe_variant_generate"]
+
+    class _SingleVariantArguments(_single_variant_tool.fn_metadata.arg_model):
+        model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+        @model_validator(mode="after")
+        def require_exactly_one_parent_source(self) -> "_SingleVariantArguments":
+            has_parent_recipe = self.parent_recipe is not None
+            has_parent_sha256 = self.parent_recipe_sha256 is not None
+            has_source_alias = self.source_alias is not None
+            if has_parent_recipe != has_parent_sha256 or has_source_alias == (has_parent_recipe and has_parent_sha256):
+                raise ValueError("provide exactly one complete parent source")
+            return self
+
+    _single_variant_tool.fn_metadata.arg_model = _SingleVariantArguments
+    _single_variant_schema = _SingleVariantArguments.model_json_schema()
+    _single_variant_schema["additionalProperties"] = False
+    _single_variant_schema["required"] = ["directives", "model_family", "runtime_capabilities", "runtime_provenance", "input_bindings"]
+    _single_variant_schema["oneOf"] = [
+        {"required": ["parent_recipe", "parent_recipe_sha256"], "not": {"required": ["source_alias"]}},
+        {"required": ["source_alias"], "not": {"anyOf": [{"required": ["parent_recipe"]}, {"required": ["parent_recipe_sha256"]}]}},
+    ]
+    _single_variant_tool.parameters = _single_variant_schema
 
 
 @ mcp.tool()
