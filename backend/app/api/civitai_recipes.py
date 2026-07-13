@@ -32,6 +32,11 @@ from app.schemas.civitai_source_aliases import (
     SourceAliasRegistrySearchRequest,
     SourceAliasRegistrySearchResponse,
 )
+from app.schemas.civitai_source_alias_backfill import (
+    CivitaiSourceAliasGalleryBackfillRequest,
+    CivitaiSourceAliasGalleryBackfillResult,
+)
+from app.services.civitai_source_alias_backfill import backfill_gallery_source_alias
 from app.services.civitai_source_alias_registry import (
     archive_source_alias,
     list_registry_sources,
@@ -218,6 +223,27 @@ class _SourceAliasRepointValidationRoute(APIRoute):
                 return JSONResponse(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     content={"detail": _detail("source_alias_repoint_invalid", "source alias repoint failed")},
+                )
+
+        return redacted_handler
+
+
+class _SourceAliasGalleryBackfillValidationRoute(APIRoute):
+    """Reject malformed Gallery-backfill requests without echoing untrusted input."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    content={"detail": _detail(
+                        "source_alias_gallery_backfill_invalid",
+                        "source alias Gallery backfill request invalid",
+                    )},
                 )
 
         return redacted_handler
@@ -473,6 +499,46 @@ def repoint_civitai_source_alias(
     else:
         status_code, code = status.HTTP_422_UNPROCESSABLE_ENTITY, result.code
     raise HTTPException(status_code=status_code, detail=_detail(code, "source alias repoint failed"))
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _SourceAliasGalleryBackfillValidationRoute
+
+
+@router.post(
+    "/source-aliases/backfill-gallery",
+    response_model=CivitaiSourceAliasGalleryBackfillResult,
+)
+def backfill_civitai_source_alias_gallery(
+    request: CivitaiSourceAliasGalleryBackfillRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiSourceAliasGalleryBackfillResult:
+    """Delegate one validated Gallery Parent request to the frozen audited core."""
+    result = backfill_gallery_source_alias(request, db=db)
+    if result.status in {"named", "pending_name", "already_backfilled"}:
+        return CivitaiSourceAliasGalleryBackfillResult.model_validate(result.model_dump(mode="python"))
+    if result.status == "ineligible":
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if result.code == "gallery_not_found"
+            else status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        code, message = result.code, "source alias Gallery backfill failed"
+    elif result.status == "conflict":
+        status_code, code, message = (
+            status.HTTP_409_CONFLICT,
+            result.code,
+            "source alias Gallery backfill failed",
+        )
+    else:
+        status_code, code, message = (
+            status.HTTP_409_CONFLICT,
+            "source_alias_gallery_backfill_corrupt",
+            "source alias Gallery backfill corrupt",
+        )
+    raise HTTPException(status_code=status_code, detail=_detail(code, message))
 
 
 router.route_class = _default_route_class
