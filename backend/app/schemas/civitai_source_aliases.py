@@ -6,7 +6,7 @@ import json
 import re
 from datetime import datetime
 from urllib.parse import urlparse
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
@@ -119,6 +119,33 @@ class CivitaiSourceAliasDomainResult(_StrictModel):
     code: str
     record: CivitaiSourceAliasRegistryView | None = None
     alias: CivitaiSourceAliasView | None = None
+
+
+class CivitaiSourceAliasRenameRequest(_StrictModel):
+    current_primary_alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    new_primary_alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    expected_registry_version: Annotated[int, Field(strict=True, ge=1)]
+
+
+class CivitaiSourceAliasHistoryEventView(_StrictModel):
+    id: int
+    registry_version: int
+    operation: Literal["rename"]
+    before_aliases: dict[str, Any]
+    after_aliases: dict[str, Any]
+    previous_event_sha256: str | None = None
+    event_sha256: str
+    created_at: datetime
+
+
+class CivitaiSourceAliasRenameResult(_StrictModel):
+    status: Literal["success", "rejected", "conflict", "missing", "corrupt"]
+    code: str
+    record: CivitaiSourceAliasRegistryView | None = None
+    new_primary: CivitaiSourceAliasView | None = None
+    preserved_old_alternate: CivitaiSourceAliasView | None = None
+    alternate_aliases: list[CivitaiSourceAliasView] = Field(default_factory=list)
+    event: CivitaiSourceAliasHistoryEventView | None = None
 
 
 class CivitaiSourceAliasResolveRequest(_StrictModel):

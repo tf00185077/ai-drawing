@@ -108,6 +108,29 @@ class CivitaiSourceAlias(Base):
     alias_kind = Column(String(16), nullable=False)
 
 
+class CivitaiSourceAliasHistory(Base):
+    """Append-only CIV-SA-H rename audit chain for one immutable registry target."""
+    __tablename__ = "civitai_source_alias_history"
+    __table_args__ = (
+        CheckConstraint("operation = 'rename'", name="ck_source_alias_history_operation"),
+        CheckConstraint("length(event_sha256) = 64", name="ck_source_alias_history_event_sha256_length"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    registry_version = Column(
+        Integer,
+        ForeignKey("civitai_source_alias_registry_records.registry_version"),
+        nullable=False,
+        index=True,
+    )
+    operation = Column(String(16), nullable=False)
+    before_aliases_json = Column(Text, nullable=False)
+    after_aliases_json = Column(Text, nullable=False)
+    previous_event_sha256 = Column(String(64), nullable=True)
+    event_sha256 = Column(String(64), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 class CivitaiVariationSet(Base):
     """CIV-V-G immutable variation-set identity; members/events are append-only."""
     __tablename__ = "civitai_variation_sets"
