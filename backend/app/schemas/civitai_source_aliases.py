@@ -260,6 +260,20 @@ class CivitaiSourceAliasResolveRequest(_StrictModel):
     alias: str = Field(max_length=512)
 
 
+class CivitaiSourceAliasExplicitVersionResolveRequest(_StrictModel):
+    """CIV-SA-Q internal explicit immutable registry-version selection intent."""
+
+    alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    registry_version: Annotated[int, Field(strict=True, ge=1)]
+
+    @field_validator("alias")
+    @classmethod
+    def require_nonblank_alias(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("alias must not be blank")
+        return value
+
+
 class CivitaiSourceAliasResolveResponse(CivitaiSourceAliasRegistryView):
     """The audited registry binding plus the persisted alias that matched it."""
 

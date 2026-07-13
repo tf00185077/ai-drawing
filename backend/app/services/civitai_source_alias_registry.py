@@ -23,6 +23,7 @@ from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasRenameResult,
     CivitaiSourceAliasArchiveRequest,
     CivitaiSourceAliasArchiveResult,
+    CivitaiSourceAliasExplicitVersionResolveRequest,
     CivitaiSourceAliasRepointRequest,
     CivitaiSourceAliasRepointResult,
     CivitaiSourceAliasRepointTransitionEventView,
@@ -216,6 +217,83 @@ def exact_resolve(alias: str, *, db: Any) -> CivitaiSourceAliasDomainResult:
     if records[0].archived_at is not None:
         return _result("archived", "target_archived")
     return _result("success", "resolved", record=view, alias=CivitaiSourceAliasView(original_alias=alias_row.original_alias, normalized_key=key, kind=alias_row.alias_kind))
+
+
+def validate_explicit_version_resolve_request(value: Any) -> CivitaiSourceAliasExplicitVersionResolveRequest | None:
+    """Strict internal boundary: callers select only an alias and immutable registry version."""
+    try:
+        raw = value.model_dump() if isinstance(value, CivitaiSourceAliasExplicitVersionResolveRequest) else value
+        request = CivitaiSourceAliasExplicitVersionResolveRequest.model_validate(raw, strict=True)
+        normalize_alias(request.alias)
+        return request
+    except (ValidationError, TypeError, ValueError):
+        return None
+
+
+def resolve_source_alias_exact_version(value: Any, *, db: Any) -> CivitaiSourceAliasDomainResult:
+    """Resolve one alias solely within the audited immutable snapshot of its requested version."""
+    request = validate_explicit_version_resolve_request(value)
+    if request is None:
+        return _result("rejected", "invalid_request")
+    try:
+        key = normalize_alias(request.alias)
+    except (TypeError, ValueError):
+        return _result("rejected", "invalid_request")
+    # Read queries must not trigger SQLAlchemy's write-oriented autoflush path.
+    with db.no_autoflush:
+        return _resolve_source_alias_exact_version(request=request, key=key, db=db)
+
+
+def _resolve_source_alias_exact_version(*, request: CivitaiSourceAliasExplicitVersionResolveRequest, key: str, db: Any) -> CivitaiSourceAliasDomainResult:
+    """Validated read-only explicit-version selection implementation."""
+    # This verifier validates all records, local histories, transition hashes, links,
+    # snapshots, and the complete graph before selecting any one target.
+    chain_error = verify_source_alias_repoint_chain(db=db)
+    if chain_error is not None:
+        return _result("corrupt", chain_error)
+
+    record_rows = db.query(CivitaiSourceAliasRegistryRecord).filter_by(
+        registry_version=request.registry_version,
+    ).all()
+    if not record_rows:
+        return _result("missing", "registry_version_not_found")
+    if len(record_rows) != 1:
+        return _result("corrupt", "record_non_unique_or_missing")
+    record = record_rows[0]
+    record_view, record_error = _record_view(record)
+    if record_view is None:
+        return _result("corrupt", record_error or "record_invalid")
+    if record.archived_at is not None:
+        return _result("archived", "target_archived")
+
+    outgoing = db.query(CivitaiSourceAliasRepointTransition).filter_by(
+        from_registry_version=request.registry_version,
+    ).all()
+    if len(outgoing) > 1:
+        return _result("corrupt", "repoint_invalid")
+    if outgoing:
+        try:
+            snapshot = _canonical_alias_snapshot(json.loads(outgoing[0].aliases_json))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            snapshot = None
+    else:
+        snapshot = _alias_snapshot(db.query(CivitaiSourceAlias).filter_by(
+            registry_version=request.registry_version,
+        ).all())
+    if snapshot is None:
+        return _result("corrupt", "repoint_invalid")
+
+    entries = [(snapshot["primary"], "primary"), *((entry, "alternate") for entry in snapshot["alternates"])]
+    matches = [(entry, kind) for entry, kind in entries if entry["normalized_key"] == key]
+    if len(matches) != 1:
+        return _result("missing", "alias_not_bound_to_registry_version")
+    entry, kind = matches[0]
+    return _result(
+        "success",
+        "resolved_explicit_version",
+        record=record_view,
+        alias=CivitaiSourceAliasView(original_alias=entry["original_alias"], normalized_key=entry["normalized_key"], kind=kind),
+    )
 
 
 # Explicit stage-local names; the concise aliases remain convenient for internal callers/tests.
