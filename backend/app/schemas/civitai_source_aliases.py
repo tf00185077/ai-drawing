@@ -94,6 +94,57 @@ class CivitaiSourceAliasRememberRequest(_StrictModel):
         return self
 
 
+class CivitaiSourceAliasRepointTarget(_StrictModel):
+    """Caller-supplied immutable replacement content only; lifecycle evidence is backend-owned."""
+    source_identity: CivitaiSourceAliasImmutableIdentity
+    acquisition_evidence_snapshot: dict[str, Any]
+    acquisition_evidence_sha256: Annotated[str, Field(strict=True, pattern=r"^[0-9a-fA-F]{64}$")]
+    parent_recipe_sha256: Annotated[str, Field(strict=True, pattern=r"^[0-9a-fA-F]{64}$")]
+    thumbnail_url: HttpUrl | None = None
+    thumbnail_path: str | None = Field(default=None, max_length=1024)
+    user_note: str | None = Field(default=None, max_length=4096)
+    approved_tags: list[str] = Field(default_factory=list, max_length=64)
+    prompt_summary: str | None = Field(default=None, max_length=4096)
+
+    @field_validator("acquisition_evidence_sha256", "parent_recipe_sha256")
+    @classmethod
+    def normalize_sha256(cls, value: str) -> str:
+        value = value.lower()
+        if _SHA256.fullmatch(value) is None:
+            raise ValueError("must be a 64-character hexadecimal SHA-256")
+        return value
+
+    @field_validator("thumbnail_path", "user_note", "prompt_summary")
+    @classmethod
+    def strip_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("optional text must not be blank when supplied")
+        return value
+
+    @field_validator("approved_tags")
+    @classmethod
+    def validate_tags(cls, value: list[str]) -> list[str]:
+        normalized = [item.strip() for item in value]
+        if any(not item for item in normalized) or len(normalized) != len(set(normalized)):
+            raise ValueError("approved_tags must be nonblank and unique")
+        return normalized
+
+    @model_validator(mode="after")
+    def evidence_hash_must_match_snapshot(self) -> "CivitaiSourceAliasRepointTarget":
+        if canonical_sha256(self.acquisition_evidence_snapshot) != self.acquisition_evidence_sha256:
+            raise ValueError("acquisition_evidence_sha256 does not match canonical snapshot")
+        return self
+
+
+class CivitaiSourceAliasRepointRequest(_StrictModel):
+    current_primary_alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    expected_registry_version: Annotated[int, Field(strict=True, ge=1)]
+    replacement: CivitaiSourceAliasRepointTarget
+
+
 class CivitaiSourceAliasView(_StrictModel):
     original_alias: str
     normalized_key: str
@@ -114,8 +165,29 @@ class CivitaiSourceAliasRegistryView(_StrictModel):
     created_at: datetime
 
 
+class CivitaiSourceAliasRepointTransitionEventView(_StrictModel):
+    id: int
+    from_registry_version: int
+    to_registry_version: int
+    aliases: dict[str, Any]
+    from_record_sha256: str
+    to_record_sha256: str
+    source_history_tail_sha256: str | None = None
+    previous_repoint_event_sha256: str | None = None
+    event_sha256: str
+    created_at: datetime
+
+
+class CivitaiSourceAliasRepointResult(_StrictModel):
+    status: Literal["success", "rejected", "conflict", "missing", "corrupt"]
+    code: str
+    from_record: CivitaiSourceAliasRegistryView | None = None
+    to_record: CivitaiSourceAliasRegistryView | None = None
+    event: CivitaiSourceAliasRepointTransitionEventView | None = None
+
+
 class CivitaiSourceAliasDomainResult(_StrictModel):
-    status: Literal["success", "rejected", "conflict", "missing", "corrupt", "archived"]
+    status: Literal["success", "rejected", "conflict", "missing", "corrupt", "archived", "repointed"]
     code: str
     record: CivitaiSourceAliasRegistryView | None = None
     alias: CivitaiSourceAliasView | None = None
