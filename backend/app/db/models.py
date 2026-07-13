@@ -71,6 +71,26 @@ class GeneratedArtifact(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CivitaiSourceAliasBackfillCandidate(Base):
+    """CIV-SA-Y durable Gallery-only pending-name candidate; it never reserves aliases."""
+    __tablename__ = "civitai_source_alias_backfill_candidates"
+    __table_args__ = (
+        UniqueConstraint("gallery_image_id", name="uq_source_alias_backfill_gallery_image_id"),
+        CheckConstraint("length(acquisition_evidence_sha256) = 64", name="ck_source_alias_backfill_evidence_sha256_length"),
+        CheckConstraint("length(parent_recipe_sha256) = 64", name="ck_source_alias_backfill_parent_recipe_sha256_length"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    gallery_image_id = Column(Integer, ForeignKey("generated_images.id"), nullable=False, unique=True, index=True)
+    source_identity_json = Column(Text, nullable=False)
+    acquisition_evidence_json = Column(Text, nullable=False)
+    acquisition_evidence_sha256 = Column(String(64), nullable=False)
+    parent_recipe_sha256 = Column(String(64), nullable=False)
+    thumbnail_path = Column(String(1024), nullable=True)
+    suggested_alias = Column(String(512), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 class CivitaiSourceAliasRegistryRecord(Base):
     """CIV-SA-A immutable audited source binding; its primary key is the registry version."""
     __tablename__ = "civitai_source_alias_registry_records"
