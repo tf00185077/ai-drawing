@@ -150,11 +150,12 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 50 個 server-side registered tool。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 51 個 server-side registered tool。
 >
 > `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
 >
 > `civitai_recipe_import` 的 optional `embedded_image` 在 MCP 端會以標準 base64 JSON 欄位 `embedded_image_base64` 傳給 backend；backend 嚴格驗證／解碼，不能傳 raw Python bytes 到 HTTP JSON body。
+> `civitai_recipe_import` 的 optional `remember_alias` 會原樣併入同一次 import POST；`civitai_source_alias_resolve(alias=...)` 只做 exact resolve，原樣回傳 backend 的 immutable audited binding，不在 MCP 正規化、搜尋或寫入 alias。
 
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
@@ -174,6 +175,7 @@ pip install -e .
 | `civitai_resource_select` | `dict` | POST /api/civitai-recipes/resource-select |
 | `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
+| `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
 | `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
 | `civitai_recipe_compatibility` | `dict` | POST /api/civitai-recipes/compatibility |

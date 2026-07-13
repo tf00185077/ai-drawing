@@ -178,7 +178,7 @@ def civitai_resource_install(selected: CivitaiResourceSelectedDescriptor, storag
 
 
 @mcp.tool()
-def civitai_recipe_import(locator: int | str, embedded_image: bytes | str | None = None) -> dict[str, Any]:
+def civitai_recipe_import(locator: int | str, embedded_image: bytes | str | None = None, remember_alias: str | None = None) -> dict[str, Any]:
     """Acquire a Civitai locator into raw acquisition evidence, GenerationRecipe 1.0, and reproduction diagnostics."""
     body: dict[str, Any] = {"locator": locator}
     if embedded_image is not None:
@@ -194,7 +194,20 @@ def civitai_recipe_import(locator: int | str, embedded_image: bytes | str | None
         else:
             image_bytes = embedded_image
         body["embedded_image_base64"] = base64.b64encode(image_bytes).decode("ascii")
+    if remember_alias is not None:
+        body["remember_alias"] = remember_alias
     return _post("civitai_recipe_import", "civitai-recipes/import", body, "inspect the recipe, then resolve its local resources")
+
+
+@mcp.tool()
+def civitai_source_alias_resolve(alias: str) -> dict[str, Any]:
+    """Resolve one remembered source alias into its immutable audited binding."""
+    return _post(
+        "civitai_source_alias_resolve",
+        "civitai-recipes/source-aliases/resolve",
+        {"alias": alias},
+        "use the immutable audited source binding as-is; do not search or rebuild it",
+    )
 
 
 @mcp.tool()
