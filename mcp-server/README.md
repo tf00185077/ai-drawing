@@ -4,11 +4,12 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 50 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 共 51 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
 > **Civitai recipe 匯入 bytes contract**：`civitai_recipe_import(embedded_image=...)` 對 MCP caller 保持 bytes 介面，但在 HTTP JSON 邊界一律轉為標準 base64 的 `embedded_image_base64`；backend 只接受嚴格 base64，解碼失敗會拒絕 request。這避免把 Python `bytes` 放進 `httpx json=`，而 metadata 合併仍完全委派 CIV-B。
+> `civitai_recipe_import` 可選 `remember_alias` 會原樣隨同一次 import POST 交給 backend；以 `civitai_source_alias_resolve(alias=...)` 精確取得既有、不可變且可稽核的來源綁定。MCP 不正規化、建議或持久化 alias。
 >
 > **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)` 或取出影片模板後走 `generate_video_custom_workflow`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 或 `generate_video_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
 
@@ -30,6 +31,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `civitai_resource_select` | `dict` | POST /api/civitai-recipes/resource-select |
 | `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
+| `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
 | `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
 | `civitai_recipe_compatibility` | `dict` | POST /api/civitai-recipes/compatibility |

@@ -48,6 +48,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("civitai_resource_select", "mcp_server.tools.civitai_recipes", "civitai_resource_select", "dict", ("POST /api/civitai-recipes/resource-select",)),
     ToolCatalogEntry("civitai_resource_install", "mcp_server.tools.civitai_recipes", "civitai_resource_install", "dict", ("POST /api/civitai-recipes/resource-install",)),
     ToolCatalogEntry("civitai_recipe_import", "mcp_server.tools.civitai_recipes", "civitai_recipe_import", "dict", ("POST /api/civitai-recipes/import",)),
+    ToolCatalogEntry("civitai_source_alias_resolve", "mcp_server.tools.civitai_recipes", "civitai_source_alias_resolve", "dict", ("POST /api/civitai-recipes/source-aliases/resolve",)),
     ToolCatalogEntry("civitai_recipe_inspect", "mcp_server.tools.civitai_recipes", "civitai_recipe_inspect", "dict", ("POST /api/civitai-recipes/inspect",)),
     ToolCatalogEntry("civitai_recipe_resolve", "mcp_server.tools.civitai_recipes", "civitai_recipe_resolve", "dict", ("POST /api/civitai-recipes/resolve",)),
     # CIV-V-C freezes documentation outside this executor scope; catalog still owns registration.
