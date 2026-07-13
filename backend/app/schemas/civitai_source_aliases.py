@@ -119,3 +119,15 @@ class CivitaiSourceAliasDomainResult(_StrictModel):
     code: str
     record: CivitaiSourceAliasRegistryView | None = None
     alias: CivitaiSourceAliasView | None = None
+
+
+class CivitaiSourceAliasResolveRequest(_StrictModel):
+    """One unmodified human alias input for the committed exact resolver."""
+
+    alias: str = Field(max_length=512)
+
+
+class CivitaiSourceAliasResolveResponse(CivitaiSourceAliasRegistryView):
+    """The audited registry binding plus the persisted alias that matched it."""
+
+    matched_alias: CivitaiSourceAliasView

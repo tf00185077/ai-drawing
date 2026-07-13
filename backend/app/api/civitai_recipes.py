@@ -18,6 +18,8 @@ from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequ
 from app.schemas.civitai_recipe_variation_sets import CivitaiRecipeVariationSetCreateRequest
 from app.services.civitai_recipe_variation_sets import VariationSetError, cancel_variation_set, create_variation_set, export_variation_set, get_variation_set
 from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
+from app.schemas.civitai_source_aliases import CivitaiSourceAliasResolveRequest, CivitaiSourceAliasResolveResponse
+from app.services.civitai_source_alias_registry import resolve_source_alias_exact
 from app.schemas.civitai_recipes import (
     CivitaiRecipeCompatibilityRequest,
     CivitaiRecipeCompatibilityResponse,
@@ -49,6 +51,7 @@ from app.services.civitai_recipe_workflow_compiler import RecipeCompileError
 from app.services.civitai_resource_resolution import LocalResourceLedgerEntry
 
 router = APIRouter(prefix="/api/civitai-recipes", tags=["civitai-recipes"])
+_default_route_class = router.route_class
 
 
 def _detail(code: str, message: str, **extra: Any) -> dict[str, Any]:
@@ -84,6 +87,24 @@ class _CompatibilityValidationRoute(APIRoute):
                 return await handler(request)
             except RequestValidationError as exc:
                 return JSONResponse(status_code=422, content={"detail": _compatibility_safe(exc.errors())})
+
+        return redacted_handler
+
+
+class _SourceAliasResolveValidationRoute(APIRoute):
+    """Reject malformed resolve requests without exposing validation internals."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"detail": _detail("invalid_alias", "source alias resolution failed")},
+                )
 
         return redacted_handler
 
@@ -155,6 +176,35 @@ def install_civitai_resource_route(request: CivitaiResourceInstallRequest, db: S
     if result["status"] != "completed":
         raise HTTPException(status_code=409 if result["status"] == "blocked" else 500, detail=_detail(result.get("diagnostic", {}).get("code", "resource_install_failed"), "resource installation did not complete", diagnostic=result.get("diagnostic", {})))
     return redact_secrets(result)
+
+
+router.route_class = _SourceAliasResolveValidationRoute
+
+
+@router.post("/source-aliases/resolve", response_model=CivitaiSourceAliasResolveResponse)
+def resolve_civitai_source_alias(
+    request: CivitaiSourceAliasResolveRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiSourceAliasResolveResponse:
+    """Read one committed source alias without altering its audited registry binding."""
+    result = resolve_source_alias_exact(request.alias, db=db)
+    if result.status == "success" and result.record is not None and result.alias is not None:
+        return CivitaiSourceAliasResolveResponse(
+            matched_alias=result.alias,
+            **result.record.model_dump(mode="python"),
+        )
+    if result.status == "missing":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=_detail(result.code, "source alias resolution failed"),
+        )
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=_detail("corrupt_registry", "source alias resolution failed"),
+    )
+
+
+router.route_class = _default_route_class
 
 
 @router.post("/import")
@@ -237,7 +287,6 @@ def resolve_local_civitai_recipe(
     return {**result, "snapshot": ledger_payload(snapshot)["snapshot"]}
 
 
-_default_route_class = router.route_class
 router.route_class = _CompatibilityValidationRoute
 
 
