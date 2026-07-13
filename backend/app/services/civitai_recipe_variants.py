@@ -289,17 +289,15 @@ def _fresh_execution_recipe(derived_recipe: Any, runtime: Any) -> Any:
     return type(derived_recipe).model_validate(payload)
 
 
-def generate_one_variant(
+def _generate_one_variant(
     request: CivitaiRecipeVariantGenerateRequest,
     *,
     db: Any,
     variant_id_factory: Callable[[], str] | None = None,
     job_id_factory: Callable[[], str] | None = None,
+    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None,
 ) -> CivitaiRecipeVariantGenerateResponse:
-    """Perform the frozen derive→resolve→compatibility→build→validate→queue sequence."""
-    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None
-    if request.source_alias is not None:
-        request, source_alias_binding = _materialize_alias_request(request, db=db)
+    """Execute a validated direct or backend-materialized Parent without acquiring aliases."""
     try:
         derivation = derive_generation_recipe(CivitaiRecipeDerivationRequest(
             parent_recipe=request.parent_recipe, parent_recipe_sha256=request.parent_recipe_sha256,
@@ -400,4 +398,56 @@ def generate_one_variant(
         derivation={"applied_directives": lineage["applied_directives"], "invalidated_evidence_sha256": lineage["invalidated_evidence_sha256"]},
         compatibility={"status": compatibility.get("status"), "snapshot_sha256": lineage["compatibility_snapshot_sha256"]},
         provenance_components=components,
+    )
+
+
+def generate_one_variant(
+    request: CivitaiRecipeVariantGenerateRequest,
+    *,
+    db: Any,
+    variant_id_factory: Callable[[], str] | None = None,
+    job_id_factory: Callable[[], str] | None = None,
+) -> CivitaiRecipeVariantGenerateResponse:
+    """Public single-child facade: it alone materializes a caller-selected alias."""
+    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None
+    if request.source_alias is not None:
+        request, source_alias_binding = _materialize_alias_request(request, db=db)
+    return _generate_one_variant(
+        request, db=db, variant_id_factory=variant_id_factory, job_id_factory=job_id_factory,
+        source_alias_binding=source_alias_binding,
+    )
+
+
+def generate_one_variant_from_materialized_parent(
+    request: CivitaiRecipeVariantGenerateRequest,
+    *,
+    parent_recipe: GenerationRecipe,
+    parent_recipe_sha256: str,
+    source_alias_binding: CivitaiSourceAliasLineageBinding,
+    db: Any,
+    variant_id_factory: Callable[[], str] | None = None,
+    job_id_factory: Callable[[], str] | None = None,
+) -> CivitaiRecipeVariantGenerateResponse:
+    """Internal-only child boundary for a variation set's already materialized Parent."""
+    try:
+        parent_payload = _recipe_payload(parent_recipe)
+        parent_sha = canonical_sha256(parent_payload)
+        binding = CivitaiSourceAliasLineageBinding.model_validate(source_alias_binding.model_dump(mode="json"))
+        if (
+            request.source_alias is None
+            or parent_sha != parent_recipe_sha256.lower()
+            or binding.parent_recipe_sha256 != parent_sha
+            or binding.source_identity.model_dump(mode="json", exclude_none=True) != _source_identity(parent_recipe)
+        ):
+            raise ValueError("trusted parent mismatch")
+        effective = request.model_copy(update={
+            "parent_recipe": parent_recipe,
+            "parent_recipe_sha256": parent_sha,
+            "source_alias": None,
+        })
+    except (AttributeError, TypeError, ValueError, ValidationError):
+        raise VariantFacadeError("source_alias_materialization", "materialization_invalid") from None
+    return _generate_one_variant(
+        effective, db=db, variant_id_factory=variant_id_factory, job_id_factory=job_id_factory,
+        source_alias_binding=binding,
     )
