@@ -150,15 +150,16 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 55 個 server-side registered tool。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 75 個 server-side registered tool。
 >
-> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後以本頁的 55 為準。
+> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
 > `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
 >
 > `civitai_recipe_import` 的 optional `embedded_image` 在 MCP 端會以標準 base64 JSON 欄位 `embedded_image_base64` 傳給 backend；backend 嚴格驗證／解碼，不能傳 raw Python bytes 到 HTTP JSON body。
 > `civitai_recipe_import` 的 optional `remember_alias` 會原樣併入同一次 import POST；`civitai_source_alias_resolve(alias=...)` 只做 exact resolve，原樣回傳 backend 的 immutable audited binding，不在 MCP 正規化、搜尋或寫入 alias。
 > `civitai_source_alias_resolve_explicit_version(alias, registry_version)` 只以一次 POST 解析 caller 明確指定的目前或歷史 immutable audited binding；MCP 不正規化、選版、搜尋、重建 evidence，且不自動 build/queue。
+> `civitai_source_alias_backfill_gallery(gallery_image_id, primary_alias=None)` 只以一次 POST 將 eligible Gallery 來源委派給 backend backfill；`pending_name` 只回候選，不自動 remember、resolve、build 或 queue。
 > `civitai_source_alias_list(limit=50, offset=0)` 僅以一次 GET 列出 backend 稽核記錄；`civitai_source_alias_search(query, limit=50, offset=0)` 僅以一次 POST 回傳 backend 排名 candidates。兩者不在 MCP 端搜尋、計分、選定或 exact resolve。
 > `civitai_source_alias_rename(current_primary_alias, new_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；改名的稽核 lifecycle evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫或重建它。
 > `civitai_source_alias_archive(current_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；terminal audited archive evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫、重建、unarchive 或改綁它。
@@ -183,6 +184,7 @@ pip install -e .
 | `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
 | `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
+| `civitai_source_alias_backfill_gallery` | `dict` | POST /api/civitai-recipes/source-aliases/backfill-gallery |
 | `civitai_source_alias_resolve_explicit_version` | `dict` | POST /api/civitai-recipes/source-aliases/resolve-explicit-version |
 | `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
 | `civitai_source_alias_archive` | `dict` | POST /api/civitai-recipes/source-aliases/archive |
