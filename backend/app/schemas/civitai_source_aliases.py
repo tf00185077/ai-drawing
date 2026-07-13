@@ -171,3 +171,19 @@ class CivitaiSourceAliasRegistrySearchResult(_StrictModel):
     limit: int = Field(default=50, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
     candidates: list[CivitaiSourceAliasSearchCandidate] = Field(default_factory=list)
+
+
+class SourceAliasRegistryListResponse(CivitaiSourceAliasRegistryListResult):
+    """CIV-SA-F typed HTTP representation of the audited CIV-SA-E list result."""
+
+
+class SourceAliasRegistrySearchRequest(_StrictModel):
+    """CIV-SA-F strict candidate-search request; no selection intent is accepted."""
+
+    query: str = Field(min_length=1, max_length=512)
+    limit: int = Field(default=50, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
+class SourceAliasRegistrySearchResponse(CivitaiSourceAliasRegistrySearchResult):
+    """CIV-SA-F typed HTTP representation of CIV-SA-E candidates only."""
