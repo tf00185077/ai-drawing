@@ -150,7 +150,9 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 53 個 server-side registered tool。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 54 個 server-side registered tool。
+>
+> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後以本頁的 54 為準。
 >
 > `dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串；`plain_text` 是 legacy human-readable helper。若 Cursor/Hermes 看不到下列工具，請完整重啟 MCP client 或重新載入 tool catalog。
 >
@@ -159,6 +161,7 @@ pip install -e .
 > `civitai_source_alias_list(limit=50, offset=0)` 僅以一次 GET 列出 backend 稽核記錄；`civitai_source_alias_search(query, limit=50, offset=0)` 僅以一次 POST 回傳 backend 排名 candidates。兩者不在 MCP 端搜尋、計分、選定或 exact resolve。
 > `civitai_source_alias_rename(current_primary_alias, new_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；改名的稽核 lifecycle evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫或重建它。
 > `civitai_source_alias_archive(current_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；terminal audited archive evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫、重建、unarchive 或改綁它。
+> `civitai_source_alias_repoint(current_primary_alias, expected_registry_version, replacement)` 只以一次 POST 轉送 typed immutable replacement；explicit repoint 的 audited transition evidence 由 backend 建立並原樣回傳。bare alias 後續使用仍必須提供 explicit registry version，MCP 不自動 resolve、build 或 queue。
 
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
@@ -181,6 +184,7 @@ pip install -e .
 | `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
 | `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
 | `civitai_source_alias_archive` | `dict` | POST /api/civitai-recipes/source-aliases/archive |
+| `civitai_source_alias_repoint` | `dict` | POST /api/civitai-recipes/source-aliases/repoint |
 | `civitai_source_alias_list` | `dict` | GET /api/civitai-recipes/source-aliases |
 | `civitai_source_alias_search` | `dict` | POST /api/civitai-recipes/source-aliases/search |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |

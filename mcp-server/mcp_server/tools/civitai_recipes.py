@@ -2,17 +2,103 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import json
 import re
 from typing import Annotated, Any, Literal
+from urllib.parse import urlparse
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, PositiveInt, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, PositiveInt, field_validator, model_validator
 
 from mcp_server.server import _get_client, mcp
 
 
 class _StrictResourceModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
+
+
+_SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
+
+
+def _canonical_sha256(value: JsonValue) -> str:
+    return hashlib.sha256(
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    ).hexdigest()
+
+
+class CivitaiSourceAliasRepointIdentity(_StrictResourceModel):
+    """Caller-controlled immutable Civitai identity; lifecycle fields are excluded."""
+
+    provider: Literal["civitai"]
+    url: str | None = None
+    image_id: PositiveInt | None = None
+    post_id: PositiveInt | None = None
+    model_id: PositiveInt | None = None
+    model_version_id: PositiveInt | None = None
+    media_url: str | None = None
+
+    @model_validator(mode="after")
+    def require_immutable_image_identity(self) -> "CivitaiSourceAliasRepointIdentity":
+        if self.image_id is not None:
+            return self
+        if self.media_url is None:
+            raise ValueError("source_identity requires image_id or a supported Civitai image CDN media_url")
+        parsed = urlparse(self.media_url)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname not in {"image.civitai.com", "images.civitai.com"}
+            or not parsed.path
+            or parsed.path == "/"
+        ):
+            raise ValueError("media_url must be a supported Civitai image CDN HTTPS identity")
+        return self
+
+
+class CivitaiSourceAliasRepointReplacement(_StrictResourceModel):
+    """Strict immutable replacement content forwarded once to backend-owned repoint lifecycle."""
+
+    source_identity: CivitaiSourceAliasRepointIdentity
+    acquisition_evidence_snapshot: dict[str, JsonValue]
+    acquisition_evidence_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    parent_recipe_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    thumbnail_url: HttpUrl | None = None
+    thumbnail_path: str | None = Field(default=None, max_length=1024)
+    user_note: str | None = Field(default=None, max_length=4096)
+    approved_tags: list[str] = Field(default_factory=list, max_length=64)
+    prompt_summary: str | None = Field(default=None, max_length=4096)
+
+    @field_validator("acquisition_evidence_sha256", "parent_recipe_sha256")
+    @classmethod
+    def normalize_sha256(cls, value: str) -> str:
+        value = value.lower()
+        if _SHA256.fullmatch(value) is None:
+            raise ValueError("must be a 64-character hexadecimal SHA-256")
+        return value
+
+    @field_validator("thumbnail_path", "user_note", "prompt_summary")
+    @classmethod
+    def require_nonblank_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("optional text must not be blank when supplied")
+        return value
+
+    @field_validator("approved_tags")
+    @classmethod
+    def require_unique_nonblank_tags(cls, value: list[str]) -> list[str]:
+        normalized = [item.strip() for item in value]
+        if any(not item for item in normalized) or len(normalized) != len(set(normalized)):
+            raise ValueError("approved_tags must be trimmed, nonblank, and unique")
+        return normalized
+
+    @model_validator(mode="after")
+    def require_matching_evidence_hash(self) -> "CivitaiSourceAliasRepointReplacement":
+        if _canonical_sha256(self.acquisition_evidence_snapshot) != self.acquisition_evidence_sha256:
+            raise ValueError("acquisition_evidence_sha256 does not match canonical JSON evidence snapshot")
+        return self
 
 
 ResourceKind = Literal["checkpoint", "lora", "vae", "embedding", "controlnet", "upscaler"]
@@ -243,6 +329,25 @@ def civitai_source_alias_archive(
             "expected_registry_version": expected_registry_version,
         },
         "use the returned terminal audited archive evidence as-is; do not unarchive, repoint, build, or queue",
+    )
+
+
+@mcp.tool()
+def civitai_source_alias_repoint(
+    current_primary_alias: Annotated[str, Field(min_length=1, max_length=512)],
+    expected_registry_version: Annotated[int, Field(ge=1)],
+    replacement: CivitaiSourceAliasRepointReplacement,
+) -> dict[str, Any]:
+    """Explicitly repoint one primary alias to typed immutable content through backend audit lifecycle."""
+    return _post(
+        "civitai_source_alias_repoint",
+        "civitai-recipes/source-aliases/repoint",
+        {
+            "current_primary_alias": current_primary_alias,
+            "expected_registry_version": expected_registry_version,
+            "replacement": CivitaiSourceAliasRepointReplacement.model_validate(replacement).model_dump(mode="json", exclude_unset=True),
+        },
+        "use the returned audited explicit-repoint evidence as-is; bare alias use still requires an explicit registry version and does not resolve, build, or queue automatically",
     )
 
 

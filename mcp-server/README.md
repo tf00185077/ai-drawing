@@ -4,7 +4,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 53 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 共 54 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+>
+> 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後以本頁的 54 為準。
 >
 > 如果 Hermes/Cursor 目前 session 看不到這裡列出的 tool（例如 `generate_video_custom_workflow`），先重啟 MCP client 或重新載入 tool catalog；server-side `mcp.list_tools()` 會由測試驗證與下列 catalog 一致。
 >
@@ -13,6 +15,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 > `civitai_source_alias_list(limit=50, offset=0)` 僅以一次 GET 列出 backend 稽核記錄；`civitai_source_alias_search(query, limit=50, offset=0)` 僅以一次 POST 回傳 backend 排名 candidates。兩者不在 MCP 端搜尋、計分、選定或 exact resolve。
 > `civitai_source_alias_rename(current_primary_alias, new_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；改名的稽核 lifecycle evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫或重建它。
 > `civitai_source_alias_archive(current_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；terminal audited archive evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫、重建、unarchive 或改綁它。
+> `civitai_source_alias_repoint(current_primary_alias, expected_registry_version, replacement)` 只以一次 POST 轉送 typed immutable replacement；explicit repoint 的 audited transition evidence 由 backend 建立並原樣回傳。bare alias 後續使用仍必須提供 explicit registry version，MCP 不自動 resolve、build 或 queue。
 >
 > **建議的自組為主流程（agent）**：`list_template_capabilities`／`match_workflow_template` 先判斷有沒有現成模板能解決需求 → **命中**就用其 id 走 `generate_image(template=…)` 或取出影片模板後走 `generate_video_custom_workflow`；**未命中**就 `list_node_categories`／`search_nodes`／`get_node_schema` 認識本機節點後自組 workflow，經 `generate_image_custom_workflow` 或 `generate_video_custom_workflow` 送出（失敗時 `get_generation_status` 回結構化 `node_errors` 可自我修正）；成功且是可重用的新形狀，再 `save_workflow_template(job_id, …)` 晉升入庫，下次即可被 match 命中。
 
@@ -37,6 +40,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
 | `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
 | `civitai_source_alias_archive` | `dict` | POST /api/civitai-recipes/source-aliases/archive |
+| `civitai_source_alias_repoint` | `dict` | POST /api/civitai-recipes/source-aliases/repoint |
 | `civitai_source_alias_list` | `dict` | GET /api/civitai-recipes/source-aliases |
 | `civitai_source_alias_search` | `dict` | POST /api/civitai-recipes/source-aliases/search |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |

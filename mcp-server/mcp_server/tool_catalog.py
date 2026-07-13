@@ -51,6 +51,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("civitai_source_alias_resolve", "mcp_server.tools.civitai_recipes", "civitai_source_alias_resolve", "dict", ("POST /api/civitai-recipes/source-aliases/resolve",)),
     ToolCatalogEntry("civitai_source_alias_rename", "mcp_server.tools.civitai_recipes", "civitai_source_alias_rename", "dict", ("POST /api/civitai-recipes/source-aliases/rename",)),
     ToolCatalogEntry("civitai_source_alias_archive", "mcp_server.tools.civitai_recipes", "civitai_source_alias_archive", "dict", ("POST /api/civitai-recipes/source-aliases/archive",)),
+    ToolCatalogEntry("civitai_source_alias_repoint", "mcp_server.tools.civitai_recipes", "civitai_source_alias_repoint", "dict", ("POST /api/civitai-recipes/source-aliases/repoint",)),
     ToolCatalogEntry("civitai_source_alias_list", "mcp_server.tools.civitai_recipes", "civitai_source_alias_list", "dict", ("GET /api/civitai-recipes/source-aliases",)),
     ToolCatalogEntry("civitai_source_alias_search", "mcp_server.tools.civitai_recipes", "civitai_source_alias_search", "dict", ("POST /api/civitai-recipes/source-aliases/search",)),
     ToolCatalogEntry("civitai_recipe_inspect", "mcp_server.tools.civitai_recipes", "civitai_recipe_inspect", "dict", ("POST /api/civitai-recipes/inspect",)),
