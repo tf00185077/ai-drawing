@@ -19,6 +19,8 @@ from app.schemas.civitai_recipe_variation_sets import CivitaiRecipeVariationSetC
 from app.services.civitai_recipe_variation_sets import VariationSetError, cancel_variation_set, create_variation_set, export_variation_set, get_variation_set
 from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
 from app.schemas.civitai_source_aliases import (
+    CivitaiSourceAliasRenameRequest,
+    CivitaiSourceAliasRenameResponse,
     CivitaiSourceAliasResolveRequest,
     CivitaiSourceAliasResolveResponse,
     SourceAliasRegistryListResponse,
@@ -27,6 +29,7 @@ from app.schemas.civitai_source_aliases import (
 )
 from app.services.civitai_source_alias_registry import (
     list_registry_sources,
+    rename_primary_source_alias,
     resolve_source_alias_exact,
     search_registry_sources,
 )
@@ -132,6 +135,24 @@ class _SourceAliasDiscoveryValidationRoute(APIRoute):
                 return JSONResponse(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     content={"detail": _detail("source_alias_discovery_invalid", "source alias discovery request invalid")},
+                )
+
+        return redacted_handler
+
+
+class _SourceAliasRenameValidationRoute(APIRoute):
+    """Reject malformed rename intent without exposing rejected request values."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    content={"detail": _detail("source_alias_rename_invalid", "source alias rename failed")},
                 )
 
         return redacted_handler
@@ -275,6 +296,34 @@ def search_civitai_source_aliases(
         search_registry_sources(request.query, db=db, limit=request.limit, offset=request.offset),
         SourceAliasRegistrySearchResponse,
     )
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _SourceAliasRenameValidationRoute
+
+
+@router.post("/source-aliases/rename", response_model=CivitaiSourceAliasRenameResponse)
+def rename_civitai_source_alias(
+    request: CivitaiSourceAliasRenameRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiSourceAliasRenameResponse:
+    """Delegate one typed rename intent to the committed audited lifecycle core."""
+    result = rename_primary_source_alias(request, db=db)
+    if result.status == "success":
+        return CivitaiSourceAliasRenameResponse.model_validate(result.model_dump(mode="python"))
+    if result.status == "missing":
+        status_code, code = status.HTTP_404_NOT_FOUND, result.code
+    elif result.code in {"stale_registry_version", "target_archived"}:
+        status_code, code = status.HTTP_409_CONFLICT, result.code
+    elif result.status == "rejected":
+        status_code, code = status.HTTP_422_UNPROCESSABLE_ENTITY, result.code
+    elif result.status == "conflict":
+        status_code, code = status.HTTP_409_CONFLICT, result.code
+    else:
+        status_code, code = status.HTTP_409_CONFLICT, "source_alias_registry_corrupt"
+    raise HTTPException(status_code=status_code, detail=_detail(code, "source alias rename failed"))
 
 
 router.route_class = _default_route_class
