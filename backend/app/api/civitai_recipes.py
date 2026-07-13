@@ -21,6 +21,7 @@ from app.services.civitai_recipe_variants import VariantFacadeError, generate_on
 from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasArchiveRequest,
     CivitaiSourceAliasArchiveResponse,
+    CivitaiSourceAliasExplicitVersionResolveRequest,
     CivitaiSourceAliasRenameRequest,
     CivitaiSourceAliasRenameResponse,
     CivitaiSourceAliasRepointRequest,
@@ -37,6 +38,7 @@ from app.services.civitai_source_alias_registry import (
     rename_primary_source_alias,
     repoint_source_alias,
     resolve_source_alias_exact,
+    resolve_source_alias_exact_version,
     search_registry_sources,
 )
 from app.schemas.civitai_recipes import (
@@ -123,6 +125,27 @@ class _SourceAliasResolveValidationRoute(APIRoute):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={"detail": _detail("invalid_alias", "source alias resolution failed")},
+                )
+
+        return redacted_handler
+
+
+class _SourceAliasExplicitVersionResolveValidationRoute(APIRoute):
+    """Reject malformed immutable version requests without echoing rejected input."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    content={"detail": _detail(
+                        "source_alias_explicit_version_resolve_invalid",
+                        "source alias explicit-version resolution failed",
+                    )},
                 )
 
         return redacted_handler
@@ -292,6 +315,38 @@ def resolve_civitai_source_alias(
     raise HTTPException(
         status_code=status.HTTP_409_CONFLICT,
         detail=_detail("corrupt_registry", "source alias resolution failed"),
+    )
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _SourceAliasExplicitVersionResolveValidationRoute
+
+
+@router.post("/source-aliases/resolve-explicit-version", response_model=CivitaiSourceAliasResolveResponse)
+def resolve_civitai_source_alias_explicit_version(
+    request: CivitaiSourceAliasExplicitVersionResolveRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiSourceAliasResolveResponse:
+    """Read exactly one audited alias binding from the caller-selected immutable version."""
+    result = resolve_source_alias_exact_version(request, db=db)
+    if result.status == "success" and result.record is not None and result.alias is not None:
+        return CivitaiSourceAliasResolveResponse(
+            matched_alias=result.alias,
+            **result.record.model_dump(mode="python"),
+        )
+    if result.status == "rejected":
+        status_code, code = status.HTTP_422_UNPROCESSABLE_ENTITY, "source_alias_explicit_version_resolve_invalid"
+    elif result.status == "missing" and result.code in {"registry_version_not_found", "alias_not_bound_to_registry_version"}:
+        status_code, code = status.HTTP_404_NOT_FOUND, result.code
+    elif result.status == "archived":
+        status_code, code = status.HTTP_409_CONFLICT, "target_archived"
+    else:
+        status_code, code = status.HTTP_409_CONFLICT, "source_alias_registry_corrupt"
+    raise HTTPException(
+        status_code=status_code,
+        detail=_detail(code, "source alias explicit-version resolution failed"),
     )
 
 
