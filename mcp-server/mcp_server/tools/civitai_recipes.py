@@ -297,6 +297,35 @@ def civitai_source_alias_resolve(alias: str) -> dict[str, Any]:
 
 
 @mcp.tool()
+def civitai_source_alias_resolve_explicit_version(
+    alias: Annotated[str, Field(strict=True, min_length=1, max_length=512, pattern=r".*\S.*")],
+    registry_version: Annotated[int, Field(strict=True, ge=1)],
+) -> dict[str, Any]:
+    """Resolve one alias at the caller-selected immutable audited registry version."""
+    return _post(
+        "civitai_source_alias_resolve_explicit_version",
+        "civitai-recipes/source-aliases/resolve-explicit-version",
+        {"alias": alias, "registry_version": registry_version},
+        "use the caller-selected immutable audited registry binding as-is; do not search, build, queue, or generate",
+    )
+
+
+# FastMCP's generated function-argument base otherwise ignores extra keys. This
+# tool's frozen facade must reject them at the formal MCP boundary.  Lightweight
+# test doubles only implement ``tool()`` and deliberately expose no tool manager;
+# they do not serve MCP requests, so leave their registration untouched.
+_tool_manager = getattr(mcp, "_tool_manager", None)
+if _tool_manager is not None:
+    _explicit_version_tool = _tool_manager._tools["civitai_source_alias_resolve_explicit_version"]
+
+    class _ExplicitVersionResolveArguments(_explicit_version_tool.fn_metadata.arg_model):
+        model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+    _explicit_version_tool.fn_metadata.arg_model = _ExplicitVersionResolveArguments
+    _explicit_version_tool.parameters = _ExplicitVersionResolveArguments.model_json_schema()
+
+
+@mcp.tool()
 def civitai_source_alias_rename(
     current_primary_alias: Annotated[str, Field(min_length=1, max_length=512)],
     new_primary_alias: Annotated[str, Field(min_length=1, max_length=512)],
