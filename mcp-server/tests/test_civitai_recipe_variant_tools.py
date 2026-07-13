@@ -39,11 +39,18 @@ def test_variant_tool_uses_strict_nested_input_models() -> None:
     schema = asyncio.run(_variant_schema())
     properties = schema["properties"]
     definitions = schema["$defs"]
-    parent = definitions[properties["parent_recipe"]["$ref"].rsplit("/", 1)[-1]]
-    runtime = definitions[properties["runtime_capabilities"]["$ref"].rsplit("/", 1)[-1]]
-    provenance = definitions[properties["runtime_provenance"]["$ref"].rsplit("/", 1)[-1]]
-    directive = definitions[properties["directives"]["items"]["$ref"].rsplit("/", 1)[-1]]
-    assert set(schema["required"]) == {"parent_recipe", "parent_recipe_sha256", "directives", "model_family", "runtime_capabilities", "runtime_provenance", "input_bindings"}
+    def definition_for(property_name: str) -> dict:
+        value = properties[property_name]
+        reference = value.get("$ref") or next(branch["$ref"] for branch in value.get("anyOf", []) if "$ref" in branch)
+        return definitions[reference.rsplit("/", 1)[-1]]
+
+    parent = definition_for("parent_recipe")
+    runtime = definition_for("runtime_capabilities")
+    provenance = definition_for("runtime_provenance")
+    directives_schema = properties["directives"]
+    directives_array = directives_schema if "items" in directives_schema else next(branch for branch in directives_schema["anyOf"] if "items" in branch)
+    directive = definitions[directives_array["items"]["$ref"].rsplit("/", 1)[-1]]
+    assert set(schema["required"]) == {"directives", "model_family", "runtime_capabilities", "runtime_provenance", "input_bindings"}
     assert properties["model_family"]["enum"] == ["sdxl", "illustrious"]
     assert parent["additionalProperties"] is False
     assert runtime["additionalProperties"] is False
@@ -61,8 +68,13 @@ def test_variant_tool_schema_exposes_typed_recipe_and_runtime_children() -> None
     def definition(ref: str) -> dict:
         return definitions[ref.rsplit("/", 1)[-1]]
 
-    parent = definition(schema["properties"]["parent_recipe"]["$ref"])
-    provenance = definition(schema["properties"]["runtime_provenance"]["$ref"])
+    def definition_for(property_name: str) -> dict:
+        value = schema["properties"][property_name]
+        reference = value.get("$ref") or next(branch["$ref"] for branch in value.get("anyOf", []) if "$ref" in branch)
+        return definition(reference)
+
+    parent = definition_for("parent_recipe")
+    provenance = definition_for("runtime_provenance")
     for name in ("source", "resources", "sampling", "passes", "inputs", "controls", "detailers", "postprocess", "workflow", "runtime", "evidence_manifest"):
         value = parent["properties"][name]
         assert "$ref" in value or "$ref" in value.get("items", {}) or "$ref" in value.get("additionalProperties", {}) or any("$ref" in branch for branch in value.get("anyOf", []))
@@ -118,10 +130,10 @@ def test_variant_tool_forwards_generic_compiler_input_reference_with_hash(monkey
 def test_variant_schema_recursively_keeps_every_nested_model_strict_and_only_seven_inputs() -> None:
     schema = asyncio.run(_variant_schema())
     assert set(schema["properties"]) == {
-        "parent_recipe", "parent_recipe_sha256", "directives", "model_family",
+        "parent_recipe", "parent_recipe_sha256", "source_alias", "directives", "model_family",
         "runtime_capabilities", "runtime_provenance", "input_bindings",
     }
-    assert set(schema["required"]) == set(schema["properties"])
+    assert set(schema["required"]) == {"directives", "model_family", "runtime_capabilities", "runtime_provenance", "input_bindings"}
 
     reachable: set[str] = set()
 
