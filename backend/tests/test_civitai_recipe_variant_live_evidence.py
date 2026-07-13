@@ -64,7 +64,10 @@ def verify(document: dict) -> bool:
 
 def test_r11_fixture_matches_evidence_preserves_r9_zero_submission_and_is_verifiable() -> None:
     document = fixture()
-    assert document == json.loads(EVIDENCE.read_text())
+    # The tracked fixture is the portable acceptance artifact.  A local
+    # gitignored agent_runs copy is optional and, when present, must match.
+    if EVIDENCE.is_file():
+        assert document == json.loads(EVIDENCE.read_text())
     assert document["schema"] == "civ-v-h-r11.live-acceptance.v1"
     assert document["stage"] == "CIV-V-H-R11"
     r9 = next(row for row in document["history"] if row["attempt_id"] == "CIV-V-H-R9.execute.1.executor")
