@@ -32,6 +32,35 @@
       "diffusion_model": "anima_baseV10.safetensors"
     },
     {
+      "id": "high-contrast-color-anima",
+      "name": "High Contrast Color Anima",
+      "chinese_name": "高對比用色",
+      "profiles": [
+        "source-color-style-neutral",
+        "source-image-131966887",
+        "anime-2d-default"
+      ],
+      "note_path": "style_presets/human/high-contrast-color-anima.md",
+      "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+      "checkpoint": null,
+      "lora": "anima-highres-aesthetic-boost.safetensors",
+      "loras": [
+        {
+          "name": "anima-highres-aesthetic-boost.safetensors",
+          "strength_model": 0.7
+        },
+        {
+          "name": "Niji Reol v1 EP11.safetensors",
+          "strength_model": 0.8
+        },
+        {
+          "name": "AnimaNSS4RE.safetensors",
+          "strength_model": 0.65
+        }
+      ],
+      "diffusion_model": "anima_baseV10.safetensors"
+    },
+    {
       "id": "hoseki-lustrousmix-anima",
       "name": "Hoseki LustrousMix Anima / Abstract Gem Illustration",
       "chinese_name": "寶石抽象插畫 Anima",
@@ -57,35 +86,6 @@
         "anime-2d-default"
       ],
       "note_path": "style_presets/human/niji-daylight-2d-anime-anima.md",
-      "template": "gen_txt2img_anima_lora_model_only_multi_lora",
-      "checkpoint": null,
-      "lora": "anima-highres-aesthetic-boost.safetensors",
-      "loras": [
-        {
-          "name": "anima-highres-aesthetic-boost.safetensors",
-          "strength_model": 0.7
-        },
-        {
-          "name": "Niji Reol v1 EP11.safetensors",
-          "strength_model": 0.8
-        },
-        {
-          "name": "AnimaNSS4RE.safetensors",
-          "strength_model": 0.65
-        }
-      ],
-      "diffusion_model": "anima_baseV10.safetensors"
-    },
-    {
-      "id": "niji-moonlit-semi-real-anima",
-      "name": "Niji Moonlit Semi-real Anima",
-      "chinese_name": "月光半寫實 Niji Anima",
-      "profiles": [
-        "source-color-style-neutral",
-        "source-image-131966887",
-        "anime-2d-default"
-      ],
-      "note_path": "style_presets/human/niji-moonlit-semi-real-anima.md",
       "template": "gen_txt2img_anima_lora_model_only_multi_lora",
       "checkpoint": null,
       "lora": "anima-highres-aesthetic-boost.safetensors",

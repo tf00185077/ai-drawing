@@ -218,7 +218,7 @@ def test_process_pending_smoke_composed_multi_lora_preset_keeps_distinct_nodes(t
         / "style_presets"
         / "agent"
         / "presets"
-        / "niji-moonlit-semi-real-anima.json"
+        / "high-contrast-color-anima.json"
     )
     preset = _parse_preset(json.loads(preset_path.read_text(encoding="utf-8")))
     generation = compose_preset(

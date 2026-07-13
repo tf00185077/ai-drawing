@@ -68,7 +68,7 @@
   },
   "note_path": "style_presets/human/niji-daylight-2d-anime-anima.md",
   "required_resources": {
-    "derived_from_preset": "niji-moonlit-semi-real-anima",
+    "derived_from_preset": "high-contrast-color-anima",
     "reason": "CTY requested the Niji/Moonlit preset default to pure hand-drawn 2D Japanese anime with daylight/non-dark backgrounds. This preset preserves the same Anima/Niji multi-LoRA recipe while removing semi-realistic, glossy, night, and dark cinematic defaults.",
     "base_model": {
       "type": "anima_split_model",
