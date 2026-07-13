@@ -152,8 +152,8 @@ class DispatchTests(unittest.TestCase):
   self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertEqual(st['review_rejections'],2)
  def test_stale_ready_stage_at_split_threshold_is_blocked_before_dispatch(self):
   st=self.st();st['max_review_rejections']=3;st['review_rejections']=2;self.s['stages']=[st];self.put()
-  with patch('dispatch.subprocess.Popen') as spawn:self.tick();spawn.assert_not_called()
-  s=self.get();self.assertEqual(s['goal']['status'],'PAUSED');self.assertEqual(s['stages'][0]['status'],'BLOCKED')
+  self.tick();s=self.get()
+  self.assertEqual(s['goal']['status'],'PAUSED');self.assertEqual(s['stages'][0]['status'],'BLOCKED');self.assertEqual(s['runs'],{})
  def test_executor_prompt_requires_progress_update_only_when_allowed(self):
   roles=json.loads((self.root/'pipeline/roles.json').read_text());st=self.st()
   with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'executor',st,notes=[])

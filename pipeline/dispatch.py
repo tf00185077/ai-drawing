@@ -308,7 +308,7 @@ def reconcile():
       elif st['attempts']['validate']>=st.get('max_attempts',3):st['status']='FAILED';s['goal']['status']='PAUSED';event(s,st['id']+':FAILED','validator failed 3 times',notes)
     if st['status']=='READY' and all((stage(s,x) or {}).get('status')=='COMMITTED' for x in st.get('depends_on',[])):dispatch(s,roles,'executor',st,'execute',notes);break
     if st['status']=='AWAITING_REVIEW':dispatch(s,roles,'judge',st,'review',notes);break
-   if not any(x['status'] in ACTIVE for x in s['stages']) and not any(r['status'] in ('DISPATCHED','RUNNING') and r['action']=='plan' for r in s['runs'].values()) and s['planning'].get('failures',0)<s['planning'].get('max_failures',3):dispatch(s,roles,'judge',None,'plan',notes)
+   if s['goal']['status']=='ACTIVE' and not any(x['status'] in ACTIVE for x in s['stages']) and not any(r['status'] in ('DISPATCHED','RUNNING') and r['action']=='plan' for r in s['runs'].values()) and s['planning'].get('failures',0)<s['planning'].get('max_failures',3):dispatch(s,roles,'judge',None,'plan',notes)
   save(s);return notes
  finally:unlock(l)
 def main():
