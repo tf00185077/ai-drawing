@@ -115,7 +115,7 @@ class CivitaiSourceAliasRegistryView(_StrictModel):
 
 
 class CivitaiSourceAliasDomainResult(_StrictModel):
-    status: Literal["success", "rejected", "conflict", "missing", "corrupt"]
+    status: Literal["success", "rejected", "conflict", "missing", "corrupt", "archived"]
     code: str
     record: CivitaiSourceAliasRegistryView | None = None
     alias: CivitaiSourceAliasView | None = None
@@ -130,7 +130,7 @@ class CivitaiSourceAliasRenameRequest(_StrictModel):
 class CivitaiSourceAliasHistoryEventView(_StrictModel):
     id: int
     registry_version: int
-    operation: Literal["rename"]
+    operation: Literal["rename", "archive"]
     before_aliases: dict[str, Any]
     after_aliases: dict[str, Any]
     previous_event_sha256: str | None = None
@@ -145,6 +145,21 @@ class CivitaiSourceAliasRenameResult(_StrictModel):
     new_primary: CivitaiSourceAliasView | None = None
     preserved_old_alternate: CivitaiSourceAliasView | None = None
     alternate_aliases: list[CivitaiSourceAliasView] = Field(default_factory=list)
+    event: CivitaiSourceAliasHistoryEventView | None = None
+
+
+class CivitaiSourceAliasArchiveRequest(_StrictModel):
+    """CIV-SA-I strict internal archive intent; callers cannot supply lifecycle evidence."""
+
+    current_primary_alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    expected_registry_version: Annotated[int, Field(strict=True, ge=1)]
+
+
+class CivitaiSourceAliasArchiveResult(_StrictModel):
+    status: Literal["success", "rejected", "conflict", "missing", "corrupt"]
+    code: str
+    record: CivitaiSourceAliasRegistryView | None = None
+    archived_at: datetime | None = None
     event: CivitaiSourceAliasHistoryEventView | None = None
 
 

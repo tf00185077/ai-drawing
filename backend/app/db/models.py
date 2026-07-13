@@ -91,6 +91,9 @@ class CivitaiSourceAliasRegistryRecord(Base):
     approved_tags_json = Column(Text, nullable=False, default="[]")
     prompt_summary = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    # CIV-SA-I terminal lifecycle marker. Alias rows and immutable source evidence
+    # are deliberately retained forever; this timestamp never re-enables a target.
+    archived_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class CivitaiSourceAlias(Base):
@@ -109,10 +112,10 @@ class CivitaiSourceAlias(Base):
 
 
 class CivitaiSourceAliasHistory(Base):
-    """Append-only CIV-SA-H rename audit chain for one immutable registry target."""
+    """Append-only CIV-SA-H/I rename/archive audit chain for one immutable registry target."""
     __tablename__ = "civitai_source_alias_history"
     __table_args__ = (
-        CheckConstraint("operation = 'rename'", name="ck_source_alias_history_operation"),
+        CheckConstraint("operation IN ('rename', 'archive')", name="ck_source_alias_history_operation"),
         CheckConstraint("length(event_sha256) = 64", name="ck_source_alias_history_event_sha256_length"),
     )
 

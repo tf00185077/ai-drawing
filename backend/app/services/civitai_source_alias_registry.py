@@ -8,6 +8,7 @@ import unicodedata
 from typing import Any, Literal
 
 from pydantic import ValidationError
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
 from app.db.models import CivitaiSourceAlias, CivitaiSourceAliasHistory, CivitaiSourceAliasRegistryRecord
@@ -20,6 +21,8 @@ from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasHistoryEventView,
     CivitaiSourceAliasRenameRequest,
     CivitaiSourceAliasRenameResult,
+    CivitaiSourceAliasArchiveRequest,
+    CivitaiSourceAliasArchiveResult,
     CivitaiSourceAliasRegistryEntry,
     CivitaiSourceAliasRegistryListResult,
     CivitaiSourceAliasRegistrySearchResult,
@@ -133,6 +136,8 @@ def remember(request: CivitaiSourceAliasRememberRequest, *, db: Any) -> CivitaiS
         view, code = _record_view(record[0])
         if view is None:
             return _result("corrupt", code or "record_invalid")
+        if record[0].archived_at is not None:
+            return _result("conflict", "alias_archived")
         if canonical_json(view.source_identity) != _identity_json(request):
             return _result("conflict", "alias_target_conflict")
         return _result("success", "idempotent", record=view)
@@ -163,6 +168,11 @@ def remember(request: CivitaiSourceAliasRememberRequest, *, db: Any) -> CivitaiS
             if len(versions) == 1:
                 existing = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=next(iter(versions))).first()
                 view, code = _record_view(existing) if existing is not None else (None, "record_missing")
+                # A concurrent winner may have archived this exact immutable target
+                # before our unique-key recovery.  Archive is terminal: never turn
+                # that state into idempotent success or rebind aliases.
+                if existing is not None and existing.archived_at is not None:
+                    return _result("conflict", "alias_archived")
                 if view is not None and canonical_json(view.source_identity) == _identity_json(request):
                     return _result("success", "idempotent", record=view)
                 if view is None:
@@ -195,6 +205,8 @@ def exact_resolve(alias: str, *, db: Any) -> CivitaiSourceAliasDomainResult:
         return _result("corrupt", code or "record_invalid")
     if alias_row.alias_kind not in {"primary", "alternate"} or not alias_row.original_alias or alias_row.normalized_key != key:
         return _result("corrupt", "alias_invalid")
+    if records[0].archived_at is not None:
+        return _result("archived", "target_archived")
     return _result("success", "resolved", record=view, alias=CivitaiSourceAliasView(original_alias=alias_row.original_alias, normalized_key=key, kind=alias_row.alias_kind))
 
 
@@ -419,8 +431,8 @@ def _utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def _event_payload(*, registry_version: int, before_aliases: dict[str, Any], after_aliases: dict[str, Any], previous_event_sha256: str | None, created_at: datetime) -> dict[str, Any]:
-    return {"registry_version": registry_version, "operation": "rename", "before_aliases": before_aliases, "after_aliases": after_aliases, "previous_event_sha256": previous_event_sha256, "created_at": _utc(created_at).isoformat().replace("+00:00", "Z")}
+def _event_payload(*, registry_version: int, operation: Literal["rename", "archive"], before_aliases: dict[str, Any], after_aliases: dict[str, Any], previous_event_sha256: str | None, created_at: datetime) -> dict[str, Any]:
+    return {"registry_version": registry_version, "operation": operation, "before_aliases": before_aliases, "after_aliases": after_aliases, "previous_event_sha256": previous_event_sha256, "created_at": _utc(created_at).isoformat().replace("+00:00", "Z")}
 
 
 def _canonical_alias_snapshot(value: Any) -> dict[str, Any] | None:
@@ -469,12 +481,17 @@ def _valid_rename_transition(before: dict[str, Any], after: dict[str, Any]) -> b
 
 
 def verify_source_alias_history_chain(registry_version: int, *, db: Any) -> str | None:
-    """Return a deterministic corruption code, or None for a complete canonical chain."""
+    """Return a deterministic corruption code, or None for one canonical lifecycle chain."""
+    record_rows = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=registry_version).all()
+    if len(record_rows) != 1:
+        return "history_invalid"
+    record = record_rows[0]
     events = db.query(CivitaiSourceAliasHistory).filter_by(registry_version=registry_version).order_by(CivitaiSourceAliasHistory.id).all()
     previous: str | None = None
     previous_after: dict[str, Any] | None = None
     seen_hashes: set[str] = set()
-    for event in events:
+    archive_event: CivitaiSourceAliasHistory | None = None
+    for index, event in enumerate(events):
         try:
             before_raw, after_raw = json.loads(event.before_aliases_json), json.loads(event.after_aliases_json)
             before, after = _canonical_alias_snapshot(before_raw), _canonical_alias_snapshot(after_raw)
@@ -484,11 +501,18 @@ def verify_source_alias_history_chain(registry_version: int, *, db: Any) -> str 
                 return "history_invalid"
             if previous_after is not None and before != previous_after:
                 return "history_invalid"
-            if not _valid_rename_transition(before, after):
+            if event.operation == "rename":
+                if archive_event is not None or not _valid_rename_transition(before, after):
+                    return "history_invalid"
+            elif event.operation == "archive":
+                if archive_event is not None or index != len(events) - 1 or before != after:
+                    return "history_invalid"
+                archive_event = event
+            else:
                 return "history_invalid"
-            if event.registry_version != registry_version or event.operation != "rename" or event.previous_event_sha256 != previous or event.event_sha256 in seen_hashes or _SHA256.fullmatch(event.event_sha256 or "") is None or not isinstance(event.created_at, datetime):
+            if event.registry_version != registry_version or event.previous_event_sha256 != previous or event.event_sha256 in seen_hashes or _SHA256.fullmatch(event.event_sha256 or "") is None or not isinstance(event.created_at, datetime):
                 return "history_invalid"
-            payload = _event_payload(registry_version=event.registry_version, before_aliases=before, after_aliases=after, previous_event_sha256=event.previous_event_sha256, created_at=event.created_at)
+            payload = _event_payload(registry_version=event.registry_version, operation=event.operation, before_aliases=before, after_aliases=after, previous_event_sha256=event.previous_event_sha256, created_at=event.created_at)
             if canonical_sha256(payload) != event.event_sha256:
                 return "history_invalid"
         except (TypeError, ValueError, json.JSONDecodeError):
@@ -499,7 +523,11 @@ def verify_source_alias_history_chain(registry_version: int, *, db: Any) -> str 
     current = _alias_snapshot(db.query(CivitaiSourceAlias).filter_by(registry_version=registry_version).all())
     if current is None or (previous_after is not None and previous_after != current):
         return "history_invalid"
-    return None
+    if record.archived_at is None:
+        return None if archive_event is None else "history_invalid"
+    if archive_event is None or not isinstance(record.archived_at, datetime):
+        return "history_invalid"
+    return None if _utc(record.archived_at) == _utc(archive_event.created_at) else "history_invalid"
 
 
 def _rename_result(status: str, code: str, **kwargs: Any) -> CivitaiSourceAliasRenameResult:
@@ -516,6 +544,24 @@ def validate_rename_request(value: Any) -> CivitaiSourceAliasRenameRequest | Non
         return request
     except (ValidationError, TypeError, ValueError):
         return None
+
+
+def _acquire_active_target_gate(*, registry_version: int, db: Any, archived_at: datetime | None = None) -> bool:
+    """Serialize lifecycle writes against a target that remains active at write time."""
+    values = (
+        {"archived_at": archived_at}
+        if archived_at is not None
+        else {"archived_at": CivitaiSourceAliasRegistryRecord.archived_at}
+    )
+    result = db.execute(
+        update(CivitaiSourceAliasRegistryRecord)
+        .where(
+            CivitaiSourceAliasRegistryRecord.registry_version == registry_version,
+            CivitaiSourceAliasRegistryRecord.archived_at.is_(None),
+        )
+        .values(**values)
+    )
+    return result.rowcount == 1
 
 
 def rename_primary_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasRenameResult:
@@ -554,6 +600,10 @@ def rename_primary_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasR
     record_view, record_error = _record_view(record_rows[0])
     if record_view is None:
         return _rename_result("corrupt", record_error or "record_invalid")
+    if verify_source_alias_history_chain(request.expected_registry_version, db=db) is not None:
+        return _rename_result("corrupt", "history_invalid")
+    if record_rows[0].archived_at is not None:
+        return _rename_result("rejected", "target_archived")
     registry_rows = db.query(CivitaiSourceAlias).filter_by(registry_version=request.expected_registry_version).all()
     before = _alias_snapshot(registry_rows)
     if before is None:
@@ -566,12 +616,15 @@ def rename_primary_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasR
     created_at = datetime.now(timezone.utc)
     after = {"primary": {"original_alias": request.new_primary_alias, "normalized_key": new_key}, "alternates": sorted([*before["alternates"], {"original_alias": old_primary.original_alias, "normalized_key": old_primary.normalized_key}], key=lambda item: item["normalized_key"])}
     event = CivitaiSourceAliasHistory(registry_version=request.expected_registry_version, operation="rename", before_aliases_json=canonical_json(before), after_aliases_json=canonical_json(after), previous_event_sha256=previous_event.event_sha256 if previous_event is not None else None, created_at=created_at)
-    event.event_sha256 = canonical_sha256(_event_payload(registry_version=event.registry_version, before_aliases=before, after_aliases=after, previous_event_sha256=event.previous_event_sha256, created_at=created_at))
+    event.event_sha256 = canonical_sha256(_event_payload(registry_version=event.registry_version, operation="rename", before_aliases=before, after_aliases=after, previous_event_sha256=event.previous_event_sha256, created_at=created_at))
     try:
         db.add(CivitaiSourceAlias(registry_version=request.expected_registry_version, original_alias=request.new_primary_alias, normalized_key=new_key, alias_kind="primary"))
         old_primary.alias_kind = "alternate"
         db.add(event)
         db.flush()
+        if not _acquire_active_target_gate(registry_version=request.expected_registry_version, db=db):
+            db.rollback()
+            return _rename_result("rejected", "target_archived")
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -583,3 +636,110 @@ def rename_primary_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasR
     preserved = CivitaiSourceAliasView(original_alias=old_primary.original_alias, normalized_key=old_primary.normalized_key, kind="alternate")
     alternates = [CivitaiSourceAliasView(original_alias=item["original_alias"], normalized_key=item["normalized_key"], kind="alternate") for item in after["alternates"]]
     return _rename_result("success", "renamed", record=record_view, new_primary=new_primary, preserved_old_alternate=preserved, alternate_aliases=alternates, event=CivitaiSourceAliasHistoryEventView(id=event.id, registry_version=event.registry_version, operation="rename", before_aliases=before, after_aliases=after, previous_event_sha256=event.previous_event_sha256, event_sha256=event.event_sha256, created_at=_utc(event.created_at)))
+
+
+def _archive_result(status: str, code: str, **kwargs: Any) -> CivitaiSourceAliasArchiveResult:
+    return CivitaiSourceAliasArchiveResult(status=status, code=code, **kwargs)
+
+
+def validate_archive_request(value: Any) -> CivitaiSourceAliasArchiveRequest | None:
+    """Strict internal boundary: archive metadata always remains backend-owned."""
+    try:
+        raw_value = value.model_dump() if isinstance(value, CivitaiSourceAliasArchiveRequest) else value
+        request = CivitaiSourceAliasArchiveRequest.model_validate(raw_value, strict=True)
+        normalize_alias(request.current_primary_alias)
+        return request
+    except (ValidationError, TypeError, ValueError):
+        return None
+
+
+def archive_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasArchiveResult:
+    """Atomically append the only terminal archive event without changing any alias binding."""
+    request = validate_archive_request(request)
+    if request is None:
+        return _archive_result("rejected", "invalid_request")
+    try:
+        current_key = normalize_alias(request.current_primary_alias)
+    except (TypeError, ValueError):
+        return _archive_result("rejected", "alias_invalid")
+    current_rows = db.query(CivitaiSourceAlias).filter_by(normalized_key=current_key).all()
+    if not current_rows:
+        entries, registry_error = _read_discovery_entries(db=db)
+        if entries is None:
+            return _archive_result("corrupt", registry_error or "registry_invalid")
+        return _archive_result("missing", "current_alias_not_found")
+    if len(current_rows) != 1:
+        return _archive_result("corrupt", "non_unique_alias")
+    primary = current_rows[0]
+    if primary.alias_kind != "primary":
+        entries, registry_error = _read_discovery_entries(db=db)
+        if entries is None:
+            return _archive_result("corrupt", registry_error or "registry_invalid")
+        return _archive_result("missing", "current_alias_not_primary")
+    if primary.registry_version != request.expected_registry_version:
+        return _archive_result("rejected", "stale_registry_version")
+    entries, registry_error = _read_discovery_entries(db=db)
+    if entries is None:
+        return _archive_result("corrupt", registry_error or "registry_invalid")
+    record_rows = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=request.expected_registry_version).all()
+    if len(record_rows) != 1:
+        return _archive_result("corrupt", "record_non_unique_or_missing")
+    record = record_rows[0]
+    record_view, record_error = _record_view(record)
+    if record_view is None:
+        return _archive_result("corrupt", record_error or "record_invalid")
+    if verify_source_alias_history_chain(request.expected_registry_version, db=db) is not None:
+        return _archive_result("corrupt", "history_invalid")
+    if record.archived_at is not None:
+        return _archive_result("conflict", "already_archived")
+    rows = db.query(CivitaiSourceAlias).filter_by(registry_version=request.expected_registry_version).all()
+    snapshot = _alias_snapshot(rows)
+    if snapshot is None:
+        return _archive_result("corrupt", "primary_alias_invalid")
+    previous_event = db.query(CivitaiSourceAliasHistory).filter_by(registry_version=request.expected_registry_version).order_by(CivitaiSourceAliasHistory.id.desc()).first()
+    created_at = datetime.now(timezone.utc)
+    event = CivitaiSourceAliasHistory(
+        registry_version=request.expected_registry_version,
+        operation="archive",
+        before_aliases_json=canonical_json(snapshot),
+        after_aliases_json=canonical_json(snapshot),
+        previous_event_sha256=previous_event.event_sha256 if previous_event is not None else None,
+        created_at=created_at,
+    )
+    event.event_sha256 = canonical_sha256(_event_payload(
+        registry_version=event.registry_version, operation="archive", before_aliases=snapshot, after_aliases=snapshot,
+        previous_event_sha256=event.previous_event_sha256, created_at=created_at,
+    ))
+    try:
+        db.add(event)
+        db.flush()
+        if not _acquire_active_target_gate(
+            registry_version=request.expected_registry_version, db=db, archived_at=created_at,
+        ):
+            db.rollback()
+            rerecords = db.query(CivitaiSourceAliasRegistryRecord).filter_by(
+                registry_version=request.expected_registry_version,
+            ).all()
+            if len(rerecords) == 1 and rerecords[0].archived_at is not None and verify_source_alias_history_chain(request.expected_registry_version, db=db) is None:
+                return _archive_result("conflict", "already_archived")
+            return _archive_result("corrupt", "archive_write_failed")
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        reread = db.query(CivitaiSourceAlias).filter_by(normalized_key=current_key).all()
+        if len(reread) == 1 and reread[0].alias_kind == "primary":
+            rerecords = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=request.expected_registry_version).all()
+            if len(rerecords) == 1 and rerecords[0].archived_at is not None and verify_source_alias_history_chain(request.expected_registry_version, db=db) is None:
+                return _archive_result("conflict", "already_archived")
+        return _archive_result("corrupt", "archive_write_failed")
+    except Exception:
+        db.rollback()
+        return _archive_result("corrupt", "archive_write_failed")
+    return _archive_result(
+        "success", "archived", record=record_view, archived_at=_utc(created_at),
+        event=CivitaiSourceAliasHistoryEventView(
+            id=event.id, registry_version=event.registry_version, operation="archive", before_aliases=snapshot,
+            after_aliases=snapshot, previous_event_sha256=event.previous_event_sha256, event_sha256=event.event_sha256,
+            created_at=_utc(created_at),
+        ),
+    )
