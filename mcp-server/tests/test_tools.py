@@ -634,6 +634,16 @@ def test_gallery_list_returns_summary() -> None:
     assert "test prompt" in result or "1 筆" in result
 
 
+def test_gallery_list_returns_machine_readable_job_bound_items() -> None:
+    """Owner RED: formal stdio callers must not parse a lossy human summary."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {"items": [{"id": 7, "job_id": "job-seven", "image_path": "day/result.png"}], "total": 1}
+    with patch("mcp_server.tools.gallery._get_client", return_value=mock_client):
+        data = json.loads(gallery_list())
+    assert data["ok"] is True
+    assert data["data"]["items"][0] == {"id": 7, "job_id": "job-seven", "image_path": "day/result.png"}
+
+
 def test_get_gallery_image_returns_agent_friendly_json() -> None:
     """get_gallery_image 成功時回傳含 image_url、local_path 與 metadata 的 JSON"""
     mock_client = MagicMock()

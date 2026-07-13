@@ -34,6 +34,7 @@ class Client:
         (civitai_recipes.civitai_recipe_import, {"locator": 123, "embedded_image": b"png"}, "civitai-recipes/import"),
         (civitai_recipes.civitai_recipe_inspect, {"recipe": {"schema_version": "1.0"}}, "civitai-recipes/inspect"),
         (civitai_recipes.civitai_recipe_resolve, {"recipe": {"schema_version": "1.0"}, "ledger": [], "strict": False}, "civitai-recipes/resolve"),
+        (civitai_recipes.civitai_recipe_compatibility, {"recipe": {"schema_version": "1.0"}, "resource_report": {}, "model_family": "sdxl", "runtime_capabilities": {}}, "civitai-recipes/compatibility"),
         (civitai_recipes.civitai_recipe_build, {"recipe": {"schema_version": "1.0"}, "resource_report": {}, "model_family": "sdxl", "input_bindings": {}}, "civitai-recipes/build"),
         (civitai_recipes.civitai_recipe_run, {"build": {"workflow": {}}, "runtime_provenance": {}}, "civitai-recipes/run"),
     ],
@@ -112,6 +113,28 @@ def test_recipe_tools_return_structured_transport_failure(monkeypatch) -> None:
     assert result == {"ok": False, "tool": "civitai_recipe_export", "error": {"code": "ConnectError", "message": "offline", "details": {"where": "backend"}}}
 
 
+def test_local_ledger_and_resolve_local_contracts(monkeypatch) -> None:
+    client = Client({"entries": [], "snapshot": {"row_count": 0}})
+    monkeypatch.setattr(civitai_recipes, "_get_client", lambda: client)
+
+    ledger = civitai_recipes.civitai_recipe_local_ledger(kind="lora", civitai_model_id=10, availability=True)
+    resolved = civitai_recipes.civitai_recipe_resolve_local(recipe={"schema_version": "1.0"})
+
+    assert ledger["ok"] is True
+    assert resolved["ok"] is True
+    assert client.calls == [
+        ("get", "civitai-recipes/local-ledger", {"kind": "lora", "civitai_model_id": 10, "availability": True}),
+        ("post", "civitai-recipes/resolve-local", {"recipe": {"schema_version": "1.0"}}),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_resolve_local_schema_has_no_ledger_or_non_strict_inputs() -> None:
+    registered = {tool.name: tool for tool in await mcp.list_tools()}
+    assert set(registered["civitai_recipe_resolve_local"].inputSchema["properties"]) == {"recipe"}
+    assert {"kind", "civitai_model_id", "civitai_model_version_id", "civitai_file_id", "air", "sha256", "availability"} <= set(registered["civitai_recipe_local_ledger"].inputSchema["properties"])
+
+
 @pytest.mark.asyncio
 async def test_all_civ_f_tools_are_registered_with_their_frozen_inputs() -> None:
     registered = {tool.name: tool for tool in await mcp.list_tools()}
@@ -119,6 +142,9 @@ async def test_all_civ_f_tools_are_registered_with_their_frozen_inputs() -> None
         "civitai_recipe_import": {"locator", "embedded_image"},
         "civitai_recipe_inspect": {"recipe"},
         "civitai_recipe_resolve": {"recipe", "ledger", "strict"},
+        "civitai_recipe_local_ledger": {"kind", "civitai_model_id", "civitai_model_version_id", "civitai_file_id", "air", "sha256", "availability"},
+        "civitai_recipe_resolve_local": {"recipe"},
+        "civitai_recipe_compatibility": {"recipe", "resource_report", "model_family", "runtime_capabilities"},
         "civitai_recipe_build": {"recipe", "resource_report", "model_family", "input_bindings"},
         "civitai_recipe_run": {"build", "runtime_provenance"},
         "civitai_recipe_export": {"image_id"},

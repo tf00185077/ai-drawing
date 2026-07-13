@@ -7,6 +7,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import logging
 import random
 import threading
@@ -45,8 +47,18 @@ WORKFLOW_TEMPLATE = "default"
 WORKFLOW_TEMPLATE_LORA = "default_lora"
 
 
+def _canonical_workflow_sha256(workflow: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(workflow, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
 class QueueFullError(Exception):
     """佇列已滿"""
+
+
+class AuditedWorkflowHashMismatchError(RuntimeError):
+    """Immutable recipe workflow no longer matches its audited digest."""
 
 
 class GenerateParams(TypedDict, total=False):
@@ -165,6 +177,22 @@ def submit_custom(params: GenerateParams) -> str:
     return submit(params)
 
 
+def submit_audited_recipe(params: GenerateParams, *, job_id: str) -> str:
+    """Queue one already-validated immutable recipe under its pre-bound opaque job id.
+
+    This is deliberately internal-only: callers cannot select a job id through HTTP/MCP.
+    """
+    if "workflow" not in params or "recipe_provenance" not in params or not isinstance(job_id, str) or not job_id:
+        raise ValueError("audited recipe submission requires immutable workflow, provenance, and job id")
+    submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    with _lock:
+        if len(_pending) >= MAX_PENDING:
+            raise QueueFullError("生圖佇列已滿，請稍後再試")
+        _pending.append(_Job(job_id=job_id, params=dict(params), submitted_at=submitted_at))
+    logger.info("Audited recipe job %s queued", job_id)
+    return job_id
+
+
 def get_status() -> dict[str, Any]:
     """
     取得佇列狀態。
@@ -253,6 +281,33 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         _running = job
 
     try:
+        audited_bundle = job.params.get("recipe_provenance")
+        if audited_bundle is not None:
+            audited_workflow = audited_bundle.get("workflow") if isinstance(audited_bundle, dict) else None
+            submitted_workflow = job.params.get("workflow")
+            declared_digest = audited_bundle.get("workflow_sha256") if isinstance(audited_bundle, dict) else None
+            if (
+                not isinstance(audited_workflow, dict)
+                or not isinstance(submitted_workflow, dict)
+                or not isinstance(declared_digest, str)
+                or submitted_workflow != audited_workflow
+                or _canonical_workflow_sha256(audited_workflow) != declared_digest
+                or _canonical_workflow_sha256(submitted_workflow) != declared_digest
+            ):
+                raise AuditedWorkflowHashMismatchError("audited_workflow_hash_mismatch")
+
+            # Provenance-bearing submissions are immutable: bypass defaults, uploads,
+            # randomization, and apply_params, then submit the audited snapshot verbatim.
+            prompt = copy.deepcopy(audited_workflow)
+            job.params["workflow_json"] = prompt
+            prompt_id = comfy.submit_prompt(prompt)
+            with _lock:
+                if _running and _running.job_id == job.job_id:
+                    _running.prompt_id = prompt_id
+                _our_prompt_ids.add(prompt_id)
+            logger.info("Audited recipe job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
+            return
+
         settings = get_settings()
         # 先決定並載入 workflow；checkpoint 預設邏輯需依其節點型別判斷。
         # template 優先序：自訂 workflow > 明確指定的 template > 依 lora 推斷的預設模板。
@@ -421,6 +476,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 _running.prompt_id = prompt_id
             _our_prompt_ids.add(prompt_id)
         logger.info("Job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
+    except AuditedWorkflowHashMismatchError as e:
+        logger.error("Audited recipe job %s rejected before ComfyUI submit: %s", job.job_id, e)
+        with _lock:
+            if _running and _running.job_id == job.job_id:
+                _running = None
+        _record_failure(job, e)
     except ComfyUIError as e:
         # ComfyUI /prompt 驗證/執行被拒：永久性失敗，不重試（過去插回隊首會無限重試而堵塞隊列）。
         # 把 node_errors 結構化記錄，供 agent 查 job 狀態後自我修正並重送。

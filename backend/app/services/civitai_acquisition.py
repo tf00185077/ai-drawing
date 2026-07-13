@@ -51,6 +51,10 @@ _SENSITIVE_KEYS = {
     "secret",
     "password",
 }
+_SENSITIVE_QUERY_VALUE = re.compile(
+    r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password)=)[^&#\s]*",
+    re.IGNORECASE,
+)
 
 
 class CivitaiTransport(Protocol):
@@ -163,7 +167,7 @@ def redact_secrets(value: Any, *, secrets: tuple[str, ...] = ()) -> Any:
         for secret in secrets:
             if secret:
                 redacted = redacted.replace(secret, "[REDACTED]")
-        return redacted
+        return _SENSITIVE_QUERY_VALUE.sub(r"\1[REDACTED]", redacted)
     return value
 
 

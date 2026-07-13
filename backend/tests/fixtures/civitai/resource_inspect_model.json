@@ -1,0 +1,37 @@
+{
+  "id": 101,
+  "name": "Fixture Model",
+  "type": "LORA",
+  "modelVersions": [
+    {
+      "id": 201,
+      "baseModel": "SDXL 1.0",
+      "files": [
+        {
+          "id": 11,
+          "name": "fixture-lora.safetensors",
+          "type": "Model",
+          "sizeKB": 1,
+          "downloadUrl": "https://civitai.com/api/download/models/11?token=TOKEN_SENTINEL",
+          "hashes": {"SHA256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+          "metadata": {"fp": "fp16"},
+          "virusScanResult": "Success",
+          "availability": "Public",
+          "license": {"name": "test-license", "allowCommercialUse": ["Image"]},
+          "usage": {"commercial": "allowed"},
+          "air": "urn:air:sdxl:lora:civitai:101@201"
+        },
+        {
+          "id": 12,
+          "name": "unsafe-unknown.safetensors",
+          "type": "Model",
+          "sizeKB": 0,
+          "downloadUrl": "https://civitai.com/api/download/models/12?token=TOKEN_SENTINEL",
+          "hashes": {},
+          "virusScanResult": "Pending",
+          "availability": "Private"
+        }
+      ]
+    }
+  ]
+}

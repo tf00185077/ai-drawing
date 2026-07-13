@@ -53,7 +53,7 @@ def client():
             )
         )
         session.commit()
-        save(image_path="2024-01/test1.png", checkpoint="model.safetensors", prompt="1girl", db=session)
+        save(image_path="2024-01/test1.png", job_id="job-1", checkpoint="model.safetensors", prompt="1girl", db=session)
         save(image_path="2024-01/test2.png", lora="lora.safetensors", seed=999, db=session)
 
     try:
@@ -71,6 +71,11 @@ def test_list_images_returns_items(client) -> None:
     assert "total" in data
     assert data["total"] >= 2
     assert len(data["items"]) >= 2
+
+
+def test_list_images_exposes_job_identity(client) -> None:
+    data = client.get("/api/gallery/", params={"image_id": 1}).json()
+    assert data["items"][0]["job_id"] == "job-1"
 
 
 def test_list_images_filter_by_image_id(client) -> None:

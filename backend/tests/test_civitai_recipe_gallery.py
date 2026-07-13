@@ -66,6 +66,27 @@ def _bundle(tmp_path: Path) -> dict:
     )
 
 
+def _bundle_with_variant_lineage(tmp_path: Path, *, variant_id: str = "variant-one", job_id: str = "job-one") -> dict:
+    bundle = _bundle(tmp_path)
+    lineage = {
+        "schema_version": "1.0",
+        "variant_id": variant_id,
+        "job_id": job_id,
+        "parent_recipe_sha256": "a" * 64,
+        "derived_recipe_sha256": "b" * 64,
+        "built_child_recipe_sha256": bundle["recipe_sha256"],
+        "applied_directives": [],
+        "invalidated_evidence_sha256": _sha({}),
+        "strict_resolution_snapshot_sha256": _sha({"snapshot": "fresh"}),
+        "compatibility_snapshot_sha256": _sha({"compatible": True}),
+        "workflow_sha256": bundle["workflow_sha256"],
+        "resource_lock_sha256": _sha(bundle["resource_locks"]),
+    }
+    lineage["lineage_sha256"] = _sha(lineage)
+    bundle["variant_lineage"] = lineage
+    return bundle
+
+
 def _sha_bytes(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -107,6 +128,13 @@ def client(tmp_path: Path):
     with factory() as db:
         save(image_path="recipe.png", prompt="audit prompt", recipe_provenance=_bundle(tmp_path), db=db)
         save(image_path="legacy.png", prompt="legacy", db=db)
+        save(
+            image_path="variant.png",
+            job_id="job-one",
+            prompt="variant",
+            recipe_provenance=_bundle_with_variant_lineage(tmp_path),
+            db=db,
+        )
     try:
         yield TestClient(app)
     finally:
@@ -129,6 +157,90 @@ def test_recipe_export_and_rerun_use_verified_bundle(client: TestClient) -> None
     assert params["workflow"] == payload["workflow"]
     assert "seed" not in params
     assert "input_refs" not in params
+
+
+def test_variant_completion_recording_gallery_and_export_keep_exact_lineage(client: TestClient) -> None:
+    from app.db.models import GeneratedImage
+    from app.services.civitai_recipe_gallery import bundle_from_record
+
+    dependency = app.dependency_overrides[get_db]
+    db = next(dependency())
+    try:
+        row = db.get(GeneratedImage, 3)
+        recorded = bundle_from_record(row)
+        persisted_lineage = json.loads(row.recipe_variant_lineage_json)
+        assert recorded["variant_lineage"] == persisted_lineage
+        assert row.recipe_variant_lineage_sha256 == persisted_lineage["lineage_sha256"]
+    finally:
+        db.close()
+
+    exported = client.get("/api/gallery/3/export?format=recipe")
+    assert exported.status_code == 200
+    payload = exported.json()
+    assert payload["gallery"]["job_id"] == "job-one"
+    assert payload["variant_lineage"] == persisted_lineage
+
+    non_lineage = client.get("/api/gallery/1/export?format=recipe")
+    assert non_lineage.status_code == 200
+    assert "variant_lineage" not in non_lineage.json()
+
+
+@pytest.mark.parametrize(
+    "tampered_column",
+    [
+        "recipe_variant_lineage_json",
+        "recipe_variant_lineage_sha256",
+        "job_id",
+        "recipe_json",
+        "recipe_sha256",
+        "recipe_workflow_json",
+        "recipe_workflow_sha256",
+        "recipe_resource_locks_json",
+    ],
+)
+def test_variant_export_fails_closed_when_each_lineage_hash_job_workflow_or_lock_column_is_tampered(
+    client: TestClient, tampered_column: str,
+) -> None:
+    from app.db.models import GeneratedImage
+
+    dependency = app.dependency_overrides[get_db]
+    db = next(dependency())
+    try:
+        row = db.get(GeneratedImage, 3)
+        if tampered_column == "recipe_variant_lineage_json":
+            value = json.loads(row.recipe_variant_lineage_json)
+            value["variant_id"] = "tampered-variant"
+            row.recipe_variant_lineage_json = json.dumps(value)
+        elif tampered_column == "recipe_json":
+            value = json.loads(row.recipe_json)
+            value["base_prompt"] = "tampered prompt"
+            row.recipe_json = json.dumps(value)
+        elif tampered_column == "recipe_workflow_json":
+            value = json.loads(row.recipe_workflow_json)
+            value["1"]["inputs"]["seed"] = 1
+            row.recipe_workflow_json = json.dumps(value)
+        elif tampered_column == "recipe_resource_locks_json":
+            value = json.loads(row.recipe_resource_locks_json)
+            value[0]["local_path"] = "/tampered/base.safetensors"
+            row.recipe_resource_locks_json = json.dumps(value)
+        elif tampered_column == "job_id":
+            row.job_id = "tampered-job"
+        else:
+            setattr(row, tampered_column, "0" * 64)
+        db.commit()
+    finally:
+        db.close()
+
+    exported = client.get("/api/gallery/3/export?format=recipe")
+    assert exported.status_code == 409
+    assert exported.json()["detail"]["error"] in {
+        "recipe_sha256_mismatch",
+        "workflow_sha256_mismatch",
+        "workflow_snapshot_binding_mismatch",
+        "resource_lock_missing",
+        "variant_lineage_digest_mismatch",
+        "variant_lineage_binding_mismatch",
+    }
 
 
 def test_recipe_export_and_rerun_fail_closed_on_tampered_workflow(client: TestClient) -> None:
