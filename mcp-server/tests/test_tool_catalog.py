@@ -89,7 +89,7 @@ async def test_response_categories_match_fastmcp_output_schema() -> None:
 
 def test_catalog_docs_list_active_tools_and_intentional_omissions() -> None:
     """Docs must list the audited active catalog and keep stale names out of active tables."""
-    expected_names = {entry.name for entry in INTENDED_TOOLS if entry.external}
+    expected_names = {entry.name for entry in INTENDED_TOOLS if entry.external and entry.docs_required}
     omitted_names = {entry.name for entry in INTENTIONAL_OMISSIONS}
 
     for path in CATALOG_DOCS:

@@ -41,6 +41,9 @@ class GeneratedImage(Base):
     recipe_resource_locks_json = Column(Text, nullable=True)
     recipe_runtime_provenance_json = Column(Text, nullable=True)
     recipe_reproduction_level = Column(String(64), nullable=True)
+    # CIV-V-F immutable Parent/Child lineage; both remain null for legacy rows.
+    recipe_variant_lineage_json = Column(Text, nullable=True)
+    recipe_variant_lineage_sha256 = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -66,6 +69,38 @@ class GeneratedArtifact(Base):
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CivitaiVariationSet(Base):
+    """CIV-V-G immutable variation-set identity; members/events are append-only."""
+    __tablename__ = "civitai_variation_sets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, unique=True, index=True)
+    parent_recipe_sha256 = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class CivitaiVariationSetMember(Base):
+    __tablename__ = "civitai_variation_set_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, index=True)
+    ordinal = Column(Integer, nullable=False)
+    client_child_key = Column(String(128), nullable=False)
+    identity_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class CivitaiVariationSetEvent(Base):
+    __tablename__ = "civitai_variation_set_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    variation_set_id = Column(String(64), nullable=False, index=True)
+    member_ordinal = Column(Integer, nullable=False, index=True)
+    event_type = Column(String(64), nullable=False)
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class LoraTrainingJob(Base):
@@ -121,6 +156,9 @@ class DownloadedResource(Base):
     sha256 = Column(String(64), nullable=True, index=True)
     model_id = Column(String(128), nullable=True)
     version_id = Column(String(128), nullable=True)
+    # Civitai immutable file/AIR identities are nullable for historical rows.
+    civitai_file_id = Column(String(128), nullable=True, index=True)
+    air = Column(String(512), nullable=True, index=True)
     status = Column(String(64), nullable=False, default="planned", index=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

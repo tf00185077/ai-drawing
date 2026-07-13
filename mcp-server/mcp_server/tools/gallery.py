@@ -33,18 +33,7 @@ def gallery_list(
         if to_date:
             params["to_date"] = to_date
         resp = client.get("gallery/", params=params)
-        items = resp.get("items", [])
-        total = resp.get("total", 0)
-        if not items:
-            return f"共 {total} 筆，無符合條件的圖片"
-        lines = [f"共 {total} 筆，顯示 {len(items)} 筆:"]
-        for it in items[:10]:  # 最多列 10 筆
-            lines.append(
-                f"  id={it.get('id')} | {it.get('prompt', '')[:50]}... | {it.get('created_at', '')}"
-            )
-        if len(items) > 10:
-            lines.append("  ...")
-        return "\n".join(lines)
+        return json.dumps({"ok": True, "tool": "gallery_list", "data": resp}, ensure_ascii=False)
     except Exception as e:
         return f"error: {e}"
 

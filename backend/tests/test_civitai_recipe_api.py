@@ -201,6 +201,74 @@ def test_non_strict_resolve_downgrades_an_intrinsically_exact_report_when_ledger
     assert "resource_resolution" in body["reproduction_report"]["caveats"]
 
 
+
+def test_compatibility_returns_incompatible_as_structured_success_without_queue() -> None:
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe).to_dict()
+    # Existing CIV-C locks intentionally lack audited family evidence: incompatible is data, not an HTTP/build error.
+    snapshot_document = {"engine": "comfyui", "engine_version": "1", "node_types": sorted(["CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage"]), "sampler_names": ["euler"], "scheduler_names": ["normal"]}
+    snapshot = {**snapshot_document, "snapshot_sha256": hashlib.sha256(json.dumps(snapshot_document, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/compatibility", json={"recipe": recipe.model_dump(mode="json"), "resource_report": report, "model_family": "sdxl", "runtime_capabilities": snapshot})
+    assert response.status_code == 200
+    assert response.json()["compatible"] is False
+    assert response.json()["status"] == "incompatible"
+    submit.assert_not_called()
+
+
+def test_compatibility_accepts_backend_owned_resolver_identity_fields() -> None:
+    """The compatibility boundary must accept the exact identity-rich CIV-C report shape."""
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe).to_dict()
+    identity = {
+        "civitai_model_id": 376130,
+        "civitai_model_version_id": 2940478,
+        "civitai_file_id": 2819621,
+        "sha256": "a" * 64,
+    }
+    report["entries"][0]["expected_identity"].update(identity)
+    report["entries"][0]["actual_identity"].update(identity)
+    report["resource_lock"][0].update({key: value for key, value in identity.items() if key != "sha256"})
+
+    snapshot_document = {
+        "engine": "comfyui",
+        "engine_version": "1",
+        "node_types": sorted(["CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage"]),
+        "sampler_names": ["euler"],
+        "scheduler_names": ["normal"],
+    }
+    runtime_capabilities = {
+        **snapshot_document,
+        "snapshot_sha256": hashlib.sha256(
+            json.dumps(snapshot_document, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest(),
+    }
+    response = TestClient(app).post(
+        "/api/civitai-recipes/compatibility",
+        json={
+            "recipe": recipe.model_dump(mode="json"),
+            "resource_report": report,
+            "model_family": "sdxl",
+            "runtime_capabilities": runtime_capabilities,
+        },
+    )
+
+    assert response.status_code == 200
+
+
+def test_compatibility_validation_errors_are_structured_and_redact_secret_sentinels() -> None:
+    response = TestClient(app).post("/api/civitai-recipes/compatibility", json={
+        "recipe": recipe_payload(),
+        "resource_report": {"strict": True, "ready": True},
+        "model_family": "sdxl",
+        "runtime_capabilities": {"engine": "comfyui", "authorization": "Bearer PRIVATE-COMPATIBILITY-SENTINEL"},
+    })
+
+    assert response.status_code == 422
+    assert isinstance(response.json()["detail"], list)
+    assert "PRIVATE-COMPATIBILITY-SENTINEL" not in json.dumps(response.json())
+
+
 def test_build_is_fail_closed_before_queue_and_returns_canonical_workflow_hash() -> None:
     recipe = GenerationRecipe.model_validate(recipe_payload())
     report = report_for(recipe)
@@ -234,4 +302,36 @@ def test_run_rejects_invalid_bundle_without_queue_submit() -> None:
     with patch("app.api.civitai_recipes.submit_custom") as submit:
         response = TestClient(app).post("/api/civitai-recipes/run", json={"build": {"recipe": recipe_payload(), "workflow": {"1": {"class_type": "KSampler", "inputs": {}}}, "input_hashes": [], "resource_locks": [], "reproduction_report": {"level": "not_reproducible"}}, "runtime_provenance": {"engine": "different", "engine_version": "1", "reference": "runtime:1"}})
     assert response.status_code >= 400
+    submit.assert_not_called()
+
+
+def test_run_rejects_every_nonempty_queue_params_without_submit() -> None:
+    """CIV-V-A-AC1: audited submissions accept no queue-time overrides."""
+    recipe = GenerationRecipe.model_validate(recipe_payload())
+    report = report_for(recipe)
+    built = TestClient(app).post("/api/civitai-recipes/build", json={
+        "recipe": recipe.model_dump(mode="json"),
+        "resource_report": report.to_dict(),
+        "model_family": "sdxl",
+        "input_bindings": {},
+    })
+    assert built.status_code == 200
+    queue_param_keys = [
+        "prompt", "negative_prompt", "seed", "steps", "cfg", "sampler_name", "scheduler",
+        "denoise", "width", "height", "batch_size", "checkpoint", "lora", "loras",
+        "lora_strength", "diffusion_model", "text_encoder", "vae", "image", "image_pose",
+        "mask", "first_frame", "last_frame", "video_ref", "template", "unexpected",
+    ]
+    with patch("app.api.civitai_recipes.submit_custom") as submit:
+        response = TestClient(app).post("/api/civitai-recipes/run", json={
+            "build": built.json(),
+            "runtime_provenance": recipe_payload()["runtime"],
+            "queue_params": {key: "override" for key in reversed(queue_param_keys)},
+        })
+    assert response.status_code == 422
+    assert response.json()["detail"] == {
+        "code": "audited_queue_overrides_forbidden",
+        "message": "audited recipe submissions do not permit queue-time overrides",
+        "rejected_keys": sorted(queue_param_keys),
+    }
     submit.assert_not_called()

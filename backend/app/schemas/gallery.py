@@ -13,6 +13,7 @@ class GalleryItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    job_id: str | None = None
     image_path: str
     image_url: str | None = None  # 前端顯示用，/gallery/ 開頭
     checkpoint: str | None = None
