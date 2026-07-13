@@ -7,12 +7,21 @@ import re
 import secrets
 from typing import Any, Callable, Mapping
 
+from pydantic import ValidationError
+
 from app.core.queue import cancel as queue_cancel, get_job_status as queue_get_job_status
 from app.db.models import CivitaiVariationSet, CivitaiVariationSetEvent, CivitaiVariationSetMember, GeneratedImage
 from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequest
+from app.schemas.civitai_source_aliases import CivitaiSourceAliasLineageBinding, CivitaiSourceAliasMaterializedParent
+from app.schemas.generation_recipe import GenerationRecipe
 from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_recipe_gallery import bundle_from_record, canonical_sha256
-from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
+from app.services.civitai_recipe_variants import (
+    VariantFacadeError,
+    generate_one_variant,
+    generate_one_variant_from_materialized_parent,
+)
+from app.services.civitai_source_alias_parent import materialize_source_alias_parent
 
 
 _OPAQUE_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -54,6 +63,7 @@ _SENSITIVE_INLINE_VALUE = re.compile(
     re.IGNORECASE,
 )
 _STABLE_ERROR_COMPONENT = re.compile(r"^[a-z0-9_]{1,64}$")
+_MATERIALIZER_STATUSES = frozenset({"success", "rejected", "missing", "corrupt", "archived", "repointed"})
 
 
 def _safe(value: Any) -> Any:
@@ -97,6 +107,46 @@ def _identity_from_result(result: Any) -> dict[str, Any]:
     if "variant_id" not in identity or "job_id" not in identity:
         raise VariationSetError("submission", "variant_response_invalid")
     return identity
+
+
+def _source_identity(recipe: GenerationRecipe) -> dict[str, Any]:
+    if recipe.source.image_id is not None:
+        return {"provider": "civitai", "image_id": recipe.source.image_id}
+    if recipe.source.media_url is not None:
+        return {"provider": "civitai", "media_url": recipe.source.media_url}
+    raise ValueError("source identity invalid")
+
+
+def _materialize_common_parent(request: Any, *, db: Any) -> tuple[GenerationRecipe, str, CivitaiSourceAliasLineageBinding]:
+    """The sole set-level alias gate: no factory, persistence, or child derivation precedes it."""
+    try:
+        result = materialize_source_alias_parent(request.source_alias, db=db)
+    except Exception:
+        raise VariationSetError("source_alias_materialization", "materialization_failed") from None
+    if not isinstance(result, CivitaiSourceAliasMaterializedParent):
+        raise VariationSetError("source_alias_materialization", "materialization_invalid")
+    status, code = getattr(result, "status", None), getattr(result, "code", None)
+    parent, parent_sha, raw_binding = getattr(result, "parent_recipe", None), getattr(result, "parent_recipe_sha256", None), getattr(result, "alias_binding", None)
+    if not isinstance(status, str) or status not in _MATERIALIZER_STATUSES or not isinstance(code, str) or _STABLE_ERROR_COMPONENT.fullmatch(code) is None:
+        raise VariationSetError("source_alias_materialization", "materialization_invalid")
+    if status != "success":
+        if parent is not None or parent_sha is not None or raw_binding is not None:
+            raise VariationSetError("source_alias_materialization", "materialization_invalid")
+        raise VariationSetError("source_alias_materialization", code)
+    try:
+        if not isinstance(parent, GenerationRecipe) or not isinstance(parent_sha, str) or not isinstance(raw_binding, CivitaiSourceAliasLineageBinding):
+            raise ValueError("partial success")
+        binding = CivitaiSourceAliasLineageBinding.model_validate(raw_binding.model_dump(mode="json"))
+        canonical_parent_sha = canonical_sha256(parent.model_dump(mode="json", exclude_none=True))
+        if (
+            canonical_parent_sha != parent_sha.lower()
+            or binding.parent_recipe_sha256 != canonical_parent_sha
+            or binding.source_identity.model_dump(mode="json", exclude_none=True) != _source_identity(parent)
+        ):
+            raise ValueError("binding mismatch")
+        return parent, canonical_parent_sha, binding
+    except (AttributeError, TypeError, ValueError, ValidationError):
+        raise VariationSetError("source_alias_materialization", "materialization_invalid") from None
 
 
 def _create(store: Any, set_id: str, parent_sha: str, members: list[dict[str, Any]]) -> None:
@@ -221,16 +271,53 @@ def _gallery_identity(record: Any) -> dict[str, Any] | None:
 
 
 def create_variation_set(request: Any, *, db: Any, variation_set_id_factory: Callable[[], str] | None = None) -> dict[str, Any]:
+    """Create durable members only after a common alias Parent has been fully materialized."""
+    alias_binding: CivitaiSourceAliasLineageBinding | None = None
+    if request.source_alias is not None:
+        parent_recipe, parent_sha, alias_binding = _materialize_common_parent(request, db=db)
+    else:
+        parent_recipe, parent_sha = request.parent_recipe, request.parent_recipe_sha256.lower()
+    # The factory is deliberately after alias preflight: no identity leaks on an alias failure.
     factory = variation_set_id_factory or (lambda: secrets.token_urlsafe(24))
     set_id = factory()
     if not isinstance(set_id, str) or _OPAQUE_ID.fullmatch(set_id) is None: raise VariationSetError("persistence", "variation_set_id_invalid")
-    identities = [{"ordinal": index, "client_child_key": child.client_child_key} for index, child in enumerate(request.children)]
-    _create(db, set_id, request.parent_recipe_sha256.lower(), identities)
+    binding_payload = alias_binding.model_dump(mode="json") if alias_binding is not None else None
+    identities = [
+        {
+            "ordinal": index,
+            "client_child_key": child.client_child_key,
+            **(
+                {
+                    "parent_recipe_sha256": parent_sha,
+                    "source_alias_binding": deepcopy(binding_payload),
+                }
+                if binding_payload is not None else {}
+            ),
+        }
+        for index, child in enumerate(request.children)
+    ]
+    _create(db, set_id, parent_sha, identities)
     outcomes = []
     for ordinal, child in enumerate(request.children):
-        variant_request = CivitaiRecipeVariantGenerateRequest(parent_recipe=request.parent_recipe, parent_recipe_sha256=request.parent_recipe_sha256, directives=child.directives, model_family=request.model_family, runtime_capabilities=request.runtime_capabilities, runtime_provenance=request.runtime_provenance, input_bindings=request.input_bindings)
+        variant_request = CivitaiRecipeVariantGenerateRequest(
+            parent_recipe=parent_recipe if alias_binding is None else None,
+            parent_recipe_sha256=parent_sha if alias_binding is None else None,
+            source_alias=request.source_alias if alias_binding is not None else None,
+            directives=child.directives, model_family=request.model_family,
+            runtime_capabilities=request.runtime_capabilities, runtime_provenance=request.runtime_provenance,
+            input_bindings=request.input_bindings,
+        )
         try:
-            identity = _identity_from_result(generate_one_variant(variant_request, db=db))
+            if alias_binding is None:
+                identity = _identity_from_result(generate_one_variant(variant_request, db=db))
+            else:
+                identity = _identity_from_result(generate_one_variant_from_materialized_parent(
+                    variant_request, parent_recipe=parent_recipe, parent_recipe_sha256=parent_sha,
+                    source_alias_binding=alias_binding, db=db,
+                ))
+                # A Child response cannot overwrite the set's immutable materialized Parent.
+                if identity.get("parent_recipe_sha256") != parent_sha or alias_binding.parent_recipe_sha256 != parent_sha:
+                    raise VariationSetError("provenance_validation", "provenance_validation")
             if isinstance(db, InMemoryVariationSetStore): db.sets[set_id]["members"][ordinal].update(identity)
             else:
                 member = db.query(CivitaiVariationSetMember).filter_by(variation_set_id=set_id, ordinal=ordinal).first(); old = _read(db, set_id)["members"][ordinal]; old.update(identity); member.identity_json = canonical_json({key: value for key, value in old.items() if key != "events"}); db.commit()
@@ -241,7 +328,6 @@ def create_variation_set(request: Any, *, db: Any, variation_set_id_factory: Cal
             _append(db, set_id, ordinal, "submission_failed", failure)
             outcomes.append({"client_child_key": child.client_child_key, "outcome": "failed", "error": failure})
         except Exception as exc:
-            # Keep the set durable and continue sequentially; raw collaborator errors can contain credentials.
             failure = _submission_failure(exc)
             _append(db, set_id, ordinal, "submission_failed", failure)
             outcomes.append({"client_child_key": child.client_child_key, "outcome": "failed", "error": failure})
@@ -286,6 +372,50 @@ def cancel_variation_set(variation_set_id: str, *, db: Any, queue_status: Callab
     return get_variation_set(variation_set_id, db=db, queue_status=queue_status, gallery_lookup=gallery_lookup)
 
 
+def _validate_alias_member_binding(member: Mapping[str, Any], *, parent_sha: str) -> dict[str, Any] | None:
+    """Alias identities are immutable set evidence, including before a Child succeeds."""
+    durable = member.get("source_alias_binding")
+    if durable is None:
+        return None
+    try:
+        expected = CivitaiSourceAliasLineageBinding.model_validate(durable).model_dump(mode="json")
+        if (
+            member.get("parent_recipe_sha256") != parent_sha
+            or expected["parent_recipe_sha256"] != parent_sha
+        ):
+            raise ValueError("durable parent mismatch")
+        return expected
+    except (AttributeError, KeyError, TypeError, ValueError, ValidationError):
+        raise VariationSetError("provenance_validation", "provenance_validation") from None
+
+
+def _validate_alias_gallery_binding(member: Mapping[str, Any], *, parent_sha: str, gallery_export: Any) -> None:
+    """Cross-check a completed alias child without ever minting replacement provenance."""
+    expected = _validate_alias_member_binding(member, parent_sha=parent_sha)
+    try:
+        if not isinstance(gallery_export, Mapping):
+            raise ValueError("gallery export invalid")
+        lineage = gallery_export.get("variant_lineage")
+        gallery_claims_alias = isinstance(lineage, Mapping) and (
+            lineage.get("schema_version") == "1.1"
+            or "source_alias_binding" in lineage
+        )
+        if expected is None:
+            if gallery_claims_alias:
+                raise ValueError("durable alias binding missing")
+            return
+        if not isinstance(lineage, Mapping) or lineage.get("schema_version") != "1.1":
+            raise ValueError("alias lineage missing")
+        if lineage.get("parent_recipe_sha256") != parent_sha:
+            raise ValueError("lineage parent mismatch")
+        if lineage.get("source_alias_binding") != expected:
+            raise ValueError("lineage binding mismatch")
+        if canonical_sha256({key: value for key, value in lineage.items() if key != "lineage_sha256"}) != lineage.get("lineage_sha256"):
+            raise ValueError("lineage digest mismatch")
+    except (AttributeError, TypeError, ValueError, ValidationError):
+        raise VariationSetError("provenance_validation", "provenance_validation") from None
+
+
 def export_variation_set(variation_set_id: str, *, db: Any, queue_status: Callable[[str], Any] | None = None, gallery_export: Callable[[str], Any] | None = None, gallery_identity: Callable[[str], Any] | None = None) -> dict[str, Any]:
     view = get_variation_set(variation_set_id, db=db, queue_status=queue_status)
     gallery_export = gallery_export or (lambda job: bundle_from_record(_gallery_lookup(db, job), verify_files=True) if _gallery_lookup(db, job) is not None else None)
@@ -293,8 +423,15 @@ def export_variation_set(variation_set_id: str, *, db: Any, queue_status: Callab
     members = []
     for member in view["members"]:
         item = deepcopy(member)
+        is_alias_member = member.get("source_alias_binding") is not None
+        if is_alias_member:
+            _validate_alias_member_binding(member, parent_sha=view["parent_recipe_sha256"])
         item["gallery_identity"] = gallery_identity(member["job_id"]) if member.get("job_id") else None
         item["gallery_export"] = gallery_export(member["job_id"]) if member.get("job_id") else None
+        if is_alias_member and member.get("status") == "completed" and item["gallery_export"] is None:
+            raise VariationSetError("provenance_validation", "provenance_validation")
+        if item["gallery_export"] is not None:
+            _validate_alias_gallery_binding(member, parent_sha=view["parent_recipe_sha256"], gallery_export=item["gallery_export"])
         members.append(item)
     document = _safe({
         "schema_version": "1.0", "variation_set_id": view["variation_set_id"],
