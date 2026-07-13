@@ -148,6 +148,10 @@ class CivitaiSourceAliasRenameResult(_StrictModel):
     event: CivitaiSourceAliasHistoryEventView | None = None
 
 
+class CivitaiSourceAliasRenameResponse(CivitaiSourceAliasRenameResult):
+    """CIV-SA-J typed HTTP representation of one audited rename result."""
+
+
 class CivitaiSourceAliasArchiveRequest(_StrictModel):
     """CIV-SA-I strict internal archive intent; callers cannot supply lifecycle evidence."""
 
