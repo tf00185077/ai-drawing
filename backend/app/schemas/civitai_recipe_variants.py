@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.civitai_recipe_derivation import CivitaiRecipeDerivationRequest, RecipeDerivationDirective
 from app.schemas.civitai_recipes import RuntimeCapabilitiesPayload
+from app.schemas.civitai_source_aliases import CivitaiSourceAliasLineageBinding, CivitaiSourceAliasParentSelector
 from app.schemas.generation_recipe import GenerationRecipe, RuntimeProvenance, canonical_runtime_lock_document
 
 
@@ -25,8 +26,18 @@ class CivitaiRecipeVariantInputBinding(_StrictModel):
 
 class CivitaiRecipeVariantGenerateRequest(_StrictModel):
     """Only upstream inputs; all executable artifacts remain backend-owned."""
-    parent_recipe: GenerationRecipe
-    parent_recipe_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "allOf": [{"oneOf": [
+                {"required": ["parent_recipe", "parent_recipe_sha256"], "not": {"required": ["source_alias"]}},
+                {"required": ["source_alias"], "not": {"anyOf": [{"required": ["parent_recipe"]}, {"required": ["parent_recipe_sha256"]}]}},
+            ]}],
+        },
+    )
+    parent_recipe: GenerationRecipe | None = None
+    parent_recipe_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    source_alias: CivitaiSourceAliasParentSelector | None = None
     directives: list[RecipeDerivationDirective]
     model_family: Literal["sdxl", "illustrious"]
     runtime_capabilities: RuntimeCapabilitiesPayload
@@ -35,11 +46,16 @@ class CivitaiRecipeVariantGenerateRequest(_StrictModel):
 
     @model_validator(mode="after")
     def validate_derivation_and_runtime_identity(self) -> "CivitaiRecipeVariantGenerateRequest":
-        CivitaiRecipeDerivationRequest(
-            parent_recipe=self.parent_recipe,
-            parent_recipe_sha256=self.parent_recipe_sha256,
-            directives=self.directives,
-        )
+        direct = self.parent_recipe is not None or self.parent_recipe_sha256 is not None
+        alias = self.source_alias is not None
+        if direct == alias or (direct and (self.parent_recipe is None or self.parent_recipe_sha256 is None)):
+            raise ValueError("exactly one complete parent source is required")
+        if direct:
+            CivitaiRecipeDerivationRequest(
+                parent_recipe=self.parent_recipe,
+                parent_recipe_sha256=self.parent_recipe_sha256,
+                directives=self.directives,
+            )
         capabilities = self.runtime_capabilities.model_dump(mode="json")
         snapshot_document = {
             key: capabilities[key]
@@ -84,7 +100,7 @@ class CivitaiRecipeVariantGenerateRequest(_StrictModel):
 
 
 class CivitaiRecipeVariantLineage(_StrictModel):
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.0"
     variant_id: str = Field(min_length=1)
     job_id: str = Field(min_length=1)
     parent_recipe_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -96,7 +112,17 @@ class CivitaiRecipeVariantLineage(_StrictModel):
     compatibility_snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     workflow_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     resource_lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None
     lineage_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def require_versioned_alias_binding(self) -> "CivitaiRecipeVariantLineage":
+        binding_present = "source_alias_binding" in self.model_fields_set
+        if self.schema_version == "1.0" and binding_present:
+            raise ValueError("v1.0 lineage must not contain source_alias_binding")
+        if self.schema_version == "1.1" and (not binding_present or self.source_alias_binding is None):
+            raise ValueError("v1.1 lineage requires source_alias_binding")
+        return self
 
 
 class CivitaiRecipeVariantGenerateResponse(_StrictModel):
