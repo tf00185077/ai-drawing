@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
@@ -18,8 +18,18 @@ from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequ
 from app.schemas.civitai_recipe_variation_sets import CivitaiRecipeVariationSetCreateRequest
 from app.services.civitai_recipe_variation_sets import VariationSetError, cancel_variation_set, create_variation_set, export_variation_set, get_variation_set
 from app.services.civitai_recipe_variants import VariantFacadeError, generate_one_variant
-from app.schemas.civitai_source_aliases import CivitaiSourceAliasResolveRequest, CivitaiSourceAliasResolveResponse
-from app.services.civitai_source_alias_registry import resolve_source_alias_exact
+from app.schemas.civitai_source_aliases import (
+    CivitaiSourceAliasResolveRequest,
+    CivitaiSourceAliasResolveResponse,
+    SourceAliasRegistryListResponse,
+    SourceAliasRegistrySearchRequest,
+    SourceAliasRegistrySearchResponse,
+)
+from app.services.civitai_source_alias_registry import (
+    list_registry_sources,
+    resolve_source_alias_exact,
+    search_registry_sources,
+)
 from app.schemas.civitai_recipes import (
     CivitaiRecipeCompatibilityRequest,
     CivitaiRecipeCompatibilityResponse,
@@ -104,6 +114,24 @@ class _SourceAliasResolveValidationRoute(APIRoute):
                 return JSONResponse(
                     status_code=status.HTTP_404_NOT_FOUND,
                     content={"detail": _detail("invalid_alias", "source alias resolution failed")},
+                )
+
+        return redacted_handler
+
+
+class _SourceAliasDiscoveryValidationRoute(APIRoute):
+    """Keep discovery validation deterministic and free of untrusted diagnostics."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    content={"detail": _detail("source_alias_discovery_invalid", "source alias discovery request invalid")},
                 )
 
         return redacted_handler
@@ -201,6 +229,51 @@ def resolve_civitai_source_alias(
     raise HTTPException(
         status_code=status.HTTP_409_CONFLICT,
         detail=_detail("corrupt_registry", "source alias resolution failed"),
+    )
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _SourceAliasDiscoveryValidationRoute
+
+
+def _source_alias_discovery_result(result: Any, response_type: type[Any]) -> Any:
+    """Map only frozen CIV-SA-E outcomes without exposing domain diagnostics."""
+    if result.status == "success":
+        return response_type.model_validate(result.model_dump(mode="python"))
+    if result.status == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=_detail("source_alias_discovery_invalid", "source alias discovery request invalid"),
+        )
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=_detail("source_alias_registry_corrupt", "source alias discovery unavailable"),
+    )
+
+
+@router.get("/source-aliases", response_model=SourceAliasRegistryListResponse)
+def list_civitai_source_aliases(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> SourceAliasRegistryListResponse:
+    """Expose the committed CIV-SA-E audited list facade without changing its semantics."""
+    return _source_alias_discovery_result(
+        list_registry_sources(db=db, limit=limit, offset=offset), SourceAliasRegistryListResponse,
+    )
+
+
+@router.post("/source-aliases/search", response_model=SourceAliasRegistrySearchResponse)
+def search_civitai_source_aliases(
+    request: SourceAliasRegistrySearchRequest,
+    db: Session = Depends(get_db),
+) -> SourceAliasRegistrySearchResponse:
+    """Expose CIV-SA-E ranked candidates only; this never chooses or resolves a target."""
+    return _source_alias_discovery_result(
+        search_registry_sources(request.query, db=db, limit=request.limit, offset=request.offset),
+        SourceAliasRegistrySearchResponse,
     )
 
 
