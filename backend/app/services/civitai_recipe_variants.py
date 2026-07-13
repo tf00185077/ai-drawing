@@ -14,12 +14,15 @@ from app.schemas.civitai_recipe_variants import (
     CivitaiRecipeVariantGenerateRequest, CivitaiRecipeVariantGenerateResponse,
     CivitaiRecipeVariantLineage,
 )
+from app.schemas.civitai_source_aliases import CivitaiSourceAliasLineageBinding, CivitaiSourceAliasMaterializedParent
+from app.schemas.generation_recipe import GenerationRecipe
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
 from app.services.civitai_recipe_compatibility import preflight_recipe_compatibility
 from app.services.civitai_recipe_derivation import RecipeDerivationError, derive_generation_recipe
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle, canonical_sha256
 from app.services.civitai_recipe_pipeline import build_recipe, report_from_payload, resolve_recipe
 from app.services.civitai_recipe_workflow_compiler import RecipeCompileError
+from app.services.civitai_source_alias_parent import materialize_source_alias_parent
 
 
 class VariantFacadeError(ValueError):
@@ -98,6 +101,67 @@ def _validate_lineage_bindings(lineage: Mapping[str, Any], components: Mapping[s
             raise VariantFacadeError("provenance_validation", "lineage_binding_mismatch")
 
 
+def _source_identity(recipe: Any) -> dict[str, Any]:
+    source = recipe.source if hasattr(recipe, "source") else recipe.get("source")
+    if isinstance(source, Mapping):
+        image_id, media_url = source.get("image_id"), source.get("media_url")
+    else:
+        image_id, media_url = source.image_id, source.media_url
+    if image_id is not None:
+        return {"provider": "civitai", "image_id": image_id}
+    if media_url is not None:
+        return {"provider": "civitai", "media_url": media_url}
+    raise VariantFacadeError("provenance_validation", "source_identity_invalid")
+
+
+_SAFE_MATERIALIZER_CODE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+_MATERIALIZER_STATUSES = {"success", "rejected", "missing", "corrupt", "archived", "repointed"}
+
+
+def _materialize_alias_request(request: CivitaiRecipeVariantGenerateRequest, *, db: Any) -> tuple[CivitaiRecipeVariantGenerateRequest, CivitaiSourceAliasLineageBinding]:
+    """Materialize exactly once; validate its boundary shape without revalidating its trusted Parent."""
+    try:
+        result = materialize_source_alias_parent(request.source_alias, db=db)
+    except Exception:
+        raise VariantFacadeError("source_alias_materialization", "materialization_failed") from None
+    if not isinstance(result, CivitaiSourceAliasMaterializedParent):
+        raise VariantFacadeError("source_alias_materialization", "materialization_invalid")
+
+    status = getattr(result, "status", None)
+    code = getattr(result, "code", None)
+    parent = getattr(result, "parent_recipe", None)
+    parent_sha256 = getattr(result, "parent_recipe_sha256", None)
+    raw_binding = getattr(result, "alias_binding", None)
+    if not isinstance(status, str) or status not in _MATERIALIZER_STATUSES or not isinstance(code, str) or _SAFE_MATERIALIZER_CODE.fullmatch(code) is None:
+        raise VariantFacadeError("source_alias_materialization", "materialization_invalid")
+    if status != "success":
+        if parent is not None or parent_sha256 is not None or raw_binding is not None:
+            raise VariantFacadeError("source_alias_materialization", "materialization_invalid")
+        raise VariantFacadeError("source_alias_materialization", code)
+    if not isinstance(parent, GenerationRecipe) or not isinstance(parent_sha256, str) or not isinstance(raw_binding, CivitaiSourceAliasLineageBinding):
+        raise VariantFacadeError("source_alias_materialization", "materialization_invalid")
+
+    try:
+        # ``parent`` may carry verified confirmation evidence that normal public model
+        # revalidation intentionally cannot reconstruct.  Preserve this exact trusted
+        # object; only caller-owned request fields were validated at the HTTP boundary.
+        parent_payload = _recipe_payload(parent)
+        parent_sha = canonical_sha256(parent_payload)
+        binding = CivitaiSourceAliasLineageBinding.model_validate(raw_binding.model_dump(mode="json"))
+        if parent_sha != parent_sha256.lower() or binding.parent_recipe_sha256 != parent_sha:
+            raise ValueError("parent hash mismatch")
+        if binding.source_identity.model_dump(mode="json", exclude_none=True) != _source_identity(parent):
+            raise ValueError("source identity mismatch")
+        effective = request.model_copy(update={
+            "parent_recipe": parent,
+            "parent_recipe_sha256": parent_sha,
+            "source_alias": None,
+        })
+        return effective, binding
+    except (AttributeError, TypeError, ValueError, ValidationError):
+        raise VariantFacadeError("source_alias_materialization", "materialization_invalid") from None
+
+
 def _build_validated_provenance(
     *,
     request: CivitaiRecipeVariantGenerateRequest,
@@ -109,6 +173,7 @@ def _build_validated_provenance(
     workflow: Mapping[str, Any],
     variant_id_factory: Callable[[], str],
     job_id_factory: Callable[[], str],
+    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, str], dict[str, Any]]:
     """Construct and validate every formal lineage binding in one fail-closed boundary."""
     try:
@@ -171,12 +236,25 @@ def _build_validated_provenance(
         if derivation.child_recipe_sha256 != digests["derived_recipe_sha256"]:
             raise VariantFacadeError("provenance_validation", "derived_recipe_hash_mismatch")
         lineage_document = {
-            "schema_version": "1.0",
+            "schema_version": "1.1" if source_alias_binding is not None else "1.0",
             "variant_id": variant_id,
             "job_id": job_id,
             **digests,
             "applied_directives": applied_directives,
         }
+        if source_alias_binding is not None:
+            parent_identity = _source_identity(request.parent_recipe)
+            child_identity = _source_identity(child_recipe)
+            built_child_identity = _source_identity(bundle["recipe"])
+            binding_identity = source_alias_binding.source_identity.model_dump(mode="json", exclude_none=True)
+            if (
+                source_alias_binding.parent_recipe_sha256 != digests["parent_recipe_sha256"]
+                or binding_identity != parent_identity
+                or binding_identity != child_identity
+                or binding_identity != built_child_identity
+            ):
+                raise VariantFacadeError("provenance_validation", "source_alias_binding_mismatch")
+            lineage_document["source_alias_binding"] = source_alias_binding.model_dump(mode="json")
         lineage_document["lineage_sha256"] = _lineage_digest(lineage_document)
     except VariantFacadeError:
         raise
@@ -184,7 +262,7 @@ def _build_validated_provenance(
         raise VariantFacadeError("provenance_validation", "canonicalization_failed") from exc
 
     try:
-        lineage = CivitaiRecipeVariantLineage.model_validate(lineage_document).model_dump(mode="json")
+        lineage = CivitaiRecipeVariantLineage.model_validate(lineage_document).model_dump(mode="json", exclude_none=True)
     except ValidationError as exc:
         raise VariantFacadeError("provenance_validation", "lineage_invalid") from exc
     try:
@@ -219,6 +297,9 @@ def generate_one_variant(
     job_id_factory: Callable[[], str] | None = None,
 ) -> CivitaiRecipeVariantGenerateResponse:
     """Perform the frozen derive→resolve→compatibility→build→validate→queue sequence."""
+    source_alias_binding: CivitaiSourceAliasLineageBinding | None = None
+    if request.source_alias is not None:
+        request, source_alias_binding = _materialize_alias_request(request, db=db)
     try:
         derivation = derive_generation_recipe(CivitaiRecipeDerivationRequest(
             parent_recipe=request.parent_recipe, parent_recipe_sha256=request.parent_recipe_sha256,
@@ -294,6 +375,7 @@ def generate_one_variant(
             workflow=workflow,
             variant_id_factory=variant_id_factory or (lambda: secrets.token_urlsafe(32)),
             job_id_factory=job_id_factory or (lambda: secrets.token_urlsafe(24)),
+            source_alias_binding=source_alias_binding,
         )
     except VariantFacadeError:
         raise

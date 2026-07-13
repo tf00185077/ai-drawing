@@ -304,7 +304,7 @@ def _validate_variant_lineage(bundle: Mapping[str, Any], lineage: Any, *, job_id
         # Keep the frozen, strict contract independent of gallery's permissive legacy
         # decoding: a lineage claim must contain every canonical field and no extras.
         from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantLineage
-        value = CivitaiRecipeVariantLineage.model_validate(dict(lineage)).model_dump(mode="json")
+        value = CivitaiRecipeVariantLineage.model_validate(dict(lineage)).model_dump(mode="json", exclude_none=True)
     except (ImportError, ValidationError):
         _fail("variant_lineage_invalid", "variant_lineage", "variant lineage does not match the strict CIV-V-F schema")
     declared = value["lineage_sha256"]
@@ -316,6 +316,19 @@ def _validate_variant_lineage(bundle: Mapping[str, Any], lineage: Any, *, job_id
         _fail("variant_lineage_binding_mismatch", "variant_lineage.resource_lock_sha256", "lineage locks do not bind persisted bundle")
     if job_id is not None and value["job_id"] != job_id:
         _fail("variant_lineage_binding_mismatch", "variant_lineage.job_id", "lineage job does not bind gallery row")
+    binding = value.get("source_alias_binding")
+    if binding is not None:
+        if binding["parent_recipe_sha256"] != value["parent_recipe_sha256"]:
+            _fail("variant_lineage_binding_mismatch", "variant_lineage.source_alias_binding.parent_recipe_sha256", "alias binding does not bind lineage parent")
+        source = bundle["recipe"].get("source")
+        projected = None
+        if isinstance(source, Mapping):
+            if source.get("image_id") is not None:
+                projected = {"provider": "civitai", "image_id": source.get("image_id")}
+            elif source.get("media_url") is not None:
+                projected = {"provider": "civitai", "media_url": source.get("media_url")}
+        if projected != binding["source_identity"]:
+            _fail("variant_lineage_binding_mismatch", "variant_lineage.source_alias_binding.source_identity", "alias binding does not bind child recipe source")
     return value
 
 
