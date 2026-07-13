@@ -13,13 +13,13 @@ class DispatchTests(unittest.TestCase):
   src=Path(__file__).resolve().parents[1]
   for n in ('executor.txt','judge_plan.txt','judge_review.txt'):(self.root/'pipeline/templates'/n).write_text((src/'templates'/n).read_text())
   (self.root/'pipeline/roles.json').write_text((src/'roles.json').read_text());(self.root/'pipeline/state.example.json').write_text((src/'state.example.json').read_text())
-  self.s={'schema':'hermes.pipeline.v1.1','goal':{'id':'g','title':'g','status':'ACTIVE'},'roles_file':'pipeline/roles.json','stages':[],'runs':{},'rate_limit':{'active':False,'resume_at':None,'hit_count_today':0},'planning':{'counter':0,'failures':0,'max_failures':3},'updated_at':'x'};self.put();self.old=(dispatch.ROOT,dispatch.PIPE,dispatch.RUNS);dispatch.ROOT=self.root;dispatch.PIPE=self.root/'pipeline';dispatch.RUNS=self.root/'agent_runs'
+  self.s={'schema':'hermes.pipeline.v1.1','goal':{'id':'g','title':'g','status':'ACTIVE'},'roles_file':'pipeline/roles.json','planner':{'substantive_review_split_threshold':2},'stages':[],'runs':{},'rate_limit':{'active':False,'resume_at':None,'hit_count_today':0},'planning':{'counter':0,'failures':0,'max_failures':3},'updated_at':'x'};self.put();self.old=(dispatch.ROOT,dispatch.PIPE,dispatch.RUNS);dispatch.ROOT=self.root;dispatch.PIPE=self.root/'pipeline';dispatch.RUNS=self.root/'agent_runs'
  def tearDown(self):dispatch.ROOT,dispatch.PIPE,dispatch.RUNS=self.old;self.d.cleanup()
  def put(self): (self.root/'pipeline/state.json').write_text(json.dumps(self.s))
  def get(self):return json.loads((self.root/'pipeline/state.json').read_text())
  def tick(self):
   with patch('dispatch.subprocess.Popen',P),patch('dispatch.alive',lambda p:p in self.live):return dispatch.reconcile()
- def st(self):return {'id':'X','title':'x','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'required_tests':['unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':3,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
+ def st(self):return {'id':'X','title':'x','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'required_tests':['AC-1 -> unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':2,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
  def dead(self,s,r):r['status']='RUNNING';r['pid']=999;s['runs'][r['run_id']]=r;self.s=s;self.put()
  def result(self,r,status='done'):
   (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.result.v1.1','run_id':r['run_id'],'status':status,'summary':'ok','files_changed':[],'how_verified':'x','blocked_reason':None,'notes_for_review':'x'}))
@@ -146,8 +146,21 @@ class DispatchTests(unittest.TestCase):
   st=self.st();self.s['stages']=[st];r={'run_id':'X.review.1.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j.json','log_file':'agent_runs/j.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['NEW-99'])
   with patch('dispatch.alive',return_value=False):dispatch.harvest(self.s,[])
   self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertIn('NEW-99',st['scope_violation'])
- def test_third_review_rejection_pauses_without_fourth_execute(self):
-  st=self.st();st['review_rejections']=2;self.s['stages']=[st];r={'run_id':'X.review.3.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j3.json','log_file':'agent_runs/j3.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['AC-1'])
+ def test_second_review_rejection_pauses_without_third_execute(self):
+  st=self.st();st['max_review_rejections']=3;st['review_rejections']=1;self.s['stages']=[st];r={'run_id':'X.review.2.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j2.json','log_file':'agent_runs/j2.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['AC-1'])
   with patch('dispatch.alive',return_value=False):dispatch.harvest(self.s,[])
-  self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertEqual(st['review_rejections'],3)
+  self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(st['status'],'BLOCKED');self.assertEqual(st['review_rejections'],2)
+ def test_stale_ready_stage_at_split_threshold_is_blocked_before_dispatch(self):
+  st=self.st();st['max_review_rejections']=3;st['review_rejections']=2;self.s['stages']=[st];self.put()
+  with patch('dispatch.subprocess.Popen') as spawn:self.tick();spawn.assert_not_called()
+  s=self.get();self.assertEqual(s['goal']['status'],'PAUSED');self.assertEqual(s['stages'][0]['status'],'BLOCKED')
+ def test_executor_prompt_requires_progress_update_only_when_allowed(self):
+  roles=json.loads((self.root/'pipeline/roles.json').read_text());st=self.st()
+  with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'executor',st,notes=[])
+  prompt=(self.root/list(self.s['runs'].values())[-1]['prompt_file']).read_text()
+  self.assertNotIn('更新 docs/PROGRESS.md',prompt)
+  st2=self.st();st2['id']='Y';st2['allowed_files'].append('docs/PROGRESS.md')
+  with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'executor',st2,notes=[])
+  prompt=(self.root/list(self.s['runs'].values())[-1]['prompt_file']).read_text()
+  self.assertIn('更新 docs/PROGRESS.md',prompt)
 if __name__=='__main__':unittest.main()

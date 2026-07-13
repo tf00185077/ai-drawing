@@ -14,7 +14,7 @@ Allowed files：{allowed_files}
 上一輪保留 worktree scope：{existing_worktree_scope}
 必讀：AGENTS.md、SPEC.md、docs/task-specs/CIVITAI_RECIPE_WORKFLOW.md，以及與本 stage 直接相關的 source/tests。
 
-SCOPE FREEZE（硬性）：只實作 in_scope 與 acceptance；不得處理 out_of_scope 或自行增加後續階段能力。發現額外問題只寫入 notes_for_review，不能擴大 dirty scope。遵守 TDD，更新 docs/PROGRESS.md。不要執行昂貴 ComfyUI 生圖；只有 live-smoke stage 才可產圖。
+SCOPE FREEZE（硬性）：只實作 in_scope 與 acceptance；不得處理 out_of_scope 或自行增加後續階段能力。發現額外問題只寫入 notes_for_review，不能擴大 dirty scope。遵守 TDD。{progress_instruction}不要執行昂貴 ComfyUI 生圖；只有 live-smoke stage 才可產圖。
 
 完成後寫入 {result_file}（這個machine result與其他允許的agent_runs證據是上方禁止修改agent_runs的唯一例外）：
 {"schema":"hermes.result.v1.1","run_id":"{run_id}","status":"done|partial|blocked","summary":"...","files_changed":["Git-visible project-relative path"],"evidence_files":["agent_runs/... evidence path"],"how_verified":"...","blocked_reason":null,"notes_for_review":"..."}
