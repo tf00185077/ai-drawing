@@ -18,6 +18,8 @@ class CivitaiRecipeImportRequest(_StrictModel):
     locator: int | str
     # JSON boundary contract: standard base64, strictly decoded only at the backend.
     embedded_image_base64: str | None = None
+    # CIV-SA-B preserves CIV-SA-A normalization and persistence semantics.
+    remember_alias: str | None = Field(default=None, min_length=1, max_length=512)
 
     @field_validator("embedded_image_base64")
     @classmethod

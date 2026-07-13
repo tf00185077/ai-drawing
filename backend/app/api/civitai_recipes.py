@@ -43,6 +43,7 @@ from app.services.civitai_recipe_pipeline import (
     inspect_recipe,
     report_from_payload,
     resolve_recipe,
+    SourceAliasImportError,
 )
 from app.services.civitai_recipe_workflow_compiler import RecipeCompileError
 from app.services.civitai_resource_resolution import LocalResourceLedgerEntry
@@ -157,13 +158,21 @@ def install_civitai_resource_route(request: CivitaiResourceInstallRequest, db: S
 
 
 @router.post("/import")
-def import_civitai_recipe(request: CivitaiRecipeImportRequest) -> dict[str, Any]:
+def import_civitai_recipe(request: CivitaiRecipeImportRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
     try:
-        return import_recipe(request.locator, embedded_image=request.embedded_image_bytes())
+        return import_recipe(
+            request.locator,
+            embedded_image=request.embedded_image_bytes(),
+            remember_alias=request.remember_alias,
+            db=db,
+        )
+    except SourceAliasImportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=_detail(exc.code, "source alias import failed")) from exc
     except AcquisitionError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail(exc.code, str(exc), provenance=exc.provenance)) from exc
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail(exc.code, "civitai acquisition failed", provenance=exc.provenance)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail("embedded_metadata_invalid", str(exc))) from exc
+        # Import fixtures and acquisition metadata are untrusted; never echo their contents.
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail("embedded_metadata_invalid", "embedded metadata invalid")) from exc
 
 
 @router.post("/inspect")

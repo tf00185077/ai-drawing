@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import hashlib
 from typing import Any, Mapping
 
 import httpx
 
 from app.schemas.generation_recipe import GenerationRecipe, assess_reproduction
-from app.services.civitai_acquisition import CivitaiTransportResponse, acquire_civitai_recipe
+from app.services.civitai_acquisition import CivitaiTransportResponse, acquire_civitai_recipe, redact_secrets
 from app.services.civitai_embedded_metadata import extract_embedded_metadata
 from app.services.civitai_resource_resolution import (
     LocalResourceLedgerEntry,
@@ -16,6 +17,8 @@ from app.services.civitai_resource_resolution import (
     resolve_recipe_resources,
 )
 from app.services.civitai_recipe_gallery import canonical_sha256
+from app.schemas.civitai_source_aliases import CivitaiSourceAliasRememberRequest, canonical_sha256 as alias_canonical_sha256
+from app.services.civitai_source_alias_registry import normalize_alias, remember_source_alias
 from app.services.civitai_recipe_workflow_compiler import compile_generation_recipe_workflow
 
 
@@ -35,7 +38,75 @@ class CivitaiHttpTransport:
         return CivitaiTransportResponse(response.status_code, response.content, dict(response.headers))
 
 
-def import_recipe(locator: int | str, *, embedded_image: bytes | None = None, transport: Any | None = None) -> dict[str, Any]:
+class SourceAliasImportError(ValueError):
+    """Stable CIV-SA-B adapter error; acquisition and registry own their internals."""
+
+    def __init__(self, code: str, status_code: int = 422) -> None:
+        self.code = code
+        self.status_code = status_code
+        super().__init__(code)
+
+
+def _source_alias_identity(acquisition: Any) -> dict[str, Any]:
+    source = acquisition.recipe.source.model_dump(mode="json", exclude_none=True)
+    identity = {"provider": "civitai"}
+    if source.get("image_id") is not None:
+        identity["image_id"] = source["image_id"]
+    elif isinstance(source.get("media_url"), str):
+        identity["media_url"] = source["media_url"]
+    else:
+        raise SourceAliasImportError("alias_identity_invalid")
+    return identity
+
+
+def _suggested_source_alias(identity: Mapping[str, Any]) -> str:
+    image_id = identity.get("image_id")
+    if image_id is not None:
+        return f"civitai-image-{image_id}"
+    media_url = identity.get("media_url")
+    if not isinstance(media_url, str):
+        raise SourceAliasImportError("alias_identity_invalid")
+    return f"civitai-media-{hashlib.sha256(media_url.encode('utf-8')).hexdigest()[:12]}"
+
+
+def _source_alias_result(acquisition: Any, raw: Mapping[str, Any], *, remember_alias: str | None, db: Any | None) -> dict[str, Any]:
+    identity = _source_alias_identity(acquisition)
+    if remember_alias is None:
+        return {"persisted": False, "suggested_alias": _suggested_source_alias(identity)}
+    if db is None:
+        raise SourceAliasImportError("alias_registry_unavailable")
+    thumbnail_url = acquisition.media_url if isinstance(acquisition.media_url, str) else None
+    try:
+        request = CivitaiSourceAliasRememberRequest.model_validate({
+            "primary_alias": remember_alias,
+            "source_identity": identity,
+            "acquisition_evidence_snapshot": dict(raw),
+            "acquisition_evidence_sha256": alias_canonical_sha256(raw),
+            "parent_recipe_sha256": alias_canonical_sha256(acquisition.recipe.model_dump(mode="json", exclude_none=True)),
+            "thumbnail_url": thumbnail_url,
+        })
+    except Exception as exc:
+        raise SourceAliasImportError("alias_import_invalid") from exc
+    result = remember_source_alias(request, db=db)
+    if result.status == "conflict":
+        raise SourceAliasImportError("alias_conflict", 409)
+    if result.status != "success" or result.record is None:
+        raise SourceAliasImportError("alias_registry_corrupt")
+    record = result.record.model_dump(mode="json")
+    return {
+        "persisted": True,
+        "registry_version": record["registry_version"],
+        "normalized_alias": normalize_alias(remember_alias),
+        "source_identity": record["source_identity"],
+        "acquisition_evidence_sha256": record["acquisition_evidence_sha256"],
+        "parent_recipe_sha256": record["parent_recipe_sha256"],
+        "thumbnail_url": record["thumbnail_url"],
+        "thumbnail_path": record["thumbnail_path"],
+        "created_at": record["created_at"],
+    }
+
+
+def import_recipe(locator: int | str, *, embedded_image: bytes | None = None, transport: Any | None = None, remember_alias: str | None = None, db: Any | None = None) -> dict[str, Any]:
     embedded_metadata = extract_embedded_metadata(embedded_image) if embedded_image is not None else None
     acquisition = acquire_civitai_recipe(locator, transport=transport or CivitaiHttpTransport(), embedded_metadata=embedded_metadata)
     if acquisition.recipe is None:
@@ -46,6 +117,7 @@ def import_recipe(locator: int | str, *, embedded_image: bytes | None = None, tr
         "acquisition": raw,
         "recipe": acquisition.recipe.model_dump(mode="json", exclude_none=True),
         "reproduction_report": assess_reproduction(acquisition.recipe).model_dump(mode="json"),
+        "source_alias_result": _source_alias_result(acquisition, redact_secrets(raw), remember_alias=remember_alias, db=db),
     }
 
 
