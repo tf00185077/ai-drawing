@@ -131,3 +131,43 @@ class CivitaiSourceAliasResolveResponse(CivitaiSourceAliasRegistryView):
     """The audited registry binding plus the persisted alias that matched it."""
 
     matched_alias: CivitaiSourceAliasView
+
+
+class CivitaiSourceAliasRegistryEntry(_StrictModel):
+    """One validated registry binding with its complete alias namespace view."""
+
+    primary_alias: CivitaiSourceAliasView
+    alternate_aliases: list[CivitaiSourceAliasView] = Field(default_factory=list)
+    record: CivitaiSourceAliasRegistryView
+
+
+class CivitaiSourceAliasRegistryListResult(_StrictModel):
+    """CIV-SA-E offline registry listing result; corrupt storage never yields entries."""
+
+    status: Literal["success", "rejected", "corrupt"]
+    code: str
+    total: int = Field(default=0, ge=0)
+    limit: int = Field(default=50, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+    entries: list[CivitaiSourceAliasRegistryEntry] = Field(default_factory=list)
+
+
+class CivitaiSourceAliasSearchCandidate(CivitaiSourceAliasRegistryEntry):
+    """A scored read-only discovery candidate, deliberately never a resolution target."""
+
+    score: int = Field(ge=0)
+    matched_fields: list[Literal[
+        "primary_alias", "alternate_aliases", "approved_tags", "user_note", "source_metadata", "prompt_summary",
+    ]] = Field(default_factory=list)
+
+
+class CivitaiSourceAliasRegistrySearchResult(_StrictModel):
+    """CIV-SA-E offline search result; candidates require explicit later selection."""
+
+    status: Literal["success", "rejected", "corrupt"]
+    code: str
+    normalized_query: str | None = None
+    total: int = Field(default=0, ge=0)
+    limit: int = Field(default=50, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+    candidates: list[CivitaiSourceAliasSearchCandidate] = Field(default_factory=list)
