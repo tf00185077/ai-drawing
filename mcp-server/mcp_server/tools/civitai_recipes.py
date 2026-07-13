@@ -211,6 +211,25 @@ def civitai_source_alias_resolve(alias: str) -> dict[str, Any]:
 
 
 @mcp.tool()
+def civitai_source_alias_rename(
+    current_primary_alias: Annotated[str, Field(min_length=1, max_length=512)],
+    new_primary_alias: Annotated[str, Field(min_length=1, max_length=512)],
+    expected_registry_version: Annotated[int, Field(ge=1)],
+) -> dict[str, Any]:
+    """Rename one primary source alias through the backend-owned audited lifecycle."""
+    return _post(
+        "civitai_source_alias_rename",
+        "civitai-recipes/source-aliases/rename",
+        {
+            "current_primary_alias": current_primary_alias,
+            "new_primary_alias": new_primary_alias,
+            "expected_registry_version": expected_registry_version,
+        },
+        "use the returned audited lifecycle evidence as-is; do not archive, repoint, build, or queue",
+    )
+
+
+@mcp.tool()
 def civitai_source_alias_list(
     limit: Annotated[int, Field(ge=1, le=100)] = 50,
     offset: Annotated[int, Field(ge=0)] = 0,
