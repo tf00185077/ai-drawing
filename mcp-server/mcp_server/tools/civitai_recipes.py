@@ -211,6 +211,38 @@ def civitai_source_alias_resolve(alias: str) -> dict[str, Any]:
 
 
 @mcp.tool()
+def civitai_source_alias_list(
+    limit: Annotated[int, Field(ge=1, le=100)] = 50,
+    offset: Annotated[int, Field(ge=0)] = 0,
+) -> dict[str, Any]:
+    """List backend-audited remembered Civitai source aliases without resolving them."""
+    tool = "civitai_source_alias_list"
+    try:
+        return _result(
+            tool,
+            _get_client().get("civitai-recipes/source-aliases", params={"limit": limit, "offset": offset}),
+            "search candidate aliases or exact-resolve one alias only when the caller selects it",
+        )
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def civitai_source_alias_search(
+    query: Annotated[str, Field(min_length=1, max_length=512)],
+    limit: Annotated[int, Field(ge=1, le=100)] = 50,
+    offset: Annotated[int, Field(ge=0)] = 0,
+) -> dict[str, Any]:
+    """Search backend-ranked source-alias candidates without selecting or resolving a candidate."""
+    return _post(
+        "civitai_source_alias_search",
+        "civitai-recipes/source-aliases/search",
+        {"query": query, "limit": limit, "offset": offset},
+        "present the audited candidates; exact-resolve only an alias explicitly selected by the caller",
+    )
+
+
+@mcp.tool()
 def civitai_recipe_inspect(recipe: dict[str, Any]) -> dict[str, Any]:
     """Validate a GenerationRecipe 1.0 without network, disk writes, or queue submission."""
     return _post("civitai_recipe_inspect", "civitai-recipes/inspect", {"recipe": recipe}, "resolve only against a caller-supplied local ledger")
