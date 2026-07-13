@@ -23,6 +23,8 @@ from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasArchiveResponse,
     CivitaiSourceAliasRenameRequest,
     CivitaiSourceAliasRenameResponse,
+    CivitaiSourceAliasRepointRequest,
+    CivitaiSourceAliasRepointResponse,
     CivitaiSourceAliasResolveRequest,
     CivitaiSourceAliasResolveResponse,
     SourceAliasRegistryListResponse,
@@ -33,6 +35,7 @@ from app.services.civitai_source_alias_registry import (
     archive_source_alias,
     list_registry_sources,
     rename_primary_source_alias,
+    repoint_source_alias,
     resolve_source_alias_exact,
     search_registry_sources,
 )
@@ -174,6 +177,24 @@ class _SourceAliasArchiveValidationRoute(APIRoute):
                 return JSONResponse(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     content={"detail": _detail("source_alias_archive_invalid", "source alias archive failed")},
+                )
+
+        return redacted_handler
+
+
+class _SourceAliasRepointValidationRoute(APIRoute):
+    """Reject malformed repoint intent before the one-call audited lifecycle facade."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def redacted_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError:
+                return JSONResponse(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    content={"detail": _detail("source_alias_repoint_invalid", "source alias repoint failed")},
                 )
 
         return redacted_handler
@@ -371,6 +392,32 @@ def archive_civitai_source_alias(
     else:
         status_code, code = status.HTTP_422_UNPROCESSABLE_ENTITY, result.code
     raise HTTPException(status_code=status_code, detail=_detail(code, "source alias archive failed"))
+
+
+router.route_class = _default_route_class
+
+
+router.route_class = _SourceAliasRepointValidationRoute
+
+
+@router.post("/source-aliases/repoint", response_model=CivitaiSourceAliasRepointResponse)
+def repoint_civitai_source_alias(
+    request: CivitaiSourceAliasRepointRequest,
+    db: Session = Depends(get_db),
+) -> CivitaiSourceAliasRepointResponse:
+    """Delegate one typed immutable replacement intent to the committed repoint lifecycle."""
+    result = repoint_source_alias(request, db=db)
+    if result.status == "success":
+        return CivitaiSourceAliasRepointResponse.model_validate(result.model_dump(mode="python"))
+    if result.status == "missing":
+        status_code, code = status.HTTP_404_NOT_FOUND, result.code
+    elif result.status == "corrupt":
+        status_code, code = status.HTTP_409_CONFLICT, "source_alias_registry_corrupt"
+    elif result.status == "conflict" or result.code in {"stale_registry_version", "target_archived"}:
+        status_code, code = status.HTTP_409_CONFLICT, result.code
+    else:
+        status_code, code = status.HTTP_422_UNPROCESSABLE_ENTITY, result.code
+    raise HTTPException(status_code=status_code, detail=_detail(code, "source alias repoint failed"))
 
 
 router.route_class = _default_route_class
