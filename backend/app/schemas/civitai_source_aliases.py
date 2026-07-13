@@ -4,13 +4,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_serializer, model_validator
 
-from app.schemas.generation_recipe import RecipeSource
+from app.schemas.generation_recipe import GenerationRecipe, RecipeSource
 
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -272,6 +272,85 @@ class CivitaiSourceAliasExplicitVersionResolveRequest(_StrictModel):
         if not value.strip():
             raise ValueError("alias must not be blank")
         return value
+
+
+class CivitaiSourceAliasParentSelector(_StrictModel):
+    """CIV-SA-T caller intent: one literal alias and, optionally, one audited version."""
+
+    alias: Annotated[str, Field(strict=True, min_length=1, max_length=512)]
+    registry_version: Annotated[int | None, Field(strict=True, ge=1)] = None
+
+    @field_validator("alias")
+    @classmethod
+    def require_nonblank_alias(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("alias must not be blank")
+        return value
+
+
+class CivitaiSourceAliasLineageIdentity(_StrictModel):
+    """The frozen, serializable immutable source projection carried in lineage."""
+
+    provider: Literal["civitai"] = "civitai"
+    image_id: Annotated[int | None, Field(strict=True, gt=0)] = None
+    media_url: Annotated[str | None, Field(strict=True)] = None
+
+    @model_validator(mode="after")
+    def require_image_or_supported_media(self) -> "CivitaiSourceAliasLineageIdentity":
+        if self.image_id is not None:
+            return self
+        if self.media_url is None:
+            raise ValueError("source identity requires image_id or immutable media_url")
+        CivitaiSourceAliasImmutableIdentity.model_validate({"provider": self.provider, "media_url": self.media_url}, strict=True)
+        return self
+
+    @model_serializer
+    def serialize_immutable_projection(self) -> dict[str, object]:
+        value: dict[str, object] = {"provider": self.provider}
+        if self.image_id is not None:
+            value["image_id"] = self.image_id
+        else:
+            value["media_url"] = self.media_url  # validated non-null above
+        return value
+
+
+class CivitaiSourceAliasLineageBinding(_StrictModel):
+    """The immutable alias record that supplied one materialized Parent Recipe."""
+
+    requested_alias: str
+    matched_alias: CivitaiSourceAliasView
+    registry_version: Annotated[int, Field(strict=True, ge=1)]
+    source_identity: CivitaiSourceAliasLineageIdentity
+    acquisition_evidence_sha256: Annotated[str, Field(strict=True, pattern=r"^[0-9a-f]{64}$")]
+    parent_recipe_sha256: Annotated[str, Field(strict=True, pattern=r"^[0-9a-f]{64}$")]
+    registry_created_at: datetime
+
+    @field_validator("registry_created_at")
+    @classmethod
+    def require_utc_registry_created_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() != timedelta(0):
+            raise ValueError("registry_created_at must be UTC-aware")
+        return value.astimezone(timezone.utc)
+
+
+class CivitaiSourceAliasMaterializedParent(_StrictModel):
+    """CIV-SA-T read-only materialization result; failures intentionally carry no target."""
+
+    status: Literal["success", "rejected", "missing", "corrupt", "archived", "repointed"]
+    code: str
+    parent_recipe: GenerationRecipe | None = None
+    parent_recipe_sha256: Annotated[str | None, Field(pattern=r"^[0-9a-f]{64}$")] = None
+    alias_binding: CivitaiSourceAliasLineageBinding | None = None
+
+    @model_validator(mode="after")
+    def require_complete_success_or_empty_failure(self) -> "CivitaiSourceAliasMaterializedParent":
+        values = (self.parent_recipe, self.parent_recipe_sha256, self.alias_binding)
+        if self.status == "success":
+            if any(value is None for value in values):
+                raise ValueError("successful materialization requires a parent recipe and complete alias binding")
+        elif any(value is not None for value in values):
+            raise ValueError("failed materialization must not expose a parent recipe or partial alias binding")
+        return self
 
 
 class CivitaiSourceAliasResolveResponse(CivitaiSourceAliasRegistryView):
