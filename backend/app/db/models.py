@@ -134,6 +134,29 @@ class CivitaiSourceAliasHistory(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
+class CivitaiSourceAliasRepointTransition(Base):
+    """CIV-SA-N append-only audited edge between immutable source-alias targets."""
+    __tablename__ = "civitai_source_alias_repoint_transitions"
+    __table_args__ = (
+        UniqueConstraint("from_registry_version", name="uq_source_alias_repoint_from_version"),
+        UniqueConstraint("to_registry_version", name="uq_source_alias_repoint_to_version"),
+        CheckConstraint("length(from_record_sha256) = 64", name="ck_source_alias_repoint_from_hash_length"),
+        CheckConstraint("length(to_record_sha256) = 64", name="ck_source_alias_repoint_to_hash_length"),
+        CheckConstraint("length(event_sha256) = 64", name="ck_source_alias_repoint_event_hash_length"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_registry_version = Column(Integer, ForeignKey("civitai_source_alias_registry_records.registry_version"), nullable=False, index=True)
+    to_registry_version = Column(Integer, ForeignKey("civitai_source_alias_registry_records.registry_version"), nullable=False, index=True)
+    aliases_json = Column(Text, nullable=False)
+    from_record_sha256 = Column(String(64), nullable=False)
+    to_record_sha256 = Column(String(64), nullable=False)
+    source_history_tail_sha256 = Column(String(64), nullable=True)
+    previous_repoint_event_sha256 = Column(String(64), nullable=True)
+    event_sha256 = Column(String(64), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 class CivitaiVariationSet(Base):
     """CIV-V-G immutable variation-set identity; members/events are append-only."""
     __tablename__ = "civitai_variation_sets"

@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
-from app.db.models import CivitaiSourceAlias, CivitaiSourceAliasHistory, CivitaiSourceAliasRegistryRecord
+from app.db.models import CivitaiSourceAlias, CivitaiSourceAliasHistory, CivitaiSourceAliasRegistryRecord, CivitaiSourceAliasRepointTransition
 from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasDomainResult,
     CivitaiSourceAliasRegistryView,
@@ -23,6 +23,9 @@ from app.schemas.civitai_source_aliases import (
     CivitaiSourceAliasRenameResult,
     CivitaiSourceAliasArchiveRequest,
     CivitaiSourceAliasArchiveResult,
+    CivitaiSourceAliasRepointRequest,
+    CivitaiSourceAliasRepointResult,
+    CivitaiSourceAliasRepointTransitionEventView,
     CivitaiSourceAliasRegistryEntry,
     CivitaiSourceAliasRegistryListResult,
     CivitaiSourceAliasRegistrySearchResult,
@@ -197,6 +200,9 @@ def exact_resolve(alias: str, *, db: Any) -> CivitaiSourceAliasDomainResult:
     if len(rows) != 1:
         return _result("corrupt", "non_unique_alias")
     alias_row = rows[0]
+    chain_error = verify_source_alias_repoint_chain(db=db)
+    if chain_error is not None:
+        return _result("corrupt", chain_error)
     records = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=alias_row.registry_version).all()
     if len(records) != 1:
         return _result("corrupt", "record_non_unique_or_missing")
@@ -205,6 +211,8 @@ def exact_resolve(alias: str, *, db: Any) -> CivitaiSourceAliasDomainResult:
         return _result("corrupt", code or "record_invalid")
     if alias_row.alias_kind not in {"primary", "alternate"} or not alias_row.original_alias or alias_row.normalized_key != key:
         return _result("corrupt", "alias_invalid")
+    if db.query(CivitaiSourceAliasRepointTransition).filter_by(to_registry_version=alias_row.registry_version).count() == 1:
+        return _result("repointed", "explicit_registry_version_required")
     if records[0].archived_at is not None:
         return _result("archived", "target_archived")
     return _result("success", "resolved", record=view, alias=CivitaiSourceAliasView(original_alias=alias_row.original_alias, normalized_key=key, kind=alias_row.alias_kind))
@@ -271,10 +279,16 @@ def _read_discovery_entries(*, db: Any) -> tuple[list[CivitaiSourceAliasRegistry
     """Read each persisted table once and reject the whole discovery result on any anomaly."""
     records = db.query(CivitaiSourceAliasRegistryRecord).all()
     aliases = db.query(CivitaiSourceAlias).all()
+    chain_error = verify_source_alias_repoint_chain(db=db)
+    if chain_error is not None:
+        return None, chain_error
+    superseded = {row.from_registry_version for row in db.query(CivitaiSourceAliasRepointTransition).all()}
     records_by_version: dict[int, CivitaiSourceAliasRegistryRecord] = {}
     views_by_version: dict[int, CivitaiSourceAliasRegistryView] = {}
     for row in records:
         version = row.registry_version
+        if version in superseded:
+            continue
         if type(version) is not int or version in records_by_version:
             return None, "record_non_unique_or_invalid"
         view, code = _record_view(row)
@@ -743,3 +757,283 @@ def archive_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasArchiveR
             created_at=_utc(created_at),
         ),
     )
+
+
+# CIV-SA-N remains internal: callers provide only immutable replacement content.
+def _repoint_result(status: str, code: str, **kwargs: Any) -> CivitaiSourceAliasRepointResult:
+    return CivitaiSourceAliasRepointResult(status=status, code=code, **kwargs)
+
+
+def validate_repoint_request(value: Any) -> CivitaiSourceAliasRepointRequest | None:
+    try:
+        raw = value.model_dump() if isinstance(value, CivitaiSourceAliasRepointRequest) else value
+        request = CivitaiSourceAliasRepointRequest.model_validate(raw, strict=True)
+        normalize_alias(request.current_primary_alias)
+        return request
+    except (ValidationError, TypeError, ValueError):
+        return None
+
+
+def _record_sha256(view: CivitaiSourceAliasRegistryView) -> str:
+    return canonical_sha256(view.model_dump(mode="json"))
+
+
+def _immutable_target_selector(identity: dict[str, Any]) -> tuple[str, int | str]:
+    """Compare the stable image selector, never optional Civitai provenance fields."""
+    image_id = identity.get("image_id")
+    if image_id is not None:
+        return "image_id", image_id
+    media_url = identity.get("media_url")
+    if not isinstance(media_url, str):
+        raise ValueError("immutable media selector missing")
+    return "media_url", media_url
+
+
+def _history_tail(registry_version: int, *, db: Any) -> tuple[str | None, str | None]:
+    """Validate history plus its terminal archive marker without assuming current aliases."""
+    records = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=registry_version).all()
+    if len(records) != 1:
+        return None, "history_invalid"
+    record = records[0]
+    events = db.query(CivitaiSourceAliasHistory).filter_by(registry_version=registry_version).order_by(CivitaiSourceAliasHistory.id).all()
+    previous: str | None = None
+    after: dict[str, Any] | None = None
+    archive_event: CivitaiSourceAliasHistory | None = None
+    for index, event in enumerate(events):
+        try:
+            before_raw, after_raw = json.loads(event.before_aliases_json), json.loads(event.after_aliases_json)
+            before, current = _canonical_alias_snapshot(before_raw), _canonical_alias_snapshot(after_raw)
+            if before is None or current is None or before_raw != before or after_raw != current or canonical_json(before) != event.before_aliases_json or canonical_json(current) != event.after_aliases_json:
+                return None, "history_invalid"
+            if after is not None and before != after:
+                return None, "history_invalid"
+            if event.operation == "rename":
+                if archive_event is not None or not _valid_rename_transition(before, current):
+                    return None, "history_invalid"
+            elif event.operation == "archive":
+                if archive_event is not None or index != len(events) - 1 or before != current:
+                    return None, "history_invalid"
+                archive_event = event
+            else:
+                return None, "history_invalid"
+            payload = _event_payload(registry_version=event.registry_version, operation=event.operation, before_aliases=before, after_aliases=current, previous_event_sha256=event.previous_event_sha256, created_at=event.created_at)
+            if event.registry_version != registry_version or event.previous_event_sha256 != previous or _SHA256.fullmatch(event.event_sha256 or "") is None or canonical_sha256(payload) != event.event_sha256:
+                return None, "history_invalid"
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None, "history_invalid"
+        previous, after = event.event_sha256, current
+    if (record.archived_at is None) != (archive_event is None):
+        return None, "history_invalid"
+    if archive_event is not None and (not isinstance(record.archived_at, datetime) or _utc(record.archived_at) != _utc(archive_event.created_at)):
+        return None, "history_invalid"
+    return previous, None
+
+
+def _repoint_payload(*, from_registry_version: int, to_registry_version: int, aliases: dict[str, Any], from_record_sha256: str, to_record_sha256: str, source_history_tail_sha256: str | None, previous_repoint_event_sha256: str | None, created_at: datetime) -> dict[str, Any]:
+    return {
+        "from_registry_version": from_registry_version, "to_registry_version": to_registry_version, "aliases": aliases,
+        "from_record_sha256": from_record_sha256, "to_record_sha256": to_record_sha256,
+        "source_history_tail_sha256": source_history_tail_sha256,
+        "previous_repoint_event_sha256": previous_repoint_event_sha256,
+        "created_at": _utc(created_at).isoformat().replace("+00:00", "Z"),
+    }
+
+
+def verify_source_alias_repoint_chain(*, db: Any) -> str | None:
+    """Validate the complete replacement graph before any read or write selects a target."""
+    records = db.query(CivitaiSourceAliasRegistryRecord).all()
+    aliases = db.query(CivitaiSourceAlias).all()
+    transitions = db.query(CivitaiSourceAliasRepointTransition).order_by(CivitaiSourceAliasRepointTransition.id).all()
+    views: dict[int, CivitaiSourceAliasRegistryView] = {}
+    for row in records:
+        if row.registry_version in views:
+            return "repoint_invalid"
+        view, code = _record_view(row)
+        if view is None:
+            return code or "record_invalid"
+        tail, history_error = _history_tail(row.registry_version, db=db)
+        if history_error:
+            return history_error
+        views[row.registry_version] = view
+    aliases_by_version: dict[int, list[CivitaiSourceAlias]] = {version: [] for version in views}
+    seen_keys: set[str] = set()
+    for row in aliases:
+        if row.registry_version not in aliases_by_version or row.normalized_key in seen_keys:
+            return "repoint_invalid"
+        try:
+            if row.alias_kind not in {"primary", "alternate"} or normalize_alias(row.original_alias) != row.normalized_key:
+                return "repoint_invalid"
+        except (TypeError, ValueError):
+            return "repoint_invalid"
+        seen_keys.add(row.normalized_key)
+        aliases_by_version[row.registry_version].append(row)
+    outgoing: dict[int, CivitaiSourceAliasRepointTransition] = {}
+    incoming: dict[int, CivitaiSourceAliasRepointTransition] = {}
+    event_hashes: set[str] = set()
+    for event in transitions:
+        try:
+            snapshot_raw = json.loads(event.aliases_json)
+            snapshot = _canonical_alias_snapshot(snapshot_raw)
+            if snapshot is None or snapshot_raw != snapshot or canonical_json(snapshot) != event.aliases_json:
+                return "repoint_invalid"
+            if event.from_registry_version not in views or event.to_registry_version not in views or event.from_registry_version == event.to_registry_version:
+                return "repoint_invalid"
+            if not isinstance(event.created_at, datetime) or _utc(event.created_at) != _utc(views[event.to_registry_version].created_at):
+                return "repoint_invalid"
+            if event.from_registry_version in outgoing or event.to_registry_version in incoming:
+                return "repoint_invalid"
+            if _SHA256.fullmatch(event.from_record_sha256 or "") is None or _SHA256.fullmatch(event.to_record_sha256 or "") is None or _SHA256.fullmatch(event.event_sha256 or "") is None:
+                return "repoint_invalid"
+            if event.from_record_sha256 != _record_sha256(views[event.from_registry_version]) or event.to_record_sha256 != _record_sha256(views[event.to_registry_version]):
+                return "repoint_invalid"
+            tail, history_error = _history_tail(event.from_registry_version, db=db)
+            if history_error or tail != event.source_history_tail_sha256:
+                return "repoint_invalid"
+            prior = incoming.get(event.from_registry_version)
+            if event.previous_repoint_event_sha256 != (prior.event_sha256 if prior else None):
+                return "repoint_invalid"
+            payload = _repoint_payload(from_registry_version=event.from_registry_version, to_registry_version=event.to_registry_version, aliases=snapshot, from_record_sha256=event.from_record_sha256, to_record_sha256=event.to_record_sha256, source_history_tail_sha256=event.source_history_tail_sha256, previous_repoint_event_sha256=event.previous_repoint_event_sha256, created_at=event.created_at)
+            if event.event_sha256 in event_hashes or canonical_sha256(payload) != event.event_sha256:
+                return "repoint_invalid"
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return "repoint_invalid"
+        outgoing[event.from_registry_version] = event
+        incoming[event.to_registry_version] = event
+        event_hashes.add(event.event_sha256)
+    # Every target has a lifecycle-local alias surface.  An incoming repoint anchors
+    # its first history before-snapshot; later renames may legitimately change the
+    # outgoing snapshot, so neighbouring repoint events must never be byte-equal.
+    for version, rows in aliases_by_version.items():
+        try:
+            current = _alias_snapshot(rows)
+            incoming_snapshot = (_canonical_alias_snapshot(json.loads(incoming[version].aliases_json)) if version in incoming else None)
+            outgoing_snapshot = (_canonical_alias_snapshot(json.loads(outgoing[version].aliases_json)) if version in outgoing else None)
+            history = db.query(CivitaiSourceAliasHistory).filter_by(registry_version=version).order_by(CivitaiSourceAliasHistory.id).all()
+            first_before = (_canonical_alias_snapshot(json.loads(history[0].before_aliases_json)) if history else None)
+            final_after = (_canonical_alias_snapshot(json.loads(history[-1].after_aliases_json)) if history else None)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return "repoint_invalid"
+        if version in outgoing:
+            if rows or outgoing_snapshot is None:
+                return "repoint_invalid"
+        elif current is None:
+            return "repoint_invalid"
+        if history:
+            if first_before is None or final_after is None:
+                return "repoint_invalid"
+            if incoming_snapshot is not None and first_before != incoming_snapshot:
+                return "repoint_invalid"
+            if outgoing_snapshot is not None:
+                if final_after != outgoing_snapshot:
+                    return "repoint_invalid"
+            elif current != final_after:
+                return "history_invalid"
+        elif incoming_snapshot is not None:
+            # No lifecycle event: the incoming binding anchors the still-current
+            # aliases or the next repoint's outgoing snapshot.
+            if (outgoing_snapshot if outgoing_snapshot is not None else current) != incoming_snapshot:
+                return "repoint_invalid"
+    for start in outgoing:
+        seen: set[int] = set()
+        current_version = start
+        while current_version in outgoing:
+            if current_version in seen:
+                return "repoint_invalid"
+            seen.add(current_version)
+            current_version = outgoing[current_version].to_registry_version
+    return None
+
+
+def repoint_source_alias(request: Any, *, db: Any) -> CivitaiSourceAliasRepointResult:
+    request = validate_repoint_request(request)
+    if request is None:
+        return _repoint_result("rejected", "invalid_request")
+    try:
+        key = normalize_alias(request.current_primary_alias)
+    except (TypeError, ValueError):
+        return _repoint_result("rejected", "alias_invalid")
+    chain_error = verify_source_alias_repoint_chain(db=db)
+    if chain_error is not None:
+        return _repoint_result("corrupt", chain_error)
+    matches = db.query(CivitaiSourceAlias).filter_by(normalized_key=key).all()
+    if not matches:
+        return _repoint_result("missing", "current_alias_not_found")
+    if len(matches) != 1:
+        return _repoint_result("corrupt", "non_unique_alias")
+    primary = matches[0]
+    if primary.alias_kind != "primary":
+        return _repoint_result("missing", "current_alias_not_primary")
+    if primary.registry_version != request.expected_registry_version:
+        return _repoint_result("rejected", "stale_registry_version")
+    source_rows = db.query(CivitaiSourceAliasRegistryRecord).filter_by(registry_version=request.expected_registry_version).all()
+    if len(source_rows) != 1:
+        return _repoint_result("corrupt", "record_non_unique_or_missing")
+    source, source_error = _record_view(source_rows[0])
+    if source is None:
+        return _repoint_result("corrupt", source_error or "record_invalid")
+    if source_rows[0].archived_at is not None:
+        return _repoint_result("rejected", "target_archived")
+    replacement_identity = request.replacement.source_identity.model_dump(mode="json", exclude_none=True)
+    try:
+        same_target = _immutable_target_selector(source.source_identity) == _immutable_target_selector(replacement_identity)
+    except (TypeError, ValueError):
+        return _repoint_result("corrupt", "immutable_target_invalid")
+    if same_target:
+        return _repoint_result("rejected", "same_immutable_target")
+    rows = db.query(CivitaiSourceAlias).filter_by(registry_version=request.expected_registry_version).all()
+    snapshot = _alias_snapshot(rows)
+    tail, history_error = _history_tail(request.expected_registry_version, db=db)
+    if snapshot is None or history_error:
+        return _repoint_result("corrupt", history_error or "primary_alias_invalid")
+    incoming = db.query(CivitaiSourceAliasRepointTransition).filter_by(to_registry_version=request.expected_registry_version).all()
+    if len(incoming) > 1:
+        return _repoint_result("corrupt", "repoint_invalid")
+    created_at = datetime.now(timezone.utc)
+    target = CivitaiSourceAliasRegistryRecord(
+        source_identity_json=canonical_json(replacement_identity),
+        acquisition_evidence_json=canonical_json(request.replacement.acquisition_evidence_snapshot),
+        acquisition_evidence_sha256=request.replacement.acquisition_evidence_sha256,
+        parent_recipe_sha256=request.replacement.parent_recipe_sha256,
+        thumbnail_url=str(request.replacement.thumbnail_url) if request.replacement.thumbnail_url is not None else None,
+        thumbnail_path=request.replacement.thumbnail_path, user_note=request.replacement.user_note,
+        approved_tags_json=canonical_json(request.replacement.approved_tags), prompt_summary=request.replacement.prompt_summary,
+        created_at=created_at,
+    )
+    try:
+        db.add(target)
+        db.flush()
+        target_view, target_error = _record_view(target)
+        if target_view is None:
+            raise RuntimeError(target_error or "record_invalid")
+        transition = CivitaiSourceAliasRepointTransition(
+            from_registry_version=request.expected_registry_version, to_registry_version=target.registry_version,
+            aliases_json=canonical_json(snapshot), from_record_sha256=_record_sha256(source), to_record_sha256=_record_sha256(target_view),
+            source_history_tail_sha256=tail, previous_repoint_event_sha256=incoming[0].event_sha256 if incoming else None,
+            created_at=created_at,
+        )
+        transition.event_sha256 = canonical_sha256(_repoint_payload(from_registry_version=transition.from_registry_version, to_registry_version=transition.to_registry_version, aliases=snapshot, from_record_sha256=transition.from_record_sha256, to_record_sha256=transition.to_record_sha256, source_history_tail_sha256=transition.source_history_tail_sha256, previous_repoint_event_sha256=transition.previous_repoint_event_sha256, created_at=created_at))
+        db.add(transition)
+        moved = db.execute(update(CivitaiSourceAlias).where(CivitaiSourceAlias.registry_version == request.expected_registry_version).values(registry_version=target.registry_version))
+        if moved.rowcount != len(rows):
+            db.rollback()
+            return _repoint_result("conflict", "repoint_conflict")
+        db.flush()
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Only an observed, valid competing CAS winner is stale.  Any other database
+        # integrity failure is a failed write and must not masquerade as concurrency.
+        winner_rows = db.query(CivitaiSourceAlias).filter_by(normalized_key=key).all()
+        if len(winner_rows) == 1 and winner_rows[0].registry_version != request.expected_registry_version:
+            winner_version = winner_rows[0].registry_version
+            winner_events = db.query(CivitaiSourceAliasRepointTransition).filter_by(
+                from_registry_version=request.expected_registry_version,
+                to_registry_version=winner_version,
+            ).all()
+            if len(winner_events) == 1 and verify_source_alias_repoint_chain(db=db) is None:
+                return _repoint_result("rejected", "stale_registry_version")
+        return _repoint_result("corrupt", "repoint_write_failed")
+    except Exception:
+        db.rollback()
+        return _repoint_result("corrupt", "repoint_write_failed")
+    return _repoint_result("success", "repointed", from_record=source, to_record=target_view, event=CivitaiSourceAliasRepointTransitionEventView(id=transition.id, from_registry_version=transition.from_registry_version, to_registry_version=transition.to_registry_version, aliases=snapshot, from_record_sha256=transition.from_record_sha256, to_record_sha256=transition.to_record_sha256, source_history_tail_sha256=transition.source_history_tail_sha256, previous_repoint_event_sha256=transition.previous_repoint_event_sha256, event_sha256=transition.event_sha256, created_at=_utc(transition.created_at)))
