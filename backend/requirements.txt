@@ -1,4 +1,7 @@
-fastapi>=0.109.0
+fastapi==0.133.1
+# Keep the FastAPI router-copy contract on the version verified by the full
+# backend suite.  Starlette 1.3.1 made included APIRouter paths empty here.
+starlette==1.0.1
 uvicorn[standard]>=0.27.0
 pydantic>=2.0
 pydantic-settings>=2.0
