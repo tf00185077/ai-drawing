@@ -167,6 +167,10 @@ class CivitaiSourceAliasArchiveResult(_StrictModel):
     event: CivitaiSourceAliasHistoryEventView | None = None
 
 
+class CivitaiSourceAliasArchiveResponse(CivitaiSourceAliasArchiveResult):
+    """CIV-SA-L typed HTTP representation of one audited archive result."""
+
+
 class CivitaiSourceAliasResolveRequest(_StrictModel):
     """One unmodified human alias input for the committed exact resolver."""
 
