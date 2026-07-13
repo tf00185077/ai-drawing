@@ -2,8 +2,8 @@
 資料庫 Schema
 欄位：圖片路徑、checkpoint、LoRA、seed、steps、prompt、生成時間
 """
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, BigInteger
+from datetime import datetime, timezone
+from sqlalchemy import CheckConstraint, Column, Integer, String, Text, DateTime, Float, BigInteger, ForeignKey, UniqueConstraint
 
 from app.db.database import Base
 
@@ -69,6 +69,43 @@ class GeneratedArtifact(Base):
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CivitaiSourceAliasRegistryRecord(Base):
+    """CIV-SA-A immutable audited source binding; its primary key is the registry version."""
+    __tablename__ = "civitai_source_alias_registry_records"
+    __table_args__ = (
+        CheckConstraint("length(acquisition_evidence_sha256) = 64", name="ck_source_alias_evidence_sha256_length"),
+        CheckConstraint("length(parent_recipe_sha256) = 64", name="ck_source_alias_parent_recipe_sha256_length"),
+        {"sqlite_autoincrement": True},
+    )
+
+    registry_version = Column(Integer, primary_key=True, autoincrement=True)
+    source_identity_json = Column(Text, nullable=False)
+    acquisition_evidence_json = Column(Text, nullable=False)
+    acquisition_evidence_sha256 = Column(String(64), nullable=False)
+    parent_recipe_sha256 = Column(String(64), nullable=False)
+    thumbnail_url = Column(Text, nullable=True)
+    thumbnail_path = Column(String(1024), nullable=True)
+    user_note = Column(Text, nullable=True)
+    approved_tags_json = Column(Text, nullable=False, default="[]")
+    prompt_summary = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class CivitaiSourceAlias(Base):
+    """One exact normalized key in the single global source-alias namespace."""
+    __tablename__ = "civitai_source_aliases"
+    __table_args__ = (
+        UniqueConstraint("normalized_key", name="uq_civitai_source_alias_normalized_key"),
+        CheckConstraint("alias_kind IN ('primary', 'alternate')", name="ck_source_alias_kind"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    registry_version = Column(Integer, ForeignKey("civitai_source_alias_registry_records.registry_version"), nullable=False, index=True)
+    original_alias = Column(String(512), nullable=False)
+    normalized_key = Column(String(512), nullable=False)
+    alias_kind = Column(String(16), nullable=False)
 
 
 class CivitaiVariationSet(Base):
