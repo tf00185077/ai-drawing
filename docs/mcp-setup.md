@@ -157,6 +157,7 @@ pip install -e .
 > `civitai_recipe_import` 的 optional `embedded_image` 在 MCP 端會以標準 base64 JSON 欄位 `embedded_image_base64` 傳給 backend；backend 嚴格驗證／解碼，不能傳 raw Python bytes 到 HTTP JSON body。
 > `civitai_recipe_import` 的 optional `remember_alias` 會原樣併入同一次 import POST；`civitai_source_alias_resolve(alias=...)` 只做 exact resolve，原樣回傳 backend 的 immutable audited binding，不在 MCP 正規化、搜尋或寫入 alias。
 > `civitai_source_alias_list(limit=50, offset=0)` 僅以一次 GET 列出 backend 稽核記錄；`civitai_source_alias_search(query, limit=50, offset=0)` 僅以一次 POST 回傳 backend 排名 candidates。兩者不在 MCP 端搜尋、計分、選定或 exact resolve。
+> `civitai_source_alias_rename(current_primary_alias, new_primary_alias, expected_registry_version)` 只以一次 POST 轉送 caller intent；改名的稽核 lifecycle evidence 由 backend 建立並原樣回傳，MCP 不正規化、補寫或重建它。
 
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
@@ -177,6 +178,7 @@ pip install -e .
 | `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
 | `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
 | `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
+| `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
 | `civitai_source_alias_list` | `dict` | GET /api/civitai-recipes/source-aliases |
 | `civitai_source_alias_search` | `dict` | POST /api/civitai-recipes/source-aliases/search |
 | `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
