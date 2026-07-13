@@ -1,7 +1,7 @@
 {
-  "id": "niji-moonlit-semi-real-anima",
-  "name": "Niji Moonlit Semi-real Anima",
-  "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, clean Niji anime color separation, cool blue accent lighting, cool clean rim light, controlled contrast, refined anime hair detail, crisp 2D anime line clarity, balanced luminous color palette",
+  "id": "high-contrast-color-anima",
+  "name": "High Contrast Color Anima",
+  "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, clean Niji anime color separation, vivid high-contrast color accents, cool clean rim light, controlled contrast, refined anime hair detail, crisp 2D anime line clarity, balanced luminous color palette",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, washed out, low contrast",
   "template": "gen_txt2img_anima_lora_model_only_multi_lora",
   "checkpoint": null,
@@ -19,9 +19,9 @@
   },
   "profiles": {
     "source-color-style-neutral": {
-      "prompt_prefix": "Niji anime coloring, cool blue accent palette, clean color separation, cool rim light, controlled anime contrast",
+      "prompt_prefix": "Niji anime coloring, high-contrast color palette, clean color separation, cool rim light, controlled anime contrast",
       "prompt_suffix": "refined 2D anime finish, crisp anime hair detail, balanced luminous background separation",
-      "negative_prompt": "black armor, sword, moon, night sky, black hair, woman, armor, medieval costume, source character, exact source pose",
+      "negative_prompt": "black armor, sword, black hair, woman, armor, medieval costume, source character, exact source pose",
       "params": {
         "steps": 30,
         "cfg": 5.0,
@@ -30,7 +30,7 @@
       }
     },
     "source-image-131966887": {
-      "prompt_prefix": "Niji anime color reference, cool blue accent palette, clean color separation, cool rim light, controlled anime contrast",
+      "prompt_prefix": "Niji anime color reference, high-contrast color palette, clean color separation, cool rim light, controlled anime contrast",
       "prompt_suffix": "refined 2D anime finish, crisp anime hair detail, balanced luminous color palette",
       "negative_prompt": "",
       "params": {
@@ -42,9 +42,9 @@
       }
     },
     "anime-2d-default": {
-      "prompt_prefix": "daylight niji lock: clear blue sky, cool clean rim light, soft crisp anime shadows, bright school campus; pure hand-drawn 2D Japanese anime",
+      "prompt_prefix": "high-contrast niji color lock: vivid clean color separation, cool clean rim light, soft crisp anime shadows, bright school campus; pure hand-drawn 2D Japanese anime",
       "prompt_suffix": "anime only on face, eyes, lineart; flat matte cel colors, clean ink line, hand-painted background, no 3D lighting",
-      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, glossy highlight rendering, sharp specular highlights, plastic skin, game cg, dark background, night, moonlit, dark cinematic color grading, deep shadow contrast",
+      "negative_prompt": "3d, 3d render, cgi, photorealistic, realistic skin, semi-realistic, glossy skin, glossy highlight rendering, sharp specular highlights, plastic skin, game cg, gloomy background, dark cinematic color grading, deep shadow contrast",
       "params": {
         "steps": 30,
         "cfg": 5.0,
@@ -53,7 +53,7 @@
       }
     }
   },
-  "note_path": "style_presets/human/niji-moonlit-semi-real-anima.md",
+  "note_path": "style_presets/human/high-contrast-color-anima.md",
   "required_resources": {
     "source_image_url": "https://civitai.com/images/131966887",
     "base_model": {
@@ -84,9 +84,9 @@
       }
     ],
     "required_workflow": "anima_txt2img_multi_lora_model_only",
-    "note": "MCP StylePreset schema currently exposes one lora field; required_resources is agent-readable metadata. Actual generation must use a custom/workflow-template graph with all three LoraLoaderModelOnly nodes."
+    "note": "This preset is a high-contrast color / Niji clean color-separation resource stack. It must not imply any source-image scene, time-of-day, or background content. Actual generation should use all three LoraLoaderModelOnly nodes."
   },
-  "chinese_name": "月光半寫實 Niji Anima",
+  "chinese_name": "高對比用色",
   "loras": [
     {
       "name": "anima-highres-aesthetic-boost.safetensors",

@@ -4,7 +4,7 @@ chinese_name: 白天日系手繪2D Niji Anima
 catalog_path: style_presets/agent/presets/niji-daylight-2d-anime-anima.json
 checkpoint:
 lora: anima-highres-aesthetic-boost.safetensors
-source_preset: niji-moonlit-semi-real-anima
+source_preset: high-contrast-color-anima
 ---
 
 # Niji Daylight 2D Anime Anima
@@ -15,9 +15,9 @@ source_preset: niji-moonlit-semi-real-anima
 
 ## 目的
 
-這是從 `niji-moonlit-semi-real-anima` 分出的白天 2D 動畫版。
+這是從 `high-contrast-color-anima` 分出的白天 2D 動畫版。
 
-CTY 的結論：原月光 preset 的 `dark / night / moonlit / glossy / semi-realistic` 不是「日式 2D 動畫感」必需；若背景要 LoveLive 校園或白天校園，暗色預設會拉錯方向。因此本 preset 保留 Anima/Niji 多 LoRA recipe，但把預設 prompt 改成：
+CTY 的結論：原高對比用色 preset 的 glossy / semi-realistic 不是「日式 2D 動畫感」必需；若背景要 LoveLive 校園或白天校園，來源情境預設會拉錯方向。因此本 preset 保留 Anima/Niji 多 LoRA recipe，但把預設 prompt 改成：
 
 - 純日系手繪 2D 動畫
 - 白天 / 清亮校園背景
@@ -51,7 +51,7 @@ no 3D lighting
 
 ## Required resources
 
-沿用原 `niji-moonlit-semi-real-anima` 的 Anima split model 與多 LoRA stack：
+沿用 `high-contrast-color-anima` 的 Anima split model 與多 LoRA stack：
 
 | Resource | File | Weight |
 |---|---|---:|
@@ -61,4 +61,4 @@ no 3D lighting
 
 ## 注意
 
-不要把原本 moonlit preset 的 `semi-realistic`, `glossy highlight rendering`, `dark cinematic color grading`, `moonlit atmosphere`, `deep shadow contrast` 當成此 preset 的預設 positive。這些詞只適合原始月光半寫實風，不適合 CTY 要的白天日式手繪 2D 動畫。
+不要把來源 preset 的 `semi-realistic`, `glossy highlight rendering`, `dark cinematic color grading`, `deep shadow contrast` 當成此 preset 的預設 positive。這些詞不適合 CTY 要的白天日式手繪 2D 動畫。
