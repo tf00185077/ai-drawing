@@ -276,13 +276,31 @@ def inspect_civitai_resource_route(request: CivitaiResourceInspectRequest) -> di
         locator = parse_civitai_locator(request.locator)
         if locator.kind != "model" or (locator.model_id is None and locator.model_version_id is None):
             raise AcquisitionError("unsupported_locator", "resource inspect requires a Civitai model or model-version locator")
-        endpoint = f"https://civitai.com/api/v1/model-versions/{locator.model_version_id}" if locator.model_version_id else f"https://civitai.com/api/v1/models/{locator.model_id}"
+        # Model-level permission fields are authoritative for license/usage gates.
+        # A browser model URL with modelVersionId therefore still resolves through
+        # the model endpoint, then narrows its version inventory deterministically.
+        endpoint = (
+            f"https://civitai.com/api/v1/models/{locator.model_id}"
+            if locator.model_id is not None
+            else f"https://civitai.com/api/v1/model-versions/{locator.model_version_id}"
+        )
         headers = {"Authorization": get_settings().civitai_authorization} if get_settings().civitai_authorization else {}
         response = httpx.get(endpoint, headers=headers, timeout=30.0)
         if response.status_code == 404:
             raise AcquisitionError("not_found", "Civitai resource was not found")
         response.raise_for_status()
-        return inspect_civitai_resource(response.json())
+        payload = response.json()
+        if locator.model_id is not None and locator.model_version_id is not None:
+            if not isinstance(payload, dict) or not isinstance(payload.get("modelVersions"), list):
+                raise AcquisitionError("unsafe_metadata", "Civitai model metadata is incomplete")
+            matching_versions = [
+                version for version in payload["modelVersions"]
+                if isinstance(version, dict) and version.get("id") == locator.model_version_id
+            ]
+            if len(matching_versions) != 1:
+                raise AcquisitionError("not_found", "Civitai model version was not found")
+            payload = {**payload, "modelVersions": matching_versions}
+        return inspect_civitai_resource(payload)
     except AcquisitionError as exc:
         raise HTTPException(status_code=422, detail=_detail(exc.code, str(exc), provenance=exc.provenance)) from exc
     except Exception as exc:
