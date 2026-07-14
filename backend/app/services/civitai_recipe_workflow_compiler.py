@@ -12,16 +12,8 @@ from typing import Any, Mapping, NoReturn, cast
 
 from app.schemas.generation_recipe import GenerationRecipe, ResourceKind, ResourceReference
 from app.services.civitai_resource_resolution import ResourceResolutionReport
+from app.services.civitai_sampling import runtime_sampler_name
 
-
-_A1111_TO_COMFYUI_SAMPLER = {
-    "euler a": "euler_ancestral",
-}
-
-
-def _runtime_sampler_name(source_name: str) -> str:
-    """Translate audited source labels to ComfyUI's stable sampler identifiers."""
-    return _A1111_TO_COMFYUI_SAMPLER.get(source_name.strip().casefold(), source_name)
 
 
 @dataclass(frozen=True)
@@ -362,7 +354,7 @@ def compile_generation_recipe_workflow(
             graph.field_binding(f"{field}.sampling.height", resized, "height", sampling["height"])
             encoded_pass = graph.node("VAEEncode", {"pixels": [resized, 0], "vae": vae_link})
             latent_link = [encoded_pass, 0]
-        runtime_sampler = _runtime_sampler_name(sampling["sampler"])
+        runtime_sampler = runtime_sampler_name(sampling["sampler"])
         sampler = graph.node("KSampler", {
             "model": model_link, "positive": positive_link, "negative": negative_link, "latent_image": latent_link,
             "seed": sampling["seed"], "steps": sampling["steps"], "cfg": sampling["cfg"],

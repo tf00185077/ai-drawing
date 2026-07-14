@@ -18,6 +18,7 @@ from app.services.civitai_resource_resolution import (
 )
 from app.services.civitai_recipe_gallery import canonical_sha256
 from app.schemas.civitai_source_aliases import CivitaiSourceAliasRememberRequest, canonical_sha256 as alias_canonical_sha256
+from app.services.civitai_source_alias_parent import canonicalize_source_alias_parent_recipe
 from app.services.civitai_source_alias_registry import normalize_alias, remember_source_alias
 from app.services.civitai_recipe_workflow_compiler import compile_generation_recipe_workflow
 
@@ -77,12 +78,17 @@ def _source_alias_result(acquisition: Any, raw: Mapping[str, Any], *, remember_a
         raise SourceAliasImportError("alias_registry_unavailable")
     thumbnail_url = acquisition.media_url if isinstance(acquisition.media_url, str) else None
     try:
+        canonical_parent = canonicalize_source_alias_parent_recipe(
+            acquisition.recipe.model_dump(mode="json", exclude_none=True)
+        ).model_dump(mode="json", exclude_none=True)
+        acquisition_evidence = dict(raw)
+        acquisition_evidence["recipe"] = canonical_parent
         request = CivitaiSourceAliasRememberRequest.model_validate({
             "primary_alias": remember_alias,
             "source_identity": identity,
-            "acquisition_evidence_snapshot": dict(raw),
-            "acquisition_evidence_sha256": alias_canonical_sha256(raw),
-            "parent_recipe_sha256": alias_canonical_sha256(acquisition.recipe.model_dump(mode="json", exclude_none=True)),
+            "acquisition_evidence_snapshot": acquisition_evidence,
+            "acquisition_evidence_sha256": alias_canonical_sha256(acquisition_evidence),
+            "parent_recipe_sha256": alias_canonical_sha256(canonical_parent),
             "thumbnail_url": thumbnail_url,
         })
     except Exception as exc:

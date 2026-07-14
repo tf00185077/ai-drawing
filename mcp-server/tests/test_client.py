@@ -36,6 +36,41 @@ def test_client_get_calls_httpx_with_correct_url() -> None:
         assert call_args[1]["params"] == {"limit": 5}
 
 
+def test_client_uses_bounded_audited_timeout_for_local_resolution_paths() -> None:
+    """Cold hashing of large local models gets a bounded route-specific timeout."""
+    import httpx
+
+    client = HttpBackendClient(base_url="http://test:9000", timeout=30.0)
+    mock_response = MagicMock(content=b'{"ok": true}')
+    mock_response.json.return_value = {"ok": True}
+
+    with patch.object(httpx, "Client") as mock_client:
+        mock_client.return_value.__enter__.return_value.post.return_value = mock_response
+        for path in (
+            "civitai-recipes/resolve-local",
+            "civitai-recipes/variants/generate-one",
+            "civitai-recipes/variation-sets",
+        ):
+            client.post(path, json={})
+
+    assert [call.kwargs["timeout"] for call in mock_client.call_args_list] == [120.0, 120.0, 120.0]
+
+
+def test_client_keeps_default_timeout_for_ordinary_backend_paths() -> None:
+    """The audited override must not make every backend failure wait two minutes."""
+    import httpx
+
+    client = HttpBackendClient(base_url="http://test:9000", timeout=30.0)
+    mock_response = MagicMock(content=b'{"ok": true}')
+    mock_response.json.return_value = {"ok": True}
+
+    with patch.object(httpx, "Client") as mock_client:
+        mock_client.return_value.__enter__.return_value.post.return_value = mock_response
+        client.post("civitai-recipes/inspect", json={})
+
+    assert mock_client.call_args.kwargs["timeout"] == 30.0
+
+
 def test_client_delete_calls_httpx_with_correct_url() -> None:
     """Client.delete 呼叫正確的 URL 並回傳 JSON"""
     import httpx  # 確保模組已載入，供 patch 使用

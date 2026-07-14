@@ -94,6 +94,25 @@ def test_report_invariants_fail_closed(mutate, code: str) -> None:
     assert any(item["code"] == code for item in result["diagnostics"])
 
 
+def test_a1111_sampler_alias_matches_the_compiler_runtime_identifier() -> None:
+    """Compatibility and compilation must agree on canonical ComfyUI sampler names."""
+    recipe = _recipe()
+    recipe.sampling.sampler = "Euler a"
+    snapshot = _snapshot(nodes=sorted([
+        "CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "SaveImage", "VAEDecode",
+    ]))
+    snapshot["sampler_names"] = ["euler_ancestral"]
+    snapshot["snapshot_sha256"] = hashlib.sha256(
+        _canonical({key: snapshot[key] for key in (
+            "engine", "engine_version", "node_types", "sampler_names", "scheduler_names"
+        )}).encode()
+    ).hexdigest()
+
+    result = _preflight(recipe, _report(recipe), "sdxl", snapshot)
+
+    assert result["compatible"] is True, result
+
+
 def test_runtime_hash_and_required_node_fail_closed() -> None:
     recipe, report = _recipe(), _report(_recipe())
     wrong_hash = _snapshot(); wrong_hash["snapshot_sha256"] = "0" * 64
