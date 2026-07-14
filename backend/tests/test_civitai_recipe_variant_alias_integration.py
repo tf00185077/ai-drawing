@@ -120,6 +120,36 @@ def _install_success_harness(monkeypatch, *, materialized_recipe: dict | None = 
     return variants, events, submissions, materializer_calls, materialized_output_parents, parent, parent_payload, alias_binding, derived_parents
 
 
+def test_alias_sparse_directives_expand_unspecified_fields_to_preserve(monkeypatch) -> None:
+    """Alias-only callers may randomize one field without restating every preserve policy."""
+    from app.schemas.civitai_recipe_derivation import CANONICAL_FIELDS
+    from app.schemas.civitai_recipe_variants import CivitaiRecipeVariantGenerateRequest
+
+    variants, _events, _submissions, _calls, _outputs, _parent, _payload, _binding, derived_parents = _install_success_harness(monkeypatch)
+    candidate = alias_body()
+    candidate["directives"] = [{"field": "sampling.seed", "policy": "randomize"}]
+    variants.generate_one_variant(
+        CivitaiRecipeVariantGenerateRequest.model_validate(candidate),
+        db=object(), variant_id_factory=lambda: "variant", job_id_factory=lambda: "job",
+    )
+    request = derived_parents and variants.CivitaiRecipeDerivationRequest(
+        parent_recipe=derived_parents[0], parent_recipe_sha256=canonical(_payload),
+        directives=variants._complete_alias_directives(CivitaiRecipeVariantGenerateRequest.model_validate(candidate).directives),
+    )
+    assert request
+    assert [item.field for item in request.directives] == list(CANONICAL_FIELDS)
+    assert next(item for item in request.directives if item.field == "sampling.seed").policy == "randomize"
+    assert all(item.policy == "preserve" for item in request.directives if item.field != "sampling.seed")
+
+    with pytest.raises(variants.VariantFacadeError) as duplicate:
+        variants._complete_alias_directives([
+            variants.RecipeDerivationDirective(field="sampling.seed", policy="preserve"),
+            variants.RecipeDerivationDirective(field="sampling.seed", policy="randomize"),
+        ])
+    assert duplicate.value.phase == "derive"
+    assert duplicate.value.code == "duplicate_directive"
+
+
 def test_single_variant_request_accepts_exactly_one_parent_source() -> None:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient

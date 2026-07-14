@@ -6,6 +6,14 @@ Backend API Client 抽象層
 from typing import Any, Protocol
 
 
+_AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS = 120.0
+_AUDITED_LOCAL_RESOLUTION_PATHS = frozenset({
+    "civitai-recipes/resolve-local",
+    "civitai-recipes/variants/generate-one",
+    "civitai-recipes/variation-sets",
+})
+
+
 class BackendApiClient(Protocol):
     """Backend API 呼叫介面"""
 
@@ -37,6 +45,12 @@ class HttpBackendClient:
         p = path if path.startswith("/") else f"/{path}"
         return f"{self._base_url}{p}"
 
+    def _timeout_for(self, path: str) -> float:
+        """Allow bounded cold-file hashing only on audited resolution routes."""
+        if path.lstrip("/") in _AUDITED_LOCAL_RESOLUTION_PATHS:
+            return max(self._timeout, _AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS)
+        return self._timeout
+
     def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         import httpx
 
@@ -50,7 +64,7 @@ class HttpBackendClient:
         import httpx
 
         url = self._url(path)
-        with httpx.Client(timeout=self._timeout) as client:
+        with httpx.Client(timeout=self._timeout_for(path)) as client:
             resp = client.post(url, json=json or {})
             resp.raise_for_status()
             return resp.json() if resp.content else {}

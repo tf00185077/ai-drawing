@@ -9,7 +9,9 @@ from typing import Any, Callable, Mapping
 from pydantic import ValidationError
 
 from app.core.queue import QueueFullError, submit_audited_recipe
-from app.schemas.civitai_recipe_derivation import CivitaiRecipeDerivationRequest
+from app.schemas.civitai_recipe_derivation import (
+    CANONICAL_FIELDS, CivitaiRecipeDerivationRequest, RecipeDerivationDirective,
+)
 from app.schemas.civitai_recipe_variants import (
     CivitaiRecipeVariantGenerateRequest, CivitaiRecipeVariantGenerateResponse,
     CivitaiRecipeVariantLineage,
@@ -289,6 +291,21 @@ def _fresh_execution_recipe(derived_recipe: Any, runtime: Any) -> Any:
     return type(derived_recipe).model_validate(payload)
 
 
+def _complete_alias_directives(
+    directives: list[RecipeDerivationDirective],
+) -> list[RecipeDerivationDirective]:
+    """Expand sparse alias intent to the complete deterministic derivation contract."""
+    by_field: dict[str, RecipeDerivationDirective] = {}
+    for directive in directives:
+        if directive.field in by_field:
+            raise VariantFacadeError("derive", "duplicate_directive")
+        by_field[directive.field] = directive
+    return [
+        by_field.get(field, RecipeDerivationDirective(field=field, policy="preserve"))
+        for field in CANONICAL_FIELDS
+    ]
+
+
 def _generate_one_variant(
     request: CivitaiRecipeVariantGenerateRequest,
     *,
@@ -299,10 +316,16 @@ def _generate_one_variant(
 ) -> CivitaiRecipeVariantGenerateResponse:
     """Execute a validated direct or backend-materialized Parent without acquiring aliases."""
     try:
+        directives = (
+            _complete_alias_directives(request.directives)
+            if source_alias_binding is not None else request.directives
+        )
         derivation = derive_generation_recipe(CivitaiRecipeDerivationRequest(
             parent_recipe=request.parent_recipe, parent_recipe_sha256=request.parent_recipe_sha256,
-            directives=request.directives,
+            directives=directives,
         ))
+    except VariantFacadeError:
+        raise
     except RecipeDerivationError as exc:
         raise VariantFacadeError("derive", exc.code, exc.field) from exc
     except Exception as exc:

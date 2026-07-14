@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from app.schemas.generation_recipe import GenerationRecipe
 from app.services.civitai_acquisition import redact_secrets
+from app.services.civitai_sampling import runtime_sampler_name
 
 CONTRACT = "civ-v-e:sdxl-illustrious-comfyui-v1"
 _BASE_NODES = {"CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage"}
@@ -207,7 +208,8 @@ def preflight_recipe_compatibility(recipe: GenerationRecipe, resource_report: Ma
         values = {**inherited, **generation_pass.sampling.model_dump(exclude_none=True)}
         resolved_sampling[generation_pass.name] = values
         sampler, scheduler = values.get("sampler"), values.get("scheduler")
-        if not isinstance(sampler, str) or sampler not in samplers: diagnostics.append(_diag("runtime_sampler_missing", f"passes[{pass_index}].sampling.sampler", "sampler is not in runtime snapshot"))
+        runtime_sampler = runtime_sampler_name(sampler) if isinstance(sampler, str) else sampler
+        if not isinstance(runtime_sampler, str) or runtime_sampler not in samplers: diagnostics.append(_diag("runtime_sampler_missing", f"passes[{pass_index}].sampling.sampler", "sampler is not in runtime snapshot"))
         if not isinstance(scheduler, str) or scheduler not in schedulers: diagnostics.append(_diag("runtime_scheduler_missing", f"passes[{pass_index}].sampling.scheduler", "scheduler is not in runtime snapshot"))
     for node in sorted(required_nodes - node_types): diagnostics.append(_diag("runtime_node_missing", "runtime_capabilities.node_types", f"required node type missing: {node}"))
     diagnostics = sorted(redact_secrets(diagnostics), key=lambda item: (item["canonical_field"], item["code"], item["message"]))

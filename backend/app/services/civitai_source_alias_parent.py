@@ -53,6 +53,26 @@ def _immutable_projection(recipe: GenerationRecipe) -> dict[str, object] | None:
         return None
 
 
+def canonicalize_source_alias_parent_recipe(recipe_payload: Any) -> GenerationRecipe:
+    """Return the one canonical Parent form shared by import and materialization."""
+    if not isinstance(recipe_payload, dict):
+        raise ValueError("persisted recipe must be an object")
+    untrusted_recipe = GenerationRecipe.model_validate_json(canonical_json(recipe_payload), strict=True)
+    raw_confirmed = recipe_payload.get("confirmed", [])
+    if not isinstance(raw_confirmed, list):
+        raise ValueError("confirmed evidence must be a list")
+    confirmed = [EvidenceRecord.model_validate_json(canonical_json(item), strict=True) for item in raw_confirmed]
+    if not confirmed:
+        return untrusted_recipe
+    recipe = _build_recipe_from_trusted_evidence(
+        recipe_payload,
+        capability=_issue_trusted_provenance_capability(confirmed),
+    )
+    if not all(_evidence_snapshot_is_verified(recipe, item) for item in confirmed):
+        raise ValueError("persisted evidence verification failed")
+    return recipe
+
+
 def _materialize_success(*, selector: CivitaiSourceAliasParentSelector, record: Any, matched_alias: Any) -> CivitaiSourceAliasMaterializedParent:
     """Revalidate exactly the persisted evidence recipe and its immutable identity."""
     try:
@@ -62,25 +82,7 @@ def _materialize_success(*, selector: CivitaiSourceAliasParentSelector, record: 
         recipe_payload = evidence.get("recipe")
         if not isinstance(recipe_payload, dict):
             return _failure("rejected", "persisted_recipe_invalid")
-        # A persisted acquisition snapshot is not caller provenance, but its recipe
-        # remains untrusted until strict validation and every retained confirmation's
-        # digest-bound evidence-manifest assertion have been checked.  Only then may
-        # we reissue an internal, record-scoped capability to reconstruct the exact
-        # canonical recipe that the trusted importer originally persisted.
-        untrusted_recipe = GenerationRecipe.model_validate_json(canonical_json(recipe_payload), strict=True)
-        raw_confirmed = recipe_payload.get("confirmed", [])
-        if not isinstance(raw_confirmed, list):
-            return _failure("rejected", "persisted_recipe_invalid")
-        confirmed = [EvidenceRecord.model_validate_json(canonical_json(item), strict=True) for item in raw_confirmed]
-        if confirmed:
-            recipe = _build_recipe_from_trusted_evidence(
-                recipe_payload,
-                capability=_issue_trusted_provenance_capability(confirmed),
-            )
-            if not all(_evidence_snapshot_is_verified(recipe, item) for item in confirmed):
-                return _failure("rejected", "persisted_recipe_invalid")
-        else:
-            recipe = untrusted_recipe
+        recipe = canonicalize_source_alias_parent_recipe(recipe_payload)
         canonical_recipe = recipe.model_dump(mode="json", exclude_none=True)
         parent_recipe_sha256 = canonical_sha256(canonical_recipe)
         if parent_recipe_sha256 != record.parent_recipe_sha256:

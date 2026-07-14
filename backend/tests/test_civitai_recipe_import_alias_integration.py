@@ -115,13 +115,21 @@ def test_import_with_remember_alias_persists_exact_audited_binding(tmp_path: Pat
             resolved = exact_resolve("sunset hero", db=db)
             assert resolved.status == "success"
             record = resolved.record.model_dump(mode="json")
+            from app.services.civitai_source_alias_parent import materialize_source_alias_parent
+            materialized = materialize_source_alias_parent({"alias": "sunset hero"}, db=db)
         for field in ("registry_version", "source_identity", "acquisition_evidence_sha256", "parent_recipe_sha256", "thumbnail_url", "thumbnail_path", "created_at"):
             assert result[field] == record[field]
         assert result["normalized_alias"] == "sunset hero"
         assert result["source_identity"] == {"provider": "civitai", "image_id": 123}
+        canonical_parent = acquisition.recipe.model_dump(mode="json", exclude_none=True)
+        assert record["acquisition_evidence_snapshot"]["recipe"] == canonical_parent
+        assert materialized.status == "success"
+        assert materialized.parent_recipe_sha256 == result["parent_recipe_sha256"]
         assert record["acquisition_evidence_snapshot"]["raw_api_payload"]["token"] == "[REDACTED]"
-        assert result["acquisition_evidence_sha256"] == hashlib.sha256(json.dumps(redact_secrets(acquisition.to_dict()), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        assert result["parent_recipe_sha256"] == hashlib.sha256(json.dumps(acquisition.recipe.model_dump(mode="json", exclude_none=True), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        expected_evidence = redact_secrets(acquisition.to_dict())
+        expected_evidence["recipe"] = canonical_parent
+        assert result["acquisition_evidence_sha256"] == hashlib.sha256(json.dumps(expected_evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        assert result["parent_recipe_sha256"] == hashlib.sha256(json.dumps(canonical_parent, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 def test_import_remember_is_idempotent_and_conflict_is_409_without_mutation(tmp_path: Path) -> None:
