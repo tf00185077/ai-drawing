@@ -19,6 +19,7 @@ SAMPLE_OBJECT_INFO = {
                 "model": ["MODEL"],
                 "seed": ["INT", {"default": 0}],
                 "sampler_name": [["euler", "euler_ancestral"]],
+                "scheduler": [["normal", "karras"]],
             },
             "optional": {"latent_image": ["LATENT"]},
         },
@@ -96,9 +97,11 @@ def test_extract_schema_known_node_has_inputs_and_outputs() -> None:
     assert schema is not None
     req_names = {i["name"] for i in schema["inputs"]["required"]}
     assert {"model", "seed", "sampler_name"} <= req_names
-    # enum 清單型別標記為 COMBO
+    # enum 清單型別標記為 COMBO，並保留正式 live capabilities 所需的可選成員。
     sampler = next(i for i in schema["inputs"]["required"] if i["name"] == "sampler_name")
-    assert sampler["type"] == "COMBO"
+    scheduler = next(i for i in schema["inputs"]["required"] if i["name"] == "scheduler")
+    assert sampler == {"name": "sampler_name", "type": "COMBO", "options": ["euler", "euler_ancestral"]}
+    assert scheduler == {"name": "scheduler", "type": "COMBO", "options": ["normal", "karras"]}
     assert [i["name"] for i in schema["inputs"]["optional"]] == ["latent_image"]
     assert schema["outputs"] == [{"name": "LATENT", "type": "LATENT"}]
 
