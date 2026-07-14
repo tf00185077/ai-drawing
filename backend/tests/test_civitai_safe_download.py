@@ -81,6 +81,27 @@ def test_200_ignoring_range_overwrites_part_safely_instead_of_concatenating(tmp_
     assert transport.calls[0]["headers"]["Range"] == "bytes=5-"
 
 
+def test_streaming_body_is_written_incrementally_and_verified(tmp_path: Path) -> None:
+    data = b"abcdefghij"
+    target = tmp_path / "streamed.safetensors"
+    chunks_seen: list[bytes] = []
+
+    def chunks():
+        for chunk in (data[:3], data[3:7], data[7:]):
+            chunks_seen.append(chunk)
+            yield chunk
+
+    transport = FakeTransport([DownloadResponse(200, chunks(), {})])
+
+    result = safe_download(_metadata(data), target, transport=transport)
+
+    assert result.status == "completed"
+    assert result.bytes == len(data)
+    assert result.actual_sha256 == _sha(data)
+    assert chunks_seen == [data[:3], data[3:7], data[7:]]
+    assert target.read_bytes() == data
+
+
 def test_hash_or_size_mismatch_never_replaces_existing_final_target(tmp_path: Path) -> None:
     expected = b"expected"
     target = tmp_path / "file.safetensors"

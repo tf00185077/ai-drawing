@@ -7,6 +7,7 @@ from typing import Any, Protocol
 
 
 _AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS = 120.0
+_RESOURCE_INSTALL_TIMEOUT_SECONDS = 3600.0
 _AUDITED_LOCAL_RESOLUTION_PATHS = frozenset({
     "civitai-recipes/resolve-local",
     "civitai-recipes/variants/generate-one",
@@ -47,7 +48,10 @@ class HttpBackendClient:
 
     def _timeout_for(self, path: str) -> float:
         """Allow bounded cold-file hashing only on audited resolution routes."""
-        if path.lstrip("/") in _AUDITED_LOCAL_RESOLUTION_PATHS:
+        normalized = path.lstrip("/")
+        if normalized == "civitai-recipes/resource-install":
+            return max(self._timeout, _RESOURCE_INSTALL_TIMEOUT_SECONDS)
+        if normalized in _AUDITED_LOCAL_RESOLUTION_PATHS:
             return max(self._timeout, _AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS)
         return self._timeout
 

@@ -1,6 +1,7 @@
 """CIV-C safe, resumable, offline-testable Civitai file download boundary."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 import hashlib
 import os
@@ -23,7 +24,7 @@ class DownloadTransport(Protocol):
 @dataclass(frozen=True)
 class DownloadResponse:
     status_code: int
-    body: bytes
+    body: bytes | Iterable[bytes]
     headers: Mapping[str, str] = field(default_factory=dict)
 
 
@@ -139,7 +140,9 @@ def safe_download(
             last_reason = str(exc)
             response = None
         if response is not None:
-            if 200 <= response.status_code < 300 and isinstance(response.body, bytes):
+            if 200 <= response.status_code < 300 and (
+                isinstance(response.body, bytes) or isinstance(response.body, Iterable)
+            ):
                 if response.status_code == 206 and initial_offset:
                     mode = "ab"
                     resume_used = True
@@ -149,8 +152,26 @@ def safe_download(
                 else:
                     return _failure(target, metadata, resume_used=resume_used, bytes_written=0,
                                     reason=f"unexpected successful status {response.status_code}", secret_values=secret_values)
-                with part.open(mode) as stream:
-                    stream.write(response.body)
+                chunks = (response.body,) if isinstance(response.body, bytes) else iter(response.body)
+                try:
+                    with part.open(mode) as stream:
+                        for chunk in chunks:
+                            if not isinstance(chunk, bytes):
+                                raise TypeError("download stream chunks must be bytes")
+                            stream.write(chunk)
+                except Exception as exc:
+                    return _failure(
+                        target,
+                        metadata,
+                        resume_used=resume_used,
+                        bytes_written=part.stat().st_size if part.exists() else 0,
+                        reason=f"streaming download failed: {exc.__class__.__name__}",
+                        secret_values=secret_values,
+                    )
+                finally:
+                    close = getattr(chunks, "close", None)
+                    if callable(close):
+                        close()
                 actual_bytes = part.stat().st_size
                 actual_sha = _file_digest(part)
                 if actual_bytes != metadata.size or actual_sha.lower() != metadata.sha256.lower():
