@@ -446,16 +446,23 @@ def extract_node_schema(
     if spec is None:
         return None
 
-    def _parse_inputs(group: dict[str, Any]) -> list[dict[str, str]]:
-        result: list[dict[str, str]] = []
+    def _parse_inputs(group: dict[str, Any]) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
         for name, definition in group.items():
-            # ComfyUI input 定義為 [type, opts?]；type 可能是字串或 enum 清單
+            # ComfyUI input 定義為 [type, opts?]；type 可能是字串或 enum 清單。
+            # COMBO 成員是 live runtime capability 的一部分；省略它們會迫使
+            # 正式 client 猜測 sampler/scheduler，故保留 JSON-safe 選項清單。
             if isinstance(definition, (list, tuple)) and definition:
                 raw_type = definition[0]
             else:
                 raw_type = definition
-            type_name = "COMBO" if isinstance(raw_type, list) else str(raw_type)
-            result.append({"name": name, "type": type_name})
+            row: dict[str, Any] = {
+                "name": name,
+                "type": "COMBO" if isinstance(raw_type, list) else str(raw_type),
+            }
+            if isinstance(raw_type, list):
+                row["options"] = list(raw_type)
+            result.append(row)
         return result
 
     input_def = spec.get("input", {}) or {}
