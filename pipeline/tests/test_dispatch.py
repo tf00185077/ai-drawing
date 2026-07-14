@@ -19,7 +19,7 @@ class DispatchTests(unittest.TestCase):
  def get(self):return json.loads((self.root/'pipeline/state.json').read_text())
  def tick(self):
   with patch('dispatch.subprocess.Popen',P),patch('dispatch.alive',lambda p:p in self.live):return dispatch.reconcile()
- def st(self):return {'id':'X','title':'x','kind':'implement','executor_brief':'bounded stage','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'acceptance_to_test_matrix':[{'criterion_id':'AC-1','behavior_attack':'bounded behavior','exact_test':'tests/test_x.py::test_bounded','expected_evidence':'typed result','forbidden_side_effects':'no network'}],'required_tests':['AC-1 -> unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':2,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
+ def st(self):return {'id':'X','title':'x','kind':'implement','executor_brief':'bounded stage','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'acceptance_to_test_matrix':[{'criterion_id':'AC-1','behavior_attack':'bounded behavior','exact_test':'tests/test_x.py::test_bounded','expected_evidence':'typed result','forbidden_side_effects':'no network'}],'required_tests':['uv run pytest tests/test_x.py::test_bounded -q'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':2,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
  def dead(self,s,r):r['status']='RUNNING';r['pid']=999;s['runs'][r['run_id']]=r;self.s=s;self.put()
  def result(self,r,status='done'):
   (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.result.v1.1','run_id':r['run_id'],'status':status,'summary':'ok','files_changed':[],'how_verified':'x','blocked_reason':None,'notes_for_review':'x'}))
@@ -92,6 +92,11 @@ class DispatchTests(unittest.TestCase):
   with patch('dispatch.dirty_paths',return_value={'Other.cs'}),patch('dispatch.subprocess.Popen') as spawn:dispatch.dispatch(self.s,roles,'executor',st,notes=[]);spawn.assert_not_called()
   self.assertEqual(self.s['goal']['status'],'PAUSED');self.s['goal']['status']='ACTIVE';st['status']='READY'
   with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):self.assertTrue(dispatch.dispatch(self.s,roles,'executor',st,notes=[]))
+ def test_invalid_frozen_contract_blocks_before_worker_spawn(self):
+  st=self.st();st['required_tests']=['uv run pytest tests/test_other.py::test_other -q'];roles=json.loads((self.root/'pipeline/roles.json').read_text())
+  with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen') as spawn:
+   self.assertFalse(dispatch.dispatch(self.s,roles,'executor',st,notes=[]));spawn.assert_not_called()
+  self.assertEqual(st['status'],'BLOCKED');self.assertEqual(self.s['goal']['status'],'PAUSED');self.assertEqual(self.s['runs'],{})
  def test_executor_scope_mismatch_does_not_enter_review(self):
   st=self.st();self.s['stages']=[st];r={'run_id':'X.execute.1.executor','role':'executor','stage':'X','action':'execute','status':'RUNNING','pid':999,'result_file':'agent_runs/x.result.json','log_file':'agent_runs/x.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.result(r);self.result(r);data=json.loads((self.root/r['result_file']).read_text());data['files_changed']=['declared.cs'];(self.root/r['result_file']).write_text(json.dumps(data))
   with patch('dispatch.alive',return_value=False),patch('dispatch.dirty_paths',return_value={'actual.cs'}):dispatch.harvest(self.s,[])

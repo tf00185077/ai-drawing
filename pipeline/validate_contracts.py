@@ -22,6 +22,22 @@ def state_ok(x):
  if x['goal']['status'] not in ('ACTIVE','PAUSED','DONE'):raise ValueError('bad goal status')
  if not isinstance(x['stages'],list) or not isinstance(x['runs'],dict):raise ValueError('bad state collections')
  for s in x['stages']:require(s,['id','status','attempts','max_attempts'],'stage')
+def stage_contract_ok(s):
+ require(s,['id','title','depends_on','kind','contract_version','inputs','outputs','in_scope','out_of_scope','acceptance','acceptance_to_test_matrix','required_tests','allowed_files','executor_brief'],'new stage frozen contract')
+ lists=('inputs','outputs','in_scope','out_of_scope','acceptance','acceptance_to_test_matrix','required_tests','allowed_files')
+ if any(not isinstance(s[k],list) for k in lists):raise ValueError('frozen contract fields must be lists')
+ if not s['acceptance'] or not all(isinstance(a,dict) and isinstance(a.get('id'),str) and a['id'] and isinstance(a.get('text'),str) and a['text'] for a in s['acceptance']):raise ValueError('frozen contract acceptance requires id/text objects')
+ ids=[a['id'] for a in s['acceptance']]
+ if len(ids)!=len(set(ids)):raise ValueError('frozen contract acceptance ids must be unique')
+ if len(ids)>4:raise ValueError('frozen contract must have at most four acceptance criteria')
+ matrix=s['acceptance_to_test_matrix'];required_row_fields=('criterion_id','behavior_attack','exact_test','expected_evidence','forbidden_side_effects')
+ if not matrix or not all(isinstance(row,dict) and all(isinstance(row.get(k),str) and row[k] for k in required_row_fields) for row in matrix):raise ValueError('acceptance_to_test_matrix requires exact non-empty rows')
+ if {row['criterion_id'] for row in matrix}!=set(ids):raise ValueError('acceptance_to_test_matrix must cover exactly the frozen acceptance ids')
+ commands='\n'.join(command for command in s['required_tests'] if isinstance(command,str))
+ for command in s['required_tests']:
+  if isinstance(command,str) and 'pytest' in command and 'backend/tests' in command and 'mcp-server/tests' in command:
+   raise ValueError('cross-project pytest command must split backend and mcp-server uv projects')
+ if any(row['exact_test'] not in commands for row in matrix):raise ValueError('matrix exact_test must appear in required_tests')
 def decision_ok(x):
  require(x,['schema','run_id','decision_type','summary'],'decision')
  if x['schema']!='hermes.decision.v1.1' or not isinstance(x['run_id'],str):raise ValueError('bad decision identity')
@@ -29,19 +45,7 @@ def decision_ok(x):
   require(x,['new_stages','goal_done','blocked_reason','needs_from_owner'],'plan decision')
   if not isinstance(x['new_stages'],list) or not isinstance(x['goal_done'],bool):raise ValueError('bad plan fields')
   for s in x['new_stages']:
-   require(s,['id','title','depends_on','kind','contract_version','inputs','outputs','in_scope','out_of_scope','acceptance','acceptance_to_test_matrix','required_tests','allowed_files','executor_brief'],'new stage frozen contract')
-   lists=('inputs','outputs','in_scope','out_of_scope','acceptance','acceptance_to_test_matrix','required_tests','allowed_files')
-   if any(not isinstance(s[k],list) for k in lists):raise ValueError('frozen contract fields must be lists')
-   if not s['acceptance'] or not all(isinstance(a,dict) and isinstance(a.get('id'),str) and a['id'] and isinstance(a.get('text'),str) and a['text'] for a in s['acceptance']):raise ValueError('frozen contract acceptance requires id/text objects')
-   ids=[a['id'] for a in s['acceptance']]
-   if len(ids)!=len(set(ids)):raise ValueError('frozen contract acceptance ids must be unique')
-   if len(ids)>4:raise ValueError('frozen contract must have at most four acceptance criteria')
-   matrix=s['acceptance_to_test_matrix'];required_row_fields=('criterion_id','behavior_attack','exact_test','expected_evidence','forbidden_side_effects')
-   if not matrix or not all(isinstance(row,dict) and all(isinstance(row.get(k),str) and row[k] for k in required_row_fields) for row in matrix):raise ValueError('acceptance_to_test_matrix requires exact non-empty rows')
-   if {row['criterion_id'] for row in matrix}!=set(ids):raise ValueError('acceptance_to_test_matrix must cover exactly the frozen acceptance ids')
-   for command in s['required_tests']:
-    if isinstance(command,str) and 'pytest' in command and 'backend/tests' in command and 'mcp-server/tests' in command:
-     raise ValueError('cross-project pytest command must split backend and mcp-server uv projects')
+   stage_contract_ok(s)
  elif x['decision_type']=='review':
   require(x,['stage','verdict','fixes','blocking_criterion_ids','deferred_findings','blocked_reason','needs_from_owner','commit'],'review decision')
   if x['verdict'] not in ('accept','accept_with_fixes','reject','blocked'):raise ValueError('bad verdict')
