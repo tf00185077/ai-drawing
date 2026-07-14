@@ -66,6 +66,58 @@ def test_resource_inspect_normalizes_authoritative_public_model_policy_fields() 
     assert select_civitai_resource(inspected, {"civitai_file_id": 11})["status"] == "completed"
 
 
+def test_model_version_locator_joins_authoritative_model_policy_before_selection(monkeypatch) -> None:
+    """A model-version URL must retain the model endpoint's explicit permission fields."""
+    from app.api import civitai_recipes as api
+    from app.schemas.civitai_recipes import CivitaiResourceInspectRequest
+    from app.services.civitai_resource_install import select_civitai_resource
+
+    model_payload = _fixture()
+    model_payload.update({
+        "availability": "Public",
+        "allowNoCredit": True,
+        "allowCommercialUse": "{RentCivit,Image,Rent}",
+        "allowDerivatives": True,
+        "allowDifferentLicense": True,
+    })
+    selected_version = model_payload["modelVersions"][0]
+    selected_version["id"] = 2940478
+    selected_version["files"][0].pop("availability")
+    selected_version["files"][0].pop("license")
+    selected_version["files"][0].pop("usage")
+    other_version = {**selected_version, "id": 999, "files": []}
+    model_payload["id"] = 376130
+    model_payload["modelVersions"] = [other_version, selected_version]
+    version_payload = {**selected_version, "model": {"id": 376130}}
+    requested_urls: list[str] = []
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    def fake_get(url: str, **_kwargs) -> Response:
+        requested_urls.append(url)
+        payload = model_payload if "/api/v1/models/" in url else version_payload
+        return Response(payload)
+
+    monkeypatch.setattr(api.httpx, "get", fake_get)
+    inspected = api.inspect_civitai_resource_route(CivitaiResourceInspectRequest(
+        locator="https://civitai.com/models/376130?modelVersionId=2940478",
+    ))
+
+    assert requested_urls == ["https://civitai.com/api/v1/models/376130"]
+    assert {candidate["civitai_model_version_id"] for candidate in inspected["candidates"]} == {2940478}
+    assert select_civitai_resource(inspected, {"civitai_file_id": 11})["status"] == "completed"
+
+
 @pytest.mark.parametrize("field,value", [
     ("allowNoCredit", None),
     ("allowNoCredit", "true"),
