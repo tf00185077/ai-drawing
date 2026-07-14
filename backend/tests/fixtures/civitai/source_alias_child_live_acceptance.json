@@ -1,0 +1,2591 @@
+{
+  "schema": "civ-sa-ac.alias-only-child-live-acceptance.v1",
+  "stage": "CIV-SA-AC",
+  "status": "blocked",
+  "ab_r2_append_only": {
+    "evidence_file": "agent_runs/CIV-SA-AB-R2.interrupted-import-adoption.json",
+    "evidence_sha256": "82d038db65016f98becc999f09334d21451699a64c9c4b04cabf0b5cc436062c",
+    "binding_sha256": "88d5fc2e963cbd07a4e0b81f91e20ddf688702b11869076cfb833c2f082746f4"
+  },
+  "adopted_binding": {
+    "requested_alias": "Violet Rooftop Parent AB",
+    "resolved_alias": "violet rooftop parent ab",
+    "matched_alias": {
+      "original_alias": "Violet Rooftop Parent AB",
+      "normalized_key": "violet rooftop parent ab",
+      "kind": "primary"
+    },
+    "registry_version": 1,
+    "source_identity": {
+      "provider": "civitai",
+      "image_id": 130519340
+    },
+    "acquisition_evidence_sha256": "56155e437ed4bb2017e76420ec0f5e3efc932eedc750e1dc4f418e05f8442d63",
+    "parent_recipe_sha256": "7737814089878228bd6decdd390d14396e7d0bf0f1fac9725e6593ba75ae0714",
+    "registry_created_at": "2026-07-13T22:38:38.111398Z"
+  },
+  "deployment": {
+    "head": "597e07dcd9c60575a324e883da46a9feaf3b6d90",
+    "head_contains_597e07d": true,
+    "backend_healthy": true,
+    "comfyui_healthy": true,
+    "formal_stdio_catalog": {
+      "tool_count": 75,
+      "required_tools": {
+        "civitai_recipe_compatibility": true,
+        "civitai_recipe_export": true,
+        "civitai_recipe_local_ledger": true,
+        "civitai_recipe_resolve_local": true,
+        "civitai_recipe_variant_generate": true,
+        "civitai_source_alias_resolve": true,
+        "gallery_list": true,
+        "generate_queue_status": true,
+        "get_gallery_image": true,
+        "get_generation_status": true
+      }
+    }
+  },
+  "preflight": {
+    "exact_resolve": {
+      "request": {
+        "alias": "Violet Rooftop Parent AB"
+      },
+      "binding": {
+        "original_alias": "Violet Rooftop Parent AB",
+        "normalized_alias": "violet rooftop parent ab",
+        "registry_version": 1,
+        "source_identity": {
+          "provider": "civitai",
+          "image_id": 130519340
+        },
+        "acquisition_evidence_sha256": "56155e437ed4bb2017e76420ec0f5e3efc932eedc750e1dc4f418e05f8442d63",
+        "parent_recipe_sha256": "7737814089878228bd6decdd390d14396e7d0bf0f1fac9725e6593ba75ae0714",
+        "registry_created_at": "2026-07-13T22:38:38.111398Z"
+      }
+    },
+    "alias_target_state": {
+      "archived": false,
+      "repointed": false,
+      "corrupt": false
+    },
+    "ledger": {
+      "unique_required_resources": false,
+      "regular_files_verified": false,
+      "entries": [],
+      "physical_regular_file_sha256": []
+    },
+    "strict_resolution": {
+      "ready": false,
+      "report_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "runtime": {
+      "live_inspection": false,
+      "blocker_code": "parent_resource_missing_from_backend_owned_local_ledger"
+    },
+    "compatibility": null,
+    "before_snapshots": {
+      "queue": "執行中：0 筆\n等候中：0 筆",
+      "gallery": {
+        "ok": true,
+        "tool": "gallery_list",
+        "data": {
+          "items": [],
+          "total": 0
+        }
+      }
+    },
+    "after_snapshots": {
+      "queue": "執行中：0 筆\n等候中：0 筆",
+      "gallery": {
+        "ok": true,
+        "tool": "gallery_list",
+        "data": {
+          "items": [],
+          "total": 0
+        }
+      }
+    }
+  },
+  "frozen_submission_intent": {
+    "source_alias": {
+      "alias": "Violet Rooftop Parent AB"
+    },
+    "directives": [
+      {
+        "field": "sampling.seed",
+        "policy": "randomize"
+      }
+    ],
+    "model_family": "illustrious",
+    "batch_size": 1
+  },
+  "variant_request": null,
+  "counts": {
+    "submission_count": 0,
+    "batch_size": 1,
+    "artifact_count": 0,
+    "variation_set_submissions": 0,
+    "other_generation_submissions": 0
+  },
+  "variant": null,
+  "gallery": null,
+  "terminal": {
+    "status": "blocked",
+    "blocker_code": "parent_resource_missing_from_backend_owned_local_ledger"
+  },
+  "tool_call_ledger": [
+    {
+      "ordinal": 1,
+      "tool": "list_tools",
+      "request": {},
+      "response_summary": {
+        "tool_count": 75,
+        "required_tools_present": true
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 2,
+      "tool": "mcp_ping",
+      "request": {},
+      "response_summary": "ok: Backend 連線正常",
+      "is_error": false
+    },
+    {
+      "ordinal": 3,
+      "tool": "get_node_schema",
+      "request": {
+        "node_type": "KSampler"
+      },
+      "response_summary": {
+        "ok": true,
+        "tool": "get_node_schema",
+        "node_type": "KSampler",
+        "schema": {
+          "node_type": "KSampler",
+          "display_name": "KSampler",
+          "category": "model/sampling",
+          "inputs": {
+            "required": [
+              {
+                "name": "model",
+                "type": "MODEL"
+              },
+              {
+                "name": "seed",
+                "type": "INT"
+              },
+              {
+                "name": "steps",
+                "type": "INT"
+              },
+              {
+                "name": "cfg",
+                "type": "FLOAT"
+              },
+              {
+                "name": "sampler_name",
+                "type": "COMBO"
+              },
+              {
+                "name": "scheduler",
+                "type": "COMBO"
+              },
+              {
+                "name": "positive",
+                "type": "CONDITIONING"
+              },
+              {
+                "name": "negative",
+                "type": "CONDITIONING"
+              },
+              {
+                "name": "latent_image",
+                "type": "LATENT"
+              },
+              {
+                "name": "denoise",
+                "type": "FLOAT"
+              }
+            ],
+            "optional": []
+          },
+          "outputs": [
+            {
+              "name": "LATENT",
+              "type": "LATENT"
+            }
+          ]
+        },
+        "next": "use these input/output names and types to build the workflow node"
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 4,
+      "tool": "civitai_source_alias_resolve",
+      "request": {
+        "alias": "Violet Rooftop Parent AB"
+      },
+      "response_summary": {
+        "ok": true,
+        "tool": "civitai_source_alias_resolve",
+        "data": {
+          "registry_version": 1,
+          "source_identity": {
+            "provider": "civitai",
+            "image_id": 130519340
+          },
+          "acquisition_evidence_sha256": "56155e437ed4bb2017e76420ec0f5e3efc932eedc750e1dc4f418e05f8442d63",
+          "parent_recipe_sha256": "7737814089878228bd6decdd390d14396e7d0bf0f1fac9725e6593ba75ae0714",
+          "thumbnail_path": null,
+          "user_note": null,
+          "approved_tags": [],
+          "prompt_summary": null,
+          "created_at": "2026-07-13T22:38:38.111398Z",
+          "matched_alias": {
+            "original_alias": "Violet Rooftop Parent AB",
+            "normalized_key": "violet rooftop parent ab",
+            "kind": "primary"
+          }
+        },
+        "next": "use the immutable audited source binding as-is; do not search or rebuild it"
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 5,
+      "tool": "generate_queue_status",
+      "request": {},
+      "response_summary": "執行中：0 筆\n等候中：0 筆",
+      "is_error": false
+    },
+    {
+      "ordinal": 6,
+      "tool": "gallery_list",
+      "request": {
+        "limit": 20,
+        "offset": 0
+      },
+      "response_summary": {
+        "ok": true,
+        "tool": "gallery_list",
+        "data": {
+          "items": [],
+          "total": 0
+        }
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 7,
+      "tool": "civitai_recipe_local_ledger",
+      "request": {
+        "kind": "checkpoint",
+        "civitai_model_version_id": 2940478,
+        "civitai_file_id": 2819621,
+        "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+        "availability": true
+      },
+      "response_summary": {
+        "ok": true,
+        "tool": "civitai_recipe_local_ledger",
+        "data": {
+          "entries": [],
+          "snapshot": {
+            "row_count": 0,
+            "excluded_non_civitai_count": 0,
+            "excluded_no_local_path_count": 0,
+            "availability_policy": "available is true only for downloaded_resources status installed or available"
+          }
+        },
+        "next": "resolve a recipe strictly against this backend-owned local ledger"
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 8,
+      "tool": "civitai_recipe_resolve_local",
+      "request": {
+        "recipe": {
+          "base_prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+          "confirmed": [
+            {
+              "canonical_field": "source.identity",
+              "note": null,
+              "reference": "civitai_api:images:130519340:response",
+              "snapshot_sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f",
+              "source": "civitai_api"
+            },
+            {
+              "canonical_field": "resources[0].identity",
+              "note": null,
+              "reference": "civitai_api:images:130519340:response",
+              "snapshot_sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f",
+              "source": "civitai_api"
+            }
+          ],
+          "controls": [],
+          "detailers": [],
+          "evidence_manifest": [
+            {
+              "assertions": [
+                {
+                  "canonical_field": "source.identity",
+                  "extractor": "json_pointer",
+                  "path": "/extractions/field_0",
+                  "value": null
+                },
+                {
+                  "canonical_field": "resources[0].identity",
+                  "extractor": "json_pointer",
+                  "path": "/extractions/field_1",
+                  "value": null
+                }
+              ],
+              "identity": "civitai_api:images:130519340:response:manifest",
+              "payload": {
+                "extractions": {
+                  "field_0": {
+                    "image_id": 130519340
+                  },
+                  "field_1": {
+                    "civitai_file_id": 2819621,
+                    "civitai_model_version_id": 2940478,
+                    "kind": "checkpoint",
+                    "name": "NovaAnimeILV19",
+                    "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
+                  }
+                },
+                "response": {
+                  "baseModel": "Illustrious",
+                  "browsingLevel": 1,
+                  "createdAt": "2026-05-12T22:23:07.379Z",
+                  "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                  "height": 2016,
+                  "id": 130519340,
+                  "meta": {
+                    "id": 130519340,
+                    "meta": {
+                      "": {},
+                      "(shadow": "[0",
+                      "Denoising strength": "0.4",
+                      "Global Seed": "428649103",
+                      "Hires Adjust": {},
+                      "Hires CFG Scale": "4",
+                      "Hires steps": "40",
+                      "Hires upscale": "1.5",
+                      "Model": "NovaAnimeILV19",
+                      "Model hash": "fa486caafc",
+                      "cfgScale": 4.5,
+                      "clipSkip": 2,
+                      "hashes": {
+                        "model": "fa486caafc"
+                      },
+                      "height": 1344,
+                      "highlight": "[20",
+                      "middle": "[0",
+                      "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                      "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                      "resources": [
+                        {
+                          "fileId": 2819621,
+                          "hash": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+                          "modelVersionId": 2940478,
+                          "name": "NovaAnimeILV19",
+                          "type": "model",
+                          "unmatched": true
+                        }
+                      ],
+                      "sampler": "Euler a",
+                      "seed": 3282307999,
+                      "steps": 20,
+                      "width": 768
+                    }
+                  },
+                  "modelVersionIds": [
+                    2940478
+                  ],
+                  "nsfw": false,
+                  "nsfwLevel": "None",
+                  "postId": 28552423,
+                  "stats": {
+                    "commentCount": 0,
+                    "cryCount": 9,
+                    "dislikeCount": 0,
+                    "heartCount": 88,
+                    "laughCount": 12,
+                    "likeCount": 194
+                  },
+                  "type": "image",
+                  "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                  "username": "Crody",
+                  "width": 1152
+                }
+              },
+              "reference": "civitai_api:images:130519340:response",
+              "sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f"
+            }
+          ],
+          "inferred": [],
+          "inputs": [],
+          "missing": [
+            {
+              "canonical_field": "sampling.width",
+              "criticality": "important",
+              "reason": "conflicting Civitai API and embedded metadata values"
+            },
+            {
+              "canonical_field": "sampling.height",
+              "criticality": "important",
+              "reason": "conflicting Civitai API and embedded metadata values"
+            }
+          ],
+          "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+          "passes": [
+            {
+              "inherits_from": "recipe.sampling",
+              "ksampler_node_id": null,
+              "name": "base",
+              "notes": null,
+              "sampling": {
+                "cfg": null,
+                "denoise": null,
+                "height": null,
+                "sampler": null,
+                "scheduler": null,
+                "seed": null,
+                "steps": null,
+                "width": null
+              },
+              "scale": null,
+              "upscale_model": null,
+              "upscale_resource": null
+            }
+          ],
+          "postprocess": [],
+          "raw": {
+            "acquisition": {
+              "locator": {
+                "canonical_url": "https://civitai.com/images/130519340",
+                "image_id": 130519340,
+                "kind": "image",
+                "media_url": null,
+                "model_id": null,
+                "model_version_id": null,
+                "post_id": null
+              },
+              "provenance": {
+                "locator": {
+                  "canonical_url": "https://civitai.com/images/130519340",
+                  "image_id": 130519340,
+                  "kind": "image",
+                  "media_url": null,
+                  "model_id": null,
+                  "model_version_id": null,
+                  "post_id": null
+                },
+                "requests": [
+                  {
+                    "attempt": 1,
+                    "params": {
+                      "imageId": 130519340,
+                      "withMeta": "true"
+                    },
+                    "raw": {
+                      "items": [
+                        {
+                          "baseModel": "Illustrious",
+                          "browsingLevel": 1,
+                          "createdAt": "2026-05-12T22:23:07.379Z",
+                          "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                          "height": 2016,
+                          "id": 130519340,
+                          "meta": {
+                            "id": 130519340,
+                            "meta": {
+                              "": {},
+                              "(shadow": "[0",
+                              "Denoising strength": "0.4",
+                              "Global Seed": "428649103",
+                              "Hires Adjust": {},
+                              "Hires CFG Scale": "4",
+                              "Hires steps": "40",
+                              "Hires upscale": "1.5",
+                              "Model": "NovaAnimeILV19",
+                              "Model hash": "fa486caafc",
+                              "cfgScale": 4.5,
+                              "clipSkip": 2,
+                              "hashes": {
+                                "model": "fa486caafc"
+                              },
+                              "height": 1344,
+                              "highlight": "[20",
+                              "middle": "[0",
+                              "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                              "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                              "resources": [
+                                {
+                                  "hash": "fa486caafc",
+                                  "name": "NovaAnimeILV19",
+                                  "type": "model",
+                                  "unmatched": true
+                                }
+                              ],
+                              "sampler": "Euler a",
+                              "seed": 3282307999,
+                              "steps": 20,
+                              "width": 768
+                            }
+                          },
+                          "modelVersionIds": [
+                            2940478
+                          ],
+                          "nsfw": false,
+                          "nsfwLevel": "None",
+                          "postId": 28552423,
+                          "stats": {
+                            "commentCount": 0,
+                            "cryCount": 9,
+                            "dislikeCount": 0,
+                            "heartCount": 88,
+                            "laughCount": 12,
+                            "likeCount": 194
+                          },
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                          "username": "Crody",
+                          "width": 1152
+                        }
+                      ],
+                      "metadata": {}
+                    },
+                    "status": 200,
+                    "url": "https://civitai.com/api/v1/images"
+                  },
+                  {
+                    "attempt": 1,
+                    "params": {},
+                    "raw": {
+                      "air": "urn:air:sdxl:checkpoint:civitai:376130@2940478",
+                      "baseModel": "Illustrious",
+                      "baseModelType": "Standard",
+                      "createdAt": "2026-05-12T22:18:45.702Z",
+                      "description": "<p>Changes</p><ul><li><p>Higher contrast</p></li><li><p>Higher details within backgrounds</p></li></ul><p>NoobAI EPS v1.1 + Illustrious v2.0-stable + ChenkinNoob v0.5 DARE applied</p>",
+                      "downloadUrl": "https://civitai.com/api/download/models/2940478",
+                      "earlyAccessConfig": null,
+                      "earlyAccessEndsAt": null,
+                      "files": [
+                        {
+                          "downloadUrl": "https://civitai.com/api/download/models/2940478",
+                          "hashes": {
+                            "AutoV1": "4E11EA3C",
+                            "AutoV2": "FA486CAAFC",
+                            "AutoV3": "6B8092EAA417",
+                            "BLAKE3": "DFEC49BE1E59D14C87A2EA38D2E4EAD4B41B2A04EBCDD01706504239BF91716C",
+                            "CRC32": "E64750EE",
+                            "SHA256": "FA486CAAFC330F133605D3C18B418D183812F14946631C6544BFB28730DB6D6F"
+                          },
+                          "id": 2819621,
+                          "metadata": {
+                            "format": "SafeTensor",
+                            "fp": "fp16",
+                            "size": "pruned"
+                          },
+                          "name": "novaAnimeXL_ilV190.safetensors",
+                          "pickleScanMessage": null,
+                          "pickleScanResult": "Success",
+                          "primary": true,
+                          "scannedAt": "2026-05-12T22:24:22.49",
+                          "sizeKB": 6776470.30859375,
+                          "type": "Model",
+                          "virusScanMessage": null,
+                          "virusScanResult": "Success"
+                        }
+                      ],
+                      "id": 2940478,
+                      "images": [
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "428649103",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[20",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 3282307999,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                            "height": 2016,
+                            "size": 2585338,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 1,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/130519340.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UdLE1i?^ELnhRNIot7ozAbM{xGf,Nx%0nhni",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "101724454",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, cleavage, cleavage cutout, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, blonde hair, low-tied_long_hair, low_side_ponytail, floating hair, blue eyes, turning head, looking at viewer, parted lips, medium breasts, turtleneck lace-trimmed frilled puffy sleeve white dress, shoulder cutout, leaning back against tree, dutch angle, dynamic, upper body, (portrait, close-up:1.2), foreshortening, forest, flowers, white butterfly, dappled sunlight, lens flare, backlighting, BREAK, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 446796035,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UdLE1i?^ELnhRNIot7ozAbM{xGf,Nx%0nhni",
+                            "height": 2016,
+                            "size": 2636436,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/76dfe015-82c2-4d33-848c-c973fe2ce5da/original=true/130519328.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UAB:~?ES5AroMbD$o~tT00%N=r9Zu6n0R3oI",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "721664149",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, eyelashes, 1girl, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, very awa, 1male, solo, male focus, athletic, (blue hair, dark purple colored tips, red streaked hair:1.2), short hair, sidecut, wolf cut, green blue eyes, looking at viewer, turtleneck white shirt, dark purple jacket, dutch angle, dynamic, upper body, portrait, perfect chaos cosmic night sky, dreamlike atmosphere, backlighting, subsurface scattering, BREAK, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 1747406714,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UAB:~?ES5AroMbD$o~tT00%N=r9Zu6n0R3oI",
+                            "height": 2016,
+                            "size": 2338253,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/4c76c8b3-cf21-437b-bdc7-03bee14bcfb3/original=true/130519333.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UFF}f}8wDi}[$%-p9E=x00x]?IR+9YEL.8#m",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "718579124",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, blurry edges, extra digits, conjoined fingers, wrong hand, white dress, devil wings, white wings, arms behind back, wide shot, very wide shot, full body, lens flare, sunset, body markings, bodypaint, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, solo, red halo, long white hair, hair between eyes, floating hair, red eyes, turning head, looking at viewer, white eyelashes, raised inner eyebrows, smile, parted lips, angel (red wings:1.2), (black sundress:1.2), floating, (midair:1.2), knees up, hugging own legs, hands, bent back, from side, dutch angle, portrait, upper body, close-up, night, starry sky, red full moon, dark, omnious, dappled moonlight, BREAK, backlighting, luminous particles, shimmering feathers, subtle lens flare, cinematic lighting, depth of field, bokeh, volumetric lighting, dreamy atmosphere",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 678217776,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UFF}f}8wDi}[$%-p9E=x00x]?IR+9YEL.8#m",
+                            "height": 2016,
+                            "size": 2390580,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/f0be436e-025f-4b93-89d1-f16b893fe197/original=true/130519332.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UEI=Aa9s0O%$HXVDDhni18#Pz.oy4pO?_Nbw",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "376831015",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, headset, extra digits, 6 fingers, conjoined fingers, wrong hand, extra legs, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, ia \\(vocaloid\\), blue eyes, looking at viewer, upturned eyes, smile, open mouth, blush, sweatdrop, small breasts, cleavage, off-shoulder (detouched sleeve:1.2) crop top black shirt over black tank top, midriff, pink skirt, floating clothes, standing, pigeon-toed, legs apart, leaning forward, arched back, reaching, outstretched arm, spread arms, open hand, holding microphone over head, from above, dutch angle, dynamic, fisheye, floating hair, portrait, close-up, face focus, light particles, fine fabric emphasis, rim light, night, concert, idol, stage, neon light, spotlight, BREAK, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 4174327409,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UEI=Aa9s0O%$HXVDDhni18#Pz.oy4pO?_Nbw",
+                            "height": 2016,
+                            "size": 2507020,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/3fa2bbf8-8975-4888-a383-56b8aa37b13d/original=true/130519334.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "U8AT]2uP6CvzO]x]XpIp00nnoJpJ#iOZ$wxb",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "3264964944",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, lace-trimmed collar, grenade pin on front of choker, grenade pin on shirt, chain, multiple pin, looking up, leaning against wall, grenade, on bed, lying on floor, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, solo, (reze \\(chainsaw man\\):1.2), looking at viewer, half-closed eyes, upturned eyes, aquiline nose, smile, closed mouth, :>, head tilt, turning head, (head down:1.2), blush, (grenade pin on side of black choker:1.2), medium breasts, sleeveless (low-cut armhole:1.2) collared impossible white shirt, sideboob, black neck ribbon, standing, arched back, arms behind back, floating hair, portrait, dutch angle, dynamic, dark, night, city, vignetting, (underlighting:1.2), bloom, BREAK, sharp focus, bokeh, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 1816887638,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "U8AT]2uP6CvzO]x]XpIp00nnoJpJ#iOZ$wxb",
+                            "height": 2016,
+                            "size": 2302493,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 4,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/900bf3b5-fdf6-4389-a84a-747bc1a302b8/original=true/130519327.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UXM%Qd%MOt$g~W%MNHVtKkxtNHW=pwNbRjxt",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "697683410",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cyrene \\(honkai: star rail\\), cyrene \\(aedes elysiae\\) \\(honkai: star rail\\) AND cyrene \\(ripples of past reverie\\) \\(honkai: star rail\\), hair ornament, hair flower, blue rose, petals, bridal veil, long hair, pink hair, purple eyes, diamond-shaped pupils, pointy ears, open mouth, smile, blush, looking at viewer, head tilt, medium breasts, layered white dress, bare shoulders, pink nails, hand on own chest, offering hand, reaching towards viewer, wind, floating hair, from above, dutch angle, cowboy shot, dynamic, dispersion \\(optics\\), light rays, lens flare, BREAK, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 919802966,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UXM%Qd%MOt$g~W%MNHVtKkxtNHW=pwNbRjxt",
+                            "height": 2016,
+                            "size": 2830782,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/ece30152-ed0a-49fe-b82b-e34d7cbf2953/original=true/130519343.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UNJQ}$9a0eXk~CI.9H9x=ZNGrsW=PAIVr_V@",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "3449743747",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, extra arms, white clothes, yellow clothes, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, zooming in, blurry edges, dispersion \\(optics\\), 1girl, solo, elf girl, blonde hair, medium bob, long sidelocks, braid, long pointy elf ears, pixie, looking at viewer, turning head, blue eyes, upturned eyes, (parted lips:1.2), blush, floral print blue scarf, medium breasts, leaf print puffy wide green detached sleeves past wrists, narrow waist, wide hips, thick thighs, cross-laced pixie frill lace strapless green (leotard:0.8) green long dress, skindentation see-through black pantyhose, brown lace-up knee boots, head tilt, sitting on log, knees together feet apart, arched back, outstretched arm up reaching towards viewer, hand out of frame, hand on own thigh, dutch angle, extremely dynamic, from above, upper body, portrait, close-up, head focus, (foreshortening:1.2), perspective, fine fabric emphasis, leaf, forest, ground, dappled sunlight, lens flare, backlighting, BREAK, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 1437002150,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UNJQ}$9a0eXk~CI.9H9x=ZNGrsW=PAIVr_V@",
+                            "height": 2016,
+                            "size": 2624497,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0772585f-774a-4efb-a634-39c5d6f51701/original=true/130519341.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UOJ@h5~V.7-;R4.9%g-pIn-;-SS#pexaxvOX",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "1133623467",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "photorealistic, realistic, 3d, broken glasses, bra, nipples, white hair, light purple hair, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, blurry edges, 1girl, solo, purple hair, medium bob, choppy blunt bangs, sidelocks, hair flaps, antenna hair, messy hair, raised inner eyebrows, (round eyebrows:1.2), blue eyes, round eyes, tareme, (head tilt:1.2), facing to the viewer, looking to the side, averting eyes, smile, open mouth, wavy mouth, embarassed, full-face blush, @ @, sweatdrop, medium breasts, (cleavage:1.2), round red-framed glasses, (oversized collared open white shirt:1.3), sleeves past fingers, loose tilted red bowtie, collarbone, no bra, navel, (hands framing own cheeks:1.2), shrugging, standing, (arched back:1.2), upper body, from above, close-up, portrait, dutch angle, window, living room, dappled sunlight, backlighting, see-through silhouette, tenebrism, subsurface scattering, red outline, vignetting, BREAK, delicate hair, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 4189265693,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UOJ@h5~V.7-;R4.9%g-pIn-;-SS#pexaxvOX",
+                            "height": 2016,
+                            "size": 2394721,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 4,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/6ea45c93-1852-4624-b1d2-fe9b8f587eb6/original=true/130519337.jpeg",
+                          "width": 1152
+                        },
+                        {
+                          "availability": "Public",
+                          "hasMeta": true,
+                          "hasPositivePrompt": true,
+                          "hash": "UMHc+vwNqf$k~BnlIVsp0xS1O,SdiyX5,[Sd",
+                          "height": 2016,
+                          "meta": {
+                            "": {},
+                            "(shadow": "[0",
+                            "Denoising strength": "0.4",
+                            "Global Seed": "3989362287",
+                            "Hires Adjust": {},
+                            "Hires CFG Scale": "4",
+                            "Hires steps": "40",
+                            "Hires upscale": "1.5",
+                            "Model": "NovaAnimeILV19",
+                            "Model hash": "fa486caafc",
+                            "cfgScale": 4.5,
+                            "clipSkip": 2,
+                            "hashes": {
+                              "model": "fa486caafc"
+                            },
+                            "height": 1344,
+                            "highlight": "[0",
+                            "middle": "[0",
+                            "negativePrompt": "arms down, extra digits, conjoined fingers, wrong hand, (multiple tongues, long tongue:1.2), outdoor, dappled sunlight, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                            "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, pink outline, dispersion \\(optics\\), prism, anaglyph, 1girl, toga himiko, double bun, (raised inner eyebrows:1.2), yellow eyes, crazy eyes, wide-eyed, very big eyes, sanpaku, (uneven eyes:1.2), bloodshot eyes, aegyo sal, crazy smile, shaded face, blood covering face, pink blood, teeth, fangs, open mouth, long sharp tongue out, turning head, looking at viewer, head tilt, beige school sweater sleeves past wrists, red neckerchief, sailor collar, blue pleated skirt, circle skirt, kneehighs, loafers, leaning forward, hands on own face, open hands, (arched back:1.2), (legs apart:1.2), from above, dutch angle, close-up, portrait, foreshortening, abstract pink background, backlighting, dark, tenebrism, BREAK, depth of field, volumetric lighting",
+                            "resources": [
+                              {
+                                "hash": "fa486caafc",
+                                "name": "NovaAnimeILV19",
+                                "type": "model",
+                                "unmatched": true
+                              }
+                            ],
+                            "sampler": "Euler a",
+                            "seed": 2680199573,
+                            "steps": 20,
+                            "width": 768
+                          },
+                          "metadata": {
+                            "hash": "UMHc+vwNqf$k~BnlIVsp0xS1O,SdiyX5,[Sd",
+                            "height": 2016,
+                            "size": 2240533,
+                            "width": 1152
+                          },
+                          "minor": false,
+                          "nsfwLevel": 2,
+                          "onSite": false,
+                          "poi": false,
+                          "remixOfId": null,
+                          "type": "image",
+                          "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/5d8603c4-8b48-45ac-b5b1-77a6c13081b6/original=true/130519336.jpeg",
+                          "width": 1152
+                        }
+                      ],
+                      "licensingFee": null,
+                      "model": {
+                        "name": "Nova Anime XL",
+                        "nsfw": false,
+                        "poi": false,
+                        "type": "Checkpoint"
+                      },
+                      "modelId": 376130,
+                      "name": "IL v19.0",
+                      "nsfwLevel": 23,
+                      "publishedAt": "2026-05-12T22:24:37.121Z",
+                      "stats": {
+                        "downloadCount": 48981,
+                        "thumbsUpCount": 1328
+                      },
+                      "status": "Published",
+                      "trainedWords": [],
+                      "trainingDetails": null,
+                      "trainingStatus": null,
+                      "updatedAt": "2026-05-12T22:24:37.130Z",
+                      "uploadType": "Created",
+                      "usageControl": "Download"
+                    },
+                    "status": 200,
+                    "url": "https://civitai.com/api/v1/model-versions/2940478"
+                  },
+                  {
+                    "attempt": 1,
+                    "params": {},
+                    "raw": {
+                      "media_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf"
+                    },
+                    "status": 200,
+                    "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg"
+                  }
+                ]
+              }
+            },
+            "civitai_api": {
+              "field_references": {
+                "base_prompt": "civitai_api:images:130519340:/meta/meta/prompt",
+                "negative_prompt": "civitai_api:images:130519340:/meta/meta/negativePrompt",
+                "sampling.cfg": "civitai_api:images:130519340:/meta/meta/cfgScale",
+                "sampling.height": "civitai_api:images:130519340:/height",
+                "sampling.sampler": "civitai_api:images:130519340:/meta/meta/sampler",
+                "sampling.seed": "civitai_api:images:130519340:/meta/meta/seed",
+                "sampling.steps": "civitai_api:images:130519340:/meta/meta/steps",
+                "sampling.width": "civitai_api:images:130519340:/width"
+              },
+              "payload": {
+                "baseModel": "Illustrious",
+                "browsingLevel": 1,
+                "createdAt": "2026-05-12T22:23:07.379Z",
+                "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                "height": 2016,
+                "id": 130519340,
+                "meta": {
+                  "id": 130519340,
+                  "meta": {
+                    "": {},
+                    "(shadow": "[0",
+                    "Denoising strength": "0.4",
+                    "Global Seed": "428649103",
+                    "Hires Adjust": {},
+                    "Hires CFG Scale": "4",
+                    "Hires steps": "40",
+                    "Hires upscale": "1.5",
+                    "Model": "NovaAnimeILV19",
+                    "Model hash": "fa486caafc",
+                    "cfgScale": 4.5,
+                    "clipSkip": 2,
+                    "hashes": {
+                      "model": "fa486caafc"
+                    },
+                    "height": 1344,
+                    "highlight": "[20",
+                    "middle": "[0",
+                    "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                    "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                    "resources": [
+                      {
+                        "fileId": 2819621,
+                        "hash": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+                        "modelVersionId": 2940478,
+                        "name": "NovaAnimeILV19",
+                        "type": "model",
+                        "unmatched": true
+                      }
+                    ],
+                    "sampler": "Euler a",
+                    "seed": 3282307999,
+                    "steps": 20,
+                    "width": 768
+                  }
+                },
+                "modelVersionIds": [
+                  2940478
+                ],
+                "nsfw": false,
+                "nsfwLevel": "None",
+                "postId": 28552423,
+                "stats": {
+                  "commentCount": 0,
+                  "cryCount": 9,
+                  "dislikeCount": 0,
+                  "heartCount": 88,
+                  "laughCount": 12,
+                  "likeCount": 194
+                },
+                "type": "image",
+                "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                "username": "Crody",
+                "width": 1152
+              }
+            },
+            "embedded_metadata": {
+              "a1111": {
+                "loras": [],
+                "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                "parameters": {
+                  "cfg": 4.5,
+                  "clip_skip": 2,
+                  "height": 1344,
+                  "model": "NovaAnimeILV19",
+                  "model_hash": "fa486caafc",
+                  "sampler": "Euler a",
+                  "seed": 3282307999,
+                  "steps": 20,
+                  "width": 768
+                },
+                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                "raw_parameters": {
+                  "CFG scale": "4.5",
+                  "Clip skip": "2",
+                  "Denoising strength": "0.4",
+                  "Global Seed": "428649103",
+                  "Hires Adjust": "(\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]])",
+                  "Hires CFG Scale": "4",
+                  "Hires steps": "40",
+                  "Hires upscale": "1.5",
+                  "Model": "NovaAnimeILV19",
+                  "Model hash": "fa486caafc",
+                  "Sampler": "Euler a",
+                  "Seed": "3282307999",
+                  "Size": "768x1344",
+                  "Steps": "20"
+                }
+              },
+              "comfyui_prompt": null,
+              "comfyui_workflow": null,
+              "format": "PNG",
+              "image_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf",
+              "raw": {
+                "a1111": {
+                  "loras": [],
+                  "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                  "parameters": {
+                    "cfg": 4.5,
+                    "clip_skip": 2,
+                    "height": 1344,
+                    "model": "NovaAnimeILV19",
+                    "model_hash": "fa486caafc",
+                    "sampler": "Euler a",
+                    "seed": 3282307999,
+                    "steps": 20,
+                    "width": 768
+                  },
+                  "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                  "raw_parameters": {
+                    "CFG scale": "4.5",
+                    "Clip skip": "2",
+                    "Denoising strength": "0.4",
+                    "Global Seed": "428649103",
+                    "Hires Adjust": "(\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]])",
+                    "Hires CFG Scale": "4",
+                    "Hires steps": "40",
+                    "Hires upscale": "1.5",
+                    "Model": "NovaAnimeILV19",
+                    "Model hash": "fa486caafc",
+                    "Sampler": "Euler a",
+                    "Seed": "3282307999",
+                    "Size": "768x1344",
+                    "Steps": "20"
+                  }
+                },
+                "containers": [
+                  {
+                    "container": "png_text",
+                    "key": "parameters",
+                    "value": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting\nNegative prompt: photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated\nSteps: 20, Sampler: Euler a, CFG scale: 4.5, Global Seed: 428649103, Seed: 3282307999, Size: 768x1344, Clip skip: 2, Model hash: fa486caafc, Model: NovaAnimeILV19, Hires steps: 40, Hires upscale: 1.5, Hires Adjust: (\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]]), Denoising strength: 0.4, Hires CFG Scale: 4"
+                  }
+                ],
+                "format": "PNG",
+                "image_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf",
+                "source_path": null
+              }
+            },
+            "importer_payload": {
+              "base_prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+              "confirmed": [
+                {
+                  "canonical_field": "source.identity",
+                  "reference": "civitai_api:images:130519340:response",
+                  "snapshot_sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f",
+                  "source": "civitai_api"
+                },
+                {
+                  "canonical_field": "resources[0].identity",
+                  "reference": "civitai_api:images:130519340:response",
+                  "snapshot_sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f",
+                  "source": "civitai_api"
+                }
+              ],
+              "evidence_manifest": [
+                {
+                  "assertions": [
+                    {
+                      "canonical_field": "source.identity",
+                      "extractor": "json_pointer",
+                      "path": "/extractions/field_0"
+                    },
+                    {
+                      "canonical_field": "resources[0].identity",
+                      "extractor": "json_pointer",
+                      "path": "/extractions/field_1"
+                    }
+                  ],
+                  "identity": "civitai_api:images:130519340:response:manifest",
+                  "payload": {
+                    "extractions": {
+                      "field_0": {
+                        "image_id": 130519340
+                      },
+                      "field_1": {
+                        "civitai_file_id": 2819621,
+                        "civitai_model_version_id": 2940478,
+                        "kind": "checkpoint",
+                        "name": "NovaAnimeILV19",
+                        "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
+                      }
+                    },
+                    "response": {
+                      "baseModel": "Illustrious",
+                      "browsingLevel": 1,
+                      "createdAt": "2026-05-12T22:23:07.379Z",
+                      "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                      "height": 2016,
+                      "id": 130519340,
+                      "meta": {
+                        "id": 130519340,
+                        "meta": {
+                          "": {},
+                          "(shadow": "[0",
+                          "Denoising strength": "0.4",
+                          "Global Seed": "428649103",
+                          "Hires Adjust": {},
+                          "Hires CFG Scale": "4",
+                          "Hires steps": "40",
+                          "Hires upscale": "1.5",
+                          "Model": "NovaAnimeILV19",
+                          "Model hash": "fa486caafc",
+                          "cfgScale": 4.5,
+                          "clipSkip": 2,
+                          "hashes": {
+                            "model": "fa486caafc"
+                          },
+                          "height": 1344,
+                          "highlight": "[20",
+                          "middle": "[0",
+                          "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                          "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                          "resources": [
+                            {
+                              "fileId": 2819621,
+                              "hash": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+                              "modelVersionId": 2940478,
+                              "name": "NovaAnimeILV19",
+                              "type": "model",
+                              "unmatched": true
+                            }
+                          ],
+                          "sampler": "Euler a",
+                          "seed": 3282307999,
+                          "steps": 20,
+                          "width": 768
+                        }
+                      },
+                      "modelVersionIds": [
+                        2940478
+                      ],
+                      "nsfw": false,
+                      "nsfwLevel": "None",
+                      "postId": 28552423,
+                      "stats": {
+                        "commentCount": 0,
+                        "cryCount": 9,
+                        "dislikeCount": 0,
+                        "heartCount": 88,
+                        "laughCount": 12,
+                        "likeCount": 194
+                      },
+                      "type": "image",
+                      "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                      "username": "Crody",
+                      "width": 1152
+                    }
+                  },
+                  "reference": "civitai_api:images:130519340:response",
+                  "sha256": "784eab7736d5d7761893a4e8ce3693ac0e03f3996e32b51c928cd3caf06ef78f"
+                }
+              ],
+              "missing": [
+                {
+                  "canonical_field": "sampling.width",
+                  "criticality": "important",
+                  "reason": "conflicting Civitai API and embedded metadata values"
+                },
+                {
+                  "canonical_field": "sampling.height",
+                  "criticality": "important",
+                  "reason": "conflicting Civitai API and embedded metadata values"
+                }
+              ],
+              "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+              "passes": [
+                {
+                  "inherits_from": "recipe.sampling",
+                  "name": "base"
+                }
+              ],
+              "raw": {
+                "acquisition": {
+                  "locator": {
+                    "canonical_url": "https://civitai.com/images/130519340",
+                    "image_id": 130519340,
+                    "kind": "image",
+                    "media_url": null,
+                    "model_id": null,
+                    "model_version_id": null,
+                    "post_id": null
+                  },
+                  "provenance": {
+                    "locator": {
+                      "canonical_url": "https://civitai.com/images/130519340",
+                      "image_id": 130519340,
+                      "kind": "image",
+                      "media_url": null,
+                      "model_id": null,
+                      "model_version_id": null,
+                      "post_id": null
+                    },
+                    "requests": [
+                      {
+                        "attempt": 1,
+                        "params": {
+                          "imageId": 130519340,
+                          "withMeta": "true"
+                        },
+                        "raw": {
+                          "items": [
+                            {
+                              "baseModel": "Illustrious",
+                              "browsingLevel": 1,
+                              "createdAt": "2026-05-12T22:23:07.379Z",
+                              "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                              "height": 2016,
+                              "id": 130519340,
+                              "meta": {
+                                "id": 130519340,
+                                "meta": {
+                                  "": {},
+                                  "(shadow": "[0",
+                                  "Denoising strength": "0.4",
+                                  "Global Seed": "428649103",
+                                  "Hires Adjust": {},
+                                  "Hires CFG Scale": "4",
+                                  "Hires steps": "40",
+                                  "Hires upscale": "1.5",
+                                  "Model": "NovaAnimeILV19",
+                                  "Model hash": "fa486caafc",
+                                  "cfgScale": 4.5,
+                                  "clipSkip": 2,
+                                  "hashes": {
+                                    "model": "fa486caafc"
+                                  },
+                                  "height": 1344,
+                                  "highlight": "[20",
+                                  "middle": "[0",
+                                  "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                  "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                                  "resources": [
+                                    {
+                                      "hash": "fa486caafc",
+                                      "name": "NovaAnimeILV19",
+                                      "type": "model",
+                                      "unmatched": true
+                                    }
+                                  ],
+                                  "sampler": "Euler a",
+                                  "seed": 3282307999,
+                                  "steps": 20,
+                                  "width": 768
+                                }
+                              },
+                              "modelVersionIds": [
+                                2940478
+                              ],
+                              "nsfw": false,
+                              "nsfwLevel": "None",
+                              "postId": 28552423,
+                              "stats": {
+                                "commentCount": 0,
+                                "cryCount": 9,
+                                "dislikeCount": 0,
+                                "heartCount": 88,
+                                "laughCount": 12,
+                                "likeCount": 194
+                              },
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                              "username": "Crody",
+                              "width": 1152
+                            }
+                          ],
+                          "metadata": {}
+                        },
+                        "status": 200,
+                        "url": "https://civitai.com/api/v1/images"
+                      },
+                      {
+                        "attempt": 1,
+                        "params": {},
+                        "raw": {
+                          "air": "urn:air:sdxl:checkpoint:civitai:376130@2940478",
+                          "baseModel": "Illustrious",
+                          "baseModelType": "Standard",
+                          "createdAt": "2026-05-12T22:18:45.702Z",
+                          "description": "<p>Changes</p><ul><li><p>Higher contrast</p></li><li><p>Higher details within backgrounds</p></li></ul><p>NoobAI EPS v1.1 + Illustrious v2.0-stable + ChenkinNoob v0.5 DARE applied</p>",
+                          "downloadUrl": "https://civitai.com/api/download/models/2940478",
+                          "earlyAccessConfig": null,
+                          "earlyAccessEndsAt": null,
+                          "files": [
+                            {
+                              "downloadUrl": "https://civitai.com/api/download/models/2940478",
+                              "hashes": {
+                                "AutoV1": "4E11EA3C",
+                                "AutoV2": "FA486CAAFC",
+                                "AutoV3": "6B8092EAA417",
+                                "BLAKE3": "DFEC49BE1E59D14C87A2EA38D2E4EAD4B41B2A04EBCDD01706504239BF91716C",
+                                "CRC32": "E64750EE",
+                                "SHA256": "FA486CAAFC330F133605D3C18B418D183812F14946631C6544BFB28730DB6D6F"
+                              },
+                              "id": 2819621,
+                              "metadata": {
+                                "format": "SafeTensor",
+                                "fp": "fp16",
+                                "size": "pruned"
+                              },
+                              "name": "novaAnimeXL_ilV190.safetensors",
+                              "pickleScanMessage": null,
+                              "pickleScanResult": "Success",
+                              "primary": true,
+                              "scannedAt": "2026-05-12T22:24:22.49",
+                              "sizeKB": 6776470.30859375,
+                              "type": "Model",
+                              "virusScanMessage": null,
+                              "virusScanResult": "Success"
+                            }
+                          ],
+                          "id": 2940478,
+                          "images": [
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "428649103",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[20",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 3282307999,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                                "height": 2016,
+                                "size": 2585338,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 1,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/130519340.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UdLE1i?^ELnhRNIot7ozAbM{xGf,Nx%0nhni",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "101724454",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, cleavage, cleavage cutout, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, blonde hair, low-tied_long_hair, low_side_ponytail, floating hair, blue eyes, turning head, looking at viewer, parted lips, medium breasts, turtleneck lace-trimmed frilled puffy sleeve white dress, shoulder cutout, leaning back against tree, dutch angle, dynamic, upper body, (portrait, close-up:1.2), foreshortening, forest, flowers, white butterfly, dappled sunlight, lens flare, backlighting, BREAK, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 446796035,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UdLE1i?^ELnhRNIot7ozAbM{xGf,Nx%0nhni",
+                                "height": 2016,
+                                "size": 2636436,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/76dfe015-82c2-4d33-848c-c973fe2ce5da/original=true/130519328.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UAB:~?ES5AroMbD$o~tT00%N=r9Zu6n0R3oI",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "721664149",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, eyelashes, 1girl, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, very awa, 1male, solo, male focus, athletic, (blue hair, dark purple colored tips, red streaked hair:1.2), short hair, sidecut, wolf cut, green blue eyes, looking at viewer, turtleneck white shirt, dark purple jacket, dutch angle, dynamic, upper body, portrait, perfect chaos cosmic night sky, dreamlike atmosphere, backlighting, subsurface scattering, BREAK, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 1747406714,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UAB:~?ES5AroMbD$o~tT00%N=r9Zu6n0R3oI",
+                                "height": 2016,
+                                "size": 2338253,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/4c76c8b3-cf21-437b-bdc7-03bee14bcfb3/original=true/130519333.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UFF}f}8wDi}[$%-p9E=x00x]?IR+9YEL.8#m",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "718579124",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, blurry edges, extra digits, conjoined fingers, wrong hand, white dress, devil wings, white wings, arms behind back, wide shot, very wide shot, full body, lens flare, sunset, body markings, bodypaint, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, solo, red halo, long white hair, hair between eyes, floating hair, red eyes, turning head, looking at viewer, white eyelashes, raised inner eyebrows, smile, parted lips, angel (red wings:1.2), (black sundress:1.2), floating, (midair:1.2), knees up, hugging own legs, hands, bent back, from side, dutch angle, portrait, upper body, close-up, night, starry sky, red full moon, dark, omnious, dappled moonlight, BREAK, backlighting, luminous particles, shimmering feathers, subtle lens flare, cinematic lighting, depth of field, bokeh, volumetric lighting, dreamy atmosphere",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 678217776,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UFF}f}8wDi}[$%-p9E=x00x]?IR+9YEL.8#m",
+                                "height": 2016,
+                                "size": 2390580,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/f0be436e-025f-4b93-89d1-f16b893fe197/original=true/130519332.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UEI=Aa9s0O%$HXVDDhni18#Pz.oy4pO?_Nbw",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "376831015",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, headset, extra digits, 6 fingers, conjoined fingers, wrong hand, extra legs, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, ia \\(vocaloid\\), blue eyes, looking at viewer, upturned eyes, smile, open mouth, blush, sweatdrop, small breasts, cleavage, off-shoulder (detouched sleeve:1.2) crop top black shirt over black tank top, midriff, pink skirt, floating clothes, standing, pigeon-toed, legs apart, leaning forward, arched back, reaching, outstretched arm, spread arms, open hand, holding microphone over head, from above, dutch angle, dynamic, fisheye, floating hair, portrait, close-up, face focus, light particles, fine fabric emphasis, rim light, night, concert, idol, stage, neon light, spotlight, BREAK, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 4174327409,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UEI=Aa9s0O%$HXVDDhni18#Pz.oy4pO?_Nbw",
+                                "height": 2016,
+                                "size": 2507020,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/3fa2bbf8-8975-4888-a383-56b8aa37b13d/original=true/130519334.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "U8AT]2uP6CvzO]x]XpIp00nnoJpJ#iOZ$wxb",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "3264964944",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, lace-trimmed collar, grenade pin on front of choker, grenade pin on shirt, chain, multiple pin, looking up, leaning against wall, grenade, on bed, lying on floor, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, dispersion \\(optics\\), prism, anaglyph, 1girl, solo, (reze \\(chainsaw man\\):1.2), looking at viewer, half-closed eyes, upturned eyes, aquiline nose, smile, closed mouth, :>, head tilt, turning head, (head down:1.2), blush, (grenade pin on side of black choker:1.2), medium breasts, sleeveless (low-cut armhole:1.2) collared impossible white shirt, sideboob, black neck ribbon, standing, arched back, arms behind back, floating hair, portrait, dutch angle, dynamic, dark, night, city, vignetting, (underlighting:1.2), bloom, BREAK, sharp focus, bokeh, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 1816887638,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "U8AT]2uP6CvzO]x]XpIp00nnoJpJ#iOZ$wxb",
+                                "height": 2016,
+                                "size": 2302493,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 4,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/900bf3b5-fdf6-4389-a84a-747bc1a302b8/original=true/130519327.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UXM%Qd%MOt$g~W%MNHVtKkxtNHW=pwNbRjxt",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "697683410",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cyrene \\(honkai: star rail\\), cyrene \\(aedes elysiae\\) \\(honkai: star rail\\) AND cyrene \\(ripples of past reverie\\) \\(honkai: star rail\\), hair ornament, hair flower, blue rose, petals, bridal veil, long hair, pink hair, purple eyes, diamond-shaped pupils, pointy ears, open mouth, smile, blush, looking at viewer, head tilt, medium breasts, layered white dress, bare shoulders, pink nails, hand on own chest, offering hand, reaching towards viewer, wind, floating hair, from above, dutch angle, cowboy shot, dynamic, dispersion \\(optics\\), light rays, lens flare, BREAK, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 919802966,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UXM%Qd%MOt$g~W%MNHVtKkxtNHW=pwNbRjxt",
+                                "height": 2016,
+                                "size": 2830782,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/ece30152-ed0a-49fe-b82b-e34d7cbf2953/original=true/130519343.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UNJQ}$9a0eXk~CI.9H9x=ZNGrsW=PAIVr_V@",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "3449743747",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, extra arms, white clothes, yellow clothes, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, zooming in, blurry edges, dispersion \\(optics\\), 1girl, solo, elf girl, blonde hair, medium bob, long sidelocks, braid, long pointy elf ears, pixie, looking at viewer, turning head, blue eyes, upturned eyes, (parted lips:1.2), blush, floral print blue scarf, medium breasts, leaf print puffy wide green detached sleeves past wrists, narrow waist, wide hips, thick thighs, cross-laced pixie frill lace strapless green (leotard:0.8) green long dress, skindentation see-through black pantyhose, brown lace-up knee boots, head tilt, sitting on log, knees together feet apart, arched back, outstretched arm up reaching towards viewer, hand out of frame, hand on own thigh, dutch angle, extremely dynamic, from above, upper body, portrait, close-up, head focus, (foreshortening:1.2), perspective, fine fabric emphasis, leaf, forest, ground, dappled sunlight, lens flare, backlighting, BREAK, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 1437002150,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UNJQ}$9a0eXk~CI.9H9x=ZNGrsW=PAIVr_V@",
+                                "height": 2016,
+                                "size": 2624497,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0772585f-774a-4efb-a634-39c5d6f51701/original=true/130519341.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UOJ@h5~V.7-;R4.9%g-pIn-;-SS#pexaxvOX",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "1133623467",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "photorealistic, realistic, 3d, broken glasses, bra, nipples, white hair, light purple hair, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, blurry edges, 1girl, solo, purple hair, medium bob, choppy blunt bangs, sidelocks, hair flaps, antenna hair, messy hair, raised inner eyebrows, (round eyebrows:1.2), blue eyes, round eyes, tareme, (head tilt:1.2), facing to the viewer, looking to the side, averting eyes, smile, open mouth, wavy mouth, embarassed, full-face blush, @ @, sweatdrop, medium breasts, (cleavage:1.2), round red-framed glasses, (oversized collared open white shirt:1.3), sleeves past fingers, loose tilted red bowtie, collarbone, no bra, navel, (hands framing own cheeks:1.2), shrugging, standing, (arched back:1.2), upper body, from above, close-up, portrait, dutch angle, window, living room, dappled sunlight, backlighting, see-through silhouette, tenebrism, subsurface scattering, red outline, vignetting, BREAK, delicate hair, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 4189265693,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UOJ@h5~V.7-;R4.9%g-pIn-;-SS#pexaxvOX",
+                                "height": 2016,
+                                "size": 2394721,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 4,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/6ea45c93-1852-4624-b1d2-fe9b8f587eb6/original=true/130519337.jpeg",
+                              "width": 1152
+                            },
+                            {
+                              "availability": "Public",
+                              "hasMeta": true,
+                              "hasPositivePrompt": true,
+                              "hash": "UMHc+vwNqf$k~BnlIVsp0xS1O,SdiyX5,[Sd",
+                              "height": 2016,
+                              "meta": {
+                                "": {},
+                                "(shadow": "[0",
+                                "Denoising strength": "0.4",
+                                "Global Seed": "3989362287",
+                                "Hires Adjust": {},
+                                "Hires CFG Scale": "4",
+                                "Hires steps": "40",
+                                "Hires upscale": "1.5",
+                                "Model": "NovaAnimeILV19",
+                                "Model hash": "fa486caafc",
+                                "cfgScale": 4.5,
+                                "clipSkip": 2,
+                                "hashes": {
+                                  "model": "fa486caafc"
+                                },
+                                "height": 1344,
+                                "highlight": "[0",
+                                "middle": "[0",
+                                "negativePrompt": "arms down, extra digits, conjoined fingers, wrong hand, (multiple tongues, long tongue:1.2), outdoor, dappled sunlight, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                                "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, pink outline, dispersion \\(optics\\), prism, anaglyph, 1girl, toga himiko, double bun, (raised inner eyebrows:1.2), yellow eyes, crazy eyes, wide-eyed, very big eyes, sanpaku, (uneven eyes:1.2), bloodshot eyes, aegyo sal, crazy smile, shaded face, blood covering face, pink blood, teeth, fangs, open mouth, long sharp tongue out, turning head, looking at viewer, head tilt, beige school sweater sleeves past wrists, red neckerchief, sailor collar, blue pleated skirt, circle skirt, kneehighs, loafers, leaning forward, hands on own face, open hands, (arched back:1.2), (legs apart:1.2), from above, dutch angle, close-up, portrait, foreshortening, abstract pink background, backlighting, dark, tenebrism, BREAK, depth of field, volumetric lighting",
+                                "resources": [
+                                  {
+                                    "hash": "fa486caafc",
+                                    "name": "NovaAnimeILV19",
+                                    "type": "model",
+                                    "unmatched": true
+                                  }
+                                ],
+                                "sampler": "Euler a",
+                                "seed": 2680199573,
+                                "steps": 20,
+                                "width": 768
+                              },
+                              "metadata": {
+                                "hash": "UMHc+vwNqf$k~BnlIVsp0xS1O,SdiyX5,[Sd",
+                                "height": 2016,
+                                "size": 2240533,
+                                "width": 1152
+                              },
+                              "minor": false,
+                              "nsfwLevel": 2,
+                              "onSite": false,
+                              "poi": false,
+                              "remixOfId": null,
+                              "type": "image",
+                              "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/5d8603c4-8b48-45ac-b5b1-77a6c13081b6/original=true/130519336.jpeg",
+                              "width": 1152
+                            }
+                          ],
+                          "licensingFee": null,
+                          "model": {
+                            "name": "Nova Anime XL",
+                            "nsfw": false,
+                            "poi": false,
+                            "type": "Checkpoint"
+                          },
+                          "modelId": 376130,
+                          "name": "IL v19.0",
+                          "nsfwLevel": 23,
+                          "publishedAt": "2026-05-12T22:24:37.121Z",
+                          "stats": {
+                            "downloadCount": 48981,
+                            "thumbsUpCount": 1328
+                          },
+                          "status": "Published",
+                          "trainedWords": [],
+                          "trainingDetails": null,
+                          "trainingStatus": null,
+                          "updatedAt": "2026-05-12T22:24:37.130Z",
+                          "uploadType": "Created",
+                          "usageControl": "Download"
+                        },
+                        "status": 200,
+                        "url": "https://civitai.com/api/v1/model-versions/2940478"
+                      },
+                      {
+                        "attempt": 1,
+                        "params": {},
+                        "raw": {
+                          "media_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf"
+                        },
+                        "status": 200,
+                        "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg"
+                      }
+                    ]
+                  }
+                },
+                "civitai_api": {
+                  "field_references": {
+                    "base_prompt": "civitai_api:images:130519340:/meta/meta/prompt",
+                    "negative_prompt": "civitai_api:images:130519340:/meta/meta/negativePrompt",
+                    "sampling.cfg": "civitai_api:images:130519340:/meta/meta/cfgScale",
+                    "sampling.height": "civitai_api:images:130519340:/height",
+                    "sampling.sampler": "civitai_api:images:130519340:/meta/meta/sampler",
+                    "sampling.seed": "civitai_api:images:130519340:/meta/meta/seed",
+                    "sampling.steps": "civitai_api:images:130519340:/meta/meta/steps",
+                    "sampling.width": "civitai_api:images:130519340:/width"
+                  },
+                  "payload": {
+                    "baseModel": "Illustrious",
+                    "browsingLevel": 1,
+                    "createdAt": "2026-05-12T22:23:07.379Z",
+                    "hash": "USINUa~X9@E1w{IUEKRj0KRP-p%MpH%2ROM{",
+                    "height": 2016,
+                    "id": 130519340,
+                    "meta": {
+                      "id": 130519340,
+                      "meta": {
+                        "": {},
+                        "(shadow": "[0",
+                        "Denoising strength": "0.4",
+                        "Global Seed": "428649103",
+                        "Hires Adjust": {},
+                        "Hires CFG Scale": "4",
+                        "Hires steps": "40",
+                        "Hires upscale": "1.5",
+                        "Model": "NovaAnimeILV19",
+                        "Model hash": "fa486caafc",
+                        "cfgScale": 4.5,
+                        "clipSkip": 2,
+                        "hashes": {
+                          "model": "fa486caafc"
+                        },
+                        "height": 1344,
+                        "highlight": "[20",
+                        "middle": "[0",
+                        "negativePrompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                        "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                        "resources": [
+                          {
+                            "fileId": 2819621,
+                            "hash": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+                            "modelVersionId": 2940478,
+                            "name": "NovaAnimeILV19",
+                            "type": "model",
+                            "unmatched": true
+                          }
+                        ],
+                        "sampler": "Euler a",
+                        "seed": 3282307999,
+                        "steps": 20,
+                        "width": 768
+                      }
+                    },
+                    "modelVersionIds": [
+                      2940478
+                    ],
+                    "nsfw": false,
+                    "nsfwLevel": "None",
+                    "postId": 28552423,
+                    "stats": {
+                      "commentCount": 0,
+                      "cryCount": 9,
+                      "dislikeCount": 0,
+                      "heartCount": 88,
+                      "laughCount": 12,
+                      "likeCount": 194
+                    },
+                    "type": "image",
+                    "url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                    "username": "Crody",
+                    "width": 1152
+                  }
+                },
+                "embedded_metadata": {
+                  "a1111": {
+                    "loras": [],
+                    "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                    "parameters": {
+                      "cfg": 4.5,
+                      "clip_skip": 2,
+                      "height": 1344,
+                      "model": "NovaAnimeILV19",
+                      "model_hash": "fa486caafc",
+                      "sampler": "Euler a",
+                      "seed": 3282307999,
+                      "steps": 20,
+                      "width": 768
+                    },
+                    "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                    "raw_parameters": {
+                      "CFG scale": "4.5",
+                      "Clip skip": "2",
+                      "Denoising strength": "0.4",
+                      "Global Seed": "428649103",
+                      "Hires Adjust": "(\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]])",
+                      "Hires CFG Scale": "4",
+                      "Hires steps": "40",
+                      "Hires upscale": "1.5",
+                      "Model": "NovaAnimeILV19",
+                      "Model hash": "fa486caafc",
+                      "Sampler": "Euler a",
+                      "Seed": "3282307999",
+                      "Size": "768x1344",
+                      "Steps": "20"
+                    }
+                  },
+                  "comfyui_prompt": null,
+                  "comfyui_workflow": null,
+                  "format": "PNG",
+                  "image_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf",
+                  "raw": {
+                    "a1111": {
+                      "loras": [],
+                      "negative_prompt": "photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated",
+                      "parameters": {
+                        "cfg": 4.5,
+                        "clip_skip": 2,
+                        "height": 1344,
+                        "model": "NovaAnimeILV19",
+                        "model_hash": "fa486caafc",
+                        "sampler": "Euler a",
+                        "seed": 3282307999,
+                        "steps": 20,
+                        "width": 768
+                      },
+                      "prompt": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting",
+                      "raw_parameters": {
+                        "CFG scale": "4.5",
+                        "Clip skip": "2",
+                        "Denoising strength": "0.4",
+                        "Global Seed": "428649103",
+                        "Hires Adjust": "(\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]])",
+                        "Hires CFG Scale": "4",
+                        "Hires steps": "40",
+                        "Hires upscale": "1.5",
+                        "Model": "NovaAnimeILV19",
+                        "Model hash": "fa486caafc",
+                        "Sampler": "Euler a",
+                        "Seed": "3282307999",
+                        "Size": "768x1344",
+                        "Steps": "20"
+                      }
+                    },
+                    "containers": [
+                      {
+                        "container": "png_text",
+                        "key": "parameters",
+                        "value": "masterpiece, best quality, amazing quality, 4k, very aesthetic, high resolution, ultra-detailed, absurdres, newest, esthetic, scenery, 1girl, solo, cute, pink hair, long hair, choppy bangs, long sidelocks, nebulae cosmic purple eyes, rimlit eyes, facing to the side, looking at viewer, downturned eyes, light smile, red annular solar eclipse halo, red choker, detailed purple blazer, collared white shirt, big red neckerchief, glowing stars in hand, dispersion \\(optics\\), from side, from below, dutch angle, portrait, upper body, head tilt, colorful, rim light, backlit, (colorful light particles:1.2), cosmic sky, aurora, chaos, perfect night, fantasy background, dreamlike atmosphere, BREAK, detailed background, blurry foreground, bokeh, depth of field, volumetric lighting\nNegative prompt: photorealistic, realistic, 3d, extra digits, (particles, adversarial_noise:1.2), multiple views, multiple angle, split view, grid view, two shot, outside border, picture frame, framed, border, letterboxed, pillarboxed, 2koma, modern, recent, old, oldest, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra fingers, extra digits, fewer digits, cropped, very displeasing, (worst quality, bad quality:1.2), sketch, jpeg artifacts, signature, watermark, username, (censored, bar_censor, mosaic_censor:1.2), simple background, conjoined, bad ai-generated\nSteps: 20, Sampler: Euler a, CFG scale: 4.5, Global Seed: 428649103, Seed: 3282307999, Size: 768x1344, Clip skip: 2, Model hash: fa486caafc, Model: NovaAnimeILV19, Hires steps: 40, Hires upscale: 1.5, Hires Adjust: (\"shadow\": [0, 0, 0, 0.8, 1.0, 1.0, [{}]], \"middle\": [0, 0, 0, 0.9, 0.9, 1.0, [{}]], \"highlight\": [20, 0, 0, 1.1, 1.0, 1.0, [{}]]), Denoising strength: 0.4, Hires CFG Scale: 4"
+                      }
+                    ],
+                    "format": "PNG",
+                    "image_sha256": "695bb4b38cad321217c484ebec6b5e52e7281b7044949ed50573a7189db648cf",
+                    "source_path": null
+                  }
+                },
+                "normalization": {
+                  "conflicts": [
+                    {
+                      "field": "sampling.width",
+                      "incoming": {
+                        "reference": "embedded_metadata:png_text:parameters:/a1111/parameters/width",
+                        "value": 768
+                      },
+                      "kept": {
+                        "reference": "civitai_api:images:130519340:/width",
+                        "value": 1152
+                      }
+                    },
+                    {
+                      "field": "sampling.height",
+                      "incoming": {
+                        "reference": "embedded_metadata:png_text:parameters:/a1111/parameters/height",
+                        "value": 1344
+                      },
+                      "kept": {
+                        "reference": "civitai_api:images:130519340:/height",
+                        "value": 2016
+                      }
+                    }
+                  ]
+                }
+              },
+              "resources": [
+                {
+                  "civitai_file_id": 2819621,
+                  "civitai_model_version_id": 2940478,
+                  "kind": "checkpoint",
+                  "name": "NovaAnimeILV19",
+                  "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
+                }
+              ],
+              "sampling": {
+                "cfg": 4.5,
+                "denoise": 1.0,
+                "height": 2016,
+                "sampler": "Euler a",
+                "scheduler": "normal",
+                "seed": 3282307999,
+                "steps": 20,
+                "width": 1152
+              },
+              "source": {
+                "image_id": 130519340,
+                "media_url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+                "post_id": 28552423,
+                "provider": "civitai",
+                "url": "https://civitai.com/images/130519340"
+              }
+            },
+            "normalization": {
+              "conflicts": [
+                {
+                  "field": "sampling.width",
+                  "incoming": {
+                    "reference": "embedded_metadata:png_text:parameters:/a1111/parameters/width",
+                    "value": 768
+                  },
+                  "kept": {
+                    "reference": "civitai_api:images:130519340:/width",
+                    "value": 1152
+                  }
+                },
+                {
+                  "field": "sampling.height",
+                  "incoming": {
+                    "reference": "embedded_metadata:png_text:parameters:/a1111/parameters/height",
+                    "value": 1344
+                  },
+                  "kept": {
+                    "reference": "civitai_api:images:130519340:/height",
+                    "value": 2016
+                  }
+                }
+              ],
+              "unknown_fields": [
+                "evidence_manifest[0].assertions[0].extractor",
+                "evidence_manifest[0].assertions[1].extractor"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "air": null,
+              "civitai_file_id": 2819621,
+              "civitai_model_id": null,
+              "civitai_model_version_id": 2940478,
+              "clip_skip": null,
+              "kind": "checkpoint",
+              "name": "NovaAnimeILV19",
+              "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+              "strength_clip": null,
+              "strength_model": null
+            }
+          ],
+          "runtime": null,
+          "sampling": {
+            "cfg": 4.5,
+            "denoise": 1.0,
+            "height": 2016,
+            "sampler": "Euler a",
+            "scheduler": "normal",
+            "seed": 3282307999,
+            "steps": 20,
+            "width": 1152
+          },
+          "schema_version": "1.0",
+          "source": {
+            "image_id": 130519340,
+            "media_url": "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/c2ac76e4-8bcb-48c0-abde-a8594288bfef/original=true/c2ac76e4-8bcb-48c0-abde-a8594288bfef.jpeg",
+            "model_id": null,
+            "model_version_id": null,
+            "post_id": 28552423,
+            "provider": "civitai",
+            "url": "https://civitai.com/images/130519340"
+          },
+          "workflow": null
+        }
+      },
+      "response_summary": {
+        "ok": false,
+        "tool": "civitai_recipe_resolve_local",
+        "error": {
+          "code": "local_resource_resolution_failed",
+          "message": "strict local resource resolution did not produce verified locks",
+          "details": {
+            "report": {
+              "strict": true,
+              "ready": false,
+              "entries": [
+                {
+                  "index": 0,
+                  "status": "missing",
+                  "matched_by": [],
+                  "expected_identity": {
+                    "civitai_model_version_id": 2940478,
+                    "civitai_file_id": 2819621,
+                    "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
+                  },
+                  "actual_identity": null,
+                  "diagnostics": {
+                    "candidate_count": 0,
+                    "conflicting_candidate_count": 0
+                  },
+                  "hash_verified": false
+                }
+              ],
+              "resource_lock": []
+            },
+            "snapshot": {
+              "row_count": 0,
+              "excluded_non_civitai_count": 0,
+              "excluded_no_local_path_count": 0,
+              "availability_policy": "available is true only for downloaded_resources status installed or available"
+            }
+          }
+        },
+        "status_code": 409
+      },
+      "is_error": false
+    },
+    {
+      "ordinal": 9,
+      "tool": "generate_queue_status",
+      "request": {},
+      "response_summary": "執行中：0 筆\n等候中：0 筆",
+      "is_error": false
+    },
+    {
+      "ordinal": 10,
+      "tool": "gallery_list",
+      "request": {
+        "limit": 20,
+        "offset": 0
+      },
+      "response_summary": {
+        "ok": true,
+        "tool": "gallery_list",
+        "data": {
+          "items": [],
+          "total": 0
+        }
+      },
+      "is_error": false
+    }
+  ],
+  "redaction": {
+    "portable": true,
+    "secret_fields_absent": [
+      "authorization",
+      "bearer",
+      "cookie",
+      "token",
+      "password",
+      "signature",
+      "signed_url_secret"
+    ]
+  },
+  "notes_for_review": [
+    "Formal stdio exact local-ledger query returned zero available entries for the Parent checkpoint identity; the required backend-owned unique-cardinality prerequisite failed.",
+    "The formal stdio strict resolve-local call returned conflict after that ledger absence. No runtime capabilities/provenance, compatibility, or variant request was fabricated or submitted; submission_count remains zero.",
+    "No import/remember/search/registry mutation/variation set/retry/replacement/rerun/raw backend generation/queue internals/ComfyUI prompt API/free-memory call occurred."
+  ],
+  "canonical_digests": {
+    "adopted_binding_sha256": "dfd6f3a55f6bac1cce8880a695702ad9e87d363f970d538c10d5e1358e83f046",
+    "preflight_sha256": "1952d07ee966de30fafaaf3bd3af8c8c9b261a289ba12c5dba9ff29c7bab26ca",
+    "tool_call_ledger_sha256": "01df325499ce068fb12cf95790dc8923411f3b253a94b029c4daf66750002601"
+  },
+  "evidence_sha256": "1aa19a6735bca4f66496921e674b40fb808ecfe10f7b06bedd8a17ee366c0bc8"
+}
