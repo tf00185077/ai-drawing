@@ -20,6 +20,7 @@ source_alias: 光影日式動畫
 - Civitai model/version/file：`1318945` / `3118448` / `2998810`
 - SHA-256：`71b1a14c2e4dbf3d43d5a8226a6bfe6a8a6f6a2bce97920b2e15a5f0203f06f2`
 - Template：`default`
+- Structured preservation manifest：`style_presets/agent/preservation_manifests/light-shadow-japanese-anime.json`
 
 ## Prompt 抽取結果
 
@@ -63,6 +64,16 @@ source_alias: 光影日式動畫
 - CFG：5.0
 - Sampler：`euler`
 - Scheduler：`karras`
-- Size：1536×2304
+- Size：1360×2040（保留 Parent 2:3 比例並正規化到 Backend 最大邊 2048 內的 8 倍數）
 
-這些沿用 Parent 的 canonical sampling；生成時可由明確需求覆寫。
+Parent canonical sampling仍保存原始1536×2304；preset僅把尺寸正規化成可執行預設。其餘參數沿用Parent，生成時可由明確需求覆寫。
+
+## 首次黑長髮變體稽核
+
+- 使用者明確要求：女生、黑色長髮。
+- 必要中性限制：`original adult woman`, `solo`, `long straight black hair`。
+- 本次agent額外加入：`dark brown eyes`, `refined anime face`, `natural relaxed pose`, `elegant simple dark dress`, `detailed hair strands`, `clean silhouette`。
+- 判定：這些agent額外內容不應回寫成別名或preset預設；依更新後的最小差異規則，未來只在使用者要求時加入，否則必須列為`agent_added`並明確揭露。
+- Child seed：`4011193838`。
+- Gallery image ID：`2426`。
+- Artifact：`2026-07-14/ComfyUI_00006_6b1bafc7_0.png`。

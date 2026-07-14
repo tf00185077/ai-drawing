@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "policy_version": "2026-07-14.1",
+  "preset_id": "light-shadow-japanese-anime",
+  "alias_intent": "光影日式動畫",
+  "alias_type": "style",
+  "source": {
+    "alias": "光影日式動畫",
+    "registry_version": 2,
+    "parent_recipe_sha256": "5a5ce51c5bb3cbfc42d12dfcb9f75a90da40296de4f28fed95c2dd2d64012d1e",
+    "registry_source_image_id": 136378559,
+    "requested_source_image_id": 136374992,
+    "proxy_parent": true,
+    "proxy_disclosure": "The requested image page and official CDN image were available, but Civitai REST v1 did not index image 136374992. Registry image 136378559 is an explicitly disclosed same-author, same-model-version auditable proxy and must not be represented as 136374992."
+  },
+  "canonical_prompt_hashes": {
+    "base_prompt_sha256": "268a93673c3d0fe173cf49119acad45de1ae919a6b761fa75516bfa6fc7dcc8b",
+    "negative_prompt_sha256": "161c4d9bbfce6295355933cb0d77c5d11ac4cb882a432f0bebe5328f9dce2e32"
+  },
+  "preserve": {
+    "quality_medium": [
+      "masterpiece",
+      "best quality",
+      "very aesthetic",
+      "high detail",
+      "digital art",
+      "anime style"
+    ],
+    "lighting": [
+      "cinematic lighting",
+      "soft shadow",
+      "soft lighting",
+      "lighting from above",
+      "light and shadow gradients",
+      "high contrast",
+      "masterful shading",
+      "chiaroscuro"
+    ],
+    "color": [
+      "vibrant colors",
+      "smooth gradients",
+      "colorful depth"
+    ],
+    "texture_finish": [
+      "impasto",
+      "smooth shading",
+      "glossy surfaces"
+    ]
+  },
+  "normalize": [
+    {
+      "from": ["anime style"],
+      "to": ["pure hand-drawn 2D Japanese TV anime style", "crisp anime lineart", "refined cel shading with controlled gradients"],
+      "reason": "Make the alias meaning explicit and prevent drift into photorealistic, 3D, or Western-comic rendering."
+    },
+    {
+      "from": ["mystical aura"],
+      "to": ["mystical atmosphere"],
+      "reason": "Use a clearer model-compatible atmosphere term."
+    },
+    {
+      "from": ["impasto", "glossy surfaces"],
+      "to": ["subtle impasto texture", "controlled glossy accents"],
+      "reason": "Retain finish cues without forcing glossy skin or overpowering 2D cel shading."
+    },
+    {
+      "from": ["low kye", "dak depth"],
+      "to": ["low-key chiaroscuro"],
+      "reason": "Repair misspelled parser fragments while preserving the interpretable low-key lighting intent."
+    }
+  ],
+  "remove": {
+    "subject_identity": [
+      "hina (dress) (blue archive)",
+      "1girl",
+      "ethnicity",
+      "body type",
+      "detailed eyes",
+      "detailed skin texture"
+    ],
+    "clothing_expression_action": [
+      "detailed clothing",
+      "parted lips",
+      "expressionless",
+      "delicate lighthearted expression",
+      "facing directly at viewer",
+      "pose",
+      "dynamic pose"
+    ],
+    "scene_composition": [
+      "scenery",
+      "detailed background design",
+      "black background",
+      "cherry blossoms",
+      "depth of field",
+      "shallow depth of field",
+      "foreshortening",
+      "diagonal angle",
+      "high angle",
+      "dutch angle",
+      "dynamic angle"
+    ],
+    "artist_identity": [
+      "artist:dino (dinoartforame)",
+      "artist:mika pikazo"
+    ],
+    "quality_noise_and_parser_artifacts": [
+      "newest",
+      "lnewest",
+      "8k resolution",
+      "absurdres",
+      "azypos",
+      "lazyup",
+      "dak depth",
+      "low kye",
+      "enthusiasm",
+      "from side:0.1",
+      "duplicates"
+    ]
+  },
+  "replace": {
+    "subject": "Replace the Parent character identity and physical attributes with the current user's explicit subject request.",
+    "clothing": "Do not preserve Parent clothing; leave unspecified unless the user requests it.",
+    "action": "Do not preserve Parent pose or gaze for this style alias; leave unspecified unless requested."
+  },
+  "negative_prompt": {
+    "preserve": [
+      "anatomical nonsense",
+      "interlocked fingers",
+      "extra fingers",
+      "extra digits",
+      "bad hands",
+      "bad feet",
+      "bad anatomy",
+      "deformed anatomy",
+      "bad proportions",
+      "lowres",
+      "low quality",
+      "worst quality",
+      "jpeg artifacts",
+      "watermark",
+      "logo",
+      "text",
+      "signature",
+      "username",
+      "transparent"
+    ],
+    "remove": [
+      "simple background",
+      "duplicates"
+    ],
+    "add": [
+      "photorealistic",
+      "realistic skin",
+      "3d",
+      "3d render",
+      "cgi",
+      "semi-realistic",
+      "western comic style",
+      "plastic skin",
+      "glossy skin"
+    ]
+  },
+  "variant_policy": {
+    "minimal_delta": true,
+    "user_add": [],
+    "agent_added": [],
+    "rule": "Only add explicit user intent plus neutral model-compatibility constraints. Any optional agent-authored eye color, clothing, expression, pose, prop, setting, or mood must be listed separately as agent_added."
+  },
+  "sampling": {
+    "canonical": {
+      "seed": 1177237964,
+      "steps": 20,
+      "cfg": 5.0,
+      "sampler": "Euler",
+      "scheduler": "Karras",
+      "denoise": 1.0,
+      "width": 1536,
+      "height": 2304
+    },
+    "executable_default": {
+      "seed": "randomize",
+      "steps": 20,
+      "cfg": 5.0,
+      "sampler": "euler",
+      "scheduler": "karras",
+      "width": 1360,
+      "height": 2040
+    },
+    "normalization_reason": "The Backend accepts a maximum edge of 2048. 1360x2040 preserves the Parent 2:3 aspect ratio exactly, uses multiples of 8, and remains executable without altering canonical Parent evidence."
+  },
+  "created_at": "2026-07-14T19:48:59.186928+00:00"
+}
