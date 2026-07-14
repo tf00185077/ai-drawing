@@ -140,6 +140,10 @@ def reusable_scopes(s,st):
  return scopes
 def dispatch(s,roles,name,st=None,action='execute',notes=None):
  notes=[] if notes is None else notes;role=roles[name]
+ if st:
+  try:contracts.stage_contract_ok(st)
+  except ValueError as e:
+   st['status']='BLOCKED';s['goal']['status']='PAUSED';event(s,st['id']+':CONTRACT_PREFLIGHT',f"{st['id']} contract preflight failed: {e}",notes);return False
  if name=='executor':
   dirty=dirty_paths();allowed=reusable_scopes(s,st)
   if dirty and set(dirty) not in allowed:

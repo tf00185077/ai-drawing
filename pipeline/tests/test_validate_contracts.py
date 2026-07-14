@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from validate_contracts import decision_ok
+from validate_contracts import decision_ok, stage_contract_ok
 
 
 class ValidateContractsTests(unittest.TestCase):
@@ -24,7 +24,7 @@ class ValidateContractsTests(unittest.TestCase):
                     "exact_test": "tests/test_x.py::test_x", "expected_evidence": "x",
                     "forbidden_side_effects": "none",
                 }],
-                "required_tests": [], "allowed_files": ["backend/**"], "executor_brief": "do x",
+                "required_tests": ["uv run pytest tests/test_x.py::test_x -q"], "allowed_files": ["backend/**"], "executor_brief": "do x",
             }],
             "goal_done": False,
             "blocked_reason": None,
@@ -42,10 +42,16 @@ class ValidateContractsTests(unittest.TestCase):
     def test_accepts_separate_project_aware_pytest_commands(self):
         d = self._decision()
         d["new_stages"][0]["required_tests"] = [
-            "uv run --python 3.11 pytest backend/tests/ -x -q",
+            "uv run --python 3.11 pytest tests/test_x.py::test_x backend/tests/ -x -q",
             "uv run --project mcp-server pytest mcp-server/tests/ -x -q",
         ]
         decision_ok(copy.deepcopy(d))
+
+    def test_stage_contract_rejects_matrix_test_missing_from_required_tests(self):
+        stage = self._decision()["new_stages"][0]
+        stage["required_tests"] = ["uv run pytest tests/test_other.py::test_other -q"]
+        with self.assertRaisesRegex(ValueError, "matrix exact_test"):
+            stage_contract_ok(stage)
 
 
 if __name__ == "__main__":
