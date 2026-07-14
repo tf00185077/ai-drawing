@@ -1,7 +1,13 @@
 """MCP Server 單元測試"""
+from pathlib import Path
+import sys
+
 import pytest
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 
 from mcp_server.server import mcp, mcp_ping
+from mcp_server.tool_catalog import INTENDED_TOOLS
 
 
 def test_mcp_instance_exists() -> None:
@@ -32,3 +38,24 @@ def test_minimum_loop_tools_are_importable() -> None:
     assert callable(get_generation_status)
     assert callable(get_gallery_image)
     assert callable(free_comfyui_memory)
+
+
+@pytest.mark.asyncio
+async def test_module_entrypoint_exposes_complete_formal_stdio_catalog() -> None:
+    """``python -m mcp_server.server`` must register tools on the served instance."""
+    project_dir = Path(__file__).resolve().parents[1]
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "mcp_server.server"],
+        cwd=str(project_dir),
+        env={},
+    )
+
+    async with stdio_client(params) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            response = await session.list_tools()
+
+    assert {tool.name for tool in response.tools} == {
+        entry.name for entry in INTENDED_TOOLS
+    }

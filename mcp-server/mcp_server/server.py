@@ -4,7 +4,16 @@ AI Drawing MCP Server
 Uses FastMCP, communicates with Cursor and other MCP clients via stdio.
 Tools are defined in the mcp_server.tools module.
 """
+import sys
+
 from mcp.server.fastmcp import FastMCP
+
+# ``python -m mcp_server.server`` executes this file as ``__main__``.  Tool
+# modules import ``mcp_server.server`` to obtain the shared FastMCP instance;
+# without this alias Python loads a second copy and registers every non-ping
+# tool on an instance that is never served.
+if __name__ == "__main__":
+    sys.modules["mcp_server.server"] = sys.modules[__name__]
 
 from mcp_server.client import HttpBackendClient
 from mcp_server.config import get_mcp_settings
