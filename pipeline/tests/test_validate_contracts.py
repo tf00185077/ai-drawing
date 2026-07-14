@@ -19,6 +19,11 @@ class ValidateContractsTests(unittest.TestCase):
                 "contract_version": "1.0", "inputs": ["i"], "outputs": ["o"],
                 "in_scope": ["x"], "out_of_scope": ["y"],
                 "acceptance": [{"id": "X-AC1", "text": "passes"}],
+                "acceptance_to_test_matrix": [{
+                    "criterion_id": "X-AC1", "behavior_attack": "x",
+                    "exact_test": "tests/test_x.py::test_x", "expected_evidence": "x",
+                    "forbidden_side_effects": "none",
+                }],
                 "required_tests": [], "allowed_files": ["backend/**"], "executor_brief": "do x",
             }],
             "goal_done": False,
