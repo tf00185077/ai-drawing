@@ -1,0 +1,32 @@
+{
+  "id": "light-shadow-japanese-anime",
+  "name": "光影日式動畫",
+  "chinese_name": null,
+  "base_prompt": "masterpiece, best quality, very aesthetic, high detail, digital art, pure hand-drawn 2D Japanese TV anime style, crisp anime lineart, refined cel shading with controlled gradients, vibrant colors, smooth color gradients, cinematic lighting, mystical atmosphere, soft shadows, soft overhead lighting, nuanced light-and-shadow gradients, high contrast, masterful shading, low-key chiaroscuro, subtle impasto texture, smooth shading, controlled glossy accents, colorful depth",
+  "negative_prompt": "anatomical nonsense, interlocked fingers, extra fingers, extra digits, bad hands, bad feet, bad anatomy, deformed anatomy, bad proportions, lowres, low quality, worst quality, jpeg artifacts, watermark, logo, text, signature, username, transparent, photorealistic, realistic skin, 3d, 3d render, cgi, semi-realistic, western comic style, plastic skin, glossy skin",
+  "template": "default",
+  "checkpoint": "oneObsession_v23.safetensors",
+  "lora": null,
+  "lora_strength": null,
+  "loras": [],
+  "diffusion_model": null,
+  "text_encoder": null,
+  "vae": null,
+  "default_params": {
+    "cfg": 5.0,
+    "height": 2304,
+    "sampler_name": "euler",
+    "scheduler": "karras",
+    "steps": 20,
+    "width": 1536
+  },
+  "profiles": {
+    "portrait": {
+      "negative_prompt": "",
+      "params": {},
+      "prompt_prefix": "",
+      "prompt_suffix": ""
+    }
+  },
+  "note_path": "style_presets/human/light-shadow-japanese-anime.md"
+}

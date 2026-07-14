@@ -77,6 +77,20 @@
       "diffusion_model": "hosekiLustrousmixAnima_animaV10.safetensors"
     },
     {
+      "id": "light-shadow-japanese-anime",
+      "name": "光影日式動畫",
+      "chinese_name": null,
+      "profiles": [
+        "portrait"
+      ],
+      "note_path": "style_presets/human/light-shadow-japanese-anime.md",
+      "template": "default",
+      "checkpoint": "oneObsession_v23.safetensors",
+      "lora": null,
+      "loras": [],
+      "diffusion_model": null
+    },
+    {
       "id": "niji-daylight-2d-anime-anima",
       "name": "Niji Daylight 2D Anime Anima",
       "chinese_name": "白天日系手繪2D Niji Anima",

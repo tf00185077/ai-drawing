@@ -640,3 +640,46 @@ def test_backend_route_redacts_authorization_and_token_query_in_success_and_erro
     assert error.status_code == 409
     assert secret not in json.dumps(success.json())
     assert secret not in json.dumps(error.json())
+
+
+def test_civitai_download_transport_follows_redirects_and_streams(monkeypatch) -> None:
+    from app.api import civitai_recipes
+
+    calls: list[dict] = []
+
+    class Response:
+        status_code = 200
+        headers = {"content-length": "6"}
+
+        def iter_bytes(self, chunk_size: int):
+            assert chunk_size == 1024 * 1024
+            yield b"abc"
+            yield b"def"
+
+    class StreamContext:
+        def __init__(self) -> None:
+            self.closed = False
+
+        def __enter__(self):
+            return Response()
+
+        def __exit__(self, exc_type, exc, tb):
+            self.closed = True
+
+    context = StreamContext()
+
+    def fake_stream(method: str, url: str, **kwargs):
+        calls.append({"method": method, "url": url, **kwargs})
+        return context
+
+    monkeypatch.setattr(civitai_recipes.httpx, "stream", fake_stream)
+    result = civitai_recipes._CivitaiDownloadTransport().get(
+        "https://civitai.com/api/download/models/3118448",
+        headers={"Authorization": "Bearer sentinel"},
+    )
+
+    assert calls[0]["method"] == "GET"
+    assert calls[0]["follow_redirects"] is True
+    assert result.status_code == 200
+    assert b"".join(result.body) == b"abcdef"
+    assert context.closed is True

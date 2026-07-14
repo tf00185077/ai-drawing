@@ -63,6 +63,7 @@ from app.db.database import get_db
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
 from app.services.civitai_acquisition import AcquisitionError, redact_secrets, parse_civitai_locator
 from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource, install_civitai_resource
+from app.services.civitai_safe_download import DownloadResponse
 from app.config import get_settings
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle
 from app.services.civitai_recipe_pipeline import (
@@ -317,7 +318,25 @@ def select_civitai_resource_route(request: CivitaiResourceSelectRequest) -> dict
 
 class _CivitaiDownloadTransport:
     def get(self, url: str, *, headers: dict[str, str] | None = None) -> Any:
-        return httpx.get(url, headers=headers, timeout=60.0)
+        stream = httpx.stream(
+            "GET",
+            url,
+            headers=headers,
+            timeout=httpx.Timeout(connect=60.0, read=None, write=60.0, pool=60.0),
+            follow_redirects=True,
+        )
+        response = stream.__enter__()
+        if not 200 <= response.status_code < 300:
+            stream.__exit__(None, None, None)
+            return DownloadResponse(response.status_code, b"", dict(response.headers))
+
+        def chunks():
+            try:
+                yield from response.iter_bytes(chunk_size=1024 * 1024)
+            finally:
+                stream.__exit__(None, None, None)
+
+        return DownloadResponse(response.status_code, chunks(), dict(response.headers))
 
 
 @router.post("/resource-install")

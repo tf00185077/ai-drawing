@@ -56,6 +56,21 @@ def test_client_uses_bounded_audited_timeout_for_local_resolution_paths() -> Non
     assert [call.kwargs["timeout"] for call in mock_client.call_args_list] == [120.0, 120.0, 120.0]
 
 
+def test_client_uses_long_bounded_timeout_for_resource_install() -> None:
+    """Large persistent model downloads may legitimately exceed the ordinary API timeout."""
+    import httpx
+
+    client = HttpBackendClient(base_url="http://test:9000", timeout=30.0)
+    mock_response = MagicMock(content=b'{"ok": true}')
+    mock_response.json.return_value = {"ok": True}
+
+    with patch.object(httpx, "Client") as mock_client:
+        mock_client.return_value.__enter__.return_value.post.return_value = mock_response
+        client.post("civitai-recipes/resource-install", json={})
+
+    assert mock_client.call_args.kwargs["timeout"] == 3600.0
+
+
 def test_client_keeps_default_timeout_for_ordinary_backend_paths() -> None:
     """The audited override must not make every backend failure wait two minutes."""
     import httpx
