@@ -19,7 +19,7 @@ class DispatchTests(unittest.TestCase):
  def get(self):return json.loads((self.root/'pipeline/state.json').read_text())
  def tick(self):
   with patch('dispatch.subprocess.Popen',P),patch('dispatch.alive',lambda p:p in self.live):return dispatch.reconcile()
- def st(self):return {'id':'X','title':'x','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'required_tests':['AC-1 -> unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':2,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
+ def st(self):return {'id':'X','title':'x','kind':'implement','executor_brief':'bounded stage','status':'READY','depends_on':[],'contract_version':'1.0','inputs':['committed predecessor'], 'outputs':['tested artifact'],'in_scope':['one bounded change'],'out_of_scope':['future stages'],'acceptance':[{'id':'AC-1','text':'bounded behavior passes'}],'acceptance_to_test_matrix':[{'criterion_id':'AC-1','behavior_attack':'bounded behavior','exact_test':'tests/test_x.py::test_bounded','expected_evidence':'typed result','forbidden_side_effects':'no network'}],'required_tests':['AC-1 -> unit test'],'allowed_files':['backend/**'],'attempts':{'execute':0,'review':0,'validate':0},'dispatch_ordinals':{},'max_attempts':3,'max_review_rejections':2,'review_rejections':0,'deferred_findings':[],'fix_notes':[],'runs':[]}
  def dead(self,s,r):r['status']='RUNNING';r['pid']=999;s['runs'][r['run_id']]=r;self.s=s;self.put()
  def result(self,r,status='done'):
   (self.root/r['result_file']).write_text(json.dumps({'schema':'hermes.result.v1.1','run_id':r['run_id'],'status':status,'summary':'ok','files_changed':[],'how_verified':'x','blocked_reason':None,'notes_for_review':'x'}))
@@ -142,6 +142,13 @@ class DispatchTests(unittest.TestCase):
  def test_plan_requires_frozen_stage_contract(self):
   decision={'schema':'hermes.decision.v1.1','run_id':'plan.1','decision_type':'plan','summary':'x','new_stages':[{'id':'CIV-B','title':'b','depends_on':['CIV-A'],'kind':'implement','acceptance':['vague'],'executor_brief':'x'}],'goal_done':False,'blocked_reason':None,'needs_from_owner':None}
   with self.assertRaisesRegex(ValueError,'frozen contract'):dispatch.contracts.decision_ok(decision)
+ def test_plan_requires_small_acceptance_to_test_matrix(self):
+  stage=self.st();stage.pop('status');stage.pop('attempts');stage.pop('dispatch_ordinals');stage.pop('max_attempts');stage.pop('max_review_rejections');stage.pop('review_rejections');stage.pop('deferred_findings');stage.pop('fix_notes');stage.pop('runs')
+  decision={'schema':'hermes.decision.v1.1','run_id':'plan.1','decision_type':'plan','summary':'x','new_stages':[stage],'goal_done':False,'blocked_reason':None,'needs_from_owner':None}
+  missing=json.loads(json.dumps(decision));missing['new_stages'][0].pop('acceptance_to_test_matrix')
+  with self.assertRaisesRegex(ValueError,'acceptance_to_test_matrix'):dispatch.contracts.decision_ok(missing)
+  too_many=json.loads(json.dumps(decision));too_many['new_stages'][0]['acceptance']=[{'id':f'AC-{i}','text':'x'} for i in range(5)];too_many['new_stages'][0]['acceptance_to_test_matrix']=[{'criterion_id':f'AC-{i}','behavior_attack':'x','exact_test':f't::{i}','expected_evidence':'x','forbidden_side_effects':'x'} for i in range(5)]
+  with self.assertRaisesRegex(ValueError,'at most four'):dispatch.contracts.decision_ok(too_many)
  def test_review_unknown_criterion_pauses_instead_of_expanding_scope(self):
   st=self.st();self.s['stages']=[st];r={'run_id':'X.review.1.judge','role':'judge','stage':'X','action':'review','status':'RUNNING','pid':999,'result_file':'agent_runs/j.json','log_file':'agent_runs/j.log'};self.s['runs'][r['run_id']]=r;st['runs']=[r['run_id']];self.review(r,'reject',['NEW-99'])
   with patch('dispatch.alive',return_value=False):dispatch.harvest(self.s,[])
@@ -163,4 +170,11 @@ class DispatchTests(unittest.TestCase):
   with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'executor',st2,notes=[])
   prompt=(self.root/list(self.s['runs'].values())[-1]['prompt_file']).read_text()
   self.assertIn('更新 docs/PROGRESS.md',prompt)
+ def test_executor_and_reviewer_prompts_include_exact_acceptance_matrix(self):
+  roles=json.loads((self.root/'pipeline/roles.json').read_text());st=self.st();matrix=json.dumps(st['acceptance_to_test_matrix'],ensure_ascii=False)
+  with patch('dispatch.dirty_paths',return_value=set()),patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'executor',st,notes=[])
+  prompt=(self.root/list(self.s['runs'].values())[-1]['prompt_file']).read_text();self.assertIn(matrix,prompt)
+  st['runs']=[];st['status']='AWAITING_REVIEW';self.s['runs']={}
+  with patch('dispatch.subprocess.Popen',P):dispatch.dispatch(self.s,roles,'judge',st,'review',notes=[])
+  prompt=(self.root/list(self.s['runs'].values())[-1]['prompt_file']).read_text();self.assertIn(matrix,prompt)
 if __name__=='__main__':unittest.main()

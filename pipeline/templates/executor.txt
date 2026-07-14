@@ -8,6 +8,7 @@ Outputs：{outputs}
 In scope：{in_scope}
 Out of scope：{out_of_scope}
 Frozen acceptance：{acceptance}
+Exact acceptance-to-test matrix：{acceptance_to_test_matrix}
 Required tests：{required_tests}
 Allowed files：{allowed_files}
 修正清單（每項綁定既有 acceptance ID）：{fix_notes}

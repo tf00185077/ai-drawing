@@ -7,6 +7,7 @@ Outputs：{outputs}
 In scope：{in_scope}
 Out of scope：{out_of_scope}
 Frozen acceptance：{acceptance}
+Exact acceptance-to-test matrix：{acceptance_to_test_matrix}
 Required tests：{required_tests}
 Allowed files：{allowed_files}
 已 reject：{review_rejections}/{max_review_rejections}
@@ -14,7 +15,7 @@ Executor result：{worker_result}
 必讀：AGENTS.md、SPEC.md、docs/task-specs/CIVITAI_RECIPE_WORKFLOW.md、實際 diff 與相關 tests。
 
 SCOPE FREEZE（硬性）：
-1. 只有違反上述 frozen acceptance criterion 才能 reject，blocking_criterion_ids 必須引用既有 ID。
+1. 只有違反上述 frozen acceptance criterion 或其 exact acceptance-to-test matrix 證據義務才能 reject，blocking_criterion_ids 必須引用既有 ID。
 2. 不得新增 acceptance criterion，不得將 out_of_scope 或後續 CIV 階段工作列為 blocker。
 3. 其他安全、強化、邊界發現寫入 deferred_findings；不可放入 fixes。
 4. fixes 每項必須含 criterion_id 與可執行 instruction。
