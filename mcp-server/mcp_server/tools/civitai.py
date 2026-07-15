@@ -113,7 +113,10 @@ def civitai_resource_acquire(source: str) -> dict[str, Any]:
     bare model ID, or a model-version ID. The download runs in the background
     and is verified against the published SHA-256; virus-scan failures are
     refused. Incomplete license metadata is recorded as a warning, not a
-    blocker. Returns an acquisition_id — poll civitai_resource_status.
+    blocker. Files are routed to the right ComfyUI directory automatically;
+    Anima split packages (diffusion / _txt text encoder / VAE published as one
+    "checkpoint") are downloaded as a whole set in one call, each file to its
+    own directory. Returns acquisition_id(s) — poll civitai_resource_status.
     """
     tool = "civitai_resource_acquire"
     try:

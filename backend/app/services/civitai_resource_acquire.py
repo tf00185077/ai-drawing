@@ -1,9 +1,13 @@
 """One-call best-effort Civitai resource acquisition.
 
 Given a model URL, model ID, or model-version ID, this service inspects the
-Civitai API, picks the primary file, downloads it in a background thread to
-the configured storage root (the external model disk), and records it in the
-``downloaded_resources`` ledger.
+Civitai API, picks the downloadable file(s), downloads them in a background
+thread to the configured storage roots (the external model disk), and records
+each file in the ``downloaded_resources`` ledger.
+
+Split packages: Anima checkpoints ship as separate diffusion / text-encoder /
+VAE files under one version. One call downloads the whole set, routing each
+file to its own ComfyUI directory by filename convention.
 
 Policy: real safety gates stay hard — the virus scan must be clean and the
 downloaded bytes must match the published SHA-256 and size. Incomplete
@@ -103,7 +107,24 @@ def normalize_model_family(base_model: Any) -> str | None:
         return "illustrious"
     if "sdxl" in lowered or "pony" in lowered:
         return "sdxl"
+    if "anima" in lowered:
+        return "anima"
     return None
+
+
+def _anima_component(file_name: str) -> tuple[str, str]:
+    """Route one Anima split-package file by filename convention.
+
+    Civitai labels the whole package "Checkpoint", but the files are split:
+    the text encoder carries "_txt", the VAE carries "vae"; the remaining
+    large file is the diffusion weight for UNETLoader.
+    """
+    lowered = file_name.casefold()
+    if "_txt" in lowered or "text_encoder" in lowered or "textencoder" in lowered:
+        return ("text_encoders", "text_encoder")
+    if "vae" in lowered:
+        return ("vae", "vae")
+    return ("diffusion_models", "diffusion_model")
 
 
 def _auth_headers() -> dict[str, str]:
@@ -196,18 +217,8 @@ def _maybe_fetch_model(transport: Any, model_id: Any) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
-def choose_file(version_payload: dict[str, Any]) -> dict[str, Any]:
-    """Pick the primary downloadable file; the virus-scan gate stays hard."""
-    files = version_payload.get("files")
-    if not isinstance(files, list) or not files:
-        raise AcquireError("no_files", "此模型版本沒有檔案清單")
-    candidates = [item for item in files if isinstance(item, dict)]
-    chosen = next((item for item in candidates if item.get("primary") is True), None)
-    if chosen is None:
-        chosen = next(
-            (item for item in candidates if str(item.get("name", "")).lower().endswith(".safetensors")),
-            candidates[0],
-        )
+def _normalize_file(chosen: dict[str, Any]) -> dict[str, Any]:
+    """Validate one Civitai file entry; the virus-scan gate stays hard."""
     name = Path(str(chosen.get("name", ""))).name
     sha256 = ((chosen.get("hashes") or {}).get("SHA256") or "").strip().lower()
     size_kb = chosen.get("sizeKB")
@@ -233,6 +244,40 @@ def choose_file(version_payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def choose_file(version_payload: dict[str, Any]) -> dict[str, Any]:
+    """Pick the primary downloadable file."""
+    files = version_payload.get("files")
+    if not isinstance(files, list) or not files:
+        raise AcquireError("no_files", "此模型版本沒有檔案清單")
+    candidates = [item for item in files if isinstance(item, dict)]
+    chosen = next((item for item in candidates if item.get("primary") is True), None)
+    if chosen is None:
+        chosen = next(
+            (item for item in candidates if str(item.get("name", "")).lower().endswith(".safetensors")),
+            candidates[0],
+        )
+    return _normalize_file(chosen)
+
+
+def downloadable_files(version_payload: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
+    """All valid files of a version (for split packages), plus skip warnings."""
+    files = version_payload.get("files")
+    if not isinstance(files, list) or not files:
+        raise AcquireError("no_files", "此模型版本沒有檔案清單")
+    valid: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    for item in files:
+        if not isinstance(item, dict):
+            continue
+        try:
+            valid.append(_normalize_file(item))
+        except AcquireError as exc:
+            warnings.append(f"檔案「{item.get('name')}」跳過：{exc.message}")
+    if not valid:
+        raise AcquireError("no_files", "此版本沒有任何可安全下載的檔案")
+    return valid, warnings
+
+
 def license_snapshot(model_payload: dict[str, Any] | None) -> tuple[dict[str, Any], list[str]]:
     """License completeness is recorded, not enforced."""
     warnings: list[str] = []
@@ -254,6 +299,8 @@ def license_snapshot(model_payload: dict[str, Any] | None) -> tuple[dict[str, An
 
 
 def _storage_roots(settings: Any) -> dict[str, Path]:
+    # All roots come from the configured COMFYUI_*_DIR settings, which point at
+    # the external model disk; the tool only picks the right subdirectory.
     return {
         "checkpoints": Path(settings.comfyui_checkpoints_dir.split(",")[0]),
         "loras": Path(settings.comfyui_loras_dir.split(",")[0]),
@@ -261,6 +308,8 @@ def _storage_roots(settings: Any) -> dict[str, Path]:
         "embeddings": Path(settings.comfyui_embeddings_dir.split(",")[0]),
         "controlnet": Path(settings.comfyui_controlnet_dir.split(",")[0]),
         "upscale_models": Path(settings.comfyui_upscale_models_dir.split(",")[0]),
+        "diffusion_models": Path(settings.comfyui_diffusion_models_dir.split(",")[0]),
+        "text_encoders": Path(settings.comfyui_text_encoders_dir.split(",")[0]),
     }
 
 
@@ -328,8 +377,19 @@ def start_acquisition(
             hint=f"目前支援：{supported}",
         )
     root_key, resource_type = _MODEL_TYPE_ROOTS[model_type]
-    chosen = choose_file(version)
     license_info, warnings = license_snapshot(model)
+    base_model = version.get("baseModel")
+    family = normalize_model_family(base_model)
+
+    # Components to install: (file, storage root, ledger resource_type).
+    # Anima "checkpoints" are split packages — grab the whole set and route
+    # each file to its own directory; everything else is a single file.
+    if model_type == "checkpoint" and family == "anima":
+        files, skip_warnings = downloadable_files(version)
+        warnings.extend(skip_warnings)
+        components = [(item, *_anima_component(item["name"])) for item in files]
+    else:
+        components = [(choose_file(version), root_key, resource_type)]
 
     version_id = version.get("id")
     model_id = version.get("modelId") or (model or {}).get("id")
@@ -340,103 +400,153 @@ def start_acquisition(
         .order_by(DownloadedResource.id.desc())
         .all()
     )
-    for row in existing:
-        if row.status in _INSTALLED_STATUSES and row.local_path and Path(row.local_path).is_file():
-            return {"status": "already_installed", "resource": _resource_summary(row), "warnings": warnings}
-        if row.status in _ACTIVE_STATUSES:
-            return {"status": "downloading", "resource": _resource_summary(row), "warnings": warnings}
 
-    target_root = _storage_roots(settings)[root_key]
-    target = target_root / chosen["name"]
-    base_model = version.get("baseModel")
-    notes = {
+    roots = _storage_roots(settings)
+    common_notes = {
         "base_model": base_model,
-        "model_family": normalize_model_family(base_model),
+        "model_family": family,
         "license": license_info,
-        "expected_size_bytes": chosen["size_bytes"],
         "version_name": version.get("name"),
         "model_name": (model or {}).get("name") or (version.get("model") or {}).get("name"),
     }
-    row = DownloadedResource(
-        resource_name=chosen["name"],
-        resource_type=resource_type,
-        provider="civitai",
-        source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
-        resolved_download_url=chosen["download_url"],
-        local_path=str(target),
-        storage_root=root_key,
-        file_size=chosen["size_bytes"],
-        sha256=chosen["sha256"],
-        model_id=str(model_id) if model_id is not None else None,
-        version_id=str(version_id) if version_id is not None else None,
-        civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
-        status="downloading",
-        notes=json.dumps(redact_secrets(notes), ensure_ascii=False),
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    acquisition_id = row.id
+    done_rows: list[DownloadedResource] = []
+    active_rows: list[DownloadedResource] = []
+    jobs: list[dict[str, Any]] = []
 
-    metadata = CivitaiFileMetadata(
-        download_url=chosen["download_url"],
-        sha256=chosen["sha256"],
-        size=chosen["size_bytes"],
-        availability=True,
-        scan_status=chosen["scan_status"],
-        license=license_info,
-        usage=None,
-    )
+    for chosen, comp_root, comp_type in components:
+        matched = next((row for row in existing if row.resource_name == chosen["name"]), None)
+        if matched is not None and matched.status in _INSTALLED_STATUSES and matched.local_path and Path(matched.local_path).is_file():
+            done_rows.append(matched)
+            continue
+        if matched is not None and matched.status in _ACTIVE_STATUSES:
+            active_rows.append(matched)
+            continue
+        notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
+        target = roots[comp_root] / chosen["name"]
+        row = DownloadedResource(
+            resource_name=chosen["name"],
+            resource_type=comp_type,
+            provider="civitai",
+            source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
+            resolved_download_url=chosen["download_url"],
+            local_path=str(target),
+            storage_root=comp_root,
+            file_size=chosen["size_bytes"],
+            sha256=chosen["sha256"],
+            model_id=str(model_id) if model_id is not None else None,
+            version_id=str(version_id) if version_id is not None else None,
+            civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+            status="downloading",
+            notes=json.dumps(redact_secrets(notes), ensure_ascii=False),
+        )
+        db.add(row)
+        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row})
+
+    if not jobs:
+        rows = done_rows + active_rows
+        status = "downloading" if active_rows else "already_installed"
+        return {
+            "status": status,
+            "resource": _resource_summary(rows[0]),
+            "resources": [_resource_summary(row) for row in rows],
+            "warnings": warnings,
+        }
+
+    db.commit()
+    for job in jobs:
+        db.refresh(job["row"])
+        job["acquisition_id"] = job["row"].id
+
     authorization = _auth_headers().get("Authorization")
     transport = download_transport or _StreamingDownloadTransport()
+    job_specs = [
+        {
+            "acquisition_id": job["acquisition_id"],
+            "target": job["target"],
+            "notes": job["notes"],
+            "metadata": CivitaiFileMetadata(
+                download_url=job["chosen"]["download_url"],
+                sha256=job["chosen"]["sha256"],
+                size=job["chosen"]["size_bytes"],
+                availability=True,
+                scan_status=job["chosen"]["scan_status"],
+                license=license_info,
+                usage=None,
+            ),
+        }
+        for job in jobs
+    ]
 
     def _run() -> None:
+        # Sequential on purpose: one big file at a time is gentler on the
+        # external disk and keeps per-file progress readable.
         session = (session_factory or SessionLocal)()
         try:
-            result = safe_download(metadata, target, transport=transport, authorization=authorization)
-            fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
-            fresh_notes = dict(notes)
-            if result.status == "completed":
-                stat = Path(result.final_path).stat()
-                fresh_notes["file_identity"] = {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}
-                fresh.status = "installed"
-                fresh.local_path = result.final_path
-                fresh.file_size = result.bytes
-                fresh.sha256 = result.actual_sha256
-                fresh.downloaded_at = datetime.utcnow()
-            else:
-                fresh.status = "failed"
-                fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
-            fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
-            session.commit()
-        except Exception as exc:  # noqa: BLE001 — the thread must record any failure
-            session.rollback()
-            try:
-                fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
-                fresh.status = "failed"
-                fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.__class__.__name__}), ensure_ascii=False)
-                session.commit()
-            except Exception:
-                session.rollback()
+            for spec in job_specs:
+                _run_one(session, spec, transport=transport, authorization=authorization)
         finally:
             session.close()
 
     if run_in_background:
         factory = thread_factory or (lambda **kwargs: threading.Thread(**kwargs))
-        thread = factory(target=_run, name=f"civitai-acquire-{acquisition_id}", daemon=True)
+        thread = factory(target=_run, name=f"civitai-acquire-{job_specs[0]['acquisition_id']}", daemon=True)
         thread.start()
     else:
         _run()
         db.expire_all()
-        fresh = db.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
-        return {"status": fresh.status, "resource": _resource_summary(fresh), "warnings": warnings}
+        ids = [spec["acquisition_id"] for spec in job_specs]
+        fresh_rows = (
+            db.query(DownloadedResource).filter(DownloadedResource.id.in_(ids)).order_by(DownloadedResource.id).all()
+        )
+        statuses = {row.status for row in fresh_rows} | {row.status for row in done_rows}
+        status = "installed" if statuses <= _INSTALLED_STATUSES else ("failed" if "failed" in statuses else fresh_rows[0].status)
+        return {
+            "status": status,
+            "resource": _resource_summary(fresh_rows[0]),
+            "resources": [_resource_summary(row) for row in done_rows + fresh_rows],
+            "warnings": warnings,
+        }
 
+    started_rows = done_rows + active_rows + [job["row"] for job in jobs]
     return {
         "status": "downloading",
-        "resource": _resource_summary(row),
+        "resource": _resource_summary(jobs[0]["row"]),
+        "resources": [_resource_summary(row) for row in started_rows],
         "warnings": warnings,
         "next_step": "下載已在背景進行；用 civitai_resource_status 查進度，installed 之後即可用於生圖",
     }
+
+
+def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, authorization: str | None) -> None:
+    """Download one file and record the outcome; never let one failure stop the batch."""
+    acquisition_id = spec["acquisition_id"]
+    notes = spec["notes"]
+    try:
+        result = safe_download(spec["metadata"], spec["target"], transport=transport, authorization=authorization)
+        fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
+        fresh_notes = dict(notes)
+        if result.status == "completed":
+            stat = Path(result.final_path).stat()
+            fresh_notes["file_identity"] = {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}
+            fresh.status = "installed"
+            fresh.local_path = result.final_path
+            fresh.file_size = result.bytes
+            fresh.sha256 = result.actual_sha256
+            fresh.downloaded_at = datetime.utcnow()
+        else:
+            fresh.status = "failed"
+            fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
+        fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
+        session.commit()
+    except Exception as exc:  # noqa: BLE001 — the thread must record any failure
+        session.rollback()
+        try:
+            fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
+            fresh.status = "failed"
+            fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.__class__.__name__}), ensure_ascii=False)
+            session.commit()
+        except Exception:
+            session.rollback()
 
 
 def acquisition_status(db: Session, *, acquisition_id: int | None = None, limit: int = 10) -> dict[str, Any]:
