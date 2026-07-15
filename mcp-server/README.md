@@ -30,7 +30,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `civitai_resource_acquire` | `dict` | POST /api/civitai/resources/acquire |
 | `civitai_resource_status` | `dict` | GET /api/civitai/resources/status |
 | `generate_image` | `json_string` | POST /api/generate/ |
+| `generate_image_custom_workflow` | `json_string` | POST /api/generate/custom |
 | `generate_video_wan_keyframes` | `json_string` | POST /api/generate/video/wan-keyframes |
+| `generate_video_custom_workflow` | `json_string` | POST /api/generate/video/custom |
 | `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
 | `cancel_job` | `json_string` | DELETE /api/generate/queue/{job_id} |
 | `list_available_resources` | `json_string` | GET /api/generate/available-resources |
@@ -38,6 +40,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
+| `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
 | `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |

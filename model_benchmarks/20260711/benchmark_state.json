@@ -1,0 +1,1210 @@
+{
+  "campaign_id": "mio-10-model-3-pose-benchmark-20260711",
+  "status": "completed",
+  "model_root": "/Volumes/AI-Drawing-16T/ai-drawing/models",
+  "canonical_identity": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+  "canonical_local": "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery/2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+  "character_contract": {
+    "name": "Kirishima Mio",
+    "age": 20,
+    "identity": "adult Japanese university sophomore, mature face, gray-blue eyes, long straight black hair with subtle navy sheen, exactly one silver star hairpin on viewer-right side",
+    "outfit": "cream high-neck blouse, fitted dark navy cardigan, long charcoal skirt, opaque black tights, brown loafers",
+    "style": "pure hand-drawn Japanese 2D anime cel style",
+    "forbidden": "child, teen, schoolgirl, school uniform, duplicate hairpin, extra person, cropped feet, changed outfit, photorealistic, 3d"
+  },
+  "poses": [
+    {
+      "id": "standing",
+      "label": "正面全身設定圖",
+      "status": "ready",
+      "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png"
+    },
+    {
+      "id": "seated_reading",
+      "label": "坐姿閱讀天文研究資料",
+      "status": "ready",
+      "rejected_job": "80326e69-d8ac-4df7-918f-ec456d59d1b6",
+      "guide_job": "d972f2c7-e1f0-4d61-819e-aa8a20a21926",
+      "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+      "guide_review": {
+        "job_id": "d972f2c7-e1f0-4d61-819e-aa8a20a21926",
+        "image_id": 2360,
+        "image_path": "2026-07-11/niji_moonlit_honoka_multilora_00419_d972f2c7_0.png",
+        "accepted_as_physical_guide": true,
+        "notes": "Chair and open book present; full body and feet visible; seated-reading pose/anatomy suitable as guide. Identity/outfit intentionally ignored."
+      },
+      "identity_transfer_job": "0a9944a0-302d-4fcf-b99a-91c97a964eb8",
+      "identity_transfer_attempt": 2,
+      "identity_transfer_review": {
+        "job_id": "b90255df-b95b-4d83-829d-f247881a3eea",
+        "image_id": 2368,
+        "image_path": "2026-07-11/qwen_route_c_q5_anypose_space_high_lunge_asuka_transfer_00002_b90255df_0.png",
+        "accepted": false,
+        "reasons": [
+          "identity failed: orange hair instead of long straight black hair with navy sheen",
+          "pose failed: both arms raised overhead instead of holding an open astronomy book",
+          "required open book is missing",
+          "outfit failed: bright red tights and mismatched layered clothing",
+          "hands are visibly malformed/overlapping",
+          "single silver star hairpin is on the wrong visible side"
+        ],
+        "passed": [
+          "one adult-presenting subject",
+          "real chair present",
+          "full body and both shoes visible",
+          "plain white background"
+        ]
+      },
+      "identity_transfer_submission": {
+        "seed": 2094156406,
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "workflow_type": "Qwen Image Edit 2511 dual-reference identity and physical pose transfer",
+        "identity_reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+        "pose_reference": "2026-07-11/niji_moonlit_honoka_multilora_00419_d972f2c7_0.png",
+        "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+        "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+        "repair": "replaced stale Asuka/high-lunge TextEncodeQwenImageEditPlus node prompt in workflow JSON"
+      },
+      "identity_transfer_retry_review": {
+        "job_id": "0a9944a0-302d-4fcf-b99a-91c97a964eb8",
+        "image_id": 2372,
+        "image_path": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+        "accepted": true,
+        "reasons": [],
+        "passed": [
+          "single adult-presenting subject with mature anime face and gray-blue eyes",
+          "long straight black hair with subtle navy sheen and exactly one silver star hairpin on viewer-right",
+          "cream high-neck blouse, fitted dark navy cardigan, long charcoal skirt, opaque black tights, brown loafers",
+          "seated on a real wooden chair while holding and reading an open book",
+          "full body and both shoes visible on a plain white background",
+          "hands, fingers, legs, feet, and shoes are anatomically acceptable"
+        ]
+      }
+    },
+    {
+      "id": "telescope",
+      "label": "操作天文望遠鏡",
+      "status": "ready",
+      "skeleton_transfer_job": "83be99ef-1437-4cea-9235-2f49a8cc74ef",
+      "guide_job": "dd5304e6-3e4b-4e51-b8c2-38abafff169c",
+      "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+      "identity_transfer_review": {
+        "job_id": "a4bcce11-43c3-40cd-910f-0a4abeaa4acf",
+        "image_id": 2370,
+        "image_path": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+        "accepted": true,
+        "reasons": [],
+        "passed": [
+          "adult-presenting single subject with mature anime face and gray-blue eyes",
+          "long straight black hair with navy sheen and exactly one silver star hairpin on viewer-right",
+          "cream high-neck blouse, fitted dark navy cardigan, long charcoal skirt, opaque black tights, brown loafers",
+          "full body and both feet visible on plain white background",
+          "real tripod telescope present and subject is operating the eyepiece/controls",
+          "hands and feet are anatomically acceptable"
+        ]
+      },
+      "skeleton_transfer_review": {
+        "job_id": "83be99ef-1437-4cea-9235-2f49a8cc74ef",
+        "image_id": 2358,
+        "image_path": "2026-07-11/mio_common_pose_telescope_00001_83be99ef_0.png",
+        "accepted": false,
+        "reasons": [
+          "no telescope present",
+          "holding a wooden rod instead of operating telescope",
+          "malformed/extra-looking fingers at rod grip"
+        ]
+      },
+      "guide_review": {
+        "job_id": "dd5304e6-3e4b-4e51-b8c2-38abafff169c",
+        "image_id": 2364,
+        "image_path": "2026-07-11/niji_moonlit_honoka_multilora_00420_dd5304e6_0.png",
+        "accepted_as_physical_guide": true,
+        "notes": "Actual tripod telescope present; clear eyepiece/adjustment pose; one full-body subject and usable anatomy. Bare feet/wrong identity are excluded from transfer prompt."
+      },
+      "identity_transfer_job": "a4bcce11-43c3-40cd-910f-0a4abeaa4acf",
+      "identity_transfer_attempt": 1,
+      "identity_transfer_submission": {
+        "seed": 236416674,
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "workflow_type": "Qwen Image Edit 2511 dual-reference identity and pose transfer",
+        "identity_reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+        "pose_reference": "2026-07-11/niji_moonlit_honoka_multilora_00420_dd5304e6_0.png",
+        "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+        "submitted_via": "MCP ai-drawing generate_image_custom_workflow"
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "animagine-xl-4-opt",
+      "label": "Animagine XL 4.0 Opt",
+      "family": "sdxl",
+      "resource": "animagine-xl-4.0-opt.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "job_id": "63743ba9-6baf-4bc0-abc1-56ad969286e1",
+          "image_id": 2376,
+          "image_path": "2026-07-11/benchmark_mio_animagine_xl4_standing_retry2_00001_63743ba9_0.png",
+          "seed": 1879335379,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "status": "completed",
+          "legacy_review_history": {
+            "status": "rejected",
+            "job_id": "fddcd1f2-ba29-43c2-b220-6caa5103c4fc",
+            "resource": "animagine-xl-4.0-opt.safetensors",
+            "seed": 424182069,
+            "steps": 25,
+            "cfg": 5.0,
+            "sampler": "euler_ancestral",
+            "scheduler": "normal",
+            "denoise": 0.52,
+            "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+            "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+            "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+            "attempt": 1,
+            "image_id": 2374,
+            "image_path": "2026-07-11/benchmark_mio_animagine_xl4_standing_00001_fddcd1f2_0.png",
+            "review": {
+              "accepted": false,
+              "reasons": [
+                "hair identity drift: prominent bright cyan/teal front streaks instead of only a subtle navy sheen",
+                "hair accessory is a white flower-shaped clip rather than exactly one silver star hairpin",
+                "cardigan is visibly oversized/loose rather than fitted",
+                "cream high-neck blouse has an invented long fringe/necklace-like chest detail not in the identity contract"
+              ],
+              "passed": [
+                "one adult-presenting anime woman on a plain white background",
+                "long straight dark hair and gray-blue/cyan eyes",
+                "dark navy cardigan, long charcoal skirt, opaque black tights, and brown loafers",
+                "full body and both feet are visible",
+                "hands and feet are anatomically acceptable"
+              ]
+            },
+            "retry": {
+              "attempt": 2,
+              "job_id": "63743ba9-6baf-4bc0-abc1-56ad969286e1",
+              "status": "rejected",
+              "seed": 1879335379,
+              "steps": 25,
+              "cfg": 5.0,
+              "sampler": "euler_ancestral",
+              "scheduler": "normal",
+              "denoise": 0.45,
+              "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+              "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+              "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+              "prompt_repair": "strengthened pure-black hair/no-colored-streak constraint, exact metallic silver five-point star hairpin, fitted cardigan and plain blouse; lowered denoise from 0.52 to 0.45",
+              "image_id": 2376,
+              "image_path": "2026-07-11/benchmark_mio_animagine_xl4_standing_retry2_00001_63743ba9_0.png",
+              "review": {
+                "accepted": false,
+                "reasons": [
+                  "required silver five-point star hairpin is absent",
+                  "cardigan remains oversized and loose rather than fitted",
+                  "cream high-neck blouse has a prominent invented ribbed/fringe bib detail rather than a plain front",
+                  "hair contains broad gray front sections rather than uniform black hair with only subtle navy sheen"
+                ],
+                "passed": [
+                  "one adult-presenting anime woman on plain white background",
+                  "gray-blue eyes and long straight predominantly black hair",
+                  "dark navy cardigan, long charcoal skirt, opaque black tights, and brown loafers",
+                  "standing front view with full body and both feet visible",
+                  "hands, legs, feet, and shoes are anatomically acceptable"
+                ]
+              }
+            }
+          }
+        },
+        "seated_reading": {
+          "seed": 1552823211,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "35f19c28-0595-417a-a62c-950304a85bb4",
+          "status": "completed",
+          "image_id": 2378,
+          "image_path": "2026-07-11/benchmark_mio_animagine_xl4_seated_reading_00001_35f19c28_0.png",
+          "artifacts": [
+            {
+              "id": 1777,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_animagine_xl4_seated_reading_00001_35f19c28_0.png",
+              "file_size": 932580,
+              "job_id": "35f19c28-0595-417a-a62c-950304a85bb4",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ]
+        },
+        "telescope": {
+          "seed": 591391830,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "6b939e55-07aa-4f2c-8934-7c51bc1a62fd",
+          "status": "completed",
+          "image_id": 2380,
+          "image_path": "2026-07-11/benchmark_mio_animagine_xl4_telescope_00001_6b939e55_0.png",
+          "artifacts": [
+            {
+              "id": 1779,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_animagine_xl4_telescope_00001_6b939e55_0.png",
+              "file_size": 897819,
+              "job_id": "6b939e55-07aa-4f2c-8934-7c51bc1a62fd",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "illustrious-xl-v2-stable",
+      "label": "Illustrious XL v2.0 STABLE",
+      "family": "sdxl",
+      "resource": "Illustrious-XL-v2.0.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 205047605,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "a95034e4-138d-4679-b6fc-eecd8acedec3",
+          "status": "completed",
+          "image_id": 2382,
+          "image_path": "2026-07-11/benchmark_mio_illustrious_xl_v2_stable_standing_00001_a95034e4_0.png",
+          "artifacts": [
+            {
+              "id": 1781,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_illustrious_xl_v2_stable_standing_00001_a95034e4_0.png",
+              "file_size": 524105,
+              "job_id": "a95034e4-138d-4679-b6fc-eecd8acedec3",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ]
+        },
+        "seated_reading": {
+          "seed": 99213063,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "dfccf8dd-e30f-4e33-8f8c-472be1fdf7a2",
+          "status": "completed",
+          "image_id": 2385,
+          "image_path": "2026-07-11/benchmark_mio_illustrious_xl_v2_stable_seated_reading_00001_dfccf8dd_0.png",
+          "artifacts": [
+            {
+              "id": 1784,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_illustrious_xl_v2_stable_seated_reading_00001_dfccf8dd_0.png",
+              "file_size": 972909,
+              "job_id": "dfccf8dd-e30f-4e33-8f8c-472be1fdf7a2",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ]
+        },
+        "telescope": {
+          "seed": 1392577445,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "836fc978-98ef-4141-90d7-8196d7269ede",
+          "status": "completed",
+          "image_id": 2386,
+          "image_path": "2026-07-11/benchmark_mio_animagine_xl4_standing_00002_836fc978_0.png",
+          "artifacts": [
+            {
+              "id": 1785,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_animagine_xl4_standing_00002_836fc978_0.png",
+              "file_size": 864244,
+              "job_id": "836fc978-98ef-4141-90d7-8196d7269ede",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wai-illustrious-v17",
+      "label": "WAI Illustrious SDXL v17",
+      "family": "sdxl",
+      "resource": "waiIllustriousSDXL_v170.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 1262362467,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "status": "completed",
+          "job_id": "caea0956-0f25-4419-af0a-2df20c506786",
+          "image_id": 2388,
+          "image_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_standing_00001_caea0956_0.png",
+          "artifacts": [
+            {
+              "id": 1787,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_standing_00001_caea0956_0.png",
+              "file_size": 305681,
+              "job_id": "caea0956-0f25-4419-af0a-2df20c506786",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-11T23:47:38+08:00"
+        },
+        "seated_reading": {
+          "seed": 2073989094,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "b21ad63f-74a0-4d40-81d1-d55ae85b2e56",
+          "status": "completed",
+          "submitted_at": "2026-07-11T23:48:29+08:00",
+          "image_id": 2390,
+          "image_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_seated_reading_00001_b21ad63f_0.png",
+          "artifacts": [
+            {
+              "id": 1789,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_seated_reading_00001_b21ad63f_0.png",
+              "file_size": 938150,
+              "job_id": "b21ad63f-74a0-4d40-81d1-d55ae85b2e56",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T00:05:05+08:00"
+        },
+        "telescope": {
+          "seed": 941239786,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "550ec028-a1eb-4abe-b14e-a890f6bbe4af",
+          "status": "completed",
+          "submitted_at": "2026-07-12T00:05:05+08:00",
+          "image_id": 2392,
+          "image_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_telescope_00001_550ec028_0.png",
+          "artifacts": [
+            {
+              "id": 1791,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_wai_illustrious_v17_telescope_00001_550ec028_0.png",
+              "file_size": 1007508,
+              "job_id": "550ec028-a1eb-4abe-b14e-a890f6bbe4af",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T00:16:11+08:00"
+        }
+      }
+    },
+    {
+      "id": "hassaku-xl-v34",
+      "label": "Hassaku XL Illustrious v3.4",
+      "family": "sdxl",
+      "resource": "hassakuXLIllustrious_v34.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 180591342,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "a53a6807-f428-477a-acd4-3824c674408d",
+          "status": "completed",
+          "submitted_at": "2026-07-12T00:16:11+08:00",
+          "image_id": 2394,
+          "image_path": "2026-07-11/benchmark_mio_hassaku_xl_v34_standing_00001_a53a6807_0.png",
+          "artifacts": [
+            {
+              "id": 1793,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_hassaku_xl_v34_standing_00001_a53a6807_0.png",
+              "file_size": 625663,
+              "job_id": "a53a6807-f428-477a-acd4-3824c674408d",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T00:33:13+08:00"
+        },
+        "seated_reading": {
+          "seed": 166943385,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "69e7f21d-e23d-4205-ad97-12e8ea0bed3d",
+          "status": "technical_failed",
+          "submitted_at": "2026-07-12T00:33:14+08:00",
+          "technical_error": {
+            "code": "generation_failed",
+            "message": "Prompt outputs failed validation: LoadImage invalid image file 2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+            "node_id": "2",
+            "class_type": "LoadImage",
+            "source": "MCP get_generation_status"
+          },
+          "completed_at": "2026-07-12T01:38:43+08:00"
+        },
+        "telescope": {
+          "seed": 1639101169,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "5274228e-ebab-40c0-8a88-ffaa583753e1",
+          "status": "completed",
+          "submitted_at": "2026-07-12T01:38:43+08:00",
+          "image_id": 2400,
+          "image_path": "2026-07-11/benchmark_mio_hassaku_xl_v34_telescope_00001_5274228e_0.png",
+          "artifacts": [
+            {
+              "id": 1799,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_hassaku_xl_v34_telescope_00001_5274228e_0.png",
+              "file_size": 923112,
+              "job_id": "5274228e-ebab-40c0-8a88-ffaa583753e1",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T01:55:04+08:00"
+        }
+      }
+    },
+    {
+      "id": "noobai-xl-v11",
+      "label": "NoobAI XL 1.1",
+      "family": "sdxl",
+      "resource": "NoobAI-XL-v1.1.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 1166449528,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "staged_reference": "model_benchmark_20260711/noobai-xl-v11/standing.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "status": "technical_failed",
+          "technical_error": {
+            "code": "mcp_tool_argument_validation_failed",
+            "message": "MCP custom workflow call rejected before backend submission: workflow was passed as object instead of required JSON string and sampler argument name did not match live schema",
+            "source": "MCP stdio call_tool"
+          },
+          "completed_at": "2026-07-12T01:55:23+08:00"
+        },
+        "seated_reading": {
+          "seed": 977379068,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "staged_reference": "model_benchmark_20260711/noobai-xl-v11/seated_reading.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "status": "technical_failed",
+          "technical_error": {
+            "code": "mcp_submission_failed",
+            "message": {
+              "code": "HTTPStatusError",
+              "message": "Client error '404 Not Found' for url 'http://127.0.0.1:8001/api/api/generate/custom'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+              "details": {
+                "where": "backend"
+              }
+            },
+            "source": "MCP stdio call_tool"
+          },
+          "completed_at": "2026-07-12T02:12:25+08:00"
+        },
+        "telescope": {
+          "seed": 529040812,
+          "steps": 25,
+          "cfg": 5.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "SDXL native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "job_id": "5c171370-77e4-4d99-ba55-403accb06d99",
+          "status": "completed",
+          "submitted_at": "2026-07-12T02:29:09+08:00",
+          "image_id": 2406,
+          "image_path": "2026-07-11/benchmark_mio_noobai_xl_v11_telescope_00001_5c171370_0.png",
+          "artifacts": [
+            {
+              "id": 1805,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_noobai_xl_v11_telescope_00001_5c171370_0.png",
+              "file_size": 923858,
+              "job_id": "5c171370-77e4-4d99-ba55-403accb06d99",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T02:46:16+08:00"
+        }
+      }
+    },
+    {
+      "id": "flux2-klein-4b",
+      "label": "FLUX.2 Klein 4B Distilled",
+      "family": "flux2",
+      "resource": "flux-2-klein-4b.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 1551068820,
+          "steps": 8,
+          "cfg": 3.5,
+          "sampler": "euler",
+          "scheduler": "Flux2Scheduler",
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "staged_reference": "model_benchmark_20260711/flux2-klein-4b/standing.png",
+          "workflow_type": "FLUX.2 Klein native image-reference via ReferenceLatent and MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "diffusion_model": "flux-2-klein-4b.safetensors",
+          "text_encoder": "gemma_3_12B_it_fp4_mixed.safetensors",
+          "vae": "flux2-vae.safetensors",
+          "width": 768,
+          "height": 1152,
+          "job_id": "12f9fb55-2957-4e90-a491-8a9e4e67458f",
+          "status": "technical_failed",
+          "submitted_at": "2026-07-12T02:47:55+08:00",
+          "technical_error": {
+            "code": "generation_failed",
+            "message": "list indices must be integers or slices, not str\n",
+            "node_errors": [
+              {
+                "node_id": "4",
+                "class_type": "CLIPTextEncodeFlux",
+                "reason": "list indices must be integers or slices, not str\n"
+              }
+            ],
+            "source": "MCP stdio get_generation_status"
+          },
+          "completed_at": "2026-07-12T03:04:16+08:00"
+        },
+        "seated_reading": {
+          "status": "technical_failed",
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "FLUX.2 Klein native image-reference via ReferenceLatent and MCP custom workflow",
+          "submitted_via": "not submitted; MCP live resource/node-schema preflight",
+          "technical_error": {
+            "code": "no_executable_family_workflow",
+            "message": "No validated FLUX.2 Klein image-reference workflow is available. The prior family workflow failed at CLIPTextEncodeFlux because its live schema requires separate clip_l and t5xxl STRING inputs, while the installed Gemma FLUX.2 encoder path is not compatible with that node shape. Per one-pass policy, this slot is terminal and was not rerouted to backend HTTP or another model family.",
+            "source": "MCP stdio list_available_resources + get_node_schema(CLIPTextEncodeFlux, ReferenceLatent, CLIPLoader, UNETLoader)",
+            "prior_family_job": "12f9fb55-2957-4e90-a491-8a9e4e67458f"
+          },
+          "completed_at": "2026-07-12T03:21:00+08:00"
+        },
+        "telescope": {
+          "status": "technical_failed",
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "FLUX.2 Klein native image-reference via ReferenceLatent and MCP custom workflow",
+          "submitted_via": "not submitted; inherited validated MCP live family preflight",
+          "technical_error": {
+            "code": "no_executable_family_workflow",
+            "message": "No validated FLUX.2 Klein image-reference workflow is available. The family standing workflow failed at CLIPTextEncodeFlux because its live schema requires separate clip_l and t5xxl STRING inputs, while the installed Gemma FLUX.2 encoder path is not compatible with that node shape. Per one-pass policy, this slot is terminal and was not rerouted to backend HTTP or another model family.",
+            "source": "prior MCP stdio list_available_resources + get_node_schema(CLIPTextEncodeFlux, ReferenceLatent, CLIPLoader, UNETLoader)",
+            "prior_family_job": "12f9fb55-2957-4e90-a491-8a9e4e67458f"
+          },
+          "completed_at": "2026-07-12T03:36:43+08:00"
+        }
+      }
+    },
+    {
+      "id": "qwen-image-edit-2511",
+      "label": "Qwen Image Edit 2511",
+      "family": "qwen_edit",
+      "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 2103976489,
+          "steps": 4,
+          "cfg": 1.0,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "staged_reference": null,
+          "workflow_type": "Qwen Image Edit 2511 single-reference identity/pose edit via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+          "text_encoder": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "job_id": "1626a907-f6ad-426f-8ec6-abbd584d14d3",
+          "status": "completed",
+          "submitted_at": "2026-07-12T03:53:32+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "1626a907-f6ad-426f-8ec6-abbd584d14d3",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2408,
+          "image_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_standing_00001_1626a907_0.png",
+          "artifacts": [
+            {
+              "id": 1807,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_standing_00001_1626a907_0.png",
+              "file_size": 689527,
+              "job_id": "1626a907-f6ad-426f-8ec6-abbd584d14d3",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T04:10:45+08:00"
+        },
+        "seated_reading": {
+          "seed": 1826476960,
+          "steps": 4,
+          "cfg": 1.0,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "staged_reference": "model_benchmark_20260711/qwen-image-edit-2511/seated_reading.png",
+          "workflow_type": "Qwen Image Edit 2511 single-reference seated-reading edit via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+          "text_encoder": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "status": "completed",
+          "submitted_at": "2026-07-12T04:10:45+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "47ca22ca-0b26-4009-b924-eb8466d73ad4",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "job_id": "47ca22ca-0b26-4009-b924-eb8466d73ad4",
+          "image_id": 2411,
+          "image_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_standing_00002_47ca22ca_0.png",
+          "artifacts": [
+            {
+              "id": 1810,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_standing_00002_47ca22ca_0.png",
+              "file_size": 888647,
+              "job_id": "47ca22ca-0b26-4009-b924-eb8466d73ad4",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T04:27:12+08:00"
+        },
+        "telescope": {
+          "seed": 1843806719,
+          "steps": 4,
+          "cfg": 1.0,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "staged_reference": "model_benchmark_20260711/qwen-image-edit-2511/telescope.png",
+          "workflow_type": "Qwen Image Edit 2511 single-reference telescope edit via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "qwen-image-edit-2511-Q5_K_M.gguf",
+          "text_encoder": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "status": "completed",
+          "submitted_at": "2026-07-12T04:27:44+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "5ee3b563-d26f-4802-a391-fd4ab1503522",
+            "status": "queued"
+          },
+          "job_id": "5ee3b563-d26f-4802-a391-fd4ab1503522",
+          "image_id": 2412,
+          "image_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_telescope_00001_5ee3b563_0.png",
+          "artifacts": [
+            {
+              "id": 1811,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_qwen_image_edit_2511_telescope_00001_5ee3b563_0.png",
+              "file_size": 935161,
+              "job_id": "5ee3b563-d26f-4802-a391-fd4ab1503522",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T04:44:11+08:00"
+        }
+      }
+    },
+    {
+      "id": "z-image-turbo",
+      "label": "Z-Image Turbo BF16",
+      "family": "z_image",
+      "resource": "z_image_turbo_bf16.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "status": "technical_failed",
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "workflow_type": "Z-Image Turbo image-reference/img2img workflow",
+          "submitted_via": "not submitted; MCP live resource/template preflight",
+          "technical_error": {
+            "code": "no_executable_family_workflow",
+            "message": "Z-Image Turbo diffusion model, qwen_3_4b text encoder, and ae VAE are installed, but the live MCP template catalog has no validated z_image image-reference/img2img workflow, and no persisted successful z_image workflow_json exists to reuse. Per one-pass policy, the slot is terminal and was not rerouted through backend HTTP or another model family.",
+            "source": "MCP stdio list_available_resources + list_template_capabilities; generated_images workflow_json lookup"
+          },
+          "completed_at": "2026-07-12T04:44:41+08:00"
+        },
+        "seated_reading": {
+          "status": "technical_failed",
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "workflow_type": "Z-Image Turbo image-reference/img2img workflow",
+          "submitted_via": "not submitted; inherited validated MCP live family preflight",
+          "technical_error": {
+            "code": "no_executable_family_workflow",
+            "message": "Z-Image Turbo diffusion model, qwen_3_4b text encoder, and ae VAE are installed, but the live MCP template catalog has no validated z_image image-reference/img2img workflow, and no persisted successful z_image workflow_json exists to reuse. Per one-pass policy, this slot is terminal and was not rerouted through backend HTTP or another model family.",
+            "source": "prior MCP stdio list_available_resources + list_template_capabilities; generated_images workflow_json lookup"
+          },
+          "completed_at": "2026-07-12T05:00:57+08:00"
+        },
+        "telescope": {
+          "status": "technical_failed",
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "workflow_type": "Z-Image Turbo image-reference/img2img workflow",
+          "submitted_via": "not submitted; inherited validated MCP live family preflight",
+          "technical_error": {
+            "code": "no_executable_family_workflow",
+            "message": "Z-Image Turbo diffusion model, qwen_3_4b text encoder, and ae VAE are installed, but the live MCP template catalog has no validated z_image image-reference/img2img workflow, and no persisted successful z_image workflow_json exists to reuse. Per one-pass policy, this slot is terminal and was not rerouted through backend HTTP or another model family.",
+            "source": "prior MCP stdio list_available_resources + list_template_capabilities; generated_images workflow_json lookup"
+          },
+          "completed_at": "2026-07-12T05:16:55+08:00"
+        }
+      }
+    },
+    {
+      "id": "sd35-medium",
+      "label": "Stable Diffusion 3.5 Medium FP8 fallback",
+      "family": "sd35",
+      "resource": "sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+      "status": "completed",
+      "note": "Apple MPS FP8 compatibility must be tested; failure is a valid benchmark result",
+      "generations": {
+        "standing": {
+          "seed": 2134243359,
+          "steps": 20,
+          "cfg": 4.5,
+          "sampler": "euler",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "staged_reference": "model_benchmark_20260711/sd35-medium/standing.png",
+          "workflow_type": "SD3.5 Medium native checkpoint img2img via MCP custom workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+          "job_id": "045ec4ce-9ed3-4419-b2a4-f804f913cf4e",
+          "status": "completed",
+          "submitted_at": "2026-07-12T05:34:06+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "045ec4ce-9ed3-4419-b2a4-f804f913cf4e",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2414,
+          "image_path": "2026-07-11/benchmark_mio_sd35_medium_standing_00001_045ec4ce_0.png",
+          "artifacts": [
+            {
+              "id": 1813,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_sd35_medium_standing_00001_045ec4ce_0.png",
+              "file_size": 450361,
+              "job_id": "045ec4ce-9ed3-4419-b2a4-f804f913cf4e",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T06:39:44+08:00"
+        },
+        "seated_reading": {
+          "seed": 567512136,
+          "steps": 20,
+          "cfg": 4.5,
+          "sampler": "euler",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "staged_reference": "model_benchmark_20260711/sd35-medium/seated_reading.png",
+          "workflow_type": "SD3.5 Medium native checkpoint img2img via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+          "job_id": "d3f694d4-6934-4b06-9955-f6eea90d83cd",
+          "status": "completed",
+          "submitted_at": "2026-07-12T06:40:03+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "d3f694d4-6934-4b06-9955-f6eea90d83cd",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2416,
+          "image_path": "2026-07-11/benchmark_mio_sd35_medium_seated_reading_00001_d3f694d4_0.png",
+          "artifacts": [
+            {
+              "id": 1815,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_sd35_medium_seated_reading_00001_d3f694d4_0.png",
+              "file_size": 923412,
+              "job_id": "d3f694d4-6934-4b06-9955-f6eea90d83cd",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T06:56:26+08:00"
+        },
+        "telescope": {
+          "seed": 1847656780,
+          "steps": 20,
+          "cfg": 4.5,
+          "sampler": "euler",
+          "scheduler": "normal",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "staged_reference": "model_benchmark_20260711/sd35-medium/telescope.png",
+          "workflow_type": "SD3.5 Medium native checkpoint img2img via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+          "job_id": "09e883bb-3da4-4bf7-8d3a-b62dbfcd1792",
+          "status": "completed",
+          "submitted_at": "2026-07-12T06:57:12+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "09e883bb-3da4-4bf7-8d3a-b62dbfcd1792",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2418,
+          "image_path": "2026-07-11/benchmark_mio_sd35_medium_telescope_00001_09e883bb_0.png",
+          "artifacts": [
+            {
+              "id": 1817,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_sd35_medium_telescope_00001_09e883bb_0.png",
+              "file_size": 1082500,
+              "job_id": "09e883bb-3da4-4bf7-8d3a-b62dbfcd1792",
+              "source_node_id": "8",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T07:13:25+08:00"
+        }
+      }
+    },
+    {
+      "id": "anima-niji",
+      "label": "Anima Base + full Niji preset",
+      "family": "anima",
+      "resource": "anima_baseV10.safetensors",
+      "status": "completed",
+      "generations": {
+        "standing": {
+          "seed": 651257565,
+          "steps": 28,
+          "cfg": 5.0,
+          "sampler": "er_sde",
+          "scheduler": "simple",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_canonical_front_single_hairpin_00001_d2e6f862_0.png",
+          "staged_reference": "model_benchmark_20260711/anima-niji/standing.png",
+          "workflow_type": "Anima Base full Niji multi-LoRA native img2img via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "anima_baseV10.safetensors",
+          "text_encoder": "anima_baseV10_txt.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "loras": [
+            {
+              "name": "anima-highres-aesthetic-boost.safetensors",
+              "strength_model": 0.7
+            },
+            {
+              "name": "Niji Reol v1 EP11.safetensors",
+              "strength_model": 0.8
+            },
+            {
+              "name": "AnimaNSS4RE.safetensors",
+              "strength_model": 0.65
+            }
+          ],
+          "job_id": "e692306c-2b94-4b75-a372-b4f536dd921f",
+          "status": "completed",
+          "submitted_at": "2026-07-12T07:14:25+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "e692306c-2b94-4b75-a372-b4f536dd921f",
+            "status": "queued"
+          },
+          "image_id": 2420,
+          "image_path": "2026-07-11/benchmark_mio_anima_niji_standing_00001_e692306c_0.png",
+          "artifacts": [
+            {
+              "id": 1819,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_anima_niji_standing_00001_e692306c_0.png",
+              "file_size": 501144,
+              "job_id": "e692306c-2b94-4b75-a372-b4f536dd921f",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T07:31:18+08:00"
+        },
+        "seated_reading": {
+          "seed": 1417576834,
+          "steps": 28,
+          "cfg": 5.0,
+          "sampler": "er_sde",
+          "scheduler": "simple",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_seated_reading_identity_transfer_retry2_00001_0a9944a0_0.png",
+          "staged_reference": "model_benchmark_20260711/anima-niji/seated_reading.png",
+          "workflow_type": "Anima Base full Niji multi-LoRA native img2img via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "anima_baseV10.safetensors",
+          "text_encoder": "anima_baseV10_txt.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "loras": [
+            {
+              "name": "anima-highres-aesthetic-boost.safetensors",
+              "strength_model": 0.7
+            },
+            {
+              "name": "Niji Reol v1 EP11.safetensors",
+              "strength_model": 0.8
+            },
+            {
+              "name": "AnimaNSS4RE.safetensors",
+              "strength_model": 0.65
+            }
+          ],
+          "job_id": "721f7609-0aa6-41ad-9054-d4eaba1419e1",
+          "status": "completed",
+          "submitted_at": "2026-07-12T07:31:18+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "721f7609-0aa6-41ad-9054-d4eaba1419e1",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2422,
+          "image_path": "2026-07-11/benchmark_mio_anima_niji_seated_reading_00001_721f7609_0.png",
+          "artifacts": [
+            {
+              "id": 1821,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_anima_niji_seated_reading_00001_721f7609_0.png",
+              "file_size": 896432,
+              "job_id": "721f7609-0aa6-41ad-9054-d4eaba1419e1",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T07:48:20+08:00"
+        },
+        "telescope": {
+          "seed": 1637446311,
+          "steps": 28,
+          "cfg": 5.0,
+          "sampler": "er_sde",
+          "scheduler": "simple",
+          "denoise": 0.45,
+          "reference": "2026-07-11/mio_common_pose_telescope_identity_transfer_00001_a4bcce11_0.png",
+          "staged_reference": "model_benchmark_20260711/anima-niji/telescope.png",
+          "workflow_type": "Anima Base full Niji multi-LoRA native img2img via persisted successful MCP workflow",
+          "submitted_via": "MCP stdio ai-drawing generate_image_custom_workflow",
+          "resource": "anima_baseV10.safetensors",
+          "text_encoder": "anima_baseV10_txt.safetensors",
+          "vae": "qwen_image_vae.safetensors",
+          "loras": [
+            {
+              "name": "anima-highres-aesthetic-boost.safetensors",
+              "strength_model": 0.7
+            },
+            {
+              "name": "Niji Reol v1 EP11.safetensors",
+              "strength_model": 0.8
+            },
+            {
+              "name": "AnimaNSS4RE.safetensors",
+              "strength_model": 0.65
+            }
+          ],
+          "job_id": "a499cde5-196b-4e84-9683-7b042ca72917",
+          "status": "completed",
+          "submitted_at": "2026-07-12T07:48:20+08:00",
+          "effective_submission": {
+            "ok": true,
+            "tool": "generate_image_custom_workflow",
+            "job_id": "a499cde5-196b-4e84-9683-7b042ca72917",
+            "status": "queued",
+            "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit; if it completes and this is a reusable new shape, consider save_workflow_template(job_id, ...) so future needs match it"
+          },
+          "image_id": 2424,
+          "image_path": "2026-07-11/benchmark_mio_anima_niji_telescope_00001_a499cde5_0.png",
+          "artifacts": [
+            {
+              "id": 1823,
+              "artifact_type": "image",
+              "mime_type": "image/png",
+              "gallery_path": "2026-07-11/benchmark_mio_anima_niji_telescope_00001_a499cde5_0.png",
+              "file_size": 940743,
+              "job_id": "a499cde5-196b-4e84-9683-7b042ca72917",
+              "source_node_id": "9",
+              "source_node_type": "SaveImage"
+            }
+          ],
+          "completed_at": "2026-07-12T08:05:00+08:00"
+        }
+      }
+    }
+  ],
+  "rules": {
+    "images_per_model": 3,
+    "generation_attempts_per_slot": 1,
+    "retry_only_on_technical_submission_failure": false,
+    "review_required": false,
+    "visual_analysis_forbidden": true,
+    "seed_policy": "random, recorded",
+    "output_root": "/Users/tf00185088/Desktop/ai-drawing/outputs/review/mio-10-model-benchmark-20260711",
+    "finished_root": "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711",
+    "complete_marker": "/Users/tf00185088/Desktop/ai-drawing/model_benchmarks/20260711/benchmark_complete.json"
+  },
+  "updated_at": "2026-07-12T08:05:00+08:00",
+  "mode": "one_pass_collect_no_visual_review",
+  "contact_sheets": [
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/animagine-xl-4-opt_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/illustrious-xl-v2-stable_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/wai-illustrious-v17_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/hassaku-xl-v34_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/noobai-xl-v11_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/flux2-klein-4b_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/qwen-image-edit-2511_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/z-image-turbo_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/sd35-medium_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/anima-niji_contact_sheet.png"
+  ],
+  "summary_path": "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/benchmark_summary.json",
+  "successful_count": 21,
+  "technical_failed_count": 9,
+  "completed_at": "2026-07-12T08:05:00+08:00"
+}

@@ -1,0 +1,16 @@
+{
+  "campaign": "sd35-medium-fallback-20260711",
+  "updated_at": "2026-07-11T18:03:14+0800",
+  "resources": {
+    "checkpoints/sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors": {
+      "model": "SD3.5 Medium incl CLIPs T5 FP8-scaled fallback",
+      "url": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+      "status": "verified",
+      "bytes": 11638004202,
+      "expected_size": 11638004202,
+      "expected_sha256": "1778e8857679042c176c21cd8a0da7b29bded68be018557477f84419df79bacf",
+      "size": 11638004202,
+      "sha256": "1778e8857679042c176c21cd8a0da7b29bded68be018557477f84419df79bacf"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "campaign_id": "mio-10-model-3-pose-benchmark-20260711",
+  "status": "completed",
+  "completed_at": "2026-07-12T08:05:00+08:00",
+  "contact_sheets": [
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/animagine-xl-4-opt_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/illustrious-xl-v2-stable_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/wai-illustrious-v17_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/hassaku-xl-v34_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/noobai-xl-v11_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/flux2-klein-4b_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/qwen-image-edit-2511_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/z-image-turbo_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/sd35-medium_contact_sheet.png",
+    "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/contact_sheets/anima-niji_contact_sheet.png"
+  ],
+  "summary_path": "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/benchmark_summary.json",
+  "summary_markdown_path": "/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711/benchmark_summary.md",
+  "successful_count": 21,
+  "technical_failed_count": 9
+}

@@ -1,0 +1,51 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {"ckpt_name": "animagine-xl-4.0-opt.safetensors"}
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "BENCHMARK_REFERENCE.png"}
+  },
+  "3": {
+    "class_type": "VAEEncode",
+    "inputs": {"pixels": ["2", 0], "vae": ["1", 2]}
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "masterpiece, high score, great score, absurdres, newest, 1girl, solo, Kirishima Mio, 20-year-old adult Japanese university student, mature face, gray-blue eyes, long straight black hair with subtle navy sheen, exactly one silver star hairpin on viewer-right side, cream high-neck blouse, fitted dark navy cardigan, long charcoal skirt, opaque black tights, brown loafers, standing straight, front view, full body, both feet visible, plain white background, pure hand-drawn Japanese 2D anime cel style, clean lineart, refined cel shading"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["1", 1],
+      "text": "lowres, worst quality, low quality, bad anatomy, bad hands, extra fingers, missing fingers, malformed feet, wrong foot direction, child, teen, schoolgirl, school uniform, young-looking, duplicate hairpin, multiple hairpins, extra person, cropped, cropped feet, changed outfit, photorealistic, 3d, cgi, glossy skin"
+    }
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["1", 0],
+      "positive": ["4", 0],
+      "negative": ["5", 0],
+      "latent_image": ["3", 0],
+      "seed": 0,
+      "steps": 25,
+      "cfg": 5.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 0.52
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {"samples": ["6", 0], "vae": ["1", 2]}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "benchmark_mio_animagine_xl4_standing", "images": ["7", 0]}
+  }
+}
