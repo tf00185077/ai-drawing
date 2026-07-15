@@ -603,6 +603,42 @@ def _resources_from_api_meta(meta: Mapping[str, Any]) -> list[dict[str, Any]]:
         if weight is not None and resource["kind"] == ResourceKind.LORA.value:
             resource["strength_model"] = weight
         resources.append(resource)
+    seen_version_ids = {
+        resource["civitai_model_version_id"]
+        for resource in resources
+        if isinstance(resource.get("civitai_model_version_id"), int)
+    }
+    # On-site generator images publish identity-only entries under
+    # civitaiResources (type + modelVersionId, no name); acquisition enriches
+    # them from the model-versions API, and deleted versions keep a synthetic
+    # name so the version identity still reaches matching and download.
+    for item in meta.get("civitaiResources") or []:
+        if not isinstance(item, Mapping):
+            continue
+        version_id = _as_int(item.get("modelVersionId"))
+        if version_id is None or version_id in seen_version_ids:
+            continue
+        seen_version_ids.add(version_id)
+        resource = {
+            "kind": _resource_kind(item.get("type") or item.get("kind")),
+            "name": _first_text(item, "name") or f"civitai-version-{version_id}",
+            "civitai_model_version_id": version_id,
+        }
+        for source_key, target_key in (("modelId", "civitai_model_id"), ("fileId", "civitai_file_id")):
+            parsed = _as_int(item.get(source_key))
+            if parsed is not None:
+                resource[target_key] = parsed
+        sha = _as_sha256(
+            item.get("hash")
+            or _first_mapping(item.get("hashes")).get("SHA256")
+            or _first_mapping(item.get("hashes")).get("sha256")
+        )
+        if sha is not None:
+            resource["sha256"] = sha
+        weight = _as_float(item.get("weight"))
+        if weight is not None and 0.0 <= weight <= 2.0 and resource["kind"] == ResourceKind.LORA.value:
+            resource["strength_model"] = weight
+        resources.append(resource)
     return resources
 
 
@@ -663,6 +699,56 @@ def _enrich_single_checkpoint_identity(
     file_id = _as_int(matched.get("id"))
     if file_id is not None:
         checkpoints[0]["fileId"] = file_id
+
+
+def _enrich_civitai_resource_identities(
+    image_payload: dict[str, Any],
+    *,
+    transport: CivitaiTransport,
+    authorization: str | None,
+    provenance: dict[str, Any],
+    backoff: Callable[[int, CivitaiTransportResponse], float | int | None] | None,
+    sleep: Callable[[float], None],
+    secrets: tuple[str, ...],
+) -> None:
+    """Resolve identity-only civitaiResources entries through the model-versions API."""
+    meta, _ = _api_generation_meta(image_payload)
+    for entry in meta.get("civitaiResources") or []:
+        if not isinstance(entry, dict):
+            continue
+        version_id = _as_int(entry.get("modelVersionId"))
+        if version_id is None or _first_text(entry, "name"):
+            continue
+        try:
+            payload = _request_json(
+                f"https://civitai.com/api/v1/model-versions/{version_id}",
+                params={}, transport=transport, authorization=authorization, provenance=provenance,
+                backoff=backoff, sleep=sleep, secrets=secrets,
+            )
+        except AcquisitionError:
+            # Deleted or restricted versions stay identity-only; matching and
+            # download still work through the version ID.
+            continue
+        if not isinstance(payload, Mapping):
+            continue
+        files = [item for item in (payload.get("files") or []) if isinstance(item, Mapping)]
+        primary = next((item for item in files if item.get("primary") is True), files[0] if files else None)
+        name = _first_text(primary or {}, "name") or _first_text(_first_mapping(payload.get("model")), "name")
+        if name:
+            entry["name"] = name
+        model_id = _as_int(payload.get("modelId"))
+        if model_id is not None and _as_int(entry.get("modelId")) is None:
+            entry["modelId"] = model_id
+        if primary is not None:
+            file_id = _as_int(primary.get("id"))
+            if file_id is not None:
+                entry["fileId"] = file_id
+            sha = _as_sha256(
+                _first_mapping(primary.get("hashes")).get("SHA256")
+                or _first_mapping(primary.get("hashes")).get("sha256")
+            )
+            if sha is not None:
+                entry["hash"] = sha
 
 
 def _api_payload_to_recipe_payload(image_payload: Mapping[str, Any], locator: CivitaiLocator) -> dict[str, Any]:
@@ -1164,6 +1250,15 @@ def acquire_civitai_recipe(
             )
             raise rating_error
     _enrich_single_checkpoint_identity(
+        image_payload,
+        transport=transport,
+        authorization=authorization,
+        provenance=provenance,
+        backoff=backoff,
+        sleep=sleep,
+        secrets=secrets,
+    )
+    _enrich_civitai_resource_identities(
         image_payload,
         transport=transport,
         authorization=authorization,

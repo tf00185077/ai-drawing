@@ -289,6 +289,123 @@ def test_single_image_model_version_identity_is_bound_to_sole_checkpoint() -> No
     assert result.recipe.resources[0].sha256 == "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f"
 
 
+def test_identity_only_civitai_resources_resolve_names_and_hashes_via_model_versions() -> None:
+    image = _json_fixture("image_123.json")
+    image["modelVersionIds"] = [2883731, 1835318]
+    image["meta"]["resources"] = []
+    image["meta"]["civitaiResources"] = [
+        {"type": "checkpoint", "weight": 1, "modelVersionId": 2883731},
+        {"type": "lora", "weight": 0.8, "modelVersionId": 1835318},
+    ]
+
+    transport = FakeTransport([
+        CivitaiTransportResponse(200, {"items": [image]}, {}),
+        CivitaiTransportResponse(200, {
+            "id": 2883731,
+            "modelId": 827184,
+            "model": {"name": "WAI-illustrious-SDXL", "type": "Checkpoint"},
+            "files": [{
+                "id": 111222,
+                "name": "waiIllustriousSDXL_v170.safetensors",
+                "primary": True,
+                "hashes": {"SHA256": "F116B0C78FF44146AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"},
+            }],
+        }, {}),
+        CivitaiTransportResponse(200, {
+            "id": 1835318,
+            "modelId": 555555,
+            "model": {"name": "Size Slider", "type": "LORA"},
+            "files": [{
+                "id": 333444,
+                "name": "size-slider-illustrious.safetensors",
+                "hashes": {"SHA256": "F780407226B00477BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"},
+            }],
+        }, {}),
+    ])
+    result = acquire_civitai_recipe("123", transport=transport)
+
+    assert result.recipe is not None
+    assert [(resource.kind, resource.name) for resource in result.recipe.resources] == [
+        (ResourceKind.CHECKPOINT, "waiIllustriousSDXL_v170.safetensors"),
+        (ResourceKind.LORA, "size-slider-illustrious.safetensors"),
+    ]
+    checkpoint, lora = result.recipe.resources
+    assert checkpoint.civitai_model_version_id == 2883731
+    assert checkpoint.civitai_model_id == 827184
+    assert checkpoint.civitai_file_id == 111222
+    assert checkpoint.sha256 == "f116b0c78ff44146aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    assert lora.civitai_model_version_id == 1835318
+    assert lora.strength_model == 0.8
+    assert [call["url"] for call in transport.calls[1:]] == [
+        "https://civitai.com/api/v1/model-versions/2883731",
+        "https://civitai.com/api/v1/model-versions/1835318",
+    ]
+
+
+def test_deleted_model_version_keeps_identity_only_civitai_resource() -> None:
+    image = _json_fixture("image_123.json")
+    image["modelVersionIds"] = [1088507]
+    image["meta"]["resources"] = []
+    image["meta"]["civitaiResources"] = [{"type": "checkpoint", "modelVersionId": 1088507}]
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([
+            CivitaiTransportResponse(200, {"items": [image]}, {}),
+            CivitaiTransportResponse(404, {"error": "Model not found"}, {}),
+        ]),
+    )
+
+    assert result.recipe is not None
+    assert len(result.recipe.resources) == 1
+    resource = result.recipe.resources[0]
+    assert resource.kind == ResourceKind.CHECKPOINT
+    assert resource.name == "civitai-version-1088507"
+    assert resource.civitai_model_version_id == 1088507
+
+
+def test_civitai_resources_deduplicate_against_named_meta_resources_by_version_id() -> None:
+    image = _json_fixture("image_123.json")
+    image["meta"]["resources"] = [image["meta"]["resources"][1]]  # blue-style lora, version 2002
+    image["meta"]["civitaiResources"] = [
+        {"type": "lora", "weight": 0.75, "modelVersionId": 2002},
+        {"type": "checkpoint", "weight": 1, "modelVersionId": 2883731},
+    ]
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([
+            CivitaiTransportResponse(200, {"items": [image]}, {}),
+            CivitaiTransportResponse(404, {"error": "Model not found"}, {}),
+        ]),
+    )
+
+    assert result.recipe is not None
+    assert [(resource.kind, resource.name) for resource in result.recipe.resources] == [
+        (ResourceKind.LORA, "blue-style.safetensors"),
+        (ResourceKind.CHECKPOINT, "civitai-version-2883731"),
+    ]
+
+
+def test_out_of_range_civitai_resource_weight_is_omitted_not_fatal() -> None:
+    image = _json_fixture("image_123.json")
+    image["meta"]["resources"] = []
+    image["meta"]["civitaiResources"] = [{"type": "lora", "weight": 5.9, "modelVersionId": 1835318}]
+
+    result = acquire_civitai_recipe(
+        "123",
+        transport=FakeTransport([
+            CivitaiTransportResponse(200, {"items": [image]}, {}),
+            CivitaiTransportResponse(404, {"error": "Model not found"}, {}),
+        ]),
+    )
+
+    assert result.recipe is not None
+    assert len(result.recipe.resources) == 1
+    assert result.recipe.resources[0].kind == ResourceKind.LORA
+    assert result.recipe.resources[0].strength_model is None
+
+
 def test_api_meta_maps_to_ordered_recipe_fields_without_losing_raw_payload() -> None:
     result = acquire_civitai_recipe(
         "123",

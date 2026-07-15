@@ -73,6 +73,25 @@
    說明——工具已自動抓齊分流，skill 保留的是拆件 workflow 接線與
    `clip input is invalid: None` 診斷知識。
 
+**2026-07-15 修正：站上生成圖的 checkpoint/LoRA 抓不到（civitaiResources 解析）**
+
+問題：Civitai 站上生成器產的圖（現在佔新圖絕大多數）在 `/api/v1/images` 的
+`meta.resources` 是空陣列，真正的資源清單放在 `meta.civitaiResources`
+（只有 `type`＋`modelVersionId`＋`weight`，沒有名稱與 hash）。acquisition 只解析
+`meta.resources`，導致網頁明明顯示 checkpoint／LoRA，agent 卻判定「來源沒有標註
+checkpoint」而改用本地預設模型。修正（`backend/app/services/civitai_acquisition.py`）：
+
+1. **解析 `civitaiResources`**：`_resources_from_api_meta` 新增第二段解析，以
+   `modelVersionId` 對既有 `resources` 去重；LoRA `weight` 超出 schema 範圍（0–2，
+   實際看過 5.9 的 slider LoRA）時略過強度、保留身分，不會讓整份 recipe 掛掉。
+2. **名稱/hash 補齊**：新增 `_enrich_civitai_resource_identities`，對缺名稱的項目
+   逐一呼叫 `/api/v1/model-versions/{id}` 補回檔名、完整 SHA256、modelId、fileId；
+   已刪除/受限的版本（404）容忍失敗，以合成名 `civitai-version-<id>` 保留身分——
+   帳本比對與自動下載走 version ID，不受影響。
+3. **驗證**：新增 4 個離線測試（識別解析／404 容錯／去重／超界 weight）；
+   backend `879 passed`、MCP `77 passed`；並以真實 API 實測 image 136790238，
+   checkpoint（WAI-illustrious v17）＋2 個 LoRA 全數帶檔名與 SHA256 解出。
+
 **下一步（實機驗證清單）**：
 - [ ] 啟動 backend + ComfyUI，用 MCP 實跑：`civitai_source_info(一張喜歡的圖)` →
       `civitai_generate_like(同圖, prompt="想要的主題")`，確認 4 張圖進 gallery。
