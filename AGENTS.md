@@ -78,7 +78,7 @@ ai-drawing/
 │   │                 # civitai_*(strict 管線), watcher, lora_trainer, wd_tagger
 │   └── schemas/      # generate, generation_recipe, lora_train
 ├── frontend/src/pages/  # Generate, Gallery, LoraDocs, LoraTrain, Dashboard
-├── mcp-server/mcp_server/tools/  # civitai, generate, gallery, lora_train, style_presets, comfyui（26 個意圖級工具）
+├── mcp-server/mcp_server/tools/  # civitai, generate, gallery, lora_train, style_presets, comfyui（27 個意圖級工具）
 ├── backend/workflows/   # workflow JSON 模板
 └── docs/
     ├── GOAL.md          # 目標與範圍
