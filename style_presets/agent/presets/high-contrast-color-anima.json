@@ -14,8 +14,7 @@
     "steps": 30,
     "cfg": 5.0,
     "sampler_name": "er_sde",
-    "scheduler": "simple",
-    "seed": 375618583377335
+    "scheduler": "simple"
   },
   "profiles": {
     "source-color-style-neutral": {

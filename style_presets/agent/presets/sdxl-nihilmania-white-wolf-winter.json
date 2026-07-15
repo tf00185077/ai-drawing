@@ -18,8 +18,7 @@
     "sampler_name": "dpmpp_2m",
     "scheduler": "karras",
     "width": 768,
-    "height": 1368,
-    "seed": 1288624888
+    "height": 1368
   },
   "profiles": {
     "portrait": {

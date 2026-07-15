@@ -13,7 +13,6 @@
   "default_params": {
     "cfg": 4.0,
     "sampler_name": "euler_ancestral",
-    "seed": 2374630006,
     "steps": 24
   },
   "profiles": {
