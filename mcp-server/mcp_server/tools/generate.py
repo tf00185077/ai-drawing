@@ -169,6 +169,229 @@ def generate_video_wan_keyframes(
 
 
 @mcp.tool()
+def generate_image_custom_workflow(
+    workflow: str,
+    prompt: str = "1girl, solo",
+    character: str | None = None,
+    style: str | None = None,
+    checkpoint: str | None = None,
+    lora: str | None = None,
+    negative_prompt: str | None = None,
+    seed: int | None = None,
+    steps: int | None = None,
+    cfg: float | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    image: str | None = None,
+    image_pose: str | None = None,
+    mask: str | None = None,
+    batch_size: int | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
+    lora_strength: float | None = None,
+    loras: list[dict] | None = None,
+    denoise: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+) -> str:
+    """
+    Trigger image generation using a custom ComfyUI workflow JSON string.
+    Start from a known-good workflow: the repo templates under
+    backend/workflows/*.json (e.g. default, default_lora, inpaint, anima) or a
+    previously successful job's recorded workflow. prompt/character/style and
+    the optional parameters below are applied onto the submitted graph.
+
+    This is the most flexible generation tool: since the workflow JSON is a full computation
+    graph, it can in principle cover any scenario — txt2img, img2img, ControlNet, inpaint,
+    diffusion-model families like Anima.
+
+    image: subject reference image for img2img, relative to gallery_dir (e.g. 2026-03-08/subject.png).
+    The backend uploads it to ComfyUI and replaces the first LoadImage node's image input.
+
+    mask: inpaint mask image, relative to gallery_dir. Use together with the "inpaint" workflow
+    template (LoadImage subject + LoadImageMask + VAEEncodeForInpaint). The backend uploads it
+    and replaces the LoadImageMask node's image input; it never collides with the subject image
+    since they are distinct node types.
+
+    image_pose: pose reference image, relative to gallery_dir (e.g. 2026-03-08/ComfyUI_xxx.png).
+    The backend reads it from the gallery, uploads it to ComfyUI, and replaces the LoadImage node. Used for ControlNet pose, etc.
+
+    diffusion_model / text_encoder / vae: components for diffusion-model families (e.g. Anima),
+    injected into UNETLoader.unet_name / CLIPLoader.clip_name / VAELoader.vae_name respectively.
+
+    Important: every parameter here is only applied when explicitly provided. Any value already
+    present in the submitted workflow JSON (steps, cfg, seed, model filenames, etc.) is left as-is
+    when the corresponding parameter is omitted — the workflow JSON is the source of truth. This
+    means a workflow with a fixed/non-zero seed will reproduce deterministically unless you pass
+    seed explicitly for variation, and hires-fix / multi-KSampler graphs keep each sampler's own
+    steps/cfg.
+    """
+    try:
+        client = _get_client()
+        wf_obj = json.loads(workflow)
+        final_prompt = prompt
+        resolved_lora = lora
+        if character or style:
+            base = prompt if prompt else "1girl, solo"
+            final_prompt, style_lora = resolve_to_prompt(
+                character=character, style=style, base_prompt=base
+            )
+            if style_lora and not resolved_lora:
+                resolved_lora = style_lora
+        body = {
+            "workflow": wf_obj,
+            "prompt": final_prompt,
+        }
+        if checkpoint:
+            body["checkpoint"] = checkpoint
+        if resolved_lora:
+            body["lora"] = resolved_lora
+        if negative_prompt is not None:
+            body["negative_prompt"] = negative_prompt
+        if seed is not None:
+            body["seed"] = seed
+        if steps is not None:
+            body["steps"] = steps
+        if cfg is not None:
+            body["cfg"] = cfg
+        if width is not None:
+            body["width"] = width
+        if height is not None:
+            body["height"] = height
+        if image is not None:
+            body["image"] = image
+        if image_pose is not None:
+            body["image_pose"] = image_pose
+        if mask is not None:
+            body["mask"] = mask
+        if batch_size is not None:
+            body["batch_size"] = batch_size
+        if sampler_name is not None:
+            body["sampler_name"] = sampler_name
+        if scheduler is not None:
+            body["scheduler"] = scheduler
+        if lora_strength is not None:
+            body["lora_strength"] = lora_strength
+        if loras is not None:
+            body["loras"] = loras
+        if denoise is not None:
+            body["denoise"] = denoise
+        if diffusion_model is not None:
+            body["diffusion_model"] = diffusion_model
+        if text_encoder is not None:
+            body["text_encoder"] = text_encoder
+        if vae is not None:
+            body["vae"] = vae
+        resp = client.post("generate/custom", json=body)
+        job_id = resp.get("job_id", "unknown")
+        status = resp.get("status", "queued")
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_image_custom_workflow",
+                "job_id": job_id,
+                "status": status,
+                "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit",
+            },
+            ensure_ascii=False,
+        )
+    except json.JSONDecodeError as e:
+        return error_json(
+            "generate_image_custom_workflow",
+            "invalid_json",
+            f"workflow 必須為合法 JSON: {e}",
+            details={"where": "validation"},
+        )
+    except Exception as e:
+        return exception_error_json("generate_image_custom_workflow", e, where="backend")
+
+@mcp.tool()
+def generate_video_custom_workflow(
+    workflow: str,
+    prompt: str = "1girl, solo",
+    checkpoint: str | None = None,
+    lora: str | None = None,
+    image: str | None = None,
+    first_frame: str | None = None,
+    last_frame: str | None = None,
+    video_ref: str | None = None,
+    negative_prompt: str | None = None,
+    seed: int | None = None,
+    steps: int | None = None,
+    cfg: float | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    batch_size: int | None = None,
+    sampler_name: str | None = None,
+    scheduler: str | None = None,
+    lora_strength: float | None = None,
+    loras: list[dict] | None = None,
+    denoise: float | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+) -> str:
+    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, optionally inject gallery-relative image/first_frame/last_frame/video_ref inputs, then poll get_generation_status."""
+    try:
+        client = _get_client()
+        wf_obj = json.loads(workflow)
+        body: dict[str, object] = {
+            "workflow": wf_obj,
+            "prompt": prompt,
+        }
+        optional_values = {
+            "checkpoint": checkpoint,
+            "lora": lora,
+            "image": image,
+            "first_frame": first_frame,
+            "last_frame": last_frame,
+            "video_ref": video_ref,
+            "negative_prompt": negative_prompt,
+            "seed": seed,
+            "steps": steps,
+            "cfg": cfg,
+            "width": width,
+            "height": height,
+            "batch_size": batch_size,
+            "sampler_name": sampler_name,
+            "scheduler": scheduler,
+            "lora_strength": lora_strength,
+            "loras": loras,
+            "denoise": denoise,
+            "diffusion_model": diffusion_model,
+            "text_encoder": text_encoder,
+            "vae": vae,
+        }
+        for key, value in optional_values.items():
+            if value is not None:
+                body[key] = value
+        resp = client.post("generate/video/custom", json=body)
+        job_id = resp.get("job_id", "unknown")
+        status = resp.get("status", "queued")
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": "generate_video_custom_workflow",
+                "job_id": job_id,
+                "status": status,
+                "submitted": body,
+                "next": "poll get_generation_status(job_id); on completion use artifacts[] with get_gallery_artifact; call free_comfyui_memory after heavy video jobs",
+            },
+            ensure_ascii=False,
+        )
+    except json.JSONDecodeError as e:
+        return error_json(
+            "generate_video_custom_workflow",
+            "invalid_json",
+            f"workflow 必須為合法 JSON: {e}",
+            details={"where": "validation"},
+        )
+    except Exception as e:
+        return exception_error_json("generate_video_custom_workflow", e, where="backend")
+
+
+@mcp.tool()
 def get_generation_status(job_id: str) -> str:
     """Query generation job status, returns agent-friendly JSON. Completed jobs include artifacts[]; image jobs keep image_id/image_path. Failed jobs return a structured error."""
     try:

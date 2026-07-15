@@ -2,9 +2,12 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from mcp_server.tools.comfyui import free_comfyui_memory
 from mcp_server.tools.generate import (
     cancel_job,
     generate_image,
+    generate_image_custom_workflow,
+    generate_video_custom_workflow,
     generate_video_wan_keyframes,
     get_generation_status,
     list_available_resources,
@@ -569,3 +572,105 @@ def test_generate_video_wan_keyframes_posts_dedicated_endpoint() -> None:
     assert data["job_id"] == "wan-job"
     assert data["keyframe_count"] == 2
     assert data["workflow_family"] == "wan_dancer_multi_keyframe"
+
+
+def test_generate_image_custom_workflow_submits_workflow() -> None:
+    """generate_image_custom_workflow 將 workflow JSON 提交至 custom 端點"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"x.safetensors"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(workflow=wf_json, prompt="1girl")
+
+    parsed = json.loads(result)
+    assert parsed["ok"] is True
+    assert parsed["job_id"] == "abc"
+    mock_client.post.assert_called_once()
+    call_json = mock_client.post.call_args[1]["json"]
+    assert "workflow" in call_json
+    assert call_json["workflow"]["4"]["class_type"] == "CheckpointLoaderSimple"
+    assert call_json["prompt"] == "1girl"
+
+
+def test_generate_image_custom_workflow_with_image_pose() -> None:
+    """generate_image_custom_workflow 傳入 image_pose 時會帶入 body"""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "xyz", "status": "queued"}
+    wf_json = '{"5":{"class_type":"LoadImage","inputs":{"image":"pose.png"}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(
+            workflow=wf_json,
+            prompt="1girl",
+            image_pose="2026-03-08/ComfyUI_01305__318631e3_0.png",
+        )
+
+    assert "xyz" in result
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["image_pose"] == "2026-03-08/ComfyUI_01305__318631e3_0.png"
+
+
+def test_generate_image_custom_workflow_forwards_loras() -> None:
+    """generate_image_custom_workflow forwards ordered multi-LoRA payloads and keeps legacy fields."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "abc", "status": "queued"}
+    wf_json = '{"10":{"class_type":"LoraLoader","inputs":{}},"11":{"class_type":"LoraLoaderModelOnly","inputs":{}}}'
+    loras = [
+        {"name": "style.safetensors", "strength_model": 0.8},
+        {"name": "detail.safetensors", "strength_model": 0.6, "strength_clip": 0.4},
+    ]
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_image_custom_workflow(
+            workflow=wf_json,
+            prompt="1girl",
+            lora="legacy.safetensors",
+            lora_strength=0.7,
+            loras=loras,
+        )
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["lora"] == "legacy.safetensors"
+    assert call_json["lora_strength"] == 0.7
+    assert call_json["loras"] == loras
+
+
+def test_generate_video_custom_workflow_submits_video_endpoint_with_refs() -> None:
+    """generate_video_custom_workflow posts to the video custom endpoint and forwards provided refs only."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {"job_id": "video-1", "status": "queued"}
+    wf_json = '{"20":{"class_type":"VHS_VideoCombine","inputs":{}}}'
+
+    with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
+        result = generate_video_custom_workflow(
+            workflow=wf_json,
+            prompt="slow pan",
+            first_frame="2026-06-22/start.png",
+            video_ref="2026-06-22/ref.mp4",
+        )
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "generate_video_custom_workflow"
+    assert data["job_id"] == "video-1"
+    assert "get_generation_status" in data["next"]
+    mock_client.post.assert_called_once()
+    assert mock_client.post.call_args[0][0] == "generate/video/custom"
+    call_json = mock_client.post.call_args[1]["json"]
+    assert call_json["workflow"]["20"]["class_type"] == "VHS_VideoCombine"
+    assert call_json["prompt"] == "slow pan"
+    assert call_json["first_frame"] == "2026-06-22/start.png"
+    assert call_json["video_ref"] == "2026-06-22/ref.mp4"
+    assert "last_frame" not in call_json
+
+
+def test_generate_video_custom_workflow_bad_json_returns_structured_error() -> None:
+    result = generate_video_custom_workflow(workflow="{bad")
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "generate_video_custom_workflow"
+    assert data["error"]["code"] == "invalid_json"
+    assert "JSON" in data["error"]["message"]
