@@ -71,7 +71,7 @@ def get_gallery_image(image_id: int) -> str:
                     "negative_prompt": resp.get("negative_prompt"),
                     "created_at": resp.get("created_at"),
                 },
-                "next": "deliver image to user, then call free_comfyui_memory if not already called",
+                "next": "deliver image to user; iterate with gallery_rerun or a new generate call",
             },
             ensure_ascii=False,
         )
@@ -111,7 +111,7 @@ def get_gallery_artifact(artifact_id: int) -> str:
                     "height": resp.get("height"),
                     "created_at": resp.get("created_at"),
                 },
-                "next": "deliver artifact to user, then call free_comfyui_memory if not already called",
+                "next": "deliver artifact to user",
             },
             ensure_ascii=False,
         )

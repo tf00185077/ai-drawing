@@ -45,14 +45,10 @@ def mcp_ping() -> str:
 
 # Register tools modules (importing triggers @mcp.tool() decorators)
 from mcp_server.tools import (  # noqa: E402, F401
-    character_style_tools,
-    civitai_recipes,
-    comfyui,
+    civitai,
     gallery,
     generate,
     lora_train,
-    style_presets,
-    workflow_catalog,
 )
 
 

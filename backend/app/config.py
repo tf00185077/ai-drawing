@@ -87,6 +87,12 @@ class Settings(BaseSettings):
     output_dir: str = _project_root_path("backend", "outputs")
     gallery_dir: str = _project_root_path("backend", "outputs", "gallery")
 
+    # 大檔 SHA-256 快取（size/mtime/inode 未變即信任快取，避免每次重算多 GB 雜湊）
+    file_digest_cache_path: str = _project_root_path("backend", ".file_sha256_cache.json")
+
+    # Civitai 自動下載後 best-effort 生圖的預設 batch 張數
+    civitai_generate_default_batch: int = 4
+
     # LoRA 訓練
     lora_train_dir: str = _project_root_path("backend", "lora_train")
     lora_train_logs_dir: str = _project_root_path("backend", "lora_train", "logs")

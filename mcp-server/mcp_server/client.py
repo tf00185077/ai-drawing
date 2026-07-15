@@ -6,12 +6,11 @@ Backend API Client 抽象層
 from typing import Any, Protocol
 
 
-_AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS = 120.0
-_RESOURCE_INSTALL_TIMEOUT_SECONDS = 3600.0
-_AUDITED_LOCAL_RESOLUTION_PATHS = frozenset({
-    "civitai-recipes/resolve-local",
-    "civitai-recipes/variants/generate-one",
-    "civitai-recipes/variation-sets",
+# Civitai import fetches remote metadata (with retries) before submitting.
+_CIVITAI_IMPORT_TIMEOUT_SECONDS = 300.0
+_CIVITAI_IMPORT_PATHS = frozenset({
+    "civitai/generate-like",
+    "civitai/source-info",
 })
 
 
@@ -38,7 +37,7 @@ class BackendApiClient(Protocol):
 class HttpBackendClient:
     """以 httpx 實作的 Backend API Client"""
 
-    def __init__(self, base_url: str, timeout: float = 30.0) -> None:
+    def __init__(self, base_url: str, timeout: float = 60.0) -> None:
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
 
@@ -47,19 +46,17 @@ class HttpBackendClient:
         return f"{self._base_url}{p}"
 
     def _timeout_for(self, path: str) -> float:
-        """Allow bounded cold-file hashing only on audited resolution routes."""
+        """Give remote-metadata routes room; everything else stays snappy."""
         normalized = path.lstrip("/")
-        if normalized == "civitai-recipes/resource-install":
-            return max(self._timeout, _RESOURCE_INSTALL_TIMEOUT_SECONDS)
-        if normalized in _AUDITED_LOCAL_RESOLUTION_PATHS:
-            return max(self._timeout, _AUDITED_LOCAL_RESOLUTION_TIMEOUT_SECONDS)
+        if normalized in _CIVITAI_IMPORT_PATHS:
+            return max(self._timeout, _CIVITAI_IMPORT_TIMEOUT_SECONDS)
         return self._timeout
 
     def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         import httpx
 
         url = self._url(path)
-        with httpx.Client(timeout=self._timeout) as client:
+        with httpx.Client(timeout=self._timeout_for(path)) as client:
             resp = client.get(url, params=params or {})
             resp.raise_for_status()
             return resp.json() if resp.content else {}

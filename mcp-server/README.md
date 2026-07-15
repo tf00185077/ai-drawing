@@ -25,89 +25,32 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | Tool | Response | Backend/API |
 |------|----------|-------------|
 | `mcp_ping` | `plain_text` | GET /health |
-| `list_character_styles` | `plain_text` | local helper |
-| `resolve_character_style_prompt` | `plain_text` | local helper |
-| `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
-| `search_nodes` | `json_string` | GET /api/comfyui/nodes |
-| `list_node_categories` | `json_string` | GET /api/comfyui/node-categories |
-| `get_node_schema` | `json_string` | GET /api/comfyui/nodes/{node_type} |
+| `civitai_source_info` | `dict` | GET /api/civitai/source-info |
+| `civitai_generate_like` | `dict` | POST /api/civitai/generate-like |
+| `civitai_resource_acquire` | `dict` | POST /api/civitai/resources/acquire |
+| `civitai_resource_status` | `dict` | GET /api/civitai/resources/status |
+| `generate_image` | `json_string` | POST /api/generate/ |
+| `generate_video_wan_keyframes` | `json_string` | POST /api/generate/video/wan-keyframes |
+| `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
+| `cancel_job` | `json_string` | DELETE /api/generate/queue/{job_id} |
+| `list_available_resources` | `json_string` | GET /api/generate/available-resources |
 | `gallery_list` | `plain_text` | GET /api/gallery/ |
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
-| `civitai_resource_inspect` | `dict` | POST /api/civitai-recipes/resource-inspect |
-| `civitai_resource_select` | `dict` | POST /api/civitai-recipes/resource-select |
-| `civitai_resource_install` | `dict` | POST /api/civitai-recipes/resource-install |
-| `civitai_recipe_import` | `dict` | POST /api/civitai-recipes/import |
-| `civitai_source_alias_resolve` | `dict` | POST /api/civitai-recipes/source-aliases/resolve |
-| `civitai_source_alias_backfill_gallery` | `dict` | POST /api/civitai-recipes/source-aliases/backfill-gallery |
-| `civitai_source_alias_resolve_explicit_version` | `dict` | POST /api/civitai-recipes/source-aliases/resolve-explicit-version |
-| `civitai_source_alias_rename` | `dict` | POST /api/civitai-recipes/source-aliases/rename |
-| `civitai_source_alias_archive` | `dict` | POST /api/civitai-recipes/source-aliases/archive |
-| `civitai_source_alias_repoint` | `dict` | POST /api/civitai-recipes/source-aliases/repoint |
-| `civitai_source_alias_list` | `dict` | GET /api/civitai-recipes/source-aliases |
-| `civitai_source_alias_search` | `dict` | POST /api/civitai-recipes/source-aliases/search |
-| `civitai_recipe_inspect` | `dict` | POST /api/civitai-recipes/inspect |
-| `civitai_recipe_resolve` | `dict` | POST /api/civitai-recipes/resolve |
-| `civitai_recipe_compatibility` | `dict` | POST /api/civitai-recipes/compatibility |
-| `civitai_recipe_build` | `dict` | POST /api/civitai-recipes/build |
-| `civitai_recipe_run` | `dict` | POST /api/civitai-recipes/run |
-| `civitai_recipe_variant_generate` | `dict` | POST /api/civitai-recipes/variants/generate-one |
-| `civitai_recipe_variation_set_generate` | `dict` | POST /api/civitai-recipes/variation-sets |
-| `civitai_recipe_variation_set_status` | `dict` | GET /api/civitai-recipes/variation-sets/{variation_set_id} |
-| `civitai_recipe_variation_set_cancel` | `dict` | POST /api/civitai-recipes/variation-sets/{variation_set_id}/cancel |
-| `civitai_recipe_variation_set_export` | `dict` | GET /api/civitai-recipes/variation-sets/{variation_set_id}/export |
-| `civitai_recipe_export` | `dict` | GET /api/gallery/{image_id}/export?format=recipe |
-| `generate_image` | `json_string` | POST /api/generate/ |
-| `list_workflow_templates` | `plain_text` | GET /api/generate/workflow-templates |
-| `get_workflow_template` | `json_string` | GET /api/generate/workflow-templates/{name} |
-| `generate_image_custom_workflow` | `json_string` | POST /api/generate/custom |
-| `generate_video_custom_workflow` | `json_string` | POST /api/generate/video/custom |
-| `generate_video_wan_keyframes` | `json_string` | POST /api/generate/video/wan-keyframes |
-| `generate_queue_status` | `plain_text` | GET /api/generate/queue |
-| `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
-| `cancel_job` | `plain_text` | DELETE /api/generate/queue/{job_id} |
-| `list_available_resources` | `json_string` | GET /api/generate/available-resources |
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
-| `lora_dataset_list` | `dict` | GET /api/lora-train/datasets |
-| `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder} |
-| `lora_dataset_metadata_get` | `dict` | GET /api/lora-train/datasets/{folder}/metadata |
-| `lora_dataset_metadata_update` | `dict` | PUT /api/lora-train/datasets/{folder}/metadata |
-| `lora_dataset_metadata_validate` | `dict` | POST /api/lora-train/datasets/{folder}/metadata/validate |
-| `lora_dataset_agent_inspect` | `dict` | GET /api/lora-train/datasets/{folder}/agent-inspect |
-| `lora_dataset_prepare` | `dict` | POST /api/lora-train/datasets/prepare |
-| `lora_dataset_validate` | `dict` | POST /api/lora-train/datasets/validate |
-| `lora_dataset_caption_assess` | `dict` | POST /api/lora-train/datasets/caption-assessment |
-| `lora_dataset_curate` | `dict` | POST /api/lora-train/datasets/curate |
 | `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
-| `lora_train_status` | `dict` | GET /api/lora-train/status |
 | `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |
 | `lora_train_logs` | `dict` | GET /api/lora-train/jobs/{job_id}/logs |
 | `lora_train_cancel` | `dict` | POST /api/lora-train/jobs/{job_id}/cancel |
-| `lora_train_smoke_test` | `dict` | POST /api/lora-train/jobs/{job_id}/smoke-test |
-| `create_style_preset` | `json_string` | POST /api/style-presets/ |
-| `reindex_style_presets` | `json_string` | POST /api/style-presets/reindex |
-| `list_style_presets` | `json_string` | GET /api/style-presets/ |
-| `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
-| `validate_style_presets` | `json_string` | GET /api/style-presets/validate |
-| `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
-| `list_template_capabilities` | `json_string` | GET /api/workflow-catalog/ |
-| `match_workflow_template` | `json_string` | GET /api/workflow-catalog/match |
-| `save_workflow_template` | `json_string` | POST /api/workflow-catalog/backfill |
-| `consolidate_workflow_templates` | `json_string` | POST /api/workflow-catalog/consolidate |
-| `validate_template_capabilities` | `json_string` | GET /api/workflow-catalog/validate |
 <!-- MCP-CATALOG:END -->
 
 <!-- MCP-OMISSIONS:START -->
-| Omitted name | Replacement | Reason |
-|--------------|-------------|--------|
-| `list_resources` | `list_available_resources` | Removed because the name collided with the MCP resources/list primitive. |
-| `get_available_resources` | `list_available_resources` | Removed legacy human-readable duplicate. |
-| `get_job_status` | `get_generation_status` | Removed legacy human-readable duplicate. |
-| `gallery_detail` | `get_gallery_image` | Removed legacy human-readable duplicate. |
-| `generate_image_from_description` | `generate_image` | Disabled regex/NLP fallback; LLM agents should submit structured generation fields directly. |
-| `suggest_workflow_from_description` | `list_template_capabilities` | Disabled regex/NLP fallback; agents should inspect catalog/schema tools directly. |
+2026-07 工具大幅收斂：75 個工具刪減為 20 個意圖級工具。低階 Civitai recipe/資源/alias 工具、
+style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢等已從 MCP 移除；
+對應功能仍在 backend HTTP API（見 docs/api-contract.md），Civitai 流程改用
+`civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->
 
 ### 連線檢查

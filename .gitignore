@@ -76,3 +76,6 @@ htmlcov/
 # ===== Docker =====
 # 通常不需忽略，但若有本機覆蓋檔可加：
 # docker-compose.override.yml
+
+# 大檔 SHA-256 執行期快取
+backend/.file_sha256_cache.json

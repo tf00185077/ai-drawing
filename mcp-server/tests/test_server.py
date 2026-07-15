@@ -24,8 +24,8 @@ def test_mcp_ping_returns_string() -> None:
 
 
 def test_minimum_loop_tools_are_importable() -> None:
-    """五個最小閉環 tools 可從各自模組成功 import（確認 server 載入無誤）"""
-    from mcp_server.tools.comfyui import free_comfyui_memory
+    """最小閉環 tools 可從各自模組成功 import（確認 server 載入無誤）"""
+    from mcp_server.tools.civitai import civitai_generate_like
     from mcp_server.tools.gallery import get_gallery_image
     from mcp_server.tools.generate import (
         generate_image,
@@ -37,7 +37,7 @@ def test_minimum_loop_tools_are_importable() -> None:
     assert callable(generate_image)
     assert callable(get_generation_status)
     assert callable(get_gallery_image)
-    assert callable(free_comfyui_memory)
+    assert callable(civitai_generate_like)
 
 
 @pytest.mark.asyncio

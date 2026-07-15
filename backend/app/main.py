@@ -65,6 +65,7 @@ app.add_middleware(
 # 四大模組 API
 from app.api import (
     analytics,
+    civitai_easy,
     civitai_recipes,
     comfyui,
     generate,
@@ -77,6 +78,7 @@ from app.api import (
 )
 
 app.include_router(generate.router)
+app.include_router(civitai_easy.router)
 app.include_router(civitai_recipes.router)
 app.include_router(gallery.router)
 app.include_router(lora_docs.router)
