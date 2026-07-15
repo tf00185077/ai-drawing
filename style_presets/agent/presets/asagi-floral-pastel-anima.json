@@ -13,7 +13,6 @@
   "default_params": {
     "cfg": 5.0,
     "sampler_name": "er_sde",
-    "seed": 3797619011,
     "steps": 30
   },
   "profiles": {
