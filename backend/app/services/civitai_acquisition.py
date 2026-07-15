@@ -1132,8 +1132,37 @@ def acquire_civitai_recipe(
     try:
         image_payload = resolve_image_payload(parsed_locator, api_payload)
     except AcquisitionError as exc:
-        exc.provenance = redact_secrets({**provenance, **exc.provenance}, secrets=secrets)
-        raise
+        if exc.code != "not_found" or parsed_locator.kind != "image" or parsed_locator.image_id is None:
+            exc.provenance = redact_secrets({**provenance, **exc.provenance}, secrets=secrets)
+            raise
+        rating_error = exc
+        for rating in ("Soft", "Mature", "X"):
+            rated_payload = _request_json(
+                url,
+                params={**params, "nsfw": rating},
+                transport=transport,
+                authorization=authorization,
+                provenance=provenance,
+                backoff=backoff,
+                sleep=sleep,
+                secrets=secrets,
+            )
+            try:
+                image_payload = resolve_image_payload(parsed_locator, rated_payload)
+            except AcquisitionError as fallback_exc:
+                if fallback_exc.code != "not_found":
+                    fallback_exc.provenance = redact_secrets(
+                        {**provenance, **fallback_exc.provenance}, secrets=secrets
+                    )
+                    raise
+                rating_error = fallback_exc
+                continue
+            break
+        else:
+            rating_error.provenance = redact_secrets(
+                {**provenance, **rating_error.provenance}, secrets=secrets
+            )
+            raise rating_error
     _enrich_single_checkpoint_identity(
         image_payload,
         transport=transport,

@@ -1,0 +1,178 @@
+{
+  "schema_version": "1.0",
+  "policy_version": "2026-07-15.1",
+  "preset_id": "japanese-a",
+  "alias": {
+    "name": "日系a",
+    "type": "style",
+    "registry_version": 3
+  },
+  "source_lock": {
+    "provider": "civitai",
+    "image_id": 82973952,
+    "post_id": 18428032,
+    "acquisition_evidence_sha256": "75c95ca825f6b41a235744d0c05c139ff8bd0242b379d0198a01c660cab85bc3",
+    "parent_recipe_sha256": "3d4b0b059deab7d9aba34b8ade337a399d528cb94dec8fb116df8926bfad8a08",
+    "positive_prompt_sha256": "1b85e4b7e3ac0b6ef6ac98cfb5f3c3655c833ccdb57fe17ee313340f9ea23169",
+    "negative_prompt_sha256": "a7574c6845dcaa2299d0d5220d8108cc72840d0a06ac88ffbd059070118cfbcf",
+    "media_sha256": "1e77412a5c2131b75543a090eeeb3206466bc52912aa828c966b273e421e7ee6"
+  },
+  "resource_lock": {
+    "kind": "checkpoint",
+    "name": "aMixIllustrious_aMix.safetensors",
+    "model_family": "Illustrious",
+    "civitai_model_id": 1692152,
+    "civitai_model_version_id": 1915059,
+    "civitai_file_id": 1813499,
+    "sha256": "b199b92ee9fadbd84b926e8f2592a8ea04503ec0953b50d62d40169264fb69d4",
+    "byte_size": 7105348060
+  },
+  "classification": {
+    "preserve_from_prompt": [
+      "masterwork",
+      "masterpiece",
+      "best quality",
+      "detailed",
+      "high detail",
+      "very aesthetic",
+      "depth of field"
+    ],
+    "preserve_from_visual_evidence": [
+      "polished Japanese anime illustration",
+      "clean thin lineart",
+      "hybrid cel shading with soft controlled gradients",
+      "detailed hair and eyes",
+      "refined fabric rendering",
+      "warm natural daylight",
+      "soft luminous highlights",
+      "harmonious warm colors",
+      "crisp subject rendering",
+      "shallow depth of field",
+      "softly rendered background"
+    ],
+    "remove_subject": [
+      "1girl",
+      "freckles",
+      "one eye closed",
+      "ponytail",
+      "orange hair",
+      "orange eyes",
+      "brown eyes",
+      "breasts",
+      "medium breasts",
+      "blush"
+    ],
+    "remove_outfit": [
+      "pants",
+      "boots",
+      "striped clothes",
+      "sweater",
+      "black pants",
+      "black footwear",
+      "long sleeves",
+      "collar",
+      "shirt",
+      "choker"
+    ],
+    "remove_pose_action": [
+      "blowing kiss",
+      "on stomach",
+      "lying",
+      "looking at viewer",
+      "the pose",
+      "feet up",
+      "dynamic pose"
+    ],
+    "remove_scene_composition": [
+      "indoors",
+      "window",
+      "curtains",
+      "dynamic angle"
+    ],
+    "normalize": {
+      "masterwork": "masterpiece",
+      "detailed, high detail": "highly detailed",
+      "Euler a": "euler_ancestral",
+      "Automatic": "normal"
+    },
+    "remove_noise": [
+      "duplicate best quality",
+      "duplicate depth of field",
+      "empty comma fragments"
+    ]
+  },
+  "negative_policy": {
+    "preserve": [
+      "lowres",
+      "worst quality",
+      "low quality",
+      "bad anatomy",
+      "bad hands",
+      "jpeg artifacts",
+      "signature",
+      "watermark",
+      "text",
+      "logo",
+      "artist name",
+      "extra digits",
+      "censored"
+    ],
+    "remove_source_specific": [
+      "loli",
+      "pink lips"
+    ],
+    "style_guards_added": [
+      "photorealistic",
+      "3d",
+      "cgi",
+      "western comic style",
+      "plastic skin"
+    ]
+  },
+  "sampling": {
+    "canonical_api_output": {
+      "seed": 2830118411,
+      "steps": 20,
+      "cfg": 6.0,
+      "sampler": "Euler a",
+      "scheduler": "Automatic",
+      "denoise": 1.0,
+      "width": 1072,
+      "height": 1608
+    },
+    "embedded_base_pass": {
+      "width": 768,
+      "height": 1152,
+      "hires_upscale": 1.4,
+      "hires_steps": 10,
+      "hires_cfg": 6.0,
+      "denoising_strength": 0.1
+    },
+    "executable_default": {
+      "steps": 20,
+      "cfg": 6.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 1.0,
+      "width": 1072,
+      "height": 1608,
+      "seed_policy": "randomize"
+    }
+  },
+  "variant_policy": {
+    "minimal_delta": true,
+    "user_requested_fields": [
+      "character",
+      "scene",
+      "pose"
+    ],
+    "agent_added_must_be_explicit": true,
+    "do_not_inherit_source_subject_scene_pose_camera": true
+  },
+  "reuse_gate": {
+    "require_exact_registry_version": true,
+    "require_exact_parent_recipe_sha256": true,
+    "require_exact_prompt_hashes": true,
+    "require_exact_resource_sha256": true
+  }
+}
