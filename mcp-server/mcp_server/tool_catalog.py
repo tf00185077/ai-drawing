@@ -52,7 +52,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("gallery_rerun", "mcp_server.tools.gallery", "gallery_rerun", "plain_text", ("POST /api/gallery/{image_id}/rerun",)),
     # ComfyUI ops
     ToolCatalogEntry("free_comfyui_memory", "mcp_server.tools.comfyui", "free_comfyui_memory", "json_string", ("POST <ComfyUI>/free",)),
-    # Style presets (use path only; authoring/maintenance stays on backend HTTP)
+    # Style presets (daily path incl. create; reindex/validate stays on backend HTTP)
+    ToolCatalogEntry("create_style_preset", "mcp_server.tools.style_presets", "create_style_preset", "json_string", ("POST /api/style-presets/",), notes="users save styles in conversation; backend auto-reindexes"),
     ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
     ToolCatalogEntry("get_style_preset", "mcp_server.tools.style_presets", "get_style_preset", "json_string", ("GET /api/style-presets/{preset_id}",)),
     ToolCatalogEntry("compose_style_preset", "mcp_server.tools.style_presets", "compose_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/compose",)),
