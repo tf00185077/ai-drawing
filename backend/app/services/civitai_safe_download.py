@@ -178,6 +178,9 @@ def safe_download(
                     return _failure(target, metadata, resume_used=resume_used, bytes_written=actual_bytes,
                                     reason="size or sha256 verification failed", secret_values=secret_values)
                 os.replace(part, target)
+                from app.services.file_digest_cache import record_sha256
+
+                record_sha256(target, actual_sha)
                 return DownloadResult(
                     status="completed", final_path=str(target), actual_sha256=actual_sha,
                     bytes=actual_bytes, resume_used=resume_used,

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import hashlib
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -68,11 +67,9 @@ class ResourceResolutionReport:
 
 
 def _digest(path: Path) -> str:
-    hasher = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            hasher.update(block)
-    return hasher.hexdigest()
+    from app.services.file_digest_cache import sha256_for
+
+    return sha256_for(path)
 
 
 def _identity(value: RecipeResource | LocalResourceLedgerEntry) -> dict[str, Any]:

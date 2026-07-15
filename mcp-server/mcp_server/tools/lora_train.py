@@ -1,9 +1,10 @@
 """
 LoRA training MCP tools.
 
-These tools are thin clients for the backend-owned LoRA dataset and training
-workflow. Results are JSON-serializable dicts so agents can branch without
-scraping human-readable strings.
+These tools are thin clients for the backend-owned LoRA training workflow.
+Results are JSON-serializable dicts so agents can branch without scraping
+human-readable strings. Dataset preparation/curation stays available through
+the backend HTTP API; the MCP surface keeps only the decision-and-train loop.
 """
 from __future__ import annotations
 
@@ -83,19 +84,6 @@ def _compact(body: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in body.items() if value is not None}
 
 
-def _dataset_path(folder: str) -> str:
-    cleaned = folder.strip().strip("/")
-    return f"lora-train/datasets/{quote(cleaned, safe='/')}"
-
-
-def _metadata_path(folder: str) -> str:
-    return f"{_dataset_path(folder)}/metadata"
-
-
-def _agent_inspection_path(folder: str) -> str:
-    return f"{_dataset_path(folder)}/agent-inspect"
-
-
 @mcp.tool()
 def caption_image(image_path: str) -> dict[str, Any]:
     """Generate one caption through the backend LLM caption endpoint."""
@@ -107,174 +95,6 @@ def caption_image(image_path: str) -> dict[str, Any]:
         if not caption_text:
             return _error(tool, "empty_caption", "LLM returned an empty caption", {"response": resp})
         return _backend_result(tool, {"content": caption_text})
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_list() -> dict[str, Any]:
-    """List available LoRA training datasets from the backend."""
-    tool = "lora_dataset_list"
-    try:
-        return _backend_result(tool, _get_client().get("lora-train/datasets"))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_inspect(folder: str, trigger_token: str | None = None) -> dict[str, Any]:
-    """Inspect one LoRA dataset with file-level details and optional validation."""
-    tool = "lora_dataset_inspect"
-    try:
-        params = _compact({"trigger_token": trigger_token})
-        return _backend_result(tool, _get_client().get(_dataset_path(folder), params=params or None))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_metadata_get(folder: str) -> dict[str, Any]:
-    """Read one dataset's normalized .lora-dataset.json metadata profile."""
-    tool = "lora_dataset_metadata_get"
-    try:
-        return _backend_result(tool, _get_client().get(_metadata_path(folder)))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_metadata_validate(folder: str, profile: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Validate proposed LoRA dataset metadata without writing files."""
-    tool = "lora_dataset_metadata_validate"
-    body = {"profile": profile or {}}
-    try:
-        return _backend_result(tool, _get_client().post(f"{_metadata_path(folder)}/validate", json=body), submitted=body)
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_metadata_update(
-    folder: str,
-    profile: dict[str, Any] | None = None,
-    expected_profile_hash: str | None = None,
-) -> dict[str, Any]:
-    """Update LoRA dataset metadata using expected profile_hash conflict protection."""
-    tool = "lora_dataset_metadata_update"
-    body = _compact({"profile": profile or {}, "expected_profile_hash": expected_profile_hash})
-    try:
-        return _backend_result(tool, _get_client().put(_metadata_path(folder), json=body), submitted=body)
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_agent_inspect(folder: str, trigger_token: str | None = None) -> dict[str, Any]:
-    """Return agent-ready dataset/profile/caption suitability inspection without starting training."""
-    tool = "lora_dataset_agent_inspect"
-    params = _compact({"trigger_token": trigger_token})
-    try:
-        return _backend_result(tool, _get_client().get(_agent_inspection_path(folder), params=params or None))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_prepare(
-    folder: str,
-    trigger_token: str | None = None,
-    dry_run: bool = True,
-    use_ai_cleanup: bool = False,
-    expected_dataset_hash: str | None = None,
-    restore_backup_id: str | None = None,
-) -> dict[str, Any]:
-    """Dry-run/apply LoRA caption preparation, or restore a prior backup id."""
-    tool = "lora_dataset_prepare"
-    body = _compact(
-        {
-            "folder": folder,
-            "trigger_token": trigger_token,
-            "dry_run": dry_run,
-            "use_ai_cleanup": use_ai_cleanup,
-            "expected_dataset_hash": expected_dataset_hash,
-            "restore_backup_id": restore_backup_id,
-        }
-    )
-    try:
-        return _backend_result(tool, _get_client().post("lora-train/datasets/prepare", json=body), submitted=body)
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_validate(
-    folder: str,
-    trigger_token: str,
-    expected_dataset_hash: str | None = None,
-) -> dict[str, Any]:
-    """Run backend LoRA dataset preflight validation."""
-    tool = "lora_dataset_validate"
-    body = _compact(
-        {
-            "folder": folder,
-            "trigger_token": trigger_token,
-            "expected_dataset_hash": expected_dataset_hash,
-        }
-    )
-    try:
-        return _backend_result(tool, _get_client().post("lora-train/datasets/validate", json=body), submitted=body)
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_caption_assess(folder: str, trigger_token: str | None = None) -> dict[str, Any]:
-    """Assess caption coverage and coherence before an explicit LoRA training decision."""
-    tool = "lora_dataset_caption_assess"
-    body = _compact({"folder": folder, "trigger_token": trigger_token})
-    try:
-        return _backend_result(
-            tool,
-            _get_client().post("lora-train/datasets/caption-assessment", json=body),
-            submitted=body,
-        )
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_dataset_curate(
-    folder: str,
-    mode: str = "dry_run",
-    trigger_token: str | None = None,
-    protected_tags: list[str] | None = None,
-    removable_tags: list[str] | None = None,
-    expected_dataset_hash: str | None = None,
-    expected_profile_hash: str | None = None,
-    backup_id: str | None = None,
-    approved_manual_overwrite_paths: list[str] | None = None,
-) -> dict[str, Any]:
-    """Dry-run, apply, or roll back deterministic LoRA dataset caption curation."""
-    tool = "lora_dataset_curate"
-    body = _compact(
-        {
-            "folder": folder,
-            "mode": mode,
-            "trigger_token": trigger_token,
-            "protected_tags": protected_tags,
-            "removable_tags": removable_tags,
-            "expected_dataset_hash": expected_dataset_hash,
-            "expected_profile_hash": expected_profile_hash,
-            "backup_id": backup_id,
-            "approved_manual_overwrite_paths": approved_manual_overwrite_paths or None,
-        }
-    )
-    try:
-        return _backend_result(
-            tool,
-            _get_client().post("lora-train/datasets/curate", json=body),
-            submitted=body,
-        )
     except Exception as exc:
         return _backend_error(tool, exc)
 
@@ -360,16 +180,6 @@ def lora_train_start(
 
 
 @mcp.tool()
-def lora_train_status() -> dict[str, Any]:
-    """Return aggregate LoRA training status for compatibility with older callers."""
-    tool = "lora_train_status"
-    try:
-        return _backend_result(tool, _get_client().get("lora-train/status"))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
 def lora_train_job_status(job_id: str) -> dict[str, Any]:
     """Query one durable LoRA training job by job_id."""
     tool = "lora_train_job_status"
@@ -396,31 +206,5 @@ def lora_train_cancel(job_id: str) -> dict[str, Any]:
     tool = "lora_train_cancel"
     try:
         return _backend_result(tool, _get_client().post(f"lora-train/jobs/{quote(job_id)}/cancel", json={}))
-    except Exception as exc:
-        return _backend_error(tool, exc)
-
-
-@mcp.tool()
-def lora_train_smoke_test(
-    job_id: str,
-    prompt: str | None = None,
-    negative_prompt: str | None = None,
-    checkpoint: str | None = None,
-) -> dict[str, Any]:
-    """Submit a generation smoke test for a completed registered LoRA job."""
-    tool = "lora_train_smoke_test"
-    body = _compact(
-        {
-            "prompt": prompt,
-            "negative_prompt": negative_prompt,
-            "checkpoint": checkpoint,
-        }
-    )
-    try:
-        return _backend_result(
-            tool,
-            _get_client().post(f"lora-train/jobs/{quote(job_id)}/smoke-test", json=body),
-            submitted={"job_id": job_id, **body},
-        )
     except Exception as exc:
         return _backend_error(tool, exc)

@@ -25,11 +25,10 @@
 |------|--------|
 | 我們在造什麼？ | [docs/GOAL.md](docs/GOAL.md) |
 | 現在做到哪裡？下一步是什麼？ | [docs/PROGRESS.md](docs/PROGRESS.md) |
-| 這個 task 要怎麼做？如何驗證？ | [docs/task-specs/](docs/task-specs/)（F-A 到 F-F，每個 task = 一個完整功能） |
-| REST API 格式？ | [docs/api-contract.md](docs/api-contract.md) |
-| 模組介面？ | [docs/internal-interfaces.md](docs/internal-interfaces.md) |
+| MCP 工具有哪些？ | [mcp-server/mcp_server/tool_catalog.py](mcp-server/mcp_server/tool_catalog.py)（單一來源）＋ [docs/mcp-setup.md](docs/mcp-setup.md) |
 | 如何啟動系統？ | [docs/setup-guide.md](docs/setup-guide.md) |
-| OpenClaw 如何接手本地繪圖 / MCP 整合？ | [docs/openclaw-ai-drawing-mcp-handoff.md](docs/openclaw-ai-drawing-mcp-handoff.md) |
+| LoRA 訓練交接流程？ | [docs/lora-training-agent-handoff-runbook.md](docs/lora-training-agent-handoff-runbook.md) |
+| 歷史文件（舊 spec、稽核日誌、API contract） | [docs/archive/](docs/archive/) |
 
 **執行規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
 
@@ -72,21 +71,37 @@
 ```
 ai-drawing/
 ├── backend/app/
-│   ├── api/          # generate, gallery, lora_docs, lora_train, analytics
-│   ├── core/         # comfyui, workflow, queue, recording
+│   ├── api/          # generate, civitai_easy(傻瓜模式), civitai_recipes(strict), gallery, lora_*
+│   ├── core/         # comfyui, workflow, queue, recording, resources
 │   ├── db/           # models, database
-│   ├── services/     # watcher, lora_trainer
-│   └── schemas/      # generate, lora_train
+│   ├── services/     # civitai_easy, civitai_resource_acquire, file_digest_cache,
+│   │                 # civitai_*(strict 管線), watcher, lora_trainer, wd_tagger
+│   └── schemas/      # generate, generation_recipe, lora_train
 ├── frontend/src/pages/  # Generate, Gallery, LoraDocs, LoraTrain, Dashboard
-├── mcp-server/mcp_server/tools/  # generate, lora_train, gallery
+├── mcp-server/mcp_server/tools/  # civitai, generate, gallery, lora_train（20 個意圖級工具）
 ├── backend/workflows/   # workflow JSON 模板
 └── docs/
     ├── GOAL.md          # 目標與範圍
     ├── PROGRESS.md      # 唯一進度來源
-    ├── task-specs/      # 各 phase 的可執行 task spec
-    ├── api-contract.md
-    └── internal-interfaces.md
+    └── archive/         # 歷史文件
 ```
+
+---
+
+## 3.5 MCP 工具設計原則（2026-07 重構後的鐵律）
+
+呼叫者是 LLM，機率性犯錯；每一步嚴格檢查都是成功率的乘法懲罰。因此：
+
+| 原則 | 做法 |
+|------|------|
+| 寬進嚴出 | 輸入能解析就收（URL/ID/各種形式）；回傳格式穩定 |
+| 狀態放伺服器 | agent 只傳短 ID／locator，不搬運大 JSON |
+| 錯誤是修復指南 | 回 `code + message + hint`（缺什麼、下一步做什麼），不是判決書 |
+| 嚴謹放在正確位置 | 病毒掃描/SHA 驗證/不可逆操作 → 硬性阻擋；license 缺漏/metadata 不全 → 警告照走；紀錄層（gallery/provenance）→ 後端自動、無限嚴謹 |
+| 生圖便宜可重試 | 預設 batch 4、允許重試與迭代（gallery_rerun）；絕不做「一次定生死」 |
+| 一個意圖一個工具 | 新功能先想「使用者的一句話是什麼」，做成一個高階工具；低階能力留在 backend HTTP API |
+
+新增 MCP 工具前先問：能不能併入既有工具的參數？agent 真的需要看到這一步嗎？
 
 ---
 

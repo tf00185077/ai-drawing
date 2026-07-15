@@ -19,9 +19,12 @@
 **目標狀態**：MCP Tools 功能完整，agent 可以：
 1. 查詢可用的 checkpoints / LoRA / workflows
 2. 用任意參數生圖（含進階參數：sampler、lora_strength、denoise）
-3. 查詢 job 狀態、取消 job
-4. 觸發 LoRA 訓練、查詢訓練狀態（訓練完後由 agent 自行呼叫生圖，backend 不自動串接）
-5. 對圖片呼叫 LLM 自動標注 caption
+3. **參考 Civitai 上別人的圖生圖**：給圖片連結＋想要的主題，自動沿用原圖參數、
+   自動下載缺少的模型到外接硬碟、找不到就用最接近的本地模型代替（best-effort，不追求
+   位元級精確重現；strict 稽核管線保留在 backend HTTP API）
+4. 查詢 job 狀態、取消 job；對滿意的圖一鍵重抽（gallery_rerun）
+5. 觸發 LoRA 訓練、查詢訓練狀態（訓練完後由 agent 自行呼叫生圖，backend 不自動串接）
+6. 對圖片呼叫 LLM 自動標注 caption
 
 **不在目前範圍**：
 - Slack 整合（已移除）

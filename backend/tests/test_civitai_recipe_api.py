@@ -78,69 +78,6 @@ def test_production_civitai_transport_follows_api_and_media_redirects() -> None:
     assert get.call_args_list[1].kwargs["follow_redirects"] is True
 
 
-def test_mcp_import_base64_encodes_embedded_bytes_over_real_http_client_and_merges_metadata(monkeypatch) -> None:
-    """The MCP boundary serializes image bytes explicitly before the API decodes them."""
-    project_root = Path(__file__).resolve().parents[2]
-    sys.path.insert(0, str(project_root / "mcp-server"))
-    from mcp_server.client import HttpBackendClient
-
-    class FakeMcp:
-        @staticmethod
-        def tool():
-            return lambda function: function
-
-    server_module = types.ModuleType("mcp_server.server")
-    server_module._get_client = lambda: None
-    server_module.mcp = FakeMcp()
-    monkeypatch.setitem(sys.modules, "mcp_server.server", server_module)
-    tool_spec = importlib.util.spec_from_file_location(
-        "civ_f_mcp_tools", project_root / "mcp-server/mcp_server/tools/civitai_recipes.py"
-    )
-    assert tool_spec is not None and tool_spec.loader is not None
-    civitai_recipes = importlib.util.module_from_spec(tool_spec)
-    tool_spec.loader.exec_module(civitai_recipes)
-
-    image = (project_root / "backend/tests/fixtures/civitai/images/a1111_parameters.png").read_bytes()
-    backend = TestClient(app)
-    captured: dict[str, object] = {}
-
-    class BackendBridge:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
-        def post(self, url, json=None):
-            captured["url"] = url
-            captured["json"] = json
-            assert isinstance(json["embedded_image_base64"], str)
-            assert base64.b64decode(json["embedded_image_base64"], validate=True) == image
-            return backend.post("/api/civitai-recipes/import", json=json)
-
-    class OfflineTransport:
-        def get_json(self, url, *, params=None, headers=None):
-            assert params == {"withMeta": "true", "imageId": 123}
-            fixture = project_root / "backend/tests/fixtures/civitai/api/image_123.json"
-            return (200, json.loads(fixture.read_text()), {})
-
-    monkeypatch.setattr("httpx.Client", BackendBridge)
-    monkeypatch.setattr("app.services.civitai_recipe_pipeline.CivitaiHttpTransport", OfflineTransport)
-    monkeypatch.setattr(civitai_recipes, "_get_client", lambda: HttpBackendClient("http://offline/api"))
-    try:
-        result = civitai_recipes.civitai_recipe_import(locator=123, embedded_image=image)
-    finally:
-        backend.close()
-
-    assert captured["url"] == "http://offline/api/civitai-recipes/import"
-    assert result["ok"] is True
-    assert result["data"]["recipe"]["raw"]["embedded_metadata"]["format"] == "PNG"
-    assert result["data"]["recipe"]["raw"]["embedded_metadata"]["a1111"]["prompt"].startswith("masterpiece, 1girl, red dress")
-
-
 def test_inspect_is_pure_and_returns_canonical_evidence_diagnostics() -> None:
     with patch("app.api.civitai_recipes.submit_custom") as submit:
         response = TestClient(app).post("/api/civitai-recipes/inspect", json={"recipe": recipe_payload()})

@@ -76,8 +76,10 @@ Approval request:
    cancelled, or reaches completion.
 6. Review registration fields from terminal status: `output_path`,
    `registered_lora_name`, and `registration_error`.
-7. If training completed and a registered LoRA exists, call
-   `lora_train_smoke_test`.
+7. If training completed and a registered LoRA exists, run the smoke test via
+   the backend endpoint `POST /api/lora-train/jobs/{job_id}/smoke-test`
+   (the dedicated MCP tool was removed in the 2026-07 tool consolidation), or
+   simply submit a normal `generate_image` call with the new LoRA.
 8. Read final `lora_train_job_status` after smoke testing and produce the
    terminal report.
 
