@@ -52,6 +52,10 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("gallery_rerun", "mcp_server.tools.gallery", "gallery_rerun", "plain_text", ("POST /api/gallery/{image_id}/rerun",)),
     # ComfyUI ops
     ToolCatalogEntry("free_comfyui_memory", "mcp_server.tools.comfyui", "free_comfyui_memory", "json_string", ("POST <ComfyUI>/free",)),
+    # Style presets (use path only; authoring/maintenance stays on backend HTTP)
+    ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
+    ToolCatalogEntry("get_style_preset", "mcp_server.tools.style_presets", "get_style_preset", "json_string", ("GET /api/style-presets/{preset_id}",)),
+    ToolCatalogEntry("compose_style_preset", "mcp_server.tools.style_presets", "compose_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/compose",)),
     # LoRA training
     ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
     ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",)),

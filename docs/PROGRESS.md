@@ -31,19 +31,27 @@
    （回 `acquiring_resources`，agent 輪詢 installed 後重呼叫；`download_missing=false` 則立即
    用替代模型生）、預設一次抽 4 張。走既有一般生圖佇列，完成後 job 狀態直接回 gallery
    image_id/path，可用 `gallery_rerun` 迭代。
-4. **MCP 工具 75 → 20**（`mcp-server/mcp_server/tool_catalog.py`）：Civitai 低階工具鏈
+4. **MCP 工具 75 → 26**（`mcp-server/mcp_server/tool_catalog.py`）：Civitai 低階工具鏈
    （inspect/select/install、import/resolve/build/run、variant/variation-set、source-alias
-   全家桶共 37 個）、style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢
-   等全部移出 MCP。Civitai 流程只剩四個意圖級工具：`civitai_source_info`、
-   `civitai_generate_like`、`civitai_resource_acquire`、`civitai_resource_status`。
-   舊 strict 管線的 backend HTTP 路由（`/api/civitai-recipes/*`）保留未動，需要精確重現
-   稽核時仍可用。MCP client 預設 timeout 30→60 秒，Civitai import 路徑 300 秒。
+   全家桶共 37 個）、workflow catalog 維護、ComfyUI node 查詢、LoRA dataset 工具組、
+   style preset 維護（create/reindex/validate）移出 MCP。Civitai 流程只剩四個意圖級工具：
+   `civitai_source_info`、`civitai_generate_like`、`civitai_resource_acquire`、
+   `civitai_resource_status`。經確認為實際使用中而保留／恢復的：custom workflow 兩個
+   （img2img/ControlNet/inpaint 與影片）、`free_comfyui_memory`、style preset 使用路徑
+   （list/get/compose）。舊 strict 管線的 backend HTTP 路由（`/api/civitai-recipes/*`）
+   保留未動，需要精確重現稽核時仍可用。MCP client 預設 timeout 30→60 秒，Civitai import
+   路徑 300 秒。
 5. **測試**：刪除 R1–R11 稽核證據型測試與 fixtures、已移除工具的 MCP 測試；新增 digest
    cache / sampler 對照 / 分層規劃 / generate-like / acquire 的離線測試
    （`backend/tests/test_civitai_easy.py`、`mcp-server/tests/test_civitai_tools.py`）。
-   回歸：Backend `875 passed`、MCP `62 passed`、pipeline `46 passed`。
+   回歸：Backend `875 passed`、MCP `74 passed`、pipeline `46 passed`。
 6. **文件**：本檔重寫；根目錄雜物與過時 spec 移入 `docs/archive/2026-07-legacy/`；
    `docs/` 只留 GOAL、PROGRESS、mcp-setup、setup-guide、LoRA runbook。
+7. **Hermes skills 同步**（`~/.hermes/skills/`，repo 外）：主 skill `creative/ai-drawing` 重寫為 v3.0
+   （意圖→工具對照＋prompt 判斷＋紅線，199→~80 行；舊版與稽核時代 references 歸檔至
+   `skill-archive/ai-drawing-v2.1-strict-20260715` 與 `references/archive-strict-era/`）；
+   discord-menu v2.1（保留輕量 preset 選單＋新增 Civitai 連結入口）；ai-video-generation、
+   comfyui、image-generation-prompting 的過時工具引用逐一修正或加註 superseded banner。
 
 **下一步（實機驗證清單）**：
 - [ ] 啟動 backend + ComfyUI，用 MCP 實跑：`civitai_source_info(一張喜歡的圖)` →

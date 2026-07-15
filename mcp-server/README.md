@@ -41,6 +41,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
 | `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
+| `list_style_presets` | `json_string` | GET /api/style-presets/ |
+| `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
+| `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
 | `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
