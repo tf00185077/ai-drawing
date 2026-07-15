@@ -118,6 +118,26 @@ def test_image_locator_uses_public_images_query_endpoint_with_image_id() -> None
     ]
 
 
+def test_exact_image_locator_retries_soft_rating_when_default_filter_hides_candidate() -> None:
+    image = _json_fixture("image_123.json")
+    transport = FakeTransport([
+        CivitaiTransportResponse(200, {"items": []}, {}),
+        CivitaiTransportResponse(200, {"items": [image]}, {}),
+    ])
+
+    result = acquire_civitai_recipe("123", transport=transport)
+
+    assert result.image_id == 123
+    assert [call["params"] for call in transport.calls] == [
+        {"withMeta": "true", "imageId": 123},
+        {"withMeta": "true", "imageId": 123, "nsfw": "Soft"},
+    ]
+    assert [entry["params"] for entry in result.provenance["requests"]] == [
+        {"withMeta": "true", "imageId": 123},
+        {"withMeta": "true", "imageId": 123, "nsfw": "Soft"},
+    ]
+
+
 def test_images_requests_force_with_meta_and_ambiguous_post_or_model_fails_closed() -> None:
     transport = FakeTransport(
         [CivitaiTransportResponse(200, _json_fixture("post_777_images.json"), {})]

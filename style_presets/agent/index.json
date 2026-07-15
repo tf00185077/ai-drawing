@@ -77,6 +77,20 @@
       "diffusion_model": "hosekiLustrousmixAnima_animaV10.safetensors"
     },
     {
+      "id": "japanese-a",
+      "name": "日系a",
+      "chinese_name": null,
+      "profiles": [
+        "portrait"
+      ],
+      "note_path": "style_presets/human/japanese-a.md",
+      "template": null,
+      "checkpoint": "aMixIllustrious_aMix.safetensors",
+      "lora": null,
+      "loras": [],
+      "diffusion_model": null
+    },
+    {
       "id": "light-shadow-japanese-anime",
       "name": "光影日式動畫",
       "chinese_name": null,
