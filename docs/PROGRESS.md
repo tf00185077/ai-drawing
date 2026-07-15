@@ -53,6 +53,26 @@
    discord-menu v2.1（保留輕量 preset 選單＋新增 Civitai 連結入口）；ai-video-generation、
    comfyui、image-generation-prompting 的過時工具引用逐一修正或加註 superseded banner。
 
+**2026-07-15 補強：下載資源按模型家族明確分類（Anima 拆件自動分流）**
+
+需求：checkpoint 依家族（Illustrious／SDXL／Anima）明確辨識，下載路徑維持外接硬碟、
+使用者不填任何路徑。實作（backend `880 passed`、MCP `77 passed`）：
+
+1. **家族辨識加入 Anima**：`normalize_model_family`（civitai_resource_acquire）與帳本
+   `_audited_model_family`（civitai_local_identity_ledger）都認得 `anima`；家族依 Civitai
+   `baseModel` 標籤判定並記錄在資源 notes 的 `model_family`。
+2. **Anima 拆件包自動分流**：Civitai 把 Anima 的 diffusion／`_txt` text encoder／VAE
+   統一標成 checkpoint。`civitai_resource_acquire` 遇到「checkpoint＋家族 anima」時改抓
+   該版本全部檔案，依檔名慣例（`_txt`→text_encoders、`vae`→vae、其餘→diffusion_models）
+   各自分流到 `.env` 的 `COMFYUI_*_DIR`（全在外接硬碟），一次呼叫裝齊整組；回傳新增
+   `resources` 陣列（每檔一筆帳本紀錄）。單檔資源行為不變。
+3. **generate-like 同家族替代**：原圖 checkpoint 本地沒有需要替代時，先從 AIR urn 的
+   生態系段解析原圖家族，優先挑帳本中同家族的本地 checkpoint，沒有才退回預設模型；
+   替代訊息會註明是同家族替代。
+4. **Skill 同步**：Hermes `creative/ai-drawing`（英＋zh-TW 鏡像）更新下載與 Anima 拆件
+   說明——工具已自動抓齊分流，skill 保留的是拆件 workflow 接線與
+   `clip input is invalid: None` 診斷知識。
+
 **下一步（實機驗證清單）**：
 - [ ] 啟動 backend + ComfyUI，用 MCP 實跑：`civitai_source_info(一張喜歡的圖)` →
       `civitai_generate_like(同圖, prompt="想要的主題")`，確認 4 張圖進 gallery。

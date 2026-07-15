@@ -64,6 +64,8 @@ def _audited_model_family(row: DownloadedResource, errors: list[dict[str, str]])
         return "illustrious"
     if normalized == "sdxl" or normalized.startswith("sdxl "):
         return "sdxl"
+    if normalized == "anima" or normalized.startswith("anima "):
+        return "anima"
     errors.append({"field": "notes.model_family", "code": "unsupported_persisted_model_family"})
     return None
 

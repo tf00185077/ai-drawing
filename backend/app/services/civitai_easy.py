@@ -21,7 +21,7 @@ from app.core.queue import submit as queue_submit
 from app.core.resources import default_checkpoint, list_checkpoints, list_loras
 from app.services.civitai_local_identity_ledger import local_identity_ledger
 from app.services.civitai_recipe_pipeline import import_recipe
-from app.services.civitai_resource_acquire import AcquireError, start_acquisition
+from app.services.civitai_resource_acquire import AcquireError, normalize_model_family, start_acquisition
 from app.services.civitai_sampling import split_sampler_scheduler
 
 
@@ -41,6 +41,27 @@ class EasyGenerateError(Exception):
 
 def _stem(name: str) -> str:
     return Path(name.strip()).stem.casefold()
+
+
+def _air_family(air: Any) -> str | None:
+    """Architecture family from an AIR urn's ecosystem segment (urn:air:<ecosystem>:…)."""
+    if not isinstance(air, str):
+        return None
+    parts = air.split(":")
+    if len(parts) < 3 or parts[0] != "urn" or parts[1] != "air":
+        return None
+    return normalize_model_family(parts[2])
+
+
+def _same_family_local_checkpoint(family: str, ledger: dict, local_names: list[str]) -> str | None:
+    """A locally installed checkpoint whose recorded family matches the source's."""
+    for entry in ledger.values():
+        if entry.normalized_kind() != "checkpoint" or entry.model_family != family:
+            continue
+        matched = _match_by_name(Path(entry.local_path).name, local_names)
+        if matched:
+            return matched
+    return None
 
 
 def _match_by_name(wanted: str, local_names: list[str]) -> str | None:
@@ -143,9 +164,19 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
             warnings.append(f"{kind}「{name}」不在 best-effort 流程處理範圍，已略過")
 
     if checkpoint_name is None:
-        fallback = default_checkpoint(settings)
-        original = next((str(r.get("name") or "") for r in recipe.get("resources", []) if r.get("kind") == "checkpoint"), None)
+        source_checkpoint = next((r for r in recipe.get("resources", []) if r.get("kind") == "checkpoint"), None)
+        original = str(source_checkpoint.get("name") or "") if source_checkpoint else None
+        wanted_family = _air_family(source_checkpoint.get("air")) if source_checkpoint else None
+        fallback = None
+        if wanted_family:
+            fallback = _same_family_local_checkpoint(wanted_family, ledger, local_checkpoints)
         if fallback:
+            checkpoint_name = fallback
+            substitutions.append(
+                f"checkpoint：原作用「{original}」，本地沒有，暫以同家族（{wanted_family}）的「{fallback}」代替"
+                "（下載完成後重呼叫可用原模型）"
+            )
+        elif fallback := default_checkpoint(settings):
             checkpoint_name = fallback
             if original:
                 substitutions.append(f"checkpoint：原作用「{original}」，本地沒有，暫以「{fallback}」代替（下載完成後重呼叫可用原模型）")
