@@ -3,12 +3,14 @@ from pydantic import ValidationError
 
 from app.core.prompt_library_models import (
     PromptCategory,
+    PromptCombination,
     PromptEntry,
     PromptEntryRef,
     PromptFragment,
+    PromptLibraryManifest,
 )
 from app.core.prompt_library_errors import PromptLibraryError
-from app.schemas.prompt_library import ArchiveRequest, EntryWriteRequest
+from app.schemas.prompt_library import ArchiveRequest, ComposeRequest, EntryWriteRequest
 
 
 def entry(**overrides):
@@ -58,6 +60,42 @@ def test_fragment_kind_and_reference_must_agree() -> None:
         PromptFragment(kind="literal", ref=ref, snapshot="free text")
 
 
+def test_persisted_models_reject_extra_fields_and_invalid_versions_or_revisions() -> None:
+    with pytest.raises(ValidationError):
+        entry(unexpected=True)
+    with pytest.raises(ValidationError):
+        PromptLibraryManifest(
+            library_id="default",
+            name="AI Drawing Prompt Library",
+            description_zh="提示詞資料庫",
+            unexpected=True,
+        )
+    with pytest.raises(ValidationError):
+        PromptCategory(
+            schema_version=2,
+            id="clothing",
+            polarity="positive",
+            name_zh="服裝",
+            description_zh="服裝提示詞",
+        )
+    with pytest.raises(ValidationError):
+        entry(revision=0)
+    with pytest.raises(ValidationError):
+        PromptCombination(
+            schema_version=2,
+            id="portrait",
+            name_zh="肖像",
+            description_zh="肖像提示詞組合",
+        )
+
+
+def test_fragment_rejects_blank_snapshots_and_literal_source_revisions() -> None:
+    with pytest.raises(ValidationError, match="fragment snapshot cannot be empty"):
+        PromptFragment(kind="literal", snapshot="   ")
+    with pytest.raises(ValidationError, match="literal fragment cannot have source_revision"):
+        PromptFragment(kind="literal", snapshot="free text", source_revision=1)
+
+
 def test_error_envelope_has_actionable_details() -> None:
     error = PromptLibraryError.invalid_locator("a/b")
 
@@ -68,6 +106,27 @@ def test_error_envelope_has_actionable_details() -> None:
         "hint": error.hint,
         "details": {"resource_id": "a/b"},
     }
+
+
+@pytest.mark.parametrize(
+    ("error", "code", "status_code"),
+    [
+        (PromptLibraryError.not_found("entry", "dress"), "not_found", 404),
+        (PromptLibraryError.invalid_locator("a/b"), "invalid_locator", 400),
+        (PromptLibraryError.revision_conflict(2, 1), "revision_conflict", 409),
+        (PromptLibraryError.external_change("before", "after"), "external_change", 409),
+        (PromptLibraryError.invalid_document("positive/clothing.json", "bad JSON"), "invalid_document", 422),
+        (PromptLibraryError.lock_timeout(5.0), "lock_timeout", 423),
+    ],
+)
+def test_named_errors_have_structured_http_envelopes(
+    error: PromptLibraryError, code: str, status_code: int
+) -> None:
+    assert error.code == code
+    assert error.status_code == status_code
+    assert error.as_dict()["code"] == code
+    assert error.as_dict()["message"]
+    assert error.as_dict()["hint"]
 
 
 def test_write_dtos_enforce_concurrency_and_reject_unknown_fields() -> None:
@@ -93,3 +152,12 @@ def test_write_dtos_enforce_concurrency_and_reject_unknown_fields() -> None:
             prompt="dress",
             unexpected=True,
         )
+    with pytest.raises(ValidationError):
+        EntryWriteRequest(
+            expected_revision=-1,
+            name_zh="連身裙",
+            description_zh="一件式裙裝",
+            prompt="dress",
+        )
+    with pytest.raises(ValidationError):
+        ComposeRequest(unexpected=True)
