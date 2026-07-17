@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "id": "expressions",
+  "polarity": "positive",
+  "name_zh": "表情",
+  "description_zh": "表情相關的可組合提示詞。",
+  "aliases": [
+    "表情",
+    "expressions"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "表情"
+  ],
+  "order": 30,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "gentle-smile",
+      "name_zh": "表情：gentle smile",
+      "description_zh": "加入「gentle smile」這個表情提示片段。",
+      "prompt": "gentle smile",
+      "aliases": [
+        "表情",
+        "gentle smile"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bright-smile",
+      "name_zh": "表情：bright smile",
+      "description_zh": "加入「bright smile」這個表情提示片段。",
+      "prompt": "bright smile",
+      "aliases": [
+        "表情",
+        "bright smile"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "laughing",
+      "name_zh": "表情：laughing",
+      "description_zh": "加入「laughing」這個表情提示片段。",
+      "prompt": "laughing",
+      "aliases": [
+        "表情",
+        "laughing"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "serious-expression",
+      "name_zh": "表情：serious expression",
+      "description_zh": "加入「serious expression」這個表情提示片段。",
+      "prompt": "serious expression",
+      "aliases": [
+        "表情",
+        "serious expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "confident-expression",
+      "name_zh": "表情：confident expression",
+      "description_zh": "加入「confident expression」這個表情提示片段。",
+      "prompt": "confident expression",
+      "aliases": [
+        "表情",
+        "confident expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "shy-expression",
+      "name_zh": "表情：shy expression",
+      "description_zh": "加入「shy expression」這個表情提示片段。",
+      "prompt": "shy expression",
+      "aliases": [
+        "表情",
+        "shy expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "surprised-expression",
+      "name_zh": "表情：surprised expression",
+      "description_zh": "加入「surprised expression」這個表情提示片段。",
+      "prompt": "surprised expression",
+      "aliases": [
+        "表情",
+        "surprised expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "angry-expression",
+      "name_zh": "表情：angry expression",
+      "description_zh": "加入「angry expression」這個表情提示片段。",
+      "prompt": "angry expression",
+      "aliases": [
+        "表情",
+        "angry expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sad-expression",
+      "name_zh": "表情：sad expression",
+      "description_zh": "加入「sad expression」這個表情提示片段。",
+      "prompt": "sad expression",
+      "aliases": [
+        "表情",
+        "sad expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "crying",
+      "name_zh": "表情：crying",
+      "description_zh": "加入「crying」這個表情提示片段。",
+      "prompt": "crying",
+      "aliases": [
+        "表情",
+        "crying"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sleepy-expression",
+      "name_zh": "表情：sleepy expression",
+      "description_zh": "加入「sleepy expression」這個表情提示片段。",
+      "prompt": "sleepy expression",
+      "aliases": [
+        "表情",
+        "sleepy expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "determined-expression",
+      "name_zh": "表情：determined expression",
+      "description_zh": "加入「determined expression」這個表情提示片段。",
+      "prompt": "determined expression",
+      "aliases": [
+        "表情",
+        "determined expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "mischievous-grin",
+      "name_zh": "表情：mischievous grin",
+      "description_zh": "加入「mischievous grin」這個表情提示片段。",
+      "prompt": "mischievous grin",
+      "aliases": [
+        "表情",
+        "mischievous grin"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "blushing",
+      "name_zh": "表情：blushing",
+      "description_zh": "加入「blushing」這個表情提示片段。",
+      "prompt": "blushing",
+      "aliases": [
+        "表情",
+        "blushing"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pensive-expression",
+      "name_zh": "表情：pensive expression",
+      "description_zh": "加入「pensive expression」這個表情提示片段。",
+      "prompt": "pensive expression",
+      "aliases": [
+        "表情",
+        "pensive expression"
+      ],
+      "keywords": [
+        "expressions",
+        "positive",
+        "表情"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

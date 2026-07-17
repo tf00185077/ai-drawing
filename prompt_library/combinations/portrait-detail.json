@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "portrait-detail",
+  "name_zh": "細節肖像",
+  "description_zh": "含細節欄位的舊版肖像模板",
+  "aliases": [
+    "細節肖像"
+  ],
+  "keywords": [
+    "legacy",
+    "template"
+  ],
+  "order": 20,
+  "revision": 1,
+  "archived": false,
+  "legacy_template": true,
+  "positive": [
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "1girl, {人物}, {風格}, solo, {細節}",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 10
+    }
+  ],
+  "negative": [],
+  "positive_prompt_snapshot": "1girl, {人物}, {風格}, solo, {細節}",
+  "negative_prompt_snapshot": ""
+}

@@ -1,0 +1,633 @@
+{
+  "schema_version": 1,
+  "id": "accessories",
+  "polarity": "positive",
+  "name_zh": "配件",
+  "description_zh": "配件相關的可組合提示詞。",
+  "aliases": [
+    "配件",
+    "accessories"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "配件"
+  ],
+  "order": 50,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "glasses",
+      "name_zh": "配件：glasses",
+      "description_zh": "加入「glasses」這個配件提示片段。",
+      "prompt": "glasses",
+      "aliases": [
+        "配件",
+        "glasses"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sunglasses",
+      "name_zh": "配件：sunglasses",
+      "description_zh": "加入「sunglasses」這個配件提示片段。",
+      "prompt": "sunglasses",
+      "aliases": [
+        "配件",
+        "sunglasses"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "earrings",
+      "name_zh": "配件：earrings",
+      "description_zh": "加入「earrings」這個配件提示片段。",
+      "prompt": "earrings",
+      "aliases": [
+        "配件",
+        "earrings"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "necklace",
+      "name_zh": "配件：necklace",
+      "description_zh": "加入「necklace」這個配件提示片段。",
+      "prompt": "necklace",
+      "aliases": [
+        "配件",
+        "necklace"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "choker",
+      "name_zh": "配件：choker",
+      "description_zh": "加入「choker」這個配件提示片段。",
+      "prompt": "choker",
+      "aliases": [
+        "配件",
+        "choker"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bracelet",
+      "name_zh": "配件：bracelet",
+      "description_zh": "加入「bracelet」這個配件提示片段。",
+      "prompt": "bracelet",
+      "aliases": [
+        "配件",
+        "bracelet"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wristwatch",
+      "name_zh": "配件：wristwatch",
+      "description_zh": "加入「wristwatch」這個配件提示片段。",
+      "prompt": "wristwatch",
+      "aliases": [
+        "配件",
+        "wristwatch"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ring",
+      "name_zh": "配件：ring",
+      "description_zh": "加入「ring」這個配件提示片段。",
+      "prompt": "ring",
+      "aliases": [
+        "配件",
+        "ring"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hair-ribbon",
+      "name_zh": "配件：hair ribbon",
+      "description_zh": "加入「hair ribbon」這個配件提示片段。",
+      "prompt": "hair ribbon",
+      "aliases": [
+        "配件",
+        "hair ribbon"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hair-ornament",
+      "name_zh": "配件：hair ornament",
+      "description_zh": "加入「hair ornament」這個配件提示片段。",
+      "prompt": "hair ornament",
+      "aliases": [
+        "配件",
+        "hair ornament"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flower-crown",
+      "name_zh": "配件：flower crown",
+      "description_zh": "加入「flower crown」這個配件提示片段。",
+      "prompt": "flower crown",
+      "aliases": [
+        "配件",
+        "flower crown"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "tiara",
+      "name_zh": "配件：tiara",
+      "description_zh": "加入「tiara」這個配件提示片段。",
+      "prompt": "tiara",
+      "aliases": [
+        "配件",
+        "tiara"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hat",
+      "name_zh": "配件：hat",
+      "description_zh": "加入「hat」這個配件提示片段。",
+      "prompt": "hat",
+      "aliases": [
+        "配件",
+        "hat"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "beret",
+      "name_zh": "配件：beret",
+      "description_zh": "加入「beret」這個配件提示片段。",
+      "prompt": "beret",
+      "aliases": [
+        "配件",
+        "beret"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cap",
+      "name_zh": "配件：cap",
+      "description_zh": "加入「cap」這個配件提示片段。",
+      "prompt": "cap",
+      "aliases": [
+        "配件",
+        "cap"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "scarf",
+      "name_zh": "配件：scarf",
+      "description_zh": "加入「scarf」這個配件提示片段。",
+      "prompt": "scarf",
+      "aliases": [
+        "配件",
+        "scarf"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "necktie",
+      "name_zh": "配件：necktie",
+      "description_zh": "加入「necktie」這個配件提示片段。",
+      "prompt": "necktie",
+      "aliases": [
+        "配件",
+        "necktie"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bow-tie",
+      "name_zh": "配件：bow tie",
+      "description_zh": "加入「bow tie」這個配件提示片段。",
+      "prompt": "bow tie",
+      "aliases": [
+        "配件",
+        "bow tie"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "gloves",
+      "name_zh": "配件：gloves",
+      "description_zh": "加入「gloves」這個配件提示片段。",
+      "prompt": "gloves",
+      "aliases": [
+        "配件",
+        "gloves"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 190,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fingerless-gloves",
+      "name_zh": "配件：fingerless gloves",
+      "description_zh": "加入「fingerless gloves」這個配件提示片段。",
+      "prompt": "fingerless gloves",
+      "aliases": [
+        "配件",
+        "fingerless gloves"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 200,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "handbag",
+      "name_zh": "配件：handbag",
+      "description_zh": "加入「handbag」這個配件提示片段。",
+      "prompt": "handbag",
+      "aliases": [
+        "配件",
+        "handbag"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 210,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "backpack",
+      "name_zh": "配件：backpack",
+      "description_zh": "加入「backpack」這個配件提示片段。",
+      "prompt": "backpack",
+      "aliases": [
+        "配件",
+        "backpack"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 220,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "umbrella",
+      "name_zh": "配件：umbrella",
+      "description_zh": "加入「umbrella」這個配件提示片段。",
+      "prompt": "umbrella",
+      "aliases": [
+        "配件",
+        "umbrella"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 230,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "parasol",
+      "name_zh": "配件：parasol",
+      "description_zh": "加入「parasol」這個配件提示片段。",
+      "prompt": "parasol",
+      "aliases": [
+        "配件",
+        "parasol"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 240,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sword",
+      "name_zh": "配件：sword",
+      "description_zh": "加入「sword」這個配件提示片段。",
+      "prompt": "sword",
+      "aliases": [
+        "配件",
+        "sword"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 250,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "staff",
+      "name_zh": "配件：staff",
+      "description_zh": "加入「staff」這個配件提示片段。",
+      "prompt": "staff",
+      "aliases": [
+        "配件",
+        "staff"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 260,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "magic-wand",
+      "name_zh": "配件：magic wand",
+      "description_zh": "加入「magic wand」這個配件提示片段。",
+      "prompt": "magic wand",
+      "aliases": [
+        "配件",
+        "magic wand"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 270,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "headphones",
+      "name_zh": "配件：headphones",
+      "description_zh": "加入「headphones」這個配件提示片段。",
+      "prompt": "headphones",
+      "aliases": [
+        "配件",
+        "headphones"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 280,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "earbuds",
+      "name_zh": "配件：earbuds",
+      "description_zh": "加入「earbuds」這個配件提示片段。",
+      "prompt": "earbuds",
+      "aliases": [
+        "配件",
+        "earbuds"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 290,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "mask",
+      "name_zh": "配件：mask",
+      "description_zh": "加入「mask」這個配件提示片段。",
+      "prompt": "mask",
+      "aliases": [
+        "配件",
+        "mask"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 300,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "eyepatch",
+      "name_zh": "配件：eyepatch",
+      "description_zh": "加入「eyepatch」這個配件提示片段。",
+      "prompt": "eyepatch",
+      "aliases": [
+        "配件",
+        "eyepatch"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 310,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wings",
+      "name_zh": "配件：wings",
+      "description_zh": "加入「wings」這個配件提示片段。",
+      "prompt": "wings",
+      "aliases": [
+        "配件",
+        "wings"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 320,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "halo",
+      "name_zh": "配件：halo",
+      "description_zh": "加入「halo」這個配件提示片段。",
+      "prompt": "halo",
+      "aliases": [
+        "配件",
+        "halo"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 330,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cat-ears",
+      "name_zh": "配件：cat ears",
+      "description_zh": "加入「cat ears」這個配件提示片段。",
+      "prompt": "cat ears",
+      "aliases": [
+        "配件",
+        "cat ears"
+      ],
+      "keywords": [
+        "accessories",
+        "positive",
+        "配件"
+      ],
+      "order": 340,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

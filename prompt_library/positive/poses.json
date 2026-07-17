@@ -1,0 +1,597 @@
+{
+  "schema_version": 1,
+  "id": "poses",
+  "polarity": "positive",
+  "name_zh": "姿勢",
+  "description_zh": "姿勢相關的可組合提示詞。",
+  "aliases": [
+    "姿勢",
+    "poses"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "姿勢"
+  ],
+  "order": 70,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "standing",
+      "name_zh": "姿勢：standing",
+      "description_zh": "加入「standing」這個姿勢提示片段。",
+      "prompt": "standing",
+      "aliases": [
+        "姿勢",
+        "standing"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sitting",
+      "name_zh": "姿勢：sitting",
+      "description_zh": "加入「sitting」這個姿勢提示片段。",
+      "prompt": "sitting",
+      "aliases": [
+        "姿勢",
+        "sitting"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "kneeling",
+      "name_zh": "姿勢：kneeling",
+      "description_zh": "加入「kneeling」這個姿勢提示片段。",
+      "prompt": "kneeling",
+      "aliases": [
+        "姿勢",
+        "kneeling"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "lying-down",
+      "name_zh": "姿勢：lying down",
+      "description_zh": "加入「lying down」這個姿勢提示片段。",
+      "prompt": "lying down",
+      "aliases": [
+        "姿勢",
+        "lying down"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "crouching",
+      "name_zh": "姿勢：crouching",
+      "description_zh": "加入「crouching」這個姿勢提示片段。",
+      "prompt": "crouching",
+      "aliases": [
+        "姿勢",
+        "crouching"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "leaning-forward",
+      "name_zh": "姿勢：leaning forward",
+      "description_zh": "加入「leaning forward」這個姿勢提示片段。",
+      "prompt": "leaning forward",
+      "aliases": [
+        "姿勢",
+        "leaning forward"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "leaning-against-wall",
+      "name_zh": "姿勢：leaning against wall",
+      "description_zh": "加入「leaning against wall」這個姿勢提示片段。",
+      "prompt": "leaning against wall",
+      "aliases": [
+        "姿勢",
+        "leaning against wall"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "arms-crossed",
+      "name_zh": "姿勢：arms crossed",
+      "description_zh": "加入「arms crossed」這個姿勢提示片段。",
+      "prompt": "arms crossed",
+      "aliases": [
+        "姿勢",
+        "arms crossed"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hands-on-hips",
+      "name_zh": "姿勢：hands on hips",
+      "description_zh": "加入「hands on hips」這個姿勢提示片段。",
+      "prompt": "hands on hips",
+      "aliases": [
+        "姿勢",
+        "hands on hips"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hand-on-chest",
+      "name_zh": "姿勢：hand on chest",
+      "description_zh": "加入「hand on chest」這個姿勢提示片段。",
+      "prompt": "hand on chest",
+      "aliases": [
+        "姿勢",
+        "hand on chest"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hand-on-chin",
+      "name_zh": "姿勢：hand on chin",
+      "description_zh": "加入「hand on chin」這個姿勢提示片段。",
+      "prompt": "hand on chin",
+      "aliases": [
+        "姿勢",
+        "hand on chin"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hand-in-hair",
+      "name_zh": "姿勢：hand in hair",
+      "description_zh": "加入「hand in hair」這個姿勢提示片段。",
+      "prompt": "hand in hair",
+      "aliases": [
+        "姿勢",
+        "hand in hair"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hands-behind-back",
+      "name_zh": "姿勢：hands behind back",
+      "description_zh": "加入「hands behind back」這個姿勢提示片段。",
+      "prompt": "hands behind back",
+      "aliases": [
+        "姿勢",
+        "hands behind back"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hands-in-pockets",
+      "name_zh": "姿勢：hands in pockets",
+      "description_zh": "加入「hands in pockets」這個姿勢提示片段。",
+      "prompt": "hands in pockets",
+      "aliases": [
+        "姿勢",
+        "hands in pockets"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "one-hand-raised",
+      "name_zh": "姿勢：one hand raised",
+      "description_zh": "加入「one hand raised」這個姿勢提示片段。",
+      "prompt": "one hand raised",
+      "aliases": [
+        "姿勢",
+        "one hand raised"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "both-arms-raised",
+      "name_zh": "姿勢：both arms raised",
+      "description_zh": "加入「both arms raised」這個姿勢提示片段。",
+      "prompt": "both arms raised",
+      "aliases": [
+        "姿勢",
+        "both arms raised"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "outstretched-arms",
+      "name_zh": "姿勢：outstretched arms",
+      "description_zh": "加入「outstretched arms」這個姿勢提示片段。",
+      "prompt": "outstretched arms",
+      "aliases": [
+        "姿勢",
+        "outstretched arms"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "open-arms",
+      "name_zh": "姿勢：open arms",
+      "description_zh": "加入「open arms」這個姿勢提示片段。",
+      "prompt": "open arms",
+      "aliases": [
+        "姿勢",
+        "open arms"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "peace-sign",
+      "name_zh": "姿勢：peace sign",
+      "description_zh": "加入「peace sign」這個姿勢提示片段。",
+      "prompt": "peace sign",
+      "aliases": [
+        "姿勢",
+        "peace sign"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 190,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "finger-heart",
+      "name_zh": "姿勢：finger heart",
+      "description_zh": "加入「finger heart」這個姿勢提示片段。",
+      "prompt": "finger heart",
+      "aliases": [
+        "姿勢",
+        "finger heart"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 200,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "salute",
+      "name_zh": "姿勢：salute",
+      "description_zh": "加入「salute」這個姿勢提示片段。",
+      "prompt": "salute",
+      "aliases": [
+        "姿勢",
+        "salute"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 210,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "head-tilt",
+      "name_zh": "姿勢：head tilt",
+      "description_zh": "加入「head tilt」這個姿勢提示片段。",
+      "prompt": "head tilt",
+      "aliases": [
+        "姿勢",
+        "head tilt"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 220,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "crossed-legs",
+      "name_zh": "姿勢：crossed legs",
+      "description_zh": "加入「crossed legs」這個姿勢提示片段。",
+      "prompt": "crossed legs",
+      "aliases": [
+        "姿勢",
+        "crossed legs"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 230,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "one-knee-up",
+      "name_zh": "姿勢：one knee up",
+      "description_zh": "加入「one knee up」這個姿勢提示片段。",
+      "prompt": "one knee up",
+      "aliases": [
+        "姿勢",
+        "one knee up"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 240,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "contrapposto",
+      "name_zh": "姿勢：contrapposto",
+      "description_zh": "加入「contrapposto」這個姿勢提示片段。",
+      "prompt": "contrapposto",
+      "aliases": [
+        "姿勢",
+        "contrapposto"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 250,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dynamic-pose",
+      "name_zh": "姿勢：dynamic pose",
+      "description_zh": "加入「dynamic pose」這個姿勢提示片段。",
+      "prompt": "dynamic pose",
+      "aliases": [
+        "姿勢",
+        "dynamic pose"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 260,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "action-stance",
+      "name_zh": "姿勢：action stance",
+      "description_zh": "加入「action stance」這個姿勢提示片段。",
+      "prompt": "action stance",
+      "aliases": [
+        "姿勢",
+        "action stance"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 270,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fighting-stance",
+      "name_zh": "姿勢：fighting stance",
+      "description_zh": "加入「fighting stance」這個姿勢提示片段。",
+      "prompt": "fighting stance",
+      "aliases": [
+        "姿勢",
+        "fighting stance"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 280,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "relaxed-pose",
+      "name_zh": "姿勢：relaxed pose",
+      "description_zh": "加入「relaxed pose」這個姿勢提示片段。",
+      "prompt": "relaxed pose",
+      "aliases": [
+        "姿勢",
+        "relaxed pose"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 290,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "elegant-pose",
+      "name_zh": "姿勢：elegant pose",
+      "description_zh": "加入「elegant pose」這個姿勢提示片段。",
+      "prompt": "elegant pose",
+      "aliases": [
+        "姿勢",
+        "elegant pose"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 300,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "floating-pose",
+      "name_zh": "姿勢：floating pose",
+      "description_zh": "加入「floating pose」這個姿勢提示片段。",
+      "prompt": "floating pose",
+      "aliases": [
+        "姿勢",
+        "floating pose"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 310,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "foreshortened-pose",
+      "name_zh": "姿勢：foreshortened pose",
+      "description_zh": "加入「foreshortened pose」這個姿勢提示片段。",
+      "prompt": "foreshortened pose",
+      "aliases": [
+        "姿勢",
+        "foreshortened pose"
+      ],
+      "keywords": [
+        "poses",
+        "positive",
+        "姿勢"
+      ],
+      "order": 320,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
