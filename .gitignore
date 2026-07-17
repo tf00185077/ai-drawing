@@ -85,3 +85,6 @@ backend/.file_sha256_cache.json
 
 # Prompt Library runtime write lock
 prompt_library/.lock
+
+# Agent implementation worktrees
+.worktrees/
