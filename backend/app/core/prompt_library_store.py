@@ -163,6 +163,7 @@ class PromptLibraryStore:
         try:
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
+                self._assert_safe_directory(path.parent, self._locator(path.parent))
                 with tempfile.NamedTemporaryFile(
                     mode="wb",
                     dir=path.parent,
@@ -331,24 +332,42 @@ class PromptLibraryStore:
             raise _DocumentIssue("unsafe_path", locator, "path escapes the Prompt Library root", {}) from exc
 
     def _assert_safe_directory(self, path: Path, locator: str) -> None:
-        if path == self.root:
-            return
+        path = Path(path).absolute()
+        self._assert_lexically_within_root(path)
         try:
-            status = path.lstat()
-        except FileNotFoundError:
-            return
-        except OSError as exc:
-            raise _DocumentIssue("io_error", locator, str(exc), {}) from exc
-        if self._is_reparse_point(path, status):
-            raise _DocumentIssue("unsafe_path", locator, "linked directories are not allowed", {})
-        try:
-            if not path.is_dir():
-                raise _DocumentIssue("unsafe_path", locator, "expected a directory", {})
-            path.resolve(strict=True).relative_to(self._resolved_root)
-        except _DocumentIssue:
-            raise
-        except (OSError, ValueError) as exc:
+            relative_parts = path.relative_to(self.root).parts
+        except ValueError as exc:  # pragma: no cover - guarded above
             raise _DocumentIssue("unsafe_path", locator, "path escapes the Prompt Library root", {}) from exc
+
+        current = self.root
+        for part in relative_parts:
+            current /= part
+            try:
+                status = current.lstat()
+            except FileNotFoundError:
+                try:
+                    current.resolve(strict=False).relative_to(self._resolved_root)
+                except (OSError, ValueError) as exc:
+                    raise _DocumentIssue(
+                        "unsafe_path", locator, "path escapes the Prompt Library root", {}
+                    ) from exc
+                continue
+            except OSError as exc:
+                raise _DocumentIssue("io_error", locator, str(exc), {}) from exc
+            if self._is_reparse_point(current, status):
+                raise _DocumentIssue(
+                    "unsafe_path", locator, "linked directories are not allowed", {}
+                )
+            try:
+                if not current.is_dir():
+                    raise _DocumentIssue("unsafe_path", locator, "expected a directory", {})
+                current.resolve(strict=True).relative_to(self._resolved_root)
+            except _DocumentIssue:
+                raise
+            except (OSError, ValueError) as exc:
+                raise _DocumentIssue(
+                    "unsafe_path", locator, "path escapes the Prompt Library root", {}
+                ) from exc
 
     @staticmethod
     def _is_reparse_point(path: Path, status: os.stat_result) -> bool:

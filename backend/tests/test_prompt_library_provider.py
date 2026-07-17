@@ -11,7 +11,7 @@ from filelock import FileLock
 
 from app.core.prompt_library import FilePromptLibraryProvider
 from app.core.prompt_library_errors import PromptLibraryError
-from app.core.prompt_library_models import PromptCategory
+from app.core.prompt_library_models import PromptCategory, PromptCombination
 from app.core.prompt_library_store import PromptLibraryStore
 
 
@@ -252,6 +252,41 @@ def test_catalog_rejects_linked_library_directories(
     assert catalog.combinations == []
     assert catalog.diagnostics[0].code == "unsafe_path"
     assert catalog.diagnostics[0].path == directory
+
+
+def test_replace_json_rejects_nested_write_below_linked_parent(library_root: Path) -> None:
+    linked_parent = library_root / "positive"
+    linked_parent.rmdir()
+    outside = library_root.parent / "outside-positive-write"
+    outside.mkdir()
+    create_directory_link(linked_parent, outside)
+    category = PromptCategory.model_validate(
+        category_dict("x", "positive", entries=[entry_dict()])
+    )
+
+    with pytest.raises(PromptLibraryError) as caught:
+        PromptLibraryStore(library_root).replace_json(
+            linked_parent / "missing-parent" / "x.json", category
+        )
+
+    assert caught.value.code == "invalid_document"
+    assert not (outside / "missing-parent" / "x.json").exists()
+
+
+def test_replace_json_creates_missing_normal_library_directories(library_root: Path) -> None:
+    (library_root / "positive").rmdir()
+    (library_root / "combinations").rmdir()
+    store = PromptLibraryStore(library_root)
+    category = PromptCategory.model_validate(
+        category_dict("clothing", "positive", entries=[entry_dict()])
+    )
+    combination = PromptCombination.model_validate(combination_dict("portrait"))
+
+    store.replace_json(store.category_path("positive", "clothing"), category)
+    store.replace_json(store.combination_path("portrait"), combination)
+
+    assert (library_root / "positive" / "clothing.json").is_file()
+    assert (library_root / "combinations" / "portrait.json").is_file()
 
 
 def test_store_does_not_leak_internal_location_mismatch(library_root: Path) -> None:
