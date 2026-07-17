@@ -327,10 +327,12 @@ def test_store_retries_when_the_file_changes_between_read_and_stat(
     path = write_category(library_root, "positive", "clothing", entries=[entry_dict()])
     original_read_bytes = Path.read_bytes
     changed = False
+    read_count = 0
 
     def read_then_change(candidate: Path) -> bytes:
-        nonlocal changed
+        nonlocal changed, read_count
         raw = original_read_bytes(candidate)
+        read_count += 1
         if candidate == path and not changed:
             changed = True
             candidate.write_bytes(raw.replace(b"dress", b"skirt"))
@@ -341,6 +343,7 @@ def test_store_retries_when_the_file_changes_between_read_and_stat(
     document = PromptLibraryStore(library_root).read_category("positive", "clothing")
 
     assert changed is True
+    assert read_count >= 4
     assert document.model.entries[0].prompt == "skirt"
 
 

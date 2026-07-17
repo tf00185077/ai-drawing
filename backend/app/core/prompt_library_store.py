@@ -221,7 +221,10 @@ class PromptLibraryStore:
             self._assert_safe_file(path, locator)
             try:
                 before = path.stat()
-                raw = path.read_bytes()
+                first_raw = path.read_bytes()
+                self._assert_safe_file(path, locator)
+                middle = path.stat()
+                second_raw = path.read_bytes()
                 self._assert_safe_file(path, locator)
                 after = path.stat()
             except FileNotFoundError as exc:
@@ -229,11 +232,12 @@ class PromptLibraryStore:
             except OSError as exc:
                 raise _DocumentIssue("io_error", locator, str(exc), {}) from exc
             if (
-                before.st_mtime_ns == after.st_mtime_ns
-                and before.st_size == after.st_size
-                and after.st_size == len(raw)
+                first_raw == second_raw
+                and before.st_mtime_ns == middle.st_mtime_ns == after.st_mtime_ns
+                and before.st_size == middle.st_size == after.st_size
+                and after.st_size == len(second_raw)
             ):
-                return raw, after.st_mtime_ns, after.st_size
+                return second_raw, after.st_mtime_ns, after.st_size
         raise _DocumentIssue(
             "unstable_snapshot",
             locator,
