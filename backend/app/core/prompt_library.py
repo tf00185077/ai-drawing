@@ -7,12 +7,17 @@ from pathlib import Path
 from typing import Protocol
 
 from app.config import get_settings
-from app.core.prompt_library_models import Polarity
+from app.core.prompt_composer import PromptComposer
+from app.core.prompt_library_models import Polarity, ResourceType
+from app.core.prompt_search import PromptSearchIndex
 from app.core.prompt_library_store import PromptLibraryStore, StoredDocument
 from app.schemas.prompt_library import (
     CatalogResponse,
     CategorySummary,
     CombinationSummary,
+    ComposeRequest,
+    ComposeResponse,
+    SearchResponse,
     VersionedCategory,
     VersionedCombination,
 )
@@ -25,6 +30,19 @@ class PromptLibraryProvider(Protocol):
 
     def get_combination(self, combination_id: str) -> VersionedCombination: ...
 
+    def compose(self, request: ComposeRequest) -> ComposeResponse: ...
+
+    def search(
+        self,
+        query: str,
+        *,
+        polarity: Polarity | None = None,
+        resource_type: ResourceType | None = None,
+        include_archived: bool = False,
+        threshold: int = 45,
+        limit: int = 50,
+    ) -> SearchResponse: ...
+
 
 class FilePromptLibraryProvider:
     def __init__(self, root: Path, lock_timeout: float = 5.0) -> None:
@@ -33,6 +51,8 @@ class FilePromptLibraryProvider:
         # Kept as an observable provider attribute while the store owns the
         # single RLock-protected snapshot/cache transaction.
         self._cache = self.store._cache
+        self._composer = PromptComposer(self.store)
+        self._search = PromptSearchIndex(self.store)
 
     def catalog(self) -> CatalogResponse:
         manifest = self.store.read_manifest()
@@ -58,6 +78,28 @@ class FilePromptLibraryProvider:
     def get_combination(self, combination_id: str) -> VersionedCombination:
         document = self.store.read_combination(combination_id)
         return VersionedCombination(combination=document.model, etag=document.etag)
+
+    def compose(self, request: ComposeRequest) -> ComposeResponse:
+        return self._composer.compose(request)
+
+    def search(
+        self,
+        query: str,
+        *,
+        polarity: Polarity | None = None,
+        resource_type: ResourceType | None = None,
+        include_archived: bool = False,
+        threshold: int = 45,
+        limit: int = 50,
+    ) -> SearchResponse:
+        return self._search.search(
+            query,
+            polarity=polarity,
+            resource_type=resource_type,
+            include_archived=include_archived,
+            threshold=threshold,
+            limit=limit,
+        )
 
     @staticmethod
     def _category_summary(document: StoredDocument) -> CategorySummary:
