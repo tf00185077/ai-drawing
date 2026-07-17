@@ -105,7 +105,22 @@ class FilePromptLibraryProvider:
         return self._writer.repair_combination(combination_id)
 
     def compose(self, request: ComposeRequest) -> ComposeResponse:
-        return self._composer.compose(request)
+        composed = self._composer.compose(request)
+        if request.save_as is None:
+            return composed
+        intent = request.save_as
+        write = self._writer.save_combination(
+            intent.id,
+            CombinationWriteRequest(
+                **intent.model_dump(exclude={"id", "positive", "negative"}),
+                positive=composed.positive,
+                negative=composed.negative,
+            ),
+        )
+        return composed.model_copy(
+            deep=True,
+            update={"saved_combination": write.combination},
+        )
 
     def search(
         self,
