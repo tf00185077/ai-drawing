@@ -1,20 +1,14 @@
-"""Long-lived, cache-aware read facade for Prompt Library JSON documents."""
+"""Long-lived facade for the safe file-backed Prompt Library store."""
 
 from __future__ import annotations
 
-import json
-import threading
-from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Protocol
 
-from pydantic import BaseModel, ValidationError
-
 from app.config import get_settings
-from app.core.prompt_library_errors import PromptLibraryError
-from app.core.prompt_library_models import Polarity, PromptCategory, PromptCombination
-from app.core.prompt_library_store import PromptLibraryStore, StoredDocument, sha256_bytes
+from app.core.prompt_library_models import Polarity
+from app.core.prompt_library_store import PromptLibraryStore, StoredDocument
 from app.schemas.prompt_library import (
     CatalogResponse,
     CategorySummary,
@@ -32,171 +26,41 @@ class PromptLibraryProvider(Protocol):
     def get_combination(self, combination_id: str) -> VersionedCombination: ...
 
 
-@dataclass(frozen=True)
-class _CacheEntry:
-    mtime_ns: int
-    size: int
-    etag: str
-    document: StoredDocument[BaseModel]
-
-
 class FilePromptLibraryProvider:
     def __init__(self, root: Path, lock_timeout: float = 5.0) -> None:
-        self.root = root.resolve()
-        self.store = PromptLibraryStore(self.root, lock_timeout=lock_timeout)
-        self._cache: dict[Path, _CacheEntry] = {}
-        self._cache_lock = threading.RLock()
+        self.store = PromptLibraryStore(root, lock_timeout=lock_timeout)
+        self.root = self.store.root
+        # Kept as an observable provider attribute while the store owns the
+        # single RLock-protected snapshot/cache transaction.
+        self._cache = self.store._cache
 
     def catalog(self) -> CatalogResponse:
         manifest = self.store.read_manifest()
-        categories, category_diagnostics = self._scan_categories()
-        combinations, combination_diagnostics = self._scan_combinations()
-        category_summaries = sorted(
-            (self._category_summary(document) for document in categories),
-            key=lambda item: (item.order, item.id),
-        )
-        combination_summaries = sorted(
-            (self._combination_summary(document) for document in combinations),
-            key=lambda item: (item.order, item.id),
-        )
+        categories, category_diagnostics = self.store.scan_categories()
+        combinations, combination_diagnostics = self.store.scan_combinations()
         return CatalogResponse(
             manifest=manifest,
-            categories=category_summaries,
-            combinations=combination_summaries,
+            categories=sorted(
+                (self._category_summary(document) for document in categories),
+                key=lambda item: (item.order, item.id),
+            ),
+            combinations=sorted(
+                (self._combination_summary(document) for document in combinations),
+                key=lambda item: (item.order, item.id),
+            ),
             diagnostics=category_diagnostics + combination_diagnostics,
         )
 
     def get_category(self, polarity: Polarity, category_id: str) -> VersionedCategory:
-        path = self.store.category_path(polarity, category_id)
-        document = self._cached_read(path, PromptCategory)
-        self._validate_category_location(document.model, path, polarity)
+        document = self.store.read_category(polarity, category_id)
         return VersionedCategory(category=document.model, etag=document.etag)
 
     def get_combination(self, combination_id: str) -> VersionedCombination:
-        path = self.store.combination_path(combination_id)
-        document = self._cached_read(path, PromptCombination)
-        if document.model.id != path.stem:
-            raise PromptLibraryError.invalid_document(
-                path.relative_to(self.root).as_posix(),
-                "document id does not match its filename",
-            )
+        document = self.store.read_combination(combination_id)
         return VersionedCombination(combination=document.model, etag=document.etag)
 
-    def _scan_categories(self) -> tuple[list[StoredDocument[PromptCategory]], list]:
-        documents: list[StoredDocument[PromptCategory]] = []
-        diagnostics = []
-        for polarity in ("positive", "negative"):
-            parent = self.root / polarity
-            if not parent.is_dir():
-                continue
-            for path in sorted(parent.glob("*.json"), key=lambda item: item.name):
-                try:
-                    document = self._cached_read(path, PromptCategory)
-                    self._validate_category_location(document.model, path, polarity)
-                except PromptLibraryError as exc:
-                    diagnostics.append(self._diagnostic(path, exc))
-                else:
-                    documents.append(document)
-        return documents, diagnostics
-
-    def _scan_combinations(self) -> tuple[list[StoredDocument[PromptCombination]], list]:
-        documents: list[StoredDocument[PromptCombination]] = []
-        diagnostics = []
-        parent = self.root / "combinations"
-        if not parent.is_dir():
-            return documents, diagnostics
-        for path in sorted(parent.glob("*.json"), key=lambda item: item.name):
-            try:
-                document = self._cached_read(path, PromptCombination)
-                if document.model.id != path.stem:
-                    raise PromptLibraryError.invalid_document(
-                        path.relative_to(self.root).as_posix(),
-                        "document id does not match its filename",
-                    )
-            except PromptLibraryError as exc:
-                diagnostics.append(self._diagnostic(path, exc))
-            else:
-                documents.append(document)
-        return documents, diagnostics
-
-    def _cached_read(
-        self, path: Path, model_type: type[BaseModel]
-    ) -> StoredDocument:
-        path = path.resolve()
-        if not path.is_file():
-            raise PromptLibraryError.not_found("document", path.relative_to(self.root).as_posix())
-        raw = path.read_bytes()
-        stat = path.stat()
-        etag = sha256_bytes(raw)
-        with self._cache_lock:
-            cached = self._cache.get(path)
-            if (
-                cached is not None
-                and (cached.mtime_ns, cached.size, cached.etag)
-                == (stat.st_mtime_ns, stat.st_size, etag)
-            ):
-                return cached.document
-            try:
-                model = model_type.model_validate_json(raw)
-            except UnicodeDecodeError as exc:
-                raise PromptLibraryError.invalid_document(
-                    path.relative_to(self.root).as_posix(), "invalid UTF-8"
-                ) from exc
-            except json.JSONDecodeError as exc:
-                raise PromptLibraryError.invalid_document(
-                    path.relative_to(self.root).as_posix(), "invalid JSON"
-                ) from exc
-            except ValidationError as exc:
-                reason = (
-                    "invalid JSON"
-                    if any(error["type"] == "json_invalid" for error in exc.errors())
-                    else str(exc)
-                )
-                raise PromptLibraryError.invalid_document(
-                    path.relative_to(self.root).as_posix(), reason
-                ) from exc
-            document = StoredDocument(model=model, etag=etag, path=path)
-            self._cache[path] = _CacheEntry(
-                mtime_ns=stat.st_mtime_ns, size=stat.st_size, etag=etag, document=document
-            )
-            return document
-
-    def _validate_category_location(
-        self, category: PromptCategory, path: Path, polarity: Polarity
-    ) -> None:
-        if category.id != path.stem:
-            raise PromptLibraryError.invalid_document(
-                path.relative_to(self.root).as_posix(),
-                "id_filename_mismatch: document id does not match its filename",
-            )
-        if category.polarity != polarity:
-            raise PromptLibraryError.invalid_document(
-                path.relative_to(self.root).as_posix(),
-                "polarity_mismatch: document polarity does not match its directory",
-            )
-
-    def _diagnostic(self, path: Path, error: PromptLibraryError):
-        message = error.message
-        if "invalid JSON" in message:
-            code = "invalid_json"
-        elif "id_filename_mismatch" in message:
-            code = "id_filename_mismatch"
-        elif "polarity_mismatch" in message:
-            code = "polarity_mismatch"
-        else:
-            code = "invalid_document"
-        from app.schemas.prompt_library import PromptLibraryDiagnostic
-
-        return PromptLibraryDiagnostic(
-            code=code,
-            message=message,
-            hint="Correct this file without changing unrelated Prompt Library documents.",
-            path=path.relative_to(self.root).as_posix(),
-            details=error.details,
-        )
-
     @staticmethod
-    def _category_summary(document: StoredDocument[PromptCategory]) -> CategorySummary:
+    def _category_summary(document: StoredDocument) -> CategorySummary:
         category = document.model
         return CategorySummary(
             id=category.id,
@@ -213,7 +77,7 @@ class FilePromptLibraryProvider:
         )
 
     @staticmethod
-    def _combination_summary(document: StoredDocument[PromptCombination]) -> CombinationSummary:
+    def _combination_summary(document: StoredDocument) -> CombinationSummary:
         combination = document.model
         return CombinationSummary(
             id=combination.id,
