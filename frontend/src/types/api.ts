@@ -164,6 +164,37 @@ export interface PromptTemplateApplyResponse {
   prompt: string;
 }
 
+// ---- Prompt Library ----
+
+export type PromptPolarity = "positive" | "negative";
+
+export interface PromptCategorySummary {
+  id: string;
+  polarity: PromptPolarity;
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+  entry_count: number;
+  etag: string;
+}
+
+export interface PromptLibraryCatalogResponse {
+  categories: PromptCategorySummary[];
+  combinations: unknown[];
+  diagnostics: unknown[];
+}
+
+export interface PromptLibraryWriteResponse {
+  category?: {
+    category: PromptCategorySummary;
+    etag: string;
+  } | null;
+}
+
 export interface UsageItem {
   name: string;
   count: number;

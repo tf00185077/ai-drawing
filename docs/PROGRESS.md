@@ -6,6 +6,15 @@
 
 ---
 
+## 2026-07-17 Prompt Library 前端新增分類介面
+
+使用者已可從主導覽進入`/prompt-library`自行建立正向或負向Prompt分類：
+
+1. 頁面即時讀取並分列現有正／負分類，顯示名稱、ID、說明與詞條數，方便建立前避免ID重複。
+2. 新增分類表單支援slug ID、中文名稱、說明、別名、搜尋關鍵字與排序；送出時呼叫既有`PUT /api/prompt-library/categories/{polarity}/{category_id}`，建立成功後刷新清單。
+3. 前端先驗證slug與排序，Backend的revision／etag衝突會保留`message + hint`顯示給使用者；未繞過既有optimistic concurrency契約。
+4. 驗證：Frontend `5 passed`、Vite production build通過；瀏覽器實機建立臨時分類後清單由14增至15，封存臨時資料後回到14。
+
 ## 2026-07-17 Prompt Library service 完成
 
 Prompt Library 後端服務階段已完成，可由後續 React 工作台與 MCP tools 共用同一份 provider／API 合約：
@@ -17,7 +26,7 @@ Prompt Library 後端服務階段已完成，可由後續 React 工作台與 MCP
 5. 驗證：Prompt Library 全套 `89 passed, 1 skipped`；Backend regression `964 passed, 4 skipped`（Windows 無 symlink 權限的安全案例依環境 skip）；`docker compose config` 確認 `PROMPT_LIBRARY_DIR=/app/prompt_library` 且 bind mount target 為 `/app/prompt_library`。
 6. 回歸過程順手修正四個既有跨平台測試問題：錯用 `MagicMock.not_called`、兩處 Windows 路徑 separator assertion，以及三個無 symlink 權限時應 skip 的安全測試 setup；未修改相關 production behavior。
 
-尚未完成的是 plan-set 後兩階段：React Prompt Workbench／workflow-default 生圖整合，以及 MCP Prompt Library parity。
+尚未完成的是完整React Prompt Workbench其餘功能（分類內詞條編輯、Prompt選取／組合與workflow-default生圖整合），以及MCP Prompt Library parity。
 
 ## 2026-07-17 Prompt Library 後端核心 checkpoint
 
