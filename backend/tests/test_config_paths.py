@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from app import config as config_module
 
 
@@ -89,3 +92,10 @@ def test_prompt_library_dir_is_project_root_relative(monkeypatch) -> None:
     settings = config_module.Settings()
     assert Path(settings.prompt_library_dir).is_absolute()
     assert Path(settings.prompt_library_dir).name == "prompt_library-test"
+
+
+@pytest.mark.parametrize("timeout", ["0", "-0.1"])
+def test_prompt_library_lock_timeout_must_be_positive(monkeypatch, timeout: str) -> None:
+    monkeypatch.setenv("PROMPT_LIBRARY_LOCK_TIMEOUT", timeout)
+    with pytest.raises(ValidationError, match="greater than 0"):
+        config_module.Settings()
