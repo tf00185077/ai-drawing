@@ -79,3 +79,9 @@ htmlcov/
 
 # 大檔 SHA-256 執行期快取
 backend/.file_sha256_cache.json
+
+# Superpowers brainstorming visual companion
+.superpowers/
+
+# Prompt Library runtime write lock
+prompt_library/.lock
