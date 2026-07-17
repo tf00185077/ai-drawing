@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "id": "clothing-colors",
+  "polarity": "negative",
+  "name_zh": "服裝色彩排除",
+  "description_zh": "服裝色彩排除相關的可組合提示詞。",
+  "aliases": [
+    "服裝色彩排除",
+    "clothing colors"
+  ],
+  "keywords": [
+    "negative",
+    "prompt",
+    "服裝色彩排除"
+  ],
+  "order": 190,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "malformed-clothing",
+      "name_zh": "服裝色彩排除：malformed clothing",
+      "description_zh": "加入「malformed clothing」這個服裝色彩排除提示片段。",
+      "prompt": "malformed clothing",
+      "aliases": [
+        "服裝色彩排除",
+        "malformed clothing"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fused-clothing",
+      "name_zh": "服裝色彩排除：fused clothing",
+      "description_zh": "加入「fused clothing」這個服裝色彩排除提示片段。",
+      "prompt": "fused clothing",
+      "aliases": [
+        "服裝色彩排除",
+        "fused clothing"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "broken-fabric",
+      "name_zh": "服裝色彩排除：broken fabric",
+      "description_zh": "加入「broken fabric」這個服裝色彩排除提示片段。",
+      "prompt": "broken fabric",
+      "aliases": [
+        "服裝色彩排除",
+        "broken fabric"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "inconsistent-outfit",
+      "name_zh": "服裝色彩排除：inconsistent outfit",
+      "description_zh": "加入「inconsistent outfit」這個服裝色彩排除提示片段。",
+      "prompt": "inconsistent outfit",
+      "aliases": [
+        "服裝色彩排除",
+        "inconsistent outfit"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "incorrect-clothing",
+      "name_zh": "服裝色彩排除：incorrect clothing",
+      "description_zh": "加入「incorrect clothing」這個服裝色彩排除提示片段。",
+      "prompt": "incorrect clothing",
+      "aliases": [
+        "服裝色彩排除",
+        "incorrect clothing"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "color-bleeding",
+      "name_zh": "服裝色彩排除：color bleeding",
+      "description_zh": "加入「color bleeding」這個服裝色彩排除提示片段。",
+      "prompt": "color bleeding",
+      "aliases": [
+        "服裝色彩排除",
+        "color bleeding"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "muddy-colors",
+      "name_zh": "服裝色彩排除：muddy colors",
+      "description_zh": "加入「muddy colors」這個服裝色彩排除提示片段。",
+      "prompt": "muddy colors",
+      "aliases": [
+        "服裝色彩排除",
+        "muddy colors"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "oversaturated-colors",
+      "name_zh": "服裝色彩排除：oversaturated colors",
+      "description_zh": "加入「oversaturated colors」這個服裝色彩排除提示片段。",
+      "prompt": "oversaturated colors",
+      "aliases": [
+        "服裝色彩排除",
+        "oversaturated colors"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "washed-out-colors",
+      "name_zh": "服裝色彩排除：washed out colors",
+      "description_zh": "加入「washed out colors」這個服裝色彩排除提示片段。",
+      "prompt": "washed out colors",
+      "aliases": [
+        "服裝色彩排除",
+        "washed out colors"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "color-banding",
+      "name_zh": "服裝色彩排除：color banding",
+      "description_zh": "加入「color banding」這個服裝色彩排除提示片段。",
+      "prompt": "color banding",
+      "aliases": [
+        "服裝色彩排除",
+        "color banding"
+      ],
+      "keywords": [
+        "clothing-colors",
+        "negative",
+        "服裝色彩排除"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

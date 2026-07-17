@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "id": "text-watermark",
+  "polarity": "negative",
+  "name_zh": "文字浮水印排除",
+  "description_zh": "文字浮水印排除相關的可組合提示詞。",
+  "aliases": [
+    "文字浮水印排除",
+    "text watermark"
+  ],
+  "keywords": [
+    "negative",
+    "prompt",
+    "文字浮水印排除"
+  ],
+  "order": 210,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "text",
+      "name_zh": "文字浮水印排除：text",
+      "description_zh": "加入「text」這個文字浮水印排除提示片段。",
+      "prompt": "text",
+      "aliases": [
+        "文字浮水印排除",
+        "text"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "watermark",
+      "name_zh": "文字浮水印排除：watermark",
+      "description_zh": "加入「watermark」這個文字浮水印排除提示片段。",
+      "prompt": "watermark",
+      "aliases": [
+        "文字浮水印排除",
+        "watermark"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "signature",
+      "name_zh": "文字浮水印排除：signature",
+      "description_zh": "加入「signature」這個文字浮水印排除提示片段。",
+      "prompt": "signature",
+      "aliases": [
+        "文字浮水印排除",
+        "signature"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "artist-name",
+      "name_zh": "文字浮水印排除：artist name",
+      "description_zh": "加入「artist name」這個文字浮水印排除提示片段。",
+      "prompt": "artist name",
+      "aliases": [
+        "文字浮水印排除",
+        "artist name"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "username",
+      "name_zh": "文字浮水印排除：username",
+      "description_zh": "加入「username」這個文字浮水印排除提示片段。",
+      "prompt": "username",
+      "aliases": [
+        "文字浮水印排除",
+        "username"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "logo",
+      "name_zh": "文字浮水印排除：logo",
+      "description_zh": "加入「logo」這個文字浮水印排除提示片段。",
+      "prompt": "logo",
+      "aliases": [
+        "文字浮水印排除",
+        "logo"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "caption",
+      "name_zh": "文字浮水印排除：caption",
+      "description_zh": "加入「caption」這個文字浮水印排除提示片段。",
+      "prompt": "caption",
+      "aliases": [
+        "文字浮水印排除",
+        "caption"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "subtitle",
+      "name_zh": "文字浮水印排除：subtitle",
+      "description_zh": "加入「subtitle」這個文字浮水印排除提示片段。",
+      "prompt": "subtitle",
+      "aliases": [
+        "文字浮水印排除",
+        "subtitle"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "speech-bubble",
+      "name_zh": "文字浮水印排除：speech bubble",
+      "description_zh": "加入「speech bubble」這個文字浮水印排除提示片段。",
+      "prompt": "speech bubble",
+      "aliases": [
+        "文字浮水印排除",
+        "speech bubble"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "date-stamp",
+      "name_zh": "文字浮水印排除：date stamp",
+      "description_zh": "加入「date stamp」這個文字浮水印排除提示片段。",
+      "prompt": "date stamp",
+      "aliases": [
+        "文字浮水印排除",
+        "date stamp"
+      ],
+      "keywords": [
+        "text-watermark",
+        "negative",
+        "文字浮水印排除"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

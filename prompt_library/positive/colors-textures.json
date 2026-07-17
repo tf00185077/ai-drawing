@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "id": "colors-textures",
+  "polarity": "positive",
+  "name_zh": "色彩材質",
+  "description_zh": "色彩材質相關的可組合提示詞。",
+  "aliases": [
+    "色彩材質",
+    "colors textures"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "色彩材質"
+  ],
+  "order": 140,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "pastel-colors",
+      "name_zh": "色彩材質：pastel colors",
+      "description_zh": "加入「pastel colors」這個色彩材質提示片段。",
+      "prompt": "pastel colors",
+      "aliases": [
+        "色彩材質",
+        "pastel colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "vibrant-colors",
+      "name_zh": "色彩材質：vibrant colors",
+      "description_zh": "加入「vibrant colors」這個色彩材質提示片段。",
+      "prompt": "vibrant colors",
+      "aliases": [
+        "色彩材質",
+        "vibrant colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "muted-colors",
+      "name_zh": "色彩材質：muted colors",
+      "description_zh": "加入「muted colors」這個色彩材質提示片段。",
+      "prompt": "muted colors",
+      "aliases": [
+        "色彩材質",
+        "muted colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "monochrome-palette",
+      "name_zh": "色彩材質：monochrome palette",
+      "description_zh": "加入「monochrome palette」這個色彩材質提示片段。",
+      "prompt": "monochrome palette",
+      "aliases": [
+        "色彩材質",
+        "monochrome palette"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "warm-color-palette",
+      "name_zh": "色彩材質：warm color palette",
+      "description_zh": "加入「warm color palette」這個色彩材質提示片段。",
+      "prompt": "warm color palette",
+      "aliases": [
+        "色彩材質",
+        "warm color palette"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cool-color-palette",
+      "name_zh": "色彩材質：cool color palette",
+      "description_zh": "加入「cool color palette」這個色彩材質提示片段。",
+      "prompt": "cool color palette",
+      "aliases": [
+        "色彩材質",
+        "cool color palette"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "complementary-colors",
+      "name_zh": "色彩材質：complementary colors",
+      "description_zh": "加入「complementary colors」這個色彩材質提示片段。",
+      "prompt": "complementary colors",
+      "aliases": [
+        "色彩材質",
+        "complementary colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "analogous-colors",
+      "name_zh": "色彩材質：analogous colors",
+      "description_zh": "加入「analogous colors」這個色彩材質提示片段。",
+      "prompt": "analogous colors",
+      "aliases": [
+        "色彩材質",
+        "analogous colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "iridescent-colors",
+      "name_zh": "色彩材質：iridescent colors",
+      "description_zh": "加入「iridescent colors」這個色彩材質提示片段。",
+      "prompt": "iridescent colors",
+      "aliases": [
+        "色彩材質",
+        "iridescent colors"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "metallic-texture",
+      "name_zh": "色彩材質：metallic texture",
+      "description_zh": "加入「metallic texture」這個色彩材質提示片段。",
+      "prompt": "metallic texture",
+      "aliases": [
+        "色彩材質",
+        "metallic texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "silk-texture",
+      "name_zh": "色彩材質：silk texture",
+      "description_zh": "加入「silk texture」這個色彩材質提示片段。",
+      "prompt": "silk texture",
+      "aliases": [
+        "色彩材質",
+        "silk texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "velvet-texture",
+      "name_zh": "色彩材質：velvet texture",
+      "description_zh": "加入「velvet texture」這個色彩材質提示片段。",
+      "prompt": "velvet texture",
+      "aliases": [
+        "色彩材質",
+        "velvet texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "lace-texture",
+      "name_zh": "色彩材質：lace texture",
+      "description_zh": "加入「lace texture」這個色彩材質提示片段。",
+      "prompt": "lace texture",
+      "aliases": [
+        "色彩材質",
+        "lace texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wood-grain",
+      "name_zh": "色彩材質：wood grain",
+      "description_zh": "加入「wood grain」這個色彩材質提示片段。",
+      "prompt": "wood grain",
+      "aliases": [
+        "色彩材質",
+        "wood grain"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "stone-texture",
+      "name_zh": "色彩材質：stone texture",
+      "description_zh": "加入「stone texture」這個色彩材質提示片段。",
+      "prompt": "stone texture",
+      "aliases": [
+        "色彩材質",
+        "stone texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "glass-texture",
+      "name_zh": "色彩材質：glass texture",
+      "description_zh": "加入「glass texture」這個色彩材質提示片段。",
+      "prompt": "glass texture",
+      "aliases": [
+        "色彩材質",
+        "glass texture"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "glowing-particles",
+      "name_zh": "色彩材質：glowing particles",
+      "description_zh": "加入「glowing particles」這個色彩材質提示片段。",
+      "prompt": "glowing particles",
+      "aliases": [
+        "色彩材質",
+        "glowing particles"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "film-grain",
+      "name_zh": "色彩材質：film grain",
+      "description_zh": "加入「film grain」這個色彩材質提示片段。",
+      "prompt": "film grain",
+      "aliases": [
+        "色彩材質",
+        "film grain"
+      ],
+      "keywords": [
+        "colors-textures",
+        "positive",
+        "色彩材質"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

@@ -72,6 +72,7 @@ from app.api import (
     gallery,
     lora_docs,
     lora_train,
+    prompt_library,
     prompt_templates,
     style_presets,
     workflow_catalog,
@@ -83,6 +84,7 @@ app.include_router(civitai_recipes.router)
 app.include_router(gallery.router)
 app.include_router(lora_docs.router)
 app.include_router(lora_train.router)
+app.include_router(prompt_library.router)
 app.include_router(prompt_templates.router)
 app.include_router(analytics.router)
 app.include_router(style_presets.router)

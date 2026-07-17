@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "id": "lighting",
+  "polarity": "positive",
+  "name_zh": "光線",
+  "description_zh": "光線相關的可組合提示詞。",
+  "aliases": [
+    "光線",
+    "lighting"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "光線"
+  ],
+  "order": 100,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "soft-lighting",
+      "name_zh": "光線：soft lighting",
+      "description_zh": "加入「soft lighting」這個光線提示片段。",
+      "prompt": "soft lighting",
+      "aliases": [
+        "光線",
+        "soft lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hard-lighting",
+      "name_zh": "光線：hard lighting",
+      "description_zh": "加入「hard lighting」這個光線提示片段。",
+      "prompt": "hard lighting",
+      "aliases": [
+        "光線",
+        "hard lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "natural-daylight",
+      "name_zh": "光線：natural daylight",
+      "description_zh": "加入「natural daylight」這個光線提示片段。",
+      "prompt": "natural daylight",
+      "aliases": [
+        "光線",
+        "natural daylight"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "golden-hour-lighting",
+      "name_zh": "光線：golden hour lighting",
+      "description_zh": "加入「golden hour lighting」這個光線提示片段。",
+      "prompt": "golden hour lighting",
+      "aliases": [
+        "光線",
+        "golden hour lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "blue-hour-lighting",
+      "name_zh": "光線：blue hour lighting",
+      "description_zh": "加入「blue hour lighting」這個光線提示片段。",
+      "prompt": "blue hour lighting",
+      "aliases": [
+        "光線",
+        "blue hour lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "backlighting",
+      "name_zh": "光線：backlighting",
+      "description_zh": "加入「backlighting」這個光線提示片段。",
+      "prompt": "backlighting",
+      "aliases": [
+        "光線",
+        "backlighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "rim-lighting",
+      "name_zh": "光線：rim lighting",
+      "description_zh": "加入「rim lighting」這個光線提示片段。",
+      "prompt": "rim lighting",
+      "aliases": [
+        "光線",
+        "rim lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "side-lighting",
+      "name_zh": "光線：side lighting",
+      "description_zh": "加入「side lighting」這個光線提示片段。",
+      "prompt": "side lighting",
+      "aliases": [
+        "光線",
+        "side lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "overhead-lighting",
+      "name_zh": "光線：overhead lighting",
+      "description_zh": "加入「overhead lighting」這個光線提示片段。",
+      "prompt": "overhead lighting",
+      "aliases": [
+        "光線",
+        "overhead lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "underlighting",
+      "name_zh": "光線：underlighting",
+      "description_zh": "加入「underlighting」這個光線提示片段。",
+      "prompt": "underlighting",
+      "aliases": [
+        "光線",
+        "underlighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "volumetric-lighting",
+      "name_zh": "光線：volumetric lighting",
+      "description_zh": "加入「volumetric lighting」這個光線提示片段。",
+      "prompt": "volumetric lighting",
+      "aliases": [
+        "光線",
+        "volumetric lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cinematic-lighting",
+      "name_zh": "光線：cinematic lighting",
+      "description_zh": "加入「cinematic lighting」這個光線提示片段。",
+      "prompt": "cinematic lighting",
+      "aliases": [
+        "光線",
+        "cinematic lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "studio-lighting",
+      "name_zh": "光線：studio lighting",
+      "description_zh": "加入「studio lighting」這個光線提示片段。",
+      "prompt": "studio lighting",
+      "aliases": [
+        "光線",
+        "studio lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "neon-lighting",
+      "name_zh": "光線：neon lighting",
+      "description_zh": "加入「neon lighting」這個光線提示片段。",
+      "prompt": "neon lighting",
+      "aliases": [
+        "光線",
+        "neon lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "candlelight",
+      "name_zh": "光線：candlelight",
+      "description_zh": "加入「candlelight」這個光線提示片段。",
+      "prompt": "candlelight",
+      "aliases": [
+        "光線",
+        "candlelight"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "moonlight",
+      "name_zh": "光線：moonlight",
+      "description_zh": "加入「moonlight」這個光線提示片段。",
+      "prompt": "moonlight",
+      "aliases": [
+        "光線",
+        "moonlight"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dappled-light",
+      "name_zh": "光線：dappled light",
+      "description_zh": "加入「dappled light」這個光線提示片段。",
+      "prompt": "dappled light",
+      "aliases": [
+        "光線",
+        "dappled light"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "chiaroscuro-lighting",
+      "name_zh": "光線：chiaroscuro lighting",
+      "description_zh": "加入「chiaroscuro lighting」這個光線提示片段。",
+      "prompt": "chiaroscuro lighting",
+      "aliases": [
+        "光線",
+        "chiaroscuro lighting"
+      ],
+      "keywords": [
+        "lighting",
+        "positive",
+        "光線"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

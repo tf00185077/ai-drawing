@@ -11,15 +11,21 @@ from app.core.prompt_composer import PromptComposer
 from app.core.prompt_library_models import Polarity, ResourceType
 from app.core.prompt_search import PromptSearchIndex
 from app.core.prompt_library_store import PromptLibraryStore, StoredDocument
+from app.core.prompt_library_writes import PromptLibraryWriter
 from app.schemas.prompt_library import (
+    ArchiveRequest,
     CatalogResponse,
+    CategoryWriteRequest,
     CategorySummary,
     CombinationSummary,
+    CombinationWriteRequest,
     ComposeRequest,
     ComposeResponse,
+    EntryWriteRequest,
     SearchResponse,
     VersionedCategory,
     VersionedCombination,
+    WriteResponse,
 )
 
 
@@ -44,6 +50,24 @@ class PromptLibraryProvider(Protocol):
         limit: int = 50,
     ) -> SearchResponse: ...
 
+    def save_category(
+        self, polarity: Polarity, category_id: str, request: CategoryWriteRequest
+    ) -> WriteResponse: ...
+
+    def save_entry(
+        self,
+        polarity: Polarity,
+        category_id: str,
+        entry_id: str,
+        request: EntryWriteRequest,
+    ) -> WriteResponse: ...
+
+    def save_combination(
+        self, combination_id: str, request: CombinationWriteRequest
+    ) -> WriteResponse: ...
+
+    def archive(self, request: ArchiveRequest) -> WriteResponse: ...
+
 
 class FilePromptLibraryProvider:
     def __init__(self, root: Path, lock_timeout: float = 5.0) -> None:
@@ -54,6 +78,7 @@ class FilePromptLibraryProvider:
         self._cache = self.store._cache
         self._composer = PromptComposer(self.store)
         self._search = PromptSearchIndex(self.store)
+        self._writer = PromptLibraryWriter(self.store)
 
     def catalog(self) -> CatalogResponse:
         manifest = self.store.read_manifest()
@@ -77,11 +102,25 @@ class FilePromptLibraryProvider:
         return VersionedCategory(category=document.model, etag=document.etag)
 
     def get_combination(self, combination_id: str) -> VersionedCombination:
-        document = self.store.read_combination(combination_id)
-        return VersionedCombination(combination=document.model, etag=document.etag)
+        return self._writer.repair_combination(combination_id)
 
     def compose(self, request: ComposeRequest) -> ComposeResponse:
-        return self._composer.compose(request)
+        composed = self._composer.compose(request)
+        if request.save_as is None:
+            return composed
+        intent = request.save_as
+        write = self._writer.save_combination(
+            intent.id,
+            CombinationWriteRequest(
+                **intent.model_dump(exclude={"id", "positive", "negative"}),
+                positive=composed.positive,
+                negative=composed.negative,
+            ),
+        )
+        return composed.model_copy(
+            deep=True,
+            update={"saved_combination": write.combination},
+        )
 
     def search(
         self,
@@ -103,6 +142,28 @@ class FilePromptLibraryProvider:
             threshold=threshold,
             limit=limit,
         )
+
+    def save_category(
+        self, polarity: Polarity, category_id: str, request: CategoryWriteRequest
+    ) -> WriteResponse:
+        return self._writer.save_category(polarity, category_id, request)
+
+    def save_entry(
+        self,
+        polarity: Polarity,
+        category_id: str,
+        entry_id: str,
+        request: EntryWriteRequest,
+    ) -> WriteResponse:
+        return self._writer.save_entry(polarity, category_id, entry_id, request)
+
+    def save_combination(
+        self, combination_id: str, request: CombinationWriteRequest
+    ) -> WriteResponse:
+        return self._writer.save_combination(combination_id, request)
+
+    def archive(self, request: ArchiveRequest) -> WriteResponse:
+        return self._writer.archive(request)
 
     @staticmethod
     def _category_summary(document: StoredDocument) -> CategorySummary:

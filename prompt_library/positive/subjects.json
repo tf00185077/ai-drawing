@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "id": "subjects",
+  "polarity": "positive",
+  "name_zh": "主體",
+  "description_zh": "主體相關的可組合提示詞。",
+  "aliases": [
+    "主體",
+    "subjects"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "主體"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "1girl",
+      "name_zh": "主體：1girl",
+      "description_zh": "加入「1girl」這個主體提示片段。",
+      "prompt": "1girl",
+      "aliases": [
+        "主體",
+        "1girl"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "1boy",
+      "name_zh": "主體：1boy",
+      "description_zh": "加入「1boy」這個主體提示片段。",
+      "prompt": "1boy",
+      "aliases": [
+        "主體",
+        "1boy"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "1woman",
+      "name_zh": "主體：1woman",
+      "description_zh": "加入「1woman」這個主體提示片段。",
+      "prompt": "1woman",
+      "aliases": [
+        "主體",
+        "1woman"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "1man",
+      "name_zh": "主體：1man",
+      "description_zh": "加入「1man」這個主體提示片段。",
+      "prompt": "1man",
+      "aliases": [
+        "主體",
+        "1man"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "child",
+      "name_zh": "主體：child",
+      "description_zh": "加入「child」這個主體提示片段。",
+      "prompt": "child",
+      "aliases": [
+        "主體",
+        "child"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "teenager",
+      "name_zh": "主體：teenager",
+      "description_zh": "加入「teenager」這個主體提示片段。",
+      "prompt": "teenager",
+      "aliases": [
+        "主體",
+        "teenager"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "adult",
+      "name_zh": "主體：adult",
+      "description_zh": "加入「adult」這個主體提示片段。",
+      "prompt": "adult",
+      "aliases": [
+        "主體",
+        "adult"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "elderly-person",
+      "name_zh": "主體：elderly person",
+      "description_zh": "加入「elderly person」這個主體提示片段。",
+      "prompt": "elderly person",
+      "aliases": [
+        "主體",
+        "elderly person"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "solo",
+      "name_zh": "主體：solo",
+      "description_zh": "加入「solo」這個主體提示片段。",
+      "prompt": "solo",
+      "aliases": [
+        "主體",
+        "solo"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "couple",
+      "name_zh": "主體：couple",
+      "description_zh": "加入「couple」這個主體提示片段。",
+      "prompt": "couple",
+      "aliases": [
+        "主體",
+        "couple"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "group",
+      "name_zh": "主體：group",
+      "description_zh": "加入「group」這個主體提示片段。",
+      "prompt": "group",
+      "aliases": [
+        "主體",
+        "group"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "animal-companion",
+      "name_zh": "主體：animal companion",
+      "description_zh": "加入「animal companion」這個主體提示片段。",
+      "prompt": "animal companion",
+      "aliases": [
+        "主體",
+        "animal companion"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fantasy-creature",
+      "name_zh": "主體：fantasy creature",
+      "description_zh": "加入「fantasy creature」這個主體提示片段。",
+      "prompt": "fantasy creature",
+      "aliases": [
+        "主體",
+        "fantasy creature"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "robot",
+      "name_zh": "主體：robot",
+      "description_zh": "加入「robot」這個主體提示片段。",
+      "prompt": "robot",
+      "aliases": [
+        "主體",
+        "robot"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "anthropomorphic-character",
+      "name_zh": "主體：anthropomorphic character",
+      "description_zh": "加入「anthropomorphic character」這個主體提示片段。",
+      "prompt": "anthropomorphic character",
+      "aliases": [
+        "主體",
+        "anthropomorphic character"
+      ],
+      "keywords": [
+        "subjects",
+        "positive",
+        "主體"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

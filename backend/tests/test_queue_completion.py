@@ -1,4 +1,5 @@
 """harden-queue-completion：終局狀態處理（不再靜默消失）"""
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -180,7 +181,7 @@ def test_save_job_outputs_copies_video_artifact_to_gallery(tmp_path, monkeypatch
     assert artifact.artifact_type == "video"
     assert artifact.mime_type == "video/mp4"
     assert artifact.job_id == "abcdef123456"
-    assert artifact.gallery_path.endswith("/video_render_abcdef12_0.mp4")
+    assert Path(artifact.gallery_path).name == "video_render_abcdef12_0.mp4"
     assert artifact.source_node_id == "9"
     assert artifact.source_node_type == "VHS_VideoCombine"
     assert artifact.file_size == len(b"video bytes")
