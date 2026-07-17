@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-17 Prompt Library 後端核心 checkpoint
+
+已完成第一個可獨立合併的後端核心收斂點：
+
+1. 新增 project-scoped、folder-backed Prompt Library 的嚴格 JSON models、API DTO、設定、Docker mount 與結構化錯誤契約。
+2. 新增安全檔案 provider：raw-byte SHA-256 etag、原子替換、FileLock、cache-aware stable snapshot、壞檔 diagnostics 隔離，以及 symlink／junction path confinement。
+3. 新增唯一的 backend prompt composer：正負 prompt 對稱、多選排序、權重、literal、重複 ref、missing／archived snapshot fallback、saved combination 匯入與 lazy in-memory repair。
+4. 新增中英文 weighted fuzzy search：NFKC、alias／keyword／description／prompt、resource type／polarity／category／archived filters、穩定排序與 bounded limit。
+
+此 checkpoint 尚未完成寫入協調器與 eager combination propagation、FastAPI routes、初始約 393 條 seed、legacy adapter、React 工作台、workflow-default 生圖整合及 MCP parity；後續由既有三份 implementation plan 繼續。
+
 ## 目前聚焦
 
 **2026-07-15 大重構：從「法務級精確重現系統」轉向「口述生圖的傻瓜模式」（程式完成，待實機驗證）**
