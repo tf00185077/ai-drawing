@@ -67,7 +67,8 @@ class PromptSearchIndex:
         query: str,
         *,
         polarity: Polarity | None = None,
-        resource_type: ResourceType | None = None,
+        resource_types: list[ResourceType] | None = None,
+        category_id: str | None = None,
         include_archived: bool = False,
         threshold: int = 45,
         limit: int = 50,
@@ -81,9 +82,16 @@ class PromptSearchIndex:
             return SearchResponse()
 
         ranked: list[tuple[_Candidate, int, list[str]]] = []
+        all_resource_types: set[ResourceType] = {
+            "category",
+            "entry",
+            "combination",
+        }
+        selected_types = set(resource_types) if resource_types else all_resource_types
         for candidate in self._candidates(
             polarity=polarity,
-            resource_type=resource_type,
+            resource_types=selected_types,
+            category_id=category_id,
             include_archived=include_archived,
         ):
             score, matched_fields = self._score(
@@ -115,7 +123,8 @@ class PromptSearchIndex:
         self,
         *,
         polarity: Polarity | None,
-        resource_type: ResourceType | None,
+        resource_types: set[ResourceType],
+        category_id: str | None,
         include_archived: bool,
     ) -> list[_Candidate]:
         category_documents, _ = self.store.scan_categories()
@@ -123,17 +132,19 @@ class PromptSearchIndex:
         candidates: list[_Candidate] = []
         for document in category_documents:
             category = document.model
+            if category_id is not None and category.id != category_id:
+                continue
             if polarity is not None and category.polarity != polarity:
                 continue
-            if resource_type in (None, "category") and (
+            if "category" in resource_types and (
                 include_archived or not category.archived
             ):
                 candidates.append(self._category_candidate(category))
-            if resource_type in (None, "entry"):
+            if "entry" in resource_types:
                 candidates.extend(
                     self._entry_candidates(category, include_archived=include_archived)
                 )
-        if polarity is None and resource_type in (None, "combination"):
+        if category_id is None and polarity is None and "combination" in resource_types:
             candidates.extend(
                 self._combination_candidate(document.model)
                 for document in combination_documents

@@ -285,6 +285,47 @@ def test_compose_imports_repaired_saved_combination_then_appends_request_fragmen
     assert result.snapshot_repaired is True
 
 
+def test_compose_result_is_deeply_isolated_from_cache_request_and_disk(
+    provider: FilePromptLibraryProvider, library_root: Path
+) -> None:
+    write_combination(library_root)
+    request_fragment = literal("soft lighting", order=30)
+    request = ComposeRequest(
+        combination_id="portrait-dress", positive=[request_fragment]
+    )
+    cached_before = provider.get_combination("portrait-dress").combination
+
+    result = provider.compose(request)
+
+    assert result.positive[0] is not cached_before.positive[0]
+    assert result.positive[1] is not cached_before.positive[1]
+    assert result.positive[1].ref is not cached_before.positive[1].ref
+    assert result.positive[2] is not request_fragment
+    assert result.positive[2] is not request.positive[0]
+
+    result.positive[0].snapshot = "mutated literal"
+    assert result.positive[1].ref is not None
+    result.positive[1].ref.entry_id = "mutated-ref"
+    result.positive[2].snapshot = "mutated request"
+
+    cached_after = provider.get_combination("portrait-dress").combination
+    disk = json.loads(
+        (library_root / "combinations" / "portrait-dress.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    next_result = provider.compose(request)
+
+    assert cached_after.positive[0].snapshot == "1girl"
+    assert cached_after.positive[1].ref is not None
+    assert cached_after.positive[1].ref.entry_id == "dress"
+    assert disk["positive"][0]["snapshot"] == "1girl"
+    assert disk["positive"][1]["ref"]["entry_id"] == "dress"
+    assert request_fragment.snapshot == "soft lighting"
+    assert request.positive[0].snapshot == "soft lighting"
+    assert next_result.positive_prompt == "1girl, dress, soft lighting"
+
+
 @pytest.mark.parametrize(
     ("text", "weight", "rendered"),
     [
