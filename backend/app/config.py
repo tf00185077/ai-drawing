@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     # 輸出目錄
     output_dir: str = _project_root_path("backend", "outputs")
     gallery_dir: str = _project_root_path("backend", "outputs", "gallery")
+    prompt_library_dir: str = _project_root_path("prompt_library")
+    prompt_library_lock_timeout: float = 5.0
 
     # 大檔 SHA-256 快取（size/mtime/inode 未變即信任快取，避免每次重算多 GB 雜湊）
     file_digest_cache_path: str = _project_root_path("backend", ".file_sha256_cache.json")
@@ -141,6 +143,7 @@ class Settings(BaseSettings):
         self.database_url = _resolve_sqlite_url(self.database_url)
         self.output_dir = _resolve_project_path(self.output_dir)
         self.gallery_dir = _resolve_project_path(self.gallery_dir)
+        self.prompt_library_dir = _resolve_project_path(self.prompt_library_dir)
         self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
         self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)
         if self.comfyui_lora_dir:

@@ -82,3 +82,10 @@ def test_relative_env_overrides_are_normalized_from_project_root(monkeypatch):
             str((PROJECT_ROOT / 'watch' / 'b').resolve()),
         ]
     )
+
+
+def test_prompt_library_dir_is_project_root_relative(monkeypatch) -> None:
+    monkeypatch.setenv("PROMPT_LIBRARY_DIR", "prompt_library-test")
+    settings = config_module.Settings()
+    assert Path(settings.prompt_library_dir).is_absolute()
+    assert Path(settings.prompt_library_dir).name == "prompt_library-test"
