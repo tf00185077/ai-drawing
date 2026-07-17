@@ -82,7 +82,7 @@ def test_inspect_is_pure_and_returns_canonical_evidence_diagnostics() -> None:
     with patch("app.api.civitai_recipes.submit_custom") as submit:
         response = TestClient(app).post("/api/civitai-recipes/inspect", json={"recipe": recipe_payload()})
     assert response.status_code == 200
-    assert submit.not_called
+    submit.assert_not_called()
     body = response.json()
     assert {"reproduction_report", "confirmed", "inferred", "missing"} <= body.keys()
 

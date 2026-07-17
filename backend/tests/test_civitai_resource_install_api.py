@@ -369,7 +369,10 @@ def test_existing_adverse_targets_have_zero_transport_file_or_ledger_side_effect
     outside = tmp_path / "outside"
     if existing_kind == "symlink":
         outside.write_bytes(b"outside must remain unchanged")
-        final.symlink_to(outside)
+        try:
+            final.symlink_to(outside)
+        except OSError:
+            pytest.skip("creating file symlinks requires unavailable privileges")
     elif existing_kind == "directory":
         final.mkdir()
     else:
@@ -507,7 +510,10 @@ def test_symlink_part_fails_without_transport_final_or_ledger(tmp_path: Path) ->
     from app.services.civitai_resource_install import install_civitai_resource
     data = b"verified install"; selected = _selected(data); root = tmp_path / "loras"; root.mkdir()
     outside = tmp_path / "outside"; outside.write_bytes(b"do-not-touch")
-    (root / (selected["name"] + ".part")).symlink_to(outside)
+    try:
+        (root / (selected["name"] + ".part")).symlink_to(outside)
+    except OSError:
+        pytest.skip("creating file symlinks requires unavailable privileges")
     transport = _Transport(data)
     with _session(tmp_path)() as db:
         result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
