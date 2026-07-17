@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "id": "anatomy",
+  "polarity": "negative",
+  "name_zh": "解剖排除",
+  "description_zh": "解剖排除相關的可組合提示詞。",
+  "aliases": [
+    "解剖排除",
+    "anatomy"
+  ],
+  "keywords": [
+    "negative",
+    "prompt",
+    "解剖排除"
+  ],
+  "order": 160,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "bad-anatomy",
+      "name_zh": "解剖排除：bad anatomy",
+      "description_zh": "加入「bad anatomy」這個解剖排除提示片段。",
+      "prompt": "bad anatomy",
+      "aliases": [
+        "解剖排除",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "deformed-anatomy",
+      "name_zh": "解剖排除：deformed anatomy",
+      "description_zh": "加入「deformed anatomy」這個解剖排除提示片段。",
+      "prompt": "deformed anatomy",
+      "aliases": [
+        "解剖排除",
+        "deformed anatomy"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "anatomical-nonsense",
+      "name_zh": "解剖排除：anatomical nonsense",
+      "description_zh": "加入「anatomical nonsense」這個解剖排除提示片段。",
+      "prompt": "anatomical nonsense",
+      "aliases": [
+        "解剖排除",
+        "anatomical nonsense"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bad-proportions",
+      "name_zh": "解剖排除：bad proportions",
+      "description_zh": "加入「bad proportions」這個解剖排除提示片段。",
+      "prompt": "bad proportions",
+      "aliases": [
+        "解剖排除",
+        "bad proportions"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wrong-proportions",
+      "name_zh": "解剖排除：wrong proportions",
+      "description_zh": "加入「wrong proportions」這個解剖排除提示片段。",
+      "prompt": "wrong proportions",
+      "aliases": [
+        "解剖排除",
+        "wrong proportions"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "long-torso",
+      "name_zh": "解剖排除：long torso",
+      "description_zh": "加入「long torso」這個解剖排除提示片段。",
+      "prompt": "long torso",
+      "aliases": [
+        "解剖排除",
+        "long torso"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "short-torso",
+      "name_zh": "解剖排除：short torso",
+      "description_zh": "加入「short torso」這個解剖排除提示片段。",
+      "prompt": "short torso",
+      "aliases": [
+        "解剖排除",
+        "short torso"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "twisted-body",
+      "name_zh": "解剖排除：twisted body",
+      "description_zh": "加入「twisted body」這個解剖排除提示片段。",
+      "prompt": "twisted body",
+      "aliases": [
+        "解剖排除",
+        "twisted body"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dislocated-joints",
+      "name_zh": "解剖排除：dislocated joints",
+      "description_zh": "加入「dislocated joints」這個解剖排除提示片段。",
+      "prompt": "dislocated joints",
+      "aliases": [
+        "解剖排除",
+        "dislocated joints"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "extra-limbs",
+      "name_zh": "解剖排除：extra limbs",
+      "description_zh": "加入「extra limbs」這個解剖排除提示片段。",
+      "prompt": "extra limbs",
+      "aliases": [
+        "解剖排除",
+        "extra limbs"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "missing-limbs",
+      "name_zh": "解剖排除：missing limbs",
+      "description_zh": "加入「missing limbs」這個解剖排除提示片段。",
+      "prompt": "missing limbs",
+      "aliases": [
+        "解剖排除",
+        "missing limbs"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fused-limbs",
+      "name_zh": "解剖排除：fused limbs",
+      "description_zh": "加入「fused limbs」這個解剖排除提示片段。",
+      "prompt": "fused limbs",
+      "aliases": [
+        "解剖排除",
+        "fused limbs"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "malformed-limbs",
+      "name_zh": "解剖排除：malformed limbs",
+      "description_zh": "加入「malformed limbs」這個解剖排除提示片段。",
+      "prompt": "malformed limbs",
+      "aliases": [
+        "解剖排除",
+        "malformed limbs"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "unnatural-pose",
+      "name_zh": "解剖排除：unnatural pose",
+      "description_zh": "加入「unnatural pose」這個解剖排除提示片段。",
+      "prompt": "unnatural pose",
+      "aliases": [
+        "解剖排除",
+        "unnatural pose"
+      ],
+      "keywords": [
+        "anatomy",
+        "negative",
+        "解剖排除"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

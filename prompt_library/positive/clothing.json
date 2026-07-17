@@ -1,0 +1,417 @@
+{
+  "schema_version": 1,
+  "id": "clothing",
+  "polarity": "positive",
+  "name_zh": "服裝",
+  "description_zh": "服裝相關的可組合提示詞。",
+  "aliases": [
+    "服裝",
+    "clothing"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "服裝"
+  ],
+  "order": 40,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "dress",
+      "name_zh": "服裝：dress",
+      "description_zh": "加入「dress」這個服裝提示片段。",
+      "prompt": "dress",
+      "aliases": [
+        "服裝",
+        "dress"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "evening-gown",
+      "name_zh": "服裝：evening gown",
+      "description_zh": "加入「evening gown」這個服裝提示片段。",
+      "prompt": "evening gown",
+      "aliases": [
+        "服裝",
+        "evening gown"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "school-uniform",
+      "name_zh": "服裝：school uniform",
+      "description_zh": "加入「school uniform」這個服裝提示片段。",
+      "prompt": "school uniform",
+      "aliases": [
+        "服裝",
+        "school uniform"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "business-suit",
+      "name_zh": "服裝：business suit",
+      "description_zh": "加入「business suit」這個服裝提示片段。",
+      "prompt": "business suit",
+      "aliases": [
+        "服裝",
+        "business suit"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "casual-outfit",
+      "name_zh": "服裝：casual outfit",
+      "description_zh": "加入「casual outfit」這個服裝提示片段。",
+      "prompt": "casual outfit",
+      "aliases": [
+        "服裝",
+        "casual outfit"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "streetwear",
+      "name_zh": "服裝：streetwear",
+      "description_zh": "加入「streetwear」這個服裝提示片段。",
+      "prompt": "streetwear",
+      "aliases": [
+        "服裝",
+        "streetwear"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hoodie",
+      "name_zh": "服裝：hoodie",
+      "description_zh": "加入「hoodie」這個服裝提示片段。",
+      "prompt": "hoodie",
+      "aliases": [
+        "服裝",
+        "hoodie"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sweater",
+      "name_zh": "服裝：sweater",
+      "description_zh": "加入「sweater」這個服裝提示片段。",
+      "prompt": "sweater",
+      "aliases": [
+        "服裝",
+        "sweater"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "jacket",
+      "name_zh": "服裝：jacket",
+      "description_zh": "加入「jacket」這個服裝提示片段。",
+      "prompt": "jacket",
+      "aliases": [
+        "服裝",
+        "jacket"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "trench-coat",
+      "name_zh": "服裝：trench coat",
+      "description_zh": "加入「trench coat」這個服裝提示片段。",
+      "prompt": "trench coat",
+      "aliases": [
+        "服裝",
+        "trench coat"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "kimono",
+      "name_zh": "服裝：kimono",
+      "description_zh": "加入「kimono」這個服裝提示片段。",
+      "prompt": "kimono",
+      "aliases": [
+        "服裝",
+        "kimono"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "yukata",
+      "name_zh": "服裝：yukata",
+      "description_zh": "加入「yukata」這個服裝提示片段。",
+      "prompt": "yukata",
+      "aliases": [
+        "服裝",
+        "yukata"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hanfu",
+      "name_zh": "服裝：hanfu",
+      "description_zh": "加入「hanfu」這個服裝提示片段。",
+      "prompt": "hanfu",
+      "aliases": [
+        "服裝",
+        "hanfu"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "armor",
+      "name_zh": "服裝：armor",
+      "description_zh": "加入「armor」這個服裝提示片段。",
+      "prompt": "armor",
+      "aliases": [
+        "服裝",
+        "armor"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fantasy-robe",
+      "name_zh": "服裝：fantasy robe",
+      "description_zh": "加入「fantasy robe」這個服裝提示片段。",
+      "prompt": "fantasy robe",
+      "aliases": [
+        "服裝",
+        "fantasy robe"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "maid-outfit",
+      "name_zh": "服裝：maid outfit",
+      "description_zh": "加入「maid outfit」這個服裝提示片段。",
+      "prompt": "maid outfit",
+      "aliases": [
+        "服裝",
+        "maid outfit"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sportswear",
+      "name_zh": "服裝：sportswear",
+      "description_zh": "加入「sportswear」這個服裝提示片段。",
+      "prompt": "sportswear",
+      "aliases": [
+        "服裝",
+        "sportswear"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "swimsuit",
+      "name_zh": "服裝：swimsuit",
+      "description_zh": "加入「swimsuit」這個服裝提示片段。",
+      "prompt": "swimsuit",
+      "aliases": [
+        "服裝",
+        "swimsuit"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pajamas",
+      "name_zh": "服裝：pajamas",
+      "description_zh": "加入「pajamas」這個服裝提示片段。",
+      "prompt": "pajamas",
+      "aliases": [
+        "服裝",
+        "pajamas"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 190,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wedding-dress",
+      "name_zh": "服裝：wedding dress",
+      "description_zh": "加入「wedding dress」這個服裝提示片段。",
+      "prompt": "wedding dress",
+      "aliases": [
+        "服裝",
+        "wedding dress"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 200,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "gothic-lolita",
+      "name_zh": "服裝：gothic lolita",
+      "description_zh": "加入「gothic lolita」這個服裝提示片段。",
+      "prompt": "gothic lolita",
+      "aliases": [
+        "服裝",
+        "gothic lolita"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 210,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sci-fi-bodysuit",
+      "name_zh": "服裝：sci-fi bodysuit",
+      "description_zh": "加入「sci-fi bodysuit」這個服裝提示片段。",
+      "prompt": "sci-fi bodysuit",
+      "aliases": [
+        "服裝",
+        "sci fi bodysuit"
+      ],
+      "keywords": [
+        "clothing",
+        "positive",
+        "服裝"
+      ],
+      "order": 220,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

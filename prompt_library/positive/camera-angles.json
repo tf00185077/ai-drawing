@@ -1,0 +1,597 @@
+{
+  "schema_version": 1,
+  "id": "camera-angles",
+  "polarity": "positive",
+  "name_zh": "鏡位",
+  "description_zh": "鏡位相關的可組合提示詞。",
+  "aliases": [
+    "鏡位",
+    "camera angles"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "鏡位"
+  ],
+  "order": 80,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "front-view",
+      "name_zh": "鏡位：front view",
+      "description_zh": "加入「front view」這個鏡位提示片段。",
+      "prompt": "front view",
+      "aliases": [
+        "鏡位",
+        "front view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "side-view",
+      "name_zh": "鏡位：side view",
+      "description_zh": "加入「side view」這個鏡位提示片段。",
+      "prompt": "side view",
+      "aliases": [
+        "鏡位",
+        "side view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "back-view",
+      "name_zh": "鏡位：back view",
+      "description_zh": "加入「back view」這個鏡位提示片段。",
+      "prompt": "back view",
+      "aliases": [
+        "鏡位",
+        "back view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "three-quarter-view",
+      "name_zh": "鏡位：three-quarter view",
+      "description_zh": "加入「three-quarter view」這個鏡位提示片段。",
+      "prompt": "three-quarter view",
+      "aliases": [
+        "鏡位",
+        "three quarter view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "from-above",
+      "name_zh": "鏡位：from above",
+      "description_zh": "加入「from above」這個鏡位提示片段。",
+      "prompt": "from above",
+      "aliases": [
+        "鏡位",
+        "from above"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "from-below",
+      "name_zh": "鏡位：from below",
+      "description_zh": "加入「from below」這個鏡位提示片段。",
+      "prompt": "from below",
+      "aliases": [
+        "鏡位",
+        "from below"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "high-angle",
+      "name_zh": "鏡位：high angle",
+      "description_zh": "加入「high angle」這個鏡位提示片段。",
+      "prompt": "high angle",
+      "aliases": [
+        "鏡位",
+        "high angle"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "low-angle",
+      "name_zh": "鏡位：low angle",
+      "description_zh": "加入「low angle」這個鏡位提示片段。",
+      "prompt": "low angle",
+      "aliases": [
+        "鏡位",
+        "low angle"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "eye-level",
+      "name_zh": "鏡位：eye level",
+      "description_zh": "加入「eye level」這個鏡位提示片段。",
+      "prompt": "eye level",
+      "aliases": [
+        "鏡位",
+        "eye level"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dutch-angle",
+      "name_zh": "鏡位：dutch angle",
+      "description_zh": "加入「dutch angle」這個鏡位提示片段。",
+      "prompt": "dutch angle",
+      "aliases": [
+        "鏡位",
+        "dutch angle"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "overhead-shot",
+      "name_zh": "鏡位：overhead shot",
+      "description_zh": "加入「overhead shot」這個鏡位提示片段。",
+      "prompt": "overhead shot",
+      "aliases": [
+        "鏡位",
+        "overhead shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bird-s-eye-view",
+      "name_zh": "鏡位：bird's-eye view",
+      "description_zh": "加入「bird's-eye view」這個鏡位提示片段。",
+      "prompt": "bird's-eye view",
+      "aliases": [
+        "鏡位",
+        "bird's eye view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "worm-s-eye-view",
+      "name_zh": "鏡位：worm's-eye view",
+      "description_zh": "加入「worm's-eye view」這個鏡位提示片段。",
+      "prompt": "worm's-eye view",
+      "aliases": [
+        "鏡位",
+        "worm's eye view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "over-the-shoulder-shot",
+      "name_zh": "鏡位：over-the-shoulder shot",
+      "description_zh": "加入「over-the-shoulder shot」這個鏡位提示片段。",
+      "prompt": "over-the-shoulder shot",
+      "aliases": [
+        "鏡位",
+        "over the shoulder shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "point-of-view-shot",
+      "name_zh": "鏡位：point-of-view shot",
+      "description_zh": "加入「point-of-view shot」這個鏡位提示片段。",
+      "prompt": "point-of-view shot",
+      "aliases": [
+        "鏡位",
+        "point of view shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "close-up-shot",
+      "name_zh": "鏡位：close-up shot",
+      "description_zh": "加入「close-up shot」這個鏡位提示片段。",
+      "prompt": "close-up shot",
+      "aliases": [
+        "鏡位",
+        "close up shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "extreme-close-up",
+      "name_zh": "鏡位：extreme close-up",
+      "description_zh": "加入「extreme close-up」這個鏡位提示片段。",
+      "prompt": "extreme close-up",
+      "aliases": [
+        "鏡位",
+        "extreme close up"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "medium-close-up",
+      "name_zh": "鏡位：medium close-up",
+      "description_zh": "加入「medium close-up」這個鏡位提示片段。",
+      "prompt": "medium close-up",
+      "aliases": [
+        "鏡位",
+        "medium close up"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "medium-shot",
+      "name_zh": "鏡位：medium shot",
+      "description_zh": "加入「medium shot」這個鏡位提示片段。",
+      "prompt": "medium shot",
+      "aliases": [
+        "鏡位",
+        "medium shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 190,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cowboy-shot",
+      "name_zh": "鏡位：cowboy shot",
+      "description_zh": "加入「cowboy shot」這個鏡位提示片段。",
+      "prompt": "cowboy shot",
+      "aliases": [
+        "鏡位",
+        "cowboy shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 200,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "full-body-shot",
+      "name_zh": "鏡位：full body shot",
+      "description_zh": "加入「full body shot」這個鏡位提示片段。",
+      "prompt": "full body shot",
+      "aliases": [
+        "鏡位",
+        "full body shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 210,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wide-shot",
+      "name_zh": "鏡位：wide shot",
+      "description_zh": "加入「wide shot」這個鏡位提示片段。",
+      "prompt": "wide shot",
+      "aliases": [
+        "鏡位",
+        "wide shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 220,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "extreme-wide-shot",
+      "name_zh": "鏡位：extreme wide shot",
+      "description_zh": "加入「extreme wide shot」這個鏡位提示片段。",
+      "prompt": "extreme wide shot",
+      "aliases": [
+        "鏡位",
+        "extreme wide shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 230,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "profile-shot",
+      "name_zh": "鏡位：profile shot",
+      "description_zh": "加入「profile shot」這個鏡位提示片段。",
+      "prompt": "profile shot",
+      "aliases": [
+        "鏡位",
+        "profile shot"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 240,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "rear-three-quarter-view",
+      "name_zh": "鏡位：rear three-quarter view",
+      "description_zh": "加入「rear three-quarter view」這個鏡位提示片段。",
+      "prompt": "rear three-quarter view",
+      "aliases": [
+        "鏡位",
+        "rear three quarter view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 250,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "top-down-view",
+      "name_zh": "鏡位：top-down view",
+      "description_zh": "加入「top-down view」這個鏡位提示片段。",
+      "prompt": "top-down view",
+      "aliases": [
+        "鏡位",
+        "top down view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 260,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ground-level-view",
+      "name_zh": "鏡位：ground-level view",
+      "description_zh": "加入「ground-level view」這個鏡位提示片段。",
+      "prompt": "ground-level view",
+      "aliases": [
+        "鏡位",
+        "ground level view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 270,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "aerial-perspective",
+      "name_zh": "鏡位：aerial perspective",
+      "description_zh": "加入「aerial perspective」這個鏡位提示片段。",
+      "prompt": "aerial perspective",
+      "aliases": [
+        "鏡位",
+        "aerial perspective"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 280,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fisheye-perspective",
+      "name_zh": "鏡位：fisheye perspective",
+      "description_zh": "加入「fisheye perspective」這個鏡位提示片段。",
+      "prompt": "fisheye perspective",
+      "aliases": [
+        "鏡位",
+        "fisheye perspective"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 290,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "isometric-view",
+      "name_zh": "鏡位：isometric view",
+      "description_zh": "加入「isometric view」這個鏡位提示片段。",
+      "prompt": "isometric view",
+      "aliases": [
+        "鏡位",
+        "isometric view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 300,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "macro-view",
+      "name_zh": "鏡位：macro view",
+      "description_zh": "加入「macro view」這個鏡位提示片段。",
+      "prompt": "macro view",
+      "aliases": [
+        "鏡位",
+        "macro view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 310,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "telephoto-view",
+      "name_zh": "鏡位：telephoto view",
+      "description_zh": "加入「telephoto view」這個鏡位提示片段。",
+      "prompt": "telephoto view",
+      "aliases": [
+        "鏡位",
+        "telephoto view"
+      ],
+      "keywords": [
+        "camera-angles",
+        "positive",
+        "鏡位"
+      ],
+      "order": 320,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

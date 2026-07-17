@@ -6,6 +6,19 @@
 
 ---
 
+## 2026-07-17 Prompt Library service 完成
+
+Prompt Library 後端服務階段已完成，可由後續 React 工作台與 MCP tools 共用同一份 provider／API 合約：
+
+1. 完成 project-scoped JSON schema 與安全 file provider：原始 bytes SHA-256 etag、FileLock、原子替換、路徑 confinement、cache-aware stable snapshot 與壞檔 diagnostics 隔離。
+2. 完成正負 prompt 組合與中英文 weighted fuzzy search；寫入採 revision + etag optimistic concurrency，entry 修正會 eager 更新所有 active combination 快照，部分更新中斷時由 combination read lazy repair。
+3. 新增 `/api/prompt-library` 十個 FastAPI 操作，涵蓋 catalog、category／entry／combination CRUD、archive、search 與 compose optional save；錯誤維持 `code + message + hint + details`。
+4. 新增 393 條中英雙語 starter catalog（14 個 positive、8 個 negative 分類）與三個精確保留舊字串的 legacy combinations；舊 `/api/prompt-templates` 已改由 `legacy_template=true` combinations 提供，不再有硬編碼第二來源。
+5. 驗證：Prompt Library 全套 `89 passed, 1 skipped`；Backend regression `964 passed, 4 skipped`（Windows 無 symlink 權限的安全案例依環境 skip）；`docker compose config` 確認 `PROMPT_LIBRARY_DIR=/app/prompt_library` 且 bind mount target 為 `/app/prompt_library`。
+6. 回歸過程順手修正四個既有跨平台測試問題：錯用 `MagicMock.not_called`、兩處 Windows 路徑 separator assertion，以及三個無 symlink 權限時應 skip 的安全測試 setup；未修改相關 production behavior。
+
+尚未完成的是 plan-set 後兩階段：React Prompt Workbench／workflow-default 生圖整合，以及 MCP Prompt Library parity。
+
 ## 2026-07-17 Prompt Library 後端核心 checkpoint
 
 已完成第一個可獨立合併的後端核心收斂點：

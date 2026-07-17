@@ -7,6 +7,12 @@ import re
 from dataclasses import dataclass
 from typing import Protocol
 
+from app.core.prompt_library import (
+    PromptLibraryProvider,
+    get_default_prompt_library_provider,
+)
+from app.core.prompt_library_models import PromptCombination
+
 
 @dataclass(frozen=True)
 class PromptTemplate:
@@ -60,29 +66,36 @@ def apply_variables(template: str, variables: dict[str, str]) -> str:
 
 
 class DefaultPromptTemplateProvider:
-    """內建預設模板，無外部依賴"""
+    """將 Prompt Library 中標記為 legacy 的組合轉為舊版模板。"""
 
-    def __init__(self) -> None:
-        raw = [
-            ("portrait", "人像基礎", "1girl, {人物}, {風格}, solo"),
-            ("portrait-detail", "人像詳述", "1girl, {人物}, {風格}, solo, {細節}"),
-            ("character", "角色風格", "{trigger} {人物}, {風格}"),
-        ]
-        self._templates: list[PromptTemplate] = []
-        for tid, name, tpl in raw:
-            vars_ = extract_variables(tpl)
-            self._templates.append(
-                PromptTemplate(id=tid, name=name, template=tpl, variables=vars_)
-            )
+    def __init__(self, prompt_library: PromptLibraryProvider | None = None) -> None:
+        self.prompt_library = prompt_library or get_default_prompt_library_provider()
 
     def list_all(self) -> list[PromptTemplate]:
-        return list(self._templates)
+        combinations = self.prompt_library.catalog().combinations
+        return sorted(
+            (
+                self._to_template(
+                    self.prompt_library.get_combination(item.id).combination
+                )
+                for item in combinations
+                if item.legacy_template and not item.archived
+            ),
+            key=lambda item: item.id,
+        )
 
     def get(self, template_id: str) -> PromptTemplate | None:
-        for t in self._templates:
-            if t.id == template_id:
-                return t
-        return None
+        return next((item for item in self.list_all() if item.id == template_id), None)
+
+    @staticmethod
+    def _to_template(combination: PromptCombination) -> PromptTemplate:
+        text = combination.positive_prompt_snapshot
+        return PromptTemplate(
+            id=combination.id,
+            name=combination.name_zh,
+            template=text,
+            variables=extract_variables(text),
+        )
 
 
 def get_default_provider() -> PromptTemplateProvider:

@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "id": "environment",
+  "polarity": "positive",
+  "name_zh": "環境",
+  "description_zh": "環境相關的可組合提示詞。",
+  "aliases": [
+    "環境",
+    "environment"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "環境"
+  ],
+  "order": 120,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "city-street",
+      "name_zh": "環境：city street",
+      "description_zh": "加入「city street」這個環境提示片段。",
+      "prompt": "city street",
+      "aliases": [
+        "環境",
+        "city street"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "school-classroom",
+      "name_zh": "環境：school classroom",
+      "description_zh": "加入「school classroom」這個環境提示片段。",
+      "prompt": "school classroom",
+      "aliases": [
+        "環境",
+        "school classroom"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cozy-bedroom",
+      "name_zh": "環境：cozy bedroom",
+      "description_zh": "加入「cozy bedroom」這個環境提示片段。",
+      "prompt": "cozy bedroom",
+      "aliases": [
+        "環境",
+        "cozy bedroom"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "modern-office",
+      "name_zh": "環境：modern office",
+      "description_zh": "加入「modern office」這個環境提示片段。",
+      "prompt": "modern office",
+      "aliases": [
+        "環境",
+        "modern office"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "coffee-shop",
+      "name_zh": "環境：coffee shop",
+      "description_zh": "加入「coffee shop」這個環境提示片段。",
+      "prompt": "coffee shop",
+      "aliases": [
+        "環境",
+        "coffee shop"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "library-interior",
+      "name_zh": "環境：library interior",
+      "description_zh": "加入「library interior」這個環境提示片段。",
+      "prompt": "library interior",
+      "aliases": [
+        "環境",
+        "library interior"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "train-station",
+      "name_zh": "環境：train station",
+      "description_zh": "加入「train station」這個環境提示片段。",
+      "prompt": "train station",
+      "aliases": [
+        "環境",
+        "train station"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "rooftop",
+      "name_zh": "環境：rooftop",
+      "description_zh": "加入「rooftop」這個環境提示片段。",
+      "prompt": "rooftop",
+      "aliases": [
+        "環境",
+        "rooftop"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flower-garden",
+      "name_zh": "環境：flower garden",
+      "description_zh": "加入「flower garden」這個環境提示片段。",
+      "prompt": "flower garden",
+      "aliases": [
+        "環境",
+        "flower garden"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "enchanted-forest",
+      "name_zh": "環境：enchanted forest",
+      "description_zh": "加入「enchanted forest」這個環境提示片段。",
+      "prompt": "enchanted forest",
+      "aliases": [
+        "環境",
+        "enchanted forest"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "mountain-landscape",
+      "name_zh": "環境：mountain landscape",
+      "description_zh": "加入「mountain landscape」這個環境提示片段。",
+      "prompt": "mountain landscape",
+      "aliases": [
+        "環境",
+        "mountain landscape"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ocean-beach",
+      "name_zh": "環境：ocean beach",
+      "description_zh": "加入「ocean beach」這個環境提示片段。",
+      "prompt": "ocean beach",
+      "aliases": [
+        "環境",
+        "ocean beach"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "underwater-scene",
+      "name_zh": "環境：underwater scene",
+      "description_zh": "加入「underwater scene」這個環境提示片段。",
+      "prompt": "underwater scene",
+      "aliases": [
+        "環境",
+        "underwater scene"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "snowy-field",
+      "name_zh": "環境：snowy field",
+      "description_zh": "加入「snowy field」這個環境提示片段。",
+      "prompt": "snowy field",
+      "aliases": [
+        "環境",
+        "snowy field"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "desert-landscape",
+      "name_zh": "環境：desert landscape",
+      "description_zh": "加入「desert landscape」這個環境提示片段。",
+      "prompt": "desert landscape",
+      "aliases": [
+        "環境",
+        "desert landscape"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ancient-ruins",
+      "name_zh": "環境：ancient ruins",
+      "description_zh": "加入「ancient ruins」這個環境提示片段。",
+      "prompt": "ancient ruins",
+      "aliases": [
+        "環境",
+        "ancient ruins"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "medieval-village",
+      "name_zh": "環境：medieval village",
+      "description_zh": "加入「medieval village」這個環境提示片段。",
+      "prompt": "medieval village",
+      "aliases": [
+        "環境",
+        "medieval village"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fantasy-castle",
+      "name_zh": "環境：fantasy castle",
+      "description_zh": "加入「fantasy castle」這個環境提示片段。",
+      "prompt": "fantasy castle",
+      "aliases": [
+        "環境",
+        "fantasy castle"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "space-station",
+      "name_zh": "環境：space station",
+      "description_zh": "加入「space station」這個環境提示片段。",
+      "prompt": "space station",
+      "aliases": [
+        "環境",
+        "space station"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 190,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cyberpunk-city",
+      "name_zh": "環境：cyberpunk city",
+      "description_zh": "加入「cyberpunk city」這個環境提示片段。",
+      "prompt": "cyberpunk city",
+      "aliases": [
+        "環境",
+        "cyberpunk city"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 200,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "steampunk-workshop",
+      "name_zh": "環境：steampunk workshop",
+      "description_zh": "加入「steampunk workshop」這個環境提示片段。",
+      "prompt": "steampunk workshop",
+      "aliases": [
+        "環境",
+        "steampunk workshop"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 210,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "festival-grounds",
+      "name_zh": "環境：festival grounds",
+      "description_zh": "加入「festival grounds」這個環境提示片段。",
+      "prompt": "festival grounds",
+      "aliases": [
+        "環境",
+        "festival grounds"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 220,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "night-sky",
+      "name_zh": "環境：night sky",
+      "description_zh": "加入「night sky」這個環境提示片段。",
+      "prompt": "night sky",
+      "aliases": [
+        "環境",
+        "night sky"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 230,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "abstract-background",
+      "name_zh": "環境：abstract background",
+      "description_zh": "加入「abstract background」這個環境提示片段。",
+      "prompt": "abstract background",
+      "aliases": [
+        "環境",
+        "abstract background"
+      ],
+      "keywords": [
+        "environment",
+        "positive",
+        "環境"
+      ],
+      "order": 240,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
