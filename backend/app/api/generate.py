@@ -82,15 +82,15 @@ def _custom_request_params(body: GenerateCustomRequest) -> dict:
 async def trigger_generate(body: GenerateRequest):
     """觸發圖片生成"""
     try:
-        params = {
-            "checkpoint": body.checkpoint,
-            "lora": body.lora,
-            "prompt": body.prompt,
-            "negative_prompt": body.negative_prompt,
-            "seed": body.seed,
-            "steps": body.steps,
-            "cfg": body.cfg,
-        }
+        params = {"prompt": body.prompt, "negative_prompt": body.negative_prompt}
+        for key in ("checkpoint", "lora", "seed", "steps", "cfg"):
+            value = getattr(body, key)
+            if value is not None:
+                params[key] = value
+        if body.use_workflow_defaults:
+            params["use_workflow_defaults"] = True
+        if body.seed_mode is not None:
+            params["seed_mode"] = body.seed_mode
         if body.template is not None:
             params["template"] = body.template
         if body.diffusion_model is not None:

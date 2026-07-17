@@ -168,6 +168,10 @@ pip install -e .
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
 |------|----------|-------------|
+| `prompt_library_search` | `dict` | GET /api/prompt-library/catalog, categories, search |
+| `prompt_library_save` | `dict` | PUT /api/prompt-library/categories, entries, combinations |
+| `prompt_library_compose` | `dict` | POST /api/prompt-library/compose |
+| `prompt_library_archive` | `dict` | POST /api/prompt-library/archive |
 | `mcp_ping` | `plain_text` | GET /health |
 | `civitai_source_info` | `dict` | GET /api/civitai/source-info |
 | `civitai_generate_like` | `dict` | POST /api/civitai/generate-like |
@@ -198,7 +202,7 @@ pip install -e .
 <!-- MCP-CATALOG:END -->
 
 <!-- MCP-OMISSIONS:START -->
-2026-07 工具大幅收斂：75 個工具刪減為 20 個意圖級工具。低階 Civitai recipe/資源/alias 工具、
+2026-07 工具大幅收斂後，現由 31 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
 style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢等已從 MCP 移除；
 對應功能仍在 backend HTTP API（見 docs/api-contract.md），Civitai 流程改用
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。

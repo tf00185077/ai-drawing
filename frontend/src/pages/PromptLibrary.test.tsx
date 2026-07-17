@@ -2,6 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PromptLibrary from "./PromptLibrary";
 
+vi.mock("../components/prompt-library/PromptWorkbench", () => ({
+  default: () => <section>Prompt Workbench</section>,
+}));
+
 const emptyCatalog = {
   manifest: { schema_version: 1, library_id: "default", name: "Prompt Library", description_zh: "提示詞庫" },
   categories: [],

@@ -5,6 +5,7 @@ import type {
   PromptLibraryWriteResponse,
   PromptPolarity,
 } from "../types/api";
+import PromptWorkbench from "../components/prompt-library/PromptWorkbench";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -265,6 +266,7 @@ export default function PromptLibrary() {
           </form>
         </section>
       </div>
+      <PromptWorkbench />
     </div>
   );
 }

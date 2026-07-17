@@ -11,6 +11,7 @@ Workflow 模板能力目錄 API
 契約：openspec/specs/workflow-template-catalog/spec.md
 """
 import json
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -25,8 +26,23 @@ from app.core.workflow_manifest import (
 )
 from app.db.database import get_db
 from app.db.models import GeneratedArtifact, GeneratedImage
+from app.core.workflow_form import GenerationFormsResponse, build_generation_forms
+from app.core.resources import list_checkpoints, list_diffusion_models, list_loras, list_text_encoders, list_vaes
+from app.config import get_settings
+from app.core.comfyui import ComfyUIClient
 
 router = APIRouter(prefix="/api/workflow-catalog", tags=["Workflow 模板目錄"])
+
+
+@router.get("/generation-forms", response_model=GenerationFormsResponse)
+async def generation_forms():
+    settings = get_settings()
+    resources = {"checkpoints": list_checkpoints(settings), "loras": list_loras(settings), "diffusion_models": list_diffusion_models(settings), "text_encoders": list_text_encoders(settings), "vaes": list_vaes(settings)}
+    try:
+        object_info = ComfyUIClient().get_object_info()
+    except Exception:
+        object_info = {}
+    return build_generation_forms(Path(__file__).resolve().parent.parent.parent / "workflows", resources=resources, object_info=object_info)
 
 
 class BackfillRequest(BaseModel):

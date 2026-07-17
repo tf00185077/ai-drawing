@@ -5,6 +5,7 @@ Corresponds to: POST /api/generate/, GET /api/generate/job/{job_id}
 Supports character and style semantic mapping (character_style).
 """
 import json
+from typing import Literal
 from urllib.parse import quote
 
 from mcp_server.character_style import resolve_to_prompt
@@ -41,6 +42,8 @@ def generate_image(
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
+    use_workflow_defaults: bool | None = None,
+    seed_mode: Literal["workflow_default", "random", "fixed"] | None = None,
 ) -> str:
     """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. Returns job_id or an error message. To generate based on a Civitai image, use civitai_generate_like instead."""
     try:
@@ -74,8 +77,12 @@ def generate_image(
         if batch_size is not None:
             if 1 <= batch_size <= 8:
                 body["batch_size"] = batch_size
-        else:
+        elif use_workflow_defaults is not True:
             body["batch_size"] = 1
+        if use_workflow_defaults is not None:
+            body["use_workflow_defaults"] = use_workflow_defaults
+        if seed_mode is not None:
+            body["seed_mode"] = seed_mode
         if width is not None:
             body["width"] = width
         if height is not None:
@@ -492,6 +499,7 @@ def list_available_resources() -> str:
     try:
         client = _get_client()
         resp = client.get("generate/available-resources")
+        forms = client.get("workflow-catalog/generation-forms")
         checkpoints = _resource_list(resp, "checkpoints")
         loras = _resource_list(resp, "loras")
         diffusion_models = _resource_list(resp, "diffusion_models")
@@ -522,6 +530,8 @@ def list_available_resources() -> str:
                 "video_inputs": video_inputs,
                 "workflows": workflows,
                 "default_checkpoint": default_checkpoint,
+                "generation_forms": forms.get("items", []),
+                "workflow_capability_source": forms.get("capability_source", "fallback"),
                 "next": next_step,
             },
             ensure_ascii=False,

@@ -8,8 +8,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any, Mapping
 
 WORKFLOWS_DIR = Path(__file__).resolve().parent.parent.parent / "workflows"
+
+
+def get_sampling_params_from_workflow(workflow: Mapping[str, Any]) -> dict[str, Any]:
+    for node in workflow.values():
+        if isinstance(node, dict) and node.get("class_type") == "KSampler":
+            inputs = node.get("inputs", {})
+            return {key: inputs.get(key) for key in ("seed", "steps", "cfg", "sampler_name", "scheduler", "denoise") if inputs.get(key) is not None}
+    return {}
 
 
 def load_template(name: str) -> dict:
