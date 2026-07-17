@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from app.services.civitai_safe_download import (
     CivitaiFileMetadata,
     DownloadResponse,
@@ -120,7 +122,10 @@ def test_part_symlink_cannot_damage_existing_final_target_on_failure(tmp_path: P
     target = tmp_path / "file.safetensors"
     target.write_bytes(b"known-good-final")
     part = target.with_name(target.name + ".part")
-    part.symlink_to(target.name)
+    try:
+        part.symlink_to(target.name)
+    except OSError:
+        pytest.skip("creating file symlinks requires unavailable privileges")
     transport = FakeTransport([DownloadResponse(200, b"bad", {})])
 
     result = safe_download(_metadata(expected), target, transport=transport)

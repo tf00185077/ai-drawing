@@ -1,4 +1,6 @@
 """圖庫 API 單元測試"""
+from pathlib import Path
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -114,7 +116,7 @@ def test_get_artifact_detail_returns_video_metadata(client) -> None:
     assert data["mime_type"] == "video/mp4"
     assert data["gallery_path"] == "2024-01/video.mp4"
     assert data["artifact_url"] == "/gallery/2024-01/video.mp4"
-    assert data["local_path"].endswith("/2024-01/video.mp4")
+    assert Path(data["local_path"]).parts[-2:] == ("2024-01", "video.mp4")
     assert data["file_size"] == 1234
     assert data["source_node_id"] == "42"
     assert data["source_node_type"] == "VHS_VideoCombine"
