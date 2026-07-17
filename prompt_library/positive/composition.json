@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "id": "composition",
+  "polarity": "positive",
+  "name_zh": "構圖",
+  "description_zh": "構圖相關的可組合提示詞。",
+  "aliases": [
+    "構圖",
+    "composition"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "構圖"
+  ],
+  "order": 90,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "centered-composition",
+      "name_zh": "構圖：centered composition",
+      "description_zh": "加入「centered composition」這個構圖提示片段。",
+      "prompt": "centered composition",
+      "aliases": [
+        "構圖",
+        "centered composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "rule-of-thirds",
+      "name_zh": "構圖：rule of thirds",
+      "description_zh": "加入「rule of thirds」這個構圖提示片段。",
+      "prompt": "rule of thirds",
+      "aliases": [
+        "構圖",
+        "rule of thirds"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "symmetrical-composition",
+      "name_zh": "構圖：symmetrical composition",
+      "description_zh": "加入「symmetrical composition」這個構圖提示片段。",
+      "prompt": "symmetrical composition",
+      "aliases": [
+        "構圖",
+        "symmetrical composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "asymmetrical-composition",
+      "name_zh": "構圖：asymmetrical composition",
+      "description_zh": "加入「asymmetrical composition」這個構圖提示片段。",
+      "prompt": "asymmetrical composition",
+      "aliases": [
+        "構圖",
+        "asymmetrical composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "diagonal-composition",
+      "name_zh": "構圖：diagonal composition",
+      "description_zh": "加入「diagonal composition」這個構圖提示片段。",
+      "prompt": "diagonal composition",
+      "aliases": [
+        "構圖",
+        "diagonal composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "triangular-composition",
+      "name_zh": "構圖：triangular composition",
+      "description_zh": "加入「triangular composition」這個構圖提示片段。",
+      "prompt": "triangular composition",
+      "aliases": [
+        "構圖",
+        "triangular composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "golden-ratio-composition",
+      "name_zh": "構圖：golden ratio composition",
+      "description_zh": "加入「golden ratio composition」這個構圖提示片段。",
+      "prompt": "golden ratio composition",
+      "aliases": [
+        "構圖",
+        "golden ratio composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "leading-lines",
+      "name_zh": "構圖：leading lines",
+      "description_zh": "加入「leading lines」這個構圖提示片段。",
+      "prompt": "leading lines",
+      "aliases": [
+        "構圖",
+        "leading lines"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "frame-within-frame",
+      "name_zh": "構圖：frame within frame",
+      "description_zh": "加入「frame within frame」這個構圖提示片段。",
+      "prompt": "frame within frame",
+      "aliases": [
+        "構圖",
+        "frame within frame"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "negative-space",
+      "name_zh": "構圖：negative space",
+      "description_zh": "加入「negative space」這個構圖提示片段。",
+      "prompt": "negative space",
+      "aliases": [
+        "構圖",
+        "negative space"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "layered-composition",
+      "name_zh": "構圖：layered composition",
+      "description_zh": "加入「layered composition」這個構圖提示片段。",
+      "prompt": "layered composition",
+      "aliases": [
+        "構圖",
+        "layered composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "foreground-framing",
+      "name_zh": "構圖：foreground framing",
+      "description_zh": "加入「foreground framing」這個構圖提示片段。",
+      "prompt": "foreground framing",
+      "aliases": [
+        "構圖",
+        "foreground framing"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "balanced-composition",
+      "name_zh": "構圖：balanced composition",
+      "description_zh": "加入「balanced composition」這個構圖提示片段。",
+      "prompt": "balanced composition",
+      "aliases": [
+        "構圖",
+        "balanced composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cinematic-composition",
+      "name_zh": "構圖：cinematic composition",
+      "description_zh": "加入「cinematic composition」這個構圖提示片段。",
+      "prompt": "cinematic composition",
+      "aliases": [
+        "構圖",
+        "cinematic composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "poster-composition",
+      "name_zh": "構圖：poster composition",
+      "description_zh": "加入「poster composition」這個構圖提示片段。",
+      "prompt": "poster composition",
+      "aliases": [
+        "構圖",
+        "poster composition"
+      ],
+      "keywords": [
+        "composition",
+        "positive",
+        "構圖"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "id": "styles",
+  "polarity": "positive",
+  "name_zh": "風格",
+  "description_zh": "風格相關的可組合提示詞。",
+  "aliases": [
+    "風格",
+    "styles"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "風格"
+  ],
+  "order": 110,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "anime-style",
+      "name_zh": "風格：anime style",
+      "description_zh": "加入「anime style」這個風格提示片段。",
+      "prompt": "anime style",
+      "aliases": [
+        "風格",
+        "anime style"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "manga-style",
+      "name_zh": "風格：manga style",
+      "description_zh": "加入「manga style」這個風格提示片段。",
+      "prompt": "manga style",
+      "aliases": [
+        "風格",
+        "manga style"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "watercolor-painting",
+      "name_zh": "風格：watercolor painting",
+      "description_zh": "加入「watercolor painting」這個風格提示片段。",
+      "prompt": "watercolor painting",
+      "aliases": [
+        "風格",
+        "watercolor painting"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "oil-painting",
+      "name_zh": "風格：oil painting",
+      "description_zh": "加入「oil painting」這個風格提示片段。",
+      "prompt": "oil painting",
+      "aliases": [
+        "風格",
+        "oil painting"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "digital-painting",
+      "name_zh": "風格：digital painting",
+      "description_zh": "加入「digital painting」這個風格提示片段。",
+      "prompt": "digital painting",
+      "aliases": [
+        "風格",
+        "digital painting"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ink-illustration",
+      "name_zh": "風格：ink illustration",
+      "description_zh": "加入「ink illustration」這個風格提示片段。",
+      "prompt": "ink illustration",
+      "aliases": [
+        "風格",
+        "ink illustration"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pencil-sketch",
+      "name_zh": "風格：pencil sketch",
+      "description_zh": "加入「pencil sketch」這個風格提示片段。",
+      "prompt": "pencil sketch",
+      "aliases": [
+        "風格",
+        "pencil sketch"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cel-shading",
+      "name_zh": "風格：cel shading",
+      "description_zh": "加入「cel shading」這個風格提示片段。",
+      "prompt": "cel shading",
+      "aliases": [
+        "風格",
+        "cel shading"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pixel-art",
+      "name_zh": "風格：pixel art",
+      "description_zh": "加入「pixel art」這個風格提示片段。",
+      "prompt": "pixel art",
+      "aliases": [
+        "風格",
+        "pixel art"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "storybook-illustration",
+      "name_zh": "風格：storybook illustration",
+      "description_zh": "加入「storybook illustration」這個風格提示片段。",
+      "prompt": "storybook illustration",
+      "aliases": [
+        "風格",
+        "storybook illustration"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "art-nouveau",
+      "name_zh": "風格：art nouveau",
+      "description_zh": "加入「art nouveau」這個風格提示片段。",
+      "prompt": "art nouveau",
+      "aliases": [
+        "風格",
+        "art nouveau"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "art-deco",
+      "name_zh": "風格：art deco",
+      "description_zh": "加入「art deco」這個風格提示片段。",
+      "prompt": "art deco",
+      "aliases": [
+        "風格",
+        "art deco"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "impressionism",
+      "name_zh": "風格：impressionism",
+      "description_zh": "加入「impressionism」這個風格提示片段。",
+      "prompt": "impressionism",
+      "aliases": [
+        "風格",
+        "impressionism"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "surrealism",
+      "name_zh": "風格：surrealism",
+      "description_zh": "加入「surrealism」這個風格提示片段。",
+      "prompt": "surrealism",
+      "aliases": [
+        "風格",
+        "surrealism"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "minimalist-art",
+      "name_zh": "風格：minimalist art",
+      "description_zh": "加入「minimalist art」這個風格提示片段。",
+      "prompt": "minimalist art",
+      "aliases": [
+        "風格",
+        "minimalist art"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "vintage-poster",
+      "name_zh": "風格：vintage poster",
+      "description_zh": "加入「vintage poster」這個風格提示片段。",
+      "prompt": "vintage poster",
+      "aliases": [
+        "風格",
+        "vintage poster"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cinematic-realism",
+      "name_zh": "風格：cinematic realism",
+      "description_zh": "加入「cinematic realism」這個風格提示片段。",
+      "prompt": "cinematic realism",
+      "aliases": [
+        "風格",
+        "cinematic realism"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fantasy-concept-art",
+      "name_zh": "風格：fantasy concept art",
+      "description_zh": "加入「fantasy concept art」這個風格提示片段。",
+      "prompt": "fantasy concept art",
+      "aliases": [
+        "風格",
+        "fantasy concept art"
+      ],
+      "keywords": [
+        "styles",
+        "positive",
+        "風格"
+      ],
+      "order": 180,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

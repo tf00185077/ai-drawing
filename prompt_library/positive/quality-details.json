@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "id": "quality-details",
+  "polarity": "positive",
+  "name_zh": "品質細節",
+  "description_zh": "品質細節相關的可組合提示詞。",
+  "aliases": [
+    "品質細節",
+    "quality details"
+  ],
+  "keywords": [
+    "positive",
+    "prompt",
+    "品質細節"
+  ],
+  "order": 130,
+  "revision": 1,
+  "archived": false,
+  "entries": [
+    {
+      "id": "masterpiece",
+      "name_zh": "品質細節：masterpiece",
+      "description_zh": "加入「masterpiece」這個品質細節提示片段。",
+      "prompt": "masterpiece",
+      "aliases": [
+        "品質細節",
+        "masterpiece"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "best-quality",
+      "name_zh": "品質細節：best quality",
+      "description_zh": "加入「best quality」這個品質細節提示片段。",
+      "prompt": "best quality",
+      "aliases": [
+        "品質細節",
+        "best quality"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "highly-detailed",
+      "name_zh": "品質細節：highly detailed",
+      "description_zh": "加入「highly detailed」這個品質細節提示片段。",
+      "prompt": "highly detailed",
+      "aliases": [
+        "品質細節",
+        "highly detailed"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ultra-detailed",
+      "name_zh": "品質細節：ultra-detailed",
+      "description_zh": "加入「ultra-detailed」這個品質細節提示片段。",
+      "prompt": "ultra-detailed",
+      "aliases": [
+        "品質細節",
+        "ultra detailed"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "sharp-focus",
+      "name_zh": "品質細節：sharp focus",
+      "description_zh": "加入「sharp focus」這個品質細節提示片段。",
+      "prompt": "sharp focus",
+      "aliases": [
+        "品質細節",
+        "sharp focus"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "crisp-details",
+      "name_zh": "品質細節：crisp details",
+      "description_zh": "加入「crisp details」這個品質細節提示片段。",
+      "prompt": "crisp details",
+      "aliases": [
+        "品質細節",
+        "crisp details"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fine-linework",
+      "name_zh": "品質細節：fine linework",
+      "description_zh": "加入「fine linework」這個品質細節提示片段。",
+      "prompt": "fine linework",
+      "aliases": [
+        "品質細節",
+        "fine linework"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "intricate-details",
+      "name_zh": "品質細節：intricate details",
+      "description_zh": "加入「intricate details」這個品質細節提示片段。",
+      "prompt": "intricate details",
+      "aliases": [
+        "品質細節",
+        "intricate details"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "detailed-eyes",
+      "name_zh": "品質細節：detailed eyes",
+      "description_zh": "加入「detailed eyes」這個品質細節提示片段。",
+      "prompt": "detailed eyes",
+      "aliases": [
+        "品質細節",
+        "detailed eyes"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "detailed-hair",
+      "name_zh": "品質細節：detailed hair",
+      "description_zh": "加入「detailed hair」這個品質細節提示片段。",
+      "prompt": "detailed hair",
+      "aliases": [
+        "品質細節",
+        "detailed hair"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "detailed-fabric",
+      "name_zh": "品質細節：detailed fabric",
+      "description_zh": "加入「detailed fabric」這個品質細節提示片段。",
+      "prompt": "detailed fabric",
+      "aliases": [
+        "品質細節",
+        "detailed fabric"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "realistic-textures",
+      "name_zh": "品質細節：realistic textures",
+      "description_zh": "加入「realistic textures」這個品質細節提示片段。",
+      "prompt": "realistic textures",
+      "aliases": [
+        "品質細節",
+        "realistic textures"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "polished-rendering",
+      "name_zh": "品質細節：polished rendering",
+      "description_zh": "加入「polished rendering」這個品質細節提示片段。",
+      "prompt": "polished rendering",
+      "aliases": [
+        "品質細節",
+        "polished rendering"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "professional-illustration",
+      "name_zh": "品質細節：professional illustration",
+      "description_zh": "加入「professional illustration」這個品質細節提示片段。",
+      "prompt": "professional illustration",
+      "aliases": [
+        "品質細節",
+        "professional illustration"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "high-resolution",
+      "name_zh": "品質細節：high resolution",
+      "description_zh": "加入「high resolution」這個品質細節提示片段。",
+      "prompt": "high resolution",
+      "aliases": [
+        "品質細節",
+        "high resolution"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "refined-finish",
+      "name_zh": "品質細節：refined finish",
+      "description_zh": "加入「refined finish」這個品質細節提示片段。",
+      "prompt": "refined finish",
+      "aliases": [
+        "品質細節",
+        "refined finish"
+      ],
+      "keywords": [
+        "quality-details",
+        "positive",
+        "品質細節"
+      ],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
