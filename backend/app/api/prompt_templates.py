@@ -5,10 +5,14 @@
 """
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.prompt_library import (
+    PromptLibraryProvider,
+    get_default_prompt_library_provider,
+)
 from app.core.prompt_templates import (
+    DefaultPromptTemplateProvider,
     PromptTemplateProvider,
     apply_variables,
-    get_default_provider,
 )
 from app.schemas.prompt_templates import (
     PromptTemplateApplyRequest,
@@ -20,8 +24,14 @@ from app.schemas.prompt_templates import (
 router = APIRouter(prefix="/api/prompt-templates", tags=["Prompt 模板"])
 
 
-def _provider() -> PromptTemplateProvider:
-    return get_default_provider()
+def _prompt_library_provider() -> PromptLibraryProvider:
+    return get_default_prompt_library_provider()
+
+
+def _provider(
+    prompt_library: PromptLibraryProvider = Depends(_prompt_library_provider),
+) -> PromptTemplateProvider:
+    return DefaultPromptTemplateProvider(prompt_library=prompt_library)
 
 
 @router.get("/", response_model=PromptTemplateListResponse)

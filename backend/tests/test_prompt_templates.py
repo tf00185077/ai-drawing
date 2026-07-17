@@ -1,4 +1,8 @@
 """Prompt 模板庫單元測試"""
+import json
+import shutil
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -7,7 +11,9 @@ from app.core.prompt_templates import (
     apply_variables,
     extract_variables,
 )
+from app.core.prompt_library import FilePromptLibraryProvider
 from app.main import app
+from app.api import prompt_templates as prompt_templates_api
 
 
 class TestExtractVariables:
@@ -39,19 +45,54 @@ class TestApplyVariables:
         assert apply_variables(tpl, {"風格": "anime"}) == "1girl, , solo"
 
 
+@pytest.fixture
+def tmp_prompt_library(tmp_path: Path) -> FilePromptLibraryProvider:
+    source = Path(__file__).resolve().parents[2] / "prompt_library"
+    root = tmp_path / "prompt_library"
+    shutil.copytree(source, root)
+    ordinary = json.loads(
+        (root / "combinations" / "portrait.json").read_text(encoding="utf-8")
+    )
+    ordinary.update(
+        id="ordinary-combination",
+        name_zh="一般組合",
+        description_zh="不提供給舊版 API",
+        legacy_template=False,
+    )
+    (root / "combinations" / "ordinary-combination.json").write_text(
+        json.dumps(ordinary, ensure_ascii=False), encoding="utf-8"
+    )
+    return FilePromptLibraryProvider(root)
+
+
 class TestDefaultProvider:
     """DefaultPromptTemplateProvider 測試"""
 
-    def test_list_all_returns_builtin_templates(self) -> None:
-        """list_all 回傳內建模板"""
-        provider = DefaultPromptTemplateProvider()
-        templates = provider.list_all()
-        assert len(templates) >= 1
-        assert all(t.id and t.name and t.template for t in templates)
+    def test_legacy_provider_lists_only_flagged_combinations(
+        self, tmp_prompt_library: FilePromptLibraryProvider
+    ) -> None:
+        provider = DefaultPromptTemplateProvider(prompt_library=tmp_prompt_library)
+        ids = [item.id for item in provider.list_all()]
+        assert ids == ["character", "portrait", "portrait-detail"]
+        assert "ordinary-combination" not in ids
 
-    def test_get_returns_template_by_id(self) -> None:
+    def test_legacy_provider_reflects_external_combination_correction(
+        self, tmp_prompt_library: FilePromptLibraryProvider
+    ) -> None:
+        provider = DefaultPromptTemplateProvider(prompt_library=tmp_prompt_library)
+        path = tmp_prompt_library.root / "combinations" / "portrait.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        corrected = "1person, {人物}, {風格}, solo"
+        document["positive"][0]["snapshot"] = corrected
+        document["positive_prompt_snapshot"] = corrected
+        path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+        assert provider.get("portrait").template == corrected
+
+    def test_get_returns_template_by_id(
+        self, tmp_prompt_library: FilePromptLibraryProvider
+    ) -> None:
         """get 依 id 回傳模板"""
-        provider = DefaultPromptTemplateProvider()
+        provider = DefaultPromptTemplateProvider(prompt_library=tmp_prompt_library)
         t = provider.get("portrait")
         assert t is not None
         assert t.id == "portrait"
@@ -91,3 +132,22 @@ class TestPromptTemplatesAPI:
             json={"template_id": "nonexistent", "variables": {}},
         )
         assert res.status_code == 404
+
+    def test_underlying_prompt_library_dependency_can_be_overridden(
+        self, tmp_prompt_library: FilePromptLibraryProvider
+    ) -> None:
+        app.dependency_overrides[prompt_templates_api._prompt_library_provider] = (
+            lambda: tmp_prompt_library
+        )
+        try:
+            response = TestClient(app).get("/api/prompt-templates/")
+        finally:
+            app.dependency_overrides.pop(
+                prompt_templates_api._prompt_library_provider, None
+            )
+        assert response.status_code == 200
+        assert [item["id"] for item in response.json()["items"]] == [
+            "character",
+            "portrait",
+            "portrait-detail",
+        ]
