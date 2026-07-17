@@ -242,6 +242,59 @@ def test_search_includes_categories_entries_and_combinations(
     assert "positive_prompt_snapshot" in combination.matched_fields
 
 
+def test_search_accepts_multiple_resource_types_and_empty_means_all(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    selected = provider.search(
+        "dress", resource_types=["entry", "combination"]
+    )
+    all_resources = provider.search("dress", resource_types=[])
+
+    assert {hit.resource_type for hit in selected.results} == {
+        "entry",
+        "combination",
+    }
+    assert {hit.resource_type for hit in all_resources.results} == {
+        "category",
+        "entry",
+        "combination",
+    }
+
+
+def test_category_filter_excludes_other_categories_and_combinations(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    result = provider.search(
+        "dress",
+        resource_types=["category", "entry", "combination"],
+        category_id="clothing",
+    )
+
+    assert result.results
+    assert {hit.resource_type for hit in result.results} == {"category", "entry"}
+    assert all(hit.category_id == "clothing" for hit in result.results)
+
+
+def test_category_filter_combines_with_polarity_and_include_archived(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    result = provider.search(
+        "dress",
+        resource_types=["category", "entry", "combination"],
+        category_id="archived-category",
+        polarity="positive",
+        include_archived=True,
+    )
+
+    assert {hit.id for hit in result.results} == {
+        "archived-category",
+        "hidden-dress",
+    }
+    assert all(hit.archived for hit in result.results)
+    assert all(hit.polarity == "positive" for hit in result.results)
+    assert all(hit.category_id == "archived-category" for hit in result.results)
+
+
 def test_entry_search_uses_category_context_at_lower_weight(
     provider: FilePromptLibraryProvider,
 ) -> None:

@@ -32,12 +32,12 @@ class PromptComposer:
         self.store = store
 
     def compose(self, request: ComposeRequest) -> ComposeResponse:
-        positive = list(request.positive)
-        negative = list(request.negative)
+        positive = self._copy_fragments(request.positive)
+        negative = self._copy_fragments(request.negative)
         if request.combination_id is not None:
             combination = self.store.read_combination(request.combination_id).model
-            positive = [*combination.positive, *positive]
-            negative = [*combination.negative, *negative]
+            positive = [*self._copy_fragments(combination.positive), *positive]
+            negative = [*self._copy_fragments(combination.negative), *negative]
 
         category_documents, _ = self.store.scan_categories()
         categories = {
@@ -122,6 +122,7 @@ class PromptComposer:
                 or fragment.source_revision != entry.revision
             ):
                 fragment = fragment.model_copy(
+                    deep=True,
                     update={
                         "snapshot": entry.prompt,
                         "source_revision": entry.revision,
@@ -130,6 +131,12 @@ class PromptComposer:
                 repaired = True
             resolved.append(fragment)
         return resolved, repaired
+
+    @staticmethod
+    def _copy_fragments(
+        fragments: Iterable[PromptFragment],
+    ) -> list[PromptFragment]:
+        return [fragment.model_copy(deep=True) for fragment in fragments]
 
     @staticmethod
     def _render(fragments: Iterable[PromptFragment]) -> str:
