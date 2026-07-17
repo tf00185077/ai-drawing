@@ -36,6 +36,7 @@ from app.core.workflow import (
     apply_params,
     extract_model_files_from_workflow,
     get_seed_from_workflow,
+    get_sampling_params_from_workflow,
     load_template,
 )
 from app.db.database import SessionLocal
@@ -328,7 +329,8 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             isinstance(n, dict) and n.get("class_type") == "CheckpointLoaderSimple"
             for n in wf.values()
         )
-        if has_checkpoint_loader and not custom_wf:
+        use_workflow_defaults = bool(job.params.get("use_workflow_defaults"))
+        if has_checkpoint_loader and not custom_wf and not use_workflow_defaults:
             effective_checkpoint = (
                 job.params.get("checkpoint")
                 or default_checkpoint(settings)
@@ -346,7 +348,7 @@ def _process_pending(comfy: ComfyUIClient) -> None:
 
         width = job.params.get("width")
         height = job.params.get("height")
-        if width is None and height is None and effective_checkpoint and settings.lora_sdxl:
+        if not use_workflow_defaults and width is None and height is None and effective_checkpoint and settings.lora_sdxl:
             width, height = 1024, 1024
         # 若提供 image / image_pose，從 gallery 讀取並上傳至 ComfyUI，取得檔名後替換
         image_for_wf: str | None = None
@@ -416,10 +418,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
 
         # template 路徑維持既有行為：省略 steps/cfg 補上預設值，省略 seed 則產生隨機值並記錄；
         # custom 路徑尊重提交的 workflow JSON，省略時原樣傳遞 None（不覆寫）。
-        if custom_wf:
+        if custom_wf or use_workflow_defaults:
             effective_steps = job.params.get("steps")
             effective_cfg = job.params.get("cfg")
             effective_seed = job.params.get("seed")
+            if job.params.get("seed_mode") == "random":
+                effective_seed = random.randint(0, 2**32 - 1)
         else:
             effective_steps = job.params.get("steps", 20)
             effective_cfg = job.params.get("cfg", 7.0)
@@ -459,6 +463,9 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             effective_seed = get_seed_from_workflow(prompt)
             if effective_seed is not None:
                 job.params["seed"] = effective_seed
+        for key, value in get_sampling_params_from_workflow(prompt).items():
+            if job.params.get(key) is None:
+                job.params[key] = value
         # 反解實際送出 workflow 的模型檔名（含 anima.json 內嵌值），供 recording 記錄、之後重生
         for key, value in extract_model_files_from_workflow(prompt).items():
             if value is not None and not job.params.get(key):

@@ -19,11 +19,12 @@ from mcp_server.tools.lora_train import lora_train_start
 def test_list_resources_returns_agent_friendly_json() -> None:
     """list_resources 回傳 agent 可解析的 JSON 資源清單"""
     mock_client = MagicMock()
-    mock_client.get.return_value = {
+    resources = {
         "checkpoints": ["novaAnimeXL_ilV190.safetensors", "v1-5-pruned-emaonly.ckpt"],
         "loras": ["artist.safetensors", "character.ckpt"],
         "workflows": ["default", "default_lora"],
     }
+    mock_client.get.side_effect = [resources, {"items": [], "capability_source": "fallback"}]
 
     with patch("mcp_server.tools.generate._get_client", return_value=mock_client):
         result = list_available_resources()
@@ -40,7 +41,10 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     assert data["video_inputs"] == []
     assert data["workflows"] == ["default", "default_lora"]
     assert "generate_image" in data["next"]
-    mock_client.get.assert_called_once_with("generate/available-resources")
+    assert [call.args[0] for call in mock_client.get.call_args_list] == [
+        "generate/available-resources",
+        "workflow-catalog/generation-forms",
+    ]
 
 
 def test_list_resources_empty_checkpoints_tells_agent_not_to_submit() -> None:

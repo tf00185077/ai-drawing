@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 共 75 個 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 目前共 31 個意圖級 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
 > 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
@@ -24,6 +24,10 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 <!-- MCP-CATALOG:START -->
 | Tool | Response | Backend/API |
 |------|----------|-------------|
+| `prompt_library_search` | `dict` | GET /api/prompt-library/catalog, categories, search |
+| `prompt_library_save` | `dict` | PUT /api/prompt-library/categories, entries, combinations |
+| `prompt_library_compose` | `dict` | POST /api/prompt-library/compose |
+| `prompt_library_archive` | `dict` | POST /api/prompt-library/archive |
 | `mcp_ping` | `plain_text` | GET /health |
 | `civitai_source_info` | `dict` | GET /api/civitai/source-info |
 | `civitai_generate_like` | `dict` | POST /api/civitai/generate-like |
@@ -54,7 +58,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 <!-- MCP-CATALOG:END -->
 
 <!-- MCP-OMISSIONS:START -->
-2026-07 工具大幅收斂：75 個工具刪減為 20 個意圖級工具。低階 Civitai recipe/資源/alias 工具、
+2026-07 工具大幅收斂後，現由 31 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
 style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢等已從 MCP 移除；
 對應功能仍在 backend HTTP API（見 docs/api-contract.md），Civitai 流程改用
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。

@@ -2,9 +2,10 @@
 生圖 API 的 Request/Response 結構
 對應 docs/api-contract.md 模組 1
 """
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from pydantic_core import PydanticCustomError
 
 
 class LoraSpec(BaseModel):
@@ -43,8 +44,10 @@ class GenerateRequest(BaseModel):
     prompt: str = Field(..., min_length=1)
     negative_prompt: str | None = None
     seed: int | None = None
-    steps: int = Field(default=20, ge=1, le=150)
-    cfg: float = Field(default=7.0, ge=1.0, le=30.0)
+    steps: int | None = Field(default=None, ge=1, le=150)
+    cfg: float | None = Field(default=None, ge=1.0, le=30.0)
+    use_workflow_defaults: bool = False
+    seed_mode: Literal["workflow_default", "random", "fixed"] | None = None
     width: int | None = Field(default=None, ge=256, le=2048)
     height: int | None = Field(default=None, ge=256, le=2048)
     batch_size: int | None = Field(default=None, ge=1, le=8)
@@ -52,6 +55,20 @@ class GenerateRequest(BaseModel):
     scheduler: str | None = None  # e.g. normal, karras, exponential
     lora_strength: float | None = Field(default=None, ge=0.0, le=2.0)
     denoise: float | None = Field(default=None, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_seed_controls(self) -> "GenerateRequest":
+        if self.seed_mode is None:
+            if self.use_workflow_defaults:
+                raise PydanticCustomError("invalid_seed_mode", "seed_mode is required when use_workflow_defaults is true")
+            return self
+        if self.seed_mode == "workflow_default" and not self.use_workflow_defaults:
+            raise PydanticCustomError("invalid_seed_mode", "workflow_default seed requires workflow defaults")
+        if self.seed_mode == "fixed" and self.seed is None:
+            raise PydanticCustomError("invalid_seed_mode", "fixed seed mode requires seed")
+        if self.seed_mode != "fixed" and self.seed is not None:
+            raise PydanticCustomError("invalid_seed_mode", "seed is only accepted in fixed mode")
+        return self
 
 
 class GenerateResponse(BaseModel):

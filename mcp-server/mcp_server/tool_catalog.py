@@ -44,7 +44,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("generate_video_custom_workflow", "mcp_server.tools.generate", "generate_video_custom_workflow", "json_string", ("POST /api/generate/video/custom",), notes="submit a known-good video workflow JSON"),
     ToolCatalogEntry("get_generation_status", "mcp_server.tools.generate", "get_generation_status", "json_string", ("GET /api/generate/job/{job_id}",)),
     ToolCatalogEntry("cancel_job", "mcp_server.tools.generate", "cancel_job", "json_string", ("DELETE /api/generate/queue/{job_id}",)),
-    ToolCatalogEntry("list_available_resources", "mcp_server.tools.generate", "list_available_resources", "json_string", ("GET /api/generate/available-resources",)),
+    ToolCatalogEntry("list_available_resources", "mcp_server.tools.generate", "list_available_resources", "json_string", ("GET /api/generate/available-resources", "GET /api/workflow-catalog/generation-forms")),
     # Gallery
     ToolCatalogEntry("gallery_list", "mcp_server.tools.gallery", "gallery_list", "plain_text", ("GET /api/gallery/",)),
     ToolCatalogEntry("get_gallery_image", "mcp_server.tools.gallery", "get_gallery_image", "json_string", ("GET /api/gallery/{image_id}",)),
@@ -57,6 +57,10 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
     ToolCatalogEntry("get_style_preset", "mcp_server.tools.style_presets", "get_style_preset", "json_string", ("GET /api/style-presets/{preset_id}",)),
     ToolCatalogEntry("compose_style_preset", "mcp_server.tools.style_presets", "compose_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/compose",)),
+    ToolCatalogEntry("prompt_library_search", "mcp_server.tools.prompt_library", "prompt_library_search", "dict", ("GET /api/prompt-library/catalog", "GET /api/prompt-library/categories/{polarity}/{category_id}", "GET /api/prompt-library/search")),
+    ToolCatalogEntry("prompt_library_save", "mcp_server.tools.prompt_library", "prompt_library_save", "dict", ("PUT /api/prompt-library/categories/{polarity}/{category_id}", "PUT /api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}", "PUT /api/prompt-library/combinations/{combination_id}")),
+    ToolCatalogEntry("prompt_library_compose", "mcp_server.tools.prompt_library", "prompt_library_compose", "dict", ("POST /api/prompt-library/compose",)),
+    ToolCatalogEntry("prompt_library_archive", "mcp_server.tools.prompt_library", "prompt_library_archive", "dict", ("POST /api/prompt-library/archive",)),
     # LoRA training
     ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
     ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",)),

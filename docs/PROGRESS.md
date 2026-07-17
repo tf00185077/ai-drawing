@@ -6,6 +6,15 @@
 
 ---
 
+## 2026-07-17 Prompt Workbench、Workflow 生圖與 MCP 對齊完成
+
+Prompt Library 剩餘的兩條使用路徑已接通，前端操作與 agent 呼叫共用同一套後端資料：
+
+1. `/prompt-library` 加入 Prompt Workbench，可瀏覽／搜尋詞條、建立詞條、加入正負片段、調整權重、加入自由文字、即時 compose 並儲存組合。
+2. 新增 workflow generation-form descriptor；工作台只列出適合純文字生圖的 workflow，並可保留 workflow 的 steps、CFG、seed 等預設值或要求隨機 seed 後直接排入生圖佇列。
+3. MCP 新增 `prompt_library_search`、`prompt_library_save`、`prompt_library_compose`、`prompt_library_archive`；`generate_image` 與 `list_available_resources` 同步支援 workflow defaults、seed mode 與 generation forms。
+4. 驗證：Backend 全套 `965 passed, 4 skipped`、MCP `77 passed`、Frontend `5 passed`，Vite production build 通過。
+
 ## 2026-07-17 Prompt Library 前端新增分類介面
 
 使用者已可從主導覽進入`/prompt-library`自行建立正向或負向Prompt分類：
