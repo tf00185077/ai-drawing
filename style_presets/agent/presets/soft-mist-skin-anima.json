@@ -1,0 +1,39 @@
+{
+  "id": "soft-mist-skin-anima",
+  "name": "柔霧肌膚",
+  "chinese_name": null,
+  "base_prompt": "best quality, score_9, very aesthetic, ultra detailed, soft mist skin rendering, smooth matte skin, delicate diffused blush, subtle translucent warmth, soft diffused highlights, gentle bloom, warm high-key backlighting, clean luminous color separation, controlled high contrast, refined cel-painterly shading, crisp fine anime lineart, polished delicate detail",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, oily skin, shiny skin, harsh specular skin highlights, plastic skin, waxy skin, coarse skin texture, oversharpened skin, heavy pores, muddy colors, harsh shadows, 3d, cgi",
+  "template": "anima",
+  "checkpoint": null,
+  "lora": null,
+  "lora_strength": null,
+  "loras": [],
+  "diffusion_model": "miaomiaoRealskin_anima11.safetensors",
+  "text_encoder": "miaomiaoRealskin_anima11_txt.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "batch_size": 4,
+    "cfg": 4,
+    "height": 1560,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "steps": 30,
+    "width": 920
+  },
+  "profiles": {
+    "default": {
+      "negative_prompt": "",
+      "params": {},
+      "prompt_prefix": "",
+      "prompt_suffix": ""
+    },
+    "portrait": {
+      "negative_prompt": "distorted face, asymmetrical eyes",
+      "params": {},
+      "prompt_prefix": "refined portrait finish, softly modeled facial planes,",
+      "prompt_suffix": ", delicate facial detail"
+    }
+  },
+  "note_path": "style_presets/human/soft-mist-skin-anima.md"
+}

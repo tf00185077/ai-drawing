@@ -178,6 +178,21 @@
       "diffusion_model": null
     },
     {
+      "id": "soft-mist-skin-anima",
+      "name": "柔霧肌膚",
+      "chinese_name": null,
+      "profiles": [
+        "default",
+        "portrait"
+      ],
+      "note_path": "style_presets/human/soft-mist-skin-anima.md",
+      "template": "anima",
+      "checkpoint": null,
+      "lora": null,
+      "loras": [],
+      "diffusion_model": "miaomiaoRealskin_anima11.safetensors"
+    },
+    {
       "id": "tactile-verism-city-noir-anima",
       "name": "Tactile Verism City Noir Anima",
       "chinese_name": "厚塗油彩城市夜景 Anima",
