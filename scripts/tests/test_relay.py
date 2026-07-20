@@ -13,8 +13,11 @@ import pytest
 from launcher.models import HostInfo, ProcessIdentity
 from launcher.relay import (
     RelayAddressError,
+    RelayStartResult,
     RelayStateLockError,
+    RelayStateLockTimeout,
     RelayState,
+    RelayStopResult,
     build_relay_command,
     clear_relay_state,
     forward_connection,
@@ -435,6 +438,79 @@ def test_relay_timeout_does_not_record_state_and_terminates_child(tmp_path):
     assert relay_state_path(tmp_path).exists() is False
 
 
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (RelayStateLockTimeout("busy"), "state_lock_timeout"),
+        (RelayStateLockError("broken"), "state_lock_error"),
+        (OSError("disk"), "state_write_failed"),
+    ],
+)
+def test_ready_relay_persistence_failure_cleans_owned_process(
+    tmp_path,
+    monkeypatch,
+    error,
+    reason,
+):
+    identity = _identity()
+    runner = FakeRelayRunner(identity)
+
+    def fail_save(*_args, **_kwargs):
+        raise error
+
+    monkeypatch.setattr("launcher.relay.save_relay_state", fail_save)
+
+    result = start_relay(
+        project_root=tmp_path,
+        python=tmp_path / "python",
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        host=HostInfo("Linux", "x86_64", Path("/home/test")),
+        runner=runner,
+        popen=FakeRelayPopen(),
+        probe=lambda *_args: True,
+        bind_probe=lambda *_args: True,
+    )
+
+    assert result == RelayStartResult(False, reason, None)
+    assert runner.commands[-1] == ["kill", "-TERM", "-7331"]
+
+
+def test_ready_relay_lock_failure_does_not_kill_replaced_process(
+    tmp_path,
+    monkeypatch,
+):
+    identity = _identity()
+    replacement = _identity(started_at="replacement")
+    runner = SequencedRelayRunner([identity, identity, replacement])
+
+    def fail_save(*_args, **_kwargs):
+        raise RelayStateLockTimeout("busy")
+
+    monkeypatch.setattr("launcher.relay.save_relay_state", fail_save)
+
+    result = start_relay(
+        project_root=tmp_path,
+        python=tmp_path / "python",
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        host=HostInfo("Linux", "x86_64", Path("/home/test")),
+        runner=runner,
+        popen=FakeRelayPopen(),
+        probe=lambda *_args: True,
+        bind_probe=lambda *_args: True,
+    )
+
+    assert result == RelayStartResult(
+        False,
+        "state_lock_timeout_cleanup_identity_mismatch",
+        None,
+    )
+    assert all(command[0] != "kill" for command in runner.commands)
+
+
 def test_relay_pid_identity_mismatch_is_not_terminated(tmp_path):
     state = RelayState(
         bind_host="172.17.0.1",
@@ -483,6 +559,80 @@ def test_relay_stop_terminates_only_exact_identity_and_clears_state(tmp_path):
     assert result.reason == "stopped"
     assert runner.commands[-1] == ["kill", "-TERM", "-7331"]
     assert relay_state_path(tmp_path).exists() is False
+
+
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (RelayStateLockTimeout("busy"), "state_lock_timeout"),
+        (RelayStateLockError("broken"), "state_lock_error"),
+    ],
+)
+def test_stop_translates_load_or_quarantine_lock_failure_before_signal(
+    tmp_path,
+    monkeypatch,
+    error,
+    reason,
+):
+    runner = FakeRelayRunner(_identity())
+
+    def fail_load(*_args, **_kwargs):
+        raise error
+
+    monkeypatch.setattr("launcher.relay.load_relay_state", fail_load)
+
+    result = stop_relay(
+        None,
+        runner,
+        HostInfo("Linux", "x86_64", Path("/home/test")),
+        project_root=tmp_path,
+    )
+
+    assert result == RelayStopResult(False, reason, None)
+    assert runner.commands == []
+
+
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (RelayStateLockTimeout("busy"), "stopped_state_lock_timeout"),
+        (RelayStateLockError("broken"), "stopped_state_lock_error"),
+    ],
+)
+def test_stop_retains_state_when_clear_lock_fails_after_termination(
+    tmp_path,
+    monkeypatch,
+    error,
+    reason,
+):
+    identity = _identity()
+    state = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=identity,
+    )
+    runner = FakeRelayRunner(identity)
+    calls = 0
+
+    def fail_clear(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        raise error
+
+    monkeypatch.setattr("launcher.relay.clear_relay_state", fail_clear)
+
+    result = stop_relay(
+        state,
+        runner,
+        HostInfo("Linux", "x86_64", Path("/home/test")),
+        project_root=tmp_path,
+    )
+
+    assert result == RelayStopResult(True, reason, state)
+    assert runner.commands[-1] == ["kill", "-TERM", "-7331"]
+    assert calls == 1
 
 
 def test_relay_stop_rechecks_identity_immediately_before_signal(tmp_path):

@@ -557,9 +557,17 @@ def start_relay(
             )
             try:
                 save_relay_state(project_root, state)
-            except OSError:
-                terminate_if_identity_matches(pid, identity, runner, host)
-                return RelayStartResult(False, "state_write_failed", None)
+            except (RelayStateLockTimeout, RelayStateLockError, OSError) as error:
+                if isinstance(error, RelayStateLockTimeout):
+                    reason = "state_lock_timeout"
+                elif isinstance(error, RelayStateLockError):
+                    reason = "state_lock_error"
+                else:
+                    reason = "state_write_failed"
+                cleanup = terminate_if_identity_matches(pid, identity, runner, host)
+                if cleanup != "terminated":
+                    reason = f"{reason}_cleanup_{cleanup}"
+                return RelayStartResult(False, reason, None)
             return RelayStartResult(True, "ready", state)
         remaining = deadline - monotonic()
         if remaining <= 0:
@@ -574,20 +582,53 @@ def start_relay(
 
 
 def stop_relay(
-    state: RelayState,
+    state: RelayState | None,
     runner: Runner,
     host: HostInfo,
     *,
     project_root: Path | None = None,
 ) -> RelayStopResult:
+    if state is None:
+        if project_root is None:
+            return RelayStopResult(False, "no_managed_process", None)
+        try:
+            state = load_relay_state(project_root)
+        except RelayStateLockTimeout:
+            return RelayStopResult(False, "state_lock_timeout", None)
+        except RelayStateLockError:
+            return RelayStopResult(False, "state_lock_error", None)
+        except OSError:
+            return RelayStopResult(False, "state_load_failed", None)
+        if state is None:
+            return RelayStopResult(False, "no_managed_process", None)
+
+    def clear_failure() -> str | None:
+        if project_root is None:
+            return None
+        try:
+            clear_relay_state(project_root, state)
+        except RelayStateLockTimeout:
+            return "state_lock_timeout"
+        except RelayStateLockError:
+            return "state_lock_error"
+        except OSError:
+            return "state_clear_failed"
+        return None
+
     current_identity = read_process_identity(host, state.managed_pid, runner)
     if current_identity is None:
-        if project_root is not None:
-            clear_relay_state(project_root, state)
+        failure = clear_failure()
+        if failure is not None:
+            return RelayStopResult(False, f"process_not_found_{failure}", state)
         return RelayStopResult(False, "process_not_found", None)
     if current_identity != state.managed_identity:
-        if project_root is not None:
-            clear_relay_state(project_root, state)
+        failure = clear_failure()
+        if failure is not None:
+            return RelayStopResult(
+                False,
+                f"process_identity_mismatch_{failure}",
+                state,
+            )
         return RelayStopResult(False, "process_identity_mismatch", None)
     termination = terminate_if_identity_matches(
         state.managed_pid,
@@ -596,16 +637,18 @@ def stop_relay(
         host,
     )
     if termination in {"identity_mismatch", "process_not_found"}:
-        if project_root is not None:
-            clear_relay_state(project_root, state)
+        failure = clear_failure()
         reason = (
             "process_identity_mismatch"
             if termination == "identity_mismatch"
             else "process_not_found"
         )
+        if failure is not None:
+            return RelayStopResult(False, f"{reason}_{failure}", state)
         return RelayStopResult(False, reason, None)
     if termination != "terminated":
         return RelayStopResult(False, "termination_failed", state)
-    if project_root is not None:
-        clear_relay_state(project_root, state)
+    failure = clear_failure()
+    if failure is not None:
+        return RelayStopResult(True, f"stopped_{failure}", state)
     return RelayStopResult(True, "stopped", None)
