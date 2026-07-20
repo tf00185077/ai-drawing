@@ -224,6 +224,8 @@ def test_example_and_gitignore_use_safe_runtime_defaults(project_root):
     assert "DATABASE_URL=sqlite:////data/database/auto_draw.db" in example
     assert "COMFYUI_CHECKPOINTS_DIR=/comfyui/models/checkpoints" in example
     assert "MCP_BACKEND_API_URL=http://127.0.0.1:8001" in example
+    assert "BACKEND_PORT=8001" in example
+    assert "FRONTEND_PORT=5173" in example
     assert "# CIVITAI_AUTHORIZATION=YOUR_CIVITAI_API_KEY" in example
     assert ".ai-drawing/" in ignored
     assert "data/" in ignored
