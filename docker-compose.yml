@@ -1,28 +1,83 @@
-version: "3.8"
-
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./outputs:/app/outputs
-      - ./lora_train:/app/lora_train
-      - ./backend/workflows:/app/workflows
-      - ./prompt_library:/app/prompt_library
+      context: .
+      dockerfile: backend/Dockerfile
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
-      - DATABASE_URL=sqlite:///./auto_draw.db
-      - PROMPT_LIBRARY_DIR=/app/prompt_library
+      COMFYUI_MODE: "${COMFYUI_MODE:-disabled}"
+      COMFYUI_BASE_URL: "${COMFYUI_BASE_URL:-}"
+      COMFYUI_WS_URL: "${COMFYUI_WS_URL:-}"
+      COMFYUI_CHECKPOINTS_DIR: "${COMFYUI_CHECKPOINTS_DIR:-/comfyui/models/checkpoints}"
+      COMFYUI_LORAS_DIR: "${COMFYUI_LORAS_DIR:-/comfyui/models/loras}"
+      COMFYUI_DIFFUSION_MODELS_DIR: "${COMFYUI_DIFFUSION_MODELS_DIR:-/comfyui/models/diffusion_models}"
+      COMFYUI_TEXT_ENCODERS_DIR: "${COMFYUI_TEXT_ENCODERS_DIR:-/comfyui/models/text_encoders}"
+      COMFYUI_VAE_DIR: "${COMFYUI_VAE_DIR:-/comfyui/models/vae}"
+      COMFYUI_EMBEDDINGS_DIR: "${COMFYUI_EMBEDDINGS_DIR:-/comfyui/models/embeddings}"
+      COMFYUI_CONTROLNET_DIR: "${COMFYUI_CONTROLNET_DIR:-/comfyui/models/controlnet}"
+      COMFYUI_UPSCALE_MODELS_DIR: "${COMFYUI_UPSCALE_MODELS_DIR:-/comfyui/models/upscale_models}"
+      COMFYUI_INPUT_DIR: "${COMFYUI_INPUT_DIR:-/comfyui/input}"
+      DATABASE_URL: "${DATABASE_URL:-sqlite:////data/database/auto_draw.db}"
+      FILE_DIGEST_CACHE_PATH: "${FILE_DIGEST_CACHE_PATH:-/data/database/file_digest_cache.json}"
+      OUTPUT_DIR: "${OUTPUT_DIR:-/data/outputs}"
+      GALLERY_DIR: "${GALLERY_DIR:-/data/gallery}"
+      PROMPT_LIBRARY_DIR: "${PROMPT_LIBRARY_DIR:-/data/prompt_library}"
+      LORA_TRAIN_DIR: "${LORA_TRAIN_DIR:-/data/lora_train}"
+      LORA_TRAIN_LOGS_DIR: "${LORA_TRAIN_LOGS_DIR:-/data/logs/lora_train}"
+      WATCH_DIRS: "${WATCH_DIRS:-/data/lora_train}"
+      CIVITAI_AUTHORIZATION: "${CIVITAI_AUTHORIZATION:-}"
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8001}:8000"
+    volumes:
+      - type: bind
+        source: ./data/database
+        target: /data/database
+      - type: bind
+        source: ./data/outputs
+        target: /data/outputs
+      - type: bind
+        source: ./data/gallery
+        target: /data/gallery
+      - type: bind
+        source: ./data/lora_train
+        target: /data/lora_train
+      - type: bind
+        source: ./data/prompt_library
+        target: /data/prompt_library
+      - type: bind
+        source: ./data/logs
+        target: /data/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    init: true
+    stop_grace_period: 10s
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
-      - "5173:80"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    init: true
+    stop_grace_period: 10s
