@@ -56,6 +56,22 @@ def test_state_rejects_invalid_managed_pid(managed_pid):
         LauncherState.from_json(json.dumps(state))
 
 
+@pytest.mark.parametrize("comfyui_port", [True, "8188", 0, -1, 65536])
+def test_state_rejects_invalid_comfyui_port(comfyui_port):
+    state = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": "C:/Comfy UI",
+        "device": "nvidia",
+        "comfyui_port": comfyui_port,
+        "managed_pid": None,
+        "managed_identity": None,
+    }
+
+    with pytest.raises(ValueError, match="comfyui_port"):
+        LauncherState.from_json(json.dumps(state))
+
+
 def test_cli_accepts_each_stable_command():
     for command in LauncherCommand:
         assert main([command.value]) == 0

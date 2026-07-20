@@ -3,8 +3,10 @@ from pathlib import Path
 
 import pytest
 
+import launcher.configuration as configuration
 from launcher.configuration import (
     ConfigurationError,
+    atomic_write,
     load_state,
     parse_env,
     redact,
@@ -77,6 +79,100 @@ def test_write_configuration_preserves_existing_civitai_authorization(tmp_path):
     rendered = (tmp_path / ".env").read_text(encoding="utf-8")
     assert "CIVITAI_AUTHORIZATION=Bearer private-value" in rendered
     assert "UNRELATED=discard-me" not in rendered
+
+
+def test_replacement_failure_restores_all_previous_files(tmp_path, monkeypatch):
+    env_path = tmp_path / ".env"
+    override_path = tmp_path / ".ai-drawing" / "compose.local.yaml"
+    state_path = tmp_path / "data" / "bootstrap" / "state.json"
+    previous = {
+        env_path: "OLD_ENV=1\n",
+        override_path: "services: {old: true}\n",
+        state_path: "{\"old\": true}\n",
+    }
+    for path, content in previous.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    original_replace = Path.replace
+    failed = False
+
+    def fail_override_once(path, target):
+        nonlocal failed
+        if Path(target) == override_path and not failed:
+            failed = True
+            raise OSError("injected replacement failure")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_override_once)
+    settings = LocalSettings.connected(ComfyPaths.from_root(tmp_path / "Comfy UI"))
+
+    with pytest.raises(ConfigurationError, match="unable to write"):
+        write_configuration(tmp_path, settings, state_for(tmp_path / "Comfy UI"), lambda *_: True)
+
+    assert {path: path.read_text(encoding="utf-8") for path in previous} == previous
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_replacement_failure_removes_files_that_were_initially_absent(tmp_path, monkeypatch):
+    state_path = tmp_path / "data" / "bootstrap" / "state.json"
+    original_replace = Path.replace
+    failed = False
+
+    def fail_state_once(path, target):
+        nonlocal failed
+        if Path(target) == state_path and not failed:
+            failed = True
+            raise OSError("injected replacement failure")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_state_once)
+    settings = LocalSettings.connected(ComfyPaths.from_root(tmp_path / "Comfy UI"))
+
+    with pytest.raises(ConfigurationError, match="unable to write"):
+        write_configuration(tmp_path, settings, state_for(tmp_path / "Comfy UI"), lambda *_: True)
+
+    assert not (tmp_path / ".env").exists()
+    assert not (tmp_path / ".ai-drawing" / "compose.local.yaml").exists()
+    assert not state_path.exists()
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_staging_creation_failure_cleans_earlier_secret_bearing_temp(tmp_path, monkeypatch):
+    original_temporary_path = configuration._temporary_path
+    calls = 0
+
+    def fail_second_staging(path, content):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected staging failure")
+        return original_temporary_path(path, content)
+
+    monkeypatch.setattr(configuration, "_temporary_path", fail_second_staging)
+    (tmp_path / ".env").write_text(
+        "CIVITAI_AUTHORIZATION=Bearer private-value\n", encoding="utf-8"
+    )
+    settings = LocalSettings.connected(ComfyPaths.from_root(tmp_path / "Comfy UI"))
+
+    with pytest.raises(ConfigurationError, match="unable to write"):
+        write_configuration(tmp_path, settings, state_for(tmp_path / "Comfy UI"), lambda *_: True)
+
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_atomic_write_removes_temp_after_replace_failure(tmp_path, monkeypatch):
+    destination = tmp_path / ".env"
+
+    def fail_replace(path, target):
+        raise OSError("injected replacement failure")
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+
+    with pytest.raises(OSError, match="injected replacement failure"):
+        atomic_write(destination, "CIVITAI_AUTHORIZATION=Bearer private-value\n")
+
+    assert not list(tmp_path.glob("*.tmp"))
 
 
 def test_load_state_rejects_unknown_schema(tmp_path):
