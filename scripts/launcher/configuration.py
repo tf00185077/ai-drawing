@@ -59,14 +59,15 @@ def render_env(
     settings: LocalSettings,
     preserved: Mapping[str, str] | None = None,
 ) -> str:
+    connected = settings.comfy_mode.value != "disabled"
     base_url = (
         f"http://host.docker.internal:{settings.comfyui_port}"
-        if settings.comfy_paths is not None
+        if connected
         else ""
     )
     ws_url = (
         f"ws://host.docker.internal:{settings.comfyui_port}/ws"
-        if settings.comfy_paths is not None
+        if connected
         else ""
     )
     values = {
@@ -88,7 +89,9 @@ def render_env(
         "PROMPT_LIBRARY_DIR": "/data/prompt_library",
         "LORA_TRAIN_DIR": "/data/lora_train",
         "WATCH_DIRS": "/data/lora_train",
-        "MCP_BACKEND_API_URL": "http://host.docker.internal:8001",
+        "MCP_BACKEND_API_URL": f"http://host.docker.internal:{settings.backend_port}",
+        "BACKEND_PORT": str(settings.backend_port),
+        "FRONTEND_PORT": str(settings.frontend_port),
     }
     authorization = (preserved or {}).get("CIVITAI_AUTHORIZATION")
     if authorization:

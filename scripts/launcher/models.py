@@ -6,7 +6,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from .constants import DEFAULT_COMFYUI_PORT, STATE_SCHEMA_VERSION
+from .constants import (
+    DEFAULT_BACKEND_PORT,
+    DEFAULT_COMFYUI_PORT,
+    DEFAULT_FRONTEND_PORT,
+    STATE_SCHEMA_VERSION,
+)
 
 
 class LauncherCommand(str, Enum):
@@ -78,21 +83,38 @@ class LocalSettings:
     comfy_mode: ComfyMode
     comfyui_port: int = DEFAULT_COMFYUI_PORT
     comfy_paths: ComfyPaths | None = None
+    backend_port: int = DEFAULT_BACKEND_PORT
+    frontend_port: int = DEFAULT_FRONTEND_PORT
 
     @classmethod
-    def disabled(cls) -> LocalSettings:
-        return cls(comfy_mode=ComfyMode.DISABLED)
+    def disabled(
+        cls,
+        *,
+        backend_port: int = DEFAULT_BACKEND_PORT,
+        frontend_port: int = DEFAULT_FRONTEND_PORT,
+    ) -> LocalSettings:
+        return cls(
+            comfy_mode=ComfyMode.DISABLED,
+            backend_port=backend_port,
+            frontend_port=frontend_port,
+        )
 
     @classmethod
     def connected(
         cls,
         paths: ComfyPaths,
         comfyui_port: int = DEFAULT_COMFYUI_PORT,
+        *,
+        comfy_mode: ComfyMode = ComfyMode.EXTERNAL,
+        backend_port: int = DEFAULT_BACKEND_PORT,
+        frontend_port: int = DEFAULT_FRONTEND_PORT,
     ) -> LocalSettings:
         return cls(
-            comfy_mode=ComfyMode.EXTERNAL,
+            comfy_mode=comfy_mode,
             comfyui_port=comfyui_port,
             comfy_paths=paths,
+            backend_port=backend_port,
+            frontend_port=frontend_port,
         )
 
 

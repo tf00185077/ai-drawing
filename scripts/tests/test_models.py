@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from launcher.cli import main
+from launcher.cli import build_parser
 from launcher.models import (
     ComfyMode,
     DeviceMode,
@@ -118,7 +118,7 @@ def test_state_rejects_invalid_comfyui_port(comfyui_port):
 
 def test_cli_accepts_each_stable_command():
     for command in LauncherCommand:
-        assert main([command.value]) == 0
+        assert build_parser().parse_args([command.value]).command == command.value
 
 
 def test_subprocess_runner_uses_argument_list_without_shell(tmp_path):
