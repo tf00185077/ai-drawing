@@ -1,6 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import App from "./App";
+
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("App", () => {
   it("renders without crashing", () => {
