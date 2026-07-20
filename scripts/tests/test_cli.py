@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from pathlib import Path
 
@@ -46,8 +47,10 @@ class Harness:
         self.discovery_batches = []
         self.candidate_batches = []
         self.path_answers = []
+        self.path_prompts = []
         self.external_running = False
         self.install_error = None
+        self.installed_roots = []
         self.detected_device = DeviceMode.CPU
         self.compose_was_running = False
         self.compose_services = frozenset()
@@ -104,8 +107,9 @@ class Harness:
         values = (explicit, previous, self.default_comfyui_root())
         return tuple(dict.fromkeys(path.resolve() for path in values if path))
 
-    def ask_path(self, _message):
+    def ask_path(self, message):
         self.events.append("ask_path")
+        self.path_prompts.append(message)
         return self.path_answers.pop(0) if self.path_answers else None
 
     def probe_external(self, _port):
@@ -121,6 +125,7 @@ class Harness:
 
     def install_comfyui(self, root, device):
         self.events.append(("install", device))
+        self.installed_roots.append(Path(root).resolve())
         if self.install_error:
             error = self.install_error
             self.install_error = None
@@ -141,7 +146,7 @@ class Harness:
         self.events.append("ports")
         return backend_port, frontend_port
 
-    def select_ports_for_running(self, desired, _configured):
+    def select_ports_for_running(self, desired, _configured, _running_services):
         self.events.append("running_ports")
         return desired
 
@@ -344,6 +349,36 @@ def test_noninteractive_managed_requires_path_or_install_target(harness):
     assert "MISSING_COMFYUI_PATH" in "\n".join(harness.output)
 
 
+def test_automatic_install_prompts_for_custom_destination(harness):
+    custom = (harness.project_root / "custom-install" / "ComfyUI").resolve()
+    harness.path_answers = [None, custom]
+
+    assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 0
+    assert harness.events.count("ask_path") == 2
+    assert harness.installed_roots == [custom]
+
+
+def test_automatic_install_blank_destination_uses_platform_default(harness):
+    harness.path_answers = [None, None]
+
+    assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 0
+    assert harness.events.count("ask_path") == 2
+    assert harness.installed_roots == [harness.default_comfyui_root().resolve()]
+    assert str(harness.default_comfyui_root().resolve()) in harness.path_prompts[-1]
+
+
+def test_explicit_install_path_wins_without_destination_prompt(harness):
+    explicit = (harness.project_root / "explicit" / "ComfyUI").resolve()
+    harness.path_answers = [harness.project_root / "ignored"]
+
+    assert main(
+        ["setup", "--comfyui-mode", "managed", "--comfyui-path", str(explicit)],
+        services=harness,
+    ) == 0
+    assert "ask_path" not in harness.events
+    assert harness.installed_roots == [explicit]
+
+
 def test_valid_state_makes_default_command_start(harness):
     harness.loaded_state = state()
     assert main([], services=harness) == 0
@@ -531,6 +566,57 @@ def test_successful_disabled_transition_stops_prior_relay_after_readiness(harnes
     assert main(["reconfigure", "--comfyui-mode", "disabled"], services=harness) == 0
     stop_index = harness.events.index(("stop_relay", prior))
     assert stop_index > harness.events.index("wait_frontend")
+
+
+def test_disabled_transition_preserves_owned_install_provenance_across_reload(harness):
+    root = (harness.project_root / "ComfyUI").resolve()
+    harness.loaded_state = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        None,
+        None,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+
+    assert main(["reconfigure", "--comfyui-mode", "disabled"], services=harness) == 0
+    saved = harness.saved_state
+    reloaded = LauncherState.from_json(saved.to_json())
+    assert reloaded.comfy_mode is ComfyMode.DISABLED
+    assert reloaded.comfyui_root == root
+    assert reloaded.device is DeviceMode.CPU
+    assert reloaded.launcher_installed is True
+    assert reloaded.installed_root == root
+    assert harness.saved_settings.comfy_paths is None
+    harness.loaded_state = reloaded
+    harness.events.clear()
+    assert main(["update-comfyui"], services=harness) == 0
+    assert "update_comfyui" in harness.events
+
+
+def test_starting_disabled_owned_state_never_probes_starts_or_stops_comfyui(harness):
+    root = (harness.project_root / "ComfyUI").resolve()
+    harness.loaded_state = LauncherState(
+        1,
+        ComfyMode.DISABLED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        None,
+        None,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+
+    assert main(["start"], services=harness) == 0
+    assert "probe_external" not in harness.events
+    assert "start_comfyui" not in harness.events
+    assert "stop_comfyui" not in harness.events
 
 
 def test_stop_attempts_relay_and_comfy_when_compose_down_fails(harness):
@@ -1091,6 +1177,20 @@ def test_bootstrap_logging_failure_never_blocks_stop_cleanup(harness):
     assert "stop_comfyui" in harness.events
 
 
+def test_no_arg_audit_uses_resolved_setup_command(harness):
+    harness.answers = [False]
+    assert main([], services=harness) == 0
+    logs = [event[1] for event in harness.events if isinstance(event, tuple) and event[0] == "bootstrap_log"]
+    assert logs == ["command=setup begin", "command=setup complete"]
+
+
+def test_no_arg_audit_uses_resolved_start_command_for_existing_state(harness):
+    harness.loaded_state = state(ComfyMode.DISABLED)
+    assert main([], services=harness) == 0
+    logs = [event[1] for event in harness.events if isinstance(event, tuple) and event[0] == "bootstrap_log"]
+    assert logs == ["command=start begin", "command=start complete"]
+
+
 def test_error_output_is_structured_and_does_not_leak_exception(harness):
     def explode():
         raise RuntimeError("PASSWORD=hunter2")
@@ -1133,6 +1233,29 @@ def test_stale_managed_pid_with_external_api_is_not_claimed(tmp_path, monkeypatc
     assert result.comfy_mode is ComfyMode.EXTERNAL
     assert result.managed_pid is None
     assert result.managed_identity is None
+
+
+def test_degraded_corrupt_managed_state_cannot_be_stopped_or_updated(harness):
+    corrupt = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": None,
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": 42,
+        "managed_identity": {
+            "executable": "python",
+            "started_at": "123",
+            "command_line": "python main.py --port 8188",
+        },
+    }
+    harness.loaded_state = LauncherState.from_json(json.dumps(corrupt))
+
+    assert main(["stop"], services=harness) == 0
+    assert "stop_comfyui" not in harness.events
+    harness.events.clear()
+    assert main(["update-comfyui"], services=harness) == 1
+    assert "update_comfyui" not in harness.events
 
 
 def test_known_managed_process_not_ready_is_not_started_twice(tmp_path, monkeypatch):
@@ -1220,9 +1343,45 @@ def test_running_port_selection_does_not_probe_verified_project_ports(
         return True
 
     monkeypatch.setattr(cli.docker, "port_available", available)
-    selected = service.select_ports_for_running((8102, 5273), (8101, 5273))
+    selected = service.select_ports_for_running(
+        (8102, 5273), (8101, 5273), frozenset({"backend", "frontend"})
+    )
     assert selected == (8102, 5273)
     assert 5273 not in probed
+
+
+def test_backend_only_stack_owns_only_backend_port(tmp_path, monkeypatch):
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    probed = []
+
+    def available(_host, port):
+        probed.append(port)
+        return port == 5274
+
+    monkeypatch.setattr(cli.docker, "port_available", available)
+    selected = service.select_ports_for_running(
+        (8101, 5273), (8101, 5273), frozenset({"backend"})
+    )
+    assert selected == (8101, 5274)
+    assert 8101 not in probed
+    assert 5273 in probed
+
+
+def test_frontend_only_stack_owns_only_frontend_port(tmp_path, monkeypatch):
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    probed = []
+
+    def available(_host, port):
+        probed.append(port)
+        return port == 8102
+
+    monkeypatch.setattr(cli.docker, "port_available", available)
+    selected = service.select_ports_for_running(
+        (8101, 5273), (8101, 5273), frozenset({"frontend"})
+    )
+    assert selected == (8102, 5273)
+    assert 5273 not in probed
+    assert 8101 in probed
 
 
 def test_external_status_does_not_claim_no_models_when_count_is_unknown(

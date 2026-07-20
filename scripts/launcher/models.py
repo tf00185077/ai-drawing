@@ -181,28 +181,39 @@ class LauncherState:
             and isinstance(raw.get("installed_commit"), str)
             and bool(raw.get("installed_commit"))
         )
+        parsed_mode = ComfyMode(raw["comfy_mode"])
+        parsed_root = (
+            Path(comfyui_root_value) if comfyui_root_value is not None else None
+        )
+        corrupt_managed = parsed_mode is ComfyMode.MANAGED and parsed_root is None
 
         return cls(
             schema_version=raw["schema_version"],
-            comfy_mode=ComfyMode(raw["comfy_mode"]),
-            comfyui_root=(
-                Path(raw["comfyui_root"])
-                if raw.get("comfyui_root") is not None
+            comfy_mode=ComfyMode.DISABLED if corrupt_managed else parsed_mode,
+            comfyui_root=None if corrupt_managed else parsed_root,
+            device=(
+                None
+                if corrupt_managed
+                else DeviceMode(raw["device"])
+                if raw.get("device") is not None
                 else None
             ),
-            device=DeviceMode(raw["device"]) if raw.get("device") is not None else None,
             comfyui_port=comfyui_port,
-            managed_pid=managed_pid,
-            managed_identity=ProcessIdentity.from_value(raw.get("managed_identity")),
-            launcher_installed=has_install_provenance,
+            managed_pid=None if corrupt_managed else managed_pid,
+            managed_identity=(
+                None
+                if corrupt_managed
+                else ProcessIdentity.from_value(raw.get("managed_identity"))
+            ),
+            launcher_installed=has_install_provenance and not corrupt_managed,
             installed_root=(
                 Path(raw["installed_root"])
-                if has_install_provenance
+                if has_install_provenance and not corrupt_managed
                 else None
             ),
             installed_commit=(
                 raw["installed_commit"]
-                if has_install_provenance
+                if has_install_provenance and not corrupt_managed
                 else None
             ),
         )

@@ -276,9 +276,14 @@ class DefaultServices:
         self,
         desired: tuple[int, int],
         configured: tuple[int, int],
+        running_services: frozenset[str],
     ) -> tuple[int, int]:
         """Treat this project's verified live ports as owned, not foreign conflicts."""
-        owned = frozenset(configured)
+        owned = frozenset(
+            port
+            for service, port in zip(("backend", "frontend"), configured, strict=True)
+            if service in running_services
+        )
         selected: list[int] = []
         for requested in desired:
             if requested in owned and requested not in selected:
@@ -800,11 +805,24 @@ def _base_state(
     installed_root: Path | None = None,
     installed_commit: str | None = None,
 ) -> LauncherState:
+    retain_disabled_install = (
+        mode is ComfyMode.DISABLED
+        and launcher_installed is not False
+        and previous is not None
+        and previous.launcher_installed
+        and previous.comfyui_root is not None
+        and previous.installed_root is not None
+        and previous.installed_commit is not None
+        and previous.device is not None
+        and previous.comfyui_root.resolve() == previous.installed_root.resolve()
+    )
+    state_root = previous.comfyui_root if retain_disabled_install else root
+    state_device = previous.device if retain_disabled_install else device
     same_root = (
         previous is not None
-        and root is not None
+        and state_root is not None
         and previous.comfyui_root is not None
-        and previous.comfyui_root.resolve() == root.resolve()
+        and previous.comfyui_root.resolve() == state_root.resolve()
         and previous.comfyui_port == port
     )
     preserve_process = (
@@ -818,16 +836,16 @@ def _base_state(
         and previous.launcher_installed
         and previous.installed_root is not None
         and (
-            (root is not None and previous.installed_root.resolve() == root.resolve())
-            or (root is None and mode is ComfyMode.DISABLED)
+            state_root is not None
+            and previous.installed_root.resolve() == state_root.resolve()
         )
     )
     owned_install = preserve_install if launcher_installed is None else launcher_installed
     return LauncherState(
         schema_version=STATE_SCHEMA_VERSION,
         comfy_mode=mode,
-        comfyui_root=root,
-        device=device,
+        comfyui_root=state_root,
+        device=state_device,
         comfyui_port=port,
         managed_pid=previous.managed_pid if preserve_process else None,
         managed_identity=previous.managed_identity if preserve_process else None,
@@ -1012,7 +1030,7 @@ def _plan_comfyui(
             previous=previous,
         )
 
-    if not args.non_interactive:
+    if not args.non_interactive and root is None:
         entered = services.ask_path("輸入其他既有 ComfyUI 路徑（留白跳過）")
         if entered is not None:
             entered_found = services.discover_comfyui((entered.resolve(),))
@@ -1032,7 +1050,13 @@ def _plan_comfyui(
             port=args.comfyui_port,
             previous=previous,
         )
-    target = root or services.default_comfyui_root()
+    default_target = services.default_comfyui_root().resolve()
+    target = root
+    if target is None and not args.non_interactive and not dry_run:
+        target = services.ask_path(
+            f"ComfyUI 安裝位置（留白使用預設 {default_target}）"
+        )
+    target = target or default_target
     device = DeviceMode(args.device) if args.device else services.detect_device()
     if dry_run:
         return _base_state(
@@ -1381,7 +1405,11 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
     if project_running:
         selector = getattr(services, "select_ports_for_running", None)
         selected = (
-            selector(desired, (configured_backend, configured_frontend))
+            selector(
+                desired,
+                (configured_backend, configured_frontend),
+                prior_services,
+            )
             if selector is not None
             else desired
         )
@@ -1489,6 +1517,9 @@ def _run(args: argparse.Namespace, services: Any) -> int:
     command = args.command
     if command is None:
         command = "start" if current is not None else "setup"
+    args._resolved_command = command
+    if command not in {"status", "logs", "dry-run"}:
+        _try_bootstrap_log(services, f"command={command} begin")
 
     docker_available = True
     if command in {
@@ -1693,17 +1724,20 @@ def main(
     active_services = services or DefaultServices()
     command = "setup"
     mutating = True
+    args: argparse.Namespace | None = None
     try:
         args = build_parser().parse_args(argv)
         command = args.command or "setup"
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
-            _try_bootstrap_log(active_services, f"command={command} begin")
         result = _run(args, active_services)
+        command = getattr(args, "_resolved_command", command)
+        mutating = command not in {"status", "logs", "dry-run"}
         if mutating:
             _try_bootstrap_log(active_services, f"command={command} complete")
         return result
     except LauncherError as error:
+        command = getattr(args, "_resolved_command", command)
+        mutating = command not in {"status", "logs", "dry-run"}
         if mutating:
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
@@ -1712,6 +1746,8 @@ def main(
         return error.exit_code
     except docker.DockerError as error:
         wrapped = LauncherError(error.code, error.message, error.hint)
+        command = getattr(args, "_resolved_command", command)
+        mutating = command not in {"status", "logs", "dry-run"}
         if mutating:
             _try_bootstrap_log(
                 active_services, f"command={command} error code={wrapped.code}"
@@ -1724,6 +1760,8 @@ def main(
             "產生或驗證本機設定失敗，舊設定已保留。",
             "請確認 Docker Compose 設定與目錄權限後重試。",
         )
+        command = getattr(args, "_resolved_command", command)
+        mutating = command not in {"status", "logs", "dry-run"}
         if mutating:
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
@@ -1736,6 +1774,8 @@ def main(
             "啟動器遇到未預期錯誤；敏感細節已隱藏。",
             "請執行 status，並查看不含密鑰的 bootstrap/Compose logs。",
         )
+        command = getattr(args, "_resolved_command", command)
+        mutating = command not in {"status", "logs", "dry-run"}
         if mutating:
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
