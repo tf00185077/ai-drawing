@@ -4,23 +4,30 @@ import asyncio
 from dataclasses import asdict
 import json
 from pathlib import Path
+import subprocess
+import sys
+import threading
 
 import pytest
 
 from launcher.models import HostInfo, ProcessIdentity
 from launcher.relay import (
     RelayAddressError,
+    RelayStateLockError,
     RelayState,
     build_relay_command,
+    clear_relay_state,
     forward_connection,
     relay_log_path,
     relay_invalid_state_path,
+    relay_lock_path,
     relay_state_path,
     load_relay_state,
     run_relay,
     save_relay_state,
     start_relay,
     stop_relay,
+    relay_state_lock,
     validate_relay_bind,
 )
 from launcher.runner import CommandResult
@@ -541,6 +548,183 @@ def test_stopping_old_relay_does_not_delete_atomically_replaced_new_state(
 
     assert result.stopped is True
     assert load_relay_state(tmp_path) == new
+
+
+def test_compare_delete_serializes_writer_after_comparison_before_unlink(
+    tmp_path,
+    monkeypatch,
+):
+    old = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=_identity(started_at="old"),
+    )
+    new = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=8442,
+        managed_identity=_identity(started_at="new"),
+    )
+    save_relay_state(tmp_path, old)
+    state_path = relay_state_path(tmp_path)
+    comparison_reached = threading.Event()
+    writer_attempted = threading.Event()
+    writer_done = threading.Event()
+    original_unlink = Path.unlink
+
+    def controlled_unlink(path, *args, **kwargs):
+        if path == state_path:
+            comparison_reached.set()
+            assert writer_attempted.wait(timeout=1)
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", controlled_unlink)
+
+    def writer():
+        assert comparison_reached.wait(timeout=1)
+        writer_attempted.set()
+        save_relay_state(tmp_path, new)
+        writer_done.set()
+
+    thread = threading.Thread(target=writer)
+    thread.start()
+    assert clear_relay_state(tmp_path, old) is True
+    thread.join(timeout=1)
+
+    assert writer_done.is_set()
+    assert load_relay_state(tmp_path) == new
+
+
+def test_malformed_quarantine_serializes_writer_and_load_retries_new_state(
+    tmp_path,
+    monkeypatch,
+):
+    raw = b"not-json"
+    new = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=8442,
+        managed_identity=_identity(started_at="new"),
+    )
+    state_path = relay_state_path(tmp_path)
+    state_path.parent.mkdir(parents=True)
+    state_path.write_bytes(raw)
+    comparison_reached = threading.Event()
+    writer_attempted = threading.Event()
+    writer_done = threading.Event()
+    original_unlink = Path.unlink
+
+    def controlled_unlink(path, *args, **kwargs):
+        if path == state_path:
+            comparison_reached.set()
+            assert writer_attempted.wait(timeout=1)
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", controlled_unlink)
+
+    def writer():
+        assert comparison_reached.wait(timeout=1)
+        writer_attempted.set()
+        save_relay_state(tmp_path, new)
+        writer_done.set()
+
+    thread = threading.Thread(target=writer)
+    thread.start()
+    loaded = load_relay_state(tmp_path, replacement_timeout=0.5)
+    thread.join(timeout=1)
+
+    assert writer_done.is_set()
+    assert loaded == new
+    assert relay_state_path(tmp_path).is_file()
+    assert relay_invalid_state_path(tmp_path).read_bytes() == raw
+
+
+def test_relay_state_lock_is_interprocess_bounded_and_stale_file_is_harmless(
+    tmp_path,
+    project_root,
+):
+    code = (
+        "import sys; "
+        "sys.path.insert(0, 'scripts'); "
+        "from pathlib import Path; "
+        "from launcher.relay import relay_state_lock, RelayStateLockTimeout; "
+        "root=Path(sys.argv[1]); "
+        "\ntry:\n"
+        "  with relay_state_lock(root, timeout=0.1): pass\n"
+        "except RelayStateLockTimeout:\n"
+        "  print('timeout')\n"
+        "else:\n"
+        "  print('acquired')\n"
+    )
+
+    with relay_state_lock(tmp_path, timeout=1):
+        result = subprocess.run(
+            [sys.executable, "-c", code, str(tmp_path)],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+    assert result.stdout.strip() == "timeout"
+    assert relay_lock_path(tmp_path).is_file()
+    with relay_state_lock(tmp_path, timeout=0.1):
+        pass
+
+
+def test_relay_state_lock_is_same_thread_reentrant(tmp_path):
+    state = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=_identity(),
+    )
+
+    with relay_state_lock(tmp_path, timeout=0.5):
+        save_relay_state(tmp_path, state, lock_timeout=0.5)
+        assert load_relay_state(tmp_path, lock_timeout=0.5) == state
+
+
+def test_unlock_error_releases_process_local_lock_for_other_threads(
+    tmp_path,
+    monkeypatch,
+):
+    import launcher.relay as relay_module
+
+    original_release = relay_module._release_os_lock
+
+    def fail_release(_handle):
+        raise RelayStateLockError("injected unlock failure")
+
+    monkeypatch.setattr(relay_module, "_release_os_lock", fail_release)
+    with pytest.raises(RelayStateLockError, match="injected"):
+        with relay_state_lock(tmp_path, timeout=0.2):
+            pass
+    monkeypatch.setattr(relay_module, "_release_os_lock", original_release)
+
+    acquired = threading.Event()
+
+    def acquire_after_error():
+        with relay_state_lock(tmp_path, timeout=0.2):
+            acquired.set()
+
+    thread = threading.Thread(target=acquire_after_error)
+    thread.start()
+    thread.join(timeout=1)
+
+    assert acquired.is_set()
+
+
+@pytest.mark.parametrize("timeout", [0, -1])
+def test_relay_state_lock_rejects_unbounded_timeout_values(tmp_path, timeout):
+    with pytest.raises(ValueError, match="positive"):
+        with relay_state_lock(tmp_path, timeout=timeout):
+            pass
 
 
 def test_stop_does_not_delete_or_raise_for_non_utf8_replacement(tmp_path):

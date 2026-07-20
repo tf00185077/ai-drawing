@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import contextmanager
 import ipaddress
 import json
 import os
@@ -8,11 +9,12 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from dataclasses import asdict, dataclass
 from functools import partial
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, BinaryIO, Callable, Iterator
 
 from .models import HostInfo, ProcessIdentity
 from .platforms import read_process_identity
@@ -29,6 +31,19 @@ _RFC1918_NETWORKS = tuple(
 
 class RelayAddressError(ValueError):
     """Raised when relay networking would expose ComfyUI beyond Docker locally."""
+
+
+class RelayStateLockTimeout(RuntimeError):
+    """Raised without mutation when another launcher holds the state lock too long."""
+
+
+class RelayStateLockError(RuntimeError):
+    """Raised without mutation when the OS state lock cannot be used safely."""
+
+
+_LOCK_REGISTRY_GUARD = threading.Lock()
+_LOCK_REGISTRY: dict[str, threading.RLock] = {}
+_LOCK_LOCAL = threading.local()
 
 
 @dataclass(frozen=True)
@@ -207,55 +222,221 @@ def relay_invalid_state_path(project_root: Path) -> Path:
     return Path(project_root) / "data/bootstrap/relay-state.invalid.json"
 
 
-def save_relay_state(project_root: Path, state: RelayState) -> None:
-    atomic_write(relay_state_path(project_root), state.to_json() + "\n")
+def relay_lock_path(project_root: Path) -> Path:
+    return Path(project_root) / "data/bootstrap/relay-state.lock"
 
 
-def load_relay_state(project_root: Path) -> RelayState | None:
-    path = relay_state_path(project_root)
-    if not path.is_file():
-        return None
-    raw_bytes = path.read_bytes()
+def _thread_lock_for(path: Path) -> threading.RLock:
+    key = os.path.normcase(str(path.resolve()))
+    with _LOCK_REGISTRY_GUARD:
+        return _LOCK_REGISTRY.setdefault(key, threading.RLock())
+
+
+def _try_os_lock(handle: BinaryIO) -> bool:
+    handle.seek(0)
+    if os.name == "nt":
+        import msvcrt
+
+        try:
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError as error:
+            if error.errno in {13, 35, 36} or error.winerror in {33, 36}:
+                return False
+            raise RelayStateLockError(f"cannot acquire relay state lock: {error}") from error
+        return True
+
+    import fcntl
+
     try:
-        raw = raw_bytes.decode("utf-8")
-        return RelayState.from_json(raw)
-    except (json.JSONDecodeError, KeyError, TypeError, UnicodeError, ValueError):
-        invalid_path = relay_invalid_state_path(project_root)
-        invalid_path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor, temporary_name = tempfile.mkstemp(
-            dir=invalid_path.parent,
-            prefix=f".{invalid_path.name}.",
-            suffix=".tmp",
-        )
-        temporary = Path(temporary_name)
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return False
+    except OSError as error:
+        raise RelayStateLockError(f"cannot acquire relay state lock: {error}") from error
+    return True
+
+
+def _release_os_lock(handle: BinaryIO) -> None:
+    handle.seek(0)
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    except OSError as error:
+        raise RelayStateLockError(f"cannot release relay state lock: {error}") from error
+
+
+@contextmanager
+def relay_state_lock(
+    project_root: Path,
+    *,
+    timeout: float = 5.0,
+    poll_interval: float = 0.05,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+) -> Iterator[None]:
+    if timeout <= 0:
+        raise ValueError("relay state lock timeout must be positive")
+    if poll_interval <= 0:
+        raise ValueError("relay state lock poll interval must be positive")
+
+    path = relay_lock_path(project_root).resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    key = os.path.normcase(str(path))
+    deadline = monotonic() + timeout
+    thread_lock = _thread_lock_for(path)
+    remaining = deadline - monotonic()
+    if remaining <= 0 or not thread_lock.acquire(timeout=remaining):
+        raise RelayStateLockTimeout(f"timed out waiting for relay state lock: {path}")
+
+    held = getattr(_LOCK_LOCAL, "held", None)
+    if held is None:
+        held = {}
+        _LOCK_LOCAL.held = held
+    record = held.get(key)
+    if record is not None:
+        record[1] += 1
         try:
-            with os.fdopen(descriptor, "wb") as handle:
-                handle.write(raw_bytes)
-            temporary.replace(invalid_path)
+            yield
         finally:
-            temporary.unlink(missing_ok=True)
+            record[1] -= 1
+            thread_lock.release()
+        return
+
+    handle: BinaryIO | None = None
+    locked = False
+    try:
         try:
-            current = path.read_bytes()
-        except FileNotFoundError:
+            handle = path.open("a+b")
+            handle.seek(0, os.SEEK_END)
+            if handle.tell() == 0:
+                handle.write(b"\0")
+                handle.flush()
+        except OSError as error:
+            raise RelayStateLockError(f"cannot open relay state lock: {error}") from error
+
+        while not _try_os_lock(handle):
+            remaining = deadline - monotonic()
+            if remaining <= 0:
+                raise RelayStateLockTimeout(
+                    f"timed out waiting for relay state lock: {path}"
+                )
+            sleep(min(poll_interval, remaining))
+        locked = True
+        held[key] = [handle, 1]
+        yield
+    finally:
+        try:
+            held.pop(key, None)
+            if handle is not None:
+                try:
+                    if locked:
+                        _release_os_lock(handle)
+                finally:
+                    handle.close()
+        finally:
+            thread_lock.release()
+
+
+def save_relay_state(
+    project_root: Path,
+    state: RelayState,
+    *,
+    lock_timeout: float = 5.0,
+) -> None:
+    with relay_state_lock(project_root, timeout=lock_timeout):
+        atomic_write(relay_state_path(project_root), state.to_json() + "\n")
+
+
+def _atomic_write_bytes(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(content)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def load_relay_state(
+    project_root: Path,
+    *,
+    lock_timeout: float = 5.0,
+    replacement_timeout: float = 0.1,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+) -> RelayState | None:
+    if replacement_timeout < 0:
+        raise ValueError("relay replacement timeout cannot be negative")
+    path = relay_state_path(project_root)
+    retry_deadline: float | None = None
+    while True:
+        saw_invalid = False
+        with relay_state_lock(project_root, timeout=lock_timeout):
+            if not path.is_file():
+                if retry_deadline is None:
+                    return None
+            else:
+                raw_bytes = path.read_bytes()
+                try:
+                    raw = raw_bytes.decode("utf-8")
+                    return RelayState.from_json(raw)
+                except (
+                    json.JSONDecodeError,
+                    KeyError,
+                    TypeError,
+                    UnicodeError,
+                    ValueError,
+                ):
+                    saw_invalid = True
+                    _atomic_write_bytes(
+                        relay_invalid_state_path(project_root),
+                        raw_bytes,
+                    )
+                    try:
+                        current = path.read_bytes()
+                    except FileNotFoundError:
+                        current = None
+                    if current == raw_bytes:
+                        path.unlink(missing_ok=True)
+
+        if retry_deadline is None and saw_invalid:
+            retry_deadline = monotonic() + replacement_timeout
+        if retry_deadline is None:
             return None
-        if current == raw_bytes:
-            path.unlink(missing_ok=True)
-        return None
+        remaining = retry_deadline - monotonic()
+        if remaining <= 0:
+            return None
+        sleep(min(0.01, remaining))
 
 
 def clear_relay_state(
     project_root: Path,
     expected_state: RelayState,
+    *,
+    lock_timeout: float = 5.0,
 ) -> bool:
-    path = relay_state_path(project_root)
-    try:
-        current = path.read_text(encoding="utf-8").strip()
-    except (FileNotFoundError, UnicodeError):
-        return False
-    if current != expected_state.to_json():
-        return False
-    path.unlink(missing_ok=True)
-    return True
+    with relay_state_lock(project_root, timeout=lock_timeout):
+        path = relay_state_path(project_root)
+        try:
+            current = path.read_text(encoding="utf-8").strip()
+        except (FileNotFoundError, UnicodeError):
+            return False
+        if current != expected_state.to_json():
+            return False
+        path.unlink(missing_ok=True)
+        return True
 
 
 def build_relay_command(
