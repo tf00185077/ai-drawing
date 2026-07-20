@@ -110,8 +110,28 @@ def _recipe(**overrides):
 def local_resources(monkeypatch):
     monkeypatch.setattr(easy, "list_checkpoints", lambda settings: ["novaAnimeXL_ilV190.safetensors"])
     monkeypatch.setattr(easy, "list_loras", lambda settings: ["style-a.safetensors"])
+    monkeypatch.setattr(easy, "list_diffusion_models", lambda settings: [])
+    monkeypatch.setattr(easy, "list_text_encoders", lambda settings: [])
+    monkeypatch.setattr(easy, "list_vaes", lambda settings: [])
     monkeypatch.setattr(easy, "default_checkpoint", lambda settings: "novaAnimeXL_ilV190.safetensors")
     monkeypatch.setattr(easy, "local_identity_ledger", lambda db: SimpleNamespace(entries=[]))
+
+
+@pytest.fixture
+def anima_local_resources(local_resources, monkeypatch):
+    """Anima split package installed locally: UNET + text encoder + VAE, no classic checkpoint entry."""
+    monkeypatch.setattr(easy, "list_diffusion_models", lambda settings: ["anima_baseV10.safetensors"])
+    monkeypatch.setattr(easy, "list_text_encoders", lambda settings: ["anima_baseV10_txt.safetensors"])
+    monkeypatch.setattr(easy, "list_vaes", lambda settings: ["qwen_image_vae.safetensors"])
+
+
+def _anima_recipe(**checkpoint_overrides):
+    checkpoint = {
+        "kind": "checkpoint", "name": "anima_baseV10.safetensors",
+        "civitai_model_id": 1277670, "civitai_model_version_id": 2514310,
+    }
+    checkpoint.update(checkpoint_overrides)
+    return _recipe(resources=[checkpoint])
 
 
 def test_plan_matches_checkpoint_by_filename_and_maps_sampler(local_resources) -> None:
@@ -204,6 +224,93 @@ def test_plan_falls_back_to_default_when_no_family_match(tmp_path, monkeypatch) 
     assert any("代替" in note for note in plan["substitutions"])
 
 
+def test_plan_matches_anima_checkpoint_installed_as_diffusion_model(anima_local_resources) -> None:
+    plan = plan_generation(_anima_recipe(), db=None)
+    assert plan["checkpoint"] == "anima_baseV10.safetensors"
+    assert plan["diffusion_model"] == "anima_baseV10.safetensors"
+    assert plan["text_encoder"] == "anima_baseV10_txt.safetensors"  # split-package naming convention
+    assert plan["template"] == "anima"
+    assert plan["needs_download"] == [] and plan["substitutions"] == []
+
+
+def test_plan_resolves_anima_components_through_ledger_identity(local_resources, tmp_path, monkeypatch) -> None:
+    files = {}
+    for kind, name in (
+        ("diffusion_model", "anima_baseV10.safetensors"),
+        ("text_encoder", "anima_txtEncoder_renamed.safetensors"),
+        ("vae", "qwen_image_vae.safetensors"),
+    ):
+        path = tmp_path / name
+        path.write_bytes(b"weights")
+        files[kind] = SimpleNamespace(
+            normalized_kind=lambda kind=kind: kind,
+            local_path=str(path),
+            model_family="anima",
+            availability=True,
+            civitai_model_version_id=2514310,
+        )
+    monkeypatch.setattr(easy, "list_diffusion_models", lambda settings: ["anima_baseV10.safetensors"])
+    monkeypatch.setattr(easy, "list_text_encoders", lambda settings: ["anima_txtEncoder_renamed.safetensors"])
+    monkeypatch.setattr(easy, "list_vaes", lambda settings: ["qwen_image_vae.safetensors"])
+    monkeypatch.setattr(easy, "local_identity_ledger", lambda db: SimpleNamespace(entries=list(files.values())))
+    # On-site generator images may carry only the version identity, not the filename.
+    plan = plan_generation(_anima_recipe(name="civitai-version-2514310"), db=None)
+    assert plan["diffusion_model"] == "anima_baseV10.safetensors"
+    assert plan["text_encoder"] == "anima_txtEncoder_renamed.safetensors"
+    assert plan["vae"] == "qwen_image_vae.safetensors"
+    assert plan["needs_download"] == []
+
+
+def test_plan_picks_anima_lora_templates_by_lora_count(anima_local_resources, monkeypatch) -> None:
+    monkeypatch.setattr(easy, "list_loras", lambda settings: ["style-a.safetensors", "style-b.safetensors"])
+    one = _anima_recipe()
+    one["resources"].append({"kind": "lora", "name": "style-a", "civitai_model_version_id": 1})
+    plan = plan_generation(one, db=None)
+    assert plan["template"] == "gen_txt2img_anima_lora_model_only"
+
+    two = _anima_recipe()
+    two["resources"].append({"kind": "lora", "name": "style-a", "civitai_model_version_id": 1})
+    two["resources"].append({"kind": "lora", "name": "style-b", "civitai_model_version_id": 2})
+    plan = plan_generation(two, db=None)
+    assert plan["template"] == "gen_txt2img_anima_lora_model_only_multi_lora"
+
+
+def test_plan_uses_lora_template_for_classic_family(local_resources) -> None:
+    recipe = _recipe(resources=[
+        {"kind": "checkpoint", "name": "novaAnimeXL_ilV190.safetensors"},
+        {"kind": "lora", "name": "style-a", "civitai_model_version_id": 1},
+    ])
+    plan = plan_generation(recipe, db=None)
+    assert plan["template"] == "default_lora"
+    assert plan["loras"] == [{"name": "style-a.safetensors"}]
+
+
+def test_plan_falls_back_to_same_family_local_diffusion_model(local_resources, tmp_path, monkeypatch) -> None:
+    installed = tmp_path / "anima_preview3Base.safetensors"
+    installed.write_bytes(b"weights")
+    entry = SimpleNamespace(
+        normalized_kind=lambda: "diffusion_model",
+        local_path=str(installed),
+        model_family="anima",
+        availability=True,
+        civitai_model_version_id=555,
+    )
+    monkeypatch.setattr(easy, "list_diffusion_models", lambda settings: ["anima_preview3Base.safetensors"])
+    monkeypatch.setattr(easy, "local_identity_ledger", lambda db: SimpleNamespace(entries=[entry]))
+    recipe = _recipe(resources=[{
+        "kind": "checkpoint", "name": "someoneElsesAnima.safetensors",
+        "civitai_model_id": 999, "civitai_model_version_id": 1234,
+        "air": "urn:air:anima:checkpoint:civitai:999@1234",
+    }])
+    plan = plan_generation(recipe, db=None)
+    assert plan["checkpoint"] == "anima_preview3Base.safetensors"
+    assert plan["diffusion_model"] == "anima_preview3Base.safetensors"
+    assert plan["template"] == "anima"
+    assert any("同家族" in note and "anima" in note for note in plan["substitutions"])
+    # The exact model is still offered for download.
+    assert plan["needs_download"] and plan["needs_download"][0]["civitai_model_version_id"] == 1234
+
+
 def test_plan_without_any_local_checkpoint_fails_with_hint(monkeypatch) -> None:
     monkeypatch.setattr(easy, "list_checkpoints", lambda settings: [])
     monkeypatch.setattr(easy, "list_loras", lambda settings: [])
@@ -283,6 +390,55 @@ def test_generate_like_download_missing_false_substitutes_and_submits(local_reso
     assert result["status"] == "queued"
     assert captured["checkpoint"] == "novaAnimeXL_ilV190.safetensors"
     assert any("otherModel" in note for note in result["substitutions"])
+
+
+def test_generate_like_anima_routes_to_diffusion_model_workflow(anima_local_resources, monkeypatch) -> None:
+    recipe = _anima_recipe()
+    recipe["resources"].append({"kind": "lora", "name": "style-a", "civitai_model_version_id": 1, "strength_model": 0.8})
+    monkeypatch.setattr(easy, "import_recipe", lambda locator, **kwargs: _imported(recipe))
+    captured: dict = {}
+    result = generate_like("135643885", db=None, submit_fn=lambda params: captured.update(params) or "job-7")
+    assert result["status"] == "queued"
+    assert captured["template"] == "gen_txt2img_anima_lora_model_only"
+    assert captured["diffusion_model"] == "anima_baseV10.safetensors"
+    assert captured["text_encoder"] == "anima_baseV10_txt.safetensors"
+    assert captured["loras"] == [{"name": "style-a.safetensors", "strength_model": 0.8}]
+    assert result["substitutions"] == []
+
+
+def test_generate_like_pads_unused_template_lora_slots_with_zero_strength(anima_local_resources, monkeypatch) -> None:
+    recipe = _anima_recipe()
+    recipe["resources"].append({"kind": "lora", "name": "style-a", "civitai_model_version_id": 1, "strength_model": 0.8})
+    recipe["resources"].append({"kind": "lora", "name": "style-b", "civitai_model_version_id": 2})
+    monkeypatch.setattr(easy, "list_loras", lambda settings: ["style-a.safetensors", "style-b.safetensors"])
+    monkeypatch.setattr(easy, "import_recipe", lambda locator, **kwargs: _imported(recipe))
+    captured: dict = {}
+    generate_like("135643885", db=None, submit_fn=lambda params: captured.update(params) or "job-8")
+    # The multi-lora template has three loader nodes; the leftover slot must be
+    # neutralized so template-baked LoRAs don't leak into the result.
+    assert captured["template"] == "gen_txt2img_anima_lora_model_only_multi_lora"
+    assert captured["loras"] == [
+        {"name": "style-a.safetensors", "strength_model": 0.8},
+        {"name": "style-b.safetensors"},
+        {"name": "style-a.safetensors", "strength_model": 0.0},
+    ]
+
+
+def test_generate_like_already_installed_does_not_wait_for_downloads(local_resources, monkeypatch) -> None:
+    recipe = _recipe(resources=[{
+        "kind": "checkpoint", "name": "renamedOnDisk.safetensors",
+        "civitai_model_id": 999, "civitai_model_version_id": 1234,
+    }])
+    monkeypatch.setattr(easy, "import_recipe", lambda locator, **kwargs: _imported(recipe))
+    captured: dict = {}
+    result = generate_like(
+        "1", db=None,
+        acquire_fn=lambda identity, **kwargs: {"status": "already_installed", "resource": {"acquisition_id": 3}},
+        submit_fn=lambda params: captured.update(params) or "job-9",
+    )
+    assert result["status"] == "queued"
+    assert captured["checkpoint"] == "novaAnimeXL_ilV190.safetensors"
+    assert any("已安裝" in warning for warning in result["warnings"])
 
 
 def test_generate_like_missing_prompt_everywhere_is_actionable(local_resources, monkeypatch) -> None:

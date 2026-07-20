@@ -134,6 +134,34 @@ checkpoint」而改用本地預設模型。修正（`backend/app/services/civita
    backend `879 passed`、MCP `77 passed`；並以真實 API 實測 image 136790238，
    checkpoint（WAI-illustrious v17）＋2 個 LoRA 全數帶檔名與 SHA256 解出。
 
+**2026-07-16 修正：generate-like 規劃層不認得 Anima 拆件包（誤判缺模型改用 Illustrious）**
+
+問題：image 135643885 的 source-info 已能解析出 `anima_baseV10.safetensors`，本地也已裝好
+整組拆件（diffusion／`_txt`／VAE），但 `plan_generation` 只拿 `list_checkpoints()`
+（checkpoints 目錄）比對，Anima 主權重實際在 `diffusion_models` 目錄且帳本 kind 是
+`diffusion_model`，於是被判「缺少、需下載」並改用 Illustrious-XL 替代；generate-like
+還會對已安裝的資源回 `acquiring_resources` 空等。修正（`backend/app/services/civitai_easy.py`）：
+
+1. **拆件視角二次比對**：checkpoint 資源用 checkpoint 視角比不到時，改以
+   `diffusion_model` 視角再比一次（帳本身分優先、檔名次之）；比到即視為本地已有，
+   並解析同版本的 text encoder／VAE 伴隨檔（帳本同 version id 優先，退而用
+   `<模型>_txt` 檔名慣例）。
+2. **計畫帶 workflow 路由**：plan／source-info 的 `local_plan` 新增 `template`、
+   `diffusion_model`、`text_encoder`、`vae`——Anima 依 LoRA 數挑 `anima`／
+   `gen_txt2img_anima_lora_model_only`／`..._multi_lora` 模板；傳統家族帶 LoRA 時也
+   明確指定 `default_lora`（先前 generate-like 只設 `loras` 不設 `lora`，queue 推斷不到
+   LoRA 模板，LoRA 會被靜默丟棄）。generate-like 把這些參數原樣傳入佇列。
+3. **LoRA 槽位對齊**：LoRA 多於模板節點數時裁掉並警告；少於時以強度 0 的重複項
+   填滿多餘槽，避免模板內建 LoRA 畫風滲入結果。
+4. **同家族替代涵蓋 diffusion model**：原模型真的沒有時，家族替代除了本地 checkpoint
+   也會找帳本中同家族的 diffusion model（如 anima_preview3Base），一樣註明同家族替代。
+5. **already_installed 不再空等**：自動下載遇到帳本回「已安裝」（規劃時對不上檔名，
+   例如檔案被改名）時不再回 `acquiring_resources`，改用替代模型直接生圖並警告。
+6. **驗證**：新增 9 個離線測試（拆件比對／帳本身分／模板選擇／槽位填補／家族退回／
+   already_installed）；backend `892 passed`、MCP `77 passed`。以真實 API 實測
+   image 135643885：`local_plan` 正確回 `anima_baseV10` + `anima_baseV10_txt` +
+   multi-lora 模板，`needs_download` 只剩真正缺的 1 個 LoRA，不再退回 Illustrious。
+
 **下一步（實機驗證清單）**：
 - [ ] 啟動 backend + ComfyUI，用 MCP 實跑：`civitai_source_info(一張喜歡的圖)` →
       `civitai_generate_like(同圖, prompt="想要的主題")`，確認 4 張圖進 gallery。

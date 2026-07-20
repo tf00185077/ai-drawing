@@ -18,7 +18,15 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.core.queue import submit as queue_submit
-from app.core.resources import default_checkpoint, list_checkpoints, list_loras
+from app.core.resources import (
+    default_checkpoint,
+    list_checkpoints,
+    list_diffusion_models,
+    list_loras,
+    list_text_encoders,
+    list_vaes,
+)
+from app.core.workflow import load_template
 from app.services.civitai_local_identity_ledger import local_identity_ledger
 from app.services.civitai_recipe_pipeline import import_recipe
 from app.services.civitai_resource_acquire import AcquireError, normalize_model_family, start_acquisition
@@ -62,6 +70,63 @@ def _same_family_local_checkpoint(family: str, ledger: dict, local_names: list[s
         if matched:
             return matched
     return None
+
+
+def _same_family_local_diffusion_model(
+    family: str, ledger: dict, local_names: list[str]
+) -> tuple[str | None, int | None]:
+    """A locally installed diffusion-model weight of the same family, with its version id."""
+    for (kind, version_id), entry in ledger.items():
+        if kind != "diffusion_model" or entry.model_family != family:
+            continue
+        matched = _match_by_name(Path(entry.local_path).name, local_names)
+        if matched:
+            return matched, version_id
+    return None, None
+
+
+def _anima_companions(
+    version_id: Any,
+    diffusion_model_name: str,
+    ledger: dict,
+    local_text_encoders: list[str],
+    local_vaes: list[str],
+) -> tuple[str | None, str | None]:
+    """Text encoder / VAE installed alongside a split-package diffusion model.
+
+    Ledger identity first (same Civitai version), then the split-package filename
+    convention (``<model>_txt``). None means "keep the template's default file".
+    """
+    text_encoder: str | None = None
+    vae: str | None = None
+    if isinstance(version_id, int):
+        entry = ledger.get(("text_encoder", version_id))
+        if entry is not None:
+            text_encoder = _match_by_name(Path(entry.local_path).name, local_text_encoders)
+        entry = ledger.get(("vae", version_id))
+        if entry is not None:
+            vae = _match_by_name(Path(entry.local_path).name, local_vaes)
+    if text_encoder is None:
+        text_encoder = _match_by_name(f"{_stem(diffusion_model_name)}_txt.safetensors", local_text_encoders)
+    return text_encoder, vae
+
+
+_ANIMA_TEMPLATE = "anima"
+_ANIMA_TEMPLATE_LORA = "gen_txt2img_anima_lora_model_only"
+_ANIMA_TEMPLATE_MULTI_LORA = "gen_txt2img_anima_lora_model_only_multi_lora"
+_CLASSIC_TEMPLATE_LORA = "default_lora"
+
+
+def _lora_loader_slots(template_name: str) -> int:
+    try:
+        workflow = load_template(template_name)
+    except FileNotFoundError:
+        return 0
+    return sum(
+        1
+        for node in workflow.values()
+        if isinstance(node, dict) and node.get("class_type") in ("LoraLoader", "LoraLoaderModelOnly")
+    )
 
 
 def _match_by_name(wanted: str, local_names: list[str]) -> str | None:
@@ -128,6 +193,7 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
     settings = get_settings()
     local_checkpoints = list_checkpoints(settings)
     local_loras = list_loras(settings)
+    local_diffusion_models = list_diffusion_models(settings)
     ledger = _ledger_index(db)
 
     substitutions: list[str] = []
@@ -135,14 +201,34 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
     needs_download: list[dict[str, Any]] = []
 
     checkpoint_name: str | None = None
+    diffusion_model_name: str | None = None
+    text_encoder_name: str | None = None
+    vae_name: str | None = None
     lora_specs: list[dict[str, Any]] = []
     for resource in recipe.get("resources", []):
         kind = str(resource.get("kind") or "")
         name = str(resource.get("name") or "")
         if kind == "checkpoint":
             match = _match_resource(resource, kind="checkpoint", local_names=local_checkpoints, ledger=ledger)
+            if match["status"] not in {"exact_local", "name_match_local"}:
+                # Civitai 把 split 套件（如 Anima）標成 Checkpoint，但主權重實際
+                # 安裝在 diffusion_models 目錄——用 diffusion_model 視角再比對一次。
+                dm_match = _match_resource(
+                    resource, kind="diffusion_model", local_names=local_diffusion_models, ledger=ledger
+                )
+                if dm_match["status"] in {"exact_local", "name_match_local"}:
+                    match = dm_match
+                    diffusion_model_name = dm_match["local_name"]
             if match["status"] in {"exact_local", "name_match_local"}:
                 checkpoint_name = match["local_name"]
+                if diffusion_model_name:
+                    text_encoder_name, vae_name = _anima_companions(
+                        resource.get("civitai_model_version_id"),
+                        diffusion_model_name,
+                        ledger,
+                        list_text_encoders(settings),
+                        list_vaes(settings),
+                    )
             elif match["status"] == "missing_downloadable":
                 needs_download.append({"kind": "checkpoint", "name": name, **{k: v for k, v in match.items() if k.startswith("civitai")}})
             else:
@@ -170,6 +256,20 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
         fallback = None
         if wanted_family:
             fallback = _same_family_local_checkpoint(wanted_family, ledger, local_checkpoints)
+            if fallback is None:
+                dm_fallback, dm_version_id = _same_family_local_diffusion_model(
+                    wanted_family, ledger, local_diffusion_models
+                )
+                if dm_fallback:
+                    fallback = dm_fallback
+                    diffusion_model_name = dm_fallback
+                    text_encoder_name, vae_name = _anima_companions(
+                        dm_version_id,
+                        dm_fallback,
+                        ledger,
+                        list_text_encoders(settings),
+                        list_vaes(settings),
+                    )
         if fallback:
             checkpoint_name = fallback
             substitutions.append(
@@ -189,6 +289,29 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
                 hint="先用 civitai_resource_acquire 下載一個 checkpoint，或確認外接硬碟已掛載",
             )
 
+    # Anima（diffusion-model 家族）不能走 CheckpointLoaderSimple 的預設模板，
+    # 依 LoRA 數量挑對應的 anima 模板；傳統家族帶 LoRA 時也要指定含 LoraLoader 的模板，
+    # 否則 queue 會載入無 LoRA 節點的 default 模板，LoRA 被靜默丟棄。
+    template: str | None = None
+    if diffusion_model_name:
+        if not lora_specs:
+            template = _ANIMA_TEMPLATE
+        elif len(lora_specs) == 1:
+            template = _ANIMA_TEMPLATE_LORA
+        else:
+            template = _ANIMA_TEMPLATE_MULTI_LORA
+    elif lora_specs:
+        template = _CLASSIC_TEMPLATE_LORA
+    if template and lora_specs:
+        slots = _lora_loader_slots(template)
+        if slots and len(lora_specs) > slots:
+            dropped = lora_specs[slots:]
+            lora_specs = lora_specs[:slots]
+            warnings.append(
+                f"workflow 模板「{template}」只有 {slots} 個 LoRA 節點，已略過："
+                + "、".join(str(item.get("name")) for item in dropped)
+            )
+
     sampling = recipe.get("sampling") or {}
     sampler_name: str | None = None
     scheduler: str | None = None
@@ -199,6 +322,10 @@ def plan_generation(recipe: dict[str, Any], *, db: Session) -> dict[str, Any]:
 
     return {
         "checkpoint": checkpoint_name,
+        "template": template,
+        "diffusion_model": diffusion_model_name,
+        "text_encoder": text_encoder_name,
+        "vae": vae_name,
         "loras": lora_specs,
         "sampler_name": sampler_name,
         "scheduler": scheduler,
@@ -224,7 +351,13 @@ def source_info(locator: int | str, *, db: Session, transport: Any | None = None
         "negative_prompt": recipe.get("negative_prompt"),
         "sampling": recipe.get("sampling"),
         "resources": recipe.get("resources", []),
-        "local_plan": {key: plan[key] for key in ("checkpoint", "loras", "substitutions", "warnings", "needs_download")},
+        "local_plan": {
+            key: plan[key]
+            for key in (
+                "checkpoint", "template", "diffusion_model", "text_encoder", "vae",
+                "loras", "substitutions", "warnings", "needs_download",
+            )
+        },
         "next_step": (
             "可直接呼叫 civitai_generate_like 生圖；prompt 參數會取代原 prompt（保留原 sampler/steps/cfg/尺寸），"
             "needs_download 非空時預設會先自動下載缺的模型"
@@ -263,9 +396,16 @@ def generate_like(
         for item in plan["needs_download"]:
             identity = item.get("civitai_model_version_id") or item.get("civitai_model_id")
             try:
-                downloads.append(acquire(identity))
+                result = acquire(identity)
             except AcquireError as exc:
                 failures.append(f"「{item.get('name')}」無法自動下載：{exc.message}" + (f"（{exc.hint}）" if exc.hint else ""))
+                continue
+            if result.get("status") == "already_installed":
+                # 帳本顯示已安裝但規劃時對不上檔名（例如檔案被改名）——沒有東西
+                # 可等，直接用計畫中的替代模型生圖，避免卡在無限等下載。
+                failures.append(f"「{item.get('name')}」帳本顯示已安裝但無法對應到本地檔案，改用替代模型")
+            else:
+                downloads.append(result)
         if downloads:
             return {
                 "status": "acquiring_resources",
@@ -302,8 +442,23 @@ def generate_like(
         "steps": steps if steps is not None else (plan["steps"] or 20),
         "cfg": cfg if cfg is not None else (plan["cfg"] or 7.0),
     }
+    if plan["template"]:
+        params["template"] = plan["template"]
+    if plan["diffusion_model"]:
+        params["diffusion_model"] = checkpoint or plan["diffusion_model"]
+    if plan["text_encoder"]:
+        params["text_encoder"] = plan["text_encoder"]
+    if plan["vae"]:
+        params["vae"] = plan["vae"]
     if plan["loras"]:
-        params["loras"] = plan["loras"]
+        loras = [dict(spec) for spec in plan["loras"]]
+        if plan["template"]:
+            # 模板 LoRA 槽多於實際 LoRA 時，多出的槽保留模板內建 LoRA（apply_params
+            # 只覆寫前 N 個節點）；以強度 0 的重複項填滿，中和模板殘留的畫風。
+            slots = _lora_loader_slots(plan["template"])
+            while len(loras) < slots:
+                loras.append({"name": loras[0]["name"], "strength_model": 0.0})
+        params["loras"] = loras
     final_width = width if width is not None else plan["width"]
     final_height = height if height is not None else plan["height"]
     if final_width:
