@@ -67,6 +67,8 @@ def comfyui_python_candidates(root: Path, host: HostInfo) -> tuple[Path, ...]:
 
 
 def process_identity_command(system: str, pid: int) -> list[str]:
+    if type(pid) is not int or pid <= 0:
+        raise ValueError("pid must be a positive integer")
     if system == "Windows":
         return [
             "powershell",
