@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
 import pytest
@@ -216,7 +217,13 @@ def test_install_promotes_staging_only_after_success(tmp_path):
     target = tmp_path / "ComfyUI"
     runner = FakeRunner()
 
-    result = install_comfyui(target, DeviceMode.CPU, runner, host=LINUX)
+    result = install_comfyui(
+        target,
+        DeviceMode.CPU,
+        runner,
+        host=LINUX,
+        project_root=tmp_path / "project",
+    )
 
     assert result.root == target.resolve()
     assert result.valid is True
@@ -230,7 +237,13 @@ def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path):
     runner = FakeRunner(fail_when=lambda args: len(args) > 1 and args[1] == "-c")
 
     with pytest.raises(ComfyInstallError, match="smoke"):
-        install_comfyui(target, DeviceMode.NVIDIA, runner, host=LINUX)
+        install_comfyui(
+            target,
+            DeviceMode.NVIDIA,
+            runner,
+            host=LINUX,
+            project_root=tmp_path / "project",
+        )
 
     assert not target.exists()
     assert not staging_path(target).exists()
@@ -319,8 +332,149 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
     monkeypatch.setattr(Path, "replace", fail_staging_promotion)
 
     with pytest.raises(OSError, match="promotion failed"):
-        install_comfyui(target, DeviceMode.CPU, runner, host=LINUX)
+        install_comfyui(
+            target,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            project_root=tmp_path / "project",
+        )
 
     assert target.is_dir()
     assert list(target.iterdir()) == []
     assert not staging_path(target).exists()
+
+
+@pytest.mark.parametrize("relative_target", [Path("."), Path("data/ComfyUI")])
+def test_install_rejects_repository_target_before_side_effects(
+    tmp_path,
+    relative_target,
+):
+    assert "project_root" in inspect.signature(install_comfyui).parameters
+    project = tmp_path / "repository"
+    project.mkdir()
+    target = project / relative_target
+    runner = FakeRunner()
+
+    with pytest.raises(ComfyInstallError, match="repository"):
+        install_comfyui(
+            target,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            project_root=project,
+        )
+
+    assert runner.commands == []
+    assert not staging_path(target.resolve()).exists()
+    if relative_target != Path("."):
+        assert not target.exists()
+
+
+def test_install_rejects_nonexistent_child_through_symlink_parent(tmp_path):
+    assert "project_root" in inspect.signature(install_comfyui).parameters
+    project = tmp_path / "repository"
+    project.mkdir()
+    link = tmp_path / "repository-link"
+    try:
+        link.symlink_to(project, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"directory symlink unavailable: {error}")
+    target = link / "future" / "ComfyUI"
+    runner = FakeRunner()
+
+    with pytest.raises(ComfyInstallError, match="repository"):
+        install_comfyui(
+            target,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            project_root=project,
+        )
+
+    assert runner.commands == []
+    assert not target.exists()
+
+
+def test_install_rejects_canonical_child_without_symlink_privileges(
+    tmp_path,
+    monkeypatch,
+):
+    """Exercise symlink-parent canonicalization without creating an OS symlink."""
+    project = tmp_path / "repository"
+    project.mkdir()
+    target = tmp_path / "repository-link" / "future" / "ComfyUI"
+    canonical_target = project / "future" / "ComfyUI"
+    runner = FakeRunner()
+    original_resolve = Path.resolve
+
+    def resolve(path: Path, strict: bool = False) -> Path:
+        if path == target:
+            return canonical_target
+        return original_resolve(path, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", resolve)
+
+    with pytest.raises(ComfyInstallError, match="repository"):
+        install_comfyui(
+            target,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            project_root=project,
+        )
+
+    assert runner.commands == []
+    assert not target.exists()
+
+
+def test_install_allows_sibling_target_with_fake_runner(tmp_path):
+    assert "project_root" in inspect.signature(install_comfyui).parameters
+    project = tmp_path / "repository"
+    project.mkdir()
+    target = tmp_path / "managed-ComfyUI"
+    runner = FakeRunner()
+
+    result = install_comfyui(
+        target,
+        DeviceMode.CPU,
+        runner,
+        host=LINUX,
+        project_root=project,
+    )
+
+    assert result.root == target.resolve()
+    assert len(runner.commands) == 6
+
+
+def test_rosetta_install_boundary_never_clones_or_writes(tmp_path):
+    assert "project_root" in inspect.signature(install_comfyui).parameters
+    project = tmp_path / "repository"
+    project.mkdir()
+    target = tmp_path / "managed-ComfyUI"
+    runner = FakeRunner()
+    runner.fail_when = lambda _args: False
+    original_run = runner.run
+
+    def translated(args, **kwargs):
+        command = tuple(str(arg) for arg in args)
+        if command == ("sysctl", "-in", "sysctl.proc_translated"):
+            runner.commands.append((command, kwargs.get("cwd")))
+            return CommandResult(command, 0, "1\n", "")
+        return original_run(args, **kwargs)
+
+    runner.run = translated
+
+    with pytest.raises(ComfyInstallError, match="native"):
+        install_comfyui(
+            target,
+            DeviceMode.CPU,
+            runner,
+            host=HostInfo("Darwin", "x86_64", Path("/Users/test")),
+            project_root=project,
+        )
+
+    assert [command for command, _cwd in runner.commands] == [
+        ("sysctl", "-in", "sysctl.proc_translated")
+    ]
+    assert not target.exists()

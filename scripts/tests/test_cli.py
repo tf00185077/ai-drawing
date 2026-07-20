@@ -8,7 +8,12 @@ import pytest
 
 import launcher.cli as cli
 from launcher.cli import DefaultServices, main
-from launcher.comfyui import ComfyInstallError, ComfyProbe, ComfyValidation
+from launcher.comfyui import (
+    ComfyInstallError,
+    ComfyProbe,
+    ComfyValidation,
+    UnsupportedComfyArchitecture,
+)
 from launcher.models import (
     ComfyMode,
     DeviceMode,
@@ -123,6 +128,9 @@ class Harness:
     def default_comfyui_root(self):
         return self.project_root / "ComfyUI"
 
+    def validate_install_target(self, _root):
+        return Path(_root).resolve()
+
     def install_comfyui(self, root, device):
         self.events.append(("install", device))
         self.installed_roots.append(Path(root).resolve())
@@ -132,7 +140,6 @@ class Harness:
             raise error
         python = Path(root) / ".venv/bin/python"
         return ComfyValidation(Path(root), True, python, ())
-
     def start_comfyui(self, planned):
         self.events.append("start_comfyui")
         return replace(planned, managed_pid=4242)
@@ -232,6 +239,7 @@ class Harness:
                 "state": "connected" if current else "not_configured",
                 "ownership": current.comfy_mode.value if current else "none",
                 "model_count": 0,
+                "device": current.device.value if current and current.device else None,
                 "hint": "Add a model" if current else "Run reconfigure",
             },
             "relay": "not_required",
@@ -242,6 +250,84 @@ class Harness:
 
     def update_comfyui(self, current):
         self.events.append("update_comfyui")
+
+
+def test_default_services_passes_project_root_to_install_boundary(
+    tmp_path,
+    monkeypatch,
+):
+    project = tmp_path / "repository"
+    project.mkdir()
+    captured = {}
+
+    def fake_install(target, device, runner, host, **kwargs):
+        captured.update(kwargs)
+        return ComfyValidation(Path(target), True, Path(target) / "python", ())
+
+    monkeypatch.setattr(cli, "install_comfyui", fake_install)
+    services = DefaultServices(project, runner=object(), output_fn=lambda _message: None)
+
+    services.install_comfyui(tmp_path / "sibling", DeviceMode.CPU)
+
+    assert captured["project_root"] == project.resolve()
+
+
+def test_default_services_filters_repository_comfyui_candidates(tmp_path):
+    project = tmp_path / "repository"
+    inside = project / "ComfyUI"
+    outside = tmp_path / "external-ComfyUI"
+    for root in (inside, outside):
+        root.mkdir(parents=True)
+        (root / "main.py").touch()
+        (root / "models").mkdir()
+    services = DefaultServices(project, runner=object(), output_fn=lambda _message: None)
+    services.host = HostInfo("Linux", "x86_64", tmp_path)
+
+    candidates = services.candidate_roots(inside, outside)
+    found = services.discover_comfyui((inside, outside))
+
+    assert inside.resolve() not in candidates
+    assert outside.resolve() in candidates
+    assert tuple(item.root for item in found) == (outside.resolve(),)
+
+
+def test_default_services_rejects_repository_auto_destination(tmp_path):
+    project = tmp_path / "repository"
+    project.mkdir()
+    services = DefaultServices(project, runner=object(), output_fn=lambda _message: None)
+
+    with pytest.raises(cli.LauncherError) as caught:
+        services.validate_install_target(project / "data/ComfyUI")
+
+    assert caught.value.code == "COMFYUI_TARGET_IN_PROJECT"
+    assert "repository" in caught.value.hint
+
+
+def test_explicit_device_still_rejects_rosetta_install(harness):
+    target = harness.project_root.parent / "managed-ComfyUI"
+    harness.install_error = UnsupportedComfyArchitecture(
+        "native arm64 architecture is required; Rosetta is unsupported"
+    )
+
+    result = main(
+        [
+            "setup",
+            "--non-interactive",
+            "--comfyui-mode",
+            "managed",
+            "--comfyui-path",
+            str(target),
+            "--device",
+            "cpu",
+        ],
+        services=harness,
+    )
+
+    assert result == 2
+    assert any(
+        "UNSUPPORTED_NATIVE_ARCHITECTURE" in line for line in harness.output
+    ), (harness.output, harness.events)
+    assert "compose_up" not in harness.events
 
 
 @pytest.fixture
@@ -658,9 +744,10 @@ def test_status_reports_docker_unavailable_and_native_truth(harness):
     harness.preflight_error = cli.docker.DockerError(
         "DOCKER_DAEMON_UNAVAILABLE", "down", "start docker"
     )
-    harness.loaded_state = state(ComfyMode.EXTERNAL)
+    harness.loaded_state = state(ComfyMode.EXTERNAL, device=DeviceMode.CPU)
     assert main(["status"], services=harness) == 0
     assert "Docker: unavailable" in "\n".join(harness.output)
+    assert "ComfyUI device: cpu" in "\n".join(harness.output)
     assert "status" in harness.events
 
 
@@ -1050,6 +1137,7 @@ def test_status_reports_each_dependency_and_no_models_hint(tmp_path, monkeypatch
     assert report["frontend"] == "unreachable"
     assert report["comfy"]["state"] == "no_models"
     assert report["comfy"]["model_count"] == 0
+    assert report["comfy"]["device"] == "cpu"
     assert report["comfy"]["hint"]
 
 

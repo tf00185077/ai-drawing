@@ -10,6 +10,14 @@ from .models import DeviceMode, HostInfo, ProcessIdentity
 from .runner import Runner
 
 
+class UnsupportedNativeArchitecture(RuntimeError):
+    """Raised when Apple Silicon is running this launcher through Rosetta."""
+
+    code = "UNSUPPORTED_NATIVE_ARCHITECTURE"
+    message = "偵測到 Rosetta/x86_64 程序，無法安全設定 Apple Silicon runtime。"
+    hint = "請關閉目前終端，改用原生 arm64 終端後重新執行。"
+
+
 def detect_host(
     system: str | None = None,
     machine: str | None = None,
@@ -35,6 +43,28 @@ def choose_device(host: HostInfo, nvidia_available: bool) -> DeviceMode:
     if host.system == "Darwin" and host.machine.lower() == "arm64":
         return DeviceMode.MPS
     return DeviceMode.CPU
+
+
+def ensure_native_macos_architecture(host: HostInfo, runner: Runner) -> None:
+    """Reject translated Apple Silicon while allowing native Intel macOS."""
+    if host.system != "Darwin" or host.machine.lower() != "x86_64":
+        return
+    command = ["sysctl", "-in", "sysctl.proc_translated"]
+    try:
+        result = runner.run(command)
+    except OSError:
+        return
+    if result.returncode == 0 and result.stdout.strip() == "1":
+        raise UnsupportedNativeArchitecture(UnsupportedNativeArchitecture.message)
+
+
+def detect_device(host: HostInfo, runner: Runner) -> DeviceMode:
+    """Detect an explicit runtime mode without silently accepting Rosetta."""
+    ensure_native_macos_architecture(host, runner)
+    has_nvidia = (
+        nvidia_available(runner) if host.system in {"Windows", "Linux"} else False
+    )
+    return choose_device(host, has_nvidia)
 
 
 def default_comfyui_root(

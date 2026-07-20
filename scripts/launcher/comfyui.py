@@ -10,7 +10,12 @@ from urllib.request import urlopen
 
 from .constants import COMFYUI_PYTHON, COMFYUI_REPOSITORY, COMFYUI_VERSION
 from .models import ComfyMode, DeviceMode, HostInfo
-from .platforms import comfyui_python_candidates, detect_host
+from .platforms import (
+    comfyui_python_candidates,
+    detect_host,
+    ensure_native_macos_architecture,
+    UnsupportedNativeArchitecture,
+)
 from .runner import Runner
 
 
@@ -25,6 +30,14 @@ class InstallTargetNotEmpty(RuntimeError):
 
 class ComfyInstallError(RuntimeError):
     """Raised when a managed install or update cannot be completed safely."""
+
+
+class InstallTargetInsideProject(ComfyInstallError):
+    """Raised when managed installation would write inside this repository."""
+
+
+class UnsupportedComfyArchitecture(ComfyInstallError):
+    """Raised when ComfyUI dependency work would run through Rosetta."""
 
 
 @dataclass(frozen=True)
@@ -139,6 +152,19 @@ def probe_comfyui(
 def staging_path(target: Path) -> Path:
     target = Path(target)
     return target.with_name(f".{target.name}.staging")
+
+
+def validate_install_target(target: Path, project_root: Path) -> Path:
+    """Return a canonical target only when it is outside the repository."""
+    canonical_target = Path(target).expanduser().resolve(strict=False)
+    canonical_project = Path(project_root).expanduser().resolve(strict=False)
+    try:
+        canonical_target.relative_to(canonical_project)
+    except ValueError:
+        return canonical_target
+    raise InstallTargetInsideProject(
+        "managed install target must be outside the canonical repository root"
+    )
 
 
 def _remove_staging(path: Path) -> None:
@@ -274,10 +300,18 @@ def install_comfyui(
     device: DeviceMode,
     runner: Runner,
     host: HostInfo | None = None,
+    *,
+    project_root: Path,
 ) -> ComfyValidation:
     """Install into staging and publish only a validated, smoke-tested root."""
     actual_host = host or detect_host()
-    final_target = Path(target).resolve()
+    final_target = validate_install_target(target, project_root)
+    try:
+        ensure_native_macos_architecture(actual_host, runner)
+    except UnsupportedNativeArchitecture as error:
+        raise UnsupportedComfyArchitecture(
+            "native arm64 architecture is required; Rosetta is unsupported"
+        ) from error
     target_was_empty = final_target.is_dir() and not any(final_target.iterdir())
     prepared = prepare_staging_target(final_target)
     plan = build_install_plan(final_target, device, actual_host)
@@ -312,6 +346,12 @@ def update_comfyui(
 ) -> str:
     """Update explicitly to the stable pin and restore the prior commit on failure."""
     actual_host = host or detect_host()
+    try:
+        ensure_native_macos_architecture(actual_host, runner)
+    except UnsupportedNativeArchitecture as error:
+        raise UnsupportedComfyArchitecture(
+            "native arm64 architecture is required; Rosetta is unsupported"
+        ) from error
     installation = validate_comfyui_root(root, actual_host)
     if not installation.valid:
         raise ComfyInstallError(

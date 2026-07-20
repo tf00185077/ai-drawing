@@ -14,10 +14,13 @@ from urllib.request import urlopen
 from . import docker
 from .comfyui import (
     ComfyInstallError,
+    InstallTargetInsideProject,
+    UnsupportedComfyArchitecture,
     discover_comfyui,
     install_comfyui,
     probe_comfyui,
     update_comfyui,
+    validate_install_target as validate_comfyui_install_target,
     validate_comfyui_root,
 )
 from .configuration import (
@@ -43,10 +46,10 @@ from .models import (
     LocalSettings,
 )
 from .platforms import (
-    choose_device,
+    UnsupportedNativeArchitecture,
     default_comfyui_root,
+    detect_device as detect_device_mode,
     detect_host,
-    nvidia_available,
     read_process_identity,
 )
 from .processes import start_comfyui, stop_comfyui
@@ -157,10 +160,26 @@ class DefaultServices:
         return selected
 
     def detect_device(self) -> DeviceMode:
-        return choose_device(self.host, nvidia_available(self.runner))
+        try:
+            return detect_device_mode(self.host, self.runner)
+        except UnsupportedNativeArchitecture as error:
+            raise LauncherError(
+                UnsupportedNativeArchitecture.code,
+                UnsupportedNativeArchitecture.message,
+                UnsupportedNativeArchitecture.hint,
+                exit_code=2,
+            ) from error
 
     def discover_comfyui(self, candidates: Sequence[Path]):
-        return discover_comfyui(candidates, self.host)
+        safe_candidates = []
+        for candidate in candidates:
+            try:
+                safe_candidates.append(
+                    validate_comfyui_install_target(candidate, self.project_root)
+                )
+            except InstallTargetInsideProject:
+                continue
+        return discover_comfyui(safe_candidates, self.host)
 
     def candidate_roots(
         self, explicit: Path | None = None, previous: Path | None = None
@@ -180,9 +199,15 @@ class DefaultServices:
             ),
         }.get(self.host.system, (home / "ComfyUI",))
         ordered = (explicit, previous, self.default_comfyui_root(), *common)
-        return tuple(
-            dict.fromkeys(path.resolve() for path in ordered if path is not None)
-        )
+        safe: list[Path] = []
+        for path in ordered:
+            if path is None:
+                continue
+            try:
+                safe.append(validate_comfyui_install_target(path, self.project_root))
+            except InstallTargetInsideProject:
+                continue
+        return tuple(dict.fromkeys(safe))
 
     def probe_external(self, port: int) -> bool:
         return probe_comfyui(f"http://127.0.0.1:{port}").running
@@ -204,8 +229,25 @@ class DefaultServices:
     def default_comfyui_root(self) -> Path:
         return default_comfyui_root(self.host)
 
+    def validate_install_target(self, root: Path) -> Path:
+        try:
+            return validate_comfyui_install_target(root, self.project_root)
+        except InstallTargetInsideProject as error:
+            raise LauncherError(
+                "COMFYUI_TARGET_IN_PROJECT",
+                "ComfyUI managed 安裝位置不能位於專案目錄內。",
+                "請選擇 repository 外的空目錄後重試。",
+                exit_code=2,
+            ) from error
+
     def install_comfyui(self, root: Path, device: DeviceMode):
-        return install_comfyui(root, device, self.runner, self.host)
+        return install_comfyui(
+            root,
+            device,
+            self.runner,
+            self.host,
+            project_root=self.project_root,
+        )
 
     def start_comfyui(self, planned: LauncherState) -> LauncherState:
         if planned.comfyui_root is None or planned.device is None:
@@ -665,6 +707,11 @@ class DefaultServices:
                 "ownership": ownership,
                 "model_count": model_count,
                 "model_state": model_state,
+                "device": (
+                    current.device.value
+                    if current is not None and current.device is not None
+                    else None
+                ),
                 "hint": hint,
             },
             "relay": relay_status,
@@ -715,6 +762,13 @@ class DefaultServices:
                 self.runner,
                 self.host,
             )
+        except UnsupportedComfyArchitecture as error:
+            raise LauncherError(
+                UnsupportedNativeArchitecture.code,
+                UnsupportedNativeArchitecture.message,
+                UnsupportedNativeArchitecture.hint,
+                exit_code=2,
+            ) from error
         except ComfyInstallError as error:
             raise LauncherError(
                 "COMFYUI_UPDATE_FAILED",
@@ -895,6 +949,20 @@ def _install_or_disable(
 ) -> LauncherState:
     try:
         installed = services.install_comfyui(root, device)
+    except (UnsupportedNativeArchitecture, UnsupportedComfyArchitecture) as error:
+        raise LauncherError(
+            UnsupportedNativeArchitecture.code,
+            UnsupportedNativeArchitecture.message,
+            UnsupportedNativeArchitecture.hint,
+            exit_code=2,
+        ) from error
+    except InstallTargetInsideProject as error:
+        raise LauncherError(
+            "COMFYUI_TARGET_IN_PROJECT",
+            "ComfyUI managed 安裝位置不能位於專案目錄內。",
+            "請選擇 repository 外的空目錄後重試。",
+            exit_code=2,
+        ) from error
     except Exception as first_error:
         choice = _recovery_choice(args, services, kind="comfy")
         if choice == "disabled":
@@ -1057,6 +1125,9 @@ def _plan_comfyui(
             f"ComfyUI 安裝位置（留白使用預設 {default_target}）"
         )
     target = target or default_target
+    target_validator = getattr(services, "validate_install_target", None)
+    if target_validator is not None:
+        target = target_validator(target)
     device = DeviceMode(args.device) if args.device else services.detect_device()
     if dry_run:
         return _base_state(
@@ -1598,6 +1669,8 @@ def _run(args: argparse.Namespace, services: Any) -> int:
             f"ComfyUI: {comfy['state']} ({comfy['ownership']}), "
             f"models={comfy['model_count']}"
         )
+        if comfy.get("device") is not None:
+            services.emit(f"ComfyUI device: {comfy['device']}")
         services.emit(f"Hint: {comfy['hint']}")
         services.emit(f"Relay: {status['relay']}")
         return 0
