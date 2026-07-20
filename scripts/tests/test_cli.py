@@ -43,6 +43,9 @@ class Harness:
         self.events = []
         self.output = []
         self.discovered = ()
+        self.discovery_batches = []
+        self.candidate_batches = []
+        self.path_answers = []
         self.external_running = False
         self.install_error = None
         self.detected_device = DeviceMode.CPU
@@ -53,12 +56,22 @@ class Harness:
         self.config_snapshot = {"old": True}
         self.relay_state = None
         self.relay_activation = None
+        self.managed_verified = False
+        self.preflight_error = None
+        self.bootstrap_log_error = None
 
     def emit(self, message):
         self.output.append(message)
 
+    def log_bootstrap(self, message):
+        self.events.append(("bootstrap_log", message))
+        if self.bootstrap_log_error is not None:
+            raise self.bootstrap_log_error
+
     def preflight(self):
         self.events.append("preflight")
+        if self.preflight_error is not None:
+            raise self.preflight_error
 
     def load_state(self):
         self.events.append("load_state")
@@ -80,13 +93,28 @@ class Harness:
         self.events.append("detect_device")
         return self.detected_device
 
-    def discover_comfyui(self, _candidates):
+    def discover_comfyui(self, candidates):
         self.events.append("discover")
+        self.candidate_batches.append(tuple(candidates))
+        if self.discovery_batches:
+            return self.discovery_batches.pop(0)
         return self.discovered
+
+    def candidate_roots(self, explicit=None, previous=None):
+        values = (explicit, previous, self.default_comfyui_root())
+        return tuple(dict.fromkeys(path.resolve() for path in values if path))
+
+    def ask_path(self, _message):
+        self.events.append("ask_path")
+        return self.path_answers.pop(0) if self.path_answers else None
 
     def probe_external(self, _port):
         self.events.append("probe_external")
         return self.external_running
+
+    def managed_state_is_verified(self, _state):
+        self.events.append("verify_managed")
+        return self.managed_verified
 
     def default_comfyui_root(self):
         return self.project_root / "ComfyUI"
@@ -112,6 +140,14 @@ class Harness:
     def select_ports(self, backend_port, frontend_port):
         self.events.append("ports")
         return backend_port, frontend_port
+
+    def select_ports_for_running(self, desired, _configured):
+        self.events.append("running_ports")
+        return desired
+
+    def load_ports(self):
+        self.events.append("load_ports")
+        return 8000, 5173
 
     def mount_probes(self, settings):
         self.events.append("mount_probes")
@@ -180,10 +216,10 @@ class Harness:
     def restore_relay(self, relay_state):
         self.events.append(("restore_relay", relay_state))
 
-    def status(self, current):
+    def status(self, current, *, docker_available=True):
         self.events.append("status")
         return {
-            "docker": "available",
+            "docker": "available" if docker_available else "unavailable",
             "services": {"backend": "running", "frontend": "running"},
             "backend": "reachable",
             "frontend": "reachable",
@@ -331,7 +367,10 @@ def test_setup_rolls_back_compose_config_and_new_managed_process(harness):
         )
         == 1
     )
-    assert harness.events[-3:] == ["compose_down", "restore_config", "stop_comfyui"]
+    events = [event for event in harness.events if not (
+        isinstance(event, tuple) and event[0] == "bootstrap_log"
+    )]
+    assert events[-3:] == ["compose_down", "restore_config", "stop_comfyui"]
 
 
 def test_failed_reconfigure_restores_previously_running_compose(harness):
@@ -339,7 +378,11 @@ def test_failed_reconfigure_restores_previously_running_compose(harness):
     harness.compose_services = frozenset({"backend"})
     harness.backend_ready = False
     assert main(["reconfigure", "--comfyui-mode", "disabled"], services=harness) == 1
-    rollback = harness.events[harness.events.index("compose_down") :]
+    rollback = [
+        event
+        for event in harness.events[harness.events.index("compose_down") :]
+        if not (isinstance(event, tuple) and event[0] == "bootstrap_log")
+    ]
     assert rollback == [
         "compose_down",
         "restore_config",
@@ -356,7 +399,10 @@ def test_failed_start_restores_state_after_starting_new_managed_process(harness)
     harness.frontend_ready = False
     assert main(["start"], services=harness) == 1
     assert "save_state" in harness.events
-    assert harness.events[-3:] == ["compose_down", "restore_config", "stop_comfyui"]
+    events = [event for event in harness.events if not (
+        isinstance(event, tuple) and event[0] == "bootstrap_log"
+    )]
+    assert events[-3:] == ["compose_down", "restore_config", "stop_comfyui"]
 
 
 def test_rollback_continues_cleanup_when_config_restore_fails(harness):
@@ -504,6 +550,62 @@ def test_stop_attempts_relay_and_comfy_when_compose_down_fails(harness):
     assert "stop_comfyui" in harness.events
 
 
+def test_docker_unavailable_does_not_block_native_stop_cleanup(harness):
+    harness.preflight_error = cli.docker.DockerError(
+        "DOCKER_DAEMON_UNAVAILABLE", "down", "start docker"
+    )
+    harness.loaded_state = state(
+        ComfyMode.MANAGED,
+        root=harness.project_root / "ComfyUI",
+        device=DeviceMode.CPU,
+    )
+    harness.compose_down = lambda: (_ for _ in ()).throw(
+        cli.docker.DockerError("COMPOSE_DOWN_FAILED", "down", "start docker")
+    )
+    assert main(["stop"], services=harness) == 1
+    assert "preflight" not in harness.events
+    assert "stop_comfyui" in harness.events
+    assert any(isinstance(event, tuple) and event[0] == "stop_relay" for event in harness.events)
+
+
+def test_status_reports_docker_unavailable_and_native_truth(harness):
+    harness.preflight_error = cli.docker.DockerError(
+        "DOCKER_DAEMON_UNAVAILABLE", "down", "start docker"
+    )
+    harness.loaded_state = state(ComfyMode.EXTERNAL)
+    assert main(["status"], services=harness) == 0
+    assert "Docker: unavailable" in "\n".join(harness.output)
+    assert "status" in harness.events
+
+
+def test_logs_and_update_do_not_require_docker_preflight(harness):
+    harness.preflight_error = cli.docker.DockerError(
+        "DOCKER_DAEMON_UNAVAILABLE", "down", "start docker"
+    )
+    assert main(["logs"], services=harness) == 0
+    assert "logs" in harness.events
+    assert "preflight" not in harness.events
+
+    root = harness.project_root / "ComfyUI"
+    harness.loaded_state = replace(
+        state(ComfyMode.MANAGED, root=root, device=DeviceMode.CPU),
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+    assert main(["update-comfyui"], services=harness) == 0
+    assert "update_comfyui" in harness.events
+
+
+def test_dry_run_reports_preflight_failure_without_mutation(harness):
+    harness.preflight_error = cli.docker.DockerError(
+        "DOCKER_DAEMON_UNAVAILABLE", "down", "start docker"
+    )
+    assert main(["dry-run", "--comfyui-mode", "disabled"], services=harness) == 0
+    assert "Docker preflight: unavailable" in "\n".join(harness.output)
+    assert "write_config" not in harness.events
+
+
 def test_discovered_user_owned_root_cannot_be_updated(harness):
     harness.loaded_state = state(
         ComfyMode.MANAGED,
@@ -576,6 +678,44 @@ def test_same_ready_managed_root_preserves_ownership_on_reconfigure(harness):
     )
     assert harness.saved_state.managed_pid == 4242
     assert "stop_comfyui" not in harness.events
+
+
+def test_ready_api_preserves_verified_previous_managed_before_external_classification(harness):
+    root = harness.project_root / "Real Existing ComfyUI"
+    identity = ProcessIdentity("python", "1", "python main.py")
+    previous = state(
+        ComfyMode.MANAGED,
+        root=root,
+        device=DeviceMode.CPU,
+        pid=4242,
+        identity=identity,
+    )
+    harness.loaded_state = previous
+    harness.external_running = True
+    harness.managed_verified = True
+
+    assert main(["reconfigure", "--comfyui-mode", "managed"], services=harness) == 0
+    assert harness.saved_state == previous
+    assert "verify_managed" in harness.events
+    assert "stop_comfyui" not in harness.events
+
+
+def test_ready_api_with_identity_mismatch_becomes_external_unowned(harness):
+    root = harness.project_root / "Old ComfyUI"
+    harness.loaded_state = state(
+        ComfyMode.MANAGED,
+        root=root,
+        device=DeviceMode.CPU,
+        pid=4242,
+        identity=ProcessIdentity("python", "1", "python main.py"),
+    )
+    harness.external_running = True
+    harness.managed_verified = False
+
+    assert main(["reconfigure", "--comfyui-mode", "managed"], services=harness) == 0
+    assert harness.saved_state.comfy_mode is ComfyMode.EXTERNAL
+    assert harness.saved_state.managed_pid is None
+    assert harness.saved_state.managed_identity is None
 
 
 def test_same_root_different_device_never_relabels_existing_process(tmp_path):
@@ -874,7 +1014,12 @@ def test_status_verifies_managed_identity_and_counts_models(tmp_path, monkeypatc
 def test_logs_include_all_sources_redact_secrets_and_tolerate_missing(tmp_path):
     (tmp_path / "data/logs").mkdir(parents=True)
     (tmp_path / "data/logs/bootstrap.log").write_text(
-        "ready\nTOKEN=private-token\nAuthorization: Bearer private-bearer\n",
+        "ready\nTOKEN=private-token\nAuthorization: Bearer private-bearer\n"
+        'CIVITAI_AUTHORIZATION="Bearer civitai-private"\n'
+        '{"my_token": "json-private"}\n'
+        "MY_API_KEY=dict-private\n"
+        "prefix_password: password-private\n"
+        "secret_value=secret-private\n",
         encoding="utf-8",
     )
     (tmp_path / "data/logs/comfyui.log").write_text("comfy ready\n", encoding="utf-8")
@@ -894,7 +1039,56 @@ def test_logs_include_all_sources_redact_secrets_and_tolerate_missing(tmp_path):
     assert "private-token" not in rendered
     assert "hunter2" not in rendered
     assert "private-bearer" not in rendered
+    for fragment in (
+        "civitai-private",
+        "json-private",
+        "dict-private",
+        "password-private",
+        "secret-private",
+    ):
+        assert fragment not in rendered
     assert "[REDACTED]" in rendered
+
+
+def test_mutating_error_produces_sanitized_bounded_bootstrap_log(tmp_path):
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.preflight = lambda: (_ for _ in ()).throw(
+        cli.docker.DockerError(
+            "DOCKER_DAEMON_UNAVAILABLE",
+            "TOKEN=private-token",
+            "Authorization: Bearer private-bearer",
+        )
+    )
+    assert main(["setup", "--comfyui-mode", "disabled"], services=service) == 1
+    log = tmp_path / "data/logs/bootstrap.log"
+    assert log.is_file()
+    content = log.read_text(encoding="utf-8")
+    assert "private-token" not in content
+    assert "private-bearer" not in content
+    assert "DOCKER_DAEMON_UNAVAILABLE" in content
+
+
+def test_status_and_dry_run_do_not_create_bootstrap_log(tmp_path):
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.preflight = lambda: None
+    service.wait_backend = lambda _port, **_kwargs: False
+    service.wait_frontend = lambda _port, **_kwargs: False
+    assert main(["status"], services=service) == 0
+    assert not (tmp_path / "data/logs/bootstrap.log").exists()
+
+    assert main(["dry-run", "--comfyui-mode", "disabled"], services=service) == 0
+    assert not (tmp_path / "data/logs/bootstrap.log").exists()
+
+
+def test_bootstrap_logging_failure_never_blocks_stop_cleanup(harness):
+    harness.bootstrap_log_error = OSError("disk full")
+    harness.loaded_state = state(
+        ComfyMode.MANAGED,
+        root=harness.project_root / "ComfyUI",
+        device=DeviceMode.CPU,
+    )
+    assert main(["stop"], services=harness) == 0
+    assert "stop_comfyui" in harness.events
 
 
 def test_error_output_is_structured_and_does_not_leak_exception(harness):
@@ -964,3 +1158,146 @@ def test_known_managed_process_not_ready_is_not_started_twice(tmp_path, monkeypa
         )
 
     assert raised.value.code == "COMFYUI_MANAGED_NOT_READY"
+
+
+def test_previous_non_default_comfyui_root_is_a_bounded_discovery_candidate(harness):
+    root = (harness.project_root / "custom" / "ComfyUI").resolve()
+    harness.loaded_state = state(
+        ComfyMode.MANAGED, root=root, device=DeviceMode.CPU
+    )
+    harness.discovered = (ComfyValidation(root, True, root / ".venv/bin/python", ()),)
+    harness.answers = [True]
+
+    assert main(["reconfigure", "--comfyui-mode", "managed"], services=harness) == 0
+    assert root in harness.candidate_batches[0]
+    assert len(harness.candidate_batches[0]) <= 8
+    assert harness.saved_state.comfyui_root == root
+
+
+def test_interactive_user_can_enter_an_existing_comfyui_path(harness):
+    root = (harness.project_root / "elsewhere" / "ComfyUI").resolve()
+    found = ComfyValidation(root, True, root / ".venv/bin/python", ())
+    harness.answers = [True]
+    harness.path_answers = [root]
+    harness.discovery_batches = [(), (found,)]
+
+    assert main(["setup"], services=harness) == 0
+    assert "ask_path" in harness.events
+    assert harness.saved_state.comfyui_root == root
+    assert not any(
+        isinstance(event, tuple) and event[0] == "install" for event in harness.events
+    )
+
+
+def test_noninteractive_discovery_never_prompts_for_another_path(harness):
+    assert main(
+        ["setup", "--non-interactive", "--comfyui-mode", "disabled"],
+        services=harness,
+    ) == 0
+    assert "ask_path" not in harness.events
+
+
+def test_running_project_reconfigure_reuses_its_configured_ports(harness):
+    harness.loaded_state = state()
+    harness.compose_services = frozenset({"backend", "frontend"})
+    harness.load_ports = lambda: (8101, 5273)
+
+    assert main(["reconfigure", "--comfyui-mode", "disabled"], services=harness) == 0
+    assert "ports" not in harness.events
+    assert "running_ports" in harness.events
+    assert harness.saved_settings.backend_port == 8101
+    assert harness.saved_settings.frontend_port == 5273
+
+
+def test_running_port_selection_does_not_probe_verified_project_ports(
+    tmp_path, monkeypatch
+):
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    probed = []
+
+    def available(_host, port):
+        probed.append(port)
+        return True
+
+    monkeypatch.setattr(cli.docker, "port_available", available)
+    selected = service.select_ports_for_running((8102, 5273), (8101, 5273))
+    assert selected == (8102, 5273)
+    assert 5273 not in probed
+
+
+def test_external_status_does_not_claim_no_models_when_count_is_unknown(
+    tmp_path, monkeypatch
+):
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    current = state(ComfyMode.EXTERNAL, root=None)
+    monkeypatch.setattr(cli, "probe_comfyui", lambda _url: ComfyProbe(True, 200, None))
+    monkeypatch.setattr(service, "query_comfy_model_count", lambda _port: None)
+    monkeypatch.setattr(service, "wait_backend", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(service, "wait_frontend", lambda *_args, **_kwargs: False)
+
+    report = service.status(current, docker_available=False)
+    assert report["comfy"]["state"] != "no_models"
+    assert report["comfy"]["model_count"] is None
+    assert report["comfy"]["model_state"] == "unknown"
+
+
+def test_external_status_reports_no_models_only_for_confirmed_zero(
+    tmp_path, monkeypatch
+):
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    current = state(ComfyMode.EXTERNAL, root=None)
+    monkeypatch.setattr(cli, "probe_comfyui", lambda _url: ComfyProbe(True, 200, None))
+    monkeypatch.setattr(service, "query_comfy_model_count", lambda _port: 0)
+    monkeypatch.setattr(service, "wait_backend", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(service, "wait_frontend", lambda *_args, **_kwargs: False)
+
+    report = service.status(current, docker_available=False)
+    assert report["comfy"]["state"] == "no_models"
+    assert report["comfy"]["model_count"] == 0
+    assert report["comfy"]["model_state"] == "confirmed"
+
+
+def test_external_model_query_can_confirm_an_empty_inventory(tmp_path, monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self, _limit):
+            return b'{"CheckpointLoaderSimple":{"input":{"required":{"ckpt_name":[[]]}}}}'
+
+    monkeypatch.setattr(cli, "urlopen", lambda *_args, **_kwargs: Response())
+    service = DefaultServices(tmp_path, output_fn=lambda _message: None)
+    assert service.query_comfy_model_count(8188) == 0
+
+
+def test_existing_state_dry_run_honors_reconfiguration_flags_without_mutation(harness):
+    old_root = (harness.project_root / "old").resolve()
+    new_root = (harness.project_root / "new").resolve()
+    harness.loaded_state = state(
+        ComfyMode.MANAGED, root=old_root, device=DeviceMode.CPU
+    )
+
+    assert main(
+        [
+            "dry-run",
+            "--comfyui-mode",
+            "managed",
+            "--comfyui-path",
+            str(new_root),
+            "--device",
+            "cpu",
+            "--backend-port",
+            "8101",
+            "--frontend-port",
+            "5273",
+        ],
+        services=harness,
+    ) == 0
+    output = "\n".join(harness.output)
+    assert str(new_root) in output
+    assert "8101" in output and "5273" in output
+    forbidden = {"write_config", "compose_up", "start_comfyui"}
+    assert not forbidden.intersection(harness.events)
