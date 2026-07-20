@@ -421,6 +421,24 @@ def load_relay_state(
         sleep(min(0.01, remaining))
 
 
+def peek_relay_state(project_root: Path) -> RelayState | None:
+    """Read relay ownership without creating locks or repairing invalid state."""
+    path = relay_state_path(project_root)
+    try:
+        raw = path.read_text(encoding="utf-8")
+        return RelayState.from_json(raw)
+    except (
+        FileNotFoundError,
+        OSError,
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        UnicodeError,
+        ValueError,
+    ):
+        return None
+
+
 def clear_relay_state(
     project_root: Path,
     expected_state: RelayState,

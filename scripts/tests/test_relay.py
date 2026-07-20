@@ -26,6 +26,7 @@ from launcher.relay import (
     relay_lock_path,
     relay_state_path,
     load_relay_state,
+    peek_relay_state,
     run_relay,
     save_relay_state,
     start_relay,
@@ -127,6 +128,21 @@ def test_non_utf8_relay_state_is_quarantined_without_exception(tmp_path):
     assert load_relay_state(tmp_path) is None
     assert path.exists() is False
     assert relay_invalid_state_path(tmp_path).read_bytes() == b"\xff\xfeinvalid"
+
+
+def test_peek_invalid_relay_state_is_strictly_read_only(tmp_path):
+    path = relay_state_path(tmp_path)
+    path.parent.mkdir(parents=True)
+    original = b"\xff\xfeinvalid"
+    path.write_bytes(original)
+    before = path.stat().st_mtime_ns
+
+    assert peek_relay_state(tmp_path) is None
+
+    assert path.read_bytes() == original
+    assert path.stat().st_mtime_ns == before
+    assert not relay_invalid_state_path(tmp_path).exists()
+    assert not relay_lock_path(tmp_path).exists()
 
 
 def test_invalid_bind_is_rejected_before_asyncio_server_starts():

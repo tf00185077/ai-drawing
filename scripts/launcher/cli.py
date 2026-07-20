@@ -19,6 +19,8 @@ from .comfyui import (
     discover_comfyui,
     install_comfyui,
     probe_comfyui,
+    resolve_uv_binary,
+    smoke_comfyui_runtime,
     update_comfyui,
     validate_install_target as validate_comfyui_install_target,
     validate_comfyui_root,
@@ -56,6 +58,7 @@ from .processes import start_comfyui, stop_comfyui
 from .relay import (
     RelayState,
     load_relay_state,
+    peek_relay_state,
     start_relay,
     stop_relay,
 )
@@ -247,6 +250,7 @@ class DefaultServices:
             self.runner,
             self.host,
             project_root=self.project_root,
+            uv_bin=resolve_uv_binary(),
         )
 
     def start_comfyui(self, planned: LauncherState) -> LauncherState:
@@ -280,6 +284,14 @@ class DefaultServices:
                 "找不到可控制的 ComfyUI Python runtime。",
                 "請確認路徑或重新安裝 ComfyUI。",
             )
+        try:
+            smoke_comfyui_runtime(validation.python, planned.device, self.runner)
+        except ComfyInstallError as error:
+            raise LauncherError(
+                "COMFYUI_DEVICE_SMOKE_FAILED",
+                "ComfyUI Python runtime does not support the selected device.",
+                "Retry, choose CPU, disable ComfyUI, or stop it before reconfiguring.",
+            ) from error
         result = start_comfyui(
             root=validation.root,
             python=validation.python,
@@ -438,6 +450,13 @@ class DefaultServices:
             )
 
     def compose_running_services(self) -> frozenset[str]:
+        base = self.project_root / "docker-compose.yml"
+        generated = (
+            self.project_root / ".env",
+            self.project_root / ".ai-drawing/compose.local.yaml",
+        )
+        if base.is_file() and not all(path.is_file() for path in generated):
+            return frozenset()
         return frozenset(
             service
             for service, state in docker.compose_service_states(
@@ -686,7 +705,8 @@ class DefaultServices:
 
         relay_status = "not_required" if self.host.system != "Linux" else "not_running"
         if self.host.system == "Linux":
-            relay_state = load_relay_state(self.project_root)
+            relay_file = self.project_root / "data/bootstrap/relay-state.json"
+            relay_state = peek_relay_state(self.project_root)
             if relay_state is not None:
                 identity = read_process_identity(
                     self.host, relay_state.managed_pid, self.runner
@@ -697,6 +717,8 @@ class DefaultServices:
                     and self._relay_ready(relay_state)
                     else "stale"
                 )
+            elif relay_file.is_file():
+                relay_status = "stale"
         return {
             "docker": "available" if docker_available else "unavailable",
             "services": services,
@@ -761,6 +783,7 @@ class DefaultServices:
                 current.device,
                 self.runner,
                 self.host,
+                uv_bin=resolve_uv_binary(),
             )
         except UnsupportedComfyArchitecture as error:
             raise LauncherError(
@@ -1013,6 +1036,55 @@ def _plan_comfyui(
             "請指定 --comfyui-mode disabled、external 或 managed。",
             exit_code=2,
         )
+    requested_root = args.comfyui_path.resolve() if args.comfyui_path else None
+    requested_device = DeviceMode(args.device) if args.device else None
+    previous_managed_verified = (
+        previous is not None
+        and previous.comfy_mode is ComfyMode.MANAGED
+        and previous.comfyui_root is not None
+        and services.managed_state_is_verified(previous)
+    )
+    if previous_managed_verified and explicit_mode is not ComfyMode.DISABLED:
+        same_runtime = (
+            explicit_mode is not ComfyMode.EXTERNAL
+            and (requested_root is None or requested_root == previous.comfyui_root.resolve())
+            and (requested_device is None or requested_device == previous.device)
+            and args.comfyui_port == previous.comfyui_port
+        )
+        if same_runtime:
+            return previous
+        raise LauncherError(
+            "COMFYUI_RECONFIGURE_REQUIRES_STOP",
+            "A verified managed ComfyUI is still running with different settings.",
+            "Run stop first, then run reconfigure with the new path, device, or port.",
+        )
+
+    discovery_cache: tuple[tuple[Any, ...], tuple[Path, ...]] | None = None
+
+    def bounded_discovery() -> tuple[tuple[Any, ...], tuple[Path, ...]]:
+        nonlocal discovery_cache
+        if discovery_cache is not None:
+            return discovery_cache
+        previous_root = previous.comfyui_root if previous is not None else None
+        candidate_builder = getattr(services, "candidate_roots", None)
+        candidates = (
+            candidate_builder(requested_root, previous_root)
+            if candidate_builder is not None
+            else tuple(
+                dict.fromkeys(
+                    path.resolve()
+                    for path in (
+                        requested_root,
+                        previous_root,
+                        services.default_comfyui_root(),
+                    )
+                    if path is not None
+                )
+            )
+        )
+        discovery_cache = (tuple(services.discover_comfyui(candidates)), candidates)
+        return discovery_cache
+
     if explicit_mode is ComfyMode.DISABLED:
         return _base_state(
             ComfyMode.DISABLED,
@@ -1020,6 +1092,7 @@ def _plan_comfyui(
             previous=previous,
         )
     if explicit_mode is ComfyMode.EXTERNAL:
+        found, _candidates = bounded_discovery()
         if not services.probe_external(args.comfyui_port):
             raise LauncherError(
                 "COMFYUI_UNREACHABLE",
@@ -1028,7 +1101,7 @@ def _plan_comfyui(
             )
         return _base_state(
             ComfyMode.EXTERNAL,
-            root=args.comfyui_path.resolve() if args.comfyui_path else None,
+            root=found[0].root if found else None,
             port=args.comfyui_port,
             previous=previous,
         )
@@ -1045,47 +1118,21 @@ def _plan_comfyui(
             exit_code=2,
         )
 
-    requested_root = args.comfyui_path.resolve() if args.comfyui_path else None
-    requested_device = DeviceMode(args.device) if args.device else None
-    if (
-        previous is not None
-        and previous.comfy_mode is ComfyMode.MANAGED
-        and explicit_mode in {None, ComfyMode.MANAGED}
-        and (requested_root is None or requested_root == previous.comfyui_root.resolve())
-        and (requested_device is None or requested_device == previous.device)
-        and args.comfyui_port == previous.comfyui_port
-        and services.managed_state_is_verified(previous)
-    ):
-        return previous
-
     if explicit_mode is None and not services.ask("是否設定 ComfyUI？", default=False):
         return _base_state(
             ComfyMode.DISABLED,
             port=args.comfyui_port,
             previous=previous,
         )
+    root = requested_root
+    found, _candidates = bounded_discovery()
     if services.probe_external(args.comfyui_port):
         return _base_state(
             ComfyMode.EXTERNAL,
+            root=found[0].root if found else None,
             port=args.comfyui_port,
             previous=previous,
         )
-
-    root = args.comfyui_path.resolve() if args.comfyui_path else None
-    previous_root = previous.comfyui_root if previous is not None else None
-    candidate_builder = getattr(services, "candidate_roots", None)
-    candidates = (
-        candidate_builder(root, previous_root)
-        if candidate_builder is not None
-        else tuple(
-            dict.fromkeys(
-                path.resolve()
-                for path in (root, previous_root, services.default_comfyui_root())
-                if path is not None
-            )
-        )
-    )
-    found = services.discover_comfyui(candidates)
     if found and (explicit_mode is ComfyMode.MANAGED or services.ask(
         f"找到 ComfyUI：{found[0].root}，是否使用？", default=True
     )):
