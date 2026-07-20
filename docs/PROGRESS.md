@@ -1,16 +1,36 @@
 # 進度追蹤
 
-## 2026-07-20 One-click launcher: Backend dependency status
+## 2026-07-20 跨平台 Docker 一鍵啟動
 
-新增型別化的 `/api/system/status`，將應用程式健康度與選用的 ComfyUI 依賴分開呈現；disabled 不探測，外部或受管理模式以固定 2 秒 timeout 檢查 `/system_stats`，並回報 connected、not_configured、unreachable、no_models 或 degraded。模型盤點只讀取已設定的 checkpoints 與 diffusion_models 目錄，不會下載模型；警告不包含主機路徑或底層例外內容。驗證：狀態與相關設定／資源測試 `39 passed`，Backend 全套 `1008 passed, 4 skipped`。
+完成 Windows `setup.ps1` 與 macOS/Linux `setup.sh`，一般使用者 clone 後不需理解 Python、Node 或容器內部即可設定並啟動 Frontend/Backend。啟動器會檢查 Docker/Compose/ports、原子產生 `.env` 與本機 Compose override、保存程序 ownership，並提供 `setup`、`start`、`stop`、`status`、`reconfigure`、`logs`、`update-comfyui` 與唯讀 `dry-run`。
 
-## 2026-07-20 One-click launcher: platform detection
+ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄，或安裝固定版 ComfyUI。安裝計畫依 Windows/Linux NVIDIA、Apple Silicon MPS、CPU 選擇 runtime，只涵蓋 ComfyUI 與必要 Python 套件，明確不下載模型或 custom nodes。程序停止前會比對 PID 與完整身分；Linux loopback relay 有獨立 lock/state/identity。Backend 新增 `/api/system/status`，Frontend Dashboard 分別呈現 connected、not_configured、unreachable、no_models、degraded，其中 `no_models` 顯示「ComfyUI 已連線，尚無模型」。MCP 不屬於這次啟動範圍。
 
-Implemented the injected, unit-testable platform detection layer for the one-click launcher: Windows/Linux NVIDIA selection, Apple Silicon MPS selection, CPU fallback, OS data roots, Python candidate paths, and safe PID command-line identity reads. PID inputs are validated as positive built-in integers at both command construction and state deserialization. Verification: PID regression coverage `29 passed`; complete launcher suite `30 passed`.
+持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
-## 2026-07-20 One-click launcher: atomic local configuration
+### 本次實際自動驗證
 
-Implemented generated Docker-safe `.env`, local Compose bind-mount override, and persisted launcher state with validation-before-replace writes. Existing `CIVITAI_AUTHORIZATION` is preserved without logging, and nested authorization/token/secret/password values are redacted for safe diagnostics. Verification: focused configuration suite `9 passed`; complete launcher suite `39 passed`.
+- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner 或暫存目錄）：`255 passed`；`python -m compileall -q scripts` 通過。
+- Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
+- Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
+- Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。
+- disabled/no_models/Compose contract mocks：`11 passed`；Backend status、entrypoint 與暫存 persistence contracts：`40 passed`。
+- Windows 本機唯讀 `dry-run --non-interactive --comfyui-mode disabled` 與 `status` 通過；沒有寫設定、安裝或啟停服務。
+- `npm ci` 依 lockfile 成功；audit 回報既有 `12 vulnerabilities`（1 low、6 moderate、4 high、1 critical），本任務未升級依賴。
+
+Docker daemon 的 Windows engine pipe 不存在，因此沒有啟動 Docker Desktop，也沒有建置 image、啟動 container 或把 mock persistence 當成 runtime persistence pass。依使用者要求，本次完全沒有執行真實 ComfyUI、PyTorch、模型或 custom-node 安裝／下載／啟動測試。
+
+### 真實平台 smoke matrix
+
+| 流程 | 結果 | 原因 |
+|------|------|------|
+| Windows NVIDIA：setup/start/status/stop | **NOT RUN** | 目前 Docker daemon 不可用，且未執行真實 ComfyUI 安裝。 |
+| Linux NVIDIA：setup/start/status/stop | **NOT RUN** | 沒有 Linux/NVIDIA 主機。 |
+| Linux CPU：setup/start/status/stop | **NOT RUN** | 沒有 Linux 主機。 |
+| Intel macOS CPU：setup/start/status/stop | **NOT RUN** | 沒有 Intel macOS 主機。 |
+| Apple Silicon MPS：setup/start/status/stop | **NOT RUN** | 沒有 Apple Silicon 主機。 |
+| 拒絕 ComfyUI 後的完整 Compose 啟停 | **NOT RUN** | 只執行 Windows 唯讀 dry-run/status；Docker daemon 不可用。 |
+| Docker image/container/recreate persistence | **NOT RUN** | 未啟動 Docker daemon；暫存 contract tests 不算實機 pass。 |
 
 > **唯一來源**。完成的任務要同步修改這個文件（`docs/PROGRESS.md`），且不需同步改 README.md 或 AGENTS.md。
 > 寫進度時以「人看得懂」為準：一項工作一段，講清楚做了什麼、為什麼、下一步；不要貼雜湊值稽核日誌。

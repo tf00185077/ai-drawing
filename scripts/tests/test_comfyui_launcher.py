@@ -122,13 +122,17 @@ def test_running_probe_is_always_external():
 
 
 def test_failed_probe_is_not_running():
-    def unavailable(_url, _timeout):
+    requested = []
+
+    def unavailable(url, *, timeout):
+        requested.append((url, timeout))
         raise OSError("connection refused")
 
     result = probe_comfyui("http://127.0.0.1:8188", http_get=unavailable)
 
     assert result.running is False
     assert result.mode is None
+    assert requested == [("http://127.0.0.1:8188/system_stats", 2.0)]
 
 
 def test_install_refuses_nonempty_target(tmp_path):

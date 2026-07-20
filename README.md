@@ -1,163 +1,122 @@
 # AI 自動化出圖系統
 
-> 資料夾監聽自動 .txt · LoRA 訓練觸發 · 參數記錄
+整合 ComfyUI 生圖、Gallery、Prompt Library、資料夾監聽與 LoRA 訓練的本機工作流。Frontend 與 Backend 由 Docker Compose 管理；ComfyUI 是選用的主機服務，可以使用既有安裝、讓啟動器安裝，或完全停用。
 
-整合 ComfyUI、LoRA 訓練與參數記錄的自動化工作流。
+## 三步啟動
+
+先準備 Git、正在執行的 Docker daemon（Docker Desktop 或 Docker Engine）、Docker Compose 2.24 以上與網路連線。不需要先安裝 Python 或 Node.js。
+
+```bash
+git clone <repository-url> ai-drawing
+cd ai-drawing
+```
+
+Windows PowerShell：
+
+```powershell
+.\setup.ps1
+```
+
+macOS / Linux：
+
+```bash
+./setup.sh
+```
+
+第一次執行會檢查 Docker、詢問是否設定 ComfyUI、尋找既有路徑，必要時再詢問是否自動安裝。你可以在任何一個問題選擇不使用 ComfyUI；Frontend 與 Backend 仍會啟動，Dashboard 會顯示「ComfyUI 尚未設定」。
+
+啟動完成後：
+
+- Frontend：<http://127.0.0.1:5173>
+- Backend API：<http://127.0.0.1:8001>
+- API 文件：<http://127.0.0.1:8001/docs>
+- ComfyUI（若啟用）：<http://127.0.0.1:8188>
+
+> Backend 在容器內使用 port `8000`，主機固定預設映射為 `8001`。
+
+## ComfyUI 選項
+
+啟動器支援三種模式：
+
+- `disabled`：拒絕安裝或暫時不用；應用程式以降級模式正常啟動。
+- `external`：連接已由你啟動、且 `/system_stats` 可連線的 ComfyUI；啟動器不會停止它。
+- `managed`：使用可控制的既有目錄，或安裝到你確認的路徑；啟動器只會停止自己啟動且程序身分相符的實例。
+
+自動安裝只取得固定版本的 ComfyUI、Python runtime 與其必要依賴。它不會下載 checkpoint、LoRA、VAE、text encoder、模型或 custom nodes，也不會修改非空的既有目錄。沒有模型時，系統會顯示「ComfyUI 已連線，尚無模型」，由使用者自行放入模型。
+
+裝置選擇：
+
+- Windows / Linux NVIDIA：CUDA 模式；主機需有相容 NVIDIA driver。
+- Apple Silicon：原生 arm64 Python 與 MPS；不要從 Rosetta 終端執行。
+- Intel macOS 或沒有可用 GPU：CPU 模式，速度會較慢。
+
+## 常用指令
+
+Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
+
+```bash
+./setup.sh setup             # 重新走完整設定並啟動
+./setup.sh start             # 使用既有設定啟動
+./setup.sh stop              # 停止 Compose 與 launcher-owned 程序
+./setup.sh status            # 顯示 Docker、Frontend、Backend、ComfyUI、relay 狀態
+./setup.sh reconfigure       # 重選 ComfyUI、路徑、裝置或 ports
+./setup.sh logs              # 顯示 Compose 與啟動相關 logs
+./setup.sh update-comfyui    # 只更新啟動器安裝的 ComfyUI
+./setup.sh dry-run --comfyui-mode disabled  # 只顯示計畫，不寫設定、不啟停服務
+./setup.sh --help
+```
+
+非互動、明確停用 ComfyUI：
+
+```bash
+./setup.sh setup --non-interactive --comfyui-mode disabled
+```
+
+完整 flags、資料保存、疑難排解與進階手動啟動請見 [docs/setup-guide.md](docs/setup-guide.md)。
+
+## 資料與設定
+
+啟動器會產生三個不進 Git 的本機檔案：
+
+- `.env`：扁平的 runtime 值、ports、URL 與可能的 secrets。
+- `.ai-drawing/compose.local.yaml`：需要 YAML 結構才能表達的 ComfyUI bind mounts。
+- `data/bootstrap/state.json`：模式、路徑、裝置與 launcher-owned 程序身分。
+
+Docker Compose 的固定服務拓撲放在版控內的 `docker-compose.yml`。這就是本專案同時使用 `.env` 與 YAML 的原因：兩者負責不同層次，不會互相衝突。SQLite、Prompt Library、Gallery、輸出、LoRA 訓練資料與 logs 都 bind mount 到 `data/`，重建容器不會刪除。
+
+任何 API key 或 token 只放 `.env` 或外部 secrets 管理；不要寫進 YAML、程式碼或 commit。
+
+## 專案模組
+
+- 生圖：ComfyUI API、workflow 模板與批次佇列。
+- 圖庫：參數記錄、Gallery 與一鍵重現。
+- Prompt Library：可搜尋、組合與保存 prompt。
+- LoRA 文件與訓練：資料夾監聽、caption、Kohya sd-scripts 與結果管理。
+- MCP tools：供 agent 呼叫的獨立介面；本次一鍵啟動不安裝、不設定也不啟動 MCP Server。
 
 ## Agent / 新成員入口
-
-> 不同 agent 系統讀取不同入口，但都指向同一份 context：
 
 | 你是誰 | 讀哪裡 |
 |--------|--------|
 | Claude Code | [CLAUDE.md](CLAUDE.md) → [AGENTS.md](AGENTS.md) |
-| OpenAI Codex / GPT agents | [AGENTS.md](AGENTS.md)（直接） |
+| OpenAI Codex / GPT agents | [AGENTS.md](AGENTS.md) |
 | Cursor | [.cursor/rules/](.cursor/rules/) |
 | 人類 / 新成員 | 本頁 → [AGENTS.md](AGENTS.md) |
 
-**必讀順序**（適用所有 agent）：
+必讀順序：
 
-1. [AGENTS.md](AGENTS.md) — 架構、Tech Stack、安全規則、編碼慣例
-2. [docs/GOAL.md](docs/GOAL.md) — 系統目標與設計原則
-3. [docs/PROGRESS.md](docs/PROGRESS.md) — 當前進度，確認下一步
+1. [AGENTS.md](AGENTS.md) — 架構、安全規則與編碼慣例。
+2. [docs/GOAL.md](docs/GOAL.md) — 系統目標與設計原則。
+3. [docs/PROGRESS.md](docs/PROGRESS.md) — 實際進度與驗證證據。
 
-> **文件同步規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
+## 開發測試
 
----
-
-## Tech Stack
-
-| 類別 | 技術 |
-|------|------|
-| 後端 | Python + FastAPI |
-| 前端 | React + Tailwind |
-| 資料庫 | SQLite / PostgreSQL |
-| AI 標註 | WD Tagger / BLIP2 |
-| 圖片引擎 | ComfyUI API |
-| LoRA 訓練 | Kohya sd-scripts |
-| 資料夾監聽 | watchdog |
-| 部署 | Docker |
-
----
-
-## 模組架構
-
-- **生圖**：ComfyUI API 串接、Workflow 模板、批次排程
-- **圖庫**：參數記錄、Gallery 瀏覽、一鍵重現
-- **LoRA 文件工具**：資料夾監聽 .txt、Caption 編輯、打包下載
-- **LoRA 訓練流程**：訓練執行、自動觸發、訓練結果管理
-- **MCP 自然語言介面**：MCP Server、角色/風格語意對應、Cursor 整合（設定見 [docs/mcp-setup.md](docs/mcp-setup.md)）
-
----
-
-## 模組
-
-| 模組 | 說明 |
-|------|------|
-| 生圖 | ComfyUI API 串接、Workflow 模板、批次排程 |
-| 圖庫 | 參數記錄、Gallery 瀏覽、一鍵重現 |
-| LoRA 文件工具 | 資料夾監聽 .txt、Caption 編輯、打包下載 |
-| LoRA 訓練 | 訓練執行器、自動觸發、訓練流程管理 |
-| MCP Tools | 生圖、訓練、圖庫操作，供 agent 呼叫 |
-
-進度追蹤：[docs/PROGRESS.md](docs/PROGRESS.md)
-
----
-
-## 自動化流水線
-
-```
-[訓練資料夾] → watchdog 監聽 → WD Tagger/BLIP2 → 自動 .txt
-     ↓
-[圖片數 ≥ 門檻] → Kohya sd-scripts → LoRA 訓練
-     ↓
-[LoRA 與參數資料可供後續生圖流程使用] → 參數記錄 / Gallery 串接
-```
-
-### WD Tagger 資料夾類型（依路徑選用 blacklist）
-
-將訓練素材放入對應資料夾，WD Tagger 會自動套用不同的 tag 過濾：
-
-| 資料夾 | 用途 | 過濾重點 |
-|--------|------|----------|
-| `lora_train/character/` | 人物訓練 | 構圖、背景、髮瞳色等噪音 |
-| `lora_train/style/` | 畫風訓練 | 角色名、系列名、品質元資料 |
-| `lora_train/costume/` | 服裝訓練 | 背景、髮瞳色、臉部；保留服裝 tag |
-| `lora_train/background/` | 背景訓練 | 人物、身體、服裝等 |
-
-範例：`lora_train/costume/10_school_uniform/` 內的圖片會使用服裝 blacklist。
-
----
-
-## 專案結構
-
-```
-ai-drawing/
-├── README.md                   # 本文件（技術入口）
-├── AGENTS.md                   # Agent 必讀：架構、Tech Stack、編碼慣例
-├── backend/                    # Python + FastAPI
-│   └── app/
-│       ├── api/               # generate, gallery, lora_docs, lora_train, analytics
-│       ├── core/              # comfyui, workflow, queue, recording
-│       ├── db/                # models, database
-│       ├── services/          # watcher, lora_trainer
-│       └── schemas/           # generate, lora_train
-├── frontend/src/pages/         # Generate, Gallery, LoraDocs, LoraTrain, Dashboard
-├── mcp-server/mcp_server/tools/ # generate, lora_train, gallery（MCP Tools）
-├── backend/workflows/          # Workflow JSON 模板
-└── docs/
-    ├── GOAL.md                 # 系統目標與設計原則
-    ├── PROGRESS.md             # 唯一進度追蹤來源
-    ├── task-specs/             # 可執行的 task spec（含 verify 指令）
-    │   ├── phase1-schema-db.md
-    │   ├── phase2-backend.md
-    │   ├── phase3-mcp.md
-    │   └── phase4-features.md
-    ├── agent-framework.md      # Task spec 撰寫方法論
-    ├── api-contract.md         # REST API 契約
-    ├── internal-interfaces.md  # 後端模組介面
-    ├── mcp-setup.md            # MCP Server 設定指南
-    ├── setup-guide.md          # 完整啟動與環境設定
-    └── archive/                # 已停用文件（Slack、舊分工等）
-```
-
-### 啟動
-
-> 完整參數說明與 ComfyUI/Kohya/WD 設定見 [`docs/setup-guide.md`](docs/setup-guide.md)
-
-**建議順序**（前端會 proxy `/api` 至後端，故後端需先啟動）：
-
-| 步驟 | 指令 | 說明 |
-|------|------|------|
-| 0 | `cp .env.example .env` | 首次使用時複製環境變數範例，並編輯 `.env` |
-| 1 | `cd backend && pip install -r requirements.txt` | 安裝後端依賴 |
-| 2 | `python backend/scripts/init_db.py` | 初始化資料庫（首次或 DB 不存在時） |
-| 3 | `cd backend && uvicorn app.main:app --reload` | **先啟動後端**（預設 port 8000） |
-| 4 | `cd frontend && npm install && npm run dev` | **再啟動前端**（新開一個終端機，預設 port 5173） |
-
-啟動完成後：
-
-- 前端：<http://localhost:5173>
-- 後端 API：<http://localhost:8000>
-- API 文件：<http://localhost:8000/docs>
-
-**Docker 一鍵啟動**：
+下列是開發者指令，不是一般使用者的啟動流程：
 
 ```bash
-cp .env.example .env && docker-compose up -d
+uv run --python 3.12 --with pytest --with pyyaml pytest scripts/tests -q
+cd backend && pytest tests -q
+cd ../frontend && npm ci && npm test && npm run build
 ```
 
-### 測試
-
-```bash
-# 後端 (pytest)
-cd backend && pytest
-
-# 前端 (Vitest)
-cd frontend && npm run test
-
-# MCP Server (pytest)
-cd mcp-server && uv run pytest
-```
-
-
+MCP 測試與設定仍獨立保留；一鍵啟動流程不依賴 MCP。
