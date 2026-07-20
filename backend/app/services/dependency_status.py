@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+from http.client import HTTPException
 from pathlib import Path
 from typing import Callable, Iterable, Protocol
 from urllib.request import urlopen
@@ -13,6 +14,10 @@ from app.schemas.system import ComfyUIState, ComfyUIStatus, SystemStatus
 
 
 PROBE_TIMEOUT_SECONDS = 2.0
+
+
+class DependencyProbeError(RuntimeError):
+    """A bounded configuration or protocol failure at the HTTP probe boundary."""
 
 
 class ComfyUIProbe(Protocol):
@@ -36,8 +41,11 @@ class _Inventory:
 
 def probe_comfyui(url: str, *, timeout: float) -> bool:
     """Return whether a ComfyUI system-stats endpoint returns a JSON object."""
-    with urlopen(url, timeout=timeout) as response:
-        payload = json.load(response)
+    try:
+        with urlopen(url, timeout=timeout) as response:
+            payload = json.load(response)
+    except (ValueError, HTTPException) as exc:
+        raise DependencyProbeError("ComfyUI dependency probe failed.") from exc
     return isinstance(payload, dict)
 
 
@@ -166,7 +174,7 @@ def get_system_status(
     endpoint = f"{settings.comfyui_base_url.rstrip('/')}/system_stats"
     try:
         reachable = probe(endpoint, timeout=PROBE_TIMEOUT_SECONDS) is True
-    except (OSError, json.JSONDecodeError, UnicodeError):
+    except (DependencyProbeError, OSError, json.JSONDecodeError, UnicodeError):
         reachable = False
 
     if not reachable:

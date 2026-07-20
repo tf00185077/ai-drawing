@@ -2,7 +2,7 @@
 
 ## 2026-07-20 One-click launcher: Backend dependency status
 
-新增型別化的 `/api/system/status`，將應用程式健康度與選用的 ComfyUI 依賴分開呈現；disabled 不探測，外部或受管理模式以固定 2 秒 timeout 檢查 `/system_stats`，並回報 connected、not_configured、unreachable、no_models 或 degraded。模型盤點只讀取已設定的 checkpoints 與 diffusion_models 目錄，不會下載模型；警告不包含主機路徑或底層例外內容。驗證：狀態與相關設定／資源測試 `36 passed`，Backend 全套 `1005 passed, 4 skipped`。
+新增型別化的 `/api/system/status`，將應用程式健康度與選用的 ComfyUI 依賴分開呈現；disabled 不探測，外部或受管理模式以固定 2 秒 timeout 檢查 `/system_stats`，並回報 connected、not_configured、unreachable、no_models 或 degraded。模型盤點只讀取已設定的 checkpoints 與 diffusion_models 目錄，不會下載模型；警告不包含主機路徑或底層例外內容。驗證：狀態與相關設定／資源測試 `39 passed`，Backend 全套 `1008 passed, 4 skipped`。
 
 ## 2026-07-20 One-click launcher: platform detection
 
