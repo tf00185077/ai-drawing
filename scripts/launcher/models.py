@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from .constants import STATE_SCHEMA_VERSION
+from .constants import DEFAULT_COMFYUI_PORT, STATE_SCHEMA_VERSION
 
 
 class LauncherCommand(str, Enum):
@@ -42,11 +42,32 @@ class HostInfo:
 class ComfyPaths:
     root: Path
 
+    @classmethod
+    def from_root(cls, root: Path) -> ComfyPaths:
+        return cls(root=Path(root))
+
 
 @dataclass(frozen=True)
 class LocalSettings:
     comfy_mode: ComfyMode
-    comfyui_port: int
+    comfyui_port: int = DEFAULT_COMFYUI_PORT
+    comfy_paths: ComfyPaths | None = None
+
+    @classmethod
+    def disabled(cls) -> LocalSettings:
+        return cls(comfy_mode=ComfyMode.DISABLED)
+
+    @classmethod
+    def connected(
+        cls,
+        paths: ComfyPaths,
+        comfyui_port: int = DEFAULT_COMFYUI_PORT,
+    ) -> LocalSettings:
+        return cls(
+            comfy_mode=ComfyMode.EXTERNAL,
+            comfyui_port=comfyui_port,
+            comfy_paths=paths,
+        )
 
 
 @dataclass(frozen=True)

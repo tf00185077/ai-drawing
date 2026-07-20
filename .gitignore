@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+.ai-drawing/
+data/
 
 # Hermes autonomous pipeline runtime
 agent_runs/*.log
