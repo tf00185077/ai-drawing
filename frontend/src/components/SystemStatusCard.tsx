@@ -36,7 +36,7 @@ function presentationFor(state: ComfyUIState): StatePresentation {
     case "unreachable":
       return { icon: "!", label: "ComfyUI 無法連線", className: "border-rose-500/50" };
     case "no_models":
-      return { icon: "!", label: "ComfyUI 已連線，但尚無模型", className: "border-amber-500/50" };
+      return { icon: "!", label: "ComfyUI 已連線，尚無模型", className: "border-amber-500/50" };
     case "degraded":
       return { icon: "!", label: "ComfyUI 可使用，但需要注意", className: "border-amber-500/50" };
     default:

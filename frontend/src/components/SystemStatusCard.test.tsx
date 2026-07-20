@@ -19,7 +19,7 @@ describe("SystemStatusCard", () => {
     ["connected", "ComfyUI 已就緒"],
     ["not_configured", "ComfyUI 尚未設定"],
     ["unreachable", "ComfyUI 無法連線"],
-    ["no_models", "ComfyUI 已連線，但尚無模型"],
+    ["no_models", "ComfyUI 已連線，尚無模型"],
     ["degraded", "ComfyUI 可使用，但需要注意"],
   ] as const)("renders an explicit semantic label for %s", (state, label) => {
     render(<SystemStatusCard status={{ ...baseStatus, state }} />);

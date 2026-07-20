@@ -1,400 +1,276 @@
-# AI 自動化出圖系統 - 設定與快速上手
+# AI 自動化出圖系統：完整啟動指南
 
-> 從環境設定、啟動程式到完成「放入圖片 → 產生 .txt → 訓練 LoRA → 產圖」的完整流程。
+一般使用者只需要 Git 與 Docker；Frontend、Backend 和資料目錄由 Docker Compose 管理。ComfyUI 是選用的主機服務，第一次啟動時可以使用既有路徑、自動安裝或拒絕安裝。
 
----
+## 1. 前置需求
 
-## 一、前置需求
+| 項目 | 要求 | 說明 |
+|------|------|------|
+| Git | 可執行 `git clone` | 啟動器不會替你安裝 Git。 |
+| Docker | daemon 必須正在執行 | Windows/macOS 通常使用 Docker Desktop；Linux 可使用 Docker Engine。 |
+| Docker Compose | `2.24` 以上 | 使用 `docker compose`，不是舊的 `docker-compose`。 |
+| 網路 | 第一次啟動需要 | 取得固定版 uv/Python、建置容器；只有同意自動安裝 ComfyUI 時才會取得 ComfyUI runtime。 |
+| GPU driver | 只有 GPU 模式需要 | NVIDIA driver 或 Apple Silicon 的原生 macOS/MPS；啟動器不安裝 driver。 |
+| 磁碟與檔案分享 | Docker 可讀專案及所選 ComfyUI 目錄 | Docker Desktop 使用者需允許對應磁碟/目錄分享。 |
 
-| 項目 | 說明 |
-|------|------|
-| **ComfyUI** | 需能獨立啟動，提供 REST API `http://127.0.0.1:8188` |
-| **Kohya sd-scripts** | 含 `train_network.py`、`finetune/tag_images_by_wd14_tagger.py` |
-| **accelerate** | `pip install accelerate`（LoRA 訓練用） |
-| **Checkpoint** | 至少一個 .safetensors 模型檔（ComfyUI 可讀取） |
+一般流程不需要預先安裝 Python、Node.js、npm、Kohya sd-scripts 或 MCP Server。
 
-### 需「啟動」 vs「存在即可」
-
-| 項目 | 是否需獨立啟動 | 說明 |
-|------|----------------|------|
-| **ComfyUI** | ✅ 必須 | 需先啟動 ComfyUI 伺服器，backend 透過 REST API 觸發產圖 |
-| **Kohya sd-scripts** | ❌ 不需要 | 不是常駐程式，由 backend 以 subprocess 呼叫 |
-| **WD Tagger** | ❌ 不需要 | 內建於 Kohya sd-scripts，由 backend 呼叫 `tag_images_by_wd14_tagger.py` |
-
----
-
-## 二、參數與環境設定
-
-### 參數位置
-
-| 來源 | 說明 |
-|------|------|
-| `backend/.env` | 主要設定檔（複製 `.env.example` 後修改） |
-| `backend/app/config.py` | 預設值與環境變數對應 |
-
-### 完整參數表
-
-| 環境變數 | 預設值 | 必填 | 說明 |
-|----------|--------|------|------|
-| **資料庫** | | | |
-| `DATABASE_URL` | `sqlite:///./auto_draw.db` | 否 | SQLite 路徑 |
-| **ComfyUI** | | | |
-| `COMFYUI_BASE_URL` | `http://127.0.0.1:8188` | 是 | ComfyUI REST API 位址 |
-| `COMFYUI_WS_URL` | `ws://127.0.0.1:8188/ws` | 否 | WebSocket（若未用到可略） |
-| **輸出目錄** | | | |
-| `OUTPUT_DIR` | `./outputs` | 否 | 產圖輸出根目錄 |
-| `GALLERY_DIR` | `./outputs/gallery` | 否 | Gallery 圖片存放目錄 |
-| **LoRA 訓練** | | | |
-| `LORA_TRAIN_DIR` | `./lora_train` | 是 | 訓練圖片與 LoRA 輸出根目錄 |
-| `LORA_TRAIN_THRESHOLD` | `10` | 否 | 自動觸發訓練門檻（圖片數） |
-| `LORA_DEFAULT_CHECKPOINT` | *(空)* | **是** | 預設 checkpoint 路徑或檔名 |
-| `LORA_MODEL_FAMILY` | *(空)* | 否 | sd15 / sdxl / anima；未設定時沿用 `LORA_SDXL` |
-| `LORA_ANIMA_QWEN3` | *(空)* | Anima 必填 | Qwen3 text encoder 路徑；可由 API `anima_qwen3` / `qwen3` 覆寫 |
-| `LORA_ANIMA_VAE` | *(空)* | Anima 建議 | Qwen-Image VAE 路徑；可由 API `anima_vae` / `vae` 覆寫 |
-| `LORA_ANIMA_T5_TOKENIZER_PATH` | *(空)* | 否 | Anima T5 tokenizer 目錄；空值使用 `sd-scripts/configs/t5_old` |
-| `LORA_AUTO_PROMPT` | `1girl, solo, high quality` | 否 | 訓練完成後自動產圖的 prompt |
-| `SD_SCRIPTS_PATH` | `./sd-scripts` | **是** | Kohya sd-scripts 目錄的絕對或相對路徑 |
-| `LORA_RESOLUTION` | `512` | 否 | 訓練解析度，API 未帶入時使用 |
-| `LORA_BATCH_SIZE` | `4` | 否 | 訓練 batch size |
-| `LORA_LEARNING_RATE` | `1e-4` | 否 | 學習率 |
-| `LORA_CLASS_TOKENS` | `sks` | 否 | 觸發詞 |
-| `LORA_KEEP_TOKENS` | `1` | 否 | caption 保留 token 數 |
-| `LORA_NUM_REPEATS` | `10` | 否 | 每張圖重複次數 |
-| `LORA_MIXED_PRECISION` | `fp16` | 否 | fp16 / bf16 / fp32 / no（fp32 會轉為 Kohya CLI 的 no） |
-| **watchdog** | | | |
-| `WATCH_DIRS` | `./lora_train` | 否 | 監聽目錄，逗號分隔 |
-
-### 一次性設定步驟
-
-**1. 複製並編輯 `.env`**
-
-```powershell
-cd backend
-copy .env.example .env
-```
-
-**必填項目**：
-
-```env
-LORA_DEFAULT_CHECKPOINT=v1-5-pruned-emaonly.safetensors
-SD_SCRIPTS_PATH=D:/path/to/your/sd-scripts
-```
-
-（`LORA_DEFAULT_CHECKPOINT` 使用 ComfyUI `models/checkpoints/` 內的檔名）
-
-**2. 讓 ComfyUI 讀取訓練後的 LoRA**
-
-在 **ComfyUI 目錄** 建立 `extra_model_paths.yaml`：
-
-```yaml
-loras: |
-  D:/AI/ai-drawing/backend/lora_train/output
-```
-
-將路徑改為你專案 `{LORA_TRAIN_DIR}/output` 的絕對路徑。
-
-**3. 初始化資料庫（首次）**
-
-```powershell
-python backend/scripts/init_db.py
-```
-
----
-
-## 三、路徑與檔案對應
-
-### Kohya sd-scripts 目錄結構
-
-```
-SD_SCRIPTS_PATH/
-├── train_network.py          # LoRA 訓練
-├── accelerate                # 或透過 pip 全域安裝
-└── finetune/
-    └── tag_images_by_wd14_tagger.py   # WD Tagger（產生 .txt caption）
-```
-
-### LoRA 輸出路徑
-
-訓練完成後，LoRA 會輸出到：
-
-```
-{LORA_TRAIN_DIR}/output/{folder名稱}.safetensors
-```
-
-例如：`./lora_train/output/my_char.safetensors`
-
-### Checkpoint 路徑
-
-`LORA_DEFAULT_CHECKPOINT` 會用於：
-1. **LoRA 訓練**：作為 `--pretrained_model_name_or_path`
-2. **訓練完成後產圖**：作為 ComfyUI CheckpointLoader 的 `ckpt_name`
-
-ComfyUI 從 `models/checkpoints/` 讀取，建議填檔名（如 `v1-5-pruned-emaonly.safetensors`）或透過 `extra_model_paths` 設定的完整路徑。
-
-### WD Tagger 相依（無需手動啟動）
-
-| 觸發時機 | 說明 |
-|----------|------|
-| 上傳圖片 | `POST /api/lora-docs/upload` 完成後 |
-| 拖檔入監聽目錄 | watchdog 偵測到新圖時 |
-
-首次執行會從 Hugging Face 下載 `SmilingWolf/wd-swinv2-tagger-v3`，需網路連線。若 Kohya sd-scripts 環境未安裝：
+## 2. Clone 後一鍵啟動
 
 ```bash
-pip install onnx onnxruntime-gpu
-# 或無 GPU：pip install onnx onnxruntime
+git clone <repository-url> ai-drawing
+cd ai-drawing
 ```
 
----
-
-## 四、啟動順序
-
-```
-1. 啟動 ComfyUI
-2. 啟動本專案後端
-3. （選用）啟動前端
-```
-
-### 1. 啟動 ComfyUI
+Windows PowerShell：
 
 ```powershell
-cd D:\path\to\ComfyUI
-python main.py
+.\setup.ps1
 ```
 
-確認瀏覽器可開啟 `http://127.0.0.1:8188`。
-
-### 2. 啟動後端
+PowerShell 也接受 `./setup.ps1`。若本機 execution policy 阻擋腳本，可只對這次程序執行：
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+macOS / Linux：
+
+```bash
+./setup.sh
+```
+
+沒有指定指令時，第一次等同 `setup`；已有設定時等同 `start`。wrapper 會在使用者 cache 內取得固定版 uv `0.11.29` 與 Python `3.12`，然後執行共用 Python launcher，不污染全域 Python/Node 環境。
+
+啟動後的預設網址：
+
+| 服務 | 主機網址 | 容器內 port |
+|------|----------|-------------|
+| Frontend | <http://127.0.0.1:5173> | `80` |
+| Backend API | <http://127.0.0.1:8001> | `8000` |
+| Backend docs | <http://127.0.0.1:8001/docs> | `8000` |
+| ComfyUI（選用） | <http://127.0.0.1:8188> | 在主機執行，不放進 Compose |
+
+主機 Backend 使用 `8001`，避免和容器內的 `8000` 混淆。
+
+## 3. 第一次互動流程
+
+`setup` 依序執行：
+
+1. 檢查 Docker CLI、Docker daemon 與 Compose `2.24+`。
+2. 檢查 Backend `8001`、Frontend `5173` 與 ComfyUI `8188`；不會終止占用 port 的程序。
+3. 詢問是否設定 ComfyUI。回答否會保存 `disabled`，並繼續啟動應用程式。
+4. 若回答是，先探測 `8188/system_stats`，再有限度搜尋常見目錄與上次設定，不會遞迴掃描整個磁碟。
+5. 找到既有目錄時顯示路徑供確認；也可手動輸入路徑。
+6. 未找到時才詢問是否自動安裝，以及安裝位置。非空目標目錄會被拒絕，不會覆蓋使用者檔案。
+7. 選擇 NVIDIA、Apple Silicon MPS 或 CPU runtime；需要時可選擇 retry、改 CPU、停用或中止。
+8. 只在 Linux 且容器需要存取主機 loopback ComfyUI 時，啟動受 launcher 管理的本機 relay。
+9. 以暫存檔產生 `.env`、Compose override 與 state，先執行 `docker compose config`，通過後才原子替換正式設定。
+10. 建立資料目錄，執行 `docker compose up -d --build --remove-orphans`，等待 Backend 與 Frontend health check。
+11. 顯示實際網址與 ComfyUI 模式；失敗時回復舊設定，並清理本次新啟動且 ownership 可驗證的程序。
+
+### ComfyUI 三種模式
+
+| 模式 | 行為 | `stop` 是否停止 ComfyUI |
+|------|------|------------------------|
+| `disabled` | 不探測、不安裝；Frontend/Backend 降級啟動 | 否 |
+| `external` | 使用已由使用者啟動且 API 可連線的實例 | 否 |
+| `managed` | 使用可控制的既有目錄，或由 launcher 安裝並啟動 | 只有 PID 與完整程序身分都吻合時才會停止 |
+
+自動安裝固定在 ComfyUI `v0.28.0`，使用 staged 目錄，完成依賴與 device smoke check 後才移到正式位置。它只安裝 ComfyUI、隔離的 Python runtime 與 ComfyUI 必要套件；絕不下載 checkpoint、LoRA、VAE、text encoder、其他模型或 custom nodes。
+
+### 裝置行為
+
+- Windows / Linux NVIDIA：使用 CUDA 13.0 PyTorch wheels；driver 不相容時會明確失敗，可選 CPU 或 disabled。
+- Apple Silicon：使用原生 arm64 Python 與 MPS；不要從 Rosetta/x86 shell 執行。
+- Intel macOS：CPU。
+- 其他無可用 NVIDIA GPU 的 Windows/Linux：CPU，啟動時加 `--cpu`，生圖會較慢。
+
+硬體偵測只決定安裝與啟動參數，不會修改 driver。
+
+## 4. 所有 launcher 指令
+
+以下以 macOS/Linux 為例；Windows 將 `./setup.sh` 換成 `.\setup.ps1`。
+
+| 指令 | 用途 |
+|------|------|
+| `./setup.sh` | 第一次 setup；已有 state 時 start。 |
+| `./setup.sh setup` | 完整設定、驗證並啟動。 |
+| `./setup.sh start` | 使用既有設定啟動 Compose 與需要的 managed ComfyUI。 |
+| `./setup.sh stop` | 停止 Compose、launcher-owned relay 與經身分驗證的 managed ComfyUI；不碰 external。 |
+| `./setup.sh status` | 唯讀顯示 Docker、Compose、Backend、Frontend、ComfyUI、模型數與 relay。Docker 不可用時仍回報可取得的狀態。 |
+| `./setup.sh reconfigure` | 重選模式、路徑、裝置或 ports，成功後才替換舊設定。 |
+| `./setup.sh logs` | 顯示 bootstrap、ComfyUI、relay 與最近 200 行 Compose logs；含 secret 的行會遮罩。 |
+| `./setup.sh update-comfyui` | 只更新 launcher 安裝且 provenance 完整的 ComfyUI；使用者自有目錄不會被修改。 |
+| `./setup.sh dry-run ...` | 唯讀顯示計畫，不寫設定、不安裝、不啟動或停止服務。 |
+| `./setup.sh --help` | 顯示完整參數。 |
+
+常用 flags：
+
+```text
+--non-interactive
+--accept-alternate-ports
+--comfyui-mode disabled|external|managed
+--comfyui-path <path>
+--device nvidia|mps|cpu
+--backend-port <1-65535>
+--frontend-port <1-65535>
+--comfyui-port <1-65535>
+--on-comfy-failure abort|retry|cpu|disabled
+--on-mount-failure abort|retry|disabled
+```
+
+安全查看停用 ComfyUI 的完整計畫：
+
+```bash
+./setup.sh dry-run --non-interactive --comfyui-mode disabled
+```
+
+CI 或無人值守環境明確停用 ComfyUI：
+
+```bash
+./setup.sh setup --non-interactive --comfyui-mode disabled
+```
+
+非互動模式不猜測重要決策：managed 必須給 `--comfyui-path`，可恢復錯誤必須給對應的 `--on-*-failure`，替代 port 必須用 `--accept-alternate-ports` 接受。
+
+## 5. 設定檔：為什麼同時用 `.env` 與 YAML
+
+| 檔案 | 格式適合的內容 | 是否進 Git |
+|------|----------------|------------|
+| `.env.example` | Docker-safe 預設與 secret placeholder | 是 |
+| `.env` | 扁平 key/value：模式、URL、ports、容器內路徑、API key | 否 |
+| `docker-compose.yml` | 固定且可審查的服務、network、health check、ports、持久化 topology | 是 |
+| `.ai-drawing/compose.local.yaml` | 依使用者 ComfyUI 路徑產生的結構化 bind mounts | 否 |
+| `data/bootstrap/state.json` | launcher 模式、裝置、安裝 provenance、PID 與程序身分 | 否 |
+
+`.env` 不是 YAML：它適合 Pydantic/Compose 的環境變數與 secret，但無法安全表達多層 service/volume 結構。YAML 適合 Compose topology 與多個 bind mount，但不應存 API key。這次設計刻意兩者並用：版控 YAML 定義固定架構，本機 `.env` 與 override 只放每台機器不同的值。
+
+`.env`、`.ai-drawing/`、`data/` 已在 `.gitignore`。`CIVITAI_AUTHORIZATION` 若存在會在重設時保留，但不會出現在安全診斷；不要把真實 token 寫入 `.env.example`、YAML、issue 或 commit。
+
+MCP Server 不在一鍵啟動範圍：launcher 不安裝、不設定、不啟動 MCP，也不要求 MCP client。需要者可另外用 agent 或 [mcp-setup.md](mcp-setup.md) 設定。
+
+## 6. 資料持久化
+
+Compose 將下列主機目錄 bind mount 至 Backend；rebuild/recreate 容器不會移除它們：
+
+| 主機 | 容器 | 內容 |
+|------|------|------|
+| `data/database/` | `/data/database` | SQLite 與檔案 digest cache |
+| `data/prompt_library/` | `/data/prompt_library` | Prompt Library 使用者資料 |
+| `data/gallery/` | `/data/gallery` | Gallery |
+| `data/outputs/` | `/data/outputs` | 產圖輸出 |
+| `data/lora_train/` | `/data/lora_train` | LoRA 資料集與產物 |
+| `data/logs/` | `/data/logs` | bootstrap、ComfyUI、relay、LoRA logs |
+
+啟用 ComfyUI 時，模型目錄以 read/write bind mount 進 Backend 的 `/comfyui/...`，讓 Backend 列出既有資源；launcher 不會替你填入模型。
+
+備份或移除前先執行 `stop`。launcher 本身不會自動刪除上述使用者資料。
+
+## 7. 狀態與回復
+
+Dashboard 與 `status` 將應用程式健康度和 ComfyUI 依賴分開：
+
+- `connected`：API 可連線且至少找到一個生成模型。
+- `not_configured`：使用者選擇 disabled。
+- `unreachable`：已設定但 `/system_stats` 無法連線。
+- `no_models`：ComfyUI 已連線，尚無模型。
+- `degraded`：可使用但部分目錄或狀態有警告。
+
+設定寫入採 validation-before-replace；任一替換失敗會復原整組舊檔。Compose 或 readiness 失敗時，launcher 會停止本次新建且 ownership 可證明的資源並回復原設定。`update-comfyui` 在更新或 smoke check 失敗時會嘗試 checkout 回舊 commit。它不會刪除非空使用者目錄，也不會只憑 PID 終止程序。
+
+## 8. 疑難排解
+
+### Docker daemon unavailable
+
+先啟動 Docker Desktop/Engine，再確認：
+
+```bash
+docker info
+docker compose version
+```
+
+Compose 必須至少 `2.24`。launcher 不會自動啟動或安裝 Docker。
+
+### Port 已占用
+
+launcher 不會殺掉占用者。互動模式可接受替代 port，或明確指定：
+
+```bash
+./setup.sh reconfigure --backend-port 8011 --frontend-port 5183
+```
+
+非互動接受自動替代需加 `--accept-alternate-ports`。
+
+### Docker mount probe 失敗
+
+確認 Docker Desktop 已分享專案磁碟與 ComfyUI 所在磁碟、路徑存在且 Docker 有權讀寫。修正後執行 `reconfigure`；不要手改產生中的暫存 YAML。
+
+### 找不到既有 ComfyUI
+
+輸入包含 `main.py` 與 `models/` 的根目錄。managed 模式還需要可辨識的 `.venv`、`venv` 或 Windows portable Python；只有 API 可連線但沒有可控制 Python 時會視為 external。
+
+### ComfyUI 已連線但沒有模型
+
+這是預期的 `no_models`，不是安裝失敗。自行把相容模型放進 ComfyUI 的 `models/checkpoints/` 或 `models/diffusion_models/`；launcher 不會下載模型。
+
+### CUDA 或 MPS smoke check 失敗
+
+先修正主機 driver/原生架構，或重新設定為 CPU/disabled：
+
+```bash
+./setup.sh reconfigure --device cpu
+```
+
+互動恢復也可選 `cpu`；非互動使用 `--on-comfy-failure cpu`。
+
+### 服務沒有 ready
+
+```bash
+./setup.sh status
+./setup.sh logs
+```
+
+主要檔案在 `data/logs/bootstrap.log`、`data/logs/comfyui.log`、`data/logs/comfyui-relay.log`。logs 輸出會遮罩疑似 authorization/token/password/secret 的整行。
+
+## 9. 平台注意事項
+
+- Windows：使用 PowerShell wrapper；managed 子程序以 hidden/detached flags 啟動。
+- Linux：Docker container 無法直接存取主機 loopback 時，launcher 只綁安全的本機 Docker bridge address，並管理獨立 relay ownership。
+- macOS Apple Silicon：Docker 仍只跑 Frontend/Backend；ComfyUI 留在主機才能使用 Metal/MPS。
+- macOS Intel：ComfyUI 使用 CPU；不宣稱 MPS 或 NVIDIA。
+- 所有平台：external ComfyUI 都由使用者擁有，`stop` 不會終止它。
+
+## 10. 進階：手動開發啟動
+
+這一節只供修改程式碼的開發者；一般使用者不要走這條流程。
+
+需要 Python `3.11`、Node/npm，以及自行啟動的 ComfyUI（若要測生圖）。根目錄 `.env` 必須使用主機可讀路徑，不能直接沿用 Docker 產生的 `/data/...` 或 `/comfyui/...` 路徑。
+
+後端：
+
+```bash
 cd backend
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-後端啟動後會自動：啟動 watchdog 監聽、生圖佇列 worker、LoRA 訓練完成後的自動產圖回呼。
+本機開發 Backend 預設為 <http://127.0.0.1:8000>。
 
-### 3. 啟動前端（選用）
+前端（另一個終端）：
 
-```powershell
+```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-開啟 `http://localhost:5173` 可使用 UI。
+測試：
 
----
-
-## 五、操作流程：圖片 → .txt → LoRA → 產圖
-
-### 步驟 1：建立訓練子資料夾
-
-在 `backend/lora_train` 下建立**子資料夾**，例如：
-
-```
-backend/lora_train/
-└── my_char/          ← 子資料夾名稱即為 LoRA 名稱
+```bash
+uv run --python 3.12 --with pytest --with pyyaml pytest scripts/tests -q
+cd backend && pytest tests -q
+cd ../frontend && npm test && npm run build
 ```
 
-**重要**：圖片必須放在子資料夾內，不能直接放在 `lora_train` 根目錄。
-
-### 步驟 2：放入圖片
-
-將訓練用圖片（.png、.jpg、.jpeg、.webp 等）複製到該子資料夾。
-
-### 步驟 3：自動產生 .txt（WD Tagger）
-
-- **watchdog** 會偵測到新圖片
-- 約 2 秒後自動執行 **WD Tagger**，在相同目錄產生同名 `.txt` caption
-- 後端 log 出現 `WD Tagger 完成` 即表示成功
-
-### 步驟 4：觸發 LoRA 訓練
-
-當子資料夾內**含 .txt 的圖片數 ≥ LORA_TRAIN_THRESHOLD**（預設 10 張）時，可觸發訓練。
-
-**方式 A：API 自動檢查**
-
-```powershell
-curl -X POST http://127.0.0.1:8000/api/lora-train/trigger-check
-```
-
-**方式 B：指定資料夾手動訓練**（最少 1 張即可）
-
-```powershell
-curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: application/json" -d "{\"folder\": \"my_char\", \"epochs\": 10}"
-```
-
-**方式 C：自訂訓練參數**（解析度、batch、學習率等）
-
-```powershell
-curl -X POST http://127.0.0.1:8000/api/lora-train/start -H "Content-Type: application/json" -d "{\"folder\": \"my_char\", \"epochs\": 15, \"resolution\": 768, \"batch_size\": 2, \"learning_rate\": \"2e-4\", \"class_tokens\": \"ohwx\", \"num_repeats\": 15, \"mixed_precision\": \"bf16\"}"
-```
-
-| 參數 | 說明 | 範例 |
-|------|------|------|
-| folder | 必填，相對 lora_train 的子資料夾 | my_char |
-| checkpoint | 選填，未填用 .env 預設 | v1-5-pruned-emaonly.safetensors |
-| model_family | 訓練器家族；sd15 使用 `train_network.py`，sdxl 使用 `sdxl_train_network.py`，anima 使用 `anima_train_network.py` | sd15、sdxl、anima |
-| network_module | 選填；未填時 sd15/sdxl 使用 `networks.lora`，anima 使用 `networks.lora_anima` | networks.lora_anima |
-| anima_qwen3 / qwen3 | Anima 必填，未填用 `LORA_ANIMA_QWEN3`；建立 job 前會驗證路徑存在 | /path/to/qwen_3_06b_base.safetensors |
-| anima_vae / vae | Anima VAE，未填用 `LORA_ANIMA_VAE` | /path/to/qwen_image_vae.safetensors |
-| anima_t5_tokenizer_path / t5_tokenizer_path | Anima T5 tokenizer；未填使用 sd-scripts bundled `configs/t5_old` | /path/to/t5_old |
-| sdxl | 舊版相容欄位；未提供 model_family 時才用來選 SDXL | true |
-| epochs | 訓練輪數 | 10 |
-| resolution | 解析度 (256–2048) | 512、768 |
-| batch_size | 每批圖片數 | 4 |
-| learning_rate | 學習率 | 1e-4、2e-4 |
-| class_tokens | 觸發詞 | sks、ohwx |
-| keep_tokens | caption 保留 token 數 | 1 |
-| num_repeats | 每張圖重複次數 | 10 |
-| mixed_precision | fp16 / bf16 / fp32 / no；fp32 會轉為 Kohya CLI 的 no | fp16 |
-
-### 步驟 5：查看訓練進度
-
-```powershell
-curl http://127.0.0.1:8000/api/lora-train/status
-```
-
-或在前端 **LoRA 訓練** 頁面查看。
-
-### 步驟 6：訓練完成後自動產圖
-
-- 訓練完成後，系統會**自動**將新 LoRA 提交至生圖佇列
-- ComfyUI 使用 `default_lora.json` workflow 產圖
-- 圖片會存到 `outputs/gallery/`，並寫入資料庫
-
-```powershell
-curl http://127.0.0.1:8000/api/generate/queue
-```
-
-### 生圖 API：自訂解析度、採樣器
-
-`POST /api/generate/` 支援傳入生圖參數：
-
-```powershell
-curl -X POST http://127.0.0.1:8000/api/generate/ -H "Content-Type: application/json" -d "{\"prompt\": \"1girl, solo\", \"width\": 768, \"height\": 768, \"steps\": 30, \"cfg\": 7.5, \"sampler_name\": \"dpmpp_2m\", \"scheduler\": \"karras\"}"
-```
-
-| 參數 | 說明 | 範例 |
-|------|------|------|
-| prompt | 必填，正向 prompt | 1girl, solo |
-| checkpoint | 選填 | v1-5-pruned-emaonly.safetensors |
-| lora | 選填 | my_char.safetensors |
-| negative_prompt | 負向 prompt | lowres, blur |
-| seed | 隨機種子，不傳則隨機 | 12345 |
-| steps | 採樣步數 | 20 |
-| cfg | CFG scale | 7.0 |
-| width | 圖寬 (256–2048) | 768 |
-| height | 圖高 | 768 |
-| batch_size | 一次產圖張數 | 2 |
-| sampler_name | 採樣器 | 預設 dpmpp_2m；euler、ddim 等 |
-| scheduler | 調度器 | normal、karras、exponential |
-
-未傳的參數使用 workflow 模板預設值。
-
-### 流程圖總覽
-
-```
-[1] 放入圖片到 lora_train/{子資料夾}/
-         ↓
-[2] watchdog 偵測 → WD Tagger 產生同名 .txt
-         ↓
-[3] POST /api/lora-train/trigger-check 或 /start
-         ↓
-[4] Kohya sd-scripts 訓練 → 輸出 lora_train/output/{folder}.safetensors
-         ↓
-[5] 訓練完成回呼 → 自動提交至生圖佇列
-         ↓
-[6] ComfyUI 產圖 → 存至 outputs/gallery/ + 寫入資料庫
-```
-
----
-
-## 六、常見問題
-
-### Q: 放入圖片後沒有產生 .txt？
-
-- 確認後端已啟動，且 `WATCH_DIRS` 包含該目錄
-- 確認圖片在 **子資料夾** 內（如 `lora_train/my_char/`）
-- 檢查 log 是否有 `WD Tagger 完成` 或錯誤訊息
-- 確認 `SD_SCRIPTS_PATH` 正確，且 `finetune/tag_images_by_wd14_tagger.py` 存在
-
-### Q: 訓練失敗 / 找不到 checkpoint？
-
-- 確認 `.env` 已設定 `LORA_DEFAULT_CHECKPOINT`
-- 檔名需與 ComfyUI `models/checkpoints/` 內的檔名一致
-- 或透過 ComfyUI `extra_model_paths.yaml` 設定 checkpoint 路徑
-
-### Q: 訓練完成但 ComfyUI 產圖失敗？
-
-- 確認 ComfyUI 已啟動
-- 確認 `extra_model_paths.yaml` 已加入 `lora_train/output` 路徑
-- 檢查 `COMFYUI_BASE_URL` 是否正確
-
-### Q: 門檻 10 張太多，想用更少圖片測試？
-
-- 直接用 `POST /api/lora-train/start` 並指定 `folder`，最少 1 張含 .txt 的圖片即可
-
----
-
-## 七、檢查清單（首次啟動前）
-
-- [ ] ComfyUI 已啟動，`http://127.0.0.1:8188` 可連線
-- [ ] `.env` 已設定 `LORA_DEFAULT_CHECKPOINT`
-- [ ] `.env` 已設定 `SD_SCRIPTS_PATH` 指向正確 Kohya 目錄
-- [ ] `SD_SCRIPTS_PATH/train_network.py` 存在
-- [ ] `SD_SCRIPTS_PATH/sdxl_train_network.py` 存在
-- [ ] `SD_SCRIPTS_PATH/anima_train_network.py` 存在（Anima checkpoint 必須使用 `model_family=anima`）
-- [ ] Anima 訓練時已設定 `LORA_ANIMA_QWEN3` 或 request `anima_qwen3` / `qwen3`
-- [ ] Anima 訓練時已設定 `LORA_ANIMA_VAE` 或 request `anima_vae` / `vae`
-- [ ] `SD_SCRIPTS_PATH/finetune/tag_images_by_wd14_tagger.py` 存在
-- [ ] `accelerate` 已安裝
-- [ ] ComfyUI 的 `extra_model_paths.yaml` 已加入 `lora_train/output`（或已處理 LoRA 路徑）
-- [ ] Checkpoint 檔案可被 ComfyUI 讀取
-- [ ] 已執行 `python backend/scripts/init_db.py`
-
----
-
-## 八、仍硬編碼的參數（備註）
-
-以下參數目前無法透過 API 或 .env 設定，若需修改須改程式碼。
-
-### LoRA 訓練
-
-| 項目 | 寫死值 | 位置 |
-|------|--------|------|
-| save_model_as | `safetensors` | `lora_trainer.py` |
-| cache_latents | 固定啟用 | `lora_trainer.py` |
-| gradient_checkpointing | 固定啟用 | `lora_trainer.py` |
-| caption_extension | `.txt` | `lora_trainer.py` (dataset TOML) |
-| LoRA 輸出子目錄 | `output` | `lora_trainer.py`（`{LORA_TRAIN_DIR}/output`） |
-
-### Workflow
-
-| 項目 | 寫死值 | 位置 |
-|------|--------|------|
-| workflow 模板名 | `default`、`default_lora` | `queue.py` |
-| workflows 目錄 | `backend/workflows/` | `workflow.py` |
-
-### 生圖佇列
-
-| 項目 | 寫死值 | 位置 |
-|------|--------|------|
-| MAX_PENDING | 50 | `queue.py` |
-| worker 輪詢間隔 | 2.0 秒 | `queue.py` |
-
-### WD Tagger
-
-| 項目 | 寫死值 | 位置 |
-|------|--------|------|
-| repo_id | `SmilingWolf/wd-swinv2-tagger-v3` | `wd_tagger.py` |
-| batch_size | 4 | `wd_tagger.py` |
-| thresh | 0.35 | `wd_tagger.py` |
-| timeout | 120 秒 | `wd_tagger.py` |
-
-### Watchdog
-
-| 項目 | 寫死值 | 位置 |
-|------|--------|------|
-| DEBOUNCE_SECONDS | 2.0 | `watcher.py` |
+LoRA 訓練開發仍需自行準備 Kohya sd-scripts、checkpoint、accelerate 與相應 runtime；一鍵啟動不會自動安裝這些項目。WD Tagger 第一次實際執行也可能依其既有行為下載模型，與 launcher 的 ComfyUI 安裝流程無關。
