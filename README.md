@@ -4,10 +4,10 @@
 
 ## 三步啟動
 
-先準備 Git、正在執行的 Docker daemon（Docker Desktop 或 Docker Engine）、Docker Compose 2.24 以上與網路連線。不需要先安裝 Python 或 Node.js。
+先準備 Git、正在執行的 Docker daemon（Docker Desktop 或 Docker Engine）、Docker Compose 2.24 以上與網路連線。macOS/Linux 的 cold cache 首次 bootstrap 另需 `curl` 或 `wget`。不需要先安裝 Python 或 Node.js。
 
 ```bash
-git clone <repository-url> ai-drawing
+git clone https://github.com/tf00185077/ai-drawing.git
 cd ai-drawing
 ```
 
@@ -44,11 +44,13 @@ macOS / Linux：
 
 自動安裝只取得固定版本的 ComfyUI、Python runtime 與其必要依賴。它不會下載 checkpoint、LoRA、VAE、text encoder、模型或 custom nodes，也不會修改非空的既有目錄。沒有模型時，系統會顯示「ComfyUI 已連線，尚無模型」，由使用者自行放入模型。
 
-裝置選擇：
+裝置模式預設由 launcher 自動偵測並在計畫／狀態中顯示；需要時可用 `--device nvidia|mps|cpu` 明確覆寫：
 
 - Windows / Linux NVIDIA：CUDA 模式；主機需有相容 NVIDIA driver。
 - Apple Silicon：原生 arm64 Python 與 MPS；不要從 Rosetta 終端執行。
 - Intel macOS 或沒有可用 GPU：CPU 模式，速度會較慢。
+
+Apple Silicon 若從 Rosetta/x86_64 終端執行會以 `UNSUPPORTED_NATIVE_ARCHITECTURE` 中止，不會默默改用 CPU 或安裝 x86 runtime。
 
 ## 常用指令
 
@@ -62,7 +64,7 @@ Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
 ./setup.sh reconfigure       # 重選 ComfyUI、路徑、裝置或 ports
 ./setup.sh logs              # 顯示 Compose 與啟動相關 logs
 ./setup.sh update-comfyui    # 只更新啟動器安裝的 ComfyUI
-./setup.sh dry-run --comfyui-mode disabled  # 只顯示計畫，不寫設定、不啟停服務
+./setup.sh dry-run --comfyui-mode disabled  # 不寫專案設定、不安裝 ComfyUI、不啟停服務
 ./setup.sh --help
 ```
 
@@ -73,6 +75,8 @@ Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
 ```
 
 完整 flags、資料保存、疑難排解與進階手動啟動請見 [docs/setup-guide.md](docs/setup-guide.md)。
+
+`dry-run` 的 launcher 階段不會安裝 ComfyUI、寫入專案設定或改變服務；但 wrapper 在 cold cache 尚無固定版 uv/Python 時，仍可能先把 bootstrap runtime 下載到使用者 cache，之後才進入 dry-run。
 
 ## 資料與設定
 

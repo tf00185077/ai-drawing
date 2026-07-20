@@ -4,13 +4,15 @@
 
 完成 Windows `setup.ps1` 與 macOS/Linux `setup.sh`，一般使用者 clone 後不需理解 Python、Node 或容器內部即可設定並啟動 Frontend/Backend。啟動器會檢查 Docker/Compose/ports、原子產生 `.env` 與本機 Compose override、保存程序 ownership，並提供 `setup`、`start`、`stop`、`status`、`reconfigure`、`logs`、`update-comfyui` 與唯讀 `dry-run`。
 
-ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄，或安裝固定版 ComfyUI。安裝計畫依 Windows/Linux NVIDIA、Apple Silicon MPS、CPU 選擇 runtime，只涵蓋 ComfyUI 與必要 Python 套件，明確不下載模型或 custom nodes。程序停止前會比對 PID 與完整身分；Linux loopback relay 有獨立 lock/state/identity。Backend 新增 `/api/system/status`，Frontend Dashboard 分別呈現 connected、not_configured、unreachable、no_models、degraded，其中 `no_models` 顯示「ComfyUI 已連線，尚無模型」。MCP 不屬於這次啟動範圍。
+ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄，或安裝固定版 ComfyUI。launcher 預設自動偵測 Windows/Linux NVIDIA、Apple Silicon MPS 或 CPU，顯示結果並允許 `--device` 明確覆寫；只涵蓋 ComfyUI 與必要 Python 套件，明確不下載模型或 custom nodes。程序停止前會比對 PID 與完整身分；Linux loopback relay 有獨立 lock/state/identity。Backend `/api/system/status` 與 Frontend Dashboard 呈現 connected、not_configured、unreachable、no_models、degraded 五種狀態；CLI `status` 則只依主機 probe 回報 not_configured、unreachable、no_models 或 connected，不宣稱 degraded。其中 `no_models` 顯示「ComfyUI 已連線，尚無模型」。MCP 不屬於這次啟動範圍。
+
+後續 review 強化三個 bootstrap 邊界：POSIX wrapper 在 cold cache 先檢查 `curl`，再安全 fallback 到 `wget`，兩者皆無時回穩定錯誤；Apple Silicon 的 x86_64 程序以 structured `sysctl -in sysctl.proc_translated` 辨識 Rosetta，回報 `1` 時以 `UNSUPPORTED_NATIVE_ARCHITECTURE` 中止，不會默默改 CPU 或安裝 x86 runtime；managed ComfyUI 的具體 install boundary 會 canonicalize 目標與 repository root，拒絕 repository 本身、子目錄及經 symlink parent 指回 repository 的未存在路徑，且在 clone/staging 前完成。文件 clone URL 已改為可直接複製的 public HTTPS。`dry-run` 不安裝 ComfyUI、不寫專案設定、不改變服務，但 cold-cache wrapper 仍可能先把固定版 uv/Python bootstrap 到使用者 cache。
 
 持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner 或暫存目錄）：`255 passed`；`python -m compileall -q scripts` 通過。
+- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner 或暫存目錄）：`270 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。
 - Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。

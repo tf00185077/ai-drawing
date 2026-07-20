@@ -58,6 +58,51 @@ def test_intel_macos_uses_cpu():
     assert choose_device(host, nvidia_available=True) is DeviceMode.CPU
 
 
+def test_rosetta_translation_is_rejected_with_stable_diagnostic(tmp_path):
+    from launcher.cli import DefaultServices, LauncherError
+
+    result = CommandResult(
+        ("sysctl", "-in", "sysctl.proc_translated"), 0, "1\n", ""
+    )
+    runner = FakeRunner(result)
+    services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+    services.host = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+
+    with pytest.raises(LauncherError) as caught:
+        services.detect_device()
+
+    assert caught.value.code == "UNSUPPORTED_NATIVE_ARCHITECTURE"
+    assert "arm64" in caught.value.hint
+    assert runner.calls == [("sysctl", "-in", "sysctl.proc_translated")]
+
+
+@pytest.mark.parametrize(
+    ("returncode", "stdout"),
+    [(0, "0\n"), (1, "")],
+)
+def test_native_or_unqueryable_intel_macos_remains_cpu(tmp_path, returncode, stdout):
+    from launcher.cli import DefaultServices
+
+    command = ("sysctl", "-in", "sysctl.proc_translated")
+    runner = FakeRunner(CommandResult(command, returncode, stdout, ""))
+    services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+    services.host = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+
+    assert services.detect_device() is DeviceMode.CPU
+    assert runner.calls == [command]
+
+
+def test_native_apple_silicon_does_not_query_rosetta(tmp_path):
+    from launcher.cli import DefaultServices
+
+    runner = FakeRunner(CommandResult(("unused",), 1, "", ""))
+    services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+    services.host = HostInfo("Darwin", "arm64", Path("/Users/test"))
+
+    assert services.detect_device() is DeviceMode.MPS
+    assert runner.calls == []
+
+
 def test_linux_without_nvidia_uses_cpu():
     host = HostInfo("Linux", "x86_64", Path("/home/test"))
 
