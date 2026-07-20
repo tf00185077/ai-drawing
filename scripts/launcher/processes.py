@@ -84,7 +84,7 @@ def terminate_if_identity_matches(
     runner: Runner,
     host: HostInfo,
 ) -> str:
-    """Terminate only when the live command line still matches the captured child."""
+    """Terminate only when the full live process identity matches the captured child."""
     if not expected_identity:
         return "identity_unavailable"
     current_identity = read_process_identity(host, pid, runner)
