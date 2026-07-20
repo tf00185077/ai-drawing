@@ -110,7 +110,7 @@ def test_discovery_is_bounded_and_deduplicates_candidates(tmp_path):
 def test_running_probe_is_always_external():
     requested = []
 
-    def http_get(url, timeout):
+    def http_get(url, *, timeout):
         requested.append((url, timeout))
         return FakeResponse()
 
@@ -196,6 +196,13 @@ def test_install_plan_has_exact_staged_sequence_and_no_content_downloads(tmp_pat
         ("uv", "pip"),
         (str(plan.python), "-c"),
     ]
+    assert plan.commands[2].args == (
+        "uv",
+        "venv",
+        "--python",
+        "3.12",
+        str(plan.staging / ".venv"),
+    )
     joined = " ".join(flattened_args(plan)).lower()
     assert "custom_nodes" not in joined
     assert "models/" not in joined
@@ -234,7 +241,24 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path):
     commands = [command for command, _cwd in runner.commands]
     assert result == "v0.28.0"
     assert commands[0] == ("git", "rev-parse", "HEAD")
-    assert commands[1] == ("git", "checkout", "--detach", "v0.28.0")
+    assert commands[1] == (
+        "git",
+        "fetch",
+        "--depth",
+        "1",
+        "origin",
+        "tag",
+        "v0.28.0",
+    )
+    assert commands[2] == ("git", "checkout", "--detach", "v0.28.0")
+    assert commands[4] == (
+        "uv",
+        "venv",
+        "--clear",
+        "--python",
+        "3.12",
+        str(root / ".venv"),
+    )
     assert not any(command[:2] == ("git", "clone") for command in commands)
     assert commands[-1][1] == "-c"
 
@@ -251,3 +275,48 @@ def test_update_restores_old_commit_when_smoke_fails(tmp_path):
 
     commands = [command for command, _cwd in runner.commands]
     assert commands[-1] == ("git", "checkout", "--detach", "old123")
+
+
+@pytest.mark.parametrize(
+    "failed_prefix",
+    [
+        ("git", "fetch"),
+        ("git", "checkout", "--detach", "v0.28.0"),
+    ],
+)
+def test_update_restores_old_commit_when_fetch_or_checkout_fails(
+    tmp_path,
+    failed_prefix,
+):
+    root = make_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(
+        fail_when=lambda args: args[: len(failed_prefix)] == failed_prefix,
+        old_commit="old123",
+    )
+
+    with pytest.raises(ComfyInstallError, match="restored old123"):
+        update_comfyui(root, DeviceMode.CPU, runner, host=LINUX)
+
+    commands = [command for command, _cwd in runner.commands]
+    assert commands[-1] == ("git", "checkout", "--detach", "old123")
+
+
+def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatch):
+    target = tmp_path / "ComfyUI"
+    target.mkdir()
+    runner = FakeRunner()
+    original_replace = Path.replace
+
+    def fail_staging_promotion(path, destination):
+        if path == staging_path(target):
+            raise OSError("promotion failed")
+        return original_replace(path, destination)
+
+    monkeypatch.setattr(Path, "replace", fail_staging_promotion)
+
+    with pytest.raises(OSError, match="promotion failed"):
+        install_comfyui(target, DeviceMode.CPU, runner, host=LINUX)
+
+    assert target.is_dir()
+    assert list(target.iterdir()) == []
+    assert not staging_path(target).exists()

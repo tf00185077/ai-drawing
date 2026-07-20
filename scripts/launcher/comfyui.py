@@ -116,7 +116,7 @@ def probe_comfyui(
     """Probe an already-running API, which is always externally owned."""
     normalized = base_url.rstrip("/")
     try:
-        response = http_get(f"{normalized}/system_stats", timeout)
+        response = http_get(f"{normalized}/system_stats", timeout=timeout)
         if hasattr(response, "__enter__"):
             with response as opened:
                 status = getattr(opened, "status", 200)
@@ -194,8 +194,13 @@ def _environment_commands(
     root: Path,
     device: DeviceMode,
     host: HostInfo,
+    clear_venv: bool = False,
 ) -> tuple[PlannedCommand, ...]:
     python = _venv_python(root, host)
+    venv_args = ["uv", "venv"]
+    if clear_venv:
+        venv_args.append("--clear")
+    venv_args.extend(("--python", COMFYUI_PYTHON, str(root / ".venv")))
     return (
         PlannedCommand(
             "python",
@@ -203,7 +208,7 @@ def _environment_commands(
         ),
         PlannedCommand(
             "venv",
-            ("uv", "venv", "--python", COMFYUI_PYTHON, str(root / ".venv")),
+            tuple(venv_args),
         ),
         PlannedCommand("torch", _torch_args(python, device)),
         PlannedCommand(
@@ -273,6 +278,7 @@ def install_comfyui(
     """Install into staging and publish only a validated, smoke-tested root."""
     actual_host = host or detect_host()
     final_target = Path(target).resolve()
+    target_was_empty = final_target.is_dir() and not any(final_target.iterdir())
     prepared = prepare_staging_target(final_target)
     plan = build_install_plan(final_target, device, actual_host)
     if prepared != plan.staging:
@@ -289,7 +295,11 @@ def install_comfyui(
             final_target.rmdir()
         plan.staging.replace(final_target)
     except Exception:
-        _remove_staging(plan.staging)
+        try:
+            _remove_staging(plan.staging)
+        finally:
+            if target_was_empty and not final_target.exists():
+                final_target.mkdir()
         raise
     return validate_comfyui_root(final_target, actual_host)
 
@@ -324,11 +334,24 @@ def update_comfyui(
 
     update_commands = (
         PlannedCommand(
+            "fetch",
+            (
+                "git",
+                "fetch",
+                "--depth",
+                "1",
+                "origin",
+                "tag",
+                COMFYUI_VERSION,
+            ),
+            cwd=root,
+        ),
+        PlannedCommand(
             "checkout",
             ("git", "checkout", "--detach", COMFYUI_VERSION),
             cwd=root,
         ),
-        *_environment_commands(root, device, actual_host),
+        *_environment_commands(root, device, actual_host, clear_venv=True),
     )
     try:
         for command in update_commands:
