@@ -109,6 +109,9 @@ class LauncherState:
             type(managed_pid) is not int or managed_pid <= 0
         ):
             raise ValueError("managed_pid must be a positive integer")
+        comfyui_port = raw.get("comfyui_port")
+        if type(comfyui_port) is not int or not 1 <= comfyui_port <= 65535:
+            raise ValueError("comfyui_port must be an integer from 1 to 65535")
 
         return cls(
             schema_version=raw["schema_version"],
@@ -119,7 +122,7 @@ class LauncherState:
                 else None
             ),
             device=DeviceMode(raw["device"]) if raw.get("device") is not None else None,
-            comfyui_port=raw["comfyui_port"],
+            comfyui_port=comfyui_port,
             managed_pid=managed_pid,
             managed_identity=raw.get("managed_identity"),
         )

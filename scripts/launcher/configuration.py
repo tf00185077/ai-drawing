@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +29,13 @@ _MODEL_MOUNTS = (
 )
 
 _SENSITIVE_PARTS = ("authorization", "token", "secret", "password")
+
+
+@dataclass(frozen=True)
+class _DestinationSnapshot:
+    destination: Path
+    existed: bool
+    backup_path: Path | None
 
 
 def parse_env(text: str) -> dict[str, str]:
@@ -123,8 +132,48 @@ def _temporary_path(path: Path, content: str) -> Path:
 
 
 def atomic_write(path: Path, content: str) -> None:
-    temporary_path = _temporary_path(path, content)
-    temporary_path.replace(path)
+    temporary_path: Path | None = None
+    try:
+        temporary_path = _temporary_path(path, content)
+        temporary_path.replace(path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def _snapshot_destination(path: Path) -> _DestinationSnapshot:
+    if not path.exists():
+        return _DestinationSnapshot(path, existed=False, backup_path=None)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    backup_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as backup, path.open("rb") as source:
+            shutil.copyfileobj(source, backup)
+    except BaseException:
+        backup_path.unlink(missing_ok=True)
+        raise
+    return _DestinationSnapshot(path, existed=True, backup_path=backup_path)
+
+
+def _restore_snapshots(snapshots: list[_DestinationSnapshot]) -> None:
+    restoration_errors: list[Exception] = []
+    for snapshot in snapshots:
+        try:
+            if snapshot.existed:
+                assert snapshot.backup_path is not None
+                snapshot.backup_path.replace(snapshot.destination)
+            else:
+                snapshot.destination.unlink(missing_ok=True)
+        except Exception as error:
+            restoration_errors.append(error)
+    if restoration_errors:
+        raise ConfigurationError("configuration replacement failed and rollback failed") from restoration_errors[0]
 
 
 def load_state(path: Path) -> LauncherState | None:
@@ -146,28 +195,43 @@ def write_configuration(
     env_path = root / ".env"
     override_path = root / ".ai-drawing" / "compose.local.yaml"
     state_path = root / "data" / "bootstrap" / "state.json"
-    previous_env = (
-        parse_env(env_path.read_text(encoding="utf-8")) if env_path.exists() else {}
-    )
-    temporary_paths = (
-        _temporary_path(env_path, render_env(settings, previous_env)),
-        _temporary_path(override_path, render_compose_override(settings)),
-        _temporary_path(state_path, state.to_json() + "\n"),
-    )
+    destinations = (env_path, override_path, state_path)
+    temporary_paths: list[Path] = []
+    snapshots: list[_DestinationSnapshot] = []
+    replacement_started = False
     try:
+        previous_env = (
+            parse_env(env_path.read_text(encoding="utf-8")) if env_path.exists() else {}
+        )
+        for destination, content in zip(
+            destinations,
+            (
+                render_env(settings, previous_env),
+                render_compose_override(settings),
+                state.to_json() + "\n",
+            ),
+            strict=True,
+        ):
+            temporary_paths.append(_temporary_path(destination, content))
         if not validate(temporary_paths[0], temporary_paths[1]):
             raise ConfigurationError("generated Compose configuration failed validation")
-        for temporary_path, destination in zip(
-            temporary_paths, (env_path, override_path, state_path), strict=True
-        ):
+        for destination in destinations:
+            snapshots.append(_snapshot_destination(destination))
+        replacement_started = True
+        for temporary_path, destination in zip(temporary_paths, destinations, strict=True):
             temporary_path.replace(destination)
     except ConfigurationError:
         raise
     except Exception as error:
+        if replacement_started:
+            _restore_snapshots(snapshots)
         raise ConfigurationError("unable to write generated configuration") from error
     finally:
         for temporary_path in temporary_paths:
             temporary_path.unlink(missing_ok=True)
+        for snapshot in snapshots:
+            if snapshot.backup_path is not None:
+                snapshot.backup_path.unlink(missing_ok=True)
 
 
 def redact(value: Any) -> Any:
