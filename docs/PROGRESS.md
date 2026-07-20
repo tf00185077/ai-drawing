@@ -1,5 +1,9 @@
 # 進度追蹤
 
+## 2026-07-20 One-click launcher: platform detection
+
+Implemented the injected, unit-testable platform detection layer for the one-click launcher: Windows/Linux NVIDIA selection, Apple Silicon MPS selection, CPU fallback, OS data roots, Python candidate paths, and safe PID command-line identity reads. Verification: focused launcher-platform tests `16 passed`; complete launcher suite `22 passed`.
+
 > **唯一來源**。完成的任務要同步修改這個文件（`docs/PROGRESS.md`），且不需同步改 README.md 或 AGENTS.md。
 > 寫進度時以「人看得懂」為準：一項工作一段，講清楚做了什麼、為什麼、下一步；不要貼雜湊值稽核日誌。
 > （2026-07-14 以前的稽核式進度原文保存在 `docs/archive/2026-07-legacy/PROGRESS-2026-07-14-audit-log.md`。）
