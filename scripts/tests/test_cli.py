@@ -265,11 +265,14 @@ def test_default_services_passes_project_root_to_install_boundary(
         return ComfyValidation(Path(target), True, Path(target) / "python", ())
 
     monkeypatch.setattr(cli, "install_comfyui", fake_install)
+    fake_uv = (tmp_path / "cache/uv.exe").resolve()
+    monkeypatch.setattr(cli, "resolve_uv_binary", lambda: fake_uv)
     services = DefaultServices(project, runner=object(), output_fn=lambda _message: None)
 
     services.install_comfyui(tmp_path / "sibling", DeviceMode.CPU)
 
     assert captured["project_root"] == project.resolve()
+    assert captured["uv_bin"] == fake_uv
 
 
 def test_default_services_filters_repository_comfyui_candidates(tmp_path):
@@ -802,7 +805,12 @@ def test_default_start_merges_install_provenance_into_task5_state(tmp_path, monk
     root.mkdir()
     python = root / "python"
     python.touch()
-    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    class SmokeRunner:
+        def run(self, args, **_kwargs):
+            command = tuple(str(item) for item in args)
+            return CommandResult(command, 0, "", "")
+
+    service = DefaultServices(tmp_path, runner=SmokeRunner(), output_fn=lambda _message: None)
     service.host = HostInfo("Linux", "x86_64", tmp_path)
     planned = replace(
         state(ComfyMode.MANAGED, root=root, device=DeviceMode.CPU),
@@ -873,6 +881,84 @@ def test_ready_api_preserves_verified_previous_managed_before_external_classific
     assert "stop_comfyui" not in harness.events
 
 
+def test_live_verified_managed_reconfigure_requires_explicit_stop(harness):
+    old_root = (harness.project_root / "Old ComfyUI").resolve()
+    new_root = (harness.project_root / "New ComfyUI").resolve()
+    previous = state(
+        ComfyMode.MANAGED,
+        root=old_root,
+        device=DeviceMode.NVIDIA,
+        pid=4242,
+        identity=ProcessIdentity("python", "1", "python main.py"),
+    )
+    harness.loaded_state = previous
+    harness.external_running = True
+    harness.managed_verified = True
+
+    assert main(
+        [
+            "reconfigure",
+            "--comfyui-mode",
+            "managed",
+            "--comfyui-path",
+            str(new_root),
+            "--device",
+            "cpu",
+        ],
+        services=harness,
+    ) == 1
+
+    rendered = "\n".join(harness.output)
+    assert "COMFYUI_RECONFIGURE_REQUIRES_STOP" in rendered
+    assert "snapshot_config" not in harness.events
+    assert "write_config" not in harness.events
+    assert "stop_comfyui" not in harness.events
+
+
+def test_production_verifier_rejects_live_managed_tuple_change_without_mutation(
+    tmp_path,
+    monkeypatch,
+):
+    identity = ProcessIdentity("python", "1", "python main.py --port 8188")
+    old_root = (tmp_path / "Old ComfyUI").resolve()
+    previous = state(
+        ComfyMode.MANAGED,
+        root=old_root,
+        device=DeviceMode.NVIDIA,
+        pid=4242,
+        identity=identity,
+    )
+    state_path = tmp_path / "data/bootstrap/state.json"
+    state_path.parent.mkdir(parents=True)
+    state_path.write_text(previous.to_json(), encoding="utf-8")
+    before = state_path.read_bytes()
+    probes = []
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    service.probe_external = lambda port: probes.append(port) or True
+    monkeypatch.setattr(cli, "read_process_identity", lambda *_args: identity)
+    args = cli.build_parser().parse_args(
+        [
+            "reconfigure",
+            "--comfyui-mode",
+            "managed",
+            "--comfyui-path",
+            str(tmp_path / "New ComfyUI"),
+            "--device",
+            "cpu",
+        ]
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        cli._plan_comfyui(args, service, previous)
+
+    assert raised.value.code == "COMFYUI_RECONFIGURE_REQUIRES_STOP"
+    assert probes == [8188]
+    assert state_path.read_bytes() == before
+    assert not (tmp_path / ".env").exists()
+    assert not (tmp_path / ".ai-drawing/compose.local.yaml").exists()
+
+
 def test_ready_api_with_identity_mismatch_becomes_external_unowned(harness):
     root = harness.project_root / "Old ComfyUI"
     harness.loaded_state = state(
@@ -884,11 +970,42 @@ def test_ready_api_with_identity_mismatch_becomes_external_unowned(harness):
     )
     harness.external_running = True
     harness.managed_verified = False
+    harness.discovered = (
+        ComfyValidation(root.resolve(), True, root / ".venv/bin/python", ()),
+    )
 
     assert main(["reconfigure", "--comfyui-mode", "managed"], services=harness) == 0
     assert harness.saved_state.comfy_mode is ComfyMode.EXTERNAL
     assert harness.saved_state.managed_pid is None
     assert harness.saved_state.managed_identity is None
+    assert harness.saved_state.comfyui_root == root.resolve()
+
+
+def test_running_external_retains_valid_discovered_root_and_mounts(harness):
+    root = (harness.project_root / "Existing ComfyUI").resolve()
+    harness.external_running = True
+    harness.discovered = (
+        ComfyValidation(root, True, root / ".venv/bin/python", ()),
+    )
+
+    assert main(
+        ["setup", "--comfyui-mode", "external", "--comfyui-path", str(root)],
+        services=harness,
+    ) == 0
+
+    assert harness.saved_state.comfy_mode is ComfyMode.EXTERNAL
+    assert harness.saved_state.comfyui_root == root
+    assert harness.saved_settings.comfy_paths.root == root
+
+
+def test_running_external_without_known_root_stays_pathless(harness):
+    harness.external_running = True
+
+    assert main(["setup", "--comfyui-mode", "external"], services=harness) == 0
+
+    assert harness.saved_state.comfy_mode is ComfyMode.EXTERNAL
+    assert harness.saved_state.comfyui_root is None
+    assert harness.saved_settings.comfy_paths is None
 
 
 def test_same_root_different_device_never_relabels_existing_process(tmp_path):
@@ -1020,6 +1137,92 @@ def test_default_services_rejects_out_of_range_loaded_env_port(tmp_path):
     assert raised.value.code == "CONFIG_PORT_INVALID"
 
 
+def test_fresh_clone_skips_compose_status_until_generated_files_exist(tmp_path):
+    (tmp_path / "docker-compose.yml").write_text(
+        "services:\n  backend:\n    image: example.invalid/backend\n",
+        encoding="utf-8",
+    )
+
+    class StaticComposeRunner:
+        def __init__(self):
+            self.commands = []
+
+        def run(self, args, cwd=None, **_kwargs):
+            command = tuple(str(item) for item in args)
+            self.commands.append(command)
+            if command[:2] == ("docker", "version"):
+                return CommandResult(command, 0, "26.1.0\n", "")
+            if command[:3] == ("docker", "compose", "version"):
+                return CommandResult(command, 0, "2.24.0\n", "")
+            if "ps" in command:
+                raise AssertionError("fresh clone must not query Compose with missing files")
+            if "config" in command:
+                env = Path(command[command.index("--env-file") + 1])
+                override = Path(command[command.index("-f", 5) + 1])
+                assert env.is_file()
+                assert override.is_file()
+            return CommandResult(command, 0, "", "")
+
+    runner = StaticComposeRunner()
+    service = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+    service.host = HostInfo("Windows", "AMD64", tmp_path)
+    service.wait_backend = lambda _port: True
+    service.wait_frontend = lambda _port: True
+
+    assert main(
+        ["setup", "--non-interactive", "--comfyui-mode", "disabled"],
+        services=service,
+    ) == 0
+
+    assert (tmp_path / ".env").is_file()
+    assert (tmp_path / ".ai-drawing/compose.local.yaml").is_file()
+    assert not any("ps" in command for command in runner.commands)
+    assert any("config" in command for command in runner.commands)
+
+
+def test_missing_base_compose_is_not_treated_as_fresh_clone(tmp_path):
+    class StaticRunner:
+        def run(self, args, **_kwargs):
+            command = tuple(str(item) for item in args)
+            return CommandResult(command, 1, "", "base compose missing")
+
+    service = DefaultServices(tmp_path, runner=StaticRunner(), output_fn=lambda _message: None)
+    with pytest.raises(cli.docker.DockerError) as raised:
+        service.compose_running_services()
+    assert raised.value.code == "COMPOSE_STATUS_FAILED"
+
+
+def test_configured_project_queries_compose_with_exact_generated_files(tmp_path):
+    base = tmp_path / "docker-compose.yml"
+    env = tmp_path / ".env"
+    override = tmp_path / ".ai-drawing/compose.local.yaml"
+    override.parent.mkdir()
+    base.write_text("services: {}\n", encoding="utf-8")
+    env.write_text("COMFYUI_MODE=disabled\n", encoding="utf-8")
+    override.write_text("services: {}\n", encoding="utf-8")
+
+    class StaticRunner:
+        def __init__(self):
+            self.command = None
+
+        def run(self, args, **_kwargs):
+            self.command = tuple(str(item) for item in args)
+            return CommandResult(
+                self.command,
+                0,
+                '[{"Service":"backend","State":"running"}]',
+                "",
+            )
+
+    runner = StaticRunner()
+    service = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+
+    assert service.compose_running_services() == frozenset({"backend"})
+    assert runner.command == tuple(
+        cli.docker.compose_command(tmp_path, "ps", "--all", "--format", "json")
+    )
+
+
 def test_managed_start_failure_can_explicitly_fallback_to_cpu(harness):
     harness.loaded_state = state(
         ComfyMode.MANAGED,
@@ -1148,6 +1351,25 @@ def test_status_before_setup_is_truthful_without_compose_files(tmp_path):
     report = service.status(None)
     assert report["services"] == {}
     assert report["comfy"]["state"] == "not_configured"
+
+
+def test_status_invalid_relay_state_is_non_mutating_and_reports_stale(tmp_path):
+    relay_path = tmp_path / "data/bootstrap/relay-state.json"
+    relay_path.parent.mkdir(parents=True)
+    relay_path.write_bytes(b"not-json")
+    before = relay_path.stat().st_mtime_ns
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    service.wait_backend = lambda _port, **_kwargs: False
+    service.wait_frontend = lambda _port, **_kwargs: False
+
+    report = service.status(None, docker_available=False)
+
+    assert report["relay"] == "stale"
+    assert relay_path.read_bytes() == b"not-json"
+    assert relay_path.stat().st_mtime_ns == before
+    assert not (tmp_path / "data/bootstrap/relay-state.invalid.json").exists()
+    assert not (tmp_path / "data/bootstrap/relay-state.lock").exists()
 
 
 def test_status_verifies_managed_identity_and_counts_models(tmp_path, monkeypatch):
@@ -1369,6 +1591,54 @@ def test_known_managed_process_not_ready_is_not_started_twice(tmp_path, monkeypa
         )
 
     assert raised.value.code == "COMFYUI_MANAGED_NOT_READY"
+
+
+def test_existing_managed_runtime_is_device_smoked_before_spawn(tmp_path, monkeypatch):
+    root = tmp_path / "ComfyUI"
+    python = root / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.touch()
+    (root / "main.py").write_text("# ComfyUI\n", encoding="utf-8")
+    (root / "models").mkdir()
+
+    class Runner:
+        def __init__(self):
+            self.commands = []
+
+        def run(self, args, **_kwargs):
+            command = tuple(str(item) for item in args)
+            self.commands.append(command)
+            return CommandResult(command, 0, "", "")
+
+    runner = Runner()
+    service = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    spawned = []
+
+    def fake_start(**kwargs):
+        spawned.append(kwargs)
+        return ProcessStartResult(
+            True,
+            "ready",
+            state(
+                ComfyMode.MANAGED,
+                root=root.resolve(),
+                device=DeviceMode.NVIDIA,
+                pid=4242,
+                identity=ProcessIdentity(str(python), "1", "python main.py"),
+            ),
+        )
+
+    monkeypatch.setattr(cli, "start_comfyui", fake_start)
+    result = service.start_comfyui(
+        state(ComfyMode.MANAGED, root=root, device=DeviceMode.NVIDIA)
+    )
+
+    assert result.managed_pid == 4242
+    assert len(spawned) == 1
+    assert runner.commands == [
+        (str(python.resolve()), "-c", "import torch; assert torch.cuda.is_available()")
+    ]
 
 
 def test_previous_non_default_comfyui_root_is_a_bounded_discovery_candidate(harness):

@@ -10,6 +10,8 @@ if (-not (Test-Path $Uv)) {
     Invoke-RestMethod "https://astral.sh/uv/0.11.29/install.ps1" | Invoke-Expression
 }
 
+$env:AI_DRAWING_UV_BIN = (Resolve-Path -LiteralPath $Uv).Path
+
 Set-Location $ProjectRoot
 & $Uv run --python 3.12 --no-project scripts/bootstrap.py $args
 exit $LASTEXITCODE

@@ -53,5 +53,8 @@ if [ ! -x "$UV_BIN" ]; then
   exit 1
 fi
 
+AI_DRAWING_UV_BIN=$(CDPATH= cd -- "$(dirname -- "$UV_BIN")" && pwd)/$(basename -- "$UV_BIN")
+export AI_DRAWING_UV_BIN
+
 cd "$PROJECT_ROOT"
 exec "$UV_BIN" run --python 3.12 --no-project scripts/bootstrap.py "$@"

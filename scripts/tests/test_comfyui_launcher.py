@@ -13,6 +13,8 @@ from launcher.comfyui import (
     install_comfyui,
     prepare_staging_target,
     probe_comfyui,
+    resolve_uv_binary,
+    smoke_comfyui_runtime,
     staging_path,
     update_comfyui,
     validate_comfyui_root,
@@ -23,6 +25,7 @@ from launcher.runner import CommandResult
 
 WINDOWS = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
 LINUX = HostInfo("Linux", "x86_64", Path("/home/test"))
+UV_BIN = Path("C:/tools/uv.exe")
 
 
 def make_root(root: Path) -> Path:
@@ -45,7 +48,7 @@ class FakeRunner:
             return CommandResult(command, 0, self.old_commit + "\n", "")
         if command[:2] == ("git", "clone"):
             make_root(Path(command[-1]))
-        if command[:2] == ("uv", "venv"):
+        if len(command) > 1 and Path(command[0]).name in {"uv", "uv.exe"} and command[1] == "venv":
             venv = Path(command[-1])
             for python in (
                 venv / "Scripts" / "python.exe",
@@ -163,8 +166,45 @@ def flattened_args(plan):
     return [arg for command in plan.commands for arg in command.args]
 
 
+def test_uv_binary_resolves_exported_absolute_cache_path(tmp_path):
+    uv = (tmp_path / "cache/uv").resolve()
+    uv.parent.mkdir()
+    uv.touch()
+
+    assert resolve_uv_binary(
+        environ={"AI_DRAWING_UV_BIN": str(uv)},
+        which=lambda _name: None,
+    ) == uv
+
+
+def test_uv_binary_missing_has_stable_diagnostic():
+    with pytest.raises(ComfyInstallError, match="UV_BINARY_MISSING"):
+        resolve_uv_binary(environ={}, which=lambda _name: None)
+
+
+def test_every_install_dependency_command_uses_injected_absolute_uv(tmp_path):
+    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.CPU, uv_bin=UV_BIN)
+
+    dependency_commands = plan.commands[1:-1]
+    assert dependency_commands
+    assert all(command.args[0] == str(UV_BIN) for command in dependency_commands)
+    assert not any(command.args[0] == "uv" for command in plan.commands)
+
+
+def test_accelerated_smoke_failure_is_explicit_and_never_falls_back(tmp_path):
+    python = (tmp_path / "python").resolve()
+    runner = FakeRunner(fail_when=lambda args: len(args) > 1 and args[1] == "-c")
+
+    with pytest.raises(ComfyInstallError, match="smoke"):
+        smoke_comfyui_runtime(python, DeviceMode.MPS, runner)
+
+    assert runner.commands == [
+        ((str(python), "-c", "import torch; assert torch.backends.mps.is_available()"), None)
+    ]
+
+
 def test_nvidia_plan_is_pinned(tmp_path):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.NVIDIA)
+    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.NVIDIA, uv_bin=UV_BIN)
     args = flattened_args(plan)
 
     assert "v0.28.0" in args
@@ -174,7 +214,7 @@ def test_nvidia_plan_is_pinned(tmp_path):
 
 
 def test_mps_plan_uses_default_torch_wheels_and_asserts_mps(tmp_path):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.MPS)
+    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.MPS, uv_bin=UV_BIN)
     torch_command = plan.commands[3].args
 
     assert "--index-url" not in torch_command
@@ -182,7 +222,7 @@ def test_mps_plan_uses_default_torch_wheels_and_asserts_mps(tmp_path):
 
 
 def test_cpu_plan_uses_cpu_torch_index(tmp_path):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.CPU)
+    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.CPU, uv_bin=UV_BIN)
     args = flattened_args(plan)
 
     assert "https://download.pytorch.org/whl/cpu" in args
@@ -191,18 +231,18 @@ def test_cpu_plan_uses_cpu_torch_index(tmp_path):
 
 def test_install_plan_has_exact_staged_sequence_and_no_content_downloads(tmp_path):
     target = tmp_path / "ComfyUI"
-    plan = build_install_plan(target, DeviceMode.CPU)
+    plan = build_install_plan(target, DeviceMode.CPU, uv_bin=UV_BIN)
 
     assert [command.args[:2] for command in plan.commands] == [
         ("git", "clone"),
-        ("uv", "python"),
-        ("uv", "venv"),
-        ("uv", "pip"),
-        ("uv", "pip"),
+        (str(UV_BIN), "python"),
+        (str(UV_BIN), "venv"),
+        (str(UV_BIN), "pip"),
+        (str(UV_BIN), "pip"),
         (str(plan.python), "-c"),
     ]
     assert plan.commands[2].args == (
-        "uv",
+        str(UV_BIN),
         "venv",
         "--python",
         "3.12",
@@ -223,6 +263,7 @@ def test_install_promotes_staging_only_after_success(tmp_path):
         runner,
         host=LINUX,
         project_root=tmp_path / "project",
+        uv_bin=UV_BIN,
     )
 
     assert result.root == target.resolve()
@@ -243,6 +284,7 @@ def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path):
             runner,
             host=LINUX,
             project_root=tmp_path / "project",
+            uv_bin=UV_BIN,
         )
 
     assert not target.exists()
@@ -253,7 +295,7 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path):
     root = make_root(tmp_path / "ComfyUI")
     runner = FakeRunner(old_commit="old123")
 
-    result = update_comfyui(root, DeviceMode.CPU, runner, host=LINUX)
+    result = update_comfyui(root, DeviceMode.CPU, runner, host=LINUX, uv_bin=UV_BIN)
 
     commands = [command for command, _cwd in runner.commands]
     assert result == "v0.28.0"
@@ -269,7 +311,7 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path):
     )
     assert commands[2] == ("git", "checkout", "--detach", "v0.28.0")
     assert commands[4] == (
-        "uv",
+        str(UV_BIN),
         "venv",
         "--clear",
         "--python",
@@ -288,7 +330,7 @@ def test_update_restores_old_commit_when_smoke_fails(tmp_path):
     )
 
     with pytest.raises(ComfyInstallError, match="restored old123"):
-        update_comfyui(root, DeviceMode.MPS, runner, host=LINUX)
+        update_comfyui(root, DeviceMode.MPS, runner, host=LINUX, uv_bin=UV_BIN)
 
     commands = [command for command, _cwd in runner.commands]
     assert commands[-1] == ("git", "checkout", "--detach", "old123")
@@ -312,7 +354,7 @@ def test_update_restores_old_commit_when_fetch_or_checkout_fails(
     )
 
     with pytest.raises(ComfyInstallError, match="restored old123"):
-        update_comfyui(root, DeviceMode.CPU, runner, host=LINUX)
+        update_comfyui(root, DeviceMode.CPU, runner, host=LINUX, uv_bin=UV_BIN)
 
     commands = [command for command, _cwd in runner.commands]
     assert commands[-1] == ("git", "checkout", "--detach", "old123")
@@ -338,6 +380,7 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
             runner,
             host=LINUX,
             project_root=tmp_path / "project",
+            uv_bin=UV_BIN,
         )
 
     assert target.is_dir()
@@ -363,6 +406,7 @@ def test_install_rejects_repository_target_before_side_effects(
             runner,
             host=LINUX,
             project_root=project,
+            uv_bin=UV_BIN,
         )
 
     assert runner.commands == []
@@ -390,6 +434,7 @@ def test_install_rejects_nonexistent_child_through_symlink_parent(tmp_path):
             runner,
             host=LINUX,
             project_root=project,
+            uv_bin=UV_BIN,
         )
 
     assert runner.commands == []
@@ -422,6 +467,7 @@ def test_install_rejects_canonical_child_without_symlink_privileges(
             runner,
             host=LINUX,
             project_root=project,
+            uv_bin=UV_BIN,
         )
 
     assert runner.commands == []
@@ -441,6 +487,7 @@ def test_install_allows_sibling_target_with_fake_runner(tmp_path):
         runner,
         host=LINUX,
         project_root=project,
+        uv_bin=UV_BIN,
     )
 
     assert result.root == target.resolve()
@@ -472,6 +519,7 @@ def test_rosetta_install_boundary_never_clones_or_writes(tmp_path):
             runner,
             host=HostInfo("Darwin", "x86_64", Path("/Users/test")),
             project_root=project,
+            uv_bin=UV_BIN,
         )
 
     assert [command for command, _cwd in runner.commands] == [

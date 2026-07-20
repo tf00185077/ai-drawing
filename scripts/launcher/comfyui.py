@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
@@ -22,6 +23,7 @@ from .runner import Runner
 CUDA_INDEX = "https://download.pytorch.org/whl/cu130"
 CPU_INDEX = "https://download.pytorch.org/whl/cpu"
 TORCH_PACKAGES = ("torch", "torchvision", "torchaudio")
+UV_BINARY_ENV = "AI_DRAWING_UV_BIN"
 
 
 class InstallTargetNotEmpty(RuntimeError):
@@ -72,6 +74,41 @@ class InstallPlan:
     staging: Path
     python: Path
     commands: tuple[PlannedCommand, ...]
+
+
+def resolve_uv_binary(
+    *,
+    environ: Mapping[str, str] | None = None,
+    which: Callable[[str], str | None] = shutil.which,
+) -> Path:
+    """Resolve the pinned wrapper binary, with a direct-Python fallback."""
+    environment = os.environ if environ is None else environ
+    configured = environment.get(UV_BINARY_ENV)
+    candidate = Path(configured) if configured else None
+    if candidate is None:
+        discovered = which("uv")
+        candidate = Path(discovered) if discovered else None
+    if candidate is None:
+        raise ComfyInstallError(
+            "UV_BINARY_MISSING: run setup.ps1/setup.sh or install uv and retry"
+        )
+    if not candidate.is_absolute():
+        raise ComfyInstallError(
+            "UV_BINARY_INVALID: AI_DRAWING_UV_BIN must be an absolute path"
+        )
+    resolved = candidate.resolve()
+    if not resolved.is_file():
+        raise ComfyInstallError(
+            "UV_BINARY_INVALID: configured uv binary does not exist"
+        )
+    return resolved
+
+
+def _plan_uv_binary(uv_bin: Path | None) -> Path:
+    resolved = resolve_uv_binary() if uv_bin is None else Path(uv_bin)
+    if not resolved.is_absolute():
+        raise ComfyInstallError("UV_BINARY_INVALID: uv binary must be absolute")
+    return resolved
 
 
 def validate_comfyui_root(
@@ -192,9 +229,13 @@ def _venv_python(root: Path, host: HostInfo) -> Path:
     return root / ".venv" / "bin" / "python"
 
 
-def _torch_args(python: Path, device: DeviceMode) -> tuple[str, ...]:
+def _torch_args(
+    python: Path,
+    device: DeviceMode,
+    uv_bin: Path,
+) -> tuple[str, ...]:
     args = (
-        "uv",
+        str(uv_bin),
         "pip",
         "install",
         "--python",
@@ -216,31 +257,48 @@ def _smoke_code(device: DeviceMode) -> str:
     return "import torch"
 
 
+def smoke_comfyui_runtime(
+    python: Path,
+    device: DeviceMode,
+    runner: Runner,
+) -> None:
+    """Assert the selected runtime supports the requested device."""
+    _run_required(
+        runner,
+        PlannedCommand(
+            "smoke",
+            (str(Path(python).resolve()), "-c", _smoke_code(device)),
+        ),
+    )
+
+
 def _environment_commands(
     root: Path,
     device: DeviceMode,
     host: HostInfo,
     clear_venv: bool = False,
+    uv_bin: Path | None = None,
 ) -> tuple[PlannedCommand, ...]:
+    uv = _plan_uv_binary(uv_bin)
     python = _venv_python(root, host)
-    venv_args = ["uv", "venv"]
+    venv_args = [str(uv), "venv"]
     if clear_venv:
         venv_args.append("--clear")
     venv_args.extend(("--python", COMFYUI_PYTHON, str(root / ".venv")))
     return (
         PlannedCommand(
             "python",
-            ("uv", "python", "install", COMFYUI_PYTHON),
+            (str(uv), "python", "install", COMFYUI_PYTHON),
         ),
         PlannedCommand(
             "venv",
             tuple(venv_args),
         ),
-        PlannedCommand("torch", _torch_args(python, device)),
+        PlannedCommand("torch", _torch_args(python, device, uv)),
         PlannedCommand(
             "requirements",
             (
-                "uv",
+                str(uv),
                 "pip",
                 "install",
                 "--python",
@@ -257,6 +315,8 @@ def build_install_plan(
     target: Path,
     device: DeviceMode,
     host: HostInfo | None = None,
+    *,
+    uv_bin: Path | None = None,
 ) -> InstallPlan:
     target = Path(target).resolve()
     staging = staging_path(target)
@@ -275,7 +335,7 @@ def build_install_plan(
                 str(staging),
             ),
         ),
-        *_environment_commands(staging, device, actual_host),
+        *_environment_commands(staging, device, actual_host, uv_bin=uv_bin),
     )
     return InstallPlan(
         target=target,
@@ -302,6 +362,7 @@ def install_comfyui(
     host: HostInfo | None = None,
     *,
     project_root: Path,
+    uv_bin: Path | None = None,
 ) -> ComfyValidation:
     """Install into staging and publish only a validated, smoke-tested root."""
     actual_host = host or detect_host()
@@ -312,9 +373,10 @@ def install_comfyui(
         raise UnsupportedComfyArchitecture(
             "native arm64 architecture is required; Rosetta is unsupported"
         ) from error
+    resolved_uv = _plan_uv_binary(uv_bin)
     target_was_empty = final_target.is_dir() and not any(final_target.iterdir())
     prepared = prepare_staging_target(final_target)
-    plan = build_install_plan(final_target, device, actual_host)
+    plan = build_install_plan(final_target, device, actual_host, uv_bin=resolved_uv)
     if prepared != plan.staging:
         raise ComfyInstallError("prepared staging target does not match install plan")
     try:
@@ -343,6 +405,8 @@ def update_comfyui(
     device: DeviceMode,
     runner: Runner,
     host: HostInfo | None = None,
+    *,
+    uv_bin: Path | None = None,
 ) -> str:
     """Update explicitly to the stable pin and restore the prior commit on failure."""
     actual_host = host or detect_host()
@@ -352,6 +416,7 @@ def update_comfyui(
         raise UnsupportedComfyArchitecture(
             "native arm64 architecture is required; Rosetta is unsupported"
         ) from error
+    resolved_uv = _plan_uv_binary(uv_bin)
     installation = validate_comfyui_root(root, actual_host)
     if not installation.valid:
         raise ComfyInstallError(
@@ -391,7 +456,13 @@ def update_comfyui(
             ("git", "checkout", "--detach", COMFYUI_VERSION),
             cwd=root,
         ),
-        *_environment_commands(root, device, actual_host, clear_venv=True),
+        *_environment_commands(
+            root,
+            device,
+            actual_host,
+            clear_venv=True,
+            uv_bin=resolved_uv,
+        ),
     )
     try:
         for command in update_commands:

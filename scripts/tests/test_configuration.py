@@ -38,6 +38,8 @@ def test_connected_env_uses_only_container_model_paths(tmp_path):
     assert "COMFYUI_CHECKPOINTS_DIR=/comfyui/models/checkpoints" in rendered
     assert "DATABASE_URL=sqlite:////data/database/auto_draw.db" in rendered
     assert str(tmp_path) not in rendered
+    assert "MCP_BACKEND_API_URL=http://127.0.0.1:8001" in rendered
+    assert "MCP_BACKEND_API_URL=http://host.docker.internal" not in rendered
 
 
 def test_disabled_override_is_empty():

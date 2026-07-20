@@ -235,6 +235,17 @@ launcher 不會殺掉占用者。互動模式可接受替代 port，或明確指
 
 互動恢復也可選 `cpu`；非互動使用 `--on-comfy-failure cpu`。
 
+### `COMFYUI_RECONFIGURE_REQUIRES_STOP`
+
+launcher 驗證到自己管理的 ComfyUI 仍在執行時，不會把它誤認為 external，也不會直接更換路徑、裝置或 port。先安全停止，再重新設定：
+
+```bash
+./setup.sh stop
+./setup.sh reconfigure --device cpu
+```
+
+Windows 請使用相同參數的 `./setup.ps1`。
+
 ### 服務沒有 ready
 
 ```bash

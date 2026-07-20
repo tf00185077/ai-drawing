@@ -89,7 +89,7 @@ def render_env(
         "PROMPT_LIBRARY_DIR": "/data/prompt_library",
         "LORA_TRAIN_DIR": "/data/lora_train",
         "WATCH_DIRS": "/data/lora_train",
-        "MCP_BACKEND_API_URL": f"http://host.docker.internal:{settings.backend_port}",
+        "MCP_BACKEND_API_URL": f"http://127.0.0.1:{settings.backend_port}",
         "BACKEND_PORT": str(settings.backend_port),
         "FRONTEND_PORT": str(settings.frontend_port),
     }
