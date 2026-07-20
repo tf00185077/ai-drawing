@@ -1,0 +1,354 @@
+from __future__ import annotations
+
+import json
+import os
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Iterable
+from urllib.request import urlopen
+
+from .constants import COMFYUI_PYTHON, COMFYUI_REPOSITORY, COMFYUI_VERSION
+from .models import ComfyMode, DeviceMode, HostInfo
+from .platforms import comfyui_python_candidates, detect_host
+from .runner import Runner
+
+
+CUDA_INDEX = "https://download.pytorch.org/whl/cu130"
+CPU_INDEX = "https://download.pytorch.org/whl/cpu"
+TORCH_PACKAGES = ("torch", "torchvision", "torchaudio")
+
+
+class InstallTargetNotEmpty(RuntimeError):
+    """Raised rather than overwriting a user's existing installation."""
+
+
+class ComfyInstallError(RuntimeError):
+    """Raised when a managed install or update cannot be completed safely."""
+
+
+@dataclass(frozen=True)
+class ComfyValidation:
+    root: Path
+    valid: bool
+    python: Path | None
+    issues: tuple[str, ...]
+
+    @property
+    def controllable(self) -> bool:
+        return self.valid and self.python is not None
+
+
+@dataclass(frozen=True)
+class ComfyProbe:
+    base_url: str
+    running: bool
+    mode: ComfyMode | None
+
+
+@dataclass(frozen=True)
+class PlannedCommand:
+    name: str
+    args: tuple[str, ...]
+    cwd: Path | None = None
+
+
+@dataclass(frozen=True)
+class InstallPlan:
+    target: Path
+    staging: Path
+    python: Path
+    commands: tuple[PlannedCommand, ...]
+
+
+def validate_comfyui_root(
+    root: Path,
+    host: HostInfo | None = None,
+) -> ComfyValidation:
+    """Validate one exact candidate without searching below it."""
+    candidate = Path(root).resolve()
+    issues: list[str] = []
+    if not (candidate / "main.py").is_file():
+        issues.append("missing_main_py")
+    if not (candidate / "models").is_dir():
+        issues.append("missing_models_directory")
+    actual_host = host or detect_host()
+    python = next(
+        (
+            path
+            for path in comfyui_python_candidates(candidate, actual_host)
+            if path.is_file()
+        ),
+        None,
+    )
+    return ComfyValidation(
+        root=candidate,
+        valid=not issues,
+        python=python,
+        issues=tuple(issues),
+    )
+
+
+def discover_comfyui(
+    candidates: Iterable[Path],
+    host: HostInfo | None = None,
+) -> tuple[ComfyValidation, ...]:
+    """Inspect only supplied roots, preserving order and removing duplicates."""
+    found: list[ComfyValidation] = []
+    seen: set[str] = set()
+    for raw_candidate in candidates:
+        candidate = Path(raw_candidate).resolve()
+        identity = os.path.normcase(str(candidate))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        validation = validate_comfyui_root(candidate, host)
+        if validation.valid:
+            found.append(validation)
+    return tuple(found)
+
+
+def probe_comfyui(
+    base_url: str,
+    http_get: Callable[..., object] = urlopen,
+    timeout: float = 2.0,
+) -> ComfyProbe:
+    """Probe an already-running API, which is always externally owned."""
+    normalized = base_url.rstrip("/")
+    try:
+        response = http_get(f"{normalized}/system_stats", timeout)
+        if hasattr(response, "__enter__"):
+            with response as opened:
+                status = getattr(opened, "status", 200)
+                body = opened.read()
+        else:
+            status = getattr(response, "status", 200)
+            body = response.read()
+        payload = json.loads(body)
+        if status != 200 or not isinstance(payload, dict):
+            raise ValueError("invalid ComfyUI response")
+    except (OSError, TimeoutError, ValueError, TypeError, json.JSONDecodeError):
+        return ComfyProbe(base_url=normalized, running=False, mode=None)
+    return ComfyProbe(
+        base_url=normalized,
+        running=True,
+        mode=ComfyMode.EXTERNAL,
+    )
+
+
+def staging_path(target: Path) -> Path:
+    target = Path(target)
+    return target.with_name(f".{target.name}.staging")
+
+
+def _remove_staging(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink(missing_ok=True)
+    elif path.exists():
+        shutil.rmtree(path)
+
+
+def prepare_staging_target(target: Path) -> Path:
+    """Prepare a known sibling staging path without replacing user data."""
+    target = Path(target)
+    if target.exists() and (not target.is_dir() or any(target.iterdir())):
+        raise InstallTargetNotEmpty(f"install target is not empty: {target}")
+    staging = staging_path(target)
+    _remove_staging(staging)
+    staging.parent.mkdir(parents=True, exist_ok=True)
+    staging.mkdir()
+    return staging
+
+
+def _venv_python(root: Path, host: HostInfo) -> Path:
+    if host.system == "Windows":
+        return root / ".venv" / "Scripts" / "python.exe"
+    return root / ".venv" / "bin" / "python"
+
+
+def _torch_args(python: Path, device: DeviceMode) -> tuple[str, ...]:
+    args = (
+        "uv",
+        "pip",
+        "install",
+        "--python",
+        str(python),
+        *TORCH_PACKAGES,
+    )
+    if device is DeviceMode.NVIDIA:
+        return (*args, "--index-url", CUDA_INDEX)
+    if device is DeviceMode.CPU:
+        return (*args, "--index-url", CPU_INDEX)
+    return args
+
+
+def _smoke_code(device: DeviceMode) -> str:
+    if device is DeviceMode.NVIDIA:
+        return "import torch; assert torch.cuda.is_available()"
+    if device is DeviceMode.MPS:
+        return "import torch; assert torch.backends.mps.is_available()"
+    return "import torch"
+
+
+def _environment_commands(
+    root: Path,
+    device: DeviceMode,
+    host: HostInfo,
+) -> tuple[PlannedCommand, ...]:
+    python = _venv_python(root, host)
+    return (
+        PlannedCommand(
+            "python",
+            ("uv", "python", "install", COMFYUI_PYTHON),
+        ),
+        PlannedCommand(
+            "venv",
+            ("uv", "venv", "--python", COMFYUI_PYTHON, str(root / ".venv")),
+        ),
+        PlannedCommand("torch", _torch_args(python, device)),
+        PlannedCommand(
+            "requirements",
+            (
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                str(python),
+                "-r",
+                str(root / "requirements.txt"),
+            ),
+        ),
+        PlannedCommand("smoke", (str(python), "-c", _smoke_code(device))),
+    )
+
+
+def build_install_plan(
+    target: Path,
+    device: DeviceMode,
+    host: HostInfo | None = None,
+) -> InstallPlan:
+    target = Path(target).resolve()
+    staging = staging_path(target)
+    actual_host = host or detect_host()
+    commands = (
+        PlannedCommand(
+            "clone",
+            (
+                "git",
+                "clone",
+                "--branch",
+                COMFYUI_VERSION,
+                "--depth",
+                "1",
+                COMFYUI_REPOSITORY,
+                str(staging),
+            ),
+        ),
+        *_environment_commands(staging, device, actual_host),
+    )
+    return InstallPlan(
+        target=target,
+        staging=staging,
+        python=_venv_python(staging, actual_host),
+        commands=commands,
+    )
+
+
+def _run_required(runner: Runner, command: PlannedCommand) -> None:
+    try:
+        result = runner.run(command.args, cwd=command.cwd)
+    except OSError as error:
+        raise ComfyInstallError(f"{command.name} command failed: {error}") from error
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        raise ComfyInstallError(f"{command.name} command failed: {detail}")
+
+
+def install_comfyui(
+    target: Path,
+    device: DeviceMode,
+    runner: Runner,
+    host: HostInfo | None = None,
+) -> ComfyValidation:
+    """Install into staging and publish only a validated, smoke-tested root."""
+    actual_host = host or detect_host()
+    final_target = Path(target).resolve()
+    prepared = prepare_staging_target(final_target)
+    plan = build_install_plan(final_target, device, actual_host)
+    if prepared != plan.staging:
+        raise ComfyInstallError("prepared staging target does not match install plan")
+    try:
+        for command in plan.commands:
+            _run_required(runner, command)
+        staged = validate_comfyui_root(plan.staging, actual_host)
+        if not staged.controllable:
+            raise ComfyInstallError(
+                "validation failed: " + ", ".join(staged.issues or ("missing_python",))
+            )
+        if final_target.exists():
+            final_target.rmdir()
+        plan.staging.replace(final_target)
+    except Exception:
+        _remove_staging(plan.staging)
+        raise
+    return validate_comfyui_root(final_target, actual_host)
+
+
+def update_comfyui(
+    root: Path,
+    device: DeviceMode,
+    runner: Runner,
+    host: HostInfo | None = None,
+) -> str:
+    """Update explicitly to the stable pin and restore the prior commit on failure."""
+    actual_host = host or detect_host()
+    installation = validate_comfyui_root(root, actual_host)
+    if not installation.valid:
+        raise ComfyInstallError(
+            "invalid ComfyUI root: " + ", ".join(installation.issues)
+        )
+    root = installation.root
+    revision = PlannedCommand(
+        "read current commit",
+        ("git", "rev-parse", "HEAD"),
+        cwd=root,
+    )
+    try:
+        result = runner.run(revision.args, cwd=revision.cwd)
+    except OSError as error:
+        raise ComfyInstallError(f"read current commit command failed: {error}") from error
+    old_commit = result.stdout.strip()
+    if result.returncode != 0 or not old_commit:
+        detail = result.stderr.strip() or "no commit returned"
+        raise ComfyInstallError(f"read current commit command failed: {detail}")
+
+    update_commands = (
+        PlannedCommand(
+            "checkout",
+            ("git", "checkout", "--detach", COMFYUI_VERSION),
+            cwd=root,
+        ),
+        *_environment_commands(root, device, actual_host),
+    )
+    try:
+        for command in update_commands:
+            _run_required(runner, command)
+        updated = validate_comfyui_root(root, actual_host)
+        if not updated.controllable:
+            raise ComfyInstallError("validation failed after update")
+    except Exception as error:
+        rollback = PlannedCommand(
+            "rollback",
+            ("git", "checkout", "--detach", old_commit),
+            cwd=root,
+        )
+        try:
+            _run_required(runner, rollback)
+        except ComfyInstallError as rollback_error:
+            raise ComfyInstallError(
+                f"update failed ({error}); rollback to {old_commit} failed: {rollback_error}"
+            ) from error
+        raise ComfyInstallError(
+            f"update failed ({error}); restored {old_commit}"
+        ) from error
+    return COMFYUI_VERSION
