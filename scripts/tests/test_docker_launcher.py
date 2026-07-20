@@ -9,6 +9,9 @@ from launcher.docker import (
     compose_command,
     compose_down,
     compose_up,
+    compose_up_services,
+    compose_service_states,
+    docker_bridge_host,
     find_available_port,
     mount_probe,
     port_available,
@@ -88,6 +91,48 @@ def test_compose_operations_are_structured_lists(tmp_path):
     compose_down(tmp_path, runner)
     assert runner.commands[0][0][-4:] == ["up", "-d", "--build", "--remove-orphans"]
     assert runner.commands[1][0][-3:] == ["down", "--remove-orphans", "--timeout=10"]
+
+
+def test_partial_compose_restore_is_exact_and_has_no_dependencies(tmp_path):
+    runner = FakeRunner((result(),))
+    compose_up_services(tmp_path, runner, frozenset({"backend"}))
+    assert runner.commands[0][0][-4:] == ["up", "-d", "--no-deps", "backend"]
+
+
+def test_compose_service_states_are_parsed_without_shell(tmp_path):
+    payload = (
+        '{"Service":"backend","State":"running"}\n'
+        '{"Service":"frontend","State":"exited"}\n'
+    )
+    runner = FakeRunner((result(stdout=payload),))
+    assert compose_service_states(tmp_path, runner) == {
+        "backend": "running",
+        "frontend": "exited",
+    }
+    assert runner.commands[0][0][-4:] == ["ps", "--all", "--format", "json"]
+
+
+def test_linux_bridge_host_comes_from_structured_docker_inspection():
+    runner = FakeRunner((result(stdout="172.17.0.1\n"),))
+    assert docker_bridge_host(runner) == "172.17.0.1"
+    assert runner.commands[0][0] == [
+        "docker",
+        "network",
+        "inspect",
+        "bridge",
+        "--format",
+        "{{(index .IPAM.Config 0).Gateway}}",
+    ]
+
+
+@pytest.mark.parametrize(
+    "address",
+    ["0.0.0.0", "127.0.0.1", "8.8.8.8", "192.0.2.1", "not-an-ip"],
+)
+def test_linux_bridge_host_rejects_unsafe_address(address):
+    with pytest.raises(DockerError) as raised:
+        docker_bridge_host(FakeRunner((result(stdout=address),)))
+    assert raised.value.code == "DOCKER_BRIDGE_UNSAFE"
 
 
 def test_validate_compose_uses_staged_paths(tmp_path):

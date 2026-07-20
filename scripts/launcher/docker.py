@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import re
+import ipaddress
+import json
 import socket
 import time
 from collections.abc import Callable, Iterable
@@ -14,6 +16,10 @@ from .runner import Runner
 
 
 MOUNT_PROBE_IMAGE = "busybox:1.36.1"
+_RFC1918_NETWORKS = tuple(
+    ipaddress.ip_network(value)
+    for value in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+)
 
 
 class DockerError(RuntimeError):
@@ -212,6 +218,101 @@ def compose_down(project_root: Path, runner: Runner) -> None:
         code="COMPOSE_DOWN_FAILED",
         message="Docker 服務停止失敗。",
     )
+
+
+def compose_service_states(project_root: Path, runner: Runner) -> dict[str, str]:
+    root = Path(project_root).resolve()
+    result = _run(
+        runner,
+        compose_command(root, "ps", "--all", "--format", "json"),
+        cwd=root,
+    )
+    if result.returncode != 0:
+        raise DockerError(
+            "COMPOSE_STATUS_FAILED",
+            "無法讀取 Docker Compose 服務狀態。",
+            "請確認設定存在並執行 reconfigure。",
+        )
+    text = result.stdout.strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+        records = parsed if isinstance(parsed, list) else [parsed]
+    except json.JSONDecodeError:
+        try:
+            records = [json.loads(line) for line in text.splitlines() if line.strip()]
+        except json.JSONDecodeError as error:
+            raise DockerError(
+                "COMPOSE_STATUS_INVALID",
+                "Docker Compose 回傳無法解析的服務狀態。",
+                "請更新 Docker Compose 至支援 JSON status 的版本。",
+            ) from error
+    states: dict[str, str] = {}
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        service = record.get("Service")
+        state = record.get("State")
+        if isinstance(service, str) and service and isinstance(state, str):
+            states[service] = state.lower()
+    return states
+
+
+def compose_up_services(
+    project_root: Path,
+    runner: Runner,
+    services: frozenset[str],
+) -> None:
+    if not services:
+        return
+    _compose_required(
+        project_root,
+        runner,
+        "up",
+        "-d",
+        "--no-deps",
+        *sorted(services),
+        code="COMPOSE_RESTORE_FAILED",
+        message="無法還原先前的 Docker Compose 服務集合。",
+    )
+
+
+def docker_bridge_host(runner: Runner) -> str:
+    result = _run(
+        runner,
+        [
+            "docker",
+            "network",
+            "inspect",
+            "bridge",
+            "--format",
+            "{{(index .IPAM.Config 0).Gateway}}",
+        ],
+    )
+    address = result.stdout.strip()
+    try:
+        parsed = ipaddress.ip_address(address)
+    except ValueError as error:
+        parsed = None
+        cause = error
+    else:
+        cause = None
+    if (
+        result.returncode != 0
+        or not isinstance(parsed, ipaddress.IPv4Address)
+        or not any(parsed in network for network in _RFC1918_NETWORKS)
+        or parsed.is_loopback
+        or parsed.is_unspecified
+        or parsed.is_multicast
+        or parsed.is_link_local
+    ):
+        raise DockerError(
+            "DOCKER_BRIDGE_UNSAFE",
+            "Docker bridge gateway 不存在或不是安全的私有 IPv4 位址。",
+            "請確認預設 bridge network 可用；不會綁定 0.0.0.0 或公開位址。",
+        ) from cause
+    return str(parsed)
 
 
 def _is_within(path: Path, roots: Iterable[Path]) -> bool:

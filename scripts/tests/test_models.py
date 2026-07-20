@@ -39,10 +39,32 @@ def test_state_round_trip(tmp_path):
         comfyui_port=8188,
         managed_pid=42,
         managed_identity=identity,
+        launcher_installed=True,
+        installed_root=tmp_path / "Comfy UI",
+        installed_commit="v0.28.0",
     )
 
     assert LauncherState.from_json(state.to_json()) == state
     assert "authorization" not in state.to_json().lower()
+    assert LauncherState.from_json(state.to_json()).launcher_installed is True
+
+
+def test_legacy_state_defaults_to_user_owned_installation():
+    legacy = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": "C:/User/ComfyUI",
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": None,
+        "managed_identity": None,
+    }
+
+    loaded = LauncherState.from_json(json.dumps(legacy))
+
+    assert loaded.launcher_installed is False
+    assert loaded.installed_root is None
+    assert loaded.installed_commit is None
 
 
 def test_legacy_command_line_only_identity_loads_as_unowned():

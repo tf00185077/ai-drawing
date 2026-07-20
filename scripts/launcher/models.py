@@ -127,6 +127,9 @@ class LauncherState:
     comfyui_port: int
     managed_pid: int | None
     managed_identity: ProcessIdentity | None
+    launcher_installed: bool = False
+    installed_root: Path | None = None
+    installed_commit: str | None = None
 
     def to_json(self) -> str:
         def convert(value: Any) -> Any:
@@ -173,4 +176,29 @@ class LauncherState:
             comfyui_port=comfyui_port,
             managed_pid=managed_pid,
             managed_identity=ProcessIdentity.from_value(raw.get("managed_identity")),
+            launcher_installed=(
+                raw.get("launcher_installed") is True
+                and isinstance(raw.get("installed_root"), str)
+                and bool(raw.get("installed_root"))
+                and isinstance(raw.get("installed_commit"), str)
+                and bool(raw.get("installed_commit"))
+            ),
+            installed_root=(
+                Path(raw["installed_root"])
+                if raw.get("launcher_installed") is True
+                and isinstance(raw.get("installed_root"), str)
+                and bool(raw.get("installed_root"))
+                and isinstance(raw.get("installed_commit"), str)
+                and bool(raw.get("installed_commit"))
+                else None
+            ),
+            installed_commit=(
+                raw["installed_commit"]
+                if raw.get("launcher_installed") is True
+                and isinstance(raw.get("installed_root"), str)
+                and bool(raw.get("installed_root"))
+                and isinstance(raw.get("installed_commit"), str)
+                and bool(raw.get("installed_commit"))
+                else None
+            ),
         )

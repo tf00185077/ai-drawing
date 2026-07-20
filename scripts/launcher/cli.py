@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import re
+import socket
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -23,6 +26,7 @@ from .configuration import (
     write_configuration,
 )
 from .constants import (
+    COMFYUI_VERSION,
     DEFAULT_BACKEND_PORT,
     DEFAULT_COMFYUI_PORT,
     DEFAULT_FRONTEND_PORT,
@@ -44,6 +48,12 @@ from .platforms import (
     read_process_identity,
 )
 from .processes import start_comfyui, stop_comfyui
+from .relay import (
+    RelayState,
+    load_relay_state,
+    start_relay,
+    stop_relay,
+)
 from .runner import Runner, SubprocessRunner
 
 
@@ -54,6 +64,15 @@ class LauncherError(RuntimeError):
         self.message = message
         self.hint = hint
         self.exit_code = exit_code
+
+
+_LOG_SECRET = re.compile(
+    r"(?im)\b(authorization|token|secret|password|api[_-]?key)\b\s*[:=]\s*[^\r\n]*"
+)
+
+
+def _redact_log(value: str) -> str:
+    return _LOG_SECRET.sub(lambda match: f"{match.group(1)}=[REDACTED]", value)
 
 
 @dataclass(frozen=True)
@@ -177,10 +196,15 @@ class DefaultServices:
                 "ComfyUI 未能在時限內啟動。",
                 "請查看 data/logs/comfyui.log，或 reconfigure 選擇 disabled。",
             )
-        return result.state
+        return replace(
+            result.state,
+            launcher_installed=planned.launcher_installed,
+            installed_root=planned.installed_root,
+            installed_commit=planned.installed_commit,
+        )
 
-    def stop_comfyui(self, current: LauncherState) -> LauncherState:
-        return stop_comfyui(current, self.runner, self.host).state
+    def stop_comfyui(self, current: LauncherState):
+        return stop_comfyui(current, self.runner, self.host)
 
     def select_ports(self, backend_port: int, frontend_port: int) -> tuple[int, int]:
         backend = docker.find_available_port(backend_port)
@@ -205,6 +229,12 @@ class DefaultServices:
                 "既有設定中的連接埠無效。",
                 "請重新執行 reconfigure。",
             ) from error
+        if not _valid_port(backend) or not _valid_port(frontend):
+            raise LauncherError(
+                "CONFIG_PORT_INVALID",
+                "既有設定中的連接埠超出有效範圍。",
+                "連接埠必須是 1 到 65535 的整數；請重新執行 reconfigure。",
+            )
         return backend, frontend
 
     def mount_probes(self, settings: LocalSettings) -> None:
@@ -280,18 +310,17 @@ class DefaultServices:
                 "請重新執行 reconfigure；不會套用無效設定。",
             )
 
-    def compose_running(self) -> bool:
-        result = self.runner.run(
-            docker.compose_command(
-                self.project_root,
-                "ps",
-                "--services",
-                "--filter",
-                "status=running",
-            ),
-            cwd=self.project_root,
+    def compose_running_services(self) -> frozenset[str]:
+        return frozenset(
+            service
+            for service, state in docker.compose_service_states(
+                self.project_root, self.runner
+            ).items()
+            if state == "running"
         )
-        return result.returncode == 0 and bool(result.stdout.strip())
+
+    def compose_up_services(self, services: frozenset[str]) -> None:
+        docker.compose_up_services(self.project_root, self.runner, services)
 
     def compose_up(self) -> None:
         docker.compose_up(self.project_root, self.runner)
@@ -299,11 +328,116 @@ class DefaultServices:
     def compose_down(self) -> None:
         docker.compose_down(self.project_root, self.runner)
 
-    def wait_backend(self, port: int) -> bool:
-        return docker.wait_http_ready(f"http://127.0.0.1:{port}/health")
+    @staticmethod
+    def _relay_ready(state: RelayState) -> bool:
+        try:
+            with socket.create_connection(
+                (state.bind_host, state.bind_port), timeout=0.5
+            ):
+                return True
+        except OSError:
+            return False
 
-    def wait_frontend(self, port: int) -> bool:
-        return docker.wait_http_ready(f"http://127.0.0.1:{port}/")
+    def ensure_relay(self, settings: LocalSettings):
+        from .relay import RelayStartResult
+
+        if self.host.system != "Linux" or settings.comfy_mode is ComfyMode.DISABLED:
+            return RelayStartResult(False, "not_required", None)
+        existing = load_relay_state(self.project_root)
+        existing_was_stopped = False
+        if existing is not None:
+            identity = read_process_identity(
+                self.host, existing.managed_pid, self.runner
+            )
+            if (
+                identity == existing.managed_identity
+                and existing.target_port == settings.comfyui_port
+                and existing.bind_port == settings.comfyui_port
+                and self._relay_ready(existing)
+            ):
+                return RelayStartResult(False, "already_ready", existing)
+            stopped = stop_relay(
+                existing,
+                self.runner,
+                self.host,
+                project_root=self.project_root,
+            )
+            existing_was_stopped = stopped.stopped
+            if not stopped.stopped and stopped.reason not in {
+                "process_not_found",
+                "process_identity_mismatch",
+            }:
+                raise LauncherError(
+                    "RELAY_REPLACEMENT_FAILED",
+                    "既有 launcher relay 無法安全替換。",
+                    "請執行 status 並檢查 data/bootstrap/relay-state.json。",
+                )
+        bridge_host = docker.docker_bridge_host(self.runner)
+        result = start_relay(
+            project_root=self.project_root,
+            python=Path(sys.executable),
+            bind_host=bridge_host,
+            bind_port=settings.comfyui_port,
+            target_port=settings.comfyui_port,
+            host=self.host,
+            runner=self.runner,
+        )
+        if not result.started or result.state is None:
+            if existing is not None and existing_was_stopped:
+                try:
+                    self.restore_relay(existing)
+                except Exception as restore_error:
+                    raise LauncherError(
+                        "RELAY_REPLACEMENT_ROLLBACK_FAILED",
+                        "新 relay 啟動失敗，且舊 relay 無法恢復。",
+                        "請執行 status 並檢查 relay ownership/log。",
+                    ) from restore_error
+            raise LauncherError(
+                "RELAY_START_FAILED",
+                "Linux Docker bridge relay 未能安全啟動。",
+                "請查看 data/logs/comfyui-relay.log，或停用 ComfyUI。",
+            )
+        return result
+
+    def current_relay_state(self) -> RelayState | None:
+        state = load_relay_state(self.project_root)
+        if state is None:
+            return None
+        identity = read_process_identity(self.host, state.managed_pid, self.runner)
+        return state if identity == state.managed_identity else None
+
+    def restore_relay(self, state: RelayState) -> None:
+        result = start_relay(
+            project_root=self.project_root,
+            python=Path(sys.executable),
+            bind_host=state.bind_host,
+            bind_port=state.bind_port,
+            target_port=state.target_port,
+            host=self.host,
+            runner=self.runner,
+        )
+        if not result.started:
+            raise LauncherError(
+                "RELAY_RESTORE_FAILED",
+                "無法恢復先前 launcher relay。",
+                "請執行 status 並檢查 data/logs/comfyui-relay.log。",
+            )
+
+    def stop_relay(self, state: RelayState | None = None):
+        return stop_relay(
+            state,
+            self.runner,
+            self.host,
+            project_root=self.project_root,
+        )
+
+    def wait_backend(self, port: int, *, timeout: float = 60.0) -> bool:
+        return docker.wait_http_ready(
+            f"http://127.0.0.1:{port}/health", timeout=timeout
+        )
+
+    def wait_frontend(self, port: int, *, timeout: float = 60.0) -> bool:
+        return docker.wait_http_ready(f"http://127.0.0.1:{port}/", timeout=timeout)
 
     def save_state(self, new_state: LauncherState) -> None:
         atomic_write(
@@ -311,22 +445,128 @@ class DefaultServices:
             new_state.to_json() + "\n",
         )
 
-    def status(self, current: LauncherState | None) -> dict[str, str]:
-        running = self.compose_running()
+    @staticmethod
+    def _model_count(root: Path | None) -> int:
+        if root is None:
+            return 0
+        extensions = {".safetensors", ".ckpt", ".pt", ".pth"}
+        found: set[Path] = set()
+        for relative in ("models/checkpoints", "models/diffusion_models"):
+            directory = root / relative
+            if directory.is_dir():
+                found.update(
+                    path.resolve()
+                    for path in directory.iterdir()
+                    if path.is_file() and path.suffix.lower() in extensions
+                )
+        return len(found)
+
+    def status(self, current: LauncherState | None) -> dict[str, Any]:
+        compose_files = (
+            self.project_root / "docker-compose.yml",
+            self.project_root / ".env",
+            self.project_root / ".ai-drawing/compose.local.yaml",
+        )
+        services = (
+            docker.compose_service_states(self.project_root, self.runner)
+            if all(path.is_file() for path in compose_files)
+            else {}
+        )
+        backend_port, frontend_port = self.load_ports()
+        backend = (
+            "reachable" if self.wait_backend(backend_port, timeout=1.0) else "unreachable"
+        )
+        frontend = (
+            "reachable"
+            if self.wait_frontend(frontend_port, timeout=1.0)
+            else "unreachable"
+        )
+        comfy_state = "not_configured"
+        ownership = "none"
+        model_count = 0
+        hint = "執行 reconfigure 可設定或安裝 ComfyUI。"
+        if current is not None and current.comfy_mode is not ComfyMode.DISABLED:
+            probe = probe_comfyui(f"http://127.0.0.1:{current.comfyui_port}")
+            model_count = self._model_count(current.comfyui_root)
+            if current.comfy_mode is ComfyMode.MANAGED:
+                identity = (
+                    read_process_identity(self.host, current.managed_pid, self.runner)
+                    if current.managed_pid is not None
+                    else None
+                )
+                ownership = (
+                    "managed_verified"
+                    if identity is not None and identity == current.managed_identity
+                    else "managed_stale"
+                )
+            else:
+                ownership = "external"
+            if not probe.running:
+                comfy_state = "unreachable"
+                hint = "請啟動 ComfyUI 或執行 reconfigure 選擇 disabled。"
+            elif model_count == 0:
+                comfy_state = "no_models"
+                hint = "ComfyUI 已連線；請自行放入 checkpoint 或 diffusion model。"
+            else:
+                comfy_state = "connected"
+                hint = "ComfyUI 與模型已就緒。"
+
+        relay_status = "not_required" if self.host.system != "Linux" else "not_running"
+        if self.host.system == "Linux":
+            relay_state = load_relay_state(self.project_root)
+            if relay_state is not None:
+                identity = read_process_identity(
+                    self.host, relay_state.managed_pid, self.runner
+                )
+                relay_status = (
+                    "running_verified"
+                    if identity == relay_state.managed_identity
+                    and self._relay_ready(relay_state)
+                    else "stale"
+                )
         return {
-            "application": "running" if running else "stopped",
-            "comfy_mode": current.comfy_mode.value if current else "not_configured",
+            "docker": "available",
+            "services": services,
+            "backend": backend,
+            "frontend": frontend,
+            "comfy": {
+                "state": comfy_state,
+                "ownership": ownership,
+                "model_count": model_count,
+                "hint": hint,
+            },
+            "relay": relay_status,
         }
 
     def compose_logs(self) -> None:
-        self.runner.run(
+        for name in ("bootstrap.log", "comfyui.log", "comfyui-relay.log"):
+            path = self.project_root / "data/logs" / name
+            if not path.is_file():
+                self.emit(f"--- {name}: missing ---")
+                continue
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                self.emit(f"--- {name}: unreadable ---")
+                continue
+            self.emit(f"--- {name} ---")
+            self.emit(_redact_log(content))
+        result = self.runner.run(
             docker.compose_command(self.project_root, "logs", "--tail", "200"),
             cwd=self.project_root,
-            capture=False,
         )
+        self.emit("--- docker compose logs ---")
+        if result.returncode == 0:
+            self.emit(_redact_log(result.stdout))
+        else:
+            self.emit("Compose logs unavailable.")
 
     def update_comfyui(self, current: LauncherState) -> None:
-        if current.comfyui_root is None or current.device is None:
+        if (
+            not current.launcher_installed
+            or current.installed_root is None
+            or current.device is None
+        ):
             raise LauncherError(
                 "COMFYUI_NOT_MANAGED",
                 "目前沒有可更新的 managed ComfyUI。",
@@ -334,7 +574,7 @@ class DefaultServices:
             )
         try:
             update_comfyui(
-                current.comfyui_root,
+                current.installed_root,
                 current.device,
                 self.runner,
                 self.host,
@@ -367,6 +607,10 @@ def _port_argument(value: str) -> int:
     return port
 
 
+def _valid_port(value: object) -> bool:
+    return type(value) is int and 1 <= value <= 65535
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(description="AI Drawing launcher")
     parser.add_argument(
@@ -376,6 +620,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument("--non-interactive", action="store_true")
+    parser.add_argument("--accept-alternate-ports", action="store_true")
+    parser.add_argument(
+        "--on-comfy-failure",
+        choices=("abort", "retry", "cpu", "disabled"),
+    )
+    parser.add_argument(
+        "--on-mount-failure",
+        choices=("abort", "retry", "disabled"),
+    )
     parser.add_argument("--comfyui-mode", choices=[mode.value for mode in ComfyMode])
     parser.add_argument("--comfyui-path", type=Path)
     parser.add_argument("--device", choices=[mode.value for mode in DeviceMode])
@@ -391,15 +644,53 @@ def _base_state(
     root: Path | None = None,
     device: DeviceMode | None = None,
     port: int = DEFAULT_COMFYUI_PORT,
+    previous: LauncherState | None = None,
+    launcher_installed: bool | None = None,
+    installed_root: Path | None = None,
+    installed_commit: str | None = None,
 ) -> LauncherState:
+    same_root = (
+        previous is not None
+        and root is not None
+        and previous.comfyui_root is not None
+        and previous.comfyui_root.resolve() == root.resolve()
+        and previous.comfyui_port == port
+    )
+    preserve_process = (
+        same_root
+        and mode is ComfyMode.MANAGED
+        and previous is not None
+        and previous.device == device
+    )
+    preserve_install = (
+        previous is not None
+        and previous.launcher_installed
+        and previous.installed_root is not None
+        and (
+            (root is not None and previous.installed_root.resolve() == root.resolve())
+            or (root is None and mode is ComfyMode.DISABLED)
+        )
+    )
+    owned_install = preserve_install if launcher_installed is None else launcher_installed
     return LauncherState(
         schema_version=STATE_SCHEMA_VERSION,
         comfy_mode=mode,
         comfyui_root=root,
         device=device,
         comfyui_port=port,
-        managed_pid=None,
-        managed_identity=None,
+        managed_pid=previous.managed_pid if preserve_process else None,
+        managed_identity=previous.managed_identity if preserve_process else None,
+        launcher_installed=owned_install,
+        installed_root=(
+            previous.installed_root
+            if owned_install and installed_root is None and previous is not None
+            else installed_root
+        ),
+        installed_commit=(
+            previous.installed_commit
+            if owned_install and installed_commit is None and previous is not None
+            else installed_commit
+        ),
     )
 
 
@@ -431,41 +722,52 @@ def _install_or_disable(
     services: Any,
     root: Path,
     device: DeviceMode,
+    previous: LauncherState | None,
 ) -> LauncherState:
     try:
         installed = services.install_comfyui(root, device)
     except Exception as first_error:
-        if device is not DeviceMode.CPU and not args.non_interactive:
-            if services.ask("GPU/MPS 驗證失敗，是否明確改用 CPU？", default=False):
-                try:
-                    installed = services.install_comfyui(root, DeviceMode.CPU)
-                    device = DeviceMode.CPU
-                except Exception:
-                    installed = None
-            else:
-                installed = None
-        else:
-            installed = None
-        if installed is None:
-            if not args.non_interactive and services.ask(
-                "ComfyUI 安裝失敗，是否以停用 ComfyUI 繼續？",
-                default=True,
-            ):
-                return _base_state(ComfyMode.DISABLED, port=args.comfyui_port)
+        choice = _recovery_choice(args, services, kind="comfy")
+        if choice == "disabled":
+            return _base_state(
+                ComfyMode.DISABLED,
+                port=args.comfyui_port,
+                previous=previous,
+            )
+        if choice == "abort":
             raise LauncherError(
                 "COMFYUI_INSTALL_FAILED",
                 "ComfyUI 安裝未完成。",
                 "可重新執行 setup，或選擇 --comfyui-mode disabled。",
             ) from first_error
+        retry_device = DeviceMode.CPU if choice == "cpu" else device
+        try:
+            installed = services.install_comfyui(root, retry_device)
+            device = retry_device
+        except Exception as retry_error:
+            raise LauncherError(
+                "COMFYUI_INSTALL_RECOVERY_FAILED",
+                "ComfyUI 安裝恢復嘗試仍未完成。",
+                "請查看安裝環境，或重新執行並選擇 disabled。",
+            ) from retry_error
     return _base_state(
         ComfyMode.MANAGED,
         root=installed.root,
         device=device,
         port=args.comfyui_port,
+        launcher_installed=True,
+        installed_root=installed.root,
+        installed_commit=COMFYUI_VERSION,
     )
 
 
-def _plan_comfyui(args: argparse.Namespace, services: Any) -> LauncherState:
+def _plan_comfyui(
+    args: argparse.Namespace,
+    services: Any,
+    previous: LauncherState | None = None,
+    *,
+    dry_run: bool = False,
+) -> LauncherState:
     explicit_mode = ComfyMode(args.comfyui_mode) if args.comfyui_mode else None
     if args.non_interactive and explicit_mode is None:
         raise LauncherError(
@@ -475,7 +777,11 @@ def _plan_comfyui(args: argparse.Namespace, services: Any) -> LauncherState:
             exit_code=2,
         )
     if explicit_mode is ComfyMode.DISABLED:
-        return _base_state(ComfyMode.DISABLED, port=args.comfyui_port)
+        return _base_state(
+            ComfyMode.DISABLED,
+            port=args.comfyui_port,
+            previous=previous,
+        )
     if explicit_mode is ComfyMode.EXTERNAL:
         if not services.probe_external(args.comfyui_port):
             raise LauncherError(
@@ -487,8 +793,14 @@ def _plan_comfyui(args: argparse.Namespace, services: Any) -> LauncherState:
             ComfyMode.EXTERNAL,
             root=args.comfyui_path.resolve() if args.comfyui_path else None,
             port=args.comfyui_port,
+            previous=previous,
         )
-    if args.non_interactive and explicit_mode is ComfyMode.MANAGED and not args.comfyui_path:
+    if (
+        args.non_interactive
+        and explicit_mode is ComfyMode.MANAGED
+        and not args.comfyui_path
+        and not dry_run
+    ):
         raise LauncherError(
             "MISSING_COMFYUI_PATH",
             "非互動 managed 模式缺少安裝或既有路徑。",
@@ -497,9 +809,17 @@ def _plan_comfyui(args: argparse.Namespace, services: Any) -> LauncherState:
         )
 
     if explicit_mode is None and not services.ask("是否設定 ComfyUI？", default=False):
-        return _base_state(ComfyMode.DISABLED, port=args.comfyui_port)
+        return _base_state(
+            ComfyMode.DISABLED,
+            port=args.comfyui_port,
+            previous=previous,
+        )
     if services.probe_external(args.comfyui_port):
-        return _base_state(ComfyMode.EXTERNAL, port=args.comfyui_port)
+        return _base_state(
+            ComfyMode.EXTERNAL,
+            port=args.comfyui_port,
+            previous=previous,
+        )
 
     root = args.comfyui_path.resolve() if args.comfyui_path else None
     candidates = tuple(path for path in (root, services.default_comfyui_root()) if path)
@@ -513,13 +833,164 @@ def _plan_comfyui(args: argparse.Namespace, services: Any) -> LauncherState:
             root=found[0].root,
             device=device,
             port=args.comfyui_port,
+            previous=previous,
         )
 
     if explicit_mode is None and not services.ask("是否自動安裝 ComfyUI？", default=True):
-        return _base_state(ComfyMode.DISABLED, port=args.comfyui_port)
+        return _base_state(
+            ComfyMode.DISABLED,
+            port=args.comfyui_port,
+            previous=previous,
+        )
     target = root or services.default_comfyui_root()
     device = DeviceMode(args.device) if args.device else services.detect_device()
-    return _install_or_disable(args, services, target, device)
+    if dry_run:
+        return _base_state(
+            ComfyMode.MANAGED,
+            root=target,
+            device=device,
+            port=args.comfyui_port,
+            previous=previous,
+        )
+    return _install_or_disable(args, services, target, device, previous)
+
+
+def _confirm_selected_ports(
+    args: argparse.Namespace,
+    services: Any,
+    selected: tuple[int, int],
+) -> tuple[int, int]:
+    backend_port, frontend_port = selected
+    if not _valid_port(backend_port) or not _valid_port(frontend_port):
+        raise LauncherError(
+            "CONFIG_PORT_INVALID",
+            "選擇的連接埠無效。",
+            "連接埠必須是 1 到 65535 的內建整數。",
+        )
+    alternate = (
+        backend_port != args.backend_port or frontend_port != args.frontend_port
+    )
+    if not alternate:
+        return selected
+    description = f"Backend {backend_port}、Frontend {frontend_port}"
+    if args.non_interactive and not args.accept_alternate_ports:
+        raise LauncherError(
+            "ALTERNATE_PORTS_NOT_ACCEPTED",
+            f"預設連接埠已占用；可用替代為 {description}。",
+            "非互動模式請加上 --accept-alternate-ports，或指定其他 ports。",
+            exit_code=2,
+        )
+    if not args.non_interactive and not services.ask(
+        f"預設連接埠已占用，是否使用 {description}？", default=False
+    ):
+        raise LauncherError(
+            "ALTERNATE_PORTS_REJECTED",
+            "使用者未接受替代連接埠。",
+            "請釋放預設連接埠或指定其他 ports。",
+            exit_code=2,
+        )
+    return selected
+
+
+def _recovery_choice(
+    args: argparse.Namespace,
+    services: Any,
+    *,
+    kind: str,
+) -> str:
+    flag = args.on_comfy_failure if kind == "comfy" else args.on_mount_failure
+    options = (
+        ("retry", "cpu", "disabled", "abort")
+        if kind == "comfy"
+        else ("retry", "disabled", "abort")
+    )
+    if args.non_interactive:
+        if flag is None:
+            raise LauncherError(
+                "MISSING_RECOVERY_DECISION",
+                "非互動模式遇到可恢復錯誤，但沒有明確處理決策。",
+                f"請指定 --on-{kind}-failure。",
+                exit_code=2,
+            )
+        return flag
+    return services.choose(
+        "恢復方式",
+        options,
+        default="abort",
+    )
+
+
+def _start_comfy_with_recovery(
+    args: argparse.Namespace,
+    services: Any,
+    planned: LauncherState,
+) -> LauncherState:
+    try:
+        return services.start_comfyui(planned)
+    except Exception as original:
+        choice = _recovery_choice(args, services, kind="comfy")
+        if choice == "disabled":
+            return _base_state(
+                ComfyMode.DISABLED,
+                port=planned.comfyui_port,
+                previous=planned,
+            )
+        retry_state = planned
+        if choice == "cpu":
+            retry_state = replace(
+                planned,
+                device=DeviceMode.CPU,
+                managed_pid=None,
+                managed_identity=None,
+            )
+        if choice in {"retry", "cpu"}:
+            try:
+                return services.start_comfyui(retry_state)
+            except Exception as retry_error:
+                raise LauncherError(
+                    "COMFYUI_RECOVERY_FAILED",
+                    "ComfyUI 恢復嘗試仍未成功。",
+                    "請查看 ComfyUI log，或重新執行並選擇 disabled。",
+                ) from retry_error
+        raise LauncherError(
+            "COMFYUI_START_ABORTED",
+            "ComfyUI 啟動已中止。",
+            "可重新執行並選擇 retry、cpu 或 disabled。",
+        ) from original
+
+
+def _mount_with_recovery(
+    args: argparse.Namespace,
+    services: Any,
+    settings: LocalSettings,
+    active: LauncherState,
+) -> tuple[LocalSettings, LauncherState]:
+    try:
+        services.mount_probes(settings)
+        return settings, active
+    except Exception as original:
+        choice = _recovery_choice(args, services, kind="mount")
+        if choice == "retry":
+            services.mount_probes(settings)
+            return settings, active
+        if choice == "disabled" and active.comfy_mode is not ComfyMode.DISABLED:
+            disabled = _base_state(
+                ComfyMode.DISABLED,
+                port=active.comfyui_port,
+                previous=active,
+            )
+            disabled_settings = _settings(
+                disabled,
+                settings.backend_port,
+                settings.frontend_port,
+            )
+            services.mount_probes(disabled_settings)
+            return disabled_settings, disabled
+        raise LauncherError(
+            "MOUNT_RECOVERY_ABORTED",
+            "Docker 掛載檢查未通過。",
+            "請修正 Docker 路徑分享，或選擇 disabled。",
+        ) from original
 
 
 def _safe_rollback(
@@ -527,8 +998,11 @@ def _safe_rollback(
     *,
     snapshot: Any | None,
     compose_attempted: bool,
-    compose_was_running: bool,
+    prior_services: frozenset[str],
     started_state: LauncherState | None,
+    started_relay: RelayState | None,
+    prior_relay: RelayState | None,
+    prior_relay_stopped: bool,
 ) -> None:
     rollback_errors: list[Exception] = []
     if compose_attempted:
@@ -541,14 +1015,39 @@ def _safe_rollback(
             services.restore_configuration(snapshot)
         except Exception as error:
             rollback_errors.append(error)
-    if started_state is not None:
+    if started_relay is not None:
         try:
-            services.stop_comfyui(started_state)
+            stopped_relay = services.stop_relay(started_relay)
+            if not stopped_relay.stopped:
+                raise LauncherError(
+                    "RELAY_ROLLBACK_STOP_FAILED",
+                    "Rollback 無法停止本次啟動的 Linux relay。",
+                    "請執行 status 並人工確認 relay PID。",
+                )
         except Exception as error:
             rollback_errors.append(error)
-    if compose_was_running:
+    if prior_relay is not None and (
+        prior_relay_stopped
+        or (started_relay is not None and prior_relay != started_relay)
+    ):
         try:
-            services.compose_up()
+            services.restore_relay(prior_relay)
+        except Exception as error:
+            rollback_errors.append(error)
+    if started_state is not None:
+        try:
+            stopped = services.stop_comfyui(started_state)
+            if not stopped.stopped:
+                raise LauncherError(
+                    "COMFYUI_ROLLBACK_STOP_FAILED",
+                    "Rollback 無法停止本次啟動的 ComfyUI。",
+                    "請執行 status 並人工確認 managed PID。",
+                )
+        except Exception as error:
+            rollback_errors.append(error)
+    if prior_services:
+        try:
+            services.compose_up_services(prior_services)
         except Exception as error:
             rollback_errors.append(error)
     if rollback_errors:
@@ -560,6 +1059,7 @@ def _safe_rollback(
 
 
 def _start_application(
+    args: argparse.Namespace,
     services: Any,
     current: LauncherState,
     *,
@@ -568,17 +1068,47 @@ def _start_application(
 ) -> None:
     snapshot = services.snapshot_configuration()
     started_state: LauncherState | None = None
+    started_relay: RelayState | None = None
+    prior_relay = services.current_relay_state()
+    prior_relay_stopped = False
     compose_attempted = False
-    compose_was_running = services.compose_running()
+    prior_services = services.compose_running_services()
     try:
         active = current
         if current.comfy_mode is ComfyMode.MANAGED:
-            active = services.start_comfyui(current)
+            active = _start_comfy_with_recovery(args, services, current)
             if active.managed_pid != current.managed_pid:
-                started_state = active
-                services.save_state(active)
-        services.mount_probes(_settings(active, backend_port, frontend_port))
-        services.validate_current_compose()
+                if active.comfy_mode is ComfyMode.MANAGED:
+                    started_state = active
+        settings = _settings(active, backend_port, frontend_port)
+        settings, active = _mount_with_recovery(
+            args, services, settings, active
+        )
+        if started_state is not None and active.comfy_mode is ComfyMode.DISABLED:
+            stopped_new = services.stop_comfyui(started_state)
+            if not stopped_new.stopped:
+                raise LauncherError(
+                    "COMFYUI_STOP_FAILED",
+                    "切換 disabled 時無法停止本次啟動的 ComfyUI。",
+                    "ownership 狀態已保留；請執行 status。",
+                )
+            started_state = None
+        relay = services.ensure_relay(settings)
+        if relay.started:
+            started_relay = relay.state
+        changed = (
+            active.comfy_mode != current.comfy_mode
+            or active.device != current.device
+            or active.comfyui_root != current.comfyui_root
+            or active.comfyui_port != current.comfyui_port
+        )
+        if changed:
+            services.write_configuration(settings, active)
+        elif active.managed_pid != current.managed_pid:
+            services.save_state(active)
+            services.validate_current_compose()
+        else:
+            services.validate_current_compose()
         compose_attempted = True
         services.compose_up()
         if not services.wait_backend(backend_port):
@@ -593,34 +1123,88 @@ def _start_application(
                 "Frontend 未能在時限內就緒。",
                 "請執行 logs 查看容器診斷。",
             )
+        if active.comfy_mode is ComfyMode.DISABLED and prior_relay is not None:
+            stopped_prior_relay = services.stop_relay(prior_relay)
+            if stopped_prior_relay.stopped:
+                prior_relay_stopped = True
+            elif stopped_prior_relay.reason not in {
+                "process_not_found",
+                "process_identity_mismatch",
+            }:
+                raise LauncherError(
+                    "RELAY_STOP_FAILED",
+                    "切換 disabled 後無法安全停止舊 relay。",
+                    "將回復舊設定；請執行 status。",
+                )
+        if (
+            current.comfy_mode is ComfyMode.MANAGED
+            and current.managed_pid is not None
+            and current.managed_pid != active.managed_pid
+        ):
+            stopped_old = services.stop_comfyui(current)
+            if not stopped_old.stopped and stopped_old.reason not in {
+                "process_not_found",
+                "process_identity_mismatch",
+                "no_managed_process",
+            }:
+                raise LauncherError(
+                    "COMFYUI_STOP_FAILED",
+                    "舊 managed ComfyUI 無法在轉換完成後安全停止。",
+                    "已回復舊設定；請執行 status。",
+                )
     except Exception:
         _safe_rollback(
             services,
             snapshot=snapshot,
             compose_attempted=compose_attempted,
-            compose_was_running=compose_was_running,
+            prior_services=prior_services,
             started_state=started_state,
+            started_relay=started_relay,
+            prior_relay=prior_relay,
+            prior_relay_stopped=prior_relay_stopped,
         )
         raise
 
 
 def _configure(args: argparse.Namespace, services: Any, old: LauncherState | None) -> None:
-    backend_port, frontend_port = services.select_ports(
-        args.backend_port,
-        args.frontend_port,
+    backend_port, frontend_port = _confirm_selected_ports(
+        args,
+        services,
+        services.select_ports(args.backend_port, args.frontend_port),
     )
-    planned = _plan_comfyui(args, services)
+    planned = _plan_comfyui(args, services, old)
     snapshot = services.snapshot_configuration()
-    compose_was_running = services.compose_running()
+    prior_services = services.compose_running_services()
     started_state: LauncherState | None = None
+    started_relay: RelayState | None = None
+    prior_relay = services.current_relay_state()
+    prior_relay_stopped = False
     compose_attempted = False
     try:
         active = planned
         if planned.comfy_mode is ComfyMode.MANAGED:
-            active = services.start_comfyui(planned)
-            started_state = active
+            active = _start_comfy_with_recovery(args, services, planned)
+            if (
+                active.comfy_mode is ComfyMode.MANAGED
+                and (old is None or active.managed_pid != old.managed_pid)
+            ):
+                started_state = active
         settings = _settings(active, backend_port, frontend_port)
-        services.mount_probes(settings)
+        settings, active = _mount_with_recovery(
+            args, services, settings, active
+        )
+        if started_state is not None and active.comfy_mode is ComfyMode.DISABLED:
+            stopped_new = services.stop_comfyui(started_state)
+            if not stopped_new.stopped:
+                raise LauncherError(
+                    "COMFYUI_STOP_FAILED",
+                    "切換 disabled 時無法停止本次啟動的 ComfyUI。",
+                    "ownership 狀態已保留；請執行 status。",
+                )
+            started_state = None
+        relay = services.ensure_relay(settings)
+        if relay.started:
+            started_relay = relay.state
         services.write_configuration(settings, active)
         compose_attempted = True
         services.compose_up()
@@ -636,13 +1220,36 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
                 "Frontend 未能在時限內就緒。",
                 "請執行 logs 查看容器診斷。",
             )
+        if active.comfy_mode is ComfyMode.DISABLED and prior_relay is not None:
+            stopped_prior_relay = services.stop_relay(prior_relay)
+            if stopped_prior_relay.stopped:
+                prior_relay_stopped = True
+            elif stopped_prior_relay.reason not in {
+                "process_not_found",
+                "process_identity_mismatch",
+            }:
+                raise LauncherError(
+                    "RELAY_STOP_FAILED",
+                    "切換 disabled 後無法安全停止舊 relay。",
+                    "將回復舊設定；請執行 status。",
+                )
         if (
             old is not None
             and old.comfy_mode is ComfyMode.MANAGED
             and old.managed_pid is not None
             and old.managed_pid != active.managed_pid
         ):
-            services.stop_comfyui(old)
+            stopped = services.stop_comfyui(old)
+            if not stopped.stopped and stopped.reason not in {
+                "process_not_found",
+                "process_identity_mismatch",
+                "no_managed_process",
+            }:
+                raise LauncherError(
+                    "COMFYUI_STOP_FAILED",
+                    "舊的 managed ComfyUI 無法安全停止。",
+                    "已保留 ownership 狀態；請執行 status。",
+                )
         services.emit(f"Frontend: http://127.0.0.1:{frontend_port}")
         services.emit(f"Backend: http://127.0.0.1:{backend_port}")
         services.emit(f"ComfyUI: {active.comfy_mode.value}")
@@ -651,8 +1258,11 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
             services,
             snapshot=snapshot,
             compose_attempted=compose_attempted,
-            compose_was_running=compose_was_running,
+            prior_services=prior_services,
             started_state=started_state,
+            started_relay=started_relay,
+            prior_relay=prior_relay,
+            prior_relay_stopped=prior_relay_stopped,
         )
         raise
 
@@ -665,31 +1275,102 @@ def _run(args: argparse.Namespace, services: Any) -> int:
         command = "start" if current is not None else "setup"
 
     if command == "dry-run":
+        planned = current
         if current is None:
-            _plan_comfyui(args, services)
+            planned = _plan_comfyui(args, services, current, dry_run=True)
+            if planned.comfy_mode is ComfyMode.MANAGED:
+                services.emit(
+                    f"Would install or use ComfyUI at: {planned.comfyui_root}"
+                )
+        if planned is not None:
+            services.emit(f"Would configure ComfyUI mode: {planned.comfy_mode.value}")
+        services.emit(
+            "Would validate explicit project/data/ComfyUI mount paths and staged Compose config."
+        )
+        services.emit(
+            "Would run Docker Compose with explicit .env, base compose, and local override paths."
+        )
         services.emit("Dry run 完成：未寫入設定、未啟動或停止任何服務。")
         return 0
     if command == LauncherCommand.STATUS.value:
         status = services.status(current)
-        services.emit(f"Application: {status['application']}")
-        services.emit(f"ComfyUI: {status['comfy_mode']}")
+        services.emit(f"Docker: {status['docker']}")
+        for service, state in sorted(status["services"].items()):
+            services.emit(f"Compose {service}: {state}")
+        services.emit(f"Backend: {status['backend']}")
+        services.emit(f"Frontend: {status['frontend']}")
+        comfy = status["comfy"]
+        services.emit(
+            f"ComfyUI: {comfy['state']} ({comfy['ownership']}), "
+            f"models={comfy['model_count']}"
+        )
+        services.emit(f"Hint: {comfy['hint']}")
+        services.emit(f"Relay: {status['relay']}")
         return 0
     if command == LauncherCommand.LOGS.value:
         services.compose_logs()
         return 0
     if command == LauncherCommand.UPDATE_COMFYUI.value:
-        if current is None or current.comfy_mode is not ComfyMode.MANAGED:
+        if (
+            current is None
+            or not current.launcher_installed
+            or current.installed_root is None
+            or current.device is None
+        ):
             raise LauncherError(
-                "COMFYUI_NOT_MANAGED",
-                "目前沒有可更新的 managed ComfyUI。",
-                "請先執行 reconfigure。",
+                "COMFYUI_UPDATE_NOT_OWNED",
+                "只有啟動器自動安裝的 ComfyUI 可以自動更新。",
+                "使用者自有或 discovered 路徑請自行更新，啟動器不會修改。",
             )
         services.update_comfyui(current)
         return 0
     if command == LauncherCommand.STOP.value:
-        services.compose_down()
+        stop_errors: list[LauncherError] = []
+        try:
+            services.compose_down()
+        except docker.DockerError as error:
+            stop_errors.append(
+                LauncherError(error.code, error.message, error.hint)
+            )
+        except Exception:
+            stop_errors.append(
+                LauncherError(
+                    "COMPOSE_DOWN_FAILED",
+                    "Docker Compose 無法完整停止。",
+                    "仍會嘗試安全停止 launcher-owned relay 與 ComfyUI。",
+                )
+            )
+        stopped_relay = services.stop_relay()
+        if not stopped_relay.stopped and stopped_relay.reason not in {
+            "no_managed_process",
+            "process_not_found",
+            "process_identity_mismatch",
+        }:
+            stop_errors.append(
+                LauncherError(
+                    "RELAY_STOP_FAILED",
+                    "launcher-owned Linux relay 無法安全停止。",
+                    "relay ownership 已保留；請執行 status。",
+                )
+            )
         if current is not None and current.comfy_mode is ComfyMode.MANAGED:
-            services.save_state(services.stop_comfyui(current))
+            stopped = services.stop_comfyui(current)
+            if stopped.stopped or stopped.reason in {
+                "process_not_found",
+                "process_identity_mismatch",
+                "no_managed_process",
+            }:
+                services.save_state(stopped.state)
+            else:
+                stop_errors.append(
+                    LauncherError(
+                        "COMFYUI_STOP_FAILED",
+                        "managed ComfyUI 無法安全停止。",
+                        "ownership 狀態已保留；請執行 status 檢查程序。",
+                    )
+                )
+        if stop_errors:
+            raise stop_errors[0]
         return 0
     if command == LauncherCommand.START.value:
         if current is None:
@@ -705,7 +1386,14 @@ def _run(args: argparse.Namespace, services: Any) -> int:
             if load_ports is not None
             else (args.backend_port, args.frontend_port)
         )
+        if not _valid_port(backend_port) or not _valid_port(frontend_port):
+            raise LauncherError(
+                "CONFIG_PORT_INVALID",
+                "既有設定中的連接埠無效。",
+                "連接埠必須是 1 到 65535 的內建整數；請執行 reconfigure。",
+            )
         _start_application(
+            args,
             services,
             current,
             backend_port=backend_port,
