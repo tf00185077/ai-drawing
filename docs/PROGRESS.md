@@ -4,6 +4,10 @@
 
 Implemented the injected, unit-testable platform detection layer for the one-click launcher: Windows/Linux NVIDIA selection, Apple Silicon MPS selection, CPU fallback, OS data roots, Python candidate paths, and safe PID command-line identity reads. PID inputs are validated as positive built-in integers at both command construction and state deserialization. Verification: PID regression coverage `29 passed`; complete launcher suite `30 passed`.
 
+## 2026-07-20 One-click launcher: atomic local configuration
+
+Implemented generated Docker-safe `.env`, local Compose bind-mount override, and persisted launcher state with validation-before-replace writes. Existing `CIVITAI_AUTHORIZATION` is preserved without logging, and nested authorization/token/secret/password values are redacted for safe diagnostics. Verification: focused configuration suite `9 passed`; complete launcher suite `39 passed`.
+
 > **唯一來源**。完成的任務要同步修改這個文件（`docs/PROGRESS.md`），且不需同步改 README.md 或 AGENTS.md。
 > 寫進度時以「人看得懂」為準：一項工作一段，講清楚做了什麼、為什麼、下一步；不要貼雜湊值稽核日誌。
 > （2026-07-14 以前的稽核式進度原文保存在 `docs/archive/2026-07-legacy/PROGRESS-2026-07-14-audit-log.md`。）
