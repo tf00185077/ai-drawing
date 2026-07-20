@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from http.client import BadStatusLine
 from io import BytesIO
 from pathlib import Path
 from urllib.error import URLError
@@ -101,7 +102,10 @@ def test_probe_timeout_connection_and_malformed_results_never_escape(
     assert result.comfyui.warnings == []
 
 
-@pytest.mark.parametrize("error", [TypeError("bug"), AssertionError("bug")])
+@pytest.mark.parametrize(
+    "error",
+    [ValueError("bug"), TypeError("bug"), AssertionError("bug")],
+)
 def test_probe_programming_errors_propagate(tmp_path: Path, error: Exception) -> None:
     with pytest.raises(type(error), match="bug"):
         get_system_status(_settings(tmp_path), probe=Probe(error=error))
@@ -131,6 +135,38 @@ def test_actual_urllib_boundary_converts_network_error_to_unreachable(
         assert url.endswith("/system_stats")
         assert timeout == 2.0
         raise URLError("offline")
+
+    monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
+
+    result = get_system_status(_settings(tmp_path))
+
+    assert result.comfyui.state == "unreachable"
+
+
+def test_actual_urllib_boundary_converts_malformed_url_to_unreachable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def fake_urlopen(url: str, *, timeout: float):
+        assert url.endswith("/system_stats")
+        assert timeout == 2.0
+        raise ValueError("unknown url type")
+
+    monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
+
+    result = get_system_status(_settings(tmp_path))
+
+    assert result.comfyui.state == "unreachable"
+
+
+def test_actual_urllib_boundary_converts_http_protocol_error_to_unreachable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def fake_urlopen(url: str, *, timeout: float):
+        assert url.endswith("/system_stats")
+        assert timeout == 2.0
+        raise BadStatusLine("broken response")
 
     monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
 
