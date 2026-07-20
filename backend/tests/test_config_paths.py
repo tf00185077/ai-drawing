@@ -99,3 +99,22 @@ def test_prompt_library_lock_timeout_must_be_positive(monkeypatch, timeout: str)
     monkeypatch.setenv("PROMPT_LIBRARY_LOCK_TIMEOUT", timeout)
     with pytest.raises(ValidationError, match="greater than 0"):
         config_module.Settings()
+
+
+def test_comfyui_mode_defaults_to_external_for_local_development(monkeypatch) -> None:
+    monkeypatch.delenv("COMFYUI_MODE", raising=False)
+    settings = config_module.Settings(_env_file=None)
+
+    assert settings.comfyui_mode == "external"
+
+
+@pytest.mark.parametrize("mode", ["disabled", "external", "managed"])
+def test_comfyui_mode_accepts_supported_values(mode: str) -> None:
+    settings = config_module.Settings(_env_file=None, comfyui_mode=mode)
+
+    assert settings.comfyui_mode == mode
+
+
+def test_comfyui_mode_rejects_unknown_values() -> None:
+    with pytest.raises(ValidationError, match="literal_error"):
+        config_module.Settings(_env_file=None, comfyui_mode="automatic")
