@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import socket
 import sys
@@ -8,6 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from urllib.request import urlopen
 
 from . import docker
 from .comfyui import (
@@ -67,12 +69,17 @@ class LauncherError(RuntimeError):
 
 
 _LOG_SECRET = re.compile(
-    r"(?im)\b(authorization|token|secret|password|api[_-]?key)\b\s*[:=]\s*[^\r\n]*"
+    r"(?i)(authorization|bearer|api[_-]?key|token|password|secret)"
 )
+_BOOTSTRAP_LOG_LIMIT = 256 * 1024
 
 
 def _redact_log(value: str) -> str:
-    return _LOG_SECRET.sub(lambda match: f"{match.group(1)}=[REDACTED]", value)
+    rendered: list[str] = []
+    for line in value.splitlines(keepends=True):
+        ending = "\n" if line.endswith(("\n", "\r")) else ""
+        rendered.append("[REDACTED]" + ending if _LOG_SECRET.search(line) else line)
+    return "".join(rendered)
 
 
 @dataclass(frozen=True)
@@ -104,6 +111,16 @@ class DefaultServices:
     def emit(self, message: str) -> None:
         self._output(message)
 
+    def log_bootstrap(self, message: str) -> None:
+        path = self.project_root / "data/logs/bootstrap.log"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_file() and path.stat().st_size >= _BOOTSTRAP_LOG_LIMIT:
+            rotated = path.with_suffix(".log.1")
+            rotated.unlink(missing_ok=True)
+            path.replace(rotated)
+        with path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(_redact_log(message.rstrip("\r\n")) + "\n")
+
     def preflight(self) -> None:
         docker.preflight(self.runner)
 
@@ -116,6 +133,10 @@ class DefaultServices:
         if not answer:
             return default
         return answer in {"y", "yes", "是"}
+
+    def ask_path(self, message: str) -> Path | None:
+        answer = self._input(f"{message}: ").strip()
+        return Path(answer).expanduser().resolve() if answer else None
 
     def choose(
         self,
@@ -141,8 +162,44 @@ class DefaultServices:
     def discover_comfyui(self, candidates: Sequence[Path]):
         return discover_comfyui(candidates, self.host)
 
+    def candidate_roots(
+        self, explicit: Path | None = None, previous: Path | None = None
+    ) -> tuple[Path, ...]:
+        home = self.host.home
+        common = {
+            "Windows": (
+                home / "ComfyUI",
+                home / "Desktop/ComfyUI",
+                home / "Documents/ComfyUI",
+            ),
+            "Darwin": (home / "ComfyUI", home / "Applications/ComfyUI"),
+            "Linux": (
+                home / "ComfyUI",
+                home / "Applications/ComfyUI",
+                home / ".local/share/ComfyUI",
+            ),
+        }.get(self.host.system, (home / "ComfyUI",))
+        ordered = (explicit, previous, self.default_comfyui_root(), *common)
+        return tuple(
+            dict.fromkeys(path.resolve() for path in ordered if path is not None)
+        )
+
     def probe_external(self, port: int) -> bool:
         return probe_comfyui(f"http://127.0.0.1:{port}").running
+
+    def managed_state_is_verified(self, state: LauncherState) -> bool:
+        if (
+            state.comfy_mode is not ComfyMode.MANAGED
+            or state.comfyui_root is None
+            or state.managed_pid is None
+            or state.managed_identity is None
+        ):
+            return False
+        identity = read_process_identity(self.host, state.managed_pid, self.runner)
+        return (
+            identity == state.managed_identity
+            and self.probe_external(state.comfyui_port)
+        )
 
     def default_comfyui_root(self) -> Path:
         return default_comfyui_root(self.host)
@@ -214,6 +271,29 @@ class DefaultServices:
             probe=lambda host, port: port != backend and docker.port_available(host, port),
         )
         return backend, frontend
+
+    def select_ports_for_running(
+        self,
+        desired: tuple[int, int],
+        configured: tuple[int, int],
+    ) -> tuple[int, int]:
+        """Treat this project's verified live ports as owned, not foreign conflicts."""
+        owned = frozenset(configured)
+        selected: list[int] = []
+        for requested in desired:
+            if requested in owned and requested not in selected:
+                selected.append(requested)
+                continue
+            chosen = docker.find_available_port(
+                requested,
+                max_attempts=100,
+                probe=lambda host, port: (
+                    port not in selected
+                    and (port in owned or docker.port_available(host, port))
+                ),
+            )
+            selected.append(chosen)
+        return selected[0], selected[1]
 
     def load_ports(self) -> tuple[int, int]:
         env_path = self.project_root / ".env"
@@ -461,7 +541,44 @@ class DefaultServices:
                 )
         return len(found)
 
-    def status(self, current: LauncherState | None) -> dict[str, Any]:
+    @staticmethod
+    def query_comfy_model_count(port: int) -> int | None:
+        """Query bounded ComfyUI metadata when no local model root is known."""
+        try:
+            with urlopen(
+                f"http://127.0.0.1:{port}/object_info", timeout=1.0
+            ) as response:
+                payload = json.loads(response.read(2 * 1024 * 1024).decode("utf-8"))
+        except (OSError, ValueError, TypeError):
+            return None
+        if not isinstance(payload, dict):
+            return None
+        models: set[str] = set()
+        inventory_seen = False
+        for node_name in ("CheckpointLoaderSimple", "UNETLoader"):
+            node = payload.get(node_name)
+            try:
+                required = node["input"]["required"]
+            except (KeyError, TypeError):
+                continue
+            if not isinstance(required, dict):
+                continue
+            for value in required.values():
+                if (
+                    isinstance(value, list)
+                    and value
+                    and isinstance(value[0], list)
+                ):
+                    inventory_seen = True
+                    models.update(str(item) for item in value[0])
+        return len(models) if inventory_seen else None
+
+    def status(
+        self,
+        current: LauncherState | None,
+        *,
+        docker_available: bool = True,
+    ) -> dict[str, Any]:
         compose_files = (
             self.project_root / "docker-compose.yml",
             self.project_root / ".env",
@@ -469,7 +586,7 @@ class DefaultServices:
         )
         services = (
             docker.compose_service_states(self.project_root, self.runner)
-            if all(path.is_file() for path in compose_files)
+            if docker_available and all(path.is_file() for path in compose_files)
             else {}
         )
         backend_port, frontend_port = self.load_ports()
@@ -483,11 +600,17 @@ class DefaultServices:
         )
         comfy_state = "not_configured"
         ownership = "none"
-        model_count = 0
+        model_count: int | None = None
+        model_state = "unknown"
         hint = "執行 reconfigure 可設定或安裝 ComfyUI。"
         if current is not None and current.comfy_mode is not ComfyMode.DISABLED:
             probe = probe_comfyui(f"http://127.0.0.1:{current.comfyui_port}")
-            model_count = self._model_count(current.comfyui_root)
+            if current.comfyui_root is not None:
+                model_count = self._model_count(current.comfyui_root)
+                model_state = "confirmed"
+            elif probe.running:
+                model_count = self.query_comfy_model_count(current.comfyui_port)
+                model_state = "confirmed" if model_count is not None else "unknown"
             if current.comfy_mode is ComfyMode.MANAGED:
                 identity = (
                     read_process_identity(self.host, current.managed_pid, self.runner)
@@ -507,6 +630,9 @@ class DefaultServices:
             elif model_count == 0:
                 comfy_state = "no_models"
                 hint = "ComfyUI 已連線；請自行放入 checkpoint 或 diffusion model。"
+            elif model_count is None:
+                comfy_state = "connected"
+                hint = "ComfyUI is reachable; model inventory could not be confirmed."
             else:
                 comfy_state = "connected"
                 hint = "ComfyUI 與模型已就緒。"
@@ -525,7 +651,7 @@ class DefaultServices:
                     else "stale"
                 )
         return {
-            "docker": "available",
+            "docker": "available" if docker_available else "unavailable",
             "services": services,
             "backend": backend,
             "frontend": frontend,
@@ -533,6 +659,7 @@ class DefaultServices:
                 "state": comfy_state,
                 "ownership": ownership,
                 "model_count": model_count,
+                "model_state": model_state,
                 "hint": hint,
             },
             "relay": relay_status,
@@ -551,11 +678,15 @@ class DefaultServices:
                 continue
             self.emit(f"--- {name} ---")
             self.emit(_redact_log(content))
-        result = self.runner.run(
-            docker.compose_command(self.project_root, "logs", "--tail", "200"),
-            cwd=self.project_root,
-        )
         self.emit("--- docker compose logs ---")
+        try:
+            result = self.runner.run(
+                docker.compose_command(self.project_root, "logs", "--tail", "200"),
+                cwd=self.project_root,
+            )
+        except OSError:
+            self.emit("Compose logs unavailable (Docker CLI/daemon unavailable).")
+            return
         if result.returncode == 0:
             self.emit(_redact_log(result.stdout))
         else:
@@ -611,6 +742,12 @@ def _valid_port(value: object) -> bool:
     return type(value) is int and 1 <= value <= 65535
 
 
+class _StorePort(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None) -> None:
+        setattr(namespace, self.dest, values)
+        setattr(namespace, f"_{self.dest}_specified", True)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(description="AI Drawing launcher")
     parser.add_argument(
@@ -632,9 +769,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--comfyui-mode", choices=[mode.value for mode in ComfyMode])
     parser.add_argument("--comfyui-path", type=Path)
     parser.add_argument("--device", choices=[mode.value for mode in DeviceMode])
-    parser.add_argument("--backend-port", type=_port_argument, default=DEFAULT_BACKEND_PORT)
-    parser.add_argument("--frontend-port", type=_port_argument, default=DEFAULT_FRONTEND_PORT)
-    parser.add_argument("--comfyui-port", type=_port_argument, default=DEFAULT_COMFYUI_PORT)
+    parser.set_defaults(
+        _backend_port_specified=False,
+        _frontend_port_specified=False,
+        _comfyui_port_specified=False,
+    )
+    parser.add_argument(
+        "--backend-port", type=_port_argument, action=_StorePort,
+        default=DEFAULT_BACKEND_PORT,
+    )
+    parser.add_argument(
+        "--frontend-port", type=_port_argument, action=_StorePort,
+        default=DEFAULT_FRONTEND_PORT,
+    )
+    parser.add_argument(
+        "--comfyui-port", type=_port_argument, action=_StorePort,
+        default=DEFAULT_COMFYUI_PORT,
+    )
     return parser
 
 
@@ -808,6 +959,19 @@ def _plan_comfyui(
             exit_code=2,
         )
 
+    requested_root = args.comfyui_path.resolve() if args.comfyui_path else None
+    requested_device = DeviceMode(args.device) if args.device else None
+    if (
+        previous is not None
+        and previous.comfy_mode is ComfyMode.MANAGED
+        and explicit_mode in {None, ComfyMode.MANAGED}
+        and (requested_root is None or requested_root == previous.comfyui_root.resolve())
+        and (requested_device is None or requested_device == previous.device)
+        and args.comfyui_port == previous.comfyui_port
+        and services.managed_state_is_verified(previous)
+    ):
+        return previous
+
     if explicit_mode is None and not services.ask("是否設定 ComfyUI？", default=False):
         return _base_state(
             ComfyMode.DISABLED,
@@ -822,7 +986,19 @@ def _plan_comfyui(
         )
 
     root = args.comfyui_path.resolve() if args.comfyui_path else None
-    candidates = tuple(path for path in (root, services.default_comfyui_root()) if path)
+    previous_root = previous.comfyui_root if previous is not None else None
+    candidate_builder = getattr(services, "candidate_roots", None)
+    candidates = (
+        candidate_builder(root, previous_root)
+        if candidate_builder is not None
+        else tuple(
+            dict.fromkeys(
+                path.resolve()
+                for path in (root, previous_root, services.default_comfyui_root())
+                if path is not None
+            )
+        )
+    )
     found = services.discover_comfyui(candidates)
     if found and (explicit_mode is ComfyMode.MANAGED or services.ask(
         f"找到 ComfyUI：{found[0].root}，是否使用？", default=True
@@ -835,6 +1011,20 @@ def _plan_comfyui(
             port=args.comfyui_port,
             previous=previous,
         )
+
+    if not args.non_interactive:
+        entered = services.ask_path("輸入其他既有 ComfyUI 路徑（留白跳過）")
+        if entered is not None:
+            entered_found = services.discover_comfyui((entered.resolve(),))
+            if entered_found:
+                device = DeviceMode(args.device) if args.device else services.detect_device()
+                return _base_state(
+                    ComfyMode.MANAGED,
+                    root=entered_found[0].root,
+                    device=device,
+                    port=args.comfyui_port,
+                    previous=previous,
+                )
 
     if explicit_mode is None and not services.ask("是否自動安裝 ComfyUI？", default=True):
         return _base_state(
@@ -858,6 +1048,7 @@ def _plan_comfyui(
 def _confirm_selected_ports(
     args: argparse.Namespace,
     services: Any,
+    desired: tuple[int, int],
     selected: tuple[int, int],
 ) -> tuple[int, int]:
     backend_port, frontend_port = selected
@@ -867,9 +1058,7 @@ def _confirm_selected_ports(
             "選擇的連接埠無效。",
             "連接埠必須是 1 到 65535 的內建整數。",
         )
-    alternate = (
-        backend_port != args.backend_port or frontend_port != args.frontend_port
-    )
+    alternate = selected != desired
     if not alternate:
         return selected
     description = f"Backend {backend_port}、Frontend {frontend_port}"
@@ -1167,14 +1356,42 @@ def _start_application(
 
 
 def _configure(args: argparse.Namespace, services: Any, old: LauncherState | None) -> None:
+    if old is not None and not args._comfyui_port_specified:
+        args.comfyui_port = old.comfyui_port
+    prior_services = services.compose_running_services()
+    project_running = old is not None and bool(prior_services)
+    if project_running:
+        configured_backend, configured_frontend = services.load_ports()
+        desired = (
+            args.backend_port
+            if args._backend_port_specified
+            else configured_backend,
+            args.frontend_port
+            if args._frontend_port_specified
+            else configured_frontend,
+        )
+    else:
+        desired = (args.backend_port, args.frontend_port)
+    if not all(_valid_port(port) for port in desired):
+        raise LauncherError(
+            "CONFIG_PORT_INVALID",
+            "Configured project ports are invalid.",
+            "Choose ports from 1 to 65535 and run reconfigure.",
+        )
+    if project_running:
+        selector = getattr(services, "select_ports_for_running", None)
+        selected = (
+            selector(desired, (configured_backend, configured_frontend))
+            if selector is not None
+            else desired
+        )
+    else:
+        selected = services.select_ports(*desired)
     backend_port, frontend_port = _confirm_selected_ports(
-        args,
-        services,
-        services.select_ports(args.backend_port, args.frontend_port),
+        args, services, desired, selected
     )
     planned = _plan_comfyui(args, services, old)
     snapshot = services.snapshot_configuration()
-    prior_services = services.compose_running_services()
     started_state: LauncherState | None = None
     started_relay: RelayState | None = None
     prior_relay = services.current_relay_state()
@@ -1268,15 +1485,39 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
 
 
 def _run(args: argparse.Namespace, services: Any) -> int:
-    services.preflight()
     current = services.load_state()
     command = args.command
     if command is None:
         command = "start" if current is not None else "setup"
 
+    docker_available = True
+    if command in {
+        LauncherCommand.SETUP.value,
+        LauncherCommand.START.value,
+        LauncherCommand.RECONFIGURE.value,
+    }:
+        services.preflight()
+    elif command in {LauncherCommand.STATUS.value, "dry-run"}:
+        try:
+            services.preflight()
+        except (docker.DockerError, LauncherError):
+            docker_available = False
+
     if command == "dry-run":
+        if not docker_available:
+            services.emit("Docker preflight: unavailable (plan continues read-only).")
+        reconfiguration_requested = any(
+            (
+                args.comfyui_mode is not None,
+                args.comfyui_path is not None,
+                args.device is not None,
+                args._comfyui_port_specified,
+            )
+        )
+        if current is not None and not args._comfyui_port_specified:
+            args.comfyui_port = current.comfyui_port
         planned = current
-        if current is None:
+        if current is None or reconfiguration_requested:
             planned = _plan_comfyui(args, services, current, dry_run=True)
             if planned.comfy_mode is ComfyMode.MANAGED:
                 services.emit(
@@ -1284,6 +1525,28 @@ def _run(args: argparse.Namespace, services: Any) -> int:
                 )
         if planned is not None:
             services.emit(f"Would configure ComfyUI mode: {planned.comfy_mode.value}")
+            services.emit(f"Would use ComfyUI port: {planned.comfyui_port}")
+            if planned.device is not None:
+                services.emit(f"Would use ComfyUI device: {planned.device.value}")
+        configured_ports = (
+            services.load_ports()
+            if current is not None
+            else (DEFAULT_BACKEND_PORT, DEFAULT_FRONTEND_PORT)
+        )
+        planned_backend = (
+            args.backend_port
+            if args._backend_port_specified
+            else configured_ports[0]
+        )
+        planned_frontend = (
+            args.frontend_port
+            if args._frontend_port_specified
+            else configured_ports[1]
+        )
+        services.emit(
+            f"Would use project ports: backend={planned_backend}, "
+            f"frontend={planned_frontend}"
+        )
         services.emit(
             "Would validate explicit project/data/ComfyUI mount paths and staged Compose config."
         )
@@ -1293,7 +1556,7 @@ def _run(args: argparse.Namespace, services: Any) -> int:
         services.emit("Dry run 完成：未寫入設定、未啟動或停止任何服務。")
         return 0
     if command == LauncherCommand.STATUS.value:
-        status = services.status(current)
+        status = services.status(current, docker_available=docker_available)
         services.emit(f"Docker: {status['docker']}")
         for service, state in sorted(status["services"].items()):
             services.emit(f"Compose {service}: {state}")
@@ -1411,20 +1674,48 @@ def _emit_error(services: Any, error: LauncherError) -> None:
     services.emit(f"Hint: {error.hint}")
 
 
+def _try_bootstrap_log(services: Any, message: str) -> None:
+    """Write an audit event without ever changing launcher behaviour."""
+    logger = getattr(services, "log_bootstrap", None)
+    if logger is None:
+        return
+    try:
+        logger(message)
+    except Exception:
+        pass
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
     services: Any | None = None,
 ) -> int:
     active_services = services or DefaultServices()
+    command = "setup"
+    mutating = True
     try:
         args = build_parser().parse_args(argv)
-        return _run(args, active_services)
+        command = args.command or "setup"
+        mutating = command not in {"status", "logs", "dry-run"}
+        if mutating:
+            _try_bootstrap_log(active_services, f"command={command} begin")
+        result = _run(args, active_services)
+        if mutating:
+            _try_bootstrap_log(active_services, f"command={command} complete")
+        return result
     except LauncherError as error:
+        if mutating:
+            _try_bootstrap_log(
+                active_services, f"command={command} error code={error.code}"
+            )
         _emit_error(active_services, error)
         return error.exit_code
     except docker.DockerError as error:
         wrapped = LauncherError(error.code, error.message, error.hint)
+        if mutating:
+            _try_bootstrap_log(
+                active_services, f"command={command} error code={wrapped.code}"
+            )
         _emit_error(active_services, wrapped)
         return wrapped.exit_code
     except ConfigurationError:
@@ -1433,6 +1724,10 @@ def main(
             "產生或驗證本機設定失敗，舊設定已保留。",
             "請確認 Docker Compose 設定與目錄權限後重試。",
         )
+        if mutating:
+            _try_bootstrap_log(
+                active_services, f"command={command} error code={error.code}"
+            )
         _emit_error(active_services, error)
         return error.exit_code
     except Exception:
@@ -1441,5 +1736,9 @@ def main(
             "啟動器遇到未預期錯誤；敏感細節已隱藏。",
             "請執行 status，並查看不含密鑰的 bootstrap/Compose logs。",
         )
+        if mutating:
+            _try_bootstrap_log(
+                active_services, f"command={command} error code={error.code}"
+            )
         _emit_error(active_services, error)
         return error.exit_code

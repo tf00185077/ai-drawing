@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
@@ -164,6 +165,23 @@ class LauncherState:
         if type(comfyui_port) is not int or not 1 <= comfyui_port <= 65535:
             raise ValueError("comfyui_port must be an integer from 1 to 65535")
 
+        comfyui_root_value = raw.get("comfyui_root")
+        installed_root_value = raw.get("installed_root")
+        roots_agree = (
+            isinstance(comfyui_root_value, str)
+            and bool(comfyui_root_value)
+            and isinstance(installed_root_value, str)
+            and bool(installed_root_value)
+            and os.path.normcase(str(Path(comfyui_root_value).resolve()))
+            == os.path.normcase(str(Path(installed_root_value).resolve()))
+        )
+        has_install_provenance = (
+            raw.get("launcher_installed") is True
+            and roots_agree
+            and isinstance(raw.get("installed_commit"), str)
+            and bool(raw.get("installed_commit"))
+        )
+
         return cls(
             schema_version=raw["schema_version"],
             comfy_mode=ComfyMode(raw["comfy_mode"]),
@@ -176,29 +194,15 @@ class LauncherState:
             comfyui_port=comfyui_port,
             managed_pid=managed_pid,
             managed_identity=ProcessIdentity.from_value(raw.get("managed_identity")),
-            launcher_installed=(
-                raw.get("launcher_installed") is True
-                and isinstance(raw.get("installed_root"), str)
-                and bool(raw.get("installed_root"))
-                and isinstance(raw.get("installed_commit"), str)
-                and bool(raw.get("installed_commit"))
-            ),
+            launcher_installed=has_install_provenance,
             installed_root=(
                 Path(raw["installed_root"])
-                if raw.get("launcher_installed") is True
-                and isinstance(raw.get("installed_root"), str)
-                and bool(raw.get("installed_root"))
-                and isinstance(raw.get("installed_commit"), str)
-                and bool(raw.get("installed_commit"))
+                if has_install_provenance
                 else None
             ),
             installed_commit=(
                 raw["installed_commit"]
-                if raw.get("launcher_installed") is True
-                and isinstance(raw.get("installed_root"), str)
-                and bool(raw.get("installed_root"))
-                and isinstance(raw.get("installed_commit"), str)
-                and bool(raw.get("installed_commit"))
+                if has_install_provenance
                 else None
             ),
         )

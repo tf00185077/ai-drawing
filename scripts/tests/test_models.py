@@ -67,6 +67,26 @@ def test_legacy_state_defaults_to_user_owned_installation():
     assert loaded.installed_commit is None
 
 
+def test_forged_install_provenance_with_mismatched_root_is_degraded(tmp_path):
+    payload = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": str(tmp_path / "user-owned"),
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": None,
+        "managed_identity": None,
+        "launcher_installed": True,
+        "installed_root": str(tmp_path / "launcher-owned"),
+        "installed_commit": "v0.28.0",
+    }
+
+    loaded = LauncherState.from_json(json.dumps(payload))
+    assert loaded.launcher_installed is False
+    assert loaded.installed_root is None
+    assert loaded.installed_commit is None
+
+
 def test_legacy_command_line_only_identity_loads_as_unowned():
     state = {
         "schema_version": 1,
