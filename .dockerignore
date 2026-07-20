@@ -1,0 +1,56 @@
+# Source control and local editor state
+.git/
+.github/
+.idea/
+.vscode/
+.worktrees/
+.superpowers/
+
+# Secrets and generated launcher/runtime state
+.env
+.env.*
+!.env.example
+**/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+.ai-drawing/
+data/
+outputs/
+gallery/
+lora_train/
+sd-scripts/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+**/.file_sha256_cache.json
+
+# Dependency caches and build outputs
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.venv/
+**/venv/
+**/node_modules/
+**/dist/
+**/build/
+
+# Non-runtime material excluded from the root backend image context
+docs/
+experiments/
+mcp-server/
+research/
+model_benchmarks/
+openspec/
+pipeline/
+.agents/
+.claude/
+.codex/
+agent_runs/
+tmp_*
+roadmap.tsx
+SPEC.md
