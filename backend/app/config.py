@@ -1,12 +1,13 @@
 """
 專案配置
 """
+from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
-from functools import lru_cache
 
 # 專案根目錄（backend 的上層），.env 在此
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -55,6 +56,7 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{_project_root_path('backend', 'auto_draw.db')}"
 
     # ComfyUI
+    comfyui_mode: Literal["disabled", "external", "managed"] = "external"
     comfyui_base_url: str = "http://127.0.0.1:8188"
     # ComfyUI 模型目錄，用於列出可用 checkpoint / lora（!查可用資源 指令）
     comfyui_checkpoints_dir: str = "D:/AI/ComfyUI/models/checkpoints"

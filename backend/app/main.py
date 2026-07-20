@@ -75,6 +75,7 @@ from app.api import (
     prompt_library,
     prompt_templates,
     style_presets,
+    system,
     workflow_catalog,
 )
 
@@ -90,6 +91,7 @@ app.include_router(analytics.router)
 app.include_router(style_presets.router)
 app.include_router(comfyui.router)
 app.include_router(workflow_catalog.router)
+app.include_router(system.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)

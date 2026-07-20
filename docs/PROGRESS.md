@@ -1,5 +1,9 @@
 # 進度追蹤
 
+## 2026-07-20 One-click launcher: Backend dependency status
+
+新增型別化的 `/api/system/status`，將應用程式健康度與選用的 ComfyUI 依賴分開呈現；disabled 不探測，外部或受管理模式以固定 2 秒 timeout 檢查 `/system_stats`，並回報 connected、not_configured、unreachable、no_models 或 degraded。模型盤點只讀取已設定的 checkpoints 與 diffusion_models 目錄，不會下載模型；警告不包含主機路徑或底層例外內容。驗證：狀態與相關設定／資源測試 `27 passed`，Backend 全套 `996 passed, 4 skipped`。
+
 ## 2026-07-20 One-click launcher: platform detection
 
 Implemented the injected, unit-testable platform detection layer for the one-click launcher: Windows/Linux NVIDIA selection, Apple Silicon MPS selection, CPU fallback, OS data roots, Python candidate paths, and safe PID command-line identity reads. PID inputs are validated as positive built-in integers at both command construction and state deserialization. Verification: PID regression coverage `29 passed`; complete launcher suite `30 passed`.
