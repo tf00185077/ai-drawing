@@ -87,6 +87,33 @@ def test_forged_install_provenance_with_mismatched_root_is_degraded(tmp_path):
     assert loaded.installed_commit is None
 
 
+def test_managed_state_without_root_degrades_to_safe_disabled_state():
+    payload = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": None,
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": 42,
+        "managed_identity": {
+            "executable": "python",
+            "started_at": "123",
+            "command_line": "python main.py --port 8188",
+        },
+        "launcher_installed": True,
+        "installed_root": "C:/forged/ComfyUI",
+        "installed_commit": "v0.28.0",
+    }
+
+    loaded = LauncherState.from_json(json.dumps(payload))
+    assert loaded.comfy_mode is ComfyMode.DISABLED
+    assert loaded.comfyui_root is None
+    assert loaded.device is None
+    assert loaded.managed_pid is None
+    assert loaded.managed_identity is None
+    assert loaded.launcher_installed is False
+
+
 def test_legacy_command_line_only_identity_loads_as_unowned():
     state = {
         "schema_version": 1,
