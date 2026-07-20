@@ -40,6 +40,22 @@ def test_state_rejects_unknown_schema_version():
         LauncherState.from_json(json.dumps({"schema_version": 999}))
 
 
+@pytest.mark.parametrize("managed_pid", [True, "42; Remove-Item C:\\", 0, -1])
+def test_state_rejects_invalid_managed_pid(managed_pid):
+    state = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": "C:/Comfy UI",
+        "device": "nvidia",
+        "comfyui_port": 8188,
+        "managed_pid": managed_pid,
+        "managed_identity": "python main.py --port 8188",
+    }
+
+    with pytest.raises(ValueError, match="managed_pid"):
+        LauncherState.from_json(json.dumps(state))
+
+
 def test_cli_accepts_each_stable_command():
     for command in LauncherCommand:
         assert main([command.value]) == 0

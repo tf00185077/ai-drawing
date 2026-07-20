@@ -83,6 +83,11 @@ class LauncherState:
             raise ValueError("launcher state must be a JSON object")
         if raw.get("schema_version") != STATE_SCHEMA_VERSION:
             raise ValueError("unsupported launcher state schema version")
+        managed_pid = raw.get("managed_pid")
+        if managed_pid is not None and (
+            type(managed_pid) is not int or managed_pid <= 0
+        ):
+            raise ValueError("managed_pid must be a positive integer")
 
         return cls(
             schema_version=raw["schema_version"],
@@ -94,6 +99,6 @@ class LauncherState:
             ),
             device=DeviceMode(raw["device"]) if raw.get("device") is not None else None,
             comfyui_port=raw["comfyui_port"],
-            managed_pid=raw.get("managed_pid"),
+            managed_pid=managed_pid,
             managed_identity=raw.get("managed_identity"),
         )

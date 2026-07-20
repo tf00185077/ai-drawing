@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from launcher.models import DeviceMode, HostInfo
 from launcher.platforms import (
     choose_device,
@@ -134,6 +136,12 @@ def test_process_identity_commands_are_platform_specific():
         "-o",
         "command=",
     ]
+
+
+@pytest.mark.parametrize("pid", [True, "42; Remove-Item C:\\", 0, -1])
+def test_process_identity_command_rejects_non_positive_builtin_integer_pids(pid):
+    with pytest.raises(ValueError, match="positive integer"):
+        process_identity_command("Windows", pid)
 
 
 def test_read_process_identity_strips_successful_output():
