@@ -20,6 +20,7 @@ class ComfyUIProbe(Protocol):
 
 
 DirectoryReader = Callable[[Path], Iterable[Path]]
+PathResolver = Callable[[Path], Path]
 
 
 @dataclass
@@ -27,6 +28,10 @@ class _Inventory:
     checkpoint_names: set[str] = field(default_factory=set)
     diffusion_model_names: set[str] = field(default_factory=set)
     warnings: list[str] = field(default_factory=list)
+
+    @property
+    def model_count(self) -> int:
+        return len(self.checkpoint_names | self.diffusion_model_names)
 
 
 def probe_comfyui(url: str, *, timeout: float) -> bool:
@@ -38,6 +43,10 @@ def probe_comfyui(url: str, *, timeout: float) -> bool:
 
 def _read_directory(path: Path) -> Iterable[Path]:
     return list(path.iterdir())
+
+
+def _resolve_path(path: Path) -> Path:
+    return path.resolve(strict=False)
 
 
 def _split_paths(configured_paths: str) -> list[Path]:
@@ -53,6 +62,7 @@ def _scan_generation_files(
     *,
     label: str,
     directory_reader: DirectoryReader,
+    path_resolver: PathResolver,
 ) -> tuple[set[str], list[str]]:
     names: set[str] = set()
     missing = False
@@ -66,7 +76,11 @@ def _scan_generation_files(
             entries = directory_reader(directory)
             for entry in entries:
                 if entry.is_file() and entry.suffix.lower() in MODEL_EXTENSIONS:
-                    canonical_path = entry.resolve(strict=False)
+                    try:
+                        canonical_path = path_resolver(entry)
+                    except RuntimeError:
+                        unreadable = True
+                        continue
                     names.add(os.path.normcase(str(canonical_path)))
         except OSError:
             unreadable = True
@@ -79,16 +93,22 @@ def _scan_generation_files(
     return names, warnings
 
 
-def _model_inventory(settings: Settings, directory_reader: DirectoryReader) -> _Inventory:
+def _model_inventory(
+    settings: Settings,
+    directory_reader: DirectoryReader,
+    path_resolver: PathResolver,
+) -> _Inventory:
     checkpoints, checkpoint_warnings = _scan_generation_files(
         settings.comfyui_checkpoints_dir,
         label="checkpoints",
         directory_reader=directory_reader,
+        path_resolver=path_resolver,
     )
     diffusion_models, diffusion_warnings = _scan_generation_files(
         settings.comfyui_diffusion_models_dir,
         label="diffusion_models",
         directory_reader=directory_reader,
+        path_resolver=path_resolver,
     )
     return _Inventory(
         checkpoint_names=checkpoints,
@@ -114,7 +134,7 @@ def _status(
             state=state,
             configured=configured,
             reachable=reachable,
-            model_count=len(current.checkpoint_names) + len(current.diffusion_model_names),
+            model_count=current.model_count,
             checkpoint_count=len(current.checkpoint_names),
             diffusion_model_count=len(current.diffusion_model_names),
             warnings=current.warnings if warnings is None else warnings,
@@ -128,6 +148,7 @@ def get_system_status(
     *,
     probe: ComfyUIProbe = probe_comfyui,
     directory_reader: DirectoryReader = _read_directory,
+    path_resolver: PathResolver = _resolve_path,
 ) -> SystemStatus:
     """Report application health separately from the optional ComfyUI dependency."""
     if settings.comfyui_mode == "disabled":
@@ -145,7 +166,7 @@ def get_system_status(
     endpoint = f"{settings.comfyui_base_url.rstrip('/')}/system_stats"
     try:
         reachable = probe(endpoint, timeout=PROBE_TIMEOUT_SECONDS) is True
-    except Exception:
+    except (OSError, json.JSONDecodeError, UnicodeError):
         reachable = False
 
     if not reachable:
@@ -161,9 +182,8 @@ def get_system_status(
             ),
         )
 
-    inventory = _model_inventory(settings, directory_reader)
-    model_count = len(inventory.checkpoint_names) + len(inventory.diffusion_model_names)
-    if model_count == 0:
+    inventory = _model_inventory(settings, directory_reader, path_resolver)
+    if inventory.model_count == 0:
         return _status(
             settings,
             state="no_models",
