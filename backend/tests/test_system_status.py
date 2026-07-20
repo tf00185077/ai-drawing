@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import json
+from io import BytesIO
 from pathlib import Path
+from urllib.error import URLError
 
 import pytest
 
 from app.config import Settings, get_settings
+from app.services import dependency_status
 from app.services.dependency_status import get_system_status
 
 
@@ -80,6 +84,9 @@ def test_unreachable_overrides_filesystem_inventory(tmp_path: Path) -> None:
     [
         Probe(error=TimeoutError("late")),
         Probe(error=ConnectionError("offline")),
+        Probe(error=URLError("offline")),
+        Probe(error=json.JSONDecodeError("invalid JSON", "{", 0)),
+        Probe(error=UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid")),
         Probe(result={"not": "a boolean probe result"}),
     ],
 )
@@ -92,6 +99,44 @@ def test_probe_timeout_connection_and_malformed_results_never_escape(
     assert result.application == "healthy"
     assert result.comfyui.state == "unreachable"
     assert result.comfyui.warnings == []
+
+
+@pytest.mark.parametrize("error", [TypeError("bug"), AssertionError("bug")])
+def test_probe_programming_errors_propagate(tmp_path: Path, error: Exception) -> None:
+    with pytest.raises(type(error), match="bug"):
+        get_system_status(_settings(tmp_path), probe=Probe(error=error))
+
+
+def test_actual_urllib_boundary_converts_malformed_json_to_unreachable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def fake_urlopen(url: str, *, timeout: float):
+        assert url.endswith("/system_stats")
+        assert timeout == 2.0
+        return BytesIO(b"{")
+
+    monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
+
+    result = get_system_status(_settings(tmp_path))
+
+    assert result.comfyui.state == "unreachable"
+
+
+def test_actual_urllib_boundary_converts_network_error_to_unreachable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    def fake_urlopen(url: str, *, timeout: float):
+        assert url.endswith("/system_stats")
+        assert timeout == 2.0
+        raise URLError("offline")
+
+    monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
+
+    result = get_system_status(_settings(tmp_path))
+
+    assert result.comfyui.state == "unreachable"
 
 
 def test_reachable_without_generation_model_is_no_models(tmp_path: Path) -> None:
@@ -146,6 +191,21 @@ def test_same_model_filename_in_distinct_directories_is_counted_separately(
     assert result.comfyui.model_count == 2
 
 
+def test_same_canonical_model_across_categories_counts_once_in_total(
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path)
+    shared_directory = Path(settings.comfyui_checkpoints_dir)
+    (shared_directory / "shared.safetensors").write_text("model", encoding="utf-8")
+    settings.comfyui_diffusion_models_dir = str(shared_directory)
+
+    result = get_system_status(settings, probe=Probe())
+
+    assert result.comfyui.checkpoint_count == 1
+    assert result.comfyui.diffusion_model_count == 1
+    assert result.comfyui.model_count == 1
+
+
 def test_usable_model_with_missing_configured_alternative_is_degraded(
     tmp_path: Path,
 ) -> None:
@@ -179,6 +239,32 @@ def test_usable_model_with_unreadable_directory_is_degraded(tmp_path: Path) -> N
         settings,
         probe=Probe(),
         directory_reader=read_directory,
+    )
+
+    assert result.comfyui.state == "degraded"
+    assert result.comfyui.model_count == 1
+    assert result.comfyui.warnings == ["diffusion_models 模型目錄無法讀取。"]
+    assert "secret" not in " ".join(result.comfyui.warnings)
+
+
+def test_runtime_error_resolving_model_is_a_pathless_unreadable_warning(
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path)
+    checkpoint = Path(settings.comfyui_checkpoints_dir) / "usable.ckpt"
+    diffusion = Path(settings.comfyui_diffusion_models_dir) / "loop.safetensors"
+    checkpoint.write_text("model", encoding="utf-8")
+    diffusion.write_text("model", encoding="utf-8")
+
+    def resolve_path(path: Path) -> Path:
+        if path == diffusion:
+            raise RuntimeError(f"symlink loop at secret path {path}")
+        return path.absolute()
+
+    result = get_system_status(
+        settings,
+        probe=Probe(),
+        path_resolver=resolve_path,
     )
 
     assert result.comfyui.state == "degraded"
