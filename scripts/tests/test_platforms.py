@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from launcher.models import DeviceMode, HostInfo
+from launcher.models import DeviceMode, HostInfo, ProcessIdentity
 from launcher.platforms import (
     choose_device,
     comfyui_python_candidates,
@@ -123,19 +123,15 @@ def test_nvidia_available_returns_false_when_command_fails():
 
 
 def test_process_identity_commands_are_platform_specific():
-    assert process_identity_command("Windows", 42) == [
-        "powershell",
-        "-NoProfile",
-        "-Command",
-        "(Get-CimInstance Win32_Process -Filter 'ProcessId = 42').CommandLine",
-    ]
-    assert process_identity_command("Linux", 42) == [
-        "ps",
-        "-p",
-        "42",
-        "-o",
-        "command=",
-    ]
+    windows = process_identity_command("Windows", 42)
+    linux = process_identity_command("Linux", 42)
+
+    assert windows[:3] == ["powershell", "-NoProfile", "-Command"]
+    assert "ExecutablePath" in windows[3]
+    assert "CreationDate" in windows[3]
+    assert "CommandLine" in windows[3]
+    assert linux[-2:] == ["Linux", "42"]
+    assert "python" in Path(linux[0]).name.lower()
 
 
 @pytest.mark.parametrize("pid", [True, "42; Remove-Item C:\\", 0, -1])
@@ -144,12 +140,20 @@ def test_process_identity_command_rejects_non_positive_builtin_integer_pids(pid)
         process_identity_command("Windows", pid)
 
 
-def test_read_process_identity_strips_successful_output():
+def test_read_process_identity_parses_full_process_instance():
     host = HostInfo("Linux", "x86_64", Path("/home/test"))
-    runner = FakeRunner(CommandResult(("ps",), 0, " python main.py --port 8188\n", ""))
+    payload = (
+        '{"executable":"/venv/bin/python","started_at":"123456",'
+        '"command_line":"python main.py --port 8188"}\n'
+    )
+    runner = FakeRunner(CommandResult(("python",), 0, payload, ""))
 
-    assert read_process_identity(host, 42, runner) == "python main.py --port 8188"
-    assert runner.calls == [("ps", "-p", "42", "-o", "command=")]
+    assert read_process_identity(host, 42, runner) == ProcessIdentity(
+        executable="/venv/bin/python",
+        started_at="123456",
+        command_line="python main.py --port 8188",
+    )
+    assert runner.calls[0][-2:] == ("Linux", "42")
 
 
 def test_read_process_identity_returns_none_for_failed_or_empty_command():
@@ -159,3 +163,18 @@ def test_read_process_identity_returns_none_for_failed_or_empty_command():
 
     assert read_process_identity(host, 42, failed) is None
     assert read_process_identity(host, 42, empty) is None
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "not-json",
+        "{}",
+        '{"executable":"python","started_at":"","command_line":"python"}',
+    ],
+)
+def test_read_process_identity_rejects_incomplete_payload(payload):
+    host = HostInfo("Linux", "x86_64", Path("/home/test"))
+    runner = FakeRunner(CommandResult(("python",), 0, payload, ""))
+
+    assert read_process_identity(host, 42, runner) is None
