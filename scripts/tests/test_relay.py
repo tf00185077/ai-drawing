@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import asdict
+import json
 from pathlib import Path
 
 import pytest
 
-from launcher.models import HostInfo
+from launcher.models import HostInfo, ProcessIdentity
 from launcher.relay import (
     RelayAddressError,
     RelayState,
     build_relay_command,
     forward_connection,
     relay_log_path,
+    relay_invalid_state_path,
     relay_state_path,
+    load_relay_state,
     run_relay,
     save_relay_state,
     start_relay,
@@ -73,6 +77,46 @@ def test_relay_uses_separate_state_and_log_files(tmp_path):
     assert relay_log_path(tmp_path) == tmp_path / "data/logs/comfyui-relay.log"
     assert relay_state_path(tmp_path).name != "state.json"
     assert relay_log_path(tmp_path).name != "comfyui.log"
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "not-json",
+        "[]",
+        '{"bind_host":"172.17.0.1"}',
+        (
+            '{"bind_host":"172.17.0.1","bind_port":18188,'
+            '"target_port":8188,"managed_pid":"7331",'
+            '"managed_identity":"python relay.py"}'
+        ),
+        (
+            '{"bind_host":"8.8.8.8","bind_port":18188,'
+            '"target_port":8188,"managed_pid":7331,'
+            '"managed_identity":{'
+            '"executable":"python","started_at":"1",'
+            '"command_line":"python relay.py"}}'
+        ),
+    ],
+)
+def test_malformed_relay_state_is_quarantined_and_degrades_to_none(tmp_path, raw):
+    path = relay_state_path(tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_text(raw, encoding="utf-8")
+
+    assert load_relay_state(tmp_path) is None
+    assert path.exists() is False
+    assert relay_invalid_state_path(tmp_path).read_text(encoding="utf-8") == raw
+
+
+def test_non_utf8_relay_state_is_quarantined_without_exception(tmp_path):
+    path = relay_state_path(tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"\xff\xfeinvalid")
+
+    assert load_relay_state(tmp_path) is None
+    assert path.exists() is False
+    assert relay_invalid_state_path(tmp_path).read_bytes() == b"\xff\xfeinvalid"
 
 
 def test_invalid_bind_is_rejected_before_asyncio_server_starts():
@@ -180,6 +224,48 @@ def test_relay_forwards_bytes_in_both_directions():
     asyncio.run(scenario())
 
 
+def test_target_eof_cancels_client_pump_and_finishes_handler():
+    async def scenario():
+        completed = asyncio.Event()
+
+        async def target_once(reader, writer):
+            await reader.readexactly(1)
+            writer.close()
+            await writer.wait_closed()
+
+        target = await asyncio.start_server(target_once, "127.0.0.1", 0)
+        target_port = target.sockets[0].getsockname()[1]
+
+        async def proxy_handler(reader, writer):
+            try:
+                await forward_connection(
+                    reader,
+                    writer,
+                    target_host="127.0.0.1",
+                    target_port=target_port,
+                )
+            finally:
+                completed.set()
+
+        proxy = await asyncio.start_server(proxy_handler, "127.0.0.1", 0)
+        proxy_port = proxy.sockets[0].getsockname()[1]
+        reader, writer = await asyncio.open_connection("127.0.0.1", proxy_port)
+        try:
+            writer.write(b"x")
+            await writer.drain()
+            await asyncio.wait_for(completed.wait(), timeout=0.5)
+            assert await asyncio.wait_for(reader.read(), timeout=0.5) == b""
+        finally:
+            writer.close()
+            await writer.wait_closed()
+            proxy.close()
+            target.close()
+            await proxy.wait_closed()
+            await target.wait_closed()
+
+    asyncio.run(scenario())
+
+
 def test_relay_lifecycle_is_linux_only(tmp_path):
     host = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
     result = start_relay(
@@ -214,46 +300,70 @@ class FakeRelayPopen:
         return FakeRelayProcess()
 
 
+class FakeClock:
+    def __init__(self):
+        self.now = 0.0
+        self.sleeps: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, duration: float) -> None:
+        self.sleeps.append(duration)
+        self.now += duration
+
+
 class FakeRelayRunner:
-    def __init__(self, identity: str | None):
+    def __init__(self, identity: ProcessIdentity | None):
         self.identity = identity
         self.commands: list[list[str]] = []
 
     def run(self, args, cwd=None, env=None, check=False, capture=True):
         command = [str(arg) for arg in args]
         self.commands.append(command)
-        if command[0] == "ps":
+        if command[0] not in {"kill", "taskkill"}:
             return CommandResult(
                 args=tuple(command),
                 returncode=0 if self.identity else 1,
-                stdout=f"{self.identity}\n" if self.identity else "",
+                stdout=json.dumps(asdict(self.identity)) + "\n" if self.identity else "",
                 stderr="",
             )
         return CommandResult(tuple(command), 0, "", "")
 
 
 class SequencedRelayRunner(FakeRelayRunner):
-    def __init__(self, identities: list[str | None]):
+    def __init__(self, identities: list[ProcessIdentity | None]):
         super().__init__(None)
         self.identities = iter(identities)
 
     def run(self, args, cwd=None, env=None, check=False, capture=True):
         command = [str(arg) for arg in args]
         self.commands.append(command)
-        if command[0] == "ps":
+        if command[0] not in {"kill", "taskkill"}:
             identity = next(self.identities)
             return CommandResult(
                 tuple(command),
                 0 if identity else 1,
-                f"{identity}\n" if identity else "",
+                json.dumps(asdict(identity)) + "\n" if identity else "",
                 "",
             )
         return CommandResult(tuple(command), 0, "", "")
 
 
+def _identity(
+    command_line: str = "python scripts/comfyui_relay.py",
+    *,
+    executable: str = "/usr/bin/python",
+    started_at: str = "123456",
+) -> ProcessIdentity:
+    return ProcessIdentity(executable, started_at, command_line)
+
+
 def test_ready_relay_records_separate_owned_state(tmp_path):
     popen = FakeRelayPopen()
-    identity = "python scripts/comfyui_relay.py --bind-host 172.17.0.1"
+    identity = _identity(
+        "python scripts/comfyui_relay.py --bind-host 172.17.0.1"
+    )
     runner = FakeRelayRunner(identity)
     probes: list[tuple[str, int]] = []
 
@@ -293,7 +403,7 @@ def test_ready_relay_records_separate_owned_state(tmp_path):
 
 
 def test_relay_timeout_does_not_record_state_and_terminates_child(tmp_path):
-    runner = FakeRelayRunner("python scripts/comfyui_relay.py")
+    runner = FakeRelayRunner(_identity())
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
@@ -313,11 +423,8 @@ def test_relay_timeout_does_not_record_state_and_terminates_child(tmp_path):
     assert result.started is False
     assert result.reason == "readiness_timeout"
     assert result.state is None
-    assert runner.commands == [
-        ["ps", "-p", "7331", "-o", "command="],
-        ["ps", "-p", "7331", "-o", "command="],
-        ["kill", "-TERM", "-7331"],
-    ]
+    assert len(runner.commands) == 3
+    assert runner.commands[-1] == ["kill", "-TERM", "-7331"]
     assert relay_state_path(tmp_path).exists() is False
 
 
@@ -327,9 +434,9 @@ def test_relay_pid_identity_mismatch_is_not_terminated(tmp_path):
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
-        managed_identity="python scripts/comfyui_relay.py",
+        managed_identity=_identity(),
     )
-    runner = FakeRelayRunner("unrelated --server")
+    runner = FakeRelayRunner(_identity("unrelated --server"))
     save_relay_state(tmp_path, state)
 
     result = stop_relay(
@@ -341,13 +448,13 @@ def test_relay_pid_identity_mismatch_is_not_terminated(tmp_path):
 
     assert result.stopped is False
     assert result.reason == "process_identity_mismatch"
-    assert runner.commands == [["ps", "-p", "7331", "-o", "command="]]
+    assert len(runner.commands) == 1
     assert result.state is None
     assert relay_state_path(tmp_path).exists() is False
 
 
 def test_relay_stop_terminates_only_exact_identity_and_clears_state(tmp_path):
-    identity = "python scripts/comfyui_relay.py"
+    identity = _identity()
     state = RelayState(
         bind_host="172.17.0.1",
         bind_port=18188,
@@ -372,7 +479,7 @@ def test_relay_stop_terminates_only_exact_identity_and_clears_state(tmp_path):
 
 
 def test_relay_stop_rechecks_identity_immediately_before_signal(tmp_path):
-    identity = "python scripts/comfyui_relay.py"
+    identity = _identity()
     state = RelayState(
         bind_host="172.17.0.1",
         bind_port=18188,
@@ -381,7 +488,7 @@ def test_relay_stop_rechecks_identity_immediately_before_signal(tmp_path):
         managed_identity=identity,
     )
     save_relay_state(tmp_path, state)
-    runner = SequencedRelayRunner([identity, "unrelated --server"])
+    runner = SequencedRelayRunner([identity, _identity("unrelated --server")])
 
     result = stop_relay(
         state,
@@ -392,7 +499,165 @@ def test_relay_stop_rechecks_identity_immediately_before_signal(tmp_path):
 
     assert result.stopped is False
     assert result.reason == "process_identity_mismatch"
-    assert all(command[0] == "ps" for command in runner.commands)
+    assert all(command[0] != "kill" for command in runner.commands)
+    assert relay_state_path(tmp_path).exists() is False
+
+
+def test_stopping_old_relay_does_not_delete_atomically_replaced_new_state(
+    tmp_path,
+    monkeypatch,
+):
+    old = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=_identity(started_at="old"),
+    )
+    new = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=8442,
+        managed_identity=_identity(started_at="new"),
+    )
+    save_relay_state(tmp_path, old)
+
+    def replace_during_termination(*_args, **_kwargs):
+        save_relay_state(tmp_path, new)
+        return "terminated"
+
+    monkeypatch.setattr(
+        "launcher.relay.terminate_if_identity_matches",
+        replace_during_termination,
+    )
+
+    result = stop_relay(
+        old,
+        FakeRelayRunner(old.managed_identity),
+        HostInfo("Linux", "x86_64", Path("/home/test")),
+        project_root=tmp_path,
+    )
+
+    assert result.stopped is True
+    assert load_relay_state(tmp_path) == new
+
+
+def test_stop_does_not_delete_or_raise_for_non_utf8_replacement(tmp_path):
+    state = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=_identity(),
+    )
+    path = relay_state_path(tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"\xffnew-owner")
+
+    result = stop_relay(
+        state,
+        FakeRelayRunner(state.managed_identity),
+        HostInfo("Linux", "x86_64", Path("/home/test")),
+        project_root=tmp_path,
+    )
+
+    assert result.stopped is True
+    assert path.read_bytes() == b"\xffnew-owner"
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        _identity(started_at="654321"),
+        _identity(executable="/different/python"),
+    ],
+)
+def test_relay_identical_command_line_different_instance_is_not_terminated(
+    tmp_path,
+    replacement,
+):
+    state = RelayState(
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        managed_pid=7331,
+        managed_identity=_identity(),
+    )
+    save_relay_state(tmp_path, state)
+    runner = FakeRelayRunner(replacement)
+
+    result = stop_relay(
+        state,
+        runner,
+        HostInfo("Linux", "x86_64", Path("/home/test")),
+        project_root=tmp_path,
+    )
+
+    assert result.stopped is False
+    assert result.reason == "process_identity_mismatch"
+    assert len(runner.commands) == 1
+
+
+def test_relay_initial_identity_capture_failure_never_claims_or_terminates(tmp_path):
+    probes: list[tuple[str, int]] = []
+    runner = FakeRelayRunner(None)
+
+    result = start_relay(
+        project_root=tmp_path,
+        python=tmp_path / "python",
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        host=HostInfo("Linux", "x86_64", Path("/home/test")),
+        runner=runner,
+        popen=FakeRelayPopen(),
+        probe=lambda host, port, _timeout: probes.append((host, port)) or True,
+        bind_probe=lambda *_args: True,
+    )
+
+    assert result.started is False
+    assert result.reason == "initial_identity_unavailable"
+    assert result.state is None
+    assert probes == []
+    assert len(runner.commands) == 1
+
+
+def test_relay_readiness_uses_real_monotonic_deadline(tmp_path):
+    clock = FakeClock()
+    probe_timeouts: list[float] = []
+    runner = FakeRelayRunner(_identity())
+
+    def probe(_host: str, _port: int, timeout: float):
+        probe_timeouts.append(timeout)
+        if len(probe_timeouts) == 2:
+            clock.now += timeout
+            return True
+        return False
+
+    result = start_relay(
+        project_root=tmp_path,
+        python=tmp_path / "python",
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        host=HostInfo("Linux", "x86_64", Path("/home/test")),
+        runner=runner,
+        popen=FakeRelayPopen(),
+        probe=probe,
+        bind_probe=lambda *_args: True,
+        sleep=clock.sleep,
+        monotonic=clock.monotonic,
+        readiness_timeout=1.5,
+        poll_interval=0.75,
+    )
+
+    assert result.started is False
+    assert result.reason == "readiness_timeout"
+    assert result.state is None
+    assert probe_timeouts == [1.0, 0.75]
+    assert clock.sleeps == [0.75]
+    assert clock.now == 1.5
     assert relay_state_path(tmp_path).exists() is False
 
 

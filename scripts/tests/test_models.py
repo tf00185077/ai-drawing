@@ -1,10 +1,15 @@
 import json
-from pathlib import Path
 
 import pytest
 
 from launcher.cli import main
-from launcher.models import ComfyMode, DeviceMode, LauncherCommand, LauncherState
+from launcher.models import (
+    ComfyMode,
+    DeviceMode,
+    LauncherCommand,
+    LauncherState,
+    ProcessIdentity,
+)
 from launcher.runner import SubprocessRunner
 
 
@@ -21,6 +26,11 @@ def test_commands_are_stable():
 
 
 def test_state_round_trip(tmp_path):
+    identity = ProcessIdentity(
+        executable=str(tmp_path / "Comfy UI/.venv/bin/python"),
+        started_at="123456",
+        command_line="python main.py --port 8188",
+    )
     state = LauncherState(
         schema_version=1,
         comfy_mode=ComfyMode.MANAGED,
@@ -28,11 +38,45 @@ def test_state_round_trip(tmp_path):
         device=DeviceMode.MPS,
         comfyui_port=8188,
         managed_pid=42,
-        managed_identity="python main.py --port 8188",
+        managed_identity=identity,
     )
 
     assert LauncherState.from_json(state.to_json()) == state
     assert "authorization" not in state.to_json().lower()
+
+
+def test_legacy_command_line_only_identity_loads_as_unowned():
+    state = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": "C:/Comfy UI",
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": 42,
+        "managed_identity": "python main.py --port 8188",
+    }
+
+    loaded = LauncherState.from_json(json.dumps(state))
+
+    assert loaded.managed_pid == 42
+    assert loaded.managed_identity is None
+
+
+def test_incomplete_structured_identity_loads_as_unowned():
+    state = {
+        "schema_version": 1,
+        "comfy_mode": "managed",
+        "comfyui_root": "C:/Comfy UI",
+        "device": "cpu",
+        "comfyui_port": 8188,
+        "managed_pid": 42,
+        "managed_identity": {
+            "executable": "python",
+            "command_line": "python main.py",
+        },
+    }
+
+    assert LauncherState.from_json(json.dumps(state)).managed_identity is None
 
 
 def test_state_rejects_unknown_schema_version():

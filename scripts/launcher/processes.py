@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import subprocess
 import time
 from dataclasses import dataclass, replace
@@ -9,7 +8,7 @@ from typing import Any, Callable
 
 from .comfyui import probe_comfyui
 from .constants import STATE_SCHEMA_VERSION
-from .models import ComfyMode, DeviceMode, HostInfo, LauncherState
+from .models import ComfyMode, DeviceMode, HostInfo, LauncherState, ProcessIdentity
 from .platforms import read_process_identity
 from .runner import Runner
 
@@ -81,7 +80,7 @@ def terminate_spawned_process(pid: int, runner: Runner, host: HostInfo) -> bool:
 
 def terminate_if_identity_matches(
     pid: int,
-    expected_identity: str | None,
+    expected_identity: ProcessIdentity | None,
     runner: Runner,
     host: HostInfo,
 ) -> str:
@@ -112,12 +111,11 @@ def _probe_ready(
     return bool(getattr(result, "running", False))
 
 
-def _attempt_count(timeout: float, interval: float) -> int:
+def _validate_readiness_timing(timeout: float, interval: float) -> None:
     if timeout <= 0:
         raise ValueError("readiness_timeout must be positive")
     if interval <= 0:
         raise ValueError("poll_interval must be positive")
-    return max(1, math.ceil(timeout / interval) + 1)
 
 
 def _spawn_logged_process(
@@ -153,13 +151,14 @@ def start_comfyui(
     probe: Callable[..., object] = probe_comfyui,
     popen: Callable[..., Any] = subprocess.Popen,
     sleep: Callable[[float], None] = time.sleep,
+    monotonic: Callable[[], float] = time.monotonic,
     readiness_timeout: float = 60.0,
     poll_interval: float = 0.5,
 ) -> ProcessStartResult:
     root = Path(root).resolve()
     python = Path(python).resolve()
     port = _validate_port(port)
-    attempts = _attempt_count(readiness_timeout, poll_interval)
+    _validate_readiness_timing(readiness_timeout, poll_interval)
     command = build_comfyui_command(root, python, device, port)
     try:
         process = _spawn_logged_process(
@@ -179,11 +178,20 @@ def start_comfyui(
     if process.poll() is not None:
         return ProcessStartResult(False, "process_exited", None, pid)
     spawned_identity = read_process_identity(host, pid, runner)
+    if spawned_identity is None:
+        return ProcessStartResult(False, "initial_identity_unavailable", None, pid)
     base_url = f"http://127.0.0.1:{port}"
-    for attempt in range(attempts):
+    deadline = monotonic() + readiness_timeout
+    while True:
         if process.poll() is not None:
             return ProcessStartResult(False, "process_exited", None, pid)
-        if _probe_ready(probe, base_url, min(2.0, readiness_timeout)):
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            break
+        ready = _probe_ready(probe, base_url, min(2.0, remaining))
+        if monotonic() >= deadline:
+            break
+        if ready:
             identity = read_process_identity(host, pid, runner)
             if identity is None:
                 terminate_if_identity_matches(pid, spawned_identity, runner, host)
@@ -205,8 +213,10 @@ def start_comfyui(
                 managed_identity=identity,
             )
             return ProcessStartResult(True, "ready", state, pid)
-        if attempt + 1 < attempts:
-            sleep(poll_interval)
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            break
+        sleep(min(poll_interval, remaining))
 
     cleanup = terminate_if_identity_matches(pid, spawned_identity, runner, host)
     reason = "readiness_timeout"
@@ -226,7 +236,10 @@ def stop_comfyui(
 ) -> ProcessStopResult:
     if state.comfy_mode is not ComfyMode.MANAGED:
         return ProcessStopResult(False, "external_instance", state)
-    if state.managed_pid is None or not state.managed_identity:
+    if state.managed_pid is None or not isinstance(
+        state.managed_identity,
+        ProcessIdentity,
+    ):
         return ProcessStopResult(False, "no_managed_process", _clear_managed_ownership(state))
 
     current_identity = read_process_identity(host, state.managed_pid, runner)

@@ -3,17 +3,18 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import json
-import math
+import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import partial
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
-from .models import HostInfo
+from .models import HostInfo, ProcessIdentity
 from .platforms import read_process_identity
 from .configuration import atomic_write
 from .processes import _spawn_logged_process, terminate_if_identity_matches
@@ -36,7 +37,7 @@ class RelayState:
     bind_port: int
     target_port: int
     managed_pid: int
-    managed_identity: str
+    managed_identity: ProcessIdentity
 
     def to_json(self) -> str:
         return json.dumps(
@@ -45,7 +46,7 @@ class RelayState:
                 "bind_port": self.bind_port,
                 "target_port": self.target_port,
                 "managed_pid": self.managed_pid,
-                "managed_identity": self.managed_identity,
+                "managed_identity": asdict(self.managed_identity),
             },
             sort_keys=True,
         )
@@ -60,7 +61,7 @@ class RelayState:
             bind_port=_validate_port(raw["bind_port"]),
             target_port=_validate_port(raw["target_port"]),
             managed_pid=_validate_pid(raw["managed_pid"]),
-            managed_identity=_validate_identity(raw["managed_identity"]),
+            managed_identity=_parse_identity(raw["managed_identity"]),
         )
 
 
@@ -90,9 +91,10 @@ def _validate_pid(pid: int) -> int:
     return pid
 
 
-def _validate_identity(identity: str) -> str:
-    if not isinstance(identity, str) or not identity.strip():
-        raise ValueError("managed_identity must be non-empty")
+def _parse_identity(value: object) -> ProcessIdentity:
+    identity = ProcessIdentity.from_value(value)
+    if identity is None:
+        raise ValueError("managed_identity must be a complete process identity")
     return identity
 
 
@@ -135,16 +137,28 @@ async def forward_connection(
     target_port: int,
 ) -> None:
     upstream_writer: asyncio.StreamWriter | None = None
+    pumps: set[asyncio.Task[None]] = set()
     try:
         upstream_reader, upstream_writer = await asyncio.open_connection(
             _validate_target(target_host),
             _validate_port(target_port),
         )
-        await asyncio.gather(
-            _copy_stream(client_reader, upstream_writer),
-            _copy_stream(upstream_reader, client_writer),
+        pumps = {
+            asyncio.create_task(_copy_stream(client_reader, upstream_writer)),
+            asyncio.create_task(_copy_stream(upstream_reader, client_writer)),
+        }
+        done, _pending = await asyncio.wait(
+            pumps,
+            return_when=asyncio.FIRST_COMPLETED,
         )
+        for task in done:
+            task.result()
     finally:
+        for task in pumps:
+            if not task.done():
+                task.cancel()
+        if pumps:
+            await asyncio.gather(*pumps, return_exceptions=True)
         client_writer.close()
         if upstream_writer is not None:
             upstream_writer.close()
@@ -189,6 +203,10 @@ def relay_log_path(project_root: Path) -> Path:
     return Path(project_root) / "data/logs/comfyui-relay.log"
 
 
+def relay_invalid_state_path(project_root: Path) -> Path:
+    return Path(project_root) / "data/bootstrap/relay-state.invalid.json"
+
+
 def save_relay_state(project_root: Path, state: RelayState) -> None:
     atomic_write(relay_state_path(project_root), state.to_json() + "\n")
 
@@ -197,11 +215,47 @@ def load_relay_state(project_root: Path) -> RelayState | None:
     path = relay_state_path(project_root)
     if not path.is_file():
         return None
-    return RelayState.from_json(path.read_text(encoding="utf-8"))
+    raw_bytes = path.read_bytes()
+    try:
+        raw = raw_bytes.decode("utf-8")
+        return RelayState.from_json(raw)
+    except (json.JSONDecodeError, KeyError, TypeError, UnicodeError, ValueError):
+        invalid_path = relay_invalid_state_path(project_root)
+        invalid_path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=invalid_path.parent,
+            prefix=f".{invalid_path.name}.",
+            suffix=".tmp",
+        )
+        temporary = Path(temporary_name)
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(raw_bytes)
+            temporary.replace(invalid_path)
+        finally:
+            temporary.unlink(missing_ok=True)
+        try:
+            current = path.read_bytes()
+        except FileNotFoundError:
+            return None
+        if current == raw_bytes:
+            path.unlink(missing_ok=True)
+        return None
 
 
-def clear_relay_state(project_root: Path) -> None:
-    relay_state_path(project_root).unlink(missing_ok=True)
+def clear_relay_state(
+    project_root: Path,
+    expected_state: RelayState,
+) -> bool:
+    path = relay_state_path(project_root)
+    try:
+        current = path.read_text(encoding="utf-8").strip()
+    except (FileNotFoundError, UnicodeError):
+        return False
+    if current != expected_state.to_json():
+        return False
+    path.unlink(missing_ok=True)
+    return True
 
 
 def build_relay_command(
@@ -258,6 +312,7 @@ def start_relay(
     probe: Callable[[str, int, float], bool] = _socket_probe,
     bind_probe: Callable[[str, int], bool] = _local_bind_probe,
     sleep: Callable[[float], None] = time.sleep,
+    monotonic: Callable[[], float] = time.monotonic,
     readiness_timeout: float = 10.0,
     poll_interval: float = 0.2,
 ) -> RelayStartResult:
@@ -293,11 +348,19 @@ def start_relay(
     if process.poll() is not None:
         return RelayStartResult(False, "process_exited", None)
     spawned_identity = read_process_identity(host, pid, runner)
-    attempts = max(1, math.ceil(readiness_timeout / poll_interval) + 1)
-    for attempt in range(attempts):
+    if spawned_identity is None:
+        return RelayStartResult(False, "initial_identity_unavailable", None)
+    deadline = monotonic() + readiness_timeout
+    while True:
         if process.poll() is not None:
             return RelayStartResult(False, "process_exited", None)
-        if probe(bind_host, bind_port, min(1.0, readiness_timeout)):
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            break
+        ready = probe(bind_host, bind_port, min(1.0, remaining))
+        if monotonic() >= deadline:
+            break
+        if ready:
             identity = read_process_identity(host, pid, runner)
             if identity is None:
                 terminate_if_identity_matches(pid, spawned_identity, runner, host)
@@ -317,8 +380,10 @@ def start_relay(
                 terminate_if_identity_matches(pid, identity, runner, host)
                 return RelayStartResult(False, "state_write_failed", None)
             return RelayStartResult(True, "ready", state)
-        if attempt + 1 < attempts:
-            sleep(poll_interval)
+        remaining = deadline - monotonic()
+        if remaining <= 0:
+            break
+        sleep(min(poll_interval, remaining))
 
     cleanup = terminate_if_identity_matches(pid, spawned_identity, runner, host)
     reason = "readiness_timeout"
@@ -337,11 +402,11 @@ def stop_relay(
     current_identity = read_process_identity(host, state.managed_pid, runner)
     if current_identity is None:
         if project_root is not None:
-            clear_relay_state(project_root)
+            clear_relay_state(project_root, state)
         return RelayStopResult(False, "process_not_found", None)
     if current_identity != state.managed_identity:
         if project_root is not None:
-            clear_relay_state(project_root)
+            clear_relay_state(project_root, state)
         return RelayStopResult(False, "process_identity_mismatch", None)
     termination = terminate_if_identity_matches(
         state.managed_pid,
@@ -351,7 +416,7 @@ def stop_relay(
     )
     if termination in {"identity_mismatch", "process_not_found"}:
         if project_root is not None:
-            clear_relay_state(project_root)
+            clear_relay_state(project_root, state)
         reason = (
             "process_identity_mismatch"
             if termination == "identity_mismatch"
@@ -361,5 +426,5 @@ def stop_relay(
     if termination != "terminated":
         return RelayStopResult(False, "termination_failed", state)
     if project_root is not None:
-        clear_relay_state(project_root)
+        clear_relay_state(project_root, state)
     return RelayStopResult(True, "stopped", None)

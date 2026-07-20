@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import json
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from launcher.models import (
     DeviceMode,
     HostInfo,
     LauncherState,
+    ProcessIdentity,
 )
 from launcher.runner import CommandResult
 from launcher.processes import (
@@ -28,7 +30,7 @@ def _state(
     mode: ComfyMode,
     *,
     pid: int | None = None,
-    identity: str | None = None,
+    identity: ProcessIdentity | str | None = None,
 ) -> LauncherState:
     return LauncherState(
         schema_version=1,
@@ -41,8 +43,21 @@ def _state(
     )
 
 
+def _identity(
+    command_line: str = "python main.py --port 8188",
+    *,
+    executable: str = "/venv/bin/python",
+    started_at: str = "123456",
+) -> ProcessIdentity:
+    return ProcessIdentity(executable, started_at, command_line)
+
+
 class FakeRunner:
-    def __init__(self, identity: str | None = None, terminate_code: int = 0):
+    def __init__(
+        self,
+        identity: ProcessIdentity | None = None,
+        terminate_code: int = 0,
+    ):
         self.identity = identity
         self.terminate_code = terminate_code
         self.commands: list[list[str]] = []
@@ -50,12 +65,16 @@ class FakeRunner:
     def run(self, args, cwd=None, env=None, check=False, capture=True):
         command = [str(arg) for arg in args]
         self.commands.append(command)
-        is_identity = command[0] in {"ps", "powershell"}
+        is_identity = command[0] not in {"kill", "taskkill"}
         if is_identity:
             return CommandResult(
                 args=tuple(command),
                 returncode=0 if self.identity is not None else 1,
-                stdout=f"{self.identity}\n" if self.identity is not None else "",
+                stdout=(
+                    json.dumps(asdict(self.identity)) + "\n"
+                    if self.identity is not None
+                    else ""
+                ),
                 stderr="",
             )
         return CommandResult(
@@ -67,19 +86,19 @@ class FakeRunner:
 
 
 class SequencedIdentityRunner(FakeRunner):
-    def __init__(self, identities: list[str | None]):
+    def __init__(self, identities: list[ProcessIdentity | None]):
         super().__init__()
         self.identities = iter(identities)
 
     def run(self, args, cwd=None, env=None, check=False, capture=True):
         command = [str(arg) for arg in args]
         self.commands.append(command)
-        if command[0] in {"ps", "powershell"}:
+        if command[0] not in {"kill", "taskkill"}:
             identity = next(self.identities)
             return CommandResult(
                 args=tuple(command),
                 returncode=0 if identity is not None else 1,
-                stdout=f"{identity}\n" if identity is not None else "",
+                stdout=json.dumps(asdict(identity)) + "\n" if identity else "",
                 stderr="",
             )
         return CommandResult(tuple(command), 0, "", "")
@@ -102,6 +121,19 @@ class FakePopen:
     def __call__(self, args, **kwargs):
         self.calls.append(([str(arg) for arg in args], kwargs))
         return self.process
+
+
+class FakeClock:
+    def __init__(self):
+        self.now = 0.0
+        self.sleeps: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, duration: float) -> None:
+        self.sleeps.append(duration)
+        self.now += duration
 
 
 def test_comfyui_command_adds_cpu_only_for_cpu(tmp_path):
@@ -143,7 +175,12 @@ def test_ready_process_records_managed_state_only_after_probe(tmp_path):
     root = tmp_path / "ComfyUI"
     python = root / ".venv" / "bin" / "python"
     popen = FakePopen()
-    runner = FakeRunner(identity=f"{python} {root / 'main.py'} --port 8188")
+    runner = FakeRunner(
+        identity=_identity(
+            f"{python} {root / 'main.py'} --port 8188",
+            executable=str(python),
+        )
+    )
     probe_calls: list[str] = []
 
     def probe(url: str, timeout: float):
@@ -181,7 +218,12 @@ def test_readiness_timeout_does_not_record_state_and_cleans_up(tmp_path):
     root = tmp_path / "ComfyUI"
     python = root / ".venv" / "bin" / "python"
     popen = FakePopen()
-    runner = FakeRunner(identity=f"{python} {root / 'main.py'} --port 8188")
+    runner = FakeRunner(
+        identity=_identity(
+            f"{python} {root / 'main.py'} --port 8188",
+            executable=str(python),
+        )
+    )
 
     result = start_comfyui(
         root=root,
@@ -201,11 +243,8 @@ def test_readiness_timeout_does_not_record_state_and_cleans_up(tmp_path):
     assert result.started is False
     assert result.reason == "readiness_timeout"
     assert result.state is None
-    assert runner.commands == [
-        ["ps", "-p", "4242", "-o", "command="],
-        ["ps", "-p", "4242", "-o", "command="],
-        ["kill", "-TERM", "-4242"],
-    ]
+    assert len(runner.commands) == 3
+    assert runner.commands[-1] == ["kill", "-TERM", "-4242"]
 
 
 def test_timeout_cleanup_refuses_to_kill_reused_pid(tmp_path):
@@ -213,8 +252,11 @@ def test_timeout_cleanup_refuses_to_kill_reused_pid(tmp_path):
     python = root / ".venv" / "bin" / "python"
     runner = SequencedIdentityRunner(
         [
-            f"{python} {root / 'main.py'} --port 8188",
-            "unrelated --server",
+            _identity(
+                f"{python} {root / 'main.py'} --port 8188",
+                executable=str(python),
+            ),
+            _identity("unrelated --server", executable="/usr/bin/unrelated"),
         ]
     )
 
@@ -235,7 +277,95 @@ def test_timeout_cleanup_refuses_to_kill_reused_pid(tmp_path):
 
     assert result.started is False
     assert result.reason == "readiness_timeout_cleanup_identity_mismatch"
-    assert all(command[0] == "ps" for command in runner.commands)
+    assert all(command[0] != "kill" for command in runner.commands)
+
+
+def test_initial_identity_capture_failure_never_claims_or_terminates(tmp_path):
+    probes: list[str] = []
+    runner = FakeRunner(identity=None)
+
+    result = start_comfyui(
+        root=tmp_path / "ComfyUI",
+        python=tmp_path / "python",
+        device=DeviceMode.CPU,
+        port=8188,
+        host=LINUX,
+        runner=runner,
+        project_root=tmp_path,
+        probe=lambda url, **_kwargs: probes.append(url) or True,
+        popen=FakePopen(),
+    )
+
+    assert result.started is False
+    assert result.reason == "initial_identity_unavailable"
+    assert result.state is None
+    assert probes == []
+    assert len(runner.commands) == 1
+
+
+def test_comfyui_readiness_uses_real_monotonic_deadline(tmp_path):
+    clock = FakeClock()
+    probe_timeouts: list[float] = []
+    runner = FakeRunner(identity=_identity())
+
+    def probe(_url: str, timeout: float):
+        probe_timeouts.append(timeout)
+        if len(probe_timeouts) == 2:
+            clock.now += timeout
+        return False
+
+    result = start_comfyui(
+        root=tmp_path / "ComfyUI",
+        python=tmp_path / "python",
+        device=DeviceMode.CPU,
+        port=8188,
+        host=LINUX,
+        runner=runner,
+        project_root=tmp_path,
+        probe=probe,
+        popen=FakePopen(),
+        sleep=clock.sleep,
+        monotonic=clock.monotonic,
+        readiness_timeout=2.5,
+        poll_interval=1.0,
+    )
+
+    assert result.started is False
+    assert result.reason == "readiness_timeout"
+    assert probe_timeouts == [2.0, 1.5]
+    assert clock.sleeps == [1.0]
+    assert clock.now == 2.5
+    assert runner.commands[-1] == ["kill", "-TERM", "-4242"]
+
+
+def test_probe_success_after_deadline_is_timeout_not_owned(tmp_path):
+    clock = FakeClock()
+    runner = FakeRunner(identity=_identity())
+
+    def slow_probe(_url: str, timeout: float):
+        clock.now += timeout
+        return True
+
+    result = start_comfyui(
+        root=tmp_path / "ComfyUI",
+        python=tmp_path / "python",
+        device=DeviceMode.CPU,
+        port=8188,
+        host=LINUX,
+        runner=runner,
+        project_root=tmp_path,
+        probe=slow_probe,
+        popen=FakePopen(),
+        sleep=clock.sleep,
+        monotonic=clock.monotonic,
+        readiness_timeout=0.25,
+        poll_interval=0.1,
+    )
+
+    assert result.started is False
+    assert result.reason == "readiness_timeout"
+    assert result.state is None
+    assert clock.now == 0.25
 
 
 def test_exited_process_fails_without_waiting_for_timeout(tmp_path):
@@ -259,7 +389,7 @@ def test_exited_process_fails_without_waiting_for_timeout(tmp_path):
 
 
 def test_external_is_never_stopped():
-    runner = FakeRunner(identity="python main.py --port 8188")
+    runner = FakeRunner(identity=_identity())
 
     result = stop_comfyui(_state(ComfyMode.EXTERNAL), runner, LINUX)
 
@@ -269,11 +399,11 @@ def test_external_is_never_stopped():
 
 
 def test_pid_reuse_is_not_terminated_and_stale_ownership_is_cleared():
-    runner = FakeRunner(identity="unrelated.exe --serve")
+    runner = FakeRunner(identity=_identity("unrelated.exe --serve"))
     state = _state(
         ComfyMode.MANAGED,
         pid=42,
-        identity="python main.py --port 8188",
+        identity=_identity(),
     )
 
     result = stop_comfyui(state, runner, WINDOWS)
@@ -286,8 +416,10 @@ def test_pid_reuse_is_not_terminated_and_stale_ownership_is_cleared():
 
 
 def test_pid_reuse_between_identity_check_and_signal_is_not_terminated():
-    identity = "python main.py --port 8188"
-    runner = SequencedIdentityRunner([identity, "unrelated --server"])
+    identity = _identity()
+    runner = SequencedIdentityRunner(
+        [identity, _identity("unrelated --server", executable="/usr/bin/unrelated")]
+    )
 
     result = stop_comfyui(
         _state(ComfyMode.MANAGED, pid=42, identity=identity),
@@ -297,8 +429,32 @@ def test_pid_reuse_between_identity_check_and_signal_is_not_terminated():
 
     assert result.stopped is False
     assert result.reason == "process_identity_mismatch"
-    assert all(command[0] == "ps" for command in runner.commands)
+    assert all(command[0] != "kill" for command in runner.commands)
     assert result.state.managed_pid is None
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        _identity(started_at="654321"),
+        _identity(executable="/different/python"),
+    ],
+)
+def test_identical_command_line_with_different_process_instance_is_not_terminated(
+    replacement,
+):
+    identity = _identity()
+    runner = FakeRunner(identity=replacement)
+
+    result = stop_comfyui(
+        _state(ComfyMode.MANAGED, pid=42, identity=identity),
+        runner,
+        LINUX,
+    )
+
+    assert result.stopped is False
+    assert result.reason == "process_identity_mismatch"
+    assert len(runner.commands) == 1
 
 
 def test_missing_process_clears_stale_ownership_without_termination():
@@ -306,14 +462,14 @@ def test_missing_process_clears_stale_ownership_without_termination():
     state = _state(
         ComfyMode.MANAGED,
         pid=42,
-        identity="python main.py --port 8188",
+        identity=_identity(),
     )
 
     result = stop_comfyui(state, runner, LINUX)
 
     assert result.stopped is False
     assert result.reason == "process_not_found"
-    assert runner.commands == [["ps", "-p", "42", "-o", "command="]]
+    assert len(runner.commands) == 1
     assert result.state.managed_pid is None
 
 
@@ -325,7 +481,7 @@ def test_missing_process_clears_stale_ownership_without_termination():
     ],
 )
 def test_managed_identity_match_terminates_owned_process(host, expected):
-    identity = "python main.py --listen 127.0.0.1 --port 8188"
+    identity = _identity("python main.py --listen 127.0.0.1 --port 8188")
     runner = FakeRunner(identity=identity)
 
     result = stop_comfyui(

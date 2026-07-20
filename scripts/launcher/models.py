@@ -32,6 +32,32 @@ class DeviceMode(str, Enum):
 
 
 @dataclass(frozen=True)
+class ProcessIdentity:
+    executable: str
+    started_at: str
+    command_line: str
+
+    def __post_init__(self) -> None:
+        for name in ("executable", "started_at", "command_line"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"process identity {name} must be non-empty")
+
+    @classmethod
+    def from_value(cls, value: Any) -> ProcessIdentity | None:
+        if not isinstance(value, dict):
+            return None
+        try:
+            return cls(
+                executable=value["executable"],
+                started_at=value["started_at"],
+                command_line=value["command_line"],
+            )
+        except (KeyError, TypeError, ValueError):
+            return None
+
+
+@dataclass(frozen=True)
 class HostInfo:
     system: str
     machine: str
@@ -78,7 +104,7 @@ class LauncherState:
     device: DeviceMode | None
     comfyui_port: int
     managed_pid: int | None
-    managed_identity: str | None
+    managed_identity: ProcessIdentity | None
 
     def to_json(self) -> str:
         def convert(value: Any) -> Any:
@@ -124,5 +150,5 @@ class LauncherState:
             device=DeviceMode(raw["device"]) if raw.get("device") is not None else None,
             comfyui_port=comfyui_port,
             managed_pid=managed_pid,
-            managed_identity=raw.get("managed_identity"),
+            managed_identity=ProcessIdentity.from_value(raw.get("managed_identity")),
         )
