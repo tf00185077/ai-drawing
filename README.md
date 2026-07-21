@@ -68,6 +68,16 @@ Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
 ./setup.sh --help
 ```
 
+更新 launcher 安裝的 ComfyUI 時，必須依序停止、更新、再啟動；更新器不會修改仍在執行中的 Python 環境：
+
+```bash
+./setup.sh stop
+./setup.sh update-comfyui
+./setup.sh start
+```
+
+更新會同時交易式處理固定版 source 與 `.venv`。任何步驟失敗時，只有在舊 commit、原 `.venv` 與舊 runtime smoke check 全部恢復成功後，才會回報已還原；否則保留唯一的 recovery backup，並要求人工檢查。
+
 非互動、明確停用 ComfyUI：
 
 ```bash

@@ -276,6 +276,123 @@ def test_default_services_passes_project_root_to_install_boundary(
     assert captured["uv_bin"] == fake_uv
 
 
+def test_default_update_rejects_verified_live_managed_process_before_mutation(
+    tmp_path,
+    monkeypatch,
+):
+    root = (tmp_path / "ComfyUI").resolve()
+    identity = ProcessIdentity(str(root / ".venv/bin/python"), "1", "python main.py")
+    current = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        4242,
+        identity,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    service.probe_external = lambda _port: True
+    monkeypatch.setattr(cli, "read_process_identity", lambda *_args: identity)
+    monkeypatch.setattr(
+        cli,
+        "resolve_uv_binary",
+        lambda: (_ for _ in ()).throw(AssertionError("uv must not be resolved")),
+    )
+    monkeypatch.setattr(
+        cli,
+        "update_comfyui",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("update boundary must not run")
+        ),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.update_comfyui(current)
+
+    assert raised.value.code == "COMFYUI_UPDATE_REQUIRES_STOP"
+    assert "stop" in raised.value.hint
+    assert not (tmp_path / "data").exists()
+
+
+def test_default_update_rejects_stale_or_mismatched_ownership_conservatively(
+    tmp_path,
+    monkeypatch,
+):
+    root = (tmp_path / "ComfyUI").resolve()
+    recorded = ProcessIdentity("old-python", "1", "python main.py")
+    unrelated = ProcessIdentity("other-python", "2", "other")
+    current = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        4242,
+        recorded,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    monkeypatch.setattr(cli, "read_process_identity", lambda *_args: unrelated)
+    monkeypatch.setattr(
+        cli,
+        "resolve_uv_binary",
+        lambda: (_ for _ in ()).throw(AssertionError("uv must not be resolved")),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.update_comfyui(current)
+
+    assert raised.value.code == "COMFYUI_UPDATE_OWNERSHIP_UNVERIFIED"
+    assert "stop" in raised.value.hint
+    assert not (tmp_path / "data").exists()
+
+
+def test_default_stopped_update_saves_coherent_install_provenance(
+    tmp_path,
+    monkeypatch,
+):
+    root = (tmp_path / "ComfyUI").resolve()
+    current = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        None,
+        None,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="old-pin",
+    )
+    fake_uv = (tmp_path / "uv").resolve()
+    captured = {}
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    monkeypatch.setattr(cli, "resolve_uv_binary", lambda: fake_uv)
+
+    def fake_update(*args, **kwargs):
+        captured.update(args=args, kwargs=kwargs)
+        return "v0.28.0"
+
+    monkeypatch.setattr(cli, "update_comfyui", fake_update)
+
+    service.update_comfyui(current)
+
+    saved = service.load_state()
+    assert captured["kwargs"]["owned_root"] == root
+    assert saved is not None
+    assert saved.installed_commit == "v0.28.0"
+    assert saved.launcher_installed is True
+    assert saved.managed_pid is None
+
+
 def test_default_services_filters_repository_comfyui_candidates(tmp_path):
     project = tmp_path / "repository"
     inside = project / "ComfyUI"
@@ -493,7 +610,7 @@ def test_cli_surfaces_typed_uv_error_without_recovery_or_mutation(
     assert runner.commands == []
     assert not (project / ".env").exists()
     assert not (project / ".ai-drawing").exists()
-    assert not comfyui_module.staging_path(target).exists()
+    assert not list(target.parent.glob(f".{target.name}.staging-*"))
     if operation == "install":
         assert not target.exists()
     else:
