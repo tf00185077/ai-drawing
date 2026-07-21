@@ -8,6 +8,8 @@
 
 雙向綁定修正：最終文字現在依括號外逗號解析成獨立 Prompt options，逐項同步文字與 `(prompt:weight)` 權重；修改多個片段不再把全部內容折成單一 Prompt。
 
+組合儲存修正：Workbench 會使用 catalog 內既有 combination 的 revision/etag，而非一律送 `expected_revision: 0`；儲存成功後同步更新 concurrency token，支援同頁連續修改與儲存。
+
 1. Prompt Library 拆成 `/prompt-library/workbench` 與 `/prompt-library/categories` 兩個獨立畫面，並加入頁內 sidebar；`/prompt-library` 會自動導向工作台。
 2. Workbench 上層改為左側詞條加入區、右側正負向總覽；加入區以正向／負向 nav 控制篩選與加入目的地，右側 Positive／Negative Prompt 永遠上下同時顯示。
 3. 選取詞條或自由文字後立即組合，不再需要額外按「組合」。片段可編輯、刪除、排序與設定可選權重；空權重輸出原文，有權重才輸出 ComfyUI `(prompt:weight)` 格式。
