@@ -14,6 +14,7 @@ from urllib.request import urlopen
 from . import docker
 from .comfyui import (
     ComfyInstallError,
+    ComfyUpdateError,
     InstallTargetInsideProject,
     UnsupportedComfyArchitecture,
     UvBinaryError,
@@ -778,14 +779,41 @@ class DefaultServices:
                 "目前沒有可更新的 managed ComfyUI。",
                 "請先執行 reconfigure 並選擇由啟動器管理的 ComfyUI。",
             )
+        if current.managed_pid is not None or current.managed_identity is not None:
+            if current.managed_pid is None or current.managed_identity is None:
+                raise LauncherError(
+                    "COMFYUI_UPDATE_OWNERSHIP_UNVERIFIED",
+                    "Managed ComfyUI process ownership is incomplete.",
+                    "Run stop to clear stale ownership, then run update-comfyui again.",
+                )
+            identity = read_process_identity(
+                self.host,
+                current.managed_pid,
+                self.runner,
+            )
+            if identity == current.managed_identity and self.probe_external(
+                current.comfyui_port
+            ):
+                raise LauncherError(
+                    "COMFYUI_UPDATE_REQUIRES_STOP",
+                    "Managed ComfyUI is still running.",
+                    "Run stop, then update-comfyui, then start.",
+                )
+            raise LauncherError(
+                "COMFYUI_UPDATE_OWNERSHIP_UNVERIFIED",
+                "Managed ComfyUI process ownership could not be verified safely.",
+                "Run stop to clear stale ownership, then run update-comfyui again.",
+            )
         try:
-            update_comfyui(
+            installed_version = update_comfyui(
                 current.installed_root,
                 current.device,
                 self.runner,
                 self.host,
+                owned_root=current.installed_root,
                 uv_bin=resolve_uv_binary(),
             )
+            self.save_state(replace(current, installed_commit=installed_version))
         except UnsupportedComfyArchitecture as error:
             raise LauncherError(
                 UnsupportedNativeArchitecture.code,
@@ -799,6 +827,12 @@ class DefaultServices:
                 error.message,
                 error.hint,
                 exit_code=2,
+            ) from error
+        except ComfyUpdateError as error:
+            raise LauncherError(
+                error.code,
+                error.message,
+                error.hint,
             ) from error
         except ComfyInstallError as error:
             raise LauncherError(

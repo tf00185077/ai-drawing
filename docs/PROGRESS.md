@@ -8,11 +8,13 @@ ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄
 
 後續 review 強化三個 bootstrap 邊界：POSIX wrapper 在 cold cache 先檢查 `curl`，再安全 fallback 到 `wget`，兩者皆無時回穩定錯誤；Apple Silicon 的 x86_64 程序以 structured `sysctl -in sysctl.proc_translated` 辨識 Rosetta，回報 `1` 時以 `UNSUPPORTED_NATIVE_ARCHITECTURE` 中止，不會默默改 CPU 或安裝 x86 runtime；managed ComfyUI 的具體 install boundary 會 canonicalize 目標與 repository root，拒絕 repository 本身、子目錄及經 symlink parent 指回 repository 的未存在路徑，且在 clone/staging 前完成。文件 clone URL 已改為可直接複製的 public HTTPS。`dry-run` 不安裝 ComfyUI、不寫專案設定、不改變服務，但 cold-cache wrapper 仍可能先把固定版 uv/Python bootstrap 到使用者 cache。
 
+最終安全複查再強化兩個 ownership/transaction 邊界：ComfyUI 安裝改用 stdlib 隨機建立的唯一 sibling staging，cleanup 會驗證該目錄的 device/inode，只處理本次呼叫擁有的 exact path，既有固定或相似 staging 目錄不會被改動。`update-comfyui` 明確要求 `stop → update-comfyui → start`；live verified PID 以 `COMFYUI_UPDATE_REQUIRES_STOP` 拒絕，stale/mismatch ownership 也在 uv、Git 與檔案變更前保守拒絕。停止後，固定版 source 與 launcher-managed `.venv` 以唯一 backup/new-env 交易式更新；rollback 必須完成舊 commit、exact 舊 `.venv` 與 restored runtime smoke，否則保留 backup 並回報 rollback failure。
+
 持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`301 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
+- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`316 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。更新故障注入涵蓋 fetch、checkout、`.venv` backup/create/activate、dependency install、new/restored smoke 與 rollback failures。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
 - Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。

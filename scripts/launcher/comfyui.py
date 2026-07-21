@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +34,44 @@ class InstallTargetNotEmpty(RuntimeError):
 
 class ComfyInstallError(RuntimeError):
     """Raised when a managed install or update cannot be completed safely."""
+
+
+class ComfyUpdateError(ComfyInstallError):
+    """Structured failure for an update transaction."""
+
+    _DETAILS = {
+        "COMFYUI_UPDATE_NOT_OWNED": (
+            "ComfyUI update root does not match launcher install provenance.",
+            "Run reconfigure and select the launcher-installed ComfyUI root.",
+        ),
+        "COMFYUI_UPDATE_BACKUP_FAILED": (
+            "ComfyUI environment could not be backed up safely.",
+            "No update was applied; inspect the managed .venv and retry.",
+        ),
+        "COMFYUI_UPDATE_SOURCE_INVALID": (
+            "Managed ComfyUI source revision could not be verified.",
+            "Keep ComfyUI stopped and inspect the managed Git checkout before retrying.",
+        ),
+        "COMFYUI_UPDATE_FAILED_RESTORED": (
+            "ComfyUI update failed; the prior source and environment were restored.",
+            "Inspect the update error, then retry while ComfyUI remains stopped.",
+        ),
+        "COMFYUI_UPDATE_ROLLBACK_FAILED": (
+            "ComfyUI update failed and automatic rollback did not complete.",
+            "Do not start ComfyUI; preserve the reported backup and repair it manually.",
+        ),
+        "COMFYUI_UPDATE_CLEANUP_FAILED": (
+            "ComfyUI updated but its retained backup could not be finalized.",
+            "Keep ComfyUI stopped and inspect the managed update backup before retrying.",
+        ),
+    }
+
+    def __init__(self, code: str, message: str = "", hint: str = "") -> None:
+        default_message, default_hint = self._DETAILS.get(code, (code, "Inspect logs."))
+        self.code = code
+        self.message = message or default_message
+        self.hint = hint or default_hint
+        super().__init__(self.message)
 
 
 class UvBinaryError(ComfyInstallError):
@@ -108,6 +147,47 @@ class InstallPlan:
     staging: Path
     python: Path
     commands: tuple[PlannedCommand, ...]
+
+
+@dataclass(frozen=True)
+class OwnedTemporaryDirectory:
+    """A uniquely allocated directory removable only while its identity matches."""
+
+    path: Path
+    device: int
+    inode: int
+
+    @classmethod
+    def create(cls, *, parent: Path, prefix: str) -> OwnedTemporaryDirectory:
+        parent.mkdir(parents=True, exist_ok=True)
+        path = Path(tempfile.mkdtemp(prefix=prefix, dir=parent))
+        identity = path.stat(follow_symlinks=False)
+        return cls(path=path, device=identity.st_dev, inode=identity.st_ino)
+
+    def remove(self) -> None:
+        try:
+            identity = self.path.stat(follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        if self.path.is_symlink() or not self.path.is_dir():
+            raise ComfyInstallError(
+                "owned temporary directory identity changed; refusing cleanup"
+            )
+        if (identity.st_dev, identity.st_ino) != (self.device, self.inode):
+            raise ComfyInstallError(
+                "owned temporary directory identity changed; refusing cleanup"
+            )
+        shutil.rmtree(self.path)
+
+
+def _rollback_failure(backup: OwnedTemporaryDirectory) -> ComfyUpdateError:
+    return ComfyUpdateError(
+        "COMFYUI_UPDATE_ROLLBACK_FAILED",
+        hint=(
+            "Do not start ComfyUI; recovery material is retained at "
+            f"{backup.path}. Inspect it and the managed .venv before repair."
+        ),
+    )
 
 
 def _validate_uv_binary(
@@ -232,11 +312,6 @@ def probe_comfyui(
     )
 
 
-def staging_path(target: Path) -> Path:
-    target = Path(target)
-    return target.with_name(f".{target.name}.staging")
-
-
 def validate_install_target(target: Path, project_root: Path) -> Path:
     """Return a canonical target only when it is outside the repository."""
     canonical_target = Path(target).expanduser().resolve(strict=False)
@@ -250,29 +325,27 @@ def validate_install_target(target: Path, project_root: Path) -> Path:
     )
 
 
-def _remove_staging(path: Path) -> None:
-    if path.is_symlink() or path.is_file():
-        path.unlink(missing_ok=True)
-    elif path.exists():
-        shutil.rmtree(path)
-
-
-def prepare_staging_target(target: Path) -> Path:
-    """Prepare a known sibling staging path without replacing user data."""
+def prepare_staging_target(target: Path) -> OwnedTemporaryDirectory:
+    """Allocate one unique sibling staging directory owned by this call."""
     target = Path(target)
     if target.exists() and (not target.is_dir() or any(target.iterdir())):
         raise InstallTargetNotEmpty(f"install target is not empty: {target}")
-    staging = staging_path(target)
-    _remove_staging(staging)
-    staging.parent.mkdir(parents=True, exist_ok=True)
-    staging.mkdir()
-    return staging
+    return OwnedTemporaryDirectory.create(
+        parent=target.parent,
+        prefix=f".{target.name}.staging-",
+    )
 
 
 def _venv_python(root: Path, host: HostInfo) -> Path:
     if host.system == "Windows":
         return root / ".venv" / "Scripts" / "python.exe"
     return root / ".venv" / "bin" / "python"
+
+
+def _python_in_venv(venv: Path, host: HostInfo) -> Path:
+    if host.system == "Windows":
+        return venv / "Scripts" / "python.exe"
+    return venv / "bin" / "python"
 
 
 def _torch_args(
@@ -322,15 +395,13 @@ def _environment_commands(
     root: Path,
     device: DeviceMode,
     host: HostInfo,
-    clear_venv: bool = False,
+    venv_path: Path | None = None,
     uv_bin: Path | None = None,
 ) -> tuple[PlannedCommand, ...]:
     uv = _plan_uv_binary(uv_bin)
-    python = _venv_python(root, host)
-    venv_args = [str(uv), "venv"]
-    if clear_venv:
-        venv_args.append("--clear")
-    venv_args.extend(("--python", COMFYUI_PYTHON, str(root / ".venv")))
+    venv = root / ".venv" if venv_path is None else Path(venv_path)
+    python = _python_in_venv(venv, host)
+    venv_args = [str(uv), "venv", "--python", COMFYUI_PYTHON, str(venv)]
     return (
         PlannedCommand(
             "python",
@@ -362,10 +433,11 @@ def build_install_plan(
     device: DeviceMode,
     host: HostInfo | None = None,
     *,
+    staging: Path,
     uv_bin: Path | None = None,
 ) -> InstallPlan:
     target = Path(target).resolve()
-    staging = staging_path(target)
+    staging = Path(staging).resolve()
     actual_host = host or detect_host()
     commands = (
         PlannedCommand(
@@ -422,9 +494,13 @@ def install_comfyui(
         ) from error
     target_was_empty = final_target.is_dir() and not any(final_target.iterdir())
     prepared = prepare_staging_target(final_target)
-    plan = build_install_plan(final_target, device, actual_host, uv_bin=resolved_uv)
-    if prepared != plan.staging:
-        raise ComfyInstallError("prepared staging target does not match install plan")
+    plan = build_install_plan(
+        final_target,
+        device,
+        actual_host,
+        staging=prepared.path,
+        uv_bin=resolved_uv,
+    )
     try:
         for command in plan.commands:
             _run_required(runner, command)
@@ -438,7 +514,7 @@ def install_comfyui(
         plan.staging.replace(final_target)
     except Exception:
         try:
-            _remove_staging(plan.staging)
+            prepared.remove()
         finally:
             if target_was_empty and not final_target.exists():
                 final_target.mkdir()
@@ -452,10 +528,15 @@ def update_comfyui(
     runner: Runner,
     host: HostInfo | None = None,
     *,
+    owned_root: Path,
     uv_bin: Path | None = None,
 ) -> str:
-    """Update explicitly to the stable pin and restore the prior commit on failure."""
+    """Update source and environment as one stopped, rollback-tested transaction."""
     actual_host = host or detect_host()
+    requested_root = Path(root).resolve()
+    provenance_root = Path(owned_root).resolve()
+    if os.path.normcase(str(requested_root)) != os.path.normcase(str(provenance_root)):
+        raise ComfyUpdateError("COMFYUI_UPDATE_NOT_OWNED")
     resolved_uv = _plan_uv_binary(uv_bin)
     try:
         ensure_native_macos_architecture(actual_host, runner)
@@ -463,11 +544,16 @@ def update_comfyui(
         raise UnsupportedComfyArchitecture(
             "native arm64 architecture is required; Rosetta is unsupported"
         ) from error
-    installation = validate_comfyui_root(root, actual_host)
-    if not installation.valid:
-        raise ComfyInstallError(
-            "invalid ComfyUI root: " + ", ".join(installation.issues)
-        )
+    installation = validate_comfyui_root(requested_root, actual_host)
+    expected_python = _venv_python(requested_root, actual_host)
+    old_venv = requested_root / ".venv"
+    if (
+        not installation.controllable
+        or installation.python != expected_python
+        or not old_venv.is_dir()
+        or old_venv.is_symlink()
+    ):
+        raise ComfyUpdateError("COMFYUI_UPDATE_NOT_OWNED")
     root = installation.root
     revision = PlannedCommand(
         "read current commit",
@@ -477,12 +563,45 @@ def update_comfyui(
     try:
         result = runner.run(revision.args, cwd=revision.cwd)
     except OSError as error:
-        raise ComfyInstallError(f"read current commit command failed: {error}") from error
+        raise ComfyUpdateError("COMFYUI_UPDATE_SOURCE_INVALID") from error
     old_commit = result.stdout.strip()
     if result.returncode != 0 or not old_commit:
-        detail = result.stderr.strip() or "no commit returned"
-        raise ComfyInstallError(f"read current commit command failed: {detail}")
+        raise ComfyUpdateError("COMFYUI_UPDATE_SOURCE_INVALID")
 
+    backup: OwnedTemporaryDirectory | None = None
+    fresh: OwnedTemporaryDirectory | None = None
+    try:
+        backup = OwnedTemporaryDirectory.create(
+            parent=root.parent,
+            prefix=f".{root.name}.venv-backup-",
+        )
+        fresh = OwnedTemporaryDirectory.create(
+            parent=root.parent,
+            prefix=f".{root.name}.venv.update-new-",
+        )
+        old_venv.replace(backup.path / "venv")
+    except Exception as error:
+        if backup is not None and (backup.path / "venv").exists():
+            if fresh is not None:
+                try:
+                    fresh.remove()
+                except Exception:
+                    pass
+            raise _rollback_failure(backup) from error
+        cleanup_errors: list[Exception] = []
+        for owned in (fresh, backup):
+            if owned is None:
+                continue
+            try:
+                owned.remove()
+            except Exception as cleanup_error:
+                cleanup_errors.append(cleanup_error)
+        raise ComfyUpdateError("COMFYUI_UPDATE_BACKUP_FAILED") from (
+            cleanup_errors[0] if cleanup_errors else error
+        )
+
+    assert backup is not None and fresh is not None
+    new_venv = fresh.path / "venv"
     update_commands = (
         PlannedCommand(
             "fetch",
@@ -506,29 +625,81 @@ def update_comfyui(
             root,
             device,
             actual_host,
-            clear_venv=True,
+            venv_path=new_venv,
             uv_bin=resolved_uv,
         ),
     )
+    new_environment_activated = False
     try:
         for command in update_commands:
             _run_required(runner, command)
+        if not _python_in_venv(new_venv, actual_host).is_file():
+            raise ComfyInstallError("validation failed after update: missing new python")
+        new_venv.replace(old_venv)
+        new_environment_activated = True
         updated = validate_comfyui_root(root, actual_host)
-        if not updated.controllable:
+        if not updated.controllable or updated.python != expected_python:
             raise ComfyInstallError("validation failed after update")
     except Exception as error:
-        rollback = PlannedCommand(
+        try:
+            _restore_update_transaction(
+                root=root,
+                old_commit=old_commit,
+                backup=backup,
+                fresh=fresh,
+                device=device,
+                host=actual_host,
+                runner=runner,
+                new_environment_activated=new_environment_activated,
+            )
+        except Exception as rollback_error:
+            raise _rollback_failure(backup) from rollback_error
+        raise ComfyUpdateError("COMFYUI_UPDATE_FAILED_RESTORED") from error
+
+    try:
+        fresh.remove()
+        backup.remove()
+    except Exception as error:
+        raise ComfyUpdateError("COMFYUI_UPDATE_CLEANUP_FAILED") from error
+    return COMFYUI_VERSION
+
+
+def _restore_update_transaction(
+    *,
+    root: Path,
+    old_commit: str,
+    backup: OwnedTemporaryDirectory,
+    fresh: OwnedTemporaryDirectory,
+    device: DeviceMode,
+    host: HostInfo,
+    runner: Runner,
+    new_environment_activated: bool,
+) -> None:
+    """Restore both old source and exact old venv, then prove the result works."""
+    old_venv = root / ".venv"
+    backup_venv = backup.path / "venv"
+    _run_required(
+        runner,
+        PlannedCommand(
             "rollback",
             ("git", "checkout", "--detach", old_commit),
             cwd=root,
-        )
-        try:
-            _run_required(runner, rollback)
-        except ComfyInstallError as rollback_error:
-            raise ComfyInstallError(
-                f"update failed ({error}); rollback to {old_commit} failed: {rollback_error}"
-            ) from error
+        ),
+    )
+    if new_environment_activated:
+        if not old_venv.exists():
+            raise ComfyInstallError("activated environment disappeared during rollback")
+        old_venv.replace(fresh.path / "failed-venv")
+    elif old_venv.exists():
         raise ComfyInstallError(
-            f"update failed ({error}); restored {old_commit}"
-        ) from error
-    return COMFYUI_VERSION
+            "unknown environment appeared during rollback; refusing to replace it"
+        )
+    backup_venv.replace(old_venv)
+    try:
+        smoke_comfyui_runtime(_venv_python(root, host), device, runner)
+    except Exception:
+        if old_venv.exists() and not backup_venv.exists():
+            old_venv.replace(backup_venv)
+        raise
+    fresh.remove()
+    backup.remove()

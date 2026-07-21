@@ -8,6 +8,7 @@ import pytest
 
 from launcher.comfyui import (
     ComfyInstallError,
+    ComfyUpdateError,
     InstallTargetNotEmpty,
     build_install_plan,
     discover_comfyui,
@@ -16,7 +17,6 @@ from launcher.comfyui import (
     probe_comfyui,
     resolve_uv_binary,
     smoke_comfyui_runtime,
-    staging_path,
     update_comfyui,
     validate_comfyui_root,
 )
@@ -43,6 +43,20 @@ def make_root(root: Path) -> Path:
     root.mkdir(parents=True, exist_ok=True)
     (root / "main.py").write_text("# ComfyUI\n", encoding="utf-8")
     (root / "models").mkdir()
+    return root
+
+
+def make_managed_root(root: Path, host: HostInfo = LINUX) -> Path:
+    root = make_root(root)
+    python = (
+        root / ".venv/Scripts/python.exe"
+        if host.system == "Windows"
+        else root / ".venv/bin/python"
+    )
+    python.parent.mkdir(parents=True)
+    python.touch()
+    (root / ".venv/old-environment.txt").write_text("exact-old", encoding="utf-8")
+    (root / "requirements.txt").write_text("# fake\n", encoding="utf-8")
     return root
 
 
@@ -158,19 +172,40 @@ def test_install_refuses_nonempty_target(tmp_path):
         prepare_staging_target(target)
 
 
-def test_prepare_staging_removes_only_stale_staging(tmp_path):
+def test_prepare_staging_never_touches_preexisting_staging_like_directory(tmp_path):
     target = tmp_path / "ComfyUI"
     target.mkdir()
-    stale = staging_path(target)
-    stale.mkdir()
-    (stale / "partial.txt").write_text("partial", encoding="utf-8")
+    sentinel = tmp_path / ".ComfyUI.staging"
+    sentinel.mkdir()
+    (sentinel / "user.txt").write_text("keep", encoding="utf-8")
+    unknown = tmp_path / ".ComfyUI.staging-user-owned"
+    unknown.mkdir()
+    (unknown / "user.txt").write_text("also-keep", encoding="utf-8")
 
     prepared = prepare_staging_target(target)
 
-    assert prepared == stale
-    assert prepared.is_dir()
-    assert list(prepared.iterdir()) == []
+    assert prepared.path != sentinel
+    assert prepared.path.parent == target.parent
+    assert prepared.path.name.startswith(".ComfyUI.staging-")
+    assert prepared.path.is_dir()
+    assert list(prepared.path.iterdir()) == []
+    assert (sentinel / "user.txt").read_text(encoding="utf-8") == "keep"
+    assert (unknown / "user.txt").read_text(encoding="utf-8") == "also-keep"
     assert target.is_dir()
+    prepared.remove()
+
+
+def test_prepare_staging_allocates_a_unique_owned_directory_each_time(tmp_path):
+    target = tmp_path / "ComfyUI"
+
+    first = prepare_staging_target(target)
+    second = prepare_staging_target(target)
+
+    assert first.path != second.path
+    assert first.path.is_dir()
+    assert second.path.is_dir()
+    first.remove()
+    second.remove()
 
 
 def flattened_args(plan):
@@ -196,7 +231,7 @@ def test_uv_binary_missing_has_stable_diagnostic():
 
 
 def test_every_install_dependency_command_uses_injected_absolute_uv(tmp_path, uv_bin):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.CPU, uv_bin=uv_bin)
+    plan = install_plan(tmp_path, DeviceMode.CPU, uv_bin)
 
     dependency_commands = plan.commands[1:-1]
     assert dependency_commands
@@ -252,7 +287,7 @@ def test_invalid_uv_rejected_before_install_staging_or_runner_side_effects(
 
     assert target.is_dir()
     assert list(target.iterdir()) == []
-    assert not staging_path(target).exists()
+    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
     assert runner.commands == []
 
 
@@ -275,6 +310,7 @@ def test_invalid_uv_rejected_before_update_git_or_filesystem_mutation(tmp_path, 
             DeviceMode.CPU,
             runner,
             host=LINUX,
+            owned_root=root,
             uv_bin=invalid_uv,
         )
 
@@ -308,18 +344,28 @@ def test_invalid_uv_precedes_macos_architecture_and_git_runner_boundaries(
             )
         else:
             update_comfyui(
-                make_root(tmp_path / "ComfyUI"),
+                make_managed_root(tmp_path / "ComfyUI"),
                 DeviceMode.CPU,
                 runner,
                 host=macos,
+                owned_root=tmp_path / "ComfyUI",
                 uv_bin=invalid_uv,
             )
 
     assert runner.commands == []
 
 
+def install_plan(tmp_path, device, uv_bin):
+    return build_install_plan(
+        tmp_path / "ComfyUI",
+        device,
+        staging=tmp_path / ".ComfyUI.staging-owned",
+        uv_bin=uv_bin,
+    )
+
+
 def test_nvidia_plan_is_pinned(tmp_path, uv_bin):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.NVIDIA, uv_bin=uv_bin)
+    plan = install_plan(tmp_path, DeviceMode.NVIDIA, uv_bin)
     args = flattened_args(plan)
 
     assert "v0.28.0" in args
@@ -329,7 +375,7 @@ def test_nvidia_plan_is_pinned(tmp_path, uv_bin):
 
 
 def test_mps_plan_uses_default_torch_wheels_and_asserts_mps(tmp_path, uv_bin):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.MPS, uv_bin=uv_bin)
+    plan = install_plan(tmp_path, DeviceMode.MPS, uv_bin)
     torch_command = plan.commands[3].args
 
     assert "--index-url" not in torch_command
@@ -337,7 +383,7 @@ def test_mps_plan_uses_default_torch_wheels_and_asserts_mps(tmp_path, uv_bin):
 
 
 def test_cpu_plan_uses_cpu_torch_index(tmp_path, uv_bin):
-    plan = build_install_plan(tmp_path / "ComfyUI", DeviceMode.CPU, uv_bin=uv_bin)
+    plan = install_plan(tmp_path, DeviceMode.CPU, uv_bin)
     args = flattened_args(plan)
 
     assert "https://download.pytorch.org/whl/cpu" in args
@@ -346,7 +392,12 @@ def test_cpu_plan_uses_cpu_torch_index(tmp_path, uv_bin):
 
 def test_install_plan_has_exact_staged_sequence_and_no_content_downloads(tmp_path, uv_bin):
     target = tmp_path / "ComfyUI"
-    plan = build_install_plan(target, DeviceMode.CPU, uv_bin=uv_bin)
+    plan = build_install_plan(
+        target,
+        DeviceMode.CPU,
+        staging=tmp_path / ".ComfyUI.staging-owned",
+        uv_bin=uv_bin,
+    )
 
     assert [command.args[:2] for command in plan.commands] == [
         ("git", "clone"),
@@ -370,6 +421,9 @@ def test_install_plan_has_exact_staged_sequence_and_no_content_downloads(tmp_pat
 
 def test_install_promotes_staging_only_after_success(tmp_path, uv_bin):
     target = tmp_path / "ComfyUI"
+    sentinel = tmp_path / ".ComfyUI.staging"
+    sentinel.mkdir()
+    (sentinel / "user.txt").write_text("keep", encoding="utf-8")
     runner = FakeRunner()
 
     result = install_comfyui(
@@ -384,12 +438,16 @@ def test_install_promotes_staging_only_after_success(tmp_path, uv_bin):
     assert result.root == target.resolve()
     assert result.valid is True
     assert target.is_dir()
-    assert not staging_path(target).exists()
+    assert (sentinel / "user.txt").read_text(encoding="utf-8") == "keep"
+    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
     assert len(runner.commands) == 6
 
 
 def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path, uv_bin):
     target = tmp_path / "ComfyUI"
+    sentinel = tmp_path / ".ComfyUI.staging"
+    sentinel.mkdir()
+    (sentinel / "user.txt").write_text("keep", encoding="utf-8")
     runner = FakeRunner(fail_when=lambda args: len(args) > 1 and args[1] == "-c")
 
     with pytest.raises(ComfyInstallError, match="smoke"):
@@ -403,14 +461,22 @@ def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path, uv_b
         )
 
     assert not target.exists()
-    assert not staging_path(target).exists()
+    assert (sentinel / "user.txt").read_text(encoding="utf-8") == "keep"
+    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
 
 
 def test_update_reinstalls_pinned_version_without_cloning(tmp_path, uv_bin):
-    root = make_root(tmp_path / "ComfyUI")
+    root = make_managed_root(tmp_path / "ComfyUI")
     runner = FakeRunner(old_commit="old123")
 
-    result = update_comfyui(root, DeviceMode.CPU, runner, host=LINUX, uv_bin=uv_bin)
+    result = update_comfyui(
+        root,
+        DeviceMode.CPU,
+        runner,
+        host=LINUX,
+        owned_root=root,
+        uv_bin=uv_bin,
+    )
 
     commands = [command for command, _cwd in runner.commands]
     assert result == "v0.28.0"
@@ -425,30 +491,45 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path, uv_bin):
         "v0.28.0",
     )
     assert commands[2] == ("git", "checkout", "--detach", "v0.28.0")
-    assert commands[4] == (
-        str(uv_bin),
-        "venv",
-        "--clear",
-        "--python",
-        "3.12",
-        str(root / ".venv"),
-    )
+    assert commands[4][:4] == (str(uv_bin), "venv", "--python", "3.12")
+    assert "--clear" not in commands[4]
+    assert Path(commands[4][-1]).name == "venv"
+    assert ".venv.update-new-" in str(Path(commands[4][-1]).parent)
     assert not any(command[:2] == ("git", "clone") for command in commands)
     assert commands[-1][1] == "-c"
+    assert not (root / ".venv/old-environment.txt").exists()
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
 
 
 def test_update_restores_old_commit_when_smoke_fails(tmp_path, uv_bin):
-    root = make_root(tmp_path / "ComfyUI")
+    root = make_managed_root(tmp_path / "ComfyUI")
     runner = FakeRunner(
-        fail_when=lambda args: len(args) > 1 and args[1] == "-c",
+        fail_when=lambda args: (
+            len(args) > 1
+            and args[1] == "-c"
+            and ".venv.update-new-" in args[0]
+        ),
         old_commit="old123",
     )
 
-    with pytest.raises(ComfyInstallError, match="restored old123"):
-        update_comfyui(root, DeviceMode.MPS, runner, host=LINUX, uv_bin=uv_bin)
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.MPS,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
 
     commands = [command for command, _cwd in runner.commands]
-    assert commands[-1] == ("git", "checkout", "--detach", "old123")
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert raised.value.hint
+    assert commands[-2] == ("git", "checkout", "--detach", "old123")
+    assert commands[-1][0] == str(root / ".venv/bin/python")
+    assert commands[-1][1] == "-c"
+    assert (root / ".venv/old-environment.txt").read_text(encoding="utf-8") == "exact-old"
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
 
 
 @pytest.mark.parametrize(
@@ -463,17 +544,302 @@ def test_update_restores_old_commit_when_fetch_or_checkout_fails(
     failed_prefix,
     uv_bin,
 ):
-    root = make_root(tmp_path / "ComfyUI")
+    root = make_managed_root(tmp_path / "ComfyUI")
     runner = FakeRunner(
         fail_when=lambda args: args[: len(failed_prefix)] == failed_prefix,
         old_commit="old123",
     )
 
-    with pytest.raises(ComfyInstallError, match="restored old123"):
-        update_comfyui(root, DeviceMode.CPU, runner, host=LINUX, uv_bin=uv_bin)
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
 
     commands = [command for command, _cwd in runner.commands]
-    assert commands[-1] == ("git", "checkout", "--detach", "old123")
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert commands[-2] == ("git", "checkout", "--detach", "old123")
+    assert commands[-1][0] == str(root / ".venv/bin/python")
+    assert (root / ".venv/old-environment.txt").is_file()
+
+
+@pytest.mark.parametrize("failed_phase", ["venv", "torch", "requirements"])
+def test_update_restores_exact_old_environment_when_environment_build_fails(
+    tmp_path,
+    uv_bin,
+    failed_phase,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+
+    def fails(args):
+        if failed_phase == "venv":
+            return len(args) > 1 and args[1] == "venv"
+        if failed_phase == "torch":
+            return "torch" in args
+        return "-r" in args
+
+    runner = FakeRunner(fail_when=fails, old_commit="old123")
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    commands = [command for command, _cwd in runner.commands]
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert commands[-2] == ("git", "checkout", "--detach", "old123")
+    assert commands[-1][0] == str(root / ".venv/bin/python")
+    assert (root / ".venv/old-environment.txt").read_text(encoding="utf-8") == "exact-old"
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+
+
+def test_update_backup_rename_failure_does_not_fetch_or_change_environment(
+    tmp_path,
+    monkeypatch,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(old_commit="old123")
+    original_replace = Path.replace
+
+    def fail_old_environment_backup(path, destination):
+        if path == root / ".venv":
+            raise OSError("backup rename failed")
+        return original_replace(path, destination)
+
+    monkeypatch.setattr(Path, "replace", fail_old_environment_backup)
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_BACKUP_FAILED"
+    assert [command for command, _cwd in runner.commands] == [
+        ("git", "rev-parse", "HEAD")
+    ]
+    assert (root / ".venv/old-environment.txt").is_file()
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+
+
+def test_update_activation_rename_failure_restores_old_environment(
+    tmp_path,
+    monkeypatch,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(old_commit="old123")
+    original_replace = Path.replace
+
+    def fail_new_environment_activation(path, destination):
+        if path.name == "venv" and ".venv.update-new-" in str(path.parent):
+            raise OSError("activation failed")
+        return original_replace(path, destination)
+
+    monkeypatch.setattr(Path, "replace", fail_new_environment_activation)
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert (root / ".venv/old-environment.txt").is_file()
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+
+
+def test_update_rollback_checkout_failure_retains_exact_backup(tmp_path, uv_bin):
+    root = make_managed_root(tmp_path / "ComfyUI")
+
+    def fails(args):
+        return (
+            (len(args) > 1 and args[1] == "-c" and ".venv.update-new-" in args[0])
+            or args == ("git", "checkout", "--detach", "old123")
+        )
+
+    runner = FakeRunner(fail_when=fails, old_commit="old123")
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    backups = list(tmp_path.glob(".ComfyUI.venv-backup-*"))
+    assert raised.value.code == "COMFYUI_UPDATE_ROLLBACK_FAILED"
+    assert len(backups) == 1
+    assert str(backups[0]) in raised.value.hint
+    assert (backups[0] / "venv/old-environment.txt").is_file()
+    assert not (root / ".venv").exists()
+
+
+def test_update_restore_rename_failure_retains_exact_backup(
+    tmp_path,
+    monkeypatch,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(
+        fail_when=lambda args: (
+            len(args) > 1 and args[1] == "-c" and ".venv.update-new-" in args[0]
+        ),
+        old_commit="old123",
+    )
+    original_replace = Path.replace
+
+    def fail_backup_restore(path, destination):
+        if path.name == "venv" and ".venv-backup-" in str(path.parent):
+            raise OSError("restore rename failed")
+        return original_replace(path, destination)
+
+    monkeypatch.setattr(Path, "replace", fail_backup_restore)
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    backups = list(tmp_path.glob(".ComfyUI.venv-backup-*"))
+    assert raised.value.code == "COMFYUI_UPDATE_ROLLBACK_FAILED"
+    assert len(backups) == 1
+    assert (backups[0] / "venv/old-environment.txt").is_file()
+
+
+def test_update_restored_smoke_failure_retains_old_environment_backup(tmp_path, uv_bin):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(
+        fail_when=lambda args: len(args) > 1 and args[1] == "-c",
+        old_commit="old123",
+    )
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    backups = list(tmp_path.glob(".ComfyUI.venv-backup-*"))
+    assert raised.value.code == "COMFYUI_UPDATE_ROLLBACK_FAILED"
+    assert len(backups) == 1
+    assert (backups[0] / "venv/old-environment.txt").is_file()
+    assert not (root / ".venv").exists()
+
+
+def test_update_rollback_never_deletes_concurrently_created_unknown_venv(
+    tmp_path,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+
+    class ConcurrentRunner(FakeRunner):
+        def run(self, args, **kwargs):
+            command = tuple(str(arg) for arg in args)
+            if (
+                len(command) > 1
+                and command[1] == "-c"
+                and ".venv.update-new-" in command[0]
+            ):
+                unknown = root / ".venv"
+                unknown.mkdir()
+                (unknown / "user.txt").write_text("never-delete", encoding="utf-8")
+            return super().run(args, **kwargs)
+
+    runner = ConcurrentRunner(
+        fail_when=lambda args: (
+            len(args) > 1 and args[1] == "-c" and ".venv.update-new-" in args[0]
+        ),
+        old_commit="old123",
+    )
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_ROLLBACK_FAILED"
+    assert (root / ".venv/user.txt").read_text(encoding="utf-8") == "never-delete"
+    backups = list(tmp_path.glob(".ComfyUI.venv-backup-*"))
+    assert len(backups) == 1
+    assert (backups[0] / "venv/old-environment.txt").is_file()
+
+
+def test_update_rejects_root_that_does_not_match_owned_provenance_before_git(
+    tmp_path,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner()
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=tmp_path / "different-root",
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_NOT_OWNED"
+    assert runner.commands == []
+    assert (root / ".venv/old-environment.txt").is_file()
+
+
+def test_update_invalid_git_source_has_stable_code_before_backup(tmp_path, uv_bin):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(old_commit="")
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_SOURCE_INVALID"
+    assert raised.value.hint
+    assert (root / ".venv/old-environment.txt").is_file()
+    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
 
 
 def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatch, uv_bin):
@@ -483,7 +849,7 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
     original_replace = Path.replace
 
     def fail_staging_promotion(path, destination):
-        if path == staging_path(target):
+        if path.name.startswith(".ComfyUI.staging-"):
             raise OSError("promotion failed")
         return original_replace(path, destination)
 
@@ -501,7 +867,7 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
 
     assert target.is_dir()
     assert list(target.iterdir()) == []
-    assert not staging_path(target).exists()
+    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
 
 
 @pytest.mark.parametrize("relative_target", [Path("."), Path("data/ComfyUI")])
@@ -527,7 +893,7 @@ def test_install_rejects_repository_target_before_side_effects(
         )
 
     assert runner.commands == []
-    assert not staging_path(target.resolve()).exists()
+    assert not list(target.resolve().parent.glob(".ComfyUI.staging-*"))
     if relative_target != Path("."):
         assert not target.exists()
 
