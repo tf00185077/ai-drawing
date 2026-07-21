@@ -4,6 +4,8 @@
 
 後續微調：可選 Prompt 詞條改為橫向 `flex-wrap`、依內容寬度排列並限制最大寬度，長文字在 option 內換行，不再每筆佔滿整列。
 
+後續微調：Positive／Negative 已選片段各自改為每頁 5 筆、3 欄 × 最多 2 列的獨立分頁 grid；修正最終文字跨片段手動修改只更新顯示字串的狀態缺陷，現在會同步成工作台片段，後續加入新 Prompt 不會再覆蓋手改內容。
+
 1. Prompt Library 拆成 `/prompt-library/workbench` 與 `/prompt-library/categories` 兩個獨立畫面，並加入頁內 sidebar；`/prompt-library` 會自動導向工作台。
 2. Workbench 上層改為左側詞條加入區、右側正負向總覽；加入區以正向／負向 nav 控制篩選與加入目的地，右側 Positive／Negative Prompt 永遠上下同時顯示。
 3. 選取詞條或自由文字後立即組合，不再需要額外按「組合」。片段可編輯、刪除、排序與設定可選權重；空權重輸出原文，有權重才輸出 ComfyUI `(prompt:weight)` 格式。
