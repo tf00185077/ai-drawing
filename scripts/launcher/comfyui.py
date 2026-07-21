@@ -24,6 +24,7 @@ CUDA_INDEX = "https://download.pytorch.org/whl/cu130"
 CPU_INDEX = "https://download.pytorch.org/whl/cpu"
 TORCH_PACKAGES = ("torch", "torchvision", "torchaudio")
 UV_BINARY_ENV = "AI_DRAWING_UV_BIN"
+_WINDOWS_EXECUTABLE_SUFFIXES = frozenset({".exe", ".com", ".bat", ".cmd"})
 
 
 class InstallTargetNotEmpty(RuntimeError):
@@ -76,6 +77,36 @@ class InstallPlan:
     commands: tuple[PlannedCommand, ...]
 
 
+def _validate_uv_binary(
+    candidate: Path,
+    *,
+    platform_name: str | None = None,
+) -> Path:
+    path = Path(candidate)
+    if not path.is_absolute():
+        raise ComfyInstallError("UV_BINARY_INVALID: uv binary must be absolute")
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise ComfyInstallError(
+            "UV_BINARY_INVALID: configured uv binary does not exist"
+        ) from error
+    if not resolved.is_file():
+        raise ComfyInstallError(
+            "UV_BINARY_INVALID: configured uv binary must be a regular file"
+        )
+    actual_platform = os.name if platform_name is None else platform_name
+    if actual_platform == "nt":
+        executable = resolved.suffix.lower() in _WINDOWS_EXECUTABLE_SUFFIXES
+    else:
+        executable = os.access(resolved, os.X_OK)
+    if not executable:
+        raise ComfyInstallError(
+            "UV_BINARY_INVALID: configured uv file is not executable"
+        )
+    return resolved
+
+
 def resolve_uv_binary(
     *,
     environ: Mapping[str, str] | None = None,
@@ -92,23 +123,13 @@ def resolve_uv_binary(
         raise ComfyInstallError(
             "UV_BINARY_MISSING: run setup.ps1/setup.sh or install uv and retry"
         )
-    if not candidate.is_absolute():
-        raise ComfyInstallError(
-            "UV_BINARY_INVALID: AI_DRAWING_UV_BIN must be an absolute path"
-        )
-    resolved = candidate.resolve()
-    if not resolved.is_file():
-        raise ComfyInstallError(
-            "UV_BINARY_INVALID: configured uv binary does not exist"
-        )
-    return resolved
+    return _validate_uv_binary(candidate)
 
 
 def _plan_uv_binary(uv_bin: Path | None) -> Path:
-    resolved = resolve_uv_binary() if uv_bin is None else Path(uv_bin)
-    if not resolved.is_absolute():
-        raise ComfyInstallError("UV_BINARY_INVALID: uv binary must be absolute")
-    return resolved
+    if uv_bin is None:
+        return resolve_uv_binary()
+    return _validate_uv_binary(Path(uv_bin))
 
 
 def validate_comfyui_root(
@@ -367,13 +388,13 @@ def install_comfyui(
     """Install into staging and publish only a validated, smoke-tested root."""
     actual_host = host or detect_host()
     final_target = validate_install_target(target, project_root)
+    resolved_uv = _plan_uv_binary(uv_bin)
     try:
         ensure_native_macos_architecture(actual_host, runner)
     except UnsupportedNativeArchitecture as error:
         raise UnsupportedComfyArchitecture(
             "native arm64 architecture is required; Rosetta is unsupported"
         ) from error
-    resolved_uv = _plan_uv_binary(uv_bin)
     target_was_empty = final_target.is_dir() and not any(final_target.iterdir())
     prepared = prepare_staging_target(final_target)
     plan = build_install_plan(final_target, device, actual_host, uv_bin=resolved_uv)
@@ -410,13 +431,13 @@ def update_comfyui(
 ) -> str:
     """Update explicitly to the stable pin and restore the prior commit on failure."""
     actual_host = host or detect_host()
+    resolved_uv = _plan_uv_binary(uv_bin)
     try:
         ensure_native_macos_architecture(actual_host, runner)
     except UnsupportedNativeArchitecture as error:
         raise UnsupportedComfyArchitecture(
             "native arm64 architecture is required; Rosetta is unsupported"
         ) from error
-    resolved_uv = _plan_uv_binary(uv_bin)
     installation = validate_comfyui_root(root, actual_host)
     if not installation.valid:
         raise ComfyInstallError(
