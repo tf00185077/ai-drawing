@@ -16,6 +16,7 @@ from .comfyui import (
     ComfyInstallError,
     InstallTargetInsideProject,
     UnsupportedComfyArchitecture,
+    UvBinaryError,
     discover_comfyui,
     install_comfyui,
     probe_comfyui,
@@ -792,6 +793,13 @@ class DefaultServices:
                 UnsupportedNativeArchitecture.hint,
                 exit_code=2,
             ) from error
+        except UvBinaryError as error:
+            raise LauncherError(
+                error.code,
+                error.message,
+                error.hint,
+                exit_code=2,
+            ) from error
         except ComfyInstallError as error:
             raise LauncherError(
                 "COMFYUI_UPDATE_FAILED",
@@ -986,6 +994,13 @@ def _install_or_disable(
             "請選擇 repository 外的空目錄後重試。",
             exit_code=2,
         ) from error
+    except UvBinaryError as error:
+        raise LauncherError(
+            error.code,
+            error.message,
+            error.hint,
+            exit_code=2,
+        ) from error
     except Exception as first_error:
         choice = _recovery_choice(args, services, kind="comfy")
         if choice == "disabled":
@@ -1004,6 +1019,13 @@ def _install_or_disable(
         try:
             installed = services.install_comfyui(root, retry_device)
             device = retry_device
+        except UvBinaryError as error:
+            raise LauncherError(
+                error.code,
+                error.message,
+                error.hint,
+                exit_code=2,
+            ) from error
         except Exception as retry_error:
             raise LauncherError(
                 "COMFYUI_INSTALL_RECOVERY_FAILED",
