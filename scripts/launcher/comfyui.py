@@ -78,10 +78,6 @@ class ComfyUpdateError(ComfyInstallError):
             "ComfyUI update failed and automatic rollback did not complete.",
             "Do not start ComfyUI; preserve the reported backup and repair it manually.",
         ),
-        "COMFYUI_UPDATE_CLEANUP_FAILED": (
-            "ComfyUI updated but its retained backup could not be finalized.",
-            "Keep ComfyUI stopped and inspect the managed update backup before retrying.",
-        ),
     }
 
     def __init__(
@@ -195,65 +191,25 @@ class UpdateOutcome:
 
 
 @dataclass(frozen=True)
-class PathIdentity:
-    device: int
-    inode: int
-
-    @classmethod
-    def capture(cls, path: Path) -> PathIdentity:
-        identity = path.stat(follow_symlinks=False)
-        return cls(identity.st_dev, identity.st_ino)
-
-    def matches(self, path: Path) -> bool:
-        try:
-            identity = path.stat(follow_symlinks=False)
-        except FileNotFoundError:
-            return False
-        return (
-            not path.is_symlink()
-            and path.is_dir()
-            and (identity.st_dev, identity.st_ino) == (self.device, self.inode)
-        )
-
-
-@dataclass(frozen=True)
 class OwnedTemporaryDirectory:
-    """A uniquely allocated directory removable only while its identity matches."""
+    """A uniquely allocated directory retained whenever its path still exists."""
 
     path: Path
-    device: int
-    inode: int
 
     @classmethod
     def create(cls, *, parent: Path, prefix: str) -> OwnedTemporaryDirectory:
         parent.mkdir(parents=True, exist_ok=True)
         path = Path(tempfile.mkdtemp(prefix=prefix, dir=parent))
-        identity = path.stat(follow_symlinks=False)
-        return cls(path=path, device=identity.st_dev, inode=identity.st_ino)
+        return cls(path=path)
 
-    def _identity_matches(self) -> bool:
+    def cleanup(self) -> CleanupOutcome:
         try:
-            identity = self.path.stat(follow_symlinks=False)
+            self.path.lstat()
         except FileNotFoundError:
-            return False
-        if self.path.is_symlink() or not self.path.is_dir():
-            return False
-        return (identity.st_dev, identity.st_ino) == (self.device, self.inode)
-
-    def cleanup(self, *, before_remove=None) -> CleanupOutcome:
-        if not self.path.exists():
             return CleanupOutcome(True)
-        if not self._identity_matches():
-            return CleanupOutcome(False, self.path)
-        if before_remove is not None:
-            before_remove(self)
-        if not self._identity_matches():
-            return CleanupOutcome(False, self.path)
-        try:
-            self.path.rmdir()
         except OSError:
             return CleanupOutcome(False, self.path)
-        return CleanupOutcome(True)
+        return CleanupOutcome(False, self.path)
 
     def remove(self) -> None:
         outcome = self.cleanup()
@@ -266,7 +222,16 @@ class OwnedTemporaryDirectory:
 def _pending_owned_paths(
     *owned_directories: OwnedTemporaryDirectory,
 ) -> tuple[Path, ...]:
-    return tuple(owned.path for owned in owned_directories if owned.path.exists())
+    pending: list[Path] = []
+    for owned in owned_directories:
+        try:
+            owned.path.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError:
+            pass
+        pending.append(owned.path)
+    return tuple(pending)
 
 
 def _cleanup_owned(
@@ -745,16 +710,12 @@ def update_comfyui(
         ),
     )
     new_environment_activated = False
-    activated_identity: PathIdentity | None = None
     try:
         for command in update_commands:
             _run_required(runner, command)
         if not _python_in_venv(new_venv, actual_host).is_file():
             raise ComfyInstallError("validation failed after update: missing new python")
-        activated_identity = PathIdentity.capture(new_venv)
         new_venv.replace(old_venv)
-        if not activated_identity.matches(old_venv):
-            raise ComfyInstallError("activated environment identity changed")
         new_environment_activated = True
         updated = validate_comfyui_root(root, actual_host)
         if not updated.controllable or updated.python != expected_python:
@@ -770,7 +731,6 @@ def update_comfyui(
                 host=actual_host,
                 runner=runner,
                 new_environment_activated=new_environment_activated,
-                activated_identity=activated_identity,
             )
         except Exception as rollback_error:
             raise _rollback_failure(backup, fresh) from rollback_error
@@ -796,7 +756,6 @@ def _restore_update_transaction(
     host: HostInfo,
     runner: Runner,
     new_environment_activated: bool,
-    activated_identity: PathIdentity | None,
 ) -> None:
     """Restore both old source and exact old venv, then prove the result works."""
     old_venv = root / ".venv"
@@ -810,11 +769,9 @@ def _restore_update_transaction(
         ),
     )
     if new_environment_activated:
-        if activated_identity is None or not activated_identity.matches(old_venv):
-            raise ComfyInstallError(
-                "activated environment identity changed during rollback"
-            )
-        old_venv.replace(fresh.path / "failed-venv")
+        raise ComfyInstallError(
+            "activated environment cannot be moved by a path-based rollback safely"
+        )
     elif old_venv.exists():
         raise ComfyInstallError(
             "unknown environment appeared during rollback; refusing to replace it"

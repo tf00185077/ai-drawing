@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
@@ -25,7 +27,12 @@ from launcher.models import (
     ProcessIdentity,
 )
 from launcher.processes import ProcessStartResult, ProcessStopResult
-from launcher.relay import RelayStartResult, RelayState, RelayStopResult
+from launcher.relay import (
+    RelayStartResult,
+    RelayState,
+    RelayStopResult,
+    relay_state_lock,
+)
 from launcher.runner import CommandResult
 
 
@@ -440,6 +447,139 @@ def test_default_stopped_update_saves_coherent_install_provenance(
     assert any(pending.name in line for line in output)
 
 
+def test_default_update_reports_filesystem_success_when_state_save_fails(
+    tmp_path,
+    monkeypatch,
+):
+    root = (tmp_path / "ComfyUI").resolve()
+    current = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        None,
+        None,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="old-pin",
+    )
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    pending_backup = tmp_path / ".ComfyUI.venv-backup-pending"
+    pending_fresh = tmp_path / ".ComfyUI.venv.update-new-pending"
+    monkeypatch.setattr(cli, "resolve_uv_binary", lambda: tmp_path / "uv")
+    monkeypatch.setattr(
+        cli,
+        "update_comfyui",
+        lambda *_args, **_kwargs: UpdateOutcome(
+            "v0.28.0",
+            (pending_backup, pending_fresh),
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "save_state",
+        lambda _state: (_ for _ in ()).throw(OSError("disk full")),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.update_comfyui(current)
+
+    assert raised.value.code == "COMFYUI_UPDATE_SUCCEEDED_STATE_SAVE_FAILED"
+    assert "v0.28.0" in raised.value.hint
+    assert str(pending_backup) in raised.value.hint
+    assert str(pending_fresh) in raised.value.hint
+    assert "filesystem" in raised.value.message.lower()
+
+
+def test_mutating_command_lifecycle_lock_is_cross_process_and_precedes_state_load(
+    tmp_path,
+    project_root,
+    harness,
+    monkeypatch,
+):
+    code = (
+        "import sys,time; "
+        "sys.path.insert(0, 'scripts'); "
+        "from pathlib import Path; "
+        "from launcher.relay import relay_state_lock; "
+        "root=Path(sys.argv[1]); "
+        "\nwith relay_state_lock(root, timeout=1):\n"
+        "  print('locked', flush=True)\n"
+        "  time.sleep(2)\n"
+    )
+    holder = subprocess.Popen(
+        [sys.executable, "-c", code, str(tmp_path)],
+        cwd=project_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout is not None
+        assert holder.stdout.readline().strip() == "locked"
+        monkeypatch.setattr(
+            cli,
+            "relay_state_lock",
+            lambda root, *, timeout: relay_state_lock(root, timeout=0.1),
+        )
+        harness.lifecycle_lock = DefaultServices.lifecycle_lock.__get__(
+            harness,
+            Harness,
+        )
+
+        assert main(["stop"], services=harness) == 1
+
+        rendered = "\n".join(harness.output)
+        assert "LAUNCHER_LIFECYCLE_LOCK_TIMEOUT" in rendered
+        assert "load_state" not in harness.events
+        assert "compose_down" not in harness.events
+    finally:
+        holder.communicate(timeout=3)
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        [],
+        ["setup"],
+        ["start"],
+        ["stop"],
+        ["reconfigure"],
+        ["update-comfyui"],
+    ],
+)
+def test_every_mutating_command_runs_inside_same_lifecycle_lock(
+    harness,
+    monkeypatch,
+    argv,
+):
+    held = False
+    entries = 0
+
+    class FakeLifecycleLock:
+        def __enter__(self):
+            nonlocal held, entries
+            held = True
+            entries += 1
+
+        def __exit__(self, *_args):
+            nonlocal held
+            held = False
+
+    harness.lifecycle_lock = FakeLifecycleLock
+
+    def fake_run(_args, _services):
+        assert held is True
+        return 0
+
+    monkeypatch.setattr(cli, "_run", fake_run)
+
+    assert main(argv, services=harness) == 0
+    assert entries == 1
+    assert held is False
+
+
 def test_default_services_filters_repository_comfyui_candidates(tmp_path):
     project = tmp_path / "repository"
     inside = project / "ComfyUI"
@@ -571,6 +711,29 @@ def test_install_cleanup_pending_is_not_retried_and_reports_exact_path(harness):
     assert str(pending) in rendered
     assert harness.events.count(("install", DeviceMode.CPU)) == 1
     assert "choose" not in harness.events
+
+
+def test_cpu_retry_preserves_install_cleanup_pending_code_and_path(harness):
+    pending = harness.project_root / ".ComfyUI.staging-retry-pending"
+    attempts = 0
+
+    def fail_install(_root, _device):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise ComfyInstallError("gpu install failed")
+        raise ComfyInstallCleanupPending(pending)
+
+    harness.install_comfyui = fail_install
+    harness.choices = ["cpu"]
+
+    assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 1
+
+    rendered = "\n".join(harness.output)
+    assert "COMFYUI_INSTALL_CLEANUP_PENDING" in rendered
+    assert "COMFYUI_INSTALL_RECOVERY_FAILED" not in rendered
+    assert str(pending) in rendered
+    assert attempts == 2
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,7 @@ import re
 import socket
 import sys
 from collections.abc import Callable, Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -59,9 +60,12 @@ from .platforms import (
 )
 from .processes import start_comfyui, stop_comfyui
 from .relay import (
+    RelayStateLockError,
+    RelayStateLockTimeout,
     RelayState,
     load_relay_state,
     peek_relay_state,
+    relay_state_lock,
     start_relay,
     stop_relay,
 )
@@ -119,6 +123,9 @@ class DefaultServices:
 
     def emit(self, message: str) -> None:
         self._output(message)
+
+    def lifecycle_lock(self):
+        return relay_state_lock(self.project_root, timeout=5.0)
 
     def log_bootstrap(self, message: str) -> None:
         path = self.project_root / "data/logs/bootstrap.log"
@@ -819,7 +826,19 @@ class DefaultServices:
                 owned_root=current.installed_root,
                 uv_bin=resolve_uv_binary(),
             )
-            self.save_state(replace(current, installed_commit=outcome.version))
+            try:
+                self.save_state(replace(current, installed_commit=outcome.version))
+            except Exception as error:
+                pending = ", ".join(str(path) for path in outcome.cleanup_pending)
+                retained = pending or "none reported"
+                raise LauncherError(
+                    "COMFYUI_UPDATE_SUCCEEDED_STATE_SAVE_FAILED",
+                    "ComfyUI filesystem update succeeded, but launcher provenance "
+                    "was not saved.",
+                    f"Updated filesystem version: {outcome.version}. "
+                    f"Retained recovery paths: {retained}. "
+                    "Inspect these paths and launcher state before another update.",
+                ) from error
             if outcome.cleanup_pending:
                 pending = ", ".join(str(path) for path in outcome.cleanup_pending)
                 self.emit(
@@ -1080,6 +1099,12 @@ def _install_or_disable(
                 error.message,
                 error.hint,
                 exit_code=2,
+            ) from error
+        except ComfyInstallCleanupPending as error:
+            raise LauncherError(
+                error.code,
+                error.message,
+                error.hint,
             ) from error
         except Exception as retry_error:
             raise LauncherError(
@@ -1973,7 +1998,10 @@ def main(
         args = build_parser().parse_args(argv)
         command = args.command or "setup"
         mutating = command not in {"status", "logs", "dry-run"}
-        result = _run(args, active_services)
+        lifecycle = getattr(active_services, "lifecycle_lock", None)
+        lock = lifecycle() if mutating and lifecycle is not None else nullcontext()
+        with lock:
+            result = _run(args, active_services)
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
         if _should_write_audit(args, mutating):
@@ -1986,6 +2014,24 @@ def main(
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
             )
+        _emit_error(active_services, error)
+        return error.exit_code
+    except (RelayStateLockTimeout, RelayStateLockError) as lock_error:
+        timeout = isinstance(lock_error, RelayStateLockTimeout)
+        error = LauncherError(
+            (
+                "LAUNCHER_LIFECYCLE_LOCK_TIMEOUT"
+                if timeout
+                else "LAUNCHER_LIFECYCLE_LOCK_FAILED"
+            ),
+            (
+                "Another launcher mutation is still active."
+                if timeout
+                else "The launcher lifecycle lock could not be used safely."
+            ),
+            "Wait for the active setup/start/stop/reconfigure/update command to "
+            "finish, then retry.",
+        )
         _emit_error(active_services, error)
         return error.exit_code
     except docker.DockerError as error:
