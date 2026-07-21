@@ -5,6 +5,11 @@ import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
 import PromptOverview from "./PromptOverview";
 
+interface CombinationVersion {
+  revision: number;
+  etag?: string;
+}
+
 async function jsonFetch(url: string) {
   const response = await fetch(url);
   const data = await response.json().catch(() => ({}));
@@ -24,10 +29,15 @@ export default function PromptWorkbench() {
   const [sequence, setSequence] = useState(0);
   const [saveId, setSaveId] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
+  const [combinationVersions, setCombinationVersions] = useState<Record<string, CombinationVersion>>({});
 
   useEffect(() => {
     Promise.all([jsonFetch("/api/prompt-library/catalog"), jsonFetch("/api/workflow-catalog/generation-forms")])
-      .then(([catalog, descriptor]) => { setCategories(catalog.categories || []); setForms(descriptor.items || []); })
+      .then(([catalog, descriptor]) => {
+        setCategories(catalog.categories || []);
+        setForms(descriptor.items || []);
+        setCombinationVersions(Object.fromEntries((catalog.combinations || []).map((item: { id: string; revision: number; etag?: string }) => [item.id, { revision: item.revision, etag: item.etag }])));
+      })
       .catch((reason) => setError(String(reason.message || reason)));
   }, []);
 
@@ -76,6 +86,7 @@ export default function PromptWorkbench() {
     setSaveStatus("");
     const positiveFragments = serializeFragments(positive);
     const negativeFragments = serializeFragments(negative);
+    const currentVersion = combinationVersions[id];
     try {
       const response = await fetch("/api/prompt-library/compose", {
         method: "POST",
@@ -87,7 +98,8 @@ export default function PromptWorkbench() {
             id,
             name_zh: id,
             description_zh: "Prompt Workbench 儲存組合",
-            expected_revision: 0,
+            expected_revision: currentVersion?.revision ?? 0,
+            ...(currentVersion?.etag ? { expected_etag: currentVersion.etag } : {}),
             aliases: [],
             keywords: [],
             order: 10,
@@ -98,6 +110,13 @@ export default function PromptWorkbench() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.detail?.message || `HTTP ${response.status}`);
+      const saved = data?.saved_combination;
+      if (saved?.combination?.revision) {
+        setCombinationVersions((versions) => ({
+          ...versions,
+          [id]: { revision: saved.combination.revision, etag: saved.etag },
+        }));
+      }
       setSaveStatus("組合已儲存");
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   }

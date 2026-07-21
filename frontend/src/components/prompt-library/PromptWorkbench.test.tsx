@@ -7,6 +7,9 @@ const catalog = {
     { id: "quality", polarity: "positive", name_zh: "品質", revision: 1, etag: "p1", archived: false },
     { id: "artifacts", polarity: "negative", name_zh: "瑕疵", revision: 1, etag: "n1", archived: false },
   ],
+  combinations: [
+    { id: "my-quality", revision: 1, etag: "combo-1" },
+  ],
 };
 const forms = { items: [{ id: "basic-txt2img", display_name: "Basic", fields: [] }] };
 const positiveCategory = {
@@ -29,13 +32,17 @@ function response(data: unknown, status = 200): Response {
 }
 
 function installFetch() {
+  let savedRevision = 1;
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === "/api/prompt-library/catalog") return response(catalog);
     if (url === "/api/workflow-catalog/generation-forms") return response(forms);
     if (url.endsWith("/positive/quality")) return response(positiveCategory);
     if (url.endsWith("/negative/artifacts")) return response(negativeCategory);
     if (url === "/api/generate/") return response({ job_id: "job-1" });
-    if (url === "/api/prompt-library/compose" && init?.method === "POST") return response({ saved_combination: {} });
+    if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+      savedRevision += 1;
+      return response({ saved_combination: { combination: { id: "my-quality", revision: savedRevision }, etag: `combo-${savedRevision}` } });
+    }
     return response({}, 404);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -66,9 +73,16 @@ describe("PromptWorkbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
     await waitFor(() => expect(screen.getByText("組合已儲存")).toBeVisible());
     const saveCall = fetchMock.mock.calls.find(([url]) => url === "/api/prompt-library/compose") as [string, RequestInit];
-    expect(JSON.parse(String(saveCall[1].body)).positive).toEqual([
+    const firstSaveBody = JSON.parse(String(saveCall[1].body));
+    expect(firstSaveBody.positive).toEqual([
       { kind: "literal", snapshot: "masterwork", weight: 1.2, order: 10 },
     ]);
+    expect(firstSaveBody.save_as).toMatchObject({ expected_revision: 1, expected_etag: "combo-1" });
+
+    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(2));
+    const secondSaveCall = fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")[1] as [string, RequestInit];
+    expect(JSON.parse(String(secondSaveCall[1].body)).save_as).toMatchObject({ expected_revision: 2, expected_etag: "combo-2" });
   });
 
   it("keeps the overview visible when switching polarity and generates from current text", async () => {
