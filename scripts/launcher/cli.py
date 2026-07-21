@@ -6,7 +6,6 @@ import re
 import socket
 import sys
 from collections.abc import Callable, Sequence
-from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -1982,7 +1981,80 @@ def _try_bootstrap_log(services: Any, message: str) -> None:
 
 
 def _should_write_audit(args: argparse.Namespace | None, mutating: bool) -> bool:
-    return mutating and (args is None or getattr(args, "_audit_started", False))
+    return (
+        mutating
+        and (args is None or getattr(args, "_audit_started", False))
+        and (args is None or not getattr(args, "_audit_finished", False))
+    )
+
+
+def _terminal_audit_code(error: BaseException) -> str:
+    if isinstance(error, (LauncherError, docker.DockerError)):
+        return error.code
+    if isinstance(error, ConfigurationError):
+        return "CONFIGURATION_FAILED"
+    return "UNEXPECTED_ERROR"
+
+
+def _finish_bootstrap_audit_inside_lock(
+    args: argparse.Namespace,
+    services: Any,
+    command: str,
+    *,
+    error: BaseException | None = None,
+) -> None:
+    mutating = command not in {"status", "logs", "dry-run"}
+    if not _should_write_audit(args, mutating):
+        return
+    suffix = "complete" if error is None else f"error code={_terminal_audit_code(error)}"
+    _try_bootstrap_log(services, f"command={command} {suffix}")
+    args._audit_finished = True
+
+
+def _run_with_lifecycle_lock(
+    args: argparse.Namespace,
+    services: Any,
+    *,
+    mutating: bool,
+) -> int:
+    lifecycle = getattr(services, "lifecycle_lock", None)
+    if not mutating or lifecycle is None:
+        return _run(args, services)
+
+    lock = lifecycle()
+    lock.__enter__()
+    try:
+        result = _run(args, services)
+    except BaseException as body_error:
+        command = getattr(args, "_resolved_command", args.command or "setup")
+        _finish_bootstrap_audit_inside_lock(
+            args,
+            services,
+            command,
+            error=body_error,
+        )
+        body_info = sys.exc_info()
+        try:
+            lock.__exit__(*body_info)
+        except Exception:
+            # The command's typed failure and recovery paths are more important
+            # than a secondary unlock failure after its body already failed.
+            pass
+        raise
+
+    command = getattr(args, "_resolved_command", args.command or "setup")
+    _finish_bootstrap_audit_inside_lock(args, services, command)
+    try:
+        lock.__exit__(None, None, None)
+    except Exception as unlock_error:
+        raise LauncherError(
+            "LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION",
+            "The launcher command body completed, but lifecycle unlock failed.",
+            "The core operation may already be complete. Run status and inspect "
+            "launcher state before any further mutation; do not repeat the command "
+            "until the result is understood.",
+        ) from unlock_error
+    return result
 
 
 def main(
@@ -1998,10 +2070,11 @@ def main(
         args = build_parser().parse_args(argv)
         command = args.command or "setup"
         mutating = command not in {"status", "logs", "dry-run"}
-        lifecycle = getattr(active_services, "lifecycle_lock", None)
-        lock = lifecycle() if mutating and lifecycle is not None else nullcontext()
-        with lock:
-            result = _run(args, active_services)
+        result = _run_with_lifecycle_lock(
+            args,
+            active_services,
+            mutating=mutating,
+        )
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
         if _should_write_audit(args, mutating):

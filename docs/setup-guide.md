@@ -190,7 +190,9 @@ CLI 依主機 probe 與可確認的模型數輸出 `not_configured`、`unreachab
 
 設定寫入採 validation-before-replace；任一替換失敗會復原整組舊檔。Compose 或 readiness 失敗時，launcher 會停止本次新建且 ownership 可證明的資源並回復原設定。安裝 staging 使用每次唯一的 sibling 暫存目錄，不會清除既有的 `.staging` 或名稱相似目錄。cleanup 完全 fail-closed：任何仍存在、broken symlink 或無法可靠查證的 temp path 都不呼叫 `rmdir`／遞迴刪除，而是保留並回報精確路徑；安裝失敗時使用 `COMFYUI_INSTALL_CLEANUP_PENDING`，包含 CPU retry 分支。
 
-所有會觸碰 managed ComfyUI 或 ownership state 的 `setup`、`start`、`stop`、`reconfigure`、`update-comfyui`（以及沒有參數時解析出的 setup/start）都會在讀取 state 前取得同一個 project lifecycle lock。此 lock 與 relay state 共用既有的跨程序 OS lock 路徑、可同執行緒重入，且等待有上限；timeout 會在 preflight、Git、uv、Docker 或 filesystem mutation 前以 `LAUNCHER_LIFECYCLE_LOCK_TIMEOUT` 結束。`status`、`logs`、`dry-run` 維持唯讀且不取得 lifecycle lock。
+所有會觸碰 managed ComfyUI 或 ownership state 的 `setup`、`start`、`stop`、`reconfigure`、`update-comfyui`（以及沒有參數時解析出的 setup/start）都會在讀取 state 前取得同一個 project lifecycle lock。此 lock 與 relay state 共用既有的跨程序 OS lock 路徑、可同執行緒重入，且等待有上限；acquire timeout/failure 會在 preflight、Git、uv、Docker 或 filesystem mutation 前以原 stable lock code 結束。complete/error audit 會在 release 前寫入，且 audit 寫入失敗仍不影響命令行為。
+
+release 階段不會改寫 body 的事實：若 body 已拋出 `LauncherError`／ComfyUI typed recovery error，即使 unlock 失敗仍保留原 code、hint 與 recovery paths。只有 body 成功但 unlock 失敗時才回 `LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION`，表示核心操作可能或已經完成；此時先執行 `status` 並檢查 state/log，不可直接重跑 mutation command。`status`、`logs`、`dry-run` 維持唯讀且不取得 lifecycle lock。
 
 `update-comfyui` 必須在 managed ComfyUI 停止後執行。即使 state 沒有 PID，設定的 ComfyUI API 只要仍可連線，就會以 `COMFYUI_UPDATE_RUNNING_UNOWNED` 中止。更新器要求 `git rev-parse --show-toplevel` 的 canonical 結果正好等於 ComfyUI root，拒絕遺失 `.git` 或只落在上層 repository 的目錄，且在建立 backup 前完成。
 

@@ -580,6 +580,68 @@ def test_every_mutating_command_runs_inside_same_lifecycle_lock(
     assert held is False
 
 
+def test_successful_stop_unlock_failure_reports_truthful_post_mutation_code(harness):
+    class UnlockFailingLifecycleLock:
+        def __enter__(self):
+            return None
+
+        def __exit__(self, *_args):
+            raise cli.RelayStateLockError("injected unlock failure")
+
+    harness.lifecycle_lock = UnlockFailingLifecycleLock
+
+    assert main(["stop"], services=harness) == 1
+
+    rendered = "\n".join(harness.output)
+    assert "LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION" in rendered
+    assert "LAUNCHER_LIFECYCLE_LOCK_FAILED" not in rendered
+    assert "status" in rendered.lower()
+    assert "retry" not in rendered.lower()
+    assert "compose_down" in harness.events
+    assert any(
+        isinstance(event, tuple) and event[0] == "stop_relay"
+        for event in harness.events
+    )
+
+
+def test_unlock_failure_never_masks_typed_update_rollback_error_or_path(harness):
+    root = (harness.project_root / "ComfyUI").resolve()
+    backup = harness.project_root / ".ComfyUI.venv-backup-retained"
+    harness.loaded_state = replace(
+        state(ComfyMode.MANAGED, root=root, device=DeviceMode.CPU),
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="old-pin",
+    )
+
+    class UnlockFailingLifecycleLock:
+        def __enter__(self):
+            return None
+
+        def __exit__(self, *_args):
+            raise cli.RelayStateLockError("injected unlock failure")
+
+    def fail_update(_current):
+        harness.events.append("update_comfyui")
+        raise cli.LauncherError(
+            "COMFYUI_UPDATE_ROLLBACK_FAILED",
+            "rollback incomplete",
+            f"Preserve recovery backup: {backup}",
+        )
+
+    harness.lifecycle_lock = UnlockFailingLifecycleLock
+    harness.update_comfyui = fail_update
+
+    assert main(["update-comfyui"], services=harness) == 1
+
+    rendered = "\n".join(harness.output)
+    assert "COMFYUI_UPDATE_ROLLBACK_FAILED" in rendered
+    assert str(backup) in rendered
+    assert "LAUNCHER_LIFECYCLE_LOCK_FAILED" not in rendered
+    assert "LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION" not in rendered
+    assert "update_comfyui" in harness.events
+
+
 def test_default_services_filters_repository_comfyui_candidates(tmp_path):
     project = tmp_path / "repository"
     inside = project / "ComfyUI"
