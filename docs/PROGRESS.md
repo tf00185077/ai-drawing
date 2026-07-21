@@ -14,11 +14,13 @@ ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄
 
 `setup`、`start`、`stop`、`reconfigure`、`update-comfyui` 現在從 state load 前就共用 relay OS lock 所在的同一個 bounded project lifecycle lock，跨程序競爭會在任何 mutation 前以 stable timeout code 結束。核心 update 與 provenance save outcome 也已分離：filesystem 成功但 state 保存失敗會以 `COMFYUI_UPDATE_SUCCEEDED_STATE_SAVE_FAILED` 回報版本及所有 pending recovery paths；CPU recovery install 同樣保留 `COMFYUI_INSTALL_CLEANUP_PENDING` 的 code/path。
 
+第三輪 review 將 lifecycle acquire、body、release 三階段明確分離。body 已拋 typed error 時，後續 unlock error 會被視為次要錯誤，原 code/hint/recovery path 保持不變；body 成功才發生 unlock failure 時，使用 `LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION` 誠實指出核心操作可能已完成，要求先 `status`／檢查 state，禁止直接重跑。terminal complete/error audit 已移到 lock release 前，audit failure 仍不影響主流程。
+
 持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`335 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。故障注入涵蓋跨程序 lifecycle lock timeout、所有 mutating command lock coverage、exact Git root、PID-free liveness、temp existence false-negative、activated rollback check/replace window、CPU retry cleanup pending、filesystem-success/state-save-failure、fetch/checkout、environment build/activate、new/restored smoke 與 rollback outcomes。`python -m compileall -q scripts` 與 Git Bash `bash -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
+- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`337 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。故障注入涵蓋跨程序 lifecycle acquire timeout、successful-stop unlock failure、typed update rollback preservation、所有 mutating command lock coverage、exact Git root、PID-free liveness、temp existence false-negative、activated rollback check/replace window、CPU retry cleanup pending、filesystem-success/state-save-failure、fetch/checkout、environment build/activate、new/restored smoke 與 rollback outcomes。`python -m compileall -q scripts` 與 Git Bash `bash -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
 - Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。
