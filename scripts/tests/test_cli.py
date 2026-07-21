@@ -913,6 +913,59 @@ def test_live_verified_managed_reconfigure_requires_explicit_stop(harness):
     assert "snapshot_config" not in harness.events
     assert "write_config" not in harness.events
     assert "stop_comfyui" not in harness.events
+    assert not any(
+        isinstance(event, tuple) and event[0] == "bootstrap_log"
+        for event in harness.events
+    )
+
+
+@pytest.mark.parametrize(
+    "change_args",
+    [
+        ("--comfyui-mode", "managed", "--comfyui-path", "NEW_ROOT"),
+        ("--comfyui-mode", "managed", "--device", "cpu"),
+        ("--comfyui-mode", "managed", "--comfyui-port", "8288"),
+        ("--comfyui-mode", "external"),
+    ],
+)
+def test_rejected_live_reconfigure_is_bootstrap_audit_write_free(
+    tmp_path,
+    monkeypatch,
+    change_args,
+):
+    identity = ProcessIdentity("python", "1", "python main.py --port 8188")
+    old_root = (tmp_path / "Old ComfyUI").resolve()
+    previous = state(
+        ComfyMode.MANAGED,
+        root=old_root,
+        device=DeviceMode.NVIDIA,
+        pid=4242,
+        identity=identity,
+    )
+    state_path = tmp_path / "data/bootstrap/state.json"
+    state_path.parent.mkdir(parents=True)
+    state_path.write_text(previous.to_json(), encoding="utf-8")
+    base = tmp_path / "docker-compose.yml"
+    base.write_text("services: {}\n", encoding="utf-8")
+    before_state = state_path.read_bytes()
+    before_base = base.read_bytes()
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    service.preflight = lambda: None
+    service.probe_external = lambda _port: True
+    monkeypatch.setattr(cli, "read_process_identity", lambda *_args: identity)
+    args = [
+        str((tmp_path / "New ComfyUI").resolve()) if item == "NEW_ROOT" else item
+        for item in change_args
+    ]
+
+    assert main(["reconfigure", *args], services=service) == 1
+
+    assert state_path.read_bytes() == before_state
+    assert base.read_bytes() == before_base
+    assert not (tmp_path / "data/logs").exists()
+    assert not (tmp_path / ".env").exists()
+    assert not (tmp_path / ".ai-drawing").exists()
 
 
 def test_production_verifier_rejects_live_managed_tuple_change_without_mutation(
@@ -1499,6 +1552,19 @@ def test_no_arg_audit_uses_resolved_start_command_for_existing_state(harness):
     assert main([], services=harness) == 0
     logs = [event[1] for event in harness.events if isinstance(event, tuple) and event[0] == "bootstrap_log"]
     assert logs == ["command=start begin", "command=start complete"]
+
+
+def test_accepted_reconfigure_keeps_begin_and_complete_audit(harness):
+    harness.loaded_state = state(ComfyMode.DISABLED)
+
+    assert main(["reconfigure", "--comfyui-mode", "disabled"], services=harness) == 0
+
+    logs = [
+        event[1]
+        for event in harness.events
+        if isinstance(event, tuple) and event[0] == "bootstrap_log"
+    ]
+    assert logs == ["command=reconfigure begin", "command=reconfigure complete"]
 
 
 def test_error_output_is_structured_and_does_not_leak_exception(harness):

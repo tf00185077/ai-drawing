@@ -1497,7 +1497,11 @@ def _start_application(
         raise
 
 
-def _configure(args: argparse.Namespace, services: Any, old: LauncherState | None) -> None:
+def _prepare_configuration(
+    args: argparse.Namespace,
+    services: Any,
+    old: LauncherState | None,
+) -> tuple[frozenset[str], int, int, LauncherState]:
     if old is not None and not args._comfyui_port_specified:
         args.comfyui_port = old.comfyui_port
     prior_services = services.compose_running_services()
@@ -1537,6 +1541,36 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
         args, services, desired, selected
     )
     planned = _plan_comfyui(args, services, old)
+    return prior_services, backend_port, frontend_port, planned
+
+
+def _begin_bootstrap_audit(
+    args: argparse.Namespace,
+    services: Any,
+    command: str,
+) -> None:
+    if getattr(args, "_audit_started", False):
+        return
+    args._audit_started = True
+    _try_bootstrap_log(services, f"command={command} begin")
+
+
+def _configure(args: argparse.Namespace, services: Any, old: LauncherState | None) -> None:
+    command = getattr(args, "_resolved_command", args.command or "setup")
+    try:
+        prior_services, backend_port, frontend_port, planned = _prepare_configuration(
+            args,
+            services,
+            old,
+        )
+    except LauncherError as error:
+        if error.code != "COMFYUI_RECONFIGURE_REQUIRES_STOP":
+            _begin_bootstrap_audit(args, services, command)
+        raise
+    except Exception:
+        _begin_bootstrap_audit(args, services, command)
+        raise
+    _begin_bootstrap_audit(args, services, command)
     snapshot = services.snapshot_configuration()
     started_state: LauncherState | None = None
     started_relay: RelayState | None = None
@@ -1636,8 +1670,12 @@ def _run(args: argparse.Namespace, services: Any) -> int:
     if command is None:
         command = "start" if current is not None else "setup"
     args._resolved_command = command
-    if command not in {"status", "logs", "dry-run"}:
-        _try_bootstrap_log(services, f"command={command} begin")
+    deferred_audit = command in {
+        LauncherCommand.SETUP.value,
+        LauncherCommand.RECONFIGURE.value,
+    }
+    if command not in {"status", "logs", "dry-run"} and not deferred_audit:
+        _begin_bootstrap_audit(args, services, command)
 
     docker_available = True
     if command in {
@@ -1645,7 +1683,12 @@ def _run(args: argparse.Namespace, services: Any) -> int:
         LauncherCommand.START.value,
         LauncherCommand.RECONFIGURE.value,
     }:
-        services.preflight()
+        try:
+            services.preflight()
+        except Exception:
+            if deferred_audit:
+                _begin_bootstrap_audit(args, services, command)
+            raise
     elif command in {LauncherCommand.STATUS.value, "dry-run"}:
         try:
             services.preflight()
@@ -1836,6 +1879,10 @@ def _try_bootstrap_log(services: Any, message: str) -> None:
         pass
 
 
+def _should_write_audit(args: argparse.Namespace | None, mutating: bool) -> bool:
+    return mutating and (args is None or getattr(args, "_audit_started", False))
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -1852,13 +1899,13 @@ def main(
         result = _run(args, active_services)
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
+        if _should_write_audit(args, mutating):
             _try_bootstrap_log(active_services, f"command={command} complete")
         return result
     except LauncherError as error:
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
+        if _should_write_audit(args, mutating):
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
             )
@@ -1868,7 +1915,7 @@ def main(
         wrapped = LauncherError(error.code, error.message, error.hint)
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
+        if _should_write_audit(args, mutating):
             _try_bootstrap_log(
                 active_services, f"command={command} error code={wrapped.code}"
             )
@@ -1882,7 +1929,7 @@ def main(
         )
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
+        if _should_write_audit(args, mutating):
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
             )
@@ -1896,7 +1943,7 @@ def main(
         )
         command = getattr(args, "_resolved_command", command)
         mutating = command not in {"status", "logs", "dry-run"}
-        if mutating:
+        if _should_write_audit(args, mutating):
             _try_bootstrap_log(
                 active_services, f"command={command} error code={error.code}"
             )
