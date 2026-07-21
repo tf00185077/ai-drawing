@@ -37,7 +37,7 @@ def test_backend_uses_root_image_context_optional_env_and_generated_defaults() -
         "${DATABASE_URL:-sqlite:////data/database/auto_draw.db}"
     )
     assert backend["environment"]["PROMPT_LIBRARY_DIR"] == (
-        "${PROMPT_LIBRARY_DIR:-/data/prompt_library}"
+        "${PROMPT_LIBRARY_DIR:-/workspace/prompt_library}"
     )
 
 
@@ -50,7 +50,7 @@ def test_compose_persists_all_application_data_without_base_model_mounts() -> No
         "/data/outputs": "./data/outputs",
         "/data/gallery": "./data/gallery",
         "/data/lora_train": "./data/lora_train",
-        "/data/prompt_library": "./data/prompt_library",
+        "/workspace/prompt_library": "./prompt_library",
         "/data/logs": "./data/logs",
     }
     assert not any(target.startswith("/comfyui/") for target in binds)

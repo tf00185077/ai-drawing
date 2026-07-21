@@ -37,6 +37,7 @@ def test_connected_env_uses_only_container_model_paths(tmp_path):
     assert "COMFYUI_BASE_URL=http://host.docker.internal:8188" in rendered
     assert "COMFYUI_CHECKPOINTS_DIR=/comfyui/models/checkpoints" in rendered
     assert "DATABASE_URL=sqlite:////data/database/auto_draw.db" in rendered
+    assert "PROMPT_LIBRARY_DIR=/workspace/prompt_library" in rendered
     assert str(tmp_path) not in rendered
     assert "MCP_BACKEND_API_URL=http://127.0.0.1:8001" in rendered
     assert "MCP_BACKEND_API_URL=http://host.docker.internal" not in rendered

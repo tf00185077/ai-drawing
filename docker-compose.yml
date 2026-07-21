@@ -23,7 +23,7 @@ services:
       FILE_DIGEST_CACHE_PATH: "${FILE_DIGEST_CACHE_PATH:-/data/database/file_digest_cache.json}"
       OUTPUT_DIR: "${OUTPUT_DIR:-/data/outputs}"
       GALLERY_DIR: "${GALLERY_DIR:-/data/gallery}"
-      PROMPT_LIBRARY_DIR: "${PROMPT_LIBRARY_DIR:-/data/prompt_library}"
+      PROMPT_LIBRARY_DIR: "${PROMPT_LIBRARY_DIR:-/workspace/prompt_library}"
       LORA_TRAIN_DIR: "${LORA_TRAIN_DIR:-/data/lora_train}"
       LORA_TRAIN_LOGS_DIR: "${LORA_TRAIN_LOGS_DIR:-/data/logs/lora_train}"
       WATCH_DIRS: "${WATCH_DIRS:-/data/lora_train}"
@@ -44,8 +44,8 @@ services:
         source: ./data/lora_train
         target: /data/lora_train
       - type: bind
-        source: ./data/prompt_library
-        target: /data/prompt_library
+        source: ./prompt_library
+        target: /workspace/prompt_library
       - type: bind
         source: ./data/logs
         target: /data/logs

@@ -1,5 +1,12 @@
 # 進度追蹤
 
+## 2026-07-21 Prompt Library Git persistence
+
+- Docker Compose now bind-mounts the repository `prompt_library/` at `/workspace/prompt_library`; `/data/prompt_library` is no longer the default library.
+- Launcher-generated configuration uses `PROMPT_LIBRARY_DIR=/workspace/prompt_library` so reconfiguration preserves the same deployment contract.
+- Prompt Workbench saves combinations directly to `prompt_library/combinations/<id>.json`, where Git can track, commit, and push them.
+- Existing `data/prompt_library/` files are retained without automatic deletion or migration, but the default Docker configuration no longer uses them.
+
 ## 2026-07-21 Prompt Workbench UI 重構完成
 
 後續微調：可選 Prompt 詞條改為橫向 `flex-wrap`、依內容寬度排列並限制最大寬度，長文字在 option 內換行，不再每筆佔滿整列。
