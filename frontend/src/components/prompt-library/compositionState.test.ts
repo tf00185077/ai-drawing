@@ -72,6 +72,22 @@ describe("compositionState", () => {
     expect(state.fragments.map((fragment) => fragment.text)).toEqual(["custom combined prompt", "new prompt"]);
   });
 
+  it("keeps comma-separated final-text edits as separate prompt options", () => {
+    let state = appendFragment(emptyComposition(), entry);
+    state = appendFragment(state, { id: "f-2", kind: "literal", originalSnapshot: "sharp focus", text: "sharp focus", weight: "" });
+    state = reconcileComposedText(state, "masterwork, crisp focus");
+    expect(state.fragments.map((fragment) => fragment.text)).toEqual(["masterwork", "crisp focus"]);
+    expect(state.text).toBe("masterwork, crisp focus");
+  });
+
+  it("syncs ComfyUI weight syntax back to the matching option", () => {
+    let state = appendFragment(emptyComposition(), entry);
+    state = appendFragment(state, { id: "f-2", kind: "literal", originalSnapshot: "sharp focus", text: "sharp focus", weight: "" });
+    state = reconcileComposedText(state, "(masterwork:1.2), sharp focus");
+    expect(state.fragments[0]).toMatchObject({ text: "masterwork", weight: "1.2" });
+    expect(state.fragments[1]).toMatchObject({ text: "sharp focus", weight: "" });
+  });
+
   it("serializes edited library copies as literals without changing the source", () => {
     const edited = setFragmentText(appendFragment(emptyComposition(), entry), "f-1", "masterwork");
     expect(serializeFragments(edited)).toEqual([{ kind: "literal", snapshot: "masterwork", weight: 1, order: 10 }]);

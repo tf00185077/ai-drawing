@@ -98,81 +98,45 @@ function balancedParentheses(text: string): boolean {
   return depth === 0;
 }
 
-function commonPrefix(a: string, b: string): number {
-  let index = 0;
-  while (index < a.length && index < b.length && a[index] === b[index]) index += 1;
-  return index;
-}
-
-function commonSuffix(a: string, b: string, prefix: number): number {
-  let count = 0;
-  while (count < a.length - prefix && count < b.length - prefix && a[a.length - 1 - count] === b[b.length - 1 - count]) count += 1;
-  return count;
-}
-
-function unwrapRenderedText(value: string, weight: string): string | null {
-  if (!weight.trim()) return value.trim();
-  const suffix = `:${weight.trim()})`;
-  if (!value.startsWith("(") || !value.endsWith(suffix)) return null;
-  return value.slice(1, -suffix.length).trim();
-}
-
-function replaceWithLiteral(state: CompositionState, nextText: string, warning: string | null): CompositionState {
-  const text = nextText.trim();
-  if (!text) return emptyComposition();
-  return rebuild([
-    {
-      id: `literal-${++literalSequence}`,
-      kind: "literal",
-      originalSnapshot: text,
-      text,
-      weight: "",
-      range: { start: 0, end: 0 },
-    },
-  ], warning);
+function parseComposedText(text: string): { text: string; weight: string }[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === "(") depth += 1;
+    if (character === ")") depth -= 1;
+    if (character === "," && depth === 0) {
+      parts.push(text.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+  parts.push(text.slice(start).trim());
+  return parts.filter(Boolean).map((part) => {
+    const weighted = part.match(/^\((.+):([0-9]*\.?[0-9]+)\)$/);
+    return weighted ? { text: weighted[1].trim(), weight: weighted[2] } : { text: part, weight: "" };
+  });
 }
 
 export function reconcileComposedText(state: CompositionState, nextText: string): CompositionState {
   if (nextText === state.text) return state;
   if (!balancedParentheses(nextText)) {
-    return replaceWithLiteral(state, nextText, "最終文字的括號或權重語法無法解析；已同步為單一自訂片段。");
+    return { ...state, text: nextText, warning: "括號尚未閉合；完成輸入後會同步回上方 Prompt。" };
   }
-
-  const oldParts = state.fragments.map(renderFragment);
-  const nextParts = nextText.split(", ");
-  if (nextParts.length === oldParts.length + 1) {
-    const insertion = nextParts.findIndex((part, index) => part !== oldParts[index]);
-    const position = insertion < 0 ? oldParts.length : insertion;
-    const afterMatches = oldParts.slice(position).every((part, index) => part === nextParts[position + index + 1]);
-    if (afterMatches && nextParts[position]?.trim()) {
-      const literal: WorkbenchFragment = {
-        id: `literal-${++literalSequence}`,
-        kind: "literal",
-        originalSnapshot: nextParts[position].trim(),
-        text: nextParts[position].trim(),
-        weight: "",
-        range: { start: 0, end: 0 },
-      };
-      const fragments = [...state.fragments];
-      fragments.splice(position, 0, literal);
-      return rebuild(fragments);
-    }
-  }
-
-  const prefix = commonPrefix(state.text, nextText);
-  const suffix = commonSuffix(state.text, nextText, prefix);
-  const oldEnd = state.text.length - suffix;
-  const affected = state.fragments.filter((fragment) => prefix <= fragment.range.end && oldEnd >= fragment.range.start);
-  if (affected.length === 1) {
-    const fragment = affected[0];
-    const before = state.text.slice(fragment.range.start, prefix);
-    const changed = nextText.slice(prefix, nextText.length - suffix);
-    const after = state.text.slice(oldEnd, fragment.range.end);
-    const unwrapped = unwrapRenderedText(before + changed + after, fragment.weight);
-    if (unwrapped !== null) return setFragmentText(state, fragment.id, unwrapped);
-  }
-
-  return replaceWithLiteral(state, nextText, "這次修改跨越多個片段，已同步為單一自訂片段。");
+  const parsed = parseComposedText(nextText);
+  if (parsed.length === 0) return emptyComposition();
+  return rebuild(parsed.map((part, index) => {
+    const existing = state.fragments[index];
+    if (existing) return { ...existing, text: part.text, weight: part.weight };
+    return {
+      id: `literal-${++literalSequence}`,
+      kind: "literal",
+      originalSnapshot: part.text,
+      text: part.text,
+      weight: part.weight,
+      range: { start: 0, end: 0 },
+    };
+  }));
 }
 
 export function serializeFragments(state: CompositionState): ApiPromptFragment[] {
