@@ -713,6 +713,37 @@ def test_first_run_can_decline_comfyui(harness):
     assert "compose_up" in harness.events
 
 
+def test_first_run_reports_docker_build_progress_around_compose(tmp_path):
+    class OrderedHarness(Harness):
+        def emit(self, message):
+            self.events.append(("emit", message))
+            super().emit(message)
+
+    harness = OrderedHarness(tmp_path)
+    harness.answers = [False]
+
+    assert main(["setup"], services=harness) == 0
+
+    starting = next(
+        event
+        for event in harness.events
+        if isinstance(event, tuple)
+        and event[0] == "emit"
+        and "Docker" in event[1]
+        and "數分鐘" in event[1]
+    )
+    waiting = next(
+        event
+        for event in harness.events
+        if isinstance(event, tuple)
+        and event[0] == "emit"
+        and "Docker" in event[1]
+        and "健康檢查" in event[1]
+    )
+    assert harness.events.index(starting) < harness.events.index("compose_up")
+    assert harness.events.index("compose_up") < harness.events.index(waiting)
+
+
 def test_selected_alternate_ports_are_written_to_staged_settings(harness):
     harness.select_ports = lambda _backend, _frontend: (8101, 5273)
     harness.answers = [True]

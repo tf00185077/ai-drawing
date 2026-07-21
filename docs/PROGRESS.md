@@ -4,6 +4,8 @@
 
 完成 Windows `setup.ps1` 與 macOS/Linux `setup.sh`，一般使用者 clone 後不需理解 Python、Node 或容器內部即可設定並啟動 Frontend/Backend。啟動器會檢查 Docker/Compose/ports、原子產生 `.env` 與本機 Compose override、保存程序 ownership，並提供 `setup`、`start`、`stop`、`status`、`reconfigure`、`logs`、`update-comfyui` 與唯讀 `dry-run`。
 
+2026-07-21 Windows 首次實機 smoke 發現 Compose build 期間沒有前景回饋，且 Docker 的 UTF-8 進度字元會被系統 CP950 解碼成 background reader exception。launcher 現在會在 Compose build 前提示首次執行可能需要數分鐘，完成後提示正在等待 health check；所有 subprocess capture 固定使用 UTF-8 並以 replacement 處理無法解碼的 byte。針對解碼與進度順序的 2 個離線回歸測試通過，未重新建置容器或執行 ComfyUI 安裝。
+
 ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄，或安裝固定版 ComfyUI。launcher 預設自動偵測 Windows/Linux NVIDIA、Apple Silicon MPS 或 CPU，顯示結果並允許 `--device` 明確覆寫；只涵蓋 ComfyUI 與必要 Python 套件，明確不下載模型或 custom nodes。程序停止前會比對 PID 與完整身分；Linux loopback relay 有獨立 lock/state/identity。Backend `/api/system/status` 與 Frontend Dashboard 呈現 connected、not_configured、unreachable、no_models、degraded 五種狀態；CLI `status` 則只依主機 probe 回報 not_configured、unreachable、no_models 或 connected，不宣稱 degraded。其中 `no_models` 顯示「ComfyUI 已連線，尚無模型」。MCP 不屬於這次啟動範圍。
 
 後續 review 強化三個 bootstrap 邊界：POSIX wrapper 在 cold cache 先檢查 `curl`，再安全 fallback 到 `wget`，兩者皆無時回穩定錯誤；Apple Silicon 的 x86_64 程序以 structured `sysctl -in sysctl.proc_translated` 辨識 Rosetta，回報 `1` 時以 `UNSUPPORTED_NATIVE_ARCHITECTURE` 中止，不會默默改 CPU 或安裝 x86 runtime；managed ComfyUI 的具體 install boundary 會 canonicalize 目標與 repository root，拒絕 repository 本身、子目錄及經 symlink parent 指回 repository 的未存在路徑，且在 clone/staging 前完成。文件 clone URL 已改為可直接複製的 public HTTPS。`dry-run` 不安裝 ComfyUI、不寫專案設定、不改變服務，但 cold-cache wrapper 仍可能先把固定版 uv/Python bootstrap 到使用者 cache。
