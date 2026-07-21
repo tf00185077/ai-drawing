@@ -14,6 +14,7 @@ from app.schemas.system import ComfyUIState, ComfyUIStatus, SystemStatus
 
 
 PROBE_TIMEOUT_SECONDS = 2.0
+OBJECT_INFO_MAX_BYTES = 2 * 1024 * 1024
 
 
 class DependencyProbeError(RuntimeError):
@@ -47,6 +48,20 @@ def probe_comfyui(url: str, *, timeout: float) -> bool:
     except (ValueError, HTTPException) as exc:
         raise DependencyProbeError("ComfyUI dependency probe failed.") from exc
     return isinstance(payload, dict)
+
+
+def probe_comfyui_object_info(url: str, *, timeout: float) -> object:
+    """Fetch a bounded ComfyUI object-info document for live model inventory."""
+    try:
+        with urlopen(url, timeout=timeout) as response:
+            raw = response.read(OBJECT_INFO_MAX_BYTES + 1)
+        if len(raw) > OBJECT_INFO_MAX_BYTES:
+            raise DependencyProbeError("ComfyUI object info exceeds the size limit.")
+        return json.loads(raw.decode("utf-8"))
+    except DependencyProbeError:
+        raise
+    except (ValueError, HTTPException, UnicodeError) as exc:
+        raise DependencyProbeError("ComfyUI object-info probe failed.") from exc
 
 
 def _read_directory(path: Path) -> Iterable[Path]:
@@ -125,6 +140,35 @@ def _model_inventory(
     )
 
 
+def _live_model_inventory(object_info: object) -> _Inventory:
+    if not isinstance(object_info, dict):
+        return _Inventory()
+
+    def options(node_name: str, field_name: str) -> set[str]:
+        node = object_info.get(node_name)
+        if not isinstance(node, dict):
+            return set()
+        node_input = node.get("input")
+        if not isinstance(node_input, dict):
+            return set()
+        required = node_input.get("required")
+        if not isinstance(required, dict):
+            return set()
+        field = required.get(field_name)
+        if not isinstance(field, list) or not field or not isinstance(field[0], list):
+            return set()
+        return {
+            item.strip()
+            for item in field[0]
+            if isinstance(item, str) and item.strip()
+        }
+
+    return _Inventory(
+        checkpoint_names=options("CheckpointLoaderSimple", "ckpt_name"),
+        diffusion_model_names=options("UNETLoader", "unet_name"),
+    )
+
+
 def _status(
     settings: Settings,
     *,
@@ -155,6 +199,7 @@ def get_system_status(
     settings: Settings,
     *,
     probe: ComfyUIProbe = probe_comfyui,
+    object_info_probe: ComfyUIProbe = probe_comfyui_object_info,
     directory_reader: DirectoryReader = _read_directory,
     path_resolver: PathResolver = _resolve_path,
 ) -> SystemStatus:
@@ -191,6 +236,18 @@ def get_system_status(
         )
 
     inventory = _model_inventory(settings, directory_reader, path_resolver)
+    if inventory.model_count == 0:
+        object_info_endpoint = f"{settings.comfyui_base_url.rstrip('/')}/object_info"
+        try:
+            object_info = object_info_probe(
+                object_info_endpoint,
+                timeout=PROBE_TIMEOUT_SECONDS,
+            )
+        except (DependencyProbeError, OSError, json.JSONDecodeError, UnicodeError):
+            object_info = None
+        live_inventory = _live_model_inventory(object_info)
+        if live_inventory.model_count > 0:
+            inventory = live_inventory
     if inventory.model_count == 0:
         return _status(
             settings,

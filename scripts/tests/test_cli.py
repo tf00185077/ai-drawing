@@ -24,6 +24,7 @@ from launcher.models import (
     DeviceMode,
     HostInfo,
     LauncherState,
+    LocalSettings,
     ProcessIdentity,
 )
 from launcher.processes import ProcessStartResult, ProcessStopResult
@@ -1352,6 +1353,69 @@ def test_default_start_merges_install_provenance_into_task5_state(tmp_path, monk
     assert result.launcher_installed is True
     assert result.installed_root == root
     assert result.installed_commit == "v0.28.0"
+
+
+def test_default_comfy_start_cleanup_failure_has_stable_pid_error(
+    tmp_path,
+    monkeypatch,
+):
+    root = tmp_path / "ComfyUI"
+    root.mkdir()
+    python = root / "python"
+    python.touch()
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    planned = state(ComfyMode.MANAGED, root=root, device=DeviceMode.CPU)
+    monkeypatch.setattr(
+        cli,
+        "validate_comfyui_root",
+        lambda *_args: ComfyValidation(root, True, python, ()),
+    )
+    monkeypatch.setattr(cli, "smoke_comfyui_runtime", lambda *_args: None)
+    monkeypatch.setattr(
+        cli,
+        "start_comfyui",
+        lambda **_kwargs: ProcessStartResult(
+            False,
+            "initial_identity_unavailable_cleanup_failed",
+            None,
+            4242,
+        ),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.start_comfyui(planned)
+
+    assert raised.value.code == "COMFYUI_START_ORPHAN_CLEANUP_FAILED"
+    assert "4242" in raised.value.hint
+    assert "status" in raised.value.hint.lower()
+
+
+def test_default_relay_cleanup_failure_has_stable_pid_error(
+    tmp_path,
+    monkeypatch,
+):
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    monkeypatch.setattr(cli, "load_relay_state", lambda *_args: None)
+    monkeypatch.setattr(cli.docker, "docker_bridge_host", lambda _runner: "172.17.0.1")
+    monkeypatch.setattr(
+        cli,
+        "start_relay",
+        lambda **_kwargs: RelayStartResult(
+            False,
+            "initial_identity_unavailable_cleanup_failed",
+            None,
+            7331,
+        ),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.ensure_relay(LocalSettings(ComfyMode.EXTERNAL))
+
+    assert raised.value.code == "RELAY_START_ORPHAN_CLEANUP_FAILED"
+    assert "7331" in raised.value.hint
+    assert "status" in raised.value.hint.lower()
 
 
 def test_same_ready_managed_root_preserves_ownership_on_reconfigure(harness):

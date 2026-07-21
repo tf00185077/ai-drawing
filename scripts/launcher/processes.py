@@ -28,6 +28,9 @@ class ProcessStopResult:
     state: LauncherState
 
 
+SPAWN_HANDLE_CLEANUP_TIMEOUT = 2.0
+
+
 def _validate_port(port: int) -> int:
     if type(port) is not int or not 1 <= port <= 65535:
         raise ValueError("port must be an integer from 1 to 65535")
@@ -95,6 +98,47 @@ def terminate_if_identity_matches(
     if not terminate_spawned_process(pid, runner, host):
         return "termination_failed"
     return "terminated"
+
+
+def cleanup_spawned_process_handle(
+    process: Any,
+    *,
+    timeout: float = SPAWN_HANDLE_CLEANUP_TIMEOUT,
+) -> str:
+    """Stop only the exact Popen child when identity capture never succeeded."""
+    if timeout <= 0:
+        raise ValueError("spawn handle cleanup timeout must be positive")
+
+    def exited() -> bool:
+        try:
+            return process.poll() is not None
+        except (OSError, AttributeError):
+            return False
+
+    if exited():
+        return "exited"
+    try:
+        process.terminate()
+    except (OSError, AttributeError):
+        pass
+    else:
+        try:
+            process.wait(timeout=timeout)
+        except (OSError, AttributeError, subprocess.TimeoutExpired):
+            pass
+        else:
+            if exited():
+                return "terminated"
+
+    try:
+        process.kill()
+    except (OSError, AttributeError):
+        return "failed"
+    try:
+        process.wait(timeout=timeout)
+    except (OSError, AttributeError, subprocess.TimeoutExpired):
+        return "failed"
+    return "killed" if exited() else "failed"
 
 
 def _probe_ready(
@@ -179,7 +223,13 @@ def start_comfyui(
         return ProcessStartResult(False, "process_exited", None, pid)
     spawned_identity = read_process_identity(host, pid, runner)
     if spawned_identity is None:
-        return ProcessStartResult(False, "initial_identity_unavailable", None, pid)
+        cleanup = cleanup_spawned_process_handle(process)
+        return ProcessStartResult(
+            False,
+            f"initial_identity_unavailable_cleanup_{cleanup}",
+            None,
+            pid,
+        )
     base_url = f"http://127.0.0.1:{port}"
     deadline = monotonic() + readiness_timeout
     while True:

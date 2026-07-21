@@ -176,7 +176,11 @@ def test_actual_urllib_boundary_converts_http_protocol_error_to_unreachable(
 
 
 def test_reachable_without_generation_model_is_no_models(tmp_path: Path) -> None:
-    result = get_system_status(_settings(tmp_path), probe=Probe())
+    result = get_system_status(
+        _settings(tmp_path),
+        probe=Probe(),
+        object_info_probe=Probe(result={}),
+    )
 
     assert result.comfyui.state == "no_models"
     assert result.comfyui.reachable is True
@@ -185,6 +189,71 @@ def test_reachable_without_generation_model_is_no_models(tmp_path: Path) -> None
     assert result.comfyui.diffusion_model_count == 0
     assert "checkpoint" in result.comfyui.hint
     assert "失敗" not in result.comfyui.hint
+
+
+def test_external_reachable_uses_live_object_info_when_no_model_mounts(
+    tmp_path: Path,
+) -> None:
+    object_info = Probe(
+        result={
+            "CheckpointLoaderSimple": {
+                "input": {
+                    "required": {
+                        "ckpt_name": [
+                            ["anime.safetensors", "shared.safetensors"],
+                            {},
+                        ]
+                    }
+                }
+            },
+            "UNETLoader": {
+                "input": {
+                    "required": {
+                        "unet_name": [
+                            ["shared.safetensors", "flux.safetensors"],
+                            {},
+                        ]
+                    }
+                }
+            },
+        }
+    )
+
+    result = get_system_status(
+        _settings(tmp_path),
+        probe=Probe(),
+        object_info_probe=object_info,
+    )
+
+    assert object_info.calls == [("http://comfy.internal:8188/object_info", 2.0)]
+    assert result.comfyui.state == "connected"
+    assert result.comfyui.checkpoint_count == 2
+    assert result.comfyui.diffusion_model_count == 2
+    assert result.comfyui.model_count == 3
+    assert result.comfyui.warnings == []
+
+
+@pytest.mark.parametrize(
+    "live_probe",
+    [
+        Probe(error=TimeoutError("late")),
+        Probe(error=URLError("offline")),
+        Probe(result={"CheckpointLoaderSimple": {"input": "malformed"}}),
+    ],
+)
+def test_live_model_inventory_failure_is_bounded_and_remains_no_models(
+    tmp_path: Path,
+    live_probe: Probe,
+) -> None:
+    result = get_system_status(
+        _settings(tmp_path),
+        probe=Probe(),
+        object_info_probe=live_probe,
+    )
+
+    assert result.application == "healthy"
+    assert result.comfyui.state == "no_models"
+    assert result.comfyui.model_count == 0
 
 
 def test_counts_checkpoint_and_split_generation_models_with_canonical_deduplication(
@@ -341,6 +410,48 @@ def test_status_api_serializes_typed_disabled_response(client, monkeypatch, tmp_
             "hint": "執行 setup.ps1 reconfigure 或 ./setup.sh reconfigure 以設定或安裝 ComfyUI。",
         },
     }
+
+
+def test_status_api_external_models_from_object_info_are_connected(
+    client,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    settings = _settings(tmp_path, mode="external")
+    payloads = {
+        "/system_stats": {"system": {"os": "test"}},
+        "/object_info": {
+            "CheckpointLoaderSimple": {
+                "input": {"required": {"ckpt_name": [["remote.ckpt"], {}]}}
+            },
+            "UNETLoader": {
+                "input": {
+                    "required": {
+                        "unet_name": [["remote-unet.safetensors"], {}]
+                    }
+                }
+            },
+        },
+    }
+
+    def fake_urlopen(url: str, *, timeout: float):
+        assert timeout == 2.0
+        key = next(path for path in payloads if url.endswith(path))
+        return BytesIO(json.dumps(payloads[key]).encode("utf-8"))
+
+    monkeypatch.setattr(dependency_status, "urlopen", fake_urlopen)
+    client.app.dependency_overrides[get_settings] = lambda: settings
+    try:
+        response = client.get("/api/system/status")
+    finally:
+        client.app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    body = response.json()["comfyui"]
+    assert body["state"] == "connected"
+    assert body["model_count"] == 2
+    assert body["checkpoint_count"] == 1
+    assert body["diffusion_model_count"] == 1
 
 
 def test_health_remains_application_only_when_comfyui_is_unreachable(client) -> None:

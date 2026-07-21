@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -111,6 +112,34 @@ class FakeProcess:
 
     def poll(self):
         return self.returncode
+
+
+class CleanupHandleProcess(FakeProcess):
+    def __init__(self, mode: str):
+        super().__init__()
+        self.mode = mode
+        self.cleanup_calls: list[object] = []
+        self.wait_count = 0
+
+    def terminate(self):
+        self.cleanup_calls.append("terminate")
+        if self.mode == "failed":
+            raise OSError("terminate failed")
+
+    def wait(self, timeout):
+        self.cleanup_calls.append(("wait", timeout))
+        self.wait_count += 1
+        if self.mode == "killed" and self.wait_count == 1:
+            raise subprocess.TimeoutExpired("fake-child", timeout)
+        if self.mode == "failed":
+            raise subprocess.TimeoutExpired("fake-child", timeout)
+        self.returncode = 0
+        return 0
+
+    def kill(self):
+        self.cleanup_calls.append("kill")
+        if self.mode == "failed":
+            raise OSError("kill failed")
 
 
 class FakePopen:
@@ -280,9 +309,10 @@ def test_timeout_cleanup_refuses_to_kill_reused_pid(tmp_path):
     assert all(command[0] != "kill" for command in runner.commands)
 
 
-def test_initial_identity_capture_failure_never_claims_or_terminates(tmp_path):
+def test_initial_identity_capture_failure_terminates_exact_popen_handle(tmp_path):
     probes: list[str] = []
     runner = FakeRunner(identity=None)
+    process = CleanupHandleProcess("terminated")
 
     result = start_comfyui(
         root=tmp_path / "ComfyUI",
@@ -293,14 +323,68 @@ def test_initial_identity_capture_failure_never_claims_or_terminates(tmp_path):
         runner=runner,
         project_root=tmp_path,
         probe=lambda url, **_kwargs: probes.append(url) or True,
-        popen=FakePopen(),
+        popen=FakePopen(process),
     )
 
     assert result.started is False
-    assert result.reason == "initial_identity_unavailable"
+    assert result.reason == "initial_identity_unavailable_cleanup_terminated"
     assert result.state is None
+    assert result.pid == 4242
     assert probes == []
     assert len(runner.commands) == 1
+    assert process.cleanup_calls == ["terminate", ("wait", 2.0)]
+
+
+def test_initial_identity_cleanup_timeout_kills_only_exact_popen_handle(tmp_path):
+    runner = FakeRunner(identity=None)
+    process = CleanupHandleProcess("killed")
+
+    result = start_comfyui(
+        root=tmp_path / "ComfyUI",
+        python=tmp_path / "python",
+        device=DeviceMode.CPU,
+        port=8188,
+        host=LINUX,
+        runner=runner,
+        project_root=tmp_path,
+        probe=lambda *_args, **_kwargs: True,
+        popen=FakePopen(process),
+    )
+
+    assert result.reason == "initial_identity_unavailable_cleanup_killed"
+    assert result.state is None
+    assert result.pid == 4242
+    assert process.cleanup_calls == [
+        "terminate",
+        ("wait", 2.0),
+        "kill",
+        ("wait", 2.0),
+    ]
+    assert all(command[0] not in {"kill", "taskkill"} for command in runner.commands)
+
+
+def test_initial_identity_cleanup_failure_reports_spawned_pid_without_state(tmp_path):
+    runner = FakeRunner(identity=None)
+    process = CleanupHandleProcess("failed")
+
+    result = start_comfyui(
+        root=tmp_path / "ComfyUI",
+        python=tmp_path / "python",
+        device=DeviceMode.CPU,
+        port=8188,
+        host=LINUX,
+        runner=runner,
+        project_root=tmp_path,
+        probe=lambda *_args, **_kwargs: True,
+        popen=FakePopen(process),
+    )
+
+    assert result.reason == "initial_identity_unavailable_cleanup_failed"
+    assert result.state is None
+    assert result.pid == 4242
+    assert process.poll() is None
+    assert process.cleanup_calls == ["terminate", "kill"]
+    assert all(command[0] not in {"kill", "taskkill"} for command in runner.commands)
 
 
 def test_comfyui_readiness_uses_real_monotonic_deadline(tmp_path):
