@@ -35,6 +35,39 @@ class ComfyInstallError(RuntimeError):
     """Raised when a managed install or update cannot be completed safely."""
 
 
+class UvBinaryError(ComfyInstallError):
+    """Structured launcher-facing failure for the uv execution boundary."""
+
+    _DETAILS = {
+        "UV_BINARY_MISSING": (
+            "找不到啟動器所需的 uv 執行檔。",
+            "請透過 setup.ps1/setup.sh 啟動，或安裝 uv 後重試。",
+        ),
+        "UV_BINARY_INVALID": (
+            "啟動器取得的 uv 執行檔無效。",
+            "請重新執行 setup wrapper，以重建固定版本的 uv cache。",
+        ),
+    }
+
+    def __init__(self, code: str) -> None:
+        try:
+            message, hint = self._DETAILS[code]
+        except KeyError as error:
+            raise ValueError(f"unsupported uv binary error code: {code}") from error
+        self.code = code
+        self.message = message
+        self.hint = hint
+        super().__init__(f"{code}: {message}")
+
+    @classmethod
+    def missing(cls) -> UvBinaryError:
+        return cls("UV_BINARY_MISSING")
+
+    @classmethod
+    def invalid(cls) -> UvBinaryError:
+        return cls("UV_BINARY_INVALID")
+
+
 class InstallTargetInsideProject(ComfyInstallError):
     """Raised when managed installation would write inside this repository."""
 
@@ -84,45 +117,37 @@ def _validate_uv_binary(
 ) -> Path:
     path = Path(candidate)
     if not path.is_absolute():
-        raise ComfyInstallError("UV_BINARY_INVALID: uv binary must be absolute")
+        raise UvBinaryError.invalid()
     try:
         resolved = path.resolve(strict=True)
     except (OSError, RuntimeError) as error:
-        raise ComfyInstallError(
-            "UV_BINARY_INVALID: configured uv binary does not exist"
-        ) from error
+        raise UvBinaryError.invalid() from error
     if not resolved.is_file():
-        raise ComfyInstallError(
-            "UV_BINARY_INVALID: configured uv binary must be a regular file"
-        )
+        raise UvBinaryError.invalid()
     actual_platform = os.name if platform_name is None else platform_name
     if actual_platform == "nt":
         executable = resolved.suffix.lower() in _WINDOWS_EXECUTABLE_SUFFIXES
     else:
         executable = os.access(resolved, os.X_OK)
     if not executable:
-        raise ComfyInstallError(
-            "UV_BINARY_INVALID: configured uv file is not executable"
-        )
+        raise UvBinaryError.invalid()
     return resolved
 
 
 def resolve_uv_binary(
     *,
     environ: Mapping[str, str] | None = None,
-    which: Callable[[str], str | None] = shutil.which,
+    which: Callable[[str], str | None] | None = None,
 ) -> Path:
     """Resolve the pinned wrapper binary, with a direct-Python fallback."""
     environment = os.environ if environ is None else environ
     configured = environment.get(UV_BINARY_ENV)
     candidate = Path(configured) if configured else None
     if candidate is None:
-        discovered = which("uv")
+        discovered = (shutil.which if which is None else which)("uv")
         candidate = Path(discovered) if discovered else None
     if candidate is None:
-        raise ComfyInstallError(
-            "UV_BINARY_MISSING: run setup.ps1/setup.sh or install uv and retry"
-        )
+        raise UvBinaryError.missing()
     return _validate_uv_binary(candidate)
 
 

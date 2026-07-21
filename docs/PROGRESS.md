@@ -12,7 +12,7 @@ ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`297 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
+- Launcher（所有安裝／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`301 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
 - Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。

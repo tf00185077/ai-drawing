@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import launcher.cli as cli
+import launcher.comfyui as comfyui_module
 from launcher.cli import DefaultServices, main
 from launcher.comfyui import (
     ComfyInstallError,
@@ -393,6 +394,120 @@ def test_install_failure_can_continue_disabled(harness):
     harness.choices = ["disabled"]
     assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 0
     assert harness.saved_state.comfy_mode is ComfyMode.DISABLED
+
+
+@pytest.mark.parametrize(
+    ("operation", "uv_case", "expected_code"),
+    [
+        ("install", "invalid", "UV_BINARY_INVALID"),
+        ("install", "missing", "UV_BINARY_MISSING"),
+        ("update", "invalid", "UV_BINARY_INVALID"),
+        ("update", "missing", "UV_BINARY_MISSING"),
+    ],
+)
+def test_cli_surfaces_typed_uv_error_without_recovery_or_mutation(
+    tmp_path,
+    monkeypatch,
+    operation,
+    uv_case,
+    expected_code,
+):
+    project = tmp_path / "repository"
+    project.mkdir()
+    (project / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
+    target = tmp_path / "managed-ComfyUI"
+    output = []
+    prompts = []
+
+    class NoSideEffectRunner:
+        def __init__(self):
+            self.commands = []
+
+        def run(self, args, **_kwargs):
+            command = tuple(str(item) for item in args)
+            self.commands.append(command)
+            return CommandResult(command, 1, "", "runner must remain unused")
+
+    runner = NoSideEffectRunner()
+    if uv_case == "invalid":
+        monkeypatch.setenv(
+            "AI_DRAWING_UV_BIN",
+            str((tmp_path / "missing-tools/uv.exe").resolve()),
+        )
+    else:
+        monkeypatch.delenv("AI_DRAWING_UV_BIN", raising=False)
+        monkeypatch.setattr(comfyui_module.shutil, "which", lambda _name: None)
+
+    service = DefaultServices(
+        project,
+        runner=runner,
+        input_fn=lambda message: prompts.append(message) or "",
+        output_fn=output.append,
+    )
+    service.host = HostInfo("Linux", "x86_64", tmp_path)
+    service.preflight = lambda: None
+    service.probe_external = lambda _port: False
+
+    if operation == "install":
+        argv = [
+            "setup",
+            "--non-interactive",
+            "--comfyui-mode",
+            "managed",
+            "--comfyui-path",
+            str(target),
+            "--device",
+            "cpu",
+        ]
+        before = None
+    else:
+        make_root = target
+        make_root.mkdir()
+        (make_root / "main.py").write_text("# ComfyUI\n", encoding="utf-8")
+        (make_root / "models").mkdir()
+        marker = make_root / "user-marker.txt"
+        marker.write_text("keep", encoding="utf-8")
+        current = replace(
+            state(ComfyMode.MANAGED, root=target, device=DeviceMode.CPU),
+            launcher_installed=True,
+            installed_root=target,
+            installed_commit="v0.28.0",
+        )
+        state_path = project / "data/bootstrap/state.json"
+        state_path.parent.mkdir(parents=True)
+        state_path.write_text(current.to_json(), encoding="utf-8")
+        before = {
+            path.relative_to(target): path.read_bytes()
+            for path in target.rglob("*")
+            if path.is_file()
+        }
+        argv = ["update-comfyui"]
+
+    assert main(argv, services=service) != 0
+
+    rendered = "\n".join(output)
+    assert f"ERROR [{expected_code}]" in rendered
+    assert "COMFYUI_INSTALL_FAILED" not in rendered
+    assert "COMFYUI_UPDATE_FAILED" not in rendered
+    assert prompts == []
+    assert runner.commands == []
+    assert not (project / ".env").exists()
+    assert not (project / ".ai-drawing").exists()
+    assert not comfyui_module.staging_path(target).exists()
+    if operation == "install":
+        assert not target.exists()
+    else:
+        after = {
+            path.relative_to(target): path.read_bytes()
+            for path in target.rglob("*")
+            if path.is_file()
+        }
+        assert after == before
+    log = project / "data/logs/bootstrap.log"
+    assert log.is_file()
+    log_text = log.read_text(encoding="utf-8")
+    assert expected_code in log_text
+    assert "missing-tools" not in log_text
 
 
 def test_noninteractive_install_failure_obeys_explicit_cpu_recovery(harness):
