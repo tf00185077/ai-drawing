@@ -7,7 +7,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export default function PromptLibraryLayout() {
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="mx-auto grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside aria-label="Prompt Library" className="h-fit rounded-xl border border-slate-800 bg-slate-900/60 p-3 lg:sticky lg:top-4">
         <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Prompt Library</p>
         <nav className="space-y-1">
