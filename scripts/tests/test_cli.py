@@ -11,9 +11,11 @@ import launcher.comfyui as comfyui_module
 from launcher.cli import DefaultServices, main
 from launcher.comfyui import (
     ComfyInstallError,
+    ComfyInstallCleanupPending,
     ComfyProbe,
     ComfyValidation,
     UnsupportedComfyArchitecture,
+    UpdateOutcome,
 )
 from launcher.models import (
     ComfyMode,
@@ -315,7 +317,47 @@ def test_default_update_rejects_verified_live_managed_process_before_mutation(
         service.update_comfyui(current)
 
     assert raised.value.code == "COMFYUI_UPDATE_REQUIRES_STOP"
-    assert "stop" in raised.value.hint
+    assert "stop" in raised.value.hint.lower()
+    assert not (tmp_path / "data").exists()
+
+
+def test_default_update_rejects_reachable_api_without_recorded_pid_before_uv_or_git(
+    tmp_path,
+    monkeypatch,
+):
+    root = (tmp_path / "ComfyUI").resolve()
+    current = LauncherState(
+        1,
+        ComfyMode.MANAGED,
+        root,
+        DeviceMode.CPU,
+        8188,
+        None,
+        None,
+        launcher_installed=True,
+        installed_root=root,
+        installed_commit="v0.28.0",
+    )
+    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    service.probe_external = lambda _port: True
+    monkeypatch.setattr(
+        cli,
+        "resolve_uv_binary",
+        lambda: (_ for _ in ()).throw(AssertionError("uv must not be resolved")),
+    )
+    monkeypatch.setattr(
+        cli,
+        "update_comfyui",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("update boundary must not run")
+        ),
+    )
+
+    with pytest.raises(cli.LauncherError) as raised:
+        service.update_comfyui(current)
+
+    assert raised.value.code == "COMFYUI_UPDATE_RUNNING_UNOWNED"
+    assert "stop" in raised.value.hint.lower()
     assert not (tmp_path / "data").exists()
 
 
@@ -351,7 +393,7 @@ def test_default_update_rejects_stale_or_mismatched_ownership_conservatively(
         service.update_comfyui(current)
 
     assert raised.value.code == "COMFYUI_UPDATE_OWNERSHIP_UNVERIFIED"
-    assert "stop" in raised.value.hint
+    assert "stop" in raised.value.hint.lower()
     assert not (tmp_path / "data").exists()
 
 
@@ -374,12 +416,15 @@ def test_default_stopped_update_saves_coherent_install_provenance(
     )
     fake_uv = (tmp_path / "uv").resolve()
     captured = {}
-    service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
+    output = []
+    service = DefaultServices(tmp_path, runner=object(), output_fn=output.append)
     monkeypatch.setattr(cli, "resolve_uv_binary", lambda: fake_uv)
+
+    pending = tmp_path / ".ComfyUI.venv-backup-pending"
 
     def fake_update(*args, **kwargs):
         captured.update(args=args, kwargs=kwargs)
-        return "v0.28.0"
+        return UpdateOutcome("v0.28.0", (pending,))
 
     monkeypatch.setattr(cli, "update_comfyui", fake_update)
 
@@ -391,6 +436,8 @@ def test_default_stopped_update_saves_coherent_install_provenance(
     assert saved.installed_commit == "v0.28.0"
     assert saved.launcher_installed is True
     assert saved.managed_pid is None
+    assert any("COMFYUI_UPDATE_CLEANUP_PENDING" in line for line in output)
+    assert any(pending.name in line for line in output)
 
 
 def test_default_services_filters_repository_comfyui_candidates(tmp_path):
@@ -511,6 +558,19 @@ def test_install_failure_can_continue_disabled(harness):
     harness.choices = ["disabled"]
     assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 0
     assert harness.saved_state.comfy_mode is ComfyMode.DISABLED
+
+
+def test_install_cleanup_pending_is_not_retried_and_reports_exact_path(harness):
+    pending = harness.project_root / ".ComfyUI.staging-pending"
+    harness.install_error = ComfyInstallCleanupPending(pending)
+
+    assert main(["setup", "--comfyui-mode", "managed"], services=harness) == 1
+
+    rendered = "\n".join(harness.output)
+    assert "COMFYUI_INSTALL_CLEANUP_PENDING" in rendered
+    assert str(pending) in rendered
+    assert harness.events.count(("install", DeviceMode.CPU)) == 1
+    assert "choose" not in harness.events
 
 
 @pytest.mark.parametrize(

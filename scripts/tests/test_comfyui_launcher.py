@@ -6,9 +6,13 @@ from pathlib import Path
 
 import pytest
 
+import launcher.comfyui as comfyui_module
 from launcher.comfyui import (
     ComfyInstallError,
+    ComfyInstallCleanupPending,
     ComfyUpdateError,
+    OwnedTemporaryDirectory,
+    UpdateOutcome,
     InstallTargetNotEmpty,
     build_install_plan,
     discover_comfyui,
@@ -48,6 +52,7 @@ def make_root(root: Path) -> Path:
 
 def make_managed_root(root: Path, host: HostInfo = LINUX) -> Path:
     root = make_root(root)
+    (root / ".git").mkdir()
     python = (
         root / ".venv/Scripts/python.exe"
         if host.system == "Windows"
@@ -69,6 +74,8 @@ class FakeRunner:
     def run(self, args, cwd=None, env=None, check=False, capture=True):
         command = tuple(str(arg) for arg in args)
         self.commands.append((command, cwd))
+        if command == ("git", "rev-parse", "--show-toplevel"):
+            return CommandResult(command, 0, str(Path(cwd).resolve()) + "\n", "")
         if command[:3] == ("git", "rev-parse", "HEAD"):
             return CommandResult(command, 0, self.old_commit + "\n", "")
         if command[:2] == ("git", "clone"):
@@ -206,6 +213,35 @@ def test_prepare_staging_allocates_a_unique_owned_directory_each_time(tmp_path):
     assert second.path.is_dir()
     first.remove()
     second.remove()
+
+
+def test_owned_nonempty_cleanup_fails_closed_and_retains_payload(tmp_path):
+    owned = OwnedTemporaryDirectory.create(parent=tmp_path, prefix="owned-")
+    (owned.path / "payload.txt").write_text("keep", encoding="utf-8")
+
+    result = owned.cleanup()
+
+    assert result.cleaned is False
+    assert result.pending_path == owned.path
+    assert (owned.path / "payload.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_owned_cleanup_swap_hook_never_deletes_unknown_or_original_payload(tmp_path):
+    owned = OwnedTemporaryDirectory.create(parent=tmp_path, prefix="owned-")
+    (owned.path / "original.txt").write_text("original", encoding="utf-8")
+    retained_original = tmp_path / "retained-original"
+
+    def swap_after_validation(_owned):
+        owned.path.replace(retained_original)
+        owned.path.mkdir()
+        (owned.path / "unknown.txt").write_text("unknown", encoding="utf-8")
+
+    result = owned.cleanup(before_remove=swap_after_validation)
+
+    assert result.cleaned is False
+    assert result.pending_path == owned.path
+    assert (owned.path / "unknown.txt").read_text(encoding="utf-8") == "unknown"
+    assert (retained_original / "original.txt").read_text(encoding="utf-8") == "original"
 
 
 def flattened_args(plan):
@@ -450,7 +486,7 @@ def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path, uv_b
     (sentinel / "user.txt").write_text("keep", encoding="utf-8")
     runner = FakeRunner(fail_when=lambda args: len(args) > 1 and args[1] == "-c")
 
-    with pytest.raises(ComfyInstallError, match="smoke"):
+    with pytest.raises(ComfyInstallCleanupPending) as raised:
         install_comfyui(
             target,
             DeviceMode.NVIDIA,
@@ -462,7 +498,9 @@ def test_smoke_failure_cleans_staging_and_does_not_publish_target(tmp_path, uv_b
 
     assert not target.exists()
     assert (sentinel / "user.txt").read_text(encoding="utf-8") == "keep"
-    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
+    assert raised.value.pending_path.name.startswith(".ComfyUI.staging-")
+    assert raised.value.pending_path.is_dir()
+    assert "cleanup" in raised.value.hint.lower()
 
 
 def test_update_reinstalls_pinned_version_without_cloning(tmp_path, uv_bin):
@@ -479,9 +517,13 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path, uv_bin):
     )
 
     commands = [command for command, _cwd in runner.commands]
-    assert result == "v0.28.0"
-    assert commands[0] == ("git", "rev-parse", "HEAD")
-    assert commands[1] == (
+    assert isinstance(result, UpdateOutcome)
+    assert result.version == "v0.28.0"
+    assert len(result.cleanup_pending) == 1
+    assert result.cleanup_pending[0].name.startswith(".ComfyUI.venv-backup-")
+    assert commands[0] == ("git", "rev-parse", "--show-toplevel")
+    assert commands[1] == ("git", "rev-parse", "HEAD")
+    assert commands[2] == (
         "git",
         "fetch",
         "--depth",
@@ -490,15 +532,16 @@ def test_update_reinstalls_pinned_version_without_cloning(tmp_path, uv_bin):
         "tag",
         "v0.28.0",
     )
-    assert commands[2] == ("git", "checkout", "--detach", "v0.28.0")
-    assert commands[4][:4] == (str(uv_bin), "venv", "--python", "3.12")
-    assert "--clear" not in commands[4]
-    assert Path(commands[4][-1]).name == "venv"
-    assert ".venv.update-new-" in str(Path(commands[4][-1]).parent)
+    assert commands[3] == ("git", "checkout", "--detach", "v0.28.0")
+    assert commands[5][:4] == (str(uv_bin), "venv", "--python", "3.12")
+    assert "--clear" not in commands[5]
+    assert Path(commands[5][-1]).name == "venv"
+    assert ".venv.update-new-" in str(Path(commands[5][-1]).parent)
     assert not any(command[:2] == ("git", "clone") for command in commands)
     assert commands[-1][1] == "-c"
     assert not (root / ".venv/old-environment.txt").exists()
-    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+    assert result.cleanup_pending[0].is_dir()
+    assert (result.cleanup_pending[0] / "venv").is_dir()
 
 
 def test_update_restores_old_commit_when_smoke_fails(tmp_path, uv_bin):
@@ -523,13 +566,16 @@ def test_update_restores_old_commit_when_smoke_fails(tmp_path, uv_bin):
         )
 
     commands = [command for command, _cwd in runner.commands]
-    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED_CLEANUP_PENDING"
     assert raised.value.hint
     assert commands[-2] == ("git", "checkout", "--detach", "old123")
     assert commands[-1][0] == str(root / ".venv/bin/python")
     assert commands[-1][1] == "-c"
     assert (root / ".venv/old-environment.txt").read_text(encoding="utf-8") == "exact-old"
-    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+    pending = list(tmp_path.glob(".ComfyUI.venv.update-new-*"))
+    assert pending == list(raised.value.pending_paths)
+    assert str(pending[0]) in raised.value.hint
+    assert not list(tmp_path.glob(".ComfyUI.venv-backup-*"))
 
 
 @pytest.mark.parametrize(
@@ -595,11 +641,12 @@ def test_update_restores_exact_old_environment_when_environment_build_fails(
         )
 
     commands = [command for command, _cwd in runner.commands]
-    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED_CLEANUP_PENDING"
     assert commands[-2] == ("git", "checkout", "--detach", "old123")
     assert commands[-1][0] == str(root / ".venv/bin/python")
     assert (root / ".venv/old-environment.txt").read_text(encoding="utf-8") == "exact-old"
-    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+    assert raised.value.pending_paths
+    assert all(path.exists() for path in raised.value.pending_paths)
 
 
 def test_update_backup_rename_failure_does_not_fetch_or_change_environment(
@@ -630,7 +677,8 @@ def test_update_backup_rename_failure_does_not_fetch_or_change_environment(
 
     assert raised.value.code == "COMFYUI_UPDATE_BACKUP_FAILED"
     assert [command for command, _cwd in runner.commands] == [
-        ("git", "rev-parse", "HEAD")
+        ("git", "rev-parse", "--show-toplevel"),
+        ("git", "rev-parse", "HEAD"),
     ]
     assert (root / ".venv/old-environment.txt").is_file()
     assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
@@ -662,9 +710,10 @@ def test_update_activation_rename_failure_restores_old_environment(
             uv_bin=uv_bin,
         )
 
-    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED"
+    assert raised.value.code == "COMFYUI_UPDATE_FAILED_RESTORED_CLEANUP_PENDING"
     assert (root / ".venv/old-environment.txt").is_file()
-    assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
+    assert raised.value.pending_paths
+    assert all(path.exists() for path in raised.value.pending_paths)
 
 
 def test_update_rollback_checkout_failure_retains_exact_backup(tmp_path, uv_bin):
@@ -800,6 +849,46 @@ def test_update_rollback_never_deletes_concurrently_created_unknown_venv(
     assert (backups[0] / "venv/old-environment.txt").is_file()
 
 
+def test_update_rollback_rejects_post_activation_venv_substitution(
+    tmp_path,
+    monkeypatch,
+    uv_bin,
+):
+    root = make_managed_root(tmp_path / "ComfyUI")
+    runner = FakeRunner(old_commit="old123")
+    original_validate = comfyui_module.validate_comfyui_root
+    validations = 0
+    retained_new = tmp_path / "retained-activated-new-venv"
+
+    def substitute_after_activation(candidate, host):
+        nonlocal validations
+        validations += 1
+        if validations == 2:
+            (root / ".venv").replace(retained_new)
+            (root / ".venv").mkdir()
+            (root / ".venv/user.txt").write_text("unknown", encoding="utf-8")
+        return original_validate(candidate, host)
+
+    monkeypatch.setattr(comfyui_module, "validate_comfyui_root", substitute_after_activation)
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_ROLLBACK_FAILED"
+    assert (root / ".venv/user.txt").read_text(encoding="utf-8") == "unknown"
+    assert (retained_new / "bin/python").is_file()
+    backups = list(tmp_path.glob(".ComfyUI.venv-backup-*"))
+    assert len(backups) == 1
+    assert (backups[0] / "venv/old-environment.txt").is_file()
+
+
 def test_update_rejects_root_that_does_not_match_owned_provenance_before_git(
     tmp_path,
     uv_bin,
@@ -842,6 +931,67 @@ def test_update_invalid_git_source_has_stable_code_before_backup(tmp_path, uv_bi
     assert not list(tmp_path.glob(".ComfyUI.venv-*-*"))
 
 
+def test_update_rejects_missing_git_root_before_backup_or_fetch(tmp_path, uv_bin):
+    root = make_root(tmp_path / "ComfyUI")
+    python = root / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.touch()
+    runner = FakeRunner(old_commit="old123")
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_SOURCE_INVALID"
+    assert [command for command, _cwd in runner.commands] == [
+        ("git", "rev-parse", "--show-toplevel")
+    ]
+    assert not list(tmp_path.glob(".ComfyUI.venv-*"))
+    assert python.is_file()
+
+
+def test_update_rejects_nested_root_resolved_to_ancestor_repository(tmp_path, uv_bin):
+    ancestor = tmp_path / "ancestor"
+    (ancestor / ".git").mkdir(parents=True)
+    root = make_root(ancestor / "nested/ComfyUI")
+    python = root / ".venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.touch()
+
+    class AncestorRunner(FakeRunner):
+        def run(self, args, **kwargs):
+            command = tuple(str(item) for item in args)
+            if command == ("git", "rev-parse", "--show-toplevel"):
+                self.commands.append((command, kwargs.get("cwd")))
+                return CommandResult(command, 0, str(ancestor.resolve()) + "\n", "")
+            return super().run(args, **kwargs)
+
+    runner = AncestorRunner(old_commit="old123")
+
+    with pytest.raises(ComfyUpdateError) as raised:
+        update_comfyui(
+            root,
+            DeviceMode.CPU,
+            runner,
+            host=LINUX,
+            owned_root=root,
+            uv_bin=uv_bin,
+        )
+
+    assert raised.value.code == "COMFYUI_UPDATE_SOURCE_INVALID"
+    assert [command for command, _cwd in runner.commands] == [
+        ("git", "rev-parse", "--show-toplevel")
+    ]
+    assert not list(ancestor.glob(".ComfyUI.venv-*"))
+    assert python.is_file()
+
+
 def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatch, uv_bin):
     target = tmp_path / "ComfyUI"
     target.mkdir()
@@ -855,7 +1005,7 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
 
     monkeypatch.setattr(Path, "replace", fail_staging_promotion)
 
-    with pytest.raises(OSError, match="promotion failed"):
+    with pytest.raises(ComfyInstallCleanupPending) as raised:
         install_comfyui(
             target,
             DeviceMode.CPU,
@@ -867,7 +1017,8 @@ def test_failed_promotion_restores_preexisting_empty_target(tmp_path, monkeypatc
 
     assert target.is_dir()
     assert list(target.iterdir()) == []
-    assert not list(tmp_path.glob(".ComfyUI.staging-*"))
+    assert raised.value.pending_path.is_dir()
+    assert raised.value.pending_path.name.startswith(".ComfyUI.staging-")
 
 
 @pytest.mark.parametrize("relative_target", [Path("."), Path("data/ComfyUI")])
