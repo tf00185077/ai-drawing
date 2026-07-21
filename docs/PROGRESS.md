@@ -2,6 +2,8 @@
 
 ## 2026-07-21 Prompt Workbench UI 重構完成
 
+後續微調：可選 Prompt 詞條改為橫向 `flex-wrap`、依內容寬度排列並限制最大寬度，長文字在 option 內換行，不再每筆佔滿整列。
+
 1. Prompt Library 拆成 `/prompt-library/workbench` 與 `/prompt-library/categories` 兩個獨立畫面，並加入頁內 sidebar；`/prompt-library` 會自動導向工作台。
 2. Workbench 上層改為左側詞條加入區、右側正負向總覽；加入區以正向／負向 nav 控制篩選與加入目的地，右側 Positive／Negative Prompt 永遠上下同時顯示。
 3. 選取詞條或自由文字後立即組合，不再需要額外按「組合」。片段可編輯、刪除、排序與設定可選權重；空權重輸出原文，有權重才輸出 ComfyUI `(prompt:weight)` 格式。
