@@ -313,17 +313,44 @@ def test_relay_lifecycle_is_linux_only(tmp_path):
 class FakeRelayProcess:
     pid = 7331
 
+    def __init__(self, mode: str = "terminated"):
+        self.mode = mode
+        self.returncode = None
+        self.cleanup_calls: list[object] = []
+        self.wait_count = 0
+
     def poll(self):
-        return None
+        return self.returncode
+
+    def terminate(self):
+        self.cleanup_calls.append("terminate")
+        if self.mode == "failed":
+            raise OSError("terminate failed")
+
+    def wait(self, timeout):
+        self.cleanup_calls.append(("wait", timeout))
+        self.wait_count += 1
+        if self.mode == "killed" and self.wait_count == 1:
+            raise subprocess.TimeoutExpired("fake-relay", timeout)
+        if self.mode == "failed":
+            raise subprocess.TimeoutExpired("fake-relay", timeout)
+        self.returncode = 0
+        return 0
+
+    def kill(self):
+        self.cleanup_calls.append("kill")
+        if self.mode == "failed":
+            raise OSError("kill failed")
 
 
 class FakeRelayPopen:
-    def __init__(self):
+    def __init__(self, process: FakeRelayProcess | None = None):
         self.calls: list[tuple[list[str], dict[str, object]]] = []
+        self.process = process or FakeRelayProcess()
 
     def __call__(self, args, **kwargs):
         self.calls.append(([str(arg) for arg in args], kwargs))
-        return FakeRelayProcess()
+        return self.process
 
 
 class FakeClock:
@@ -949,8 +976,56 @@ def test_relay_identical_command_line_different_instance_is_not_terminated(
     assert len(runner.commands) == 1
 
 
-def test_relay_initial_identity_capture_failure_never_claims_or_terminates(tmp_path):
+def test_relay_initial_identity_failure_terminates_exact_handle_without_state(tmp_path):
     probes: list[tuple[str, int]] = []
+    runner = FakeRelayRunner(None)
+    process = FakeRelayProcess("terminated")
+
+    result = start_relay(
+        project_root=tmp_path,
+        python=tmp_path / "python",
+        bind_host="172.17.0.1",
+        bind_port=18188,
+        target_port=8188,
+        host=HostInfo("Linux", "x86_64", Path("/home/test")),
+        runner=runner,
+        popen=FakeRelayPopen(process),
+        probe=lambda host, port, _timeout: probes.append((host, port)) or True,
+        bind_probe=lambda *_args: True,
+    )
+
+    assert result.started is False
+    assert result.reason == "initial_identity_unavailable_cleanup_terminated"
+    assert result.state is None
+    assert result.pid == 7331
+    assert probes == []
+    assert len(runner.commands) == 1
+    assert process.cleanup_calls == ["terminate", ("wait", 2.0)]
+    assert relay_state_path(tmp_path).exists() is False
+
+
+@pytest.mark.parametrize(
+    ("mode", "reason", "calls"),
+    [
+        (
+            "killed",
+            "initial_identity_unavailable_cleanup_killed",
+            ["terminate", ("wait", 2.0), "kill", ("wait", 2.0)],
+        ),
+        (
+            "failed",
+            "initial_identity_unavailable_cleanup_failed",
+            ["terminate", "kill"],
+        ),
+    ],
+)
+def test_relay_initial_identity_cleanup_outcome_is_structured_and_never_saved(
+    tmp_path,
+    mode,
+    reason,
+    calls,
+):
+    process = FakeRelayProcess(mode)
     runner = FakeRelayRunner(None)
 
     result = start_relay(
@@ -961,16 +1036,15 @@ def test_relay_initial_identity_capture_failure_never_claims_or_terminates(tmp_p
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
         runner=runner,
-        popen=FakeRelayPopen(),
-        probe=lambda host, port, _timeout: probes.append((host, port)) or True,
+        popen=FakeRelayPopen(process),
+        probe=lambda *_args: True,
         bind_probe=lambda *_args: True,
     )
 
-    assert result.started is False
-    assert result.reason == "initial_identity_unavailable"
-    assert result.state is None
-    assert probes == []
-    assert len(runner.commands) == 1
+    assert result == RelayStartResult(False, reason, None, 7331)
+    assert process.cleanup_calls == calls
+    assert relay_state_path(tmp_path).exists() is False
+    assert all(command[0] not in {"kill", "taskkill"} for command in runner.commands)
 
 
 def test_relay_readiness_uses_real_monotonic_deadline(tmp_path):

@@ -16,12 +16,14 @@ ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄
 
 第三輪 review 將 lifecycle acquire、body、release 三階段明確分離。body 已拋 typed error 時，後續 unlock error 會被視為次要錯誤，原 code/hint/recovery path 保持不變；body 成功才發生 unlock failure 時，使用 `LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION` 誠實指出核心操作可能已完成，要求先 `status`／檢查 state，禁止直接重跑。terminal complete/error audit 已移到 lock release 前，audit failure 仍不影響主流程。
 
+全分枝 review 再修正三個啟動邊界：POSIX wrapper 對齊 uv installer 的 direct-root layout（`UV_UNMANAGED_INSTALL/uv`），並以離線 fake-installer 契約測試；Backend filesystem model inventory 為零時 bounded 查詢 `/object_info` 的 checkpoint/UNET enum，external 有 live models 即回 connected，查詢失敗不影響 status API；ComfyUI/relay spawn 後若 initial identity unavailable，改以 exact `Popen` handle 執行 bounded terminate→wait→kill 並驗證退出，reason 區分 terminated/killed/failed，cleanup failure 的 stable CLI error/hint 包含 spawned PID且不會操作其他未驗證 PID。
+
 持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`337 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。故障注入涵蓋跨程序 lifecycle acquire timeout、successful-stop unlock failure、typed update rollback preservation、所有 mutating command lock coverage、exact Git root、PID-free liveness、temp existence false-negative、activated rollback check/replace window、CPU retry cleanup pending、filesystem-success/state-save-failure、fetch/checkout、environment build/activate、new/restored smoke 與 rollback outcomes。`python -m compileall -q scripts` 與 Git Bash `bash -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
-- Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
+- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`344 passed, 2 skipped`；skips 是 Windows directory-symlink 權限案例與僅在 POSIX 執行的離線 fake uv-installer 動態測試，另有 Windows static direct-root wrapper 契約。故障注入另涵蓋 exact-Popen terminate success、timeout→kill、cleanup failure/no-state、spawned PID stable CLI errors，以及既有 lifecycle/update safety cases。`python -m compileall -q scripts` 與 Git Bash `bash -n setup.sh` 通過。依使用者要求，本輪沒有執行真實網路、uv/ComfyUI/PyTorch/模型/custom-node 安裝下載、Git fetch/checkout、Docker build/up/pull。
+- Backend 全套：`1013 passed, 4 skipped, 76 warnings`；新增 external live `/object_info` inventory service/API、dedupe/count 與 failure fallback 覆蓋。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。
 - disabled/no_models/Compose contract mocks：`11 passed`；Backend status、entrypoint 與暫存 persistence contracts：`40 passed`。

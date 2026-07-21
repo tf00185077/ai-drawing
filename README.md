@@ -23,7 +23,7 @@ macOS / Linux：
 ./setup.sh
 ```
 
-第一次執行會檢查 Docker、詢問是否設定 ComfyUI、尋找既有路徑，必要時再詢問是否自動安裝。你可以在任何一個問題選擇不使用 ComfyUI；Frontend 與 Backend 仍會啟動，Dashboard 會顯示「ComfyUI 尚未設定」。
+第一次執行會檢查 Docker、詢問是否設定 ComfyUI、尋找既有路徑，必要時再詢問是否自動安裝。macOS/Linux cold cache 的 uv installer 與 wrapper 使用同一個 direct-root cache layout（`.../0.11.29/uv`）。你可以在任何一個問題選擇不使用 ComfyUI；Frontend 與 Backend 仍會啟動，Dashboard 會顯示「ComfyUI 尚未設定」。
 
 啟動完成後：
 
@@ -42,7 +42,9 @@ macOS / Linux：
 - `external`：連接已由你啟動、且 `/system_stats` 可連線的 ComfyUI；啟動器不會停止它。
 - `managed`：使用可控制的既有目錄，或安裝到你確認的路徑；啟動器只會停止自己啟動且程序身分相符的實例。
 
-自動安裝只取得固定版本的 ComfyUI、Python runtime 與其必要依賴。它不會下載 checkpoint、LoRA、VAE、text encoder、模型或 custom nodes，也不會修改非空的既有目錄。沒有模型時，系統會顯示「ComfyUI 已連線，尚無模型」，由使用者自行放入模型。
+自動安裝只取得固定版本的 ComfyUI、Python runtime 與其必要依賴。它不會下載 checkpoint、LoRA、VAE、text encoder、模型或 custom nodes，也不會修改非空的既有目錄。external ComfyUI 沒有本機 model mounts 時，Backend 會以有時限的 `/object_info` 查詢確認 `CheckpointLoaderSimple`／`UNETLoader` 模型清單；查詢失敗仍保守顯示沒有模型，不會讓 status endpoint 失敗。
+
+若 child 已啟動但初始 process identity 無法取得，launcher 只使用仍持有的 exact `Popen` handle 執行 bounded terminate → wait → kill fallback，不會以未驗證 PID 操作其他程序。若仍無法確認退出，錯誤會包含本次 spawned PID，要求先執行 `status` 並人工檢查 log。
 
 裝置模式預設由 launcher 自動偵測並在計畫／狀態中顯示；需要時可用 `--device nvidia|mps|cpu` 明確覆寫：
 

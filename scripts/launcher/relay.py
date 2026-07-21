@@ -19,7 +19,11 @@ from typing import Any, Awaitable, BinaryIO, Callable, Iterator
 from .models import HostInfo, ProcessIdentity
 from .platforms import read_process_identity
 from .configuration import atomic_write
-from .processes import _spawn_logged_process, terminate_if_identity_matches
+from .processes import (
+    _spawn_logged_process,
+    cleanup_spawned_process_handle,
+    terminate_if_identity_matches,
+)
 from .runner import Runner
 
 
@@ -85,6 +89,7 @@ class RelayStartResult:
     started: bool
     reason: str
     state: RelayState | None
+    pid: int | None = None
 
 
 @dataclass(frozen=True)
@@ -548,7 +553,13 @@ def start_relay(
         return RelayStartResult(False, "process_exited", None)
     spawned_identity = read_process_identity(host, pid, runner)
     if spawned_identity is None:
-        return RelayStartResult(False, "initial_identity_unavailable", None)
+        cleanup = cleanup_spawned_process_handle(process)
+        return RelayStartResult(
+            False,
+            f"initial_identity_unavailable_cleanup_{cleanup}",
+            None,
+            pid,
+        )
     deadline = monotonic() + readiness_timeout
     while True:
         if process.poll() is not None:

@@ -311,6 +311,14 @@ class DefaultServices:
             project_root=self.project_root,
         )
         if not result.started or result.state is None:
+            if result.reason.endswith("cleanup_failed") and result.pid is not None:
+                raise LauncherError(
+                    "COMFYUI_START_ORPHAN_CLEANUP_FAILED",
+                    "The spawned ComfyUI child could not be confirmed stopped.",
+                    f"Spawned PID: {result.pid}. Run status and inspect "
+                    "data/logs/comfyui.log before manual action; do not terminate "
+                    "any other PID.",
+                )
             raise LauncherError(
                 "COMFYUI_START_FAILED",
                 "ComfyUI 未能在時限內啟動。",
@@ -538,6 +546,14 @@ class DefaultServices:
             runner=self.runner,
         )
         if not result.started or result.state is None:
+            if result.reason.endswith("cleanup_failed") and result.pid is not None:
+                raise LauncherError(
+                    "RELAY_START_ORPHAN_CLEANUP_FAILED",
+                    "The spawned relay child could not be confirmed stopped.",
+                    f"Spawned PID: {result.pid}. Run status and inspect "
+                    "data/logs/comfyui-relay.log before manual action; do not "
+                    "terminate any other PID.",
+                )
             if existing is not None and existing_was_stopped:
                 try:
                     self.restore_relay(existing)
