@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CompositionState } from "./compositionState";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 interface Props {
   title: "Positive Prompt" | "Negative Prompt";
@@ -42,9 +42,13 @@ export default function PromptComposerPanel({ title, state, onTextChange, onWeig
                 <label className="text-xs text-slate-400">{label} 權重
                   <input aria-label={`${label} 權重`} type="number" min="0.01" max="2" step="0.1" placeholder="未設定" value={fragment.weight} onChange={(event) => onWeightChange(fragment.id, event.target.value)} className="mt-1 block w-24 rounded-md border border-slate-600 bg-slate-950 px-2 py-1.5 text-sm text-white" />
                 </label>
-                <button type="button" disabled={index === 0} onClick={() => onMove(fragment.id, -1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">上移</button>
-                <button type="button" disabled={index === state.fragments.length - 1} onClick={() => onMove(fragment.id, 1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">下移</button>
-                <button type="button" onClick={() => onRemove(fragment.id)} className="rounded-md bg-red-950 px-2 py-1.5 text-xs text-red-300">刪除</button>
+                <div className="w-full flex justify-between">
+                  <div className="flex gap-2">
+                    <button type="button" disabled={index === 0} onClick={() => onMove(fragment.id, -1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">上移</button>
+                    <button type="button" disabled={index === state.fragments.length - 1} onClick={() => onMove(fragment.id, 1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">下移</button>
+                  </div>
+                  <button type="button" onClick={() => onRemove(fragment.id)} className="rounded-md bg-red-950 px-2 py-1.5 text-xs text-red-300">刪除</button>
+                </div>
               </div>
             </div>
           );
