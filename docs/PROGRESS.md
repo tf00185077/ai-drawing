@@ -1,5 +1,14 @@
 # 進度追蹤
 
+## 2026-07-21 Prompt Workbench UI 重構完成
+
+1. Prompt Library 拆成 `/prompt-library/workbench` 與 `/prompt-library/categories` 兩個獨立畫面，並加入頁內 sidebar；`/prompt-library` 會自動導向工作台。
+2. Workbench 上層改為左側詞條加入區、右側正負向總覽；加入區以正向／負向 nav 控制篩選與加入目的地，右側 Positive／Negative Prompt 永遠上下同時顯示。
+3. 選取詞條或自由文字後立即組合，不再需要額外按「組合」。片段可編輯、刪除、排序與設定可選權重；空權重輸出原文，有權重才輸出 ComfyUI `(prompt:weight)` 格式。
+4. 最終整段 Prompt 可直接編輯，透過字元範圍做 best-effort 雙向同步；工作台修改只影響前端副本，不回寫 Prompt Library JSON。儲存已修改的來源詞條時會轉成 literal，避免後端重新套回原始詞條。
+5. Workflow 生圖移到下方獨立區塊，送出時直接讀取畫面當下的 positive／negative 文字，不再依賴舊 compose result。
+6. 驗證：frontend focused `15 passed`、完整 suite `26 passed`、`npx tsc --noEmit` 通過、Vite production build 通過。
+
 ## 2026-07-20 跨平台 Docker 一鍵啟動
 
 完成 Windows `setup.ps1` 與 macOS/Linux `setup.sh`，一般使用者 clone 後不需理解 Python、Node 或容器內部即可設定並啟動 Frontend/Backend。啟動器會檢查 Docker/Compose/ports、原子產生 `.env` 與本機 Compose override、保存程序 ownership，並提供 `setup`、`start`、`stop`、`status`、`reconfigure`、`logs`、`update-comfyui` 與唯讀 `dry-run`。
