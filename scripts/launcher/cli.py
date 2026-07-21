@@ -1506,6 +1506,14 @@ def _safe_rollback(
         ) from rollback_errors[0]
 
 
+def _compose_up_with_progress(services: Any) -> None:
+    services.emit(
+        "正在建置並啟動 Docker 服務；首次執行可能需要數分鐘，請勿關閉此視窗。"
+    )
+    services.compose_up()
+    services.emit("Docker 服務已啟動，正在等待健康檢查。")
+
+
 def _start_application(
     args: argparse.Namespace,
     services: Any,
@@ -1558,7 +1566,7 @@ def _start_application(
         else:
             services.validate_current_compose()
         compose_attempted = True
-        services.compose_up()
+        _compose_up_with_progress(services)
         if not services.wait_backend(backend_port):
             raise LauncherError(
                 "BACKEND_NOT_READY",
@@ -1721,7 +1729,7 @@ def _configure(args: argparse.Namespace, services: Any, old: LauncherState | Non
             started_relay = relay.state
         services.write_configuration(settings, active)
         compose_attempted = True
-        services.compose_up()
+        _compose_up_with_progress(services)
         if not services.wait_backend(backend_port):
             raise LauncherError(
                 "BACKEND_NOT_READY",

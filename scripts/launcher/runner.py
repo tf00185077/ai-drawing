@@ -41,6 +41,8 @@ class SubprocessRunner:
             check=check,
             capture_output=capture,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         return CommandResult(
             args=tuple(args),
