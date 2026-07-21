@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Generate from "./pages/Generate";
 import Gallery from "./pages/Gallery";
 import LoraDocs from "./pages/LoraDocs";
 import LoraTrain from "./pages/LoraTrain";
-import PromptLibrary from "./pages/PromptLibrary";
+import PromptLibraryLayout from "./pages/PromptLibraryLayout";
+import PromptCategoryManagement from "./pages/PromptCategoryManagement";
+import PromptWorkbench from "./components/prompt-library/PromptWorkbench";
 
 function App() {
   return (
@@ -15,7 +17,7 @@ function App() {
             <Link to="/" className="text-emerald-400 hover:underline">儀表板</Link>
             <Link to="/generate" className="hover:underline">生圖</Link>
             <Link to="/gallery" className="hover:underline">圖庫</Link>
-            <Link to="/prompt-library" className="hover:underline">Prompt 工作台</Link>
+            <Link to="/prompt-library/workbench" className="hover:underline">Prompt 工作台</Link>
             <Link to="/lora-docs" className="hover:underline">LoRA 文件</Link>
             <Link to="/lora-train" className="hover:underline">LoRA 訓練</Link>
           </div>
@@ -25,7 +27,11 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/generate" element={<Generate />} />
             <Route path="/gallery" element={<Gallery />} />
-            <Route path="/prompt-library" element={<PromptLibrary />} />
+            <Route path="/prompt-library" element={<PromptLibraryLayout />}>
+              <Route index element={<Navigate replace to="workbench" />} />
+              <Route path="workbench" element={<PromptWorkbench />} />
+              <Route path="categories" element={<PromptCategoryManagement />} />
+            </Route>
             <Route path="/lora-docs" element={<LoraDocs />} />
             <Route path="/lora-train" element={<LoraTrain />} />
           </Routes>
