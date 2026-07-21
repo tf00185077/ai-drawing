@@ -86,7 +86,7 @@ def render_env(
         "DATABASE_URL": "sqlite:////data/database/auto_draw.db",
         "OUTPUT_DIR": "/data/outputs",
         "GALLERY_DIR": "/data/gallery",
-        "PROMPT_LIBRARY_DIR": "/data/prompt_library",
+        "PROMPT_LIBRARY_DIR": "/workspace/prompt_library",
         "LORA_TRAIN_DIR": "/data/lora_train",
         "WATCH_DIRS": "/data/lora_train",
         "MCP_BACKEND_API_URL": f"http://127.0.0.1:{settings.backend_port}",
