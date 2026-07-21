@@ -117,10 +117,25 @@ function unwrapRenderedText(value: string, weight: string): string | null {
   return value.slice(1, -suffix.length).trim();
 }
 
+function replaceWithLiteral(state: CompositionState, nextText: string, warning: string | null): CompositionState {
+  const text = nextText.trim();
+  if (!text) return emptyComposition();
+  return rebuild([
+    {
+      id: `literal-${++literalSequence}`,
+      kind: "literal",
+      originalSnapshot: text,
+      text,
+      weight: "",
+      range: { start: 0, end: 0 },
+    },
+  ], warning);
+}
+
 export function reconcileComposedText(state: CompositionState, nextText: string): CompositionState {
   if (nextText === state.text) return state;
   if (!balancedParentheses(nextText)) {
-    return { ...state, text: nextText, warning: "最終文字的括號或權重語法無法同步；已保留手動輸入。" };
+    return replaceWithLiteral(state, nextText, "最終文字的括號或權重語法無法解析；已同步為單一自訂片段。");
   }
 
   const oldParts = state.fragments.map(renderFragment);
@@ -157,7 +172,7 @@ export function reconcileComposedText(state: CompositionState, nextText: string)
     if (unwrapped !== null) return setFragmentText(state, fragment.id, unwrapped);
   }
 
-  return { ...state, text: nextText, warning: "這次修改跨越多個片段，已保留手動輸入但未變更來源片段。" };
+  return replaceWithLiteral(state, nextText, "這次修改跨越多個片段，已同步為單一自訂片段。");
 }
 
 export function serializeFragments(state: CompositionState): ApiPromptFragment[] {

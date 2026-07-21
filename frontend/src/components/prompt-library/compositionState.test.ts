@@ -63,6 +63,15 @@ describe("compositionState", () => {
     expect(edited.warning).toBeTruthy();
   });
 
+  it("preserves a cross-fragment final-text edit when another prompt is appended", () => {
+    let state = appendFragment(emptyComposition(), entry);
+    state = appendFragment(state, { id: "f-2", kind: "literal", originalSnapshot: "sharp focus", text: "sharp focus", weight: "" });
+    state = reconcileComposedText(state, "custom combined prompt");
+    state = appendFragment(state, { id: "f-3", kind: "literal", originalSnapshot: "new prompt", text: "new prompt", weight: "" });
+    expect(state.text).toBe("custom combined prompt, new prompt");
+    expect(state.fragments.map((fragment) => fragment.text)).toEqual(["custom combined prompt", "new prompt"]);
+  });
+
   it("serializes edited library copies as literals without changing the source", () => {
     const edited = setFragmentText(appendFragment(emptyComposition(), entry), "f-1", "masterwork");
     expect(serializeFragments(edited)).toEqual([{ kind: "literal", snapshot: "masterwork", weight: 1, order: 10 }]);
