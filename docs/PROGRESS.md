@@ -10,11 +10,13 @@ ComfyUI 維持選用：可拒絕、連接 external、使用既有 managed 目錄
 
 最終安全複查再強化兩個 ownership/transaction 邊界：ComfyUI 安裝改用 stdlib 隨機建立的唯一 sibling staging，cleanup 會驗證該目錄的 device/inode，只處理本次呼叫擁有的 exact path，既有固定或相似 staging 目錄不會被改動。`update-comfyui` 明確要求 `stop → update-comfyui → start`；live verified PID 以 `COMFYUI_UPDATE_REQUIRES_STOP` 拒絕，stale/mismatch ownership 也在 uv、Git 與檔案變更前保守拒絕。停止後，固定版 source 與 launcher-managed `.venv` 以唯一 backup/new-env 交易式更新；rollback 必須完成舊 commit、exact 舊 `.venv` 與 restored runtime smoke，否則保留 backup 並回報 rollback failure。
 
+後續安全 review 將 cleanup 收斂為全平台 fail-closed：程式不再對 owned temp 使用 pathname-based recursive delete；identity 仍一致的空目錄只用 `rmdir`，任何非空、被替換或無法確認的 staging/backup/new-env 都保留並回報精確 pending path。更新前新增 exact Git top-level 與 `.git` 驗證，拒絕 nested ancestor repository；即使 state 沒有 PID，也會先 probe ComfyUI API，reachable endpoint 會在 uv/Git/filesystem 前中止。啟用的新 `.venv` 另保存 device/inode，rollback 不會移動被替換的未知目錄。核心 restore 與 cleanup outcome 已分離；成功更新即使 backup cleanup pending，也會保存 pin/provenance 並顯示 sanitized warning。
+
 持久化使用 `data/database`、`data/prompt_library`、`data/gallery`、`data/outputs`、`data/lora_train`、`data/logs` 的明確 bind mounts。設定先以 `docker compose config` 驗證才整組替換，Compose/readiness/update 失敗有 rollback；secret 只保留在被 Git 忽略的 `.env`，log 與診斷會遮罩。
 
 ### 本次實際自動驗證
 
-- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`316 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。更新故障注入涵蓋 fetch、checkout、`.venv` backup/create/activate、dependency install、new/restored smoke 與 rollback failures。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
+- Launcher（所有安裝／更新／程序／HTTP/Docker 邊界皆為 fake runner、static Compose runner 或暫存目錄）：`323 passed, 1 skipped`；skip 是目前 Windows 沒有建立 directory symlink 的權限，另有不依賴 OS symlink 權限的模擬 canonical symlink-parent case 通過。故障注入涵蓋 exact Git root、PID-free liveness、temp path substitution、post-activation `.venv` substitution、fetch/checkout、`.venv` backup/create/activate、dependency install、new/restored smoke、rollback 與 cleanup-pending outcomes。`python -m compileall -q scripts` 與 `sh -n setup.sh` 通過。依使用者要求，本輪沒有執行真實 Git fetch、ComfyUI、PyTorch、模型、Docker image 或 container 安裝測試。
 - Backend 全套：`1008 passed, 4 skipped, 76 warnings`。
 - Frontend：`16 passed`；TypeScript `npx tsc --noEmit` 與 Vite production build 通過。
 - Docker Compose CLI `v5.1.1`：沒有 `.env` 的 base config 與暫存 connected generated `.env`/override 都通過 `config --quiet`。

@@ -14,6 +14,7 @@ from urllib.request import urlopen
 from . import docker
 from .comfyui import (
     ComfyInstallError,
+    ComfyInstallCleanupPending,
     ComfyUpdateError,
     InstallTargetInsideProject,
     UnsupportedComfyArchitecture,
@@ -779,6 +780,7 @@ class DefaultServices:
                 "目前沒有可更新的 managed ComfyUI。",
                 "請先執行 reconfigure 並選擇由啟動器管理的 ComfyUI。",
             )
+        api_reachable = self.probe_external(current.comfyui_port)
         if current.managed_pid is not None or current.managed_identity is not None:
             if current.managed_pid is None or current.managed_identity is None:
                 raise LauncherError(
@@ -791,9 +793,7 @@ class DefaultServices:
                 current.managed_pid,
                 self.runner,
             )
-            if identity == current.managed_identity and self.probe_external(
-                current.comfyui_port
-            ):
+            if identity == current.managed_identity and api_reachable:
                 raise LauncherError(
                     "COMFYUI_UPDATE_REQUIRES_STOP",
                     "Managed ComfyUI is still running.",
@@ -804,8 +804,14 @@ class DefaultServices:
                 "Managed ComfyUI process ownership could not be verified safely.",
                 "Run stop to clear stale ownership, then run update-comfyui again.",
             )
+        if api_reachable:
+            raise LauncherError(
+                "COMFYUI_UPDATE_RUNNING_UNOWNED",
+                "A reachable ComfyUI API has no verified launcher process ownership.",
+                "Stop that ComfyUI instance, then run update-comfyui again.",
+            )
         try:
-            installed_version = update_comfyui(
+            outcome = update_comfyui(
                 current.installed_root,
                 current.device,
                 self.runner,
@@ -813,7 +819,16 @@ class DefaultServices:
                 owned_root=current.installed_root,
                 uv_bin=resolve_uv_binary(),
             )
-            self.save_state(replace(current, installed_commit=installed_version))
+            self.save_state(replace(current, installed_commit=outcome.version))
+            if outcome.cleanup_pending:
+                pending = ", ".join(str(path) for path in outcome.cleanup_pending)
+                self.emit(
+                    _redact_log(
+                        "WARNING [COMFYUI_UPDATE_CLEANUP_PENDING] "
+                        "Update succeeded and provenance was saved; manually inspect "
+                        f"these retained paths after confirming no update is active: {pending}"
+                    )
+                )
         except UnsupportedComfyArchitecture as error:
             raise LauncherError(
                 UnsupportedNativeArchitecture.code,
@@ -1034,6 +1049,12 @@ def _install_or_disable(
             error.message,
             error.hint,
             exit_code=2,
+        ) from error
+    except ComfyInstallCleanupPending as error:
+        raise LauncherError(
+            error.code,
+            error.message,
+            error.hint,
         ) from error
     except Exception as first_error:
         choice = _recovery_choice(args, services, kind="comfy")

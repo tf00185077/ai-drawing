@@ -76,7 +76,9 @@ Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
 ./setup.sh start
 ```
 
-更新會同時交易式處理固定版 source 與 `.venv`。任何步驟失敗時，只有在舊 commit、原 `.venv` 與舊 runtime smoke check 全部恢復成功後，才會回報已還原；否則保留唯一的 recovery backup，並要求人工檢查。
+更新會先確認 ComfyUI 本身就是 Git repository root，再同時交易式處理固定版 source 與 `.venv`。任何步驟失敗時，只有在舊 commit、原 `.venv` 與舊 runtime smoke check 全部恢復成功後，才會回報已還原；暫存清理若未完成會另外標示 cleanup pending，不會假裝已刪除。
+
+為避免路徑替換競態，launcher 不會自動遞迴刪除非空的 staging、backup 或 new-env 目錄。即使更新成功，也可能留下唯一命名的 `.ComfyUI.venv-backup-*` 並顯示 warning；確認沒有安裝、更新或 rollback 正在執行後，再依提示人工檢查與移除。
 
 非互動、明確停用 ComfyUI：
 
