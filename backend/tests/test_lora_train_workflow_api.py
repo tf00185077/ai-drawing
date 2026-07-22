@@ -706,3 +706,89 @@ def test_smoke_test_endpoint_success_and_precondition_failure(tmp_path: Path, mo
     precondition = client.post("/api/lora-train/jobs/job-no-lora/smoke-test")
     assert precondition.status_code == 400
     assert precondition.json()["detail"]["code"] == "smoke_test_precondition_failed"
+
+
+def test_smoke_test_anima_job_builds_diffusion_model_request(tmp_path: Path, monkeypatch) -> None:
+    """An Anima job's smoke test uses diffusion-model components, not a checkpoint-only request."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+
+    captured: dict = {}
+
+    def _capture(params):
+        captured.update(params)
+        return "gen-anima-1"
+
+    monkeypatch.setattr(lora_trainer, "submit_generation", _capture)
+    lora_trainer._reset_for_test()
+
+    db = session_local()
+    db.add(
+        LoraTrainingJob(
+            job_id="job-anima",
+            folder="character/louise",
+            status="completed",
+            stage="completed",
+            progress=1.0,
+            registered_lora_name="louise.safetensors",
+            normalized_trigger_token="louise_token",
+            params_json=(
+                '{"model_family": "anima", "checkpoint": "D:/models/diffusion/anima.safetensors", '
+                '"anima_qwen3": "D:/models/te/qwen3.safetensors", "anima_vae": "D:/models/vae/anima_vae.safetensors"}'
+            ),
+        )
+    )
+    db.commit()
+    db.close()
+
+    client = _client()
+    smoke = client.post("/api/lora-train/jobs/job-anima/smoke-test", json={"prompt": "portrait"})
+    assert smoke.status_code == 200
+    assert smoke.json()["generation_job_id"] == "gen-anima-1"
+
+    assert captured.get("template") == "anima"
+    assert captured.get("diffusion_model") == "D:/models/diffusion/anima.safetensors"
+    assert captured.get("text_encoder") == "D:/models/te/qwen3.safetensors"
+    assert captured.get("vae") == "D:/models/vae/anima_vae.safetensors"
+    assert captured.get("lora") == "louise.safetensors"
+    assert "checkpoint" not in captured
+
+
+def test_smoke_test_anima_component_override(tmp_path: Path, monkeypatch) -> None:
+    """Per-request component overrides win over Anima job params."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'lora.db'}", connect_args={"check_same_thread": False})
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    database.Base.metadata.create_all(bind=engine)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", session_local)
+
+    captured: dict = {}
+    monkeypatch.setattr(lora_trainer, "submit_generation", lambda params: captured.update(params) or "gen-2")
+    lora_trainer._reset_for_test()
+
+    db = session_local()
+    db.add(
+        LoraTrainingJob(
+            job_id="job-anima-2",
+            folder="character/louise",
+            status="completed",
+            stage="completed",
+            progress=1.0,
+            registered_lora_name="louise.safetensors",
+            params_json='{"model_family": "anima", "checkpoint": "job_diffusion.safetensors", "anima_qwen3": "job_qwen3.safetensors"}',
+        )
+    )
+    db.commit()
+    db.close()
+
+    client = _client()
+    smoke = client.post(
+        "/api/lora-train/jobs/job-anima-2/smoke-test",
+        json={"diffusion_model": "override_diffusion.safetensors"},
+    )
+    assert smoke.status_code == 200
+    assert captured.get("diffusion_model") == "override_diffusion.safetensors"
+    assert captured.get("text_encoder") == "job_qwen3.safetensors"

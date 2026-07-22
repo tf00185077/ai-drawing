@@ -31,6 +31,7 @@ class TrainStartRequest(BaseModel):
         description="Anima T5 tokenizer path；也接受 t5_tokenizer_path alias",
     )
     sdxl: bool | None = None  # True: SDXL 腳本；False: SD1.x；None: 用 config
+    allow_unverified_checkpoint: bool = False  # True 時跳過 checkpoint 存在性檢查
     epochs: int = Field(default=10, ge=1, le=500)
     # 以下未帶入時使用 config 預設值
     resolution: int | None = Field(default=None, ge=256, le=2048)
@@ -526,11 +527,19 @@ class LoraRegistrationResponse(BaseModel):
 
 
 class LoraSmokeTestRequest(BaseModel):
-    """LoRA smoke-test request."""
+    """LoRA smoke-test request.
+
+    For diffusion-model families (e.g. Anima) the component overrides take
+    precedence over values derived from the training job params; unset values
+    fall back to those job params.
+    """
 
     prompt: str | None = None
     negative_prompt: str | None = None
     checkpoint: str | None = None
+    diffusion_model: str | None = None
+    text_encoder: str | None = None
+    vae: str | None = None
 
 
 class LoraSmokeTestResponse(BaseModel):

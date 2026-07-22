@@ -68,6 +68,9 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("lora_train_job_status", "mcp_server.tools.lora_train", "lora_train_job_status", "dict", ("GET /api/lora-train/jobs/{job_id}",)),
     ToolCatalogEntry("lora_train_logs", "mcp_server.tools.lora_train", "lora_train_logs", "dict", ("GET /api/lora-train/jobs/{job_id}/logs",)),
     ToolCatalogEntry("lora_train_cancel", "mcp_server.tools.lora_train", "lora_train_cancel", "dict", ("POST /api/lora-train/jobs/{job_id}/cancel",)),
+    ToolCatalogEntry("lora_dataset_list", "mcp_server.tools.lora_train", "lora_dataset_list", "dict", ("GET /api/lora-train/datasets",)),
+    ToolCatalogEntry("lora_dataset_inspect", "mcp_server.tools.lora_train", "lora_dataset_inspect", "dict", ("GET /api/lora-train/datasets/{folder}/agent-inspect",)),
+    ToolCatalogEntry("lora_train_smoke_test", "mcp_server.tools.lora_train", "lora_train_smoke_test", "dict", ("POST /api/lora-train/jobs/{job_id}/smoke-test",)),
 )
 
 

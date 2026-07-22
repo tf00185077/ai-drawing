@@ -55,6 +55,9 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `lora_train_job_status` | `dict` | GET /api/lora-train/jobs/{job_id} |
 | `lora_train_logs` | `dict` | GET /api/lora-train/jobs/{job_id}/logs |
 | `lora_train_cancel` | `dict` | POST /api/lora-train/jobs/{job_id}/cancel |
+| `lora_dataset_list` | `dict` | GET /api/lora-train/datasets |
+| `lora_dataset_inspect` | `dict` | GET /api/lora-train/datasets/{folder}/agent-inspect |
+| `lora_train_smoke_test` | `dict` | POST /api/lora-train/jobs/{job_id}/smoke-test |
 <!-- MCP-CATALOG:END -->
 
 <!-- MCP-OMISSIONS:START -->

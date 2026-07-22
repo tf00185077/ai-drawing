@@ -335,6 +335,7 @@ async def start_training(body: TrainStartRequest):
             network_alpha=body.network_alpha,
             trigger_token=body.trigger_token,
             expected_dataset_hash=body.expected_dataset_hash,
+            allow_unverified_checkpoint=body.allow_unverified_checkpoint,
         )
         try:
             job_status = lora_trainer.get_job_status(job_id)

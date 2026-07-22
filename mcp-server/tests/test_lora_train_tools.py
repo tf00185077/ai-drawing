@@ -6,10 +6,13 @@ from unittest.mock import MagicMock, patch
 import httpx
 
 from mcp_server.tools.lora_train import (
+    lora_dataset_inspect,
+    lora_dataset_list,
     lora_training_decision_preflight,
     lora_train_cancel,
     lora_train_job_status,
     lora_train_logs,
+    lora_train_smoke_test,
     lora_train_start,
 )
 
@@ -203,3 +206,85 @@ def test_lora_train_cancel_returns_structured_status() -> None:
         result = lora_train_cancel("job-1")
 
     assert result == {"ok": True, "tool": "lora_train_cancel", "job_id": "job-1", "status": "cancelled"}
+
+
+def test_lora_dataset_list_returns_structured_datasets() -> None:
+    """Dataset list forwards backend dataset summaries as a structured result."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "datasets": [
+            {"folder": "character/miku", "image_count": 12, "caption_count": 12, "dataset_hash": "hash-a"}
+        ]
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_list()
+
+    mock_client.get.assert_called_once_with("lora-train/datasets")
+    assert result["ok"] is True
+    assert result["tool"] == "lora_dataset_list"
+    assert result["datasets"][0]["folder"] == "character/miku"
+
+
+def test_lora_dataset_inspect_calls_agent_inspect_endpoint() -> None:
+    """Dataset inspect calls the agent-inspect endpoint and returns structured review signals."""
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "folder": "character/miku",
+        "dataset_hash": "hash-a",
+        "profile_hash": "profile-a",
+        "caption_suitability": {"verdict": "suitable"},
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_inspect("character/miku")
+
+    mock_client.get.assert_called_once_with("lora-train/datasets/character/miku/agent-inspect")
+    assert result["ok"] is True
+    assert result["tool"] == "lora_dataset_inspect"
+    assert result["caption_suitability"]["verdict"] == "suitable"
+
+
+def test_lora_dataset_inspect_surfaces_backend_error() -> None:
+    """An invalid folder surfaces a structured backend error."""
+    mock_client = MagicMock()
+    mock_client.get.side_effect = _http_error(
+        404, {"code": "dataset_not_found", "message": "no such dataset"}
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_dataset_inspect("character/ghost")
+
+    assert result["ok"] is False
+    assert result["tool"] == "lora_dataset_inspect"
+    assert result["status_code"] == 404
+    assert result["error"]["code"] == "dataset_not_found"
+
+
+def test_lora_train_smoke_test_forwards_anima_component_overrides() -> None:
+    """Smoke test forwards optional Anima component overrides and returns structured status."""
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "ok": True,
+        "job_id": "job-anima",
+        "registered_lora_name": "louise.safetensors",
+        "smoke_test_status": "submitted",
+        "generation_job_id": "gen-1",
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_smoke_test(
+            "job-anima",
+            prompt="portrait",
+            diffusion_model="anima.safetensors",
+            text_encoder="qwen3.safetensors",
+        )
+
+    call = mock_client.post.call_args
+    assert call.args[0] == "lora-train/jobs/job-anima/smoke-test"
+    assert call.kwargs["json"]["diffusion_model"] == "anima.safetensors"
+    assert call.kwargs["json"]["text_encoder"] == "qwen3.safetensors"
+    assert "vae" not in call.kwargs["json"]  # unset overrides are omitted
+    assert result["ok"] is True
+    assert result["tool"] == "lora_train_smoke_test"
+    assert result["submitted"]["diffusion_model"] == "anima.safetensors"
