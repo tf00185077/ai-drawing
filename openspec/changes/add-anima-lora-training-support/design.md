@@ -97,6 +97,8 @@ Rollback is a straight revert of the trainer/API/MCP changes.
 
 ## Open Questions
 
-- Does the Anima generation workflow expect the training-time `qwen3` file as its `text_encoder`, or a
-  distinct CLIP? Resolve during D3 implementation against a real workflow (does not block the resolver
-  or smoke-test wiring).
+- ~~Does the Anima generation workflow expect the training-time `qwen3` file as its `text_encoder`, or a
+  distinct CLIP?~~ **Resolved:** `backend/workflows/anima.json` wires `CLIPLoader.clip_name =
+  qwen_3_06b_base.safetensors` (type `qwen_image`), and `workflow_form` maps the `text_encoder`
+  parameter to `CLIPLoader.clip_name`. So the training `anima_qwen3` is the generation `text_encoder`,
+  which is exactly the mapping the smoke test uses.

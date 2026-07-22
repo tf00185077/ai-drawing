@@ -147,6 +147,7 @@ def lora_train_start(
     anima_vae: str | None = None,
     anima_t5_tokenizer_path: str | None = None,
     sdxl: bool | None = None,
+    allow_unverified_checkpoint: bool | None = None,
 ) -> dict[str, Any]:
     """Start a backend-managed LoRA training job."""
     tool = "lora_train_start"
@@ -171,6 +172,7 @@ def lora_train_start(
             "anima_vae": anima_vae,
             "anima_t5_tokenizer_path": anima_t5_tokenizer_path,
             "sdxl": sdxl,
+            "allow_unverified_checkpoint": allow_unverified_checkpoint,
         }
     )
     try:
@@ -206,5 +208,62 @@ def lora_train_cancel(job_id: str) -> dict[str, Any]:
     tool = "lora_train_cancel"
     try:
         return _backend_result(tool, _get_client().post(f"lora-train/jobs/{quote(job_id)}/cancel", json={}))
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_list() -> dict[str, Any]:
+    """List LoRA training datasets with image/caption/hash/lock summary so an agent can choose work."""
+    tool = "lora_dataset_list"
+    try:
+        return _backend_result(tool, _get_client().get("lora-train/datasets"))
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_dataset_inspect(folder: str) -> dict[str, Any]:
+    """Inspect one LoRA dataset (agent-ready: profile summary, caption suitability, dataset/profile hashes)."""
+    tool = "lora_dataset_inspect"
+    try:
+        path = quote(folder.strip().strip("/"), safe="/")
+        return _backend_result(tool, _get_client().get(f"lora-train/datasets/{path}/agent-inspect"))
+    except Exception as exc:
+        return _backend_error(tool, exc)
+
+
+@mcp.tool()
+def lora_train_smoke_test(
+    job_id: str,
+    prompt: str | None = None,
+    negative_prompt: str | None = None,
+    diffusion_model: str | None = None,
+    text_encoder: str | None = None,
+    vae: str | None = None,
+    checkpoint: str | None = None,
+) -> dict[str, Any]:
+    """Run a backend smoke test for a completed, registered LoRA job.
+
+    For Anima (diffusion-model family) jobs the diffusion_model / text_encoder / vae
+    overrides take precedence; unset values are derived from the training job params.
+    """
+    tool = "lora_train_smoke_test"
+    body = _compact(
+        {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "diffusion_model": diffusion_model,
+            "text_encoder": text_encoder,
+            "vae": vae,
+            "checkpoint": checkpoint,
+        }
+    )
+    try:
+        return _backend_result(
+            tool,
+            _get_client().post(f"lora-train/jobs/{quote(job_id)}/smoke-test", json=body),
+            submitted=body,
+        )
     except Exception as exc:
         return _backend_error(tool, exc)

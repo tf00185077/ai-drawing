@@ -605,3 +605,189 @@ def test_on_lora_complete_does_not_submit_to_queue(
     _on_lora_complete("/path/to/lora.safetensors", "my_lora")
 
     mock_queue_submit.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Unified model-file resolver (add-anima-lora-training-support)
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_model_file_absolute_unchanged(tmp_path: Path) -> None:
+    f = tmp_path / "m.safetensors"
+    f.write_bytes(b"x")
+    assert lora_trainer._resolve_model_file(str(f), []) == str(f.resolve())
+
+
+def test_resolve_model_file_bare_name_found_in_search_dir(tmp_path: Path) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    (diffusion / "anima.safetensors").write_bytes(b"x")
+    other = tmp_path / "checkpoints"
+    other.mkdir()
+    res = lora_trainer._resolve_model_file("anima.safetensors", [str(other), str(diffusion)])
+    assert res == str((diffusion / "anima.safetensors").resolve())
+
+
+def test_resolve_model_file_bare_name_best_effort_first_dir(tmp_path: Path) -> None:
+    d1 = tmp_path / "a"
+    d1.mkdir()
+    d2 = tmp_path / "b"
+    d2.mkdir()
+    res = lora_trainer._resolve_model_file("missing.safetensors", [str(d1), str(d2)])
+    assert res == str((d1 / "missing.safetensors").resolve())
+
+
+def test_resolve_model_file_hf_id_passthrough() -> None:
+    assert lora_trainer._resolve_model_file("org/model", ["D:/whatever"]) == "org/model"
+
+
+def test_resolve_model_file_bare_name_no_dirs_returns_name() -> None:
+    assert lora_trainer._resolve_model_file("x.safetensors", []) == "x.safetensors"
+
+
+def test_checkpoint_search_dirs_are_family_aware() -> None:
+    settings = SimpleNamespace(
+        lora_checkpoint_dirs="A",
+        comfyui_diffusion_models_dir="B",
+        comfyui_checkpoints_dir="C",
+    )
+    assert lora_trainer._checkpoint_search_dirs(settings, "anima") == ["A", "B"]
+    assert lora_trainer._checkpoint_search_dirs(settings, "sdxl") == ["A", "C"]
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_resolve_checkpoint_path_sdxl_bare_name_regression(
+    mock_settings: MagicMock, tmp_path: Path
+) -> None:
+    """SDXL bare filename still resolves under LORA_CHECKPOINT_DIRS as before."""
+    ckpt_dir = tmp_path / "checkpoints"
+    ckpt_dir.mkdir()
+    mock_settings.return_value.lora_checkpoint_dirs = str(ckpt_dir)
+    mock_settings.return_value.comfyui_checkpoints_dir = ""
+    res = lora_trainer._resolve_checkpoint_path("model.safetensors")
+    assert res == str((ckpt_dir / "model.safetensors").resolve())
+
+
+def test_validate_runtime_path_resolves_bare_component(tmp_path: Path) -> None:
+    te = tmp_path / "text_encoders"
+    te.mkdir()
+    (te / "qwen3.safetensors").write_bytes(b"x")
+    res = lora_trainer._validate_runtime_path(
+        "qwen3.safetensors",
+        code="anima_qwen3_missing",
+        label="anima_qwen3",
+        search_dirs=[str(te)],
+        required=True,
+    )
+    assert res == str((te / "qwen3.safetensors").resolve())
+
+
+def _set_common_enqueue_settings(mock_settings: MagicMock, train_dir: Path) -> None:
+    s = mock_settings.return_value
+    s.lora_train_dir = str(train_dir / "lora_train")
+    s.lora_default_checkpoint = ""
+    s.lora_train_threshold = 10
+    s.sd_scripts_path = str(train_dir)
+    s.lora_resolution = 512
+    s.lora_batch_size = 4
+    s.lora_learning_rate = "1e-4"
+    s.lora_class_tokens = "sks"
+    s.lora_keep_tokens = 1
+    s.lora_num_repeats = 10
+    s.lora_mixed_precision = "fp16"
+    s.lora_network_dim = 16
+    s.lora_network_alpha = 16
+    s.lora_checkpoint_dirs = ""
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_missing_anima_checkpoint_raises_checkpoint_not_found(
+    mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()  # empty → checkpoint absent
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+
+    with patch("app.services.lora_trainer._create_persistent_job") as mock_create:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc:
+            lora_trainer.enqueue(
+                "my_lora", checkpoint="anima.safetensors", model_family="anima", epochs=1
+            )
+
+    assert exc.value.code == "checkpoint_not_found"
+    assert str(diffusion) in exc.value.details["searched_dirs"]
+    mock_create.assert_not_called()
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_missing_checkpoint_bypassed_by_allow_unverified(
+    mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    qwen3 = tmp_path / "q.safetensors"
+    qwen3.write_bytes(b"x")
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+    mock_settings.return_value.comfyui_text_encoders_dir = ""
+    mock_settings.return_value.comfyui_vae_dir = ""
+    mock_settings.return_value.lora_anima_qwen3 = ""
+    mock_settings.return_value.lora_anima_vae = ""
+    mock_settings.return_value.lora_anima_t5_tokenizer_path = ""
+
+    job_id = lora_trainer.enqueue(
+        "my_lora",
+        checkpoint="anima.safetensors",
+        model_family="anima",
+        anima_qwen3=str(qwen3),
+        allow_unverified_checkpoint=True,
+        epochs=1,
+    )
+    assert job_id
+    assert len(job_id) == 36
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_remote_checkpoint_skips_existence_check(
+    mock_settings: MagicMock, valid_train_dir: Path
+) -> None:
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_checkpoints_dir = ""
+    job_id = lora_trainer.enqueue(
+        "my_lora",
+        checkpoint="stabilityai/stable-diffusion-xl-base-1.0",
+        model_family="sdxl",
+        epochs=1,
+    )
+    assert job_id
+    assert len(job_id) == 36
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_anima_bare_checkpoint_resolves_from_diffusion_dir(
+    mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    (diffusion / "anima.safetensors").write_bytes(b"x")
+    te = tmp_path / "text_encoders"
+    te.mkdir()
+    (te / "qwen3.safetensors").write_bytes(b"x")
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+    mock_settings.return_value.comfyui_text_encoders_dir = str(te)
+    mock_settings.return_value.comfyui_vae_dir = ""
+    mock_settings.return_value.lora_anima_qwen3 = ""
+    mock_settings.return_value.lora_anima_vae = ""
+    mock_settings.return_value.lora_anima_t5_tokenizer_path = ""
+
+    job_id = lora_trainer.enqueue(
+        "my_lora",
+        checkpoint="anima.safetensors",
+        model_family="anima",
+        anima_qwen3="qwen3.safetensors",
+        epochs=1,
+    )
+    assert job_id
+    assert len(job_id) == 36

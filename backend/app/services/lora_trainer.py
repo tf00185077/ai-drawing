@@ -368,37 +368,123 @@ def _resolve_image_dir(folder: str) -> Path:
     return (base / folder).resolve()
 
 
-def _resolve_checkpoint_path(checkpoint: str) -> str:
+def _dir_candidates(value: Any) -> list[str]:
+    """Split a comma-separated directory setting into stripped entries.
+
+    Non-string settings (e.g. an unset MagicMock in tests) yield an empty list so
+    resolution degrades gracefully instead of raising.
     """
-    解析 checkpoint 為本機絕對路徑。
-    - 含 \\、Windows 磁碟代號、或以 / 開頭：當作路徑解析
-    - 純檔名：使用 LORA_CHECKPOINT_DIRS 第一個路徑作為前綴，回傳絕對路徑
-    - 否則原樣回傳（如 HuggingFace ID）
-    """
-    s = checkpoint.strip()
-    if not s:
-        return s
-    # 本機路徑：含 \、Windows 磁碟代號 (D:)、或以 / 開頭（排除 //）
-    is_local = (
+    if not isinstance(value, str):
+        return []
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def _is_local_path(s: str) -> bool:
+    """True if the string looks like a local filesystem path rather than a bare
+    name or a remote/HuggingFace id."""
+    return (
         "\\" in s
+        or s.startswith("~")
         or (len(s) > 2 and s[1] == ":" and s[0].isalpha())
         or (s.startswith("/") and not s.startswith("//"))
     )
-    if is_local:
+
+
+def _is_bare_filename(s: str) -> bool:
+    """True if the string is a plain filename with no path separators."""
+    return "/" not in s and "\\" not in s
+
+
+def _resolve_model_file(name: str, search_dirs: list[str]) -> str:
+    """Resolve one model-file input to a local path, accepting three input forms.
+
+    - absolute / separator-bearing / ``~`` local path → resolved as given
+    - bare filename → first ``search_dirs`` entry that contains it; otherwise a
+      best-effort join with the first search dir; otherwise the bare name
+    - remote / HuggingFace id (contains ``/`` but is not a local path) → unchanged
+
+    This never raises and never enforces existence — existence is validated
+    separately by the caller so remote references and unresolved names stay usable.
+    """
+    s = (name or "").strip()
+    if not s:
+        return s
+    if _is_local_path(s):
         try:
-            return str(Path(s).resolve())
+            return str(Path(s).expanduser().resolve())
         except (OSError, RuntimeError):
             return s
-    # 純檔名：用 LORA_CHECKPOINT_DIRS 第一個路徑前綴成絕對路徑
-    if "/" not in s and "\\" not in s:
-        settings = get_settings()
-        dirs_str = getattr(settings, "lora_checkpoint_dirs", None) or ""
-        for d in dirs_str.split(","):
-            d = d.strip()
-            if not d:
-                continue
-            return str((Path(d) / s).resolve())
+    if _is_bare_filename(s):
+        for d in search_dirs:
+            candidate = Path(d) / s
+            if candidate.exists():
+                return str(candidate.resolve())
+        if search_dirs:
+            return str((Path(search_dirs[0]) / s).resolve())
+        return s
+    # Contains "/" but is not a local path → treat as a remote / HuggingFace id.
     return s
+
+
+def _checkpoint_search_dirs(settings: Any, model_family: str) -> list[str]:
+    """Family-aware checkpoint search order, reusing generation-side config.
+
+    ``LORA_CHECKPOINT_DIRS`` stays first so existing SD/SDXL bare-name flows
+    resolve identically; Anima additionally searches the diffusion-model dir.
+    """
+    dirs = _dir_candidates(getattr(settings, "lora_checkpoint_dirs", ""))
+    if _normalize_model_family(model_family) == "anima":
+        dirs += _dir_candidates(getattr(settings, "comfyui_diffusion_models_dir", ""))
+    else:
+        dirs += _dir_candidates(getattr(settings, "comfyui_checkpoints_dir", ""))
+    return dirs
+
+
+def _resolve_checkpoint_path(checkpoint: str, model_family: str = "sdxl") -> str:
+    """Resolve a checkpoint input via the unified resolver with family-aware dirs."""
+    settings = get_settings()
+    return _resolve_model_file(checkpoint, _checkpoint_search_dirs(settings, model_family))
+
+
+def _validate_checkpoint_exists(
+    resolved: str,
+    original_input: str,
+    search_dirs: list[str],
+    *,
+    allow_unverified: bool,
+) -> None:
+    """Fail fast on a missing local checkpoint before a durable job is created.
+
+    Remote/HuggingFace references are exempt, bare names with no configured search
+    dirs are treated as unverifiable (warn, do not block), and ``allow_unverified``
+    bypasses the check entirely.
+    """
+    if allow_unverified:
+        return
+    s = (original_input or "").strip()
+    if not s:
+        return
+    if not _is_local_path(s) and not _is_bare_filename(s):
+        # Remote / HuggingFace id — nothing to check on the local filesystem.
+        return
+    if _is_bare_filename(s) and not _is_local_path(s) and not search_dirs:
+        logger.warning("checkpoint existence unverifiable (no search dirs configured): %s", s)
+        return
+    if Path(resolved).exists():
+        return
+    raise TrainerServiceError(
+        "checkpoint_not_found",
+        f"checkpoint not found: {resolved}",
+        {"checkpoint": resolved, "searched_dirs": search_dirs},
+    )
+
+
+def _is_anima_family(model_family: str | None) -> bool:
+    """Safe check for the Anima family that never raises on unknown/None values."""
+    try:
+        return _normalize_model_family(model_family) == "anima"
+    except TrainerServiceError:
+        return False
 
 
 def _normalize_model_family(model_family: str | None) -> str:
@@ -479,6 +565,7 @@ def _validate_runtime_path(
     *,
     code: str,
     label: str,
+    search_dirs: list[str] | None = None,
     required: bool = False,
 ) -> str | None:
     cleaned = _clean_optional_str(value)
@@ -491,12 +578,14 @@ def _validate_runtime_path(
             )
         return None
 
-    resolved = _resolve_runtime_path(cleaned)
+    # Route through the unified resolver so a bare component filename resolves
+    # against its ComfyUI directory instead of failing relative to the CWD.
+    resolved = _resolve_model_file(cleaned, search_dirs or [])
     if not Path(resolved).exists():
         raise TrainerServiceError(
             code,
             f"{label} does not exist: {resolved}",
-            {"model_family": "anima", label: resolved},
+            {"model_family": "anima", label: resolved, "searched_dirs": search_dirs or []},
         )
     return resolved
 
@@ -522,22 +611,27 @@ def _resolve_anima_runtime_args(
     t5_value = _clean_optional_str(anima_t5_tokenizer_path) or _clean_optional_str(
         getattr(settings, "lora_anima_t5_tokenizer_path", "")
     )
+    text_encoder_dirs = _dir_candidates(getattr(settings, "comfyui_text_encoders_dir", ""))
+    vae_dirs = _dir_candidates(getattr(settings, "comfyui_vae_dir", ""))
     return {
         "anima_qwen3": _validate_runtime_path(
             qwen3_value,
             code="anima_qwen3_missing",
             label="anima_qwen3",
+            search_dirs=text_encoder_dirs,
             required=True,
         ),
         "anima_vae": _validate_runtime_path(
             vae_value,
             code="anima_vae_missing",
             label="anima_vae",
+            search_dirs=vae_dirs,
         ),
         "anima_t5_tokenizer_path": _validate_runtime_path(
             t5_value,
             code="anima_t5_tokenizer_path_missing",
             label="anima_t5_tokenizer_path",
+            search_dirs=text_encoder_dirs,
         ),
     }
 
@@ -1110,11 +1204,13 @@ def enqueue(
     network_alpha: int | None = None,
     trigger_token: str | None = None,
     expected_dataset_hash: str | None = None,
+    allow_unverified_checkpoint: bool = False,
 ) -> str:
     """
     加入訓練佇列。
     folder: 相對 lora_train_dir 的路徑。
     訓練參數未指定時使用 config 預設值。
+    allow_unverified_checkpoint: True 時跳過 checkpoint 存在性檢查（如遠端掛載邊界情境）。
     Returns: job_id
     Raises: ValueError 若資料夾不存在或圖片數不足
     """
@@ -1128,10 +1224,9 @@ def enqueue(
     if count < _MIN_IMAGES:
         raise ValueError(f"圖片數不足（需至少 {_MIN_IMAGES} 張含 .txt）: {folder} 僅 {count} 張")
 
-    ckpt = checkpoint or settings.lora_default_checkpoint
-    if not ckpt:
+    checkpoint_input = checkpoint or settings.lora_default_checkpoint
+    if not checkpoint_input:
         raise ValueError("未指定 checkpoint 且 config 無 lora_default_checkpoint")
-    ckpt = _resolve_checkpoint_path(ckpt)
 
     configured_model_family = getattr(settings, "lora_model_family", "")
     if not isinstance(configured_model_family, str):
@@ -1144,6 +1239,15 @@ def enqueue(
         configured_sdxl=configured_sdxl if isinstance(configured_sdxl, bool) else False,
     )
     use_sdxl = use_model_family == "sdxl"
+
+    checkpoint_search_dirs = _checkpoint_search_dirs(settings, use_model_family)
+    ckpt = _resolve_model_file(checkpoint_input, checkpoint_search_dirs)
+    _validate_checkpoint_exists(
+        ckpt,
+        checkpoint_input,
+        checkpoint_search_dirs,
+        allow_unverified=allow_unverified_checkpoint,
+    )
     resolved_network_module = _resolve_network_module(use_model_family, network_module)
     anima_args = _resolve_anima_runtime_args(
         model_family=use_model_family,
@@ -1419,14 +1523,26 @@ def smoke_test_job(job_id: str, body: LoraSmokeTestRequest) -> dict:
     prompt_parts = [
         part for part in [job.get("normalized_trigger_token"), body.prompt or "high quality, 1girl, solo"] if part
     ]
+    job_params = job.get("params") or {}
     params: dict[str, Any] = {
         "prompt": ", ".join(prompt_parts),
         "negative_prompt": body.negative_prompt or "low quality, blurry",
         "lora": registered_lora,
-        "checkpoint": body.checkpoint or (job.get("params") or {}).get("checkpoint"),
         "steps": 12,
         "cfg": 7.0,
     }
+    # Build a generation request matching the trained model family. Anima is a
+    # diffusion-model family (separate diffusion model / text encoder / VAE) and
+    # cannot be exercised through a checkpoint-only request.
+    if _is_anima_family(job_params.get("model_family")):
+        params["template"] = "anima"
+        params["diffusion_model"] = body.diffusion_model or job_params.get("checkpoint")
+        params["text_encoder"] = body.text_encoder or job_params.get("anima_qwen3")
+        vae_value = body.vae or job_params.get("anima_vae")
+        if vae_value:
+            params["vae"] = vae_value
+    else:
+        params["checkpoint"] = body.checkpoint or job_params.get("checkpoint")
     try:
         generation_job_id = submit_generation(params)
     except QueueFullError as exc:

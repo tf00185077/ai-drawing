@@ -1,5 +1,14 @@
 # 進度追蹤
 
+## 2026-07-22 Anima LoRA 訓練支援（OpenSpec: add-anima-lora-training-support）
+
+- 統一模型檔解析器 `_resolve_model_file`：接受絕對路徑／純檔名／HuggingFace id 三種形態。純檔名依 model_family 跨目錄搜尋——checkpoint 用 `LORA_CHECKPOINT_DIRS`＋（Anima）`COMFYUI_DIFFUSION_MODELS_DIR` 或（SD/SDXL）`COMFYUI_CHECKPOINTS_DIR`，qwen3/t5 用 `COMFYUI_TEXT_ENCODERS_DIR`、vae 用 `COMFYUI_VAE_DIR`，複用既有生成端設定，不新增平行 config。SDXL 純檔名解析行為維持不變（`LORA_CHECKPOINT_DIRS` 仍為第一順位）。
+- Checkpoint 存在性 preflight：本機路徑／純檔名在建立 durable job 前驗證存在，失敗回 `checkpoint_not_found` 並附 `searched_dirs`；遠端/HF 參照豁免；`allow_unverified_checkpoint` 可繞過。qwen3/vae/t5 亦改走解析器，純檔名不再相對 CWD 失敗。
+- Smoke test 改為 model-family-aware：Anima job 依 job params 組 `{template:"anima", diffusion_model, text_encoder, vae, lora}`（可 per-request 覆寫），其他家族維持 checkpoint-only。已比對 `backend/workflows/anima.json` 確認訓練 `qwen3` 即生成 `text_encoder`（CLIPLoader.clip_name）。
+- 重建漂移的 MCP 工具：`lora_dataset_list`（GET /datasets）、`lora_dataset_inspect`（GET /datasets/{folder}/agent-inspect）、`lora_train_smoke_test`（POST /jobs/{id}/smoke-test，含 Anima 元件覆寫），並登錄 `tool_catalog.py` 與 README／mcp-setup catalog 表。
+- 驗證：backend `test_lora_trainer.py`/`test_lora_train_workflow_api.py` 與 mcp-server 全套（81）通過；backend 全套 1026 passed（1 個 civitai import-alias 測試為既有 test-isolation flake，單獨執行通過，與本次無關）。
+- 後續：`reconcile-mcp-spec-catalog`（依賴本 change）處理全專案 MCP spec/catalog 對齊與其餘漂移工具（prepare/validate/curation/metadata）去留。
+
 ## 2026-07-21 Prompt Library Git persistence
 
 - Docker Compose now bind-mounts the repository `prompt_library/` at `/workspace/prompt_library`; `/data/prompt_library` is no longer the default library.
