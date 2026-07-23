@@ -1,5 +1,14 @@
 # 進度追蹤
 
+## 2026-07-23 MCP spec/catalog 對齊（OpenSpec: reconcile-mcp-spec-catalog）
+
+- 盤點：code 內 34 個 `@mcp.tool`（含 `mcp_ping`）與 `tool_catalog.py` **完全雙向對齊**（34=34，無幽靈/遺漏）；Change 1 已使 dataset_list/inspect/smoke_test 落地。
+- `lora-training-mcp-tools` spec 移除 6 個 code 從未實作的漂移工具需求：`lora_dataset_prepare`、`lora_dataset_validate`、`lora_dataset_caption_assess`、metadata（get/validate/update）、`lora_dataset_agent_inspect`（已併入 `lora_dataset_inspect`）、curation；每項附 Reason + Migration（改走 backend HTTP 端點）。
+- `mcp-tool-catalog` spec 需求改為 catalog 與實際註冊集「雙向對齊（無幽靈工具）」。
+- 修掉 `mcp-tool-catalog` 與 `lora-training-mcp-tools` 的 `TBD` Purpose 佔位為正式描述。
+- 其餘 MCP-referencing specs（video/style/custom-workflow/workflow-template）掃描後無真正工具漂移（`lora_strength`/`lora_name`/`gallery_dir` 等為欄位/設定名，非工具）。
+- 驗證：`openspec validate --specs` 12 passed；mcp-server catalog 稽核測試通過。
+
 ## 2026-07-22 Anima LoRA 訓練支援（OpenSpec: add-anima-lora-training-support）
 
 - 統一模型檔解析器 `_resolve_model_file`：接受絕對路徑／純檔名／HuggingFace id 三種形態。純檔名依 model_family 跨目錄搜尋——checkpoint 用 `LORA_CHECKPOINT_DIRS`＋（Anima）`COMFYUI_DIFFUSION_MODELS_DIR` 或（SD/SDXL）`COMFYUI_CHECKPOINTS_DIR`，qwen3/t5 用 `COMFYUI_TEXT_ENCODERS_DIR`、vae 用 `COMFYUI_VAE_DIR`，複用既有生成端設定，不新增平行 config。SDXL 純檔名解析行為維持不變（`LORA_CHECKPOINT_DIRS` 仍為第一順位）。

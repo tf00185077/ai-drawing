@@ -1,15 +1,26 @@
 # mcp-tool-catalog Specification
 
 ## Purpose
-TBD - created by archiving change fix-mcp-tool-catalog-exposure. Update Purpose after archive.
+Define the audited catalog of agent-facing ai-drawing MCP tools and the contract that keeps it
+bidirectionally aligned with the tools actually registered in code, so hidden tools, stale names, and
+phantom catalog entries fail tests before release. Covers the machine-readable response contract, LoRA
+and multi-LoRA payload consistency, and keeping tool documentation in sync with the catalog.
 ## Requirements
 ### Requirement: MCP server exposes an audited tool catalog
-The ai-drawing MCP server SHALL maintain a tested catalog of intended agent-facing tools.
+The ai-drawing MCP server SHALL maintain a tested catalog of intended agent-facing tools that stays
+bidirectionally aligned with the tools actually registered in code: the catalog SHALL contain no tool
+that is not registered, and every registered agent-facing tool SHALL appear in the catalog or be
+recorded as a documented intentional omission.
 
 #### Scenario: Intended tools are registered
 - **WHEN** the MCP server starts and registers its tools
 - **THEN** every tool in the intended catalog is registered under its documented name
 - **AND** missing or renamed tools fail tests before release
+
+#### Scenario: Catalog contains no phantom tools
+- **WHEN** the catalog audit runs
+- **THEN** every tool named in the catalog resolves to a registered MCP tool
+- **AND** a catalog entry with no corresponding registered tool fails the audit
 
 #### Scenario: Intentional omissions are documented
 - **WHEN** a backend endpoint is intentionally not exposed as an MCP tool
