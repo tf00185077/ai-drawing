@@ -1,6 +1,6 @@
 {
   "id": "asagi-floral-pastel-anima",
-  "name": "Toosaka Asagi Floral Pastel Anima",
+  "name": "[Anima] Toosaka Asagi Floral Pastel",
   "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, cinematic lighting, volumetric lighting, anime coloring, anime screenshot, delicate, dreamy, natural shadow, serene atmosphere, film grain, soft pastel colors, soft shading, detailed textures, clean outline, subtle geometric design accents",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name",
   "template": "anima",
@@ -49,5 +49,5 @@
     }
   },
   "note_path": "style_presets/human/asagi-floral-pastel-anima.md",
-  "chinese_name": "淺蔥花境粉彩 Anima"
+  "chinese_name": "[Anima] 淺蔥花境粉彩"
 }

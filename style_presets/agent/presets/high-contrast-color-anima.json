@@ -1,6 +1,6 @@
 {
   "id": "high-contrast-color-anima",
-  "name": "High Contrast Color Anima",
+  "name": "[Anima] High Contrast Color",
   "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, clean Niji anime color separation, vivid high-contrast color accents, cool clean rim light, controlled contrast, refined anime hair detail, crisp 2D anime line clarity, balanced luminous color palette",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, flat pastel coloring, washed out, low contrast",
   "template": "gen_txt2img_anima_lora_model_only_multi_lora",
@@ -85,7 +85,7 @@
     "required_workflow": "anima_txt2img_multi_lora_model_only",
     "note": "This preset is a high-contrast color / Niji clean color-separation resource stack. It must not imply any source-image scene, time-of-day, or background content. Actual generation should use all three LoraLoaderModelOnly nodes."
   },
-  "chinese_name": "高對比用色",
+  "chinese_name": "[Anima] 高對比用色",
   "loras": [
     {
       "name": "anima-highres-aesthetic-boost.safetensors",

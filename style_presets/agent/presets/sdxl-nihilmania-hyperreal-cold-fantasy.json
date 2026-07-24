@@ -1,6 +1,6 @@
 {
   "id": "sdxl-nihilmania-hyperreal-cold-fantasy",
-  "name": "SDXL NihilMania Hyperreal Cold Fantasy",
+  "name": "[SDXL] NihilMania Hyperreal Cold Fantasy",
   "chinese_name": null,
   "base_prompt": "hyper realistic SDXL fantasy illustration, ultra-detailed, UHD, 8K, high-resolution details, photographic realism pushed to stylized fantasy, fine texture, crisp high-frequency detail, cinematic cold color grading, icy blue highlights, luminous eye catchlights, soft depth of field, dramatic contrast, polished digital painting, detailed matte painting, clean composition, premium fantasy concept art rendering",
   "negative_prompt": "bad quality, bad anatomy, worst quality, low quality, low resolution, extra fingers, blur, blurry, ugly, wrong proportions, watermark, image artifacts, lowres, jpeg artifacts, deformed, noisy image, deformation",

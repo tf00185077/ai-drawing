@@ -1,6 +1,6 @@
 {
   "id": "tactile-verism-city-noir-anima",
-  "name": "Tactile Verism City Noir Anima",
+  "name": "[Anima] Tactile Verism City Noir",
   "base_prompt": "tactile oil painting finish, visible painterly brushwork, controlled impasto texture, atmospheric cinematic rendering",
   "negative_prompt": "worst quality, low quality, bad anatomy, deformed, blurry, muddy details",
   "template": "gen_txt2img_anima_lora_model_only",
@@ -160,5 +160,5 @@
     "2026-06-20: CTY approved anime-oil-color-safe color direction. Moved broad unscoped dark teal/gold/highlight language out of base_prompt so anime portraits do not inherit metallic/ghostly face contamination; source profiles retain original source color language.",
     "2026-06-20: Reframed image_id=399 correction as anime-oil-character-preserving: preserve character identity and warm natural face colors, constrain teal/gold/noir/oil effects to background/rim/hair/clothing brushwork, and block global color/material contamination on skin."
   ],
-  "chinese_name": "厚塗油彩城市夜景 Anima"
+  "chinese_name": "[Anima] 厚塗油彩城市夜景"
 }

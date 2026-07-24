@@ -1,7 +1,7 @@
 {
   "id": "niji-daylight-2d-anime-anima",
-  "name": "Niji Daylight 2D Anime Anima",
-  "chinese_name": "白天日系手繪2D Niji Anima",
+  "name": "[Anima] Niji Daylight 2D Anime",
+  "chinese_name": "[Anima] 白天日系手繪2D Niji",
   "base_prompt": "masterpiece, best quality, pure hand-drawn 2D Japanese TV anime cel style, high-quality Anima anime illustration, daylight niji coloring, clear blue sky, cool clean rim light, soft crisp anime shadows, bright school-campus friendly palette, flat matte color fills, clean ink line, simple cel shadow shapes, hand-painted Japanese anime background, no 3D lighting",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, 3d, 3d render, cgi, blender, unreal engine, octane render, photorealistic, realistic skin, skin pores, hyperrealistic, semi-realistic, semi-real rendering, realistic face, uncanny face, glossy skin, glossy highlight rendering, sharp specular highlights, plastic skin, doll-like, game cg, western comic style, oil painting, thick impasto, dark background, night, moonlit, dark cinematic color grading, deep shadow contrast, underexposed, washed out, low contrast, text, watermark, logo",
   "template": "gen_txt2img_anima_lora_model_only_multi_lora",

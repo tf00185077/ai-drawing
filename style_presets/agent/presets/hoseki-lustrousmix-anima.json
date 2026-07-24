@@ -1,6 +1,6 @@
 {
   "id": "hoseki-lustrousmix-anima",
-  "name": "Hoseki LustrousMix Anima / Abstract Gem Illustration",
+  "name": "[Anima] Hoseki LustrousMix / Abstract Gem Illustration",
   "base_prompt": "masterpiece, best quality, high-quality Anima anime illustration, abstract multicolored background, refined character linework, clean polished digital rendering, contemplative mood",
   "negative_prompt": "worst quality, low quality, bad anatomy, jpeg artifacts, signature, sepia, fewer digits, extra digits, bad hands, watermark, score_1, score_2, score_3, censored",
   "template": "anima",
@@ -49,5 +49,5 @@
     }
   },
   "note_path": "style_presets/human/hoseki-lustrousmix-anima.md",
-  "chinese_name": "寶石抽象插畫 Anima"
+  "chinese_name": "[Anima] 寶石抽象插畫"
 }

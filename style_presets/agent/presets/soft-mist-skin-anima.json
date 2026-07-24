@@ -1,6 +1,6 @@
 {
   "id": "soft-mist-skin-anima",
-  "name": "柔霧肌膚",
+  "name": "[Anima] 柔霧肌膚",
   "chinese_name": null,
   "base_prompt": "best quality, score_9, very aesthetic, ultra detailed, soft mist skin rendering, smooth matte skin, delicate diffused blush, subtle translucent warmth, soft diffused highlights, gentle bloom, warm high-key backlighting, clean luminous color separation, controlled high contrast, refined cel-painterly shading, crisp fine anime lineart, polished delicate detail",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, oily skin, shiny skin, harsh specular skin highlights, plastic skin, waxy skin, coarse skin texture, oversharpened skin, heavy pores, muddy colors, harsh shadows, 3d, cgi",
