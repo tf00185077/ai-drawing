@@ -119,6 +119,23 @@ MCP 新增 `save_successful_workflow_as_style_preset` 與
   Evidence 位於 `.hermes/evidence/style-preset-batch-20260724/`。
 - OpenSpec：target strict valid；`openspec validate --all --strict` 為
   `13 passed, 0 failed`；`git diff --check` 通過。
+## 2026-07-23 shampoohatslime Anima V1 訓練後八條件正式驗收完成
+
+- 已實證 Anima 訓練完整跑完 8 epochs／1600 steps；Epoch 2、Epoch 4、Epoch 6 與 Final safetensors 均有永久外接碟權重、bytes 與 SHA-256 紀錄，且訓練證據確認為 DiT-only LoRA。
+- 評測權重以不搬移原檔的方式註冊到外接碟 ComfyUI LoRA inventory；乾淨 Base 固定使用 `anima_baseV10` diffusion／text encoder 與 Qwen Image VAE，未疊加 Moonlit 推論 LoRA。
+- 正式矩陣為 8 條件 × Emma／Karin／Kanata = 24 張：Base、Epoch 2／4／6、Final 0.5／0.7／1.0 與 Final 0.7 無 Trigger。固定 seed `3174638636`、1448×2048、30 steps、CFG 5.5、DPM++ 2M／normal；Trigger 為 `connexion`（控制組移除）。24 個 job 全部 completed，每個 job 僅採一個永久 `SaveImage` PNG，已排除 `PreviewImage` 重複 artifact；未做視覺評分、挑圖或因美觀重生。
+- 每條件建立一份獨立 ZIP，共 8 包；每包正好含 `emma.png`、`karin.png`、`kanata.png`、`INDEX.txt`、`MANIFEST.json`。8 包皆通過 entry-count、`testzip`、SHA-256 與 `<10 MiB` 驗證；本輪原圖直接打包即符合限制，未需重新壓縮。最終 job/result/effective-payload master manifest 與交付驗證保存在外接碟指定輸出目錄。
+- 全程未直接修改 DB、Gallery 或 queue internals，也未卸載 ComfyUI 模型；先前 7 組檔案保留，但此 8 組版本為正式交付。
+
+### 測試產物整理
+
+- Git 收錄初始 7 條件／21 張的歷史可續跑與封裝工具：
+  `scripts/run_anima_v1_initial_7_matrix.py`、
+  `scripts/package_anima_v1_initial_7_matrix.py`；檔名與 module docstring 明確標示不包含後補的 Epoch 2。
+- 最終 8 條件／24 張的 authoritative manifest 位於外接碟
+  `training/lora/output/style_shampoohatslime-first50-anima-v1-matrix-jobs-final-8-conditions.json`，
+  8 個 ZIP 位於 `training/lora/output/shampoohatslime-anima-v1-comparison-by-condition-8/`。
+- PNG、ZIP 與大型 JSON evidence 是實機產物，保留於 16TB 外接碟，不複製進 Git；repository 只保存可讀工具與驗收說明。
 
 ## 2026-07-21 Prompt Library Git persistence
 
