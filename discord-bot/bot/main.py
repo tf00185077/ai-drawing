@@ -1,5 +1,6 @@
 """Bot 進入點：註冊 /draw、/result 到指定 guild。"""
 import io
+import re
 
 import discord
 from discord import app_commands
@@ -9,6 +10,18 @@ from .config import Config, load_config
 from .views import PresetView
 
 DISCORD_UPLOAD_LIMIT_BYTES = 24 * 1024 * 1024
+JOB_ID_PATTERN = re.compile(
+    r"(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])"
+)
+
+
+def normalize_job_id(value: str) -> str | None:
+    """Extract one UUID from plain IDs or copied Discord command text."""
+    matches = JOB_ID_PATTERN.findall(value)
+    if len(matches) != 1:
+        return None
+    return matches[0].lower()
 
 
 def build_bot(config: Config):
@@ -39,8 +52,14 @@ def build_bot(config: Config):
     @app_commands.describe(id="生圖時取得的 job id")
     async def result(interaction: discord.Interaction, id: str):
         await interaction.response.defer(thinking=True)
+        job_id = normalize_job_id(id)
+        if job_id is None:
+            await interaction.followup.send(
+                "❌ job id 格式錯誤；請貼上訊息中的 UUID，或整段 `/result id:...`"
+            )
+            return
         try:
-            outcome = await api.collect_job_result(id)
+            outcome = await api.collect_job_result(job_id)
         except BackendError as exc:
             if exc.status_code == 404:
                 await interaction.followup.send("找不到這個 job id")
