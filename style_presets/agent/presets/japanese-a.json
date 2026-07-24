@@ -1,6 +1,6 @@
 {
   "id": "japanese-a",
-  "name": "日系a",
+  "name": "[Illustrious] 日系a",
   "chinese_name": null,
   "base_prompt": "masterpiece, best quality, very aesthetic, highly detailed, polished Japanese anime illustration, clean thin lineart, hybrid cel shading with soft controlled gradients, detailed hair and eyes, refined fabric rendering, warm natural daylight, soft luminous highlights, harmonious warm colors, crisp subject rendering, shallow depth of field, softly rendered background",
   "negative_prompt": "lowres, worst quality, low quality, bad anatomy, bad hands, extra digits, jpeg artifacts, signature, watermark, text, logo, artist name, censored, photorealistic, 3d, cgi, western comic style, plastic skin",

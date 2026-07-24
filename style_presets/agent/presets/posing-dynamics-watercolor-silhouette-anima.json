@@ -1,6 +1,6 @@
 {
   "id": "posing-dynamics-watercolor-silhouette-anima",
-  "name": "Posing Dynamics Watercolor Silhouette Anima",
+  "name": "[Anima] Posing Dynamics Watercolor Silhouette",
   "base_prompt": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, airy watercolor anime illustration, luminous backlit silhouette, soft pastel gradient wash, cyan blue and cotton candy pink sky, warm yellow orange foreground glow, translucent watercolor blooms, wet-on-wet color bleeding, fine paint speckles, floating petals, delicate ink-like edge accents, broad white negative space, dreamy high-key lighting, soft rim light, clean elegant composition",
   "negative_prompt": "worst quality, low quality, score_1, score_2, score_3, artist name, photorealistic, harsh outlines, muddy colors, dull palette, heavy black shadows, noisy texture, cluttered background, text, watermark, logo, signature",
   "template": "gen_txt2img_anima_lora_model_only",
@@ -53,5 +53,5 @@
     }
   },
   "note_path": "style_presets/human/posing-dynamics-watercolor-silhouette-anima.md",
-  "chinese_name": "水彩剪影動態姿勢 Anima"
+  "chinese_name": "[Anima] 水彩剪影動態姿勢"
 }

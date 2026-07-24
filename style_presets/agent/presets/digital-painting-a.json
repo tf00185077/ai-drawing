@@ -1,6 +1,6 @@
 {
   "id": "digital-painting-a",
-  "name": "電繪A / Anima Masterpiece Digital Painting",
+  "name": "[Anima] 電繪A / Masterpiece Digital Painting",
   "base_prompt": "masterpiece, very aesthetic, absurdres, @[yoneyama mai|kuga huna|diyokama], high-end digital anime illustration, refined painterly linework, polished commercial key visual, elegant decorative composition",
   "negative_prompt": "worst quality, low quality, blurry, jpeg artifacts, sepia, signature, artist name, bad anatomy, deformed",
   "template": "anima",
@@ -40,5 +40,5 @@
     }
   },
   "note_path": "style_presets/human/digital-painting-a.md",
-  "chinese_name": "暖粉日系電繪 Anima"
+  "chinese_name": "[Anima] 暖粉日系電繪"
 }
