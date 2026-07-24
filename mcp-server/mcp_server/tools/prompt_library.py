@@ -1,11 +1,34 @@
 """Intent-level Prompt Library MCP tools."""
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import quote
 import httpx
 
 from mcp_server.server import _get_client, mcp
+
+
+_CJK = re.compile(r"[㐀-䶿一-鿿]")
+
+
+def _has_cjk(text: str) -> bool:
+    return bool(_CJK.search(text or ""))
+
+
+def _norm(text: str) -> str:
+    return " ".join((text or "").split()).casefold()
+
+
+def _bilingual_warnings(resource_type: str, payload: dict) -> list[dict[str, Any]]:
+    """偵測 name_zh 是否缺少有意義中文對照；只回 warning，永不擋。"""
+    name_zh = str(payload.get("name_zh", ""))
+    prompt = str(payload.get("prompt", ""))
+    if resource_type == "entry" and prompt and _norm(name_zh) == _norm(prompt):
+        return [{"code": "name_zh_echoes_prompt", "message": "name_zh 只是照抄英文 prompt", "hint": "建議填實際中文意思，方便日後用中文檢索", "details": {"name_zh": name_zh}}]
+    if not _has_cjk(name_zh):
+        return [{"code": "name_zh_missing_chinese", "message": "name_zh 看起來沒有中文對照", "hint": "建議補上中文翻譯，方便日後用中文檢索", "details": {"name_zh": name_zh}}]
+    return []
 
 
 def _error(tool: str, exc: Exception) -> dict[str, Any]:
@@ -51,11 +74,21 @@ def prompt_library_search(query: str = "", polarity: str | None = None, resource
 
 @mcp.tool()
 def prompt_library_save(resource_type: str, resource_id: str, payload: dict, expected_revision: int = 0, expected_etag: str | None = None, polarity: str | None = None, category_id: str | None = None) -> dict[str, Any]:
+    """建立或更新 Prompt Library 的 entry／category／combination。
+
+    payload 內的 name_zh 必須是英文 prompt 的「有意義中文對照」（翻譯或說明），
+    不是照抄英文、也不是機械拼接——這是給中文使用者日後用中文檢索、回想此詞
+    用途的依據。若 name_zh 沒填好，本工具仍會照常儲存，但回傳 warnings 提示補件。
+    """
     tool = "prompt_library_save"; path, problem = _locator(resource_type, resource_id, polarity, category_id)
     if problem: return {"tool": tool, **problem}
     body = dict(payload); body.pop("expected_revision", None); body.pop("expected_etag", None); body["expected_revision"] = expected_revision
     if expected_etag is not None: body["expected_etag"] = expected_etag
-    try: return {"ok": True, "tool": tool, **_get_client().put(path, json=body), "next": "reload the resource and use its new revision and etag"}
+    try:
+        result = {"ok": True, "tool": tool, **_get_client().put(path, json=body), "next": "reload the resource and use its new revision and etag"}
+        warnings = _bilingual_warnings(resource_type, payload)
+        if warnings: result["warnings"] = warnings
+        return result
     except Exception as exc: return _error(tool, exc)
 
 
