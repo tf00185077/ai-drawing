@@ -1,0 +1,64 @@
+"""backend HTTP 包裝——唯一知道 backend 契約的地方。"""
+import httpx
+
+
+class BackendError(Exception):
+    def __init__(self, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+def _error_message(response: httpx.Response) -> str:
+    try:
+        data = response.json()
+    except Exception:
+        return response.text or f"HTTP {response.status_code}"
+    if isinstance(data, dict):
+        detail = data.get("detail", data)
+        if isinstance(detail, dict):
+            return detail.get("message") or detail.get("error") or str(detail)
+        return str(detail)
+    return str(data)
+
+
+class ApiClient:
+    def __init__(self, base_url: str, client: httpx.AsyncClient | None = None):
+        self._base_url = base_url.rstrip("/")
+        self._client = client or httpx.AsyncClient(base_url=self._base_url, timeout=30.0)
+
+    def _check(self, response: httpx.Response) -> httpx.Response:
+        if response.status_code >= 400:
+            raise BackendError(_error_message(response), status_code=response.status_code)
+        return response
+
+    async def list_presets(self) -> list[dict]:
+        r = self._check(await self._client.get("/api/style-presets/"))
+        return r.json().get("items", [])
+
+    async def compose(self, preset_id: str, *, content_prompt: str,
+                      profile: str | None = None, overrides: dict | None = None) -> dict:
+        body: dict = {"content_prompt": content_prompt}
+        if profile:
+            body["profile"] = profile
+        if overrides:
+            body["overrides"] = overrides
+        r = self._check(await self._client.post(f"/api/style-presets/{preset_id}/compose", json=body))
+        return r.json()["generation"]
+
+    async def submit_generate(self, generation: dict) -> str:
+        r = self._check(await self._client.post("/api/generate/", json=generation))
+        return r.json()["job_id"]
+
+    async def get_job(self, job_id: str) -> dict:
+        r = self._check(await self._client.get(f"/api/generate/job/{job_id}"))
+        return r.json()
+
+    async def list_job_images(self, job_id: str) -> list[dict]:
+        r = self._check(await self._client.get(
+            "/api/gallery/", params={"image_name": job_id[:8], "limit": 8}
+        ))
+        return r.json().get("items", [])
+
+    async def download(self, image_url: str) -> bytes:
+        r = self._check(await self._client.get(image_url))
+        return r.content
