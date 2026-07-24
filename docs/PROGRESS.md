@@ -1,5 +1,26 @@
 # 進度追蹤
 
+## 2026-07-24 Prompt Library 雙語軟性偵測 + Entry 增刪改查
+
+背景：詞庫改由 agent 經 MCP 寫入後，agent 不知道使用者需要「有意義的中文對照」，可能把 name_zh
+照抄英文或機械拼接。經討論確認不適合用 i18n（i18n 是「切換語言」，需求是「中英同時對照」；另立 i18n
+store 會與詞條 JSON 形成雙重來源）。改以「MCP 軟性提醒 + 操作台兜底編輯」解決。
+
+1. MCP `prompt_library_save` 加契約 docstring 並在成功後附 `warnings`（name_zh 無 CJK，或 entry 的
+   name_zh 照抄英文 prompt），永不擋、`ok` 恆 True，符合「寬進嚴出、錯誤是修復指南」。
+2. 前端新增共用啟發式 `suspectChinese.ts`（與 Python 版行為對齊：先 echoes 後 missing），操作台詞條區
+   對可疑 name_zh 標 ⚠️。
+3. 操作台補齊 entry 增刪改查：新增 `PromptEntryEditor`，`PromptEntryBrowser` 加編輯／封存／新增，
+   `PromptWorkbench` 串接 `PUT .../entries/{id}` 與 `POST /archive`。entry 樂觀鎖以「分類 revision + etag」
+   為單位（後端契約），寫入後重載分類刷新 token。刪＝封存（可復原），未做實體刪檔。
+4. 實作期修正一個設計缺陷：編輯詞條原本只帶回 name_zh，會把 description_zh／aliases／keywords／order
+   清空（且後端 `description_zh` min_length=1 會 422）。已把 `BrowserEntry` 擴充為攜帶完整詞條資料
+   （分類 GET 本就回傳），編輯表單改以真實值預填，只改 name_zh 也不會動到其他欄位；並加了保存驗證測試。
+5. backend 端點與 schema 未動；未引入 i18n。
+6. 驗證：MCP `pytest` 新增 4 條（全套 81 passed）；前端 vitest 新增啟發式／編輯器／Browser CRUD／
+   Workbench 串接測試，`tsc --noEmit` 與 Vite build 通過。註：`PromptComposerPanel.test.tsx` 有一個
+   與本次無關、base 分支即存在的失敗（grid 5 vs 6），未在本次範圍處理。
+
 ## 2026-07-23 MCP spec/catalog 對齊（OpenSpec: reconcile-mcp-spec-catalog）
 
 - 盤點：code 內 34 個 `@mcp.tool`（含 `mcp_ping`）與 `tool_catalog.py` **完全雙向對齊**（34=34，無幽靈/遺漏）；Change 1 已使 dataset_list/inspect/smoke_test 落地。
@@ -17,7 +38,6 @@
 - 重建漂移的 MCP 工具：`lora_dataset_list`（GET /datasets）、`lora_dataset_inspect`（GET /datasets/{folder}/agent-inspect）、`lora_train_smoke_test`（POST /jobs/{id}/smoke-test，含 Anima 元件覆寫），並登錄 `tool_catalog.py` 與 README／mcp-setup catalog 表。
 - 驗證：backend `test_lora_trainer.py`/`test_lora_train_workflow_api.py` 與 mcp-server 全套（81）通過；backend 全套 1026 passed（1 個 civitai import-alias 測試為既有 test-isolation flake，單獨執行通過，與本次無關）。
 - 後續：`reconcile-mcp-spec-catalog`（依賴本 change）處理全專案 MCP spec/catalog 對齊與其餘漂移工具（prepare/validate/curation/metadata）去留。
-
 ## 2026-07-21 Prompt Library Git persistence
 
 - Docker Compose now bind-mounts the repository `prompt_library/` at `/workspace/prompt_library`; `/data/prompt_library` is no longer the default library.
