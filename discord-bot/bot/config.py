@@ -1,6 +1,7 @@
 """環境變數載入；缺必要值即 fail-fast。"""
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 class ConfigError(Exception):
@@ -18,14 +19,23 @@ def load_config(env: dict | None = None) -> Config:
     if env is None:
         from dotenv import load_dotenv
 
+        repo_env = Path(__file__).resolve().parents[2] / ".env"
+        load_dotenv(repo_env)
         load_dotenv()
         env = dict(os.environ)
 
-    token = env.get("DISCORD_TOKEN")
-    guild = env.get("GUILD_ID")
+    token = env.get("DISCORD_BOT_TOKEN") or env.get("DISCORD_TOKEN")
+    guild = env.get("DISCORD_GUILD_ID") or env.get("GUILD_ID")
     base = env.get("BACKEND_BASE_URL") or "http://localhost:8000"
 
-    missing = [name for name, value in (("DISCORD_TOKEN", token), ("GUILD_ID", guild)) if not value]
+    missing = [
+        name
+        for name, value in (
+            ("DISCORD_BOT_TOKEN", token),
+            ("DISCORD_GUILD_ID", guild),
+        )
+        if not value
+    ]
     if missing:
         raise ConfigError(f"缺少環境變數：{', '.join(missing)}")
 
