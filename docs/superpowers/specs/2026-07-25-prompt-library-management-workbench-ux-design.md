@@ -1,7 +1,7 @@
 # Prompt Library 管理邊界、組合載入與工作檯編輯 UX 設計
 
 - 日期：2026-07-25
-- 狀態：設計已討論確認，待使用者審閱本文件
+- 狀態：使用者已於 2026-07-25 核准，進入實作計畫
 - 相關路徑：`/prompt-library/workbench`、`/prompt-library/categories`、`/prompt-library/categories/:polarity/:categoryId`
 
 ## 1. 背景
