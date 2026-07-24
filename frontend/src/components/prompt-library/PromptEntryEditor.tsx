@@ -24,6 +24,7 @@ interface Props {
     order?: number;
   };
   submitting?: boolean;
+  existingIds?: string[];
   onSubmit: (value: EntryEditorValue) => void;
   onCancel: () => void;
 }
@@ -36,7 +37,7 @@ function commaSeparated(value: string): string[] {
 
 const inputClass = "mt-1 w-full rounded border border-slate-600 bg-slate-900 p-2 text-sm text-white";
 
-export default function PromptEntryEditor({ mode, initial, submitting, onSubmit, onCancel }: Props) {
+export default function PromptEntryEditor({ mode, initial, submitting, existingIds, onSubmit, onCancel }: Props) {
   const [id, setId] = useState(initial?.id ?? "");
   const [nameZh, setNameZh] = useState(initial?.name_zh ?? "");
   const [descriptionZh, setDescriptionZh] = useState(initial?.description_zh ?? "");
@@ -50,6 +51,10 @@ export default function PromptEntryEditor({ mode, initial, submitting, onSubmit,
     const trimmedId = (mode === "create" ? id : initial?.id ?? "").trim();
     if (mode === "create" && !SLUG_PATTERN.test(trimmedId)) {
       setError("詞條 ID 只能使用小寫英文字母、數字與單一連字號，例如 detailed-eyes");
+      return;
+    }
+    if (mode === "create" && existingIds?.includes(trimmedId)) {
+      setError("此詞條 ID 已存在，請改用編輯或換一個 ID");
       return;
     }
     if (!nameZh.trim() || !descriptionZh.trim() || !prompt.trim()) {
@@ -103,7 +108,7 @@ export default function PromptEntryEditor({ mode, initial, submitting, onSubmit,
       {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={submitting} className="rounded bg-emerald-600 px-3 py-1.5 text-sm text-white disabled:opacity-40">{submitting ? "儲存中…" : "儲存"}</button>
-        <button type="button" onClick={onCancel} className="rounded bg-slate-700 px-3 py-1.5 text-sm text-slate-200">取消</button>
+        <button type="button" disabled={submitting} onClick={onCancel} className="rounded bg-slate-700 px-3 py-1.5 text-sm text-slate-200 disabled:opacity-40">取消</button>
       </div>
     </form>
   );

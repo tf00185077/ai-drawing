@@ -74,7 +74,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
                 mode="edit"
                 initial={{ id: entry.id, name_zh: entry.name_zh, description_zh: entry.description_zh, prompt: entry.prompt, aliases: entry.aliases, keywords: entry.keywords, order: entry.order }}
                 submitting={busy}
-                onSubmit={(value) => handleSave(value, "edit")}
+                onSubmit={(value) => { void handleSave(value, "edit").catch(() => {}); }}
                 onCancel={() => setEditingId(null)}
               />
             )}
@@ -84,7 +84,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
       {selectedCategory && (
         <div className="mt-4">
           {creating ? (
-            <PromptEntryEditor mode="create" submitting={busy} onSubmit={(value) => handleSave(value, "create")} onCancel={() => setCreating(false)} />
+            <PromptEntryEditor mode="create" existingIds={entries.map((e) => e.id)} submitting={busy} onSubmit={(value) => { void handleSave(value, "create").catch(() => {}); }} onCancel={() => setCreating(false)} />
           ) : (
             <button type="button" onClick={() => { setEditingId(null); setCreating(true); }} className="w-full rounded-lg border border-dashed border-slate-600 px-3 py-2 text-sm text-slate-300"><span aria-hidden="true">＋ </span>新增詞條</button>
           )}
