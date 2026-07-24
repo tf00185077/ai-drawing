@@ -51,6 +51,23 @@ def test_slug_fields_reject_unsafe_ids(bad_id: str) -> None:
         entry(id=bad_id)
 
 
+def test_combination_ids_accept_safe_unicode_but_reject_unsafe_paths() -> None:
+    combination = PromptCombination(
+        id="niji基礎瑟瑟",
+        name_zh="Niji 基礎瑟瑟",
+        description_zh="Niji 基礎提示詞",
+    )
+    assert combination.id == "niji基礎瑟瑟"
+
+    for bad_id in ("兩 個", "../逃逸", "a/b", "a\\b", ".", "-開頭", "結尾-"):
+        with pytest.raises(ValidationError):
+            PromptCombination(
+                id=bad_id,
+                name_zh="不安全",
+                description_zh="不安全組合 ID",
+            )
+
+
 def test_fragment_kind_and_reference_must_agree() -> None:
     ref = PromptEntryRef(polarity="positive", category_id="clothing", entry_id="dress")
     assert PromptFragment(kind="entry", ref=ref, snapshot="dress").ref == ref

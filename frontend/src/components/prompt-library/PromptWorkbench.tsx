@@ -11,10 +11,32 @@ interface CombinationVersion {
   etag?: string;
 }
 
+const COMBINATION_ID_PATTERN = /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u;
+
+function responseErrorMessage(data: unknown, status: number): string {
+  const detail = (data as { detail?: unknown } | null)?.detail;
+  if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+    const message = (detail as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const location = Array.isArray((item as { loc?: unknown }).loc)
+        ? ((item as { loc: unknown[] }).loc).filter((part) => part !== "body").join(".")
+        : "request";
+      const message = (item as { msg?: unknown }).msg;
+      return typeof message === "string" ? [`${location}：${message}`] : [];
+    });
+    if (messages.length) return messages.join("；");
+  }
+  return `HTTP ${status}`;
+}
+
 async function jsonFetch(url: string) {
   const response = await fetch(url);
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.detail?.message || `HTTP ${response.status}`);
+  if (!response.ok) throw new Error(responseErrorMessage(data, response.status));
   return data;
 }
 
@@ -85,6 +107,10 @@ export default function PromptWorkbench() {
     if (!id) return;
     setError("");
     setSaveStatus("");
+    if (!COMBINATION_ID_PATTERN.test(id)) {
+      setError("組合 ID 只能使用 Unicode 字母、數字與連字號，例如 niji基礎瑟瑟");
+      return;
+    }
     const positiveFragments = serializeFragments(positive);
     const negativeFragments = serializeFragments(negative);
     const currentVersion = combinationVersions[id];
@@ -110,7 +136,7 @@ export default function PromptWorkbench() {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail?.message || `HTTP ${response.status}`);
+      if (!response.ok) throw new Error(responseErrorMessage(data, response.status));
       const saved = data?.saved_combination;
       if (saved?.combination?.revision) {
         setCombinationVersions((versions) => ({
@@ -179,7 +205,7 @@ export default function PromptWorkbench() {
       </div>
       <section className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="flex-1 text-sm text-slate-400">組合 ID<input aria-label="組合 ID" value={saveId} onChange={(event) => setSaveId(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 p-2 text-white" /></label>
+          <label className="flex-1 text-sm text-slate-400">組合 ID<input aria-label="組合 ID" aria-describedby="combination-id-help" value={saveId} onChange={(event) => setSaveId(event.target.value)} placeholder="例如 niji基礎瑟瑟" className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800 p-2 text-white" /><span id="combination-id-help" className="mt-1 block text-xs text-slate-500">允許 Unicode 字母、數字與連字號；不允許空白或路徑符號</span></label>
           <button type="button" disabled={!saveId.trim()} onClick={saveCombination} className="rounded-lg bg-emerald-600 px-5 py-2.5 font-medium text-white disabled:bg-slate-700">儲存組合</button>
         </div>
         {saveStatus && <p className="mt-2 text-sm text-emerald-300">{saveStatus}</p>}
