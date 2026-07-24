@@ -11,8 +11,8 @@ tool contracts unchanged.
 - Permanently remove the existing category JSON documents under
   `prompt_library/positive/` and `prompt_library/negative/`.
 - Keep `prompt_library/manifest.json` and the Prompt Library implementation.
-- Start the local backend and MCP server, then use `prompt_library_save` to create
-  every replacement category and entry.
+- The initial replacement was created through `prompt_library_save`; future
+  maintenance is performed directly inside AI Drawing's Prompt Library.
 - Import selectable LTJ Prompt fragments only. Do not import LTJ's model-family
   selection, automatic ordering, conflict rules, generation settings, or LoRA
   filesystem discovery behavior.
@@ -53,14 +53,9 @@ defines reusable negative Prompt fragments.
 
 ## Import Flow
 
-1. Validate the existing Prompt Library root and physically delete only its old
-   positive and negative category documents.
-2. Start the backend with the project Prompt Library directory as its active root.
-3. Start the MCP server against that backend and verify its health.
-4. Extract static LTJ choice tuples into a deterministic import manifest.
-5. Create categories and entries through `prompt_library_save`.
-6. Read the catalog through `prompt_library_search` and verify entry totals,
-   unique slugs, and required bilingual fields.
+The LTJ extraction was a one-time bootstrap operation. The shipped AI Drawing
+project must not read, parse, test against, or otherwise depend on the LTJ
+folder after this initial library has been created.
 
 ## Safety and Verification
 

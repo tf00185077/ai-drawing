@@ -4,7 +4,7 @@
 
 **Goal:** Replace AI Drawing's test Prompt Library categories with LTJ's selectable Prompt fragments through the local MCP server.
 
-**Architecture:** A deterministic import module reads only static LTJ tuple and dictionary choices, maps them to category documents, and calls the existing `prompt_library_save` MCP tool. A runner validates the backend/MCP connection before deleting the existing positive and negative JSON documents, then imports and verifies the resulting catalog.
+**Architecture:** The LTJ import was a one-time bootstrap operation. The resulting Prompt Library is self-contained; future maintenance uses AI Drawing's existing library UI and MCP tools without reading the LTJ folder.
 
 **Tech Stack:** Python 3.11+, FastAPI backend, FastMCP client/server, Pydantic, pytest.
 
