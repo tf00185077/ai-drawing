@@ -117,6 +117,7 @@ class DefaultServices:
         )
         self.runner = runner or SubprocessRunner()
         self.host = detect_host()
+        self._compose = None
         self._input = input_fn
         self._output = output_fn
 
@@ -136,8 +137,22 @@ class DefaultServices:
         with path.open("a", encoding="utf-8", newline="\n") as handle:
             handle.write(_redact_log(message.rstrip("\r\n")) + "\n")
 
-    def preflight(self) -> None:
-        docker.preflight(self.runner)
+    def preflight(self, *, allow_download: bool = True) -> None:
+        self._compose = docker.preflight(
+            self.runner, self.host, allow_download=allow_download
+        )
+
+    def _compose_invocation(self) -> tuple[str, ...]:
+        if self._compose is None:
+            # Commands that skip preflight (stop/logs) still need a usable compose;
+            # reuse a cached bundled binary if present, but never download here.
+            try:
+                self._compose = docker.resolve_compose_runtime(
+                    self.host, self.runner, allow_download=False
+                )
+            except docker.DockerError:
+                return ("docker", "compose")
+        return self._compose.invocation
 
     def load_state(self) -> LauncherState | None:
         return load_state(self.project_root / "data/bootstrap/state.json")
@@ -450,6 +465,7 @@ class DefaultServices:
                 env,
                 override,
                 self.runner,
+                invocation=self._compose_invocation(),
             ),
         )
 
@@ -459,6 +475,7 @@ class DefaultServices:
             self.project_root / ".env",
             self.project_root / ".ai-drawing/compose.local.yaml",
             self.runner,
+            invocation=self._compose_invocation(),
         ):
             raise LauncherError(
                 "COMPOSE_CONFIG_INVALID",
@@ -477,19 +494,21 @@ class DefaultServices:
         return frozenset(
             service
             for service, state in docker.compose_service_states(
-                self.project_root, self.runner
+                self.project_root, self.runner, invocation=self._compose_invocation()
             ).items()
             if state == "running"
         )
 
     def compose_up_services(self, services: frozenset[str]) -> None:
-        docker.compose_up_services(self.project_root, self.runner, services)
+        docker.compose_up_services(
+            self.project_root, self.runner, services, invocation=self._compose_invocation()
+        )
 
     def compose_up(self) -> None:
-        docker.compose_up(self.project_root, self.runner)
+        docker.compose_up(self.project_root, self.runner, invocation=self._compose_invocation())
 
     def compose_down(self) -> None:
-        docker.compose_down(self.project_root, self.runner)
+        docker.compose_down(self.project_root, self.runner, invocation=self._compose_invocation())
 
     @staticmethod
     def _relay_ready(state: RelayState) -> bool:
@@ -676,7 +695,9 @@ class DefaultServices:
             self.project_root / ".ai-drawing/compose.local.yaml",
         )
         services = (
-            docker.compose_service_states(self.project_root, self.runner)
+            docker.compose_service_states(
+                self.project_root, self.runner, invocation=self._compose_invocation()
+            )
             if docker_available and all(path.is_file() for path in compose_files)
             else {}
         )
@@ -780,7 +801,13 @@ class DefaultServices:
         self.emit("--- docker compose logs ---")
         try:
             result = self.runner.run(
-                docker.compose_command(self.project_root, "logs", "--tail", "200"),
+                docker.compose_command(
+                    self.project_root,
+                    "logs",
+                    "--tail",
+                    "200",
+                    invocation=self._compose_invocation(),
+                ),
                 cwd=self.project_root,
             )
         except OSError:
@@ -1809,14 +1836,14 @@ def _run(args: argparse.Namespace, services: Any) -> int:
         LauncherCommand.RECONFIGURE.value,
     }:
         try:
-            services.preflight()
+            services.preflight(allow_download=True)
         except Exception:
             if deferred_audit:
                 _begin_bootstrap_audit(args, services, command)
             raise
     elif command in {LauncherCommand.STATUS.value, "dry-run"}:
         try:
-            services.preflight()
+            services.preflight(allow_download=False)
         except (docker.DockerError, LauncherError):
             docker_available = False
 
