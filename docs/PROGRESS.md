@@ -282,11 +282,13 @@ checkpoint」而改用本地預設模型。修正（`backend/app/services/civita
 
 ## 已完成（時間倒序）
 
-- **2026-07-24 自帶 Compose fallback（設計）**：安裝時系統 Docker Compose 太舊/缺 plugin/
-  只有 v1 會被 `COMPOSE_VERSION_UNSUPPORTED` 擋下。設計「能用系統的就用系統的，不能用才
-  下載釘死版 standalone compose（私有 cache、絕不碰 PATH 與 `~/.docker`、下載後比對釘死
-  SHA256）」。Spec：`docs/superpowers/specs/2026-07-24-bundled-compose-fallback-design.md`。
-  **狀態：設計已核可，待寫實作計畫與實作。**
+- **2026-07-24 自帶 Compose fallback（已實作）**：安裝時系統 Docker Compose 太舊/缺 plugin/
+  只有 v1 會被 `COMPOSE_VERSION_UNSUPPORTED` 擋下。改為 `preflight` 解析 `ComposeRuntime`：
+  系統 compose ≥ 2.24 直接沿用；否則下載釘死版 2.32.4 standalone compose 到私有 cache
+  （`<CACHE>/ai-drawing/compose/<版本>/`）、比對釘死 SHA256 後才用絕對路徑呼叫，**絕不碰
+  PATH 與 `~/.docker`**。status/dry-run 不觸發下載；setup/start/reconfigure 才會。實作於
+  `scripts/launcher/{constants,docker,cli}.py`，新增 39 個 docker 測試全綠。Spec/Plan 見
+  `docs/superpowers/{specs,plans}/2026-07-24-bundled-compose-fallback*.md`。
 - **2026-07-15 Civitai best-effort 重構**：見「目前聚焦」。
 - **2026-07-12～14 Civitai 精確重現管線（CIV-A～F、CIV-V-*、CIV-SA-*）**：GenerationRecipe
   schema、取得/資源解析/相容性/compiler/佇列/出處稽核/變體/variation set/source alias 全套
