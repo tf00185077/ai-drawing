@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
+from app.core import queue as q
 from app.core.queue import (
     QueueFullError,
     _process_pending,
@@ -26,6 +27,26 @@ def setup_function() -> None:
     _reset_for_test()
 
 
+@pytest.fixture(autouse=True)
+def isolated_generation_batch_db(monkeypatch):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+
+    from app.db.database import Base
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr(q, "SessionLocal", factory)
+    yield factory
+    engine.dispose()
+
+
 def test_submit_returns_job_id() -> None:
     """submit 回傳有效的 job_id"""
     job_id = submit({"prompt": "1girl"})
@@ -40,6 +61,267 @@ def test_submit_raises_when_full() -> None:
         submit({"prompt": "b"})
         with pytest.raises(QueueFullError):
             submit({"prompt": "c"})
+
+
+def test_independent_submit_allocates_one_parent_and_unique_private_children() -> None:
+    with patch(
+        "app.core.queue.random.randint",
+        side_effect=[7, 7, 8, 9, 10],
+    ):
+        parent_id = submit(
+            {
+                "prompt": "four variants",
+                "batch_size": 4,
+                "batch_seed_mode": "independent",
+            }
+        )
+
+    assert len(q._pending) == 4
+    assert {job.public_job_id for job in q._pending} == {parent_id}
+    assert len({job.execution_id for job in q._pending}) == 4
+    assert [job.batch_index for job in q._pending] == [0, 1, 2, 3]
+    seeds = [job.params["seed"] for job in q._pending]
+    assert seeds == [7, 8, 9, 10]
+    assert len(set(seeds)) == 4
+    assert all(job.params["batch_size"] == 1 for job in q._pending)
+
+
+def test_independent_submit_reserves_capacity_atomically() -> None:
+    with patch("app.core.queue.MAX_PENDING", 3):
+        with pytest.raises(QueueFullError):
+            submit(
+                {
+                    "prompt": "too many variants",
+                    "batch_size": 4,
+                    "batch_seed_mode": "independent",
+                }
+            )
+
+    assert q._pending == []
+    assert q._batches == {}
+
+
+@pytest.mark.parametrize(
+    "invalid_controls",
+    [
+        {"seed": 123},
+        {"seed_mode": "fixed"},
+        {"seed_mode": "workflow_default"},
+    ],
+)
+def test_independent_submit_rejects_non_random_seed_controls(
+    invalid_controls,
+) -> None:
+    with pytest.raises(ValueError, match="independent"):
+        submit(
+            {
+                "prompt": "invalid direct queue request",
+                "batch_size": 2,
+                "batch_seed_mode": "independent",
+                **invalid_controls,
+            }
+        )
+
+    assert q._pending == []
+    assert q._batches == {}
+
+
+def test_independent_submit_persists_parent_and_members_atomically(
+    monkeypatch,
+) -> None:
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+
+    from app.db.database import Base
+    from app.db.models import GenerationBatch, GenerationBatchMember
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr(q, "SessionLocal", factory)
+
+    parent_id = submit(
+        {
+            "prompt": "durable variants",
+            "batch_size": 4,
+            "batch_seed_mode": "independent",
+        }
+    )
+
+    with factory() as db:
+        parent = db.query(GenerationBatch).one()
+        members = (
+            db.query(GenerationBatchMember)
+            .order_by(GenerationBatchMember.batch_index.asc())
+            .all()
+        )
+    assert parent.public_job_id == parent_id
+    assert parent.batch_total == 4
+    assert len(members) == 4
+    assert [member.execution_id for member in members] == [
+        job.execution_id for job in q._pending
+    ]
+    assert [member.seed for member in members] == [
+        job.params["seed"] for job in q._pending
+    ]
+
+
+def test_cancel_queued_independent_parent_persists_terminal_members(
+    monkeypatch,
+) -> None:
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+
+    from app.core.generation_batches import get_batch_status
+    from app.db.database import Base
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr(q, "SessionLocal", factory)
+    parent_id = submit(
+        {
+            "prompt": "cancel durable variants",
+            "batch_size": 3,
+            "batch_seed_mode": "independent",
+        }
+    )
+
+    assert q.cancel(parent_id) is True
+
+    with factory() as db:
+        status = get_batch_status(db, parent_id)
+    assert status["status"] == "failed"
+    assert status["batch_completed"] == 0
+    assert status["batch_failed"] == 3
+    assert {item["code"] for item in status["failed_members"]} == {"cancelled"}
+
+
+def test_shared_submit_still_enqueues_one_job_with_original_batch_size() -> None:
+    parent_id = submit(
+        {
+            "prompt": "legacy batch",
+            "batch_size": 4,
+            "batch_seed_mode": "shared",
+        }
+    )
+
+    assert len(q._pending) == 1
+    job = q._pending[0]
+    assert job.public_job_id == parent_id
+    assert job.execution_id == parent_id
+    assert job.batch_index is None
+    assert job.params["batch_size"] == 4
+    assert q._batches == {}
+
+
+def test_independent_status_lists_parent_once_and_never_regresses(tmp_path) -> None:
+    (tmp_path / "model.safetensors").write_text("", encoding="utf-8")
+    parent_id = submit(
+        {
+            "prompt": "four variants",
+            "batch_size": 4,
+            "batch_seed_mode": "independent",
+        }
+    )
+
+    queued = get_status()
+    assert [item["job_id"] for item in queued["queue_pending"]] == [parent_id]
+    assert queued["queue_pending"][0]["batch_total"] == 4
+
+    fake_comfy = _FakeComfy()
+    with patch(
+        "app.core.queue.get_settings",
+        return_value=_settings_for_checkpoint_dir(tmp_path),
+    ):
+        _process_pending(fake_comfy)
+
+    running = get_status()
+    assert [item["job_id"] for item in running["queue_running"]] == [parent_id]
+    assert running["queue_pending"] == []
+    current = q._running
+    assert current is not None
+    q._release_running(current)
+
+    between_children = get_status()
+    assert [item["job_id"] for item in between_children["queue_running"]] == [
+        parent_id
+    ]
+    assert between_children["queue_pending"] == []
+    assert get_job_status(parent_id)["status"] == "running"
+
+
+def test_independent_random_mode_keeps_preallocated_child_seed_in_workflow(
+    tmp_path,
+) -> None:
+    (tmp_path / "model.safetensors").write_text("", encoding="utf-8")
+    fake_comfy = _FakeComfy()
+    with patch(
+        "app.core.queue.random.randint",
+        side_effect=[101, 202, 999],
+    ):
+        submit(
+            {
+                "prompt": "random workflow defaults",
+                "batch_size": 2,
+                "batch_seed_mode": "independent",
+                "seed_mode": "random",
+                "use_workflow_defaults": True,
+            }
+        )
+        allocated_seed = q._pending[0].params["seed"]
+        with patch(
+            "app.core.queue.get_settings",
+            return_value=_settings_for_checkpoint_dir(tmp_path),
+        ):
+            _process_pending(fake_comfy)
+
+    assert allocated_seed == 101
+    assert fake_comfy.submitted_prompt["3"]["inputs"]["seed"] == allocated_seed
+
+
+def test_cancel_queued_independent_parent_removes_every_child() -> None:
+    parent_id = submit(
+        {
+            "prompt": "cancel variants",
+            "batch_size": 4,
+            "batch_seed_mode": "independent",
+        }
+    )
+
+    assert q.cancel(parent_id) is True
+    assert q._pending == []
+    assert q._batches == {}
+
+
+def test_cancel_running_independent_parent_keeps_existing_conflict(tmp_path) -> None:
+    (tmp_path / "model.safetensors").write_text("", encoding="utf-8")
+    parent_id = submit(
+        {
+            "prompt": "running variants",
+            "batch_size": 2,
+            "batch_seed_mode": "independent",
+        }
+    )
+    with patch(
+        "app.core.queue.get_settings",
+        return_value=_settings_for_checkpoint_dir(tmp_path),
+    ):
+        _process_pending(_FakeComfy())
+
+    with pytest.raises(ValueError, match="執行中"):
+        q.cancel(parent_id)
+    assert len(q._pending) == 1
 
 
 def test_get_status_empty_initially() -> None:

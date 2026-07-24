@@ -48,6 +48,7 @@ class GenerateRequest(BaseModel):
     cfg: float | None = Field(default=None, ge=1.0, le=30.0)
     use_workflow_defaults: bool = False
     seed_mode: Literal["workflow_default", "random", "fixed"] | None = None
+    batch_seed_mode: Literal["shared", "independent"] = "shared"
     width: int | None = Field(default=None, ge=256, le=2048)
     height: int | None = Field(default=None, ge=256, le=2048)
     batch_size: int | None = Field(default=None, ge=1, le=8)
@@ -58,6 +59,17 @@ class GenerateRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_seed_controls(self) -> "GenerateRequest":
+        if self.batch_seed_mode == "independent":
+            if self.seed is not None:
+                raise PydanticCustomError(
+                    "invalid_batch_seed_mode",
+                    "independent batch seed mode requires backend-owned random seeds",
+                )
+            if self.seed_mode in ("fixed", "workflow_default"):
+                raise PydanticCustomError(
+                    "invalid_batch_seed_mode",
+                    "independent batch seed mode accepts only implicit or random seed selection",
+                )
         if self.seed_mode is None:
             if self.use_workflow_defaults:
                 raise PydanticCustomError("invalid_seed_mode", "seed_mode is required when use_workflow_defaults is true")
@@ -86,6 +98,11 @@ class QueueItem(BaseModel):
     status: str
     submitted_at: str | None = None
     prompt_id: str | None = None
+    batch_total: int | None = None
+    batch_completed: int | None = None
+    batch_failed: int | None = None
+    current_batch_index: int | None = None
+    failed_members: list[dict[str, Any]] | None = None
 
 
 class QueueStatusResponse(BaseModel):
@@ -147,6 +164,19 @@ class GenerateCustomRequest(BaseModel):
         default=None,
         description="VAELoader.vae_name；省略時沿用 workflow JSON 既有值",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_independent_batch_seed_mode(cls, data: Any) -> Any:
+        if (
+            isinstance(data, dict)
+            and data.get("batch_seed_mode") == "independent"
+        ):
+            raise PydanticCustomError(
+                "invalid_batch_seed_mode",
+                "independent batch seed mode only supports normal template generation",
+            )
+        return data
 
 
 class GenerateVideoCustomRequest(GenerateCustomRequest):

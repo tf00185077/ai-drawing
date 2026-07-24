@@ -10,6 +10,9 @@ from .config import Config, load_config
 from .views import PresetView
 
 DISCORD_UPLOAD_LIMIT_BYTES = 24 * 1024 * 1024
+DISCORD_MESSAGE_LIMIT = 2000
+MAX_FAILED_MEMBER_DETAILS = 4
+MAX_FAILURE_REASON_CHARS = 160
 JOB_ID_PATTERN = re.compile(
     r"(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-"
     r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])"
@@ -22,6 +25,59 @@ def normalize_job_id(value: str) -> str | None:
     if len(matches) != 1:
         return None
     return matches[0].lower()
+
+
+def _mixed_batch_warning(outcome: dict) -> str | None:
+    failed = (
+        outcome.get("batch_failed")
+        if type(outcome.get("batch_failed")) is int
+        else 0
+    )
+    if failed <= 0:
+        return None
+    total = (
+        outcome.get("batch_total")
+        if type(outcome.get("batch_total")) is int
+        else 0
+    )
+    completed = (
+        outcome.get("batch_completed")
+        if type(outcome.get("batch_completed")) is int
+        else 0
+    )
+    raw_members = outcome.get("failed_members")
+    members = (
+        [item for item in raw_members if isinstance(item, dict)]
+        if isinstance(raw_members, list)
+        else []
+    )
+    members = sorted(
+        enumerate(members),
+        key=lambda pair: (
+            pair[1].get("batch_index")
+            if type(pair[1].get("batch_index")) is int
+            else 2**31,
+            pair[0],
+        ),
+    )
+    details: list[str] = []
+    for _, member in members[:MAX_FAILED_MEMBER_DETAILS]:
+        batch_index = member.get("batch_index")
+        ordinal = batch_index + 1 if type(batch_index) is int else "?"
+        raw_reason = member.get("message") or member.get("code")
+        reason = (
+            raw_reason if isinstance(raw_reason, str) else "未知錯誤"
+        )[:MAX_FAILURE_REASON_CHARS]
+        details.append(f"第 {ordinal} 張：{reason}")
+    omitted = max(failed - len(details), len(members) - len(details), 0)
+    if omitted:
+        details.append(f"其餘 {omitted} 張失敗已省略")
+    suffix = f"（{'；'.join(details)}）" if details else ""
+    warning = (
+        f"⚠️ 本輪已完成：成功 {completed}/{total}；"
+        f"失敗 {failed}/{total}{suffix}"
+    )
+    return warning[:DISCORD_MESSAGE_LIMIT]
 
 
 def build_bot(config: Config):
@@ -75,8 +131,30 @@ def build_bot(config: Config):
             await interaction.followup.send(f"⏳ 狀態：{status}，尚未完成")
             return
         if status == "failed":
-            errs = "；".join(str(x) for x in (outcome.get("node_errors") or []))
-            detail = errs or outcome.get("error") or "未知錯誤"
+            batch_detail = _mixed_batch_warning(outcome)
+            if batch_detail:
+                batch_detail = batch_detail.removeprefix("⚠️ 本輪已完成：")
+                detail = batch_detail
+            else:
+                raw_node_errors = outcome.get("node_errors")
+                node_reasons = []
+                if isinstance(raw_node_errors, list):
+                    for item in raw_node_errors[:MAX_FAILED_MEMBER_DETAILS]:
+                        raw_reason = (
+                            item.get("reason")
+                            if isinstance(item, dict)
+                            else item
+                        )
+                        if isinstance(raw_reason, str):
+                            node_reasons.append(
+                                raw_reason[:MAX_FAILURE_REASON_CHARS]
+                            )
+                errs = "；".join(node_reasons)
+                detail = (
+                    errs
+                    or outcome.get("error")
+                    or "未知錯誤"
+                )
             await interaction.followup.send(f"❌ 生圖失敗：{detail}")
             return
 
@@ -89,10 +167,13 @@ def build_bot(config: Config):
         if total > DISCORD_UPLOAD_LIMIT_BYTES:
             links = "\n".join(outcome.get("urls") or [])
             await interaction.followup.send(f"✅ 完成，共 {len(images)} 張（檔案過大，改附連結）：\n{links}")
-            return
+        else:
+            files = [discord.File(io.BytesIO(data), filename=name) for name, data in images]
+            await interaction.followup.send(f"✅ 完成，共 {len(files)} 張", files=files)
 
-        files = [discord.File(io.BytesIO(data), filename=name) for name, data in images]
-        await interaction.followup.send(f"✅ 完成，共 {len(files)} 張", files=files)
+        warning = _mixed_batch_warning(outcome)
+        if warning:
+            await interaction.followup.send(warning)
 
     @client.event
     async def on_ready():

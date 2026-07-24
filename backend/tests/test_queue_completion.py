@@ -1,5 +1,6 @@
 """harden-queue-completion：終局狀態處理（不再靜默消失）"""
 from pathlib import Path
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -189,3 +190,77 @@ def test_save_job_outputs_copies_video_artifact_to_gallery(tmp_path, monkeypatch
     assert artifact.negative_prompt == "blur"
     assert artifact.metadata_json == '{"output_key": "gifs"}'
     assert (gallery_dir / artifact.gallery_path).read_bytes() == b"video bytes"
+
+
+def test_independent_children_with_same_source_filename_do_not_collide(
+    tmp_path, monkeypatch
+) -> None:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    gallery_dir = tmp_path / "gallery"
+
+    monkeypatch.setattr(q, "SessionLocal", session_factory)
+    monkeypatch.setattr(
+        q, "get_settings", lambda: SimpleNamespace(gallery_dir=str(gallery_dir))
+    )
+    fake = MagicMock()
+    fake.fetch_image.return_value = b"same source bytes"
+    parent_id = "parent123456789"
+
+    for batch_index, seed in enumerate((101, 202, 303, 404)):
+        job = q._Job(
+            execution_id=f"execution-{batch_index}",
+            public_job_id=parent_id,
+            batch_index=batch_index,
+            params={
+                "prompt": "variant",
+                "seed": seed,
+                "workflow_json": {
+                    "3": {"class_type": "KSampler", "inputs": {"seed": seed}},
+                    "9": {"class_type": "SaveImage", "inputs": {}},
+                },
+            },
+            submitted_at="t",
+        )
+        assert (
+            q._save_job_outputs(
+                fake,
+                job,
+                [
+                    {
+                        "filename": "ComfyUI.png",
+                        "artifact_type": "image",
+                        "mime_type": "image/png",
+                        "source_node_id": "9",
+                        "source_node_type": "SaveImage",
+                        "output_key": "images",
+                    }
+                ],
+            )
+            == 1
+        )
+
+    with session_factory() as db:
+        images = db.query(GeneratedImage).order_by(GeneratedImage.id.asc()).all()
+        artifacts = (
+            db.query(GeneratedArtifact).order_by(GeneratedArtifact.id.asc()).all()
+        )
+
+    assert len({image.image_path for image in images}) == 4
+    assert {image.job_id for image in images} == {parent_id}
+    assert [image.seed for image in images] == [101, 202, 303, 404]
+    assert [
+        json.loads(artifact.metadata_json)["batch_index"]
+        for artifact in artifacts
+    ] == [0, 1, 2, 3]
+    assert [
+        json.loads(artifact.metadata_json)["seed"] for artifact in artifacts
+    ] == [101, 202, 303, 404]
+    assert all(artifact.source_node_type == "SaveImage" for artifact in artifacts)
+    assert all(parent_id in Path(image.image_path).name for image in images)
+    assert all((gallery_dir / image.image_path).is_file() for image in images)

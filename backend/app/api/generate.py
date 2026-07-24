@@ -3,6 +3,7 @@
 ComfyUI API 串接、Workflow 模板、批次排程
 契約：docs/api-contract.md
 """
+import json
 from pathlib import Path
 from typing import cast
 
@@ -18,10 +19,17 @@ from app.core.resources import (
     list_text_encoders,
     list_vaes,
 )
+from app.core.generation_batches import (
+    get_batch_status as get_persisted_batch_status,
+)
 from app.core.queue import QueueFullError, GenerateParams, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.core.wan_keyframes import build_wan_keyframe_workflow
 from app.db.database import get_db
-from app.db.models import GeneratedArtifact, GeneratedImage
+from app.db.models import (
+    GeneratedArtifact,
+    GeneratedImage,
+    GenerationBatchMember,
+)
 from app.schemas.generate import (
     GenerateCustomRequest,
     GenerateRequest,
@@ -91,6 +99,8 @@ async def trigger_generate(body: GenerateRequest):
             params["use_workflow_defaults"] = True
         if body.seed_mode is not None:
             params["seed_mode"] = body.seed_mode
+        if "batch_seed_mode" in body.model_fields_set:
+            params["batch_seed_mode"] = body.batch_seed_mode
         if body.template is not None:
             params["template"] = body.template
         if body.diffusion_model is not None:
@@ -277,10 +287,16 @@ async def get_workflow_template(name: str):
         return json.load(f)
 
 
-@router.get("/queue", response_model=QueueStatusResponse)
+@router.get(
+    "/queue",
+    response_model=QueueStatusResponse,
+    response_model_exclude_unset=True,
+)
 async def get_queue_status():
     """取得生圖佇列狀態"""
     status = get_status()
+    for item in (*status["queue_running"], *status["queue_pending"]):
+        item.setdefault("prompt_id", None)
     return QueueStatusResponse(
         queue_running=status["queue_running"],
         queue_pending=status["queue_pending"],
@@ -299,6 +315,15 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
             "prompt_id": queue_status.get("prompt_id"),
             "submitted_at": queue_status.get("submitted_at"),
         }
+        for key in (
+            "batch_total",
+            "batch_completed",
+            "batch_failed",
+            "current_batch_index",
+            "failed_members",
+        ):
+            if key in queue_status:
+                resp[key] = queue_status.get(key)
         if queue_status["status"] == "failed":
             # 自訂 workflow 被 ComfyUI 拒絕時，回傳結構化 node_errors 供 agent 修正重送
             resp["error"] = queue_status.get("error")
@@ -306,7 +331,10 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
             resp["recording_error"] = queue_status.get("recording_error")
         return resp
 
-    # 2. 查 DB（completed）
+    # 2. Durable independent parent/member state wins over artifact inference.
+    batch_status = get_persisted_batch_status(db, job_id)
+
+    # 3. 查 DB artifacts/images.
     artifacts = (
         db.query(GeneratedArtifact)
         .filter(GeneratedArtifact.job_id == job_id)
@@ -314,7 +342,48 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         .all()
     )
     image_record = db.query(GeneratedImage).filter_by(job_id=job_id).first()
-    if artifacts or image_record:
+
+    def artifact_metadata(artifact: GeneratedArtifact) -> dict:
+        if not artifact.metadata_json:
+            return {}
+        try:
+            value = json.loads(artifact.metadata_json)
+        except (TypeError, ValueError):
+            return {}
+        return value if isinstance(value, dict) else {}
+
+    if batch_status is not None:
+        completed_indices = {
+            batch_index
+            for (batch_index,) in (
+                db.query(GenerationBatchMember.batch_index)
+                .filter(
+                    GenerationBatchMember.public_job_id == job_id,
+                    GenerationBatchMember.status == "completed",
+                )
+                .all()
+            )
+        }
+        artifacts = [
+            artifact
+            for artifact in artifacts
+            if artifact.source_node_type == "SaveImage"
+            and artifact_metadata(artifact).get("batch_index")
+            in completed_indices
+        ]
+        artifacts = sorted(
+            artifacts,
+            key=lambda artifact: (
+                artifact_metadata(artifact).get("batch_index")
+                if isinstance(
+                    artifact_metadata(artifact).get("batch_index"), int
+                )
+                else 2**31,
+                artifact.id,
+            ),
+        )
+
+    if batch_status is not None or artifacts or image_record:
         artifact_items = [
             {
                 "id": artifact.id,
@@ -325,20 +394,38 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
                 "job_id": artifact.job_id,
                 "source_node_id": artifact.source_node_id,
                 "source_node_type": artifact.source_node_type,
+                **(
+                    {
+                        "batch_index": artifact_metadata(artifact).get(
+                            "batch_index"
+                        ),
+                        "seed": artifact_metadata(artifact).get("seed"),
+                    }
+                    if (
+                        artifact_metadata(artifact).get("batch_index")
+                        is not None
+                        or artifact_metadata(artifact).get("seed") is not None
+                    )
+                    else {}
+                ),
             }
             for artifact in artifacts
         ]
-        resp = {
-            "status": "completed",
-            "job_id": job_id,
-            "artifacts": artifact_items,
-        }
-        if image_record:
+        resp = (
+            {**batch_status, "artifacts": artifact_items}
+            if batch_status is not None
+            else {
+                "status": "completed",
+                "job_id": job_id,
+                "artifacts": artifact_items,
+            }
+        )
+        if image_record and batch_status is None:
             resp["image_id"] = image_record.id
             resp["image_path"] = image_record.image_path
         return resp
 
-    # 3. 找不到
+    # 4. 找不到
     raise HTTPException(404, f"Job not found: {job_id}")
 
 

@@ -1,4 +1,5 @@
 """生圖 API 端點測試"""
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -11,7 +12,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.queue import _reset_for_test
 from app.core.recording import save
 from app.db.database import Base, get_db
-from app.db.models import GeneratedArtifact
+from app.db.models import GeneratedArtifact, GeneratedImage
 from app.main import app
 
 
@@ -44,6 +45,98 @@ def test_post_generate_returns_503_when_queue_full(client) -> None:
     assert r.status_code == 503
 
 
+def test_post_generate_omitted_batch_seed_mode_preserves_legacy_queue_payload(client) -> None:
+    with patch("app.api.generate.submit", return_value="job-shared") as mock_submit:
+        response = client.post(
+            "/api/generate/",
+            json={"prompt": "legacy batch", "batch_size": 4},
+        )
+
+    assert response.status_code == 201
+    params = mock_submit.call_args.args[0]
+    assert params["batch_size"] == 4
+    assert "batch_seed_mode" not in params
+
+
+def test_post_generate_forwards_independent_random_batch_mode(client) -> None:
+    with patch("app.api.generate.submit", return_value="job-independent") as mock_submit:
+        response = client.post(
+            "/api/generate/",
+            json={
+                "prompt": "independent batch",
+                "batch_size": 4,
+                "batch_seed_mode": "independent",
+            },
+        )
+
+    assert response.status_code == 201
+    params = mock_submit.call_args.args[0]
+    assert params["batch_size"] == 4
+    assert params["batch_seed_mode"] == "independent"
+    assert "seed" not in params
+
+
+def test_post_generate_forwards_explicit_shared_batch_mode(client) -> None:
+    with patch("app.api.generate.submit", return_value="job-shared") as mock_submit:
+        response = client.post(
+            "/api/generate/",
+            json={
+                "prompt": "shared batch",
+                "batch_size": 4,
+                "batch_seed_mode": "shared",
+                "seed_mode": "fixed",
+                "seed": 123,
+            },
+        )
+
+    assert response.status_code == 201
+    params = mock_submit.call_args.args[0]
+    assert params["batch_seed_mode"] == "shared"
+    assert params["seed_mode"] == "fixed"
+    assert params["seed"] == 123
+
+
+def test_post_generate_rejects_independent_fixed_seed_mode(client) -> None:
+    response = client.post(
+        "/api/generate/",
+        json={
+            "prompt": "invalid independent batch",
+            "batch_seed_mode": "independent",
+            "seed_mode": "fixed",
+            "seed": 123,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_post_generate_rejects_independent_workflow_default_seed_mode(client) -> None:
+    response = client.post(
+        "/api/generate/",
+        json={
+            "prompt": "invalid independent batch",
+            "batch_seed_mode": "independent",
+            "use_workflow_defaults": True,
+            "seed_mode": "workflow_default",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_post_generate_rejects_independent_explicit_seed(client) -> None:
+    response = client.post(
+        "/api/generate/",
+        json={
+            "prompt": "invalid independent batch",
+            "batch_seed_mode": "independent",
+            "seed": 123,
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_get_queue_returns_valid_structure(client) -> None:
     """GET /api/generate/queue 回傳正確結構"""
     r = client.get("/api/generate/queue")
@@ -53,6 +146,53 @@ def test_get_queue_returns_valid_structure(client) -> None:
     assert "queue_pending" in data
     assert isinstance(data["queue_running"], list)
     assert isinstance(data["queue_pending"], list)
+
+
+def test_get_queue_preserves_additive_independent_batch_progress(client) -> None:
+    aggregate = {
+        "job_id": "parent-queue",
+        "status": "running",
+        "submitted_at": "2026-07-25T01:02:03Z",
+        "prompt_id": "prompt-2",
+        "batch_total": 4,
+        "batch_completed": 1,
+        "batch_failed": 1,
+        "current_batch_index": 2,
+        "failed_members": [
+            {
+                "batch_index": 1,
+                "seed": 22,
+                "code": "comfyui_execution_error",
+                "message": "failed",
+            }
+        ],
+    }
+    with patch(
+        "app.api.generate.get_status",
+        return_value={"queue_running": [aggregate], "queue_pending": []},
+    ):
+        response = client.get("/api/generate/queue")
+
+    assert response.status_code == 200
+    assert response.json()["queue_running"] == [aggregate]
+
+
+def test_get_queue_preserves_legacy_shared_item_shape(client) -> None:
+    legacy = {
+        "job_id": "shared-job",
+        "status": "queued",
+        "submitted_at": "2026-07-25T01:02:03Z",
+        "prompt_id": None,
+    }
+    queue_item = {key: value for key, value in legacy.items() if key != "prompt_id"}
+    with patch(
+        "app.api.generate.get_status",
+        return_value={"queue_running": [], "queue_pending": [queue_item]},
+    ):
+        response = client.get("/api/generate/queue")
+
+    assert response.status_code == 200
+    assert response.json()["queue_pending"] == [legacy]
 
 
 def test_available_resources_includes_empty_video_categories(client) -> None:
@@ -108,6 +248,19 @@ def test_post_generate_custom_returns_201(client) -> None:
     data = r.json()
     assert "job_id" in data
     assert "自訂" in (data.get("message") or "")
+
+
+def test_post_generate_custom_rejects_independent_batch_seed_mode(client) -> None:
+    response = client.post(
+        "/api/generate/custom",
+        json={
+            "workflow": {"3": {"class_type": "KSampler", "inputs": {}}},
+            "prompt": "immutable custom graph",
+            "batch_seed_mode": "independent",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_post_generate_forwards_loras_to_queue(client) -> None:
@@ -332,6 +485,211 @@ def test_get_job_status_preserves_legacy_image_fields() -> None:
     ]
 
 
+def test_get_job_status_returns_only_completed_saveimage_artifacts() -> None:
+    from app.core.generation_batches import create_batch, mark_member_terminal
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    session_factory = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
+
+    def override_get_db():
+        db = session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    with session_factory() as db:
+        create_batch(
+            db,
+            public_job_id="parent-mixed-api",
+            execution_ids=("a", "b", "c", "d"),
+            seeds=(10, 20, 30, 40),
+            submitted_at="2026-07-25T01:02:03Z",
+        )
+        for batch_index in (0, 1, 2):
+            mark_member_terminal(
+                db,
+                public_job_id="parent-mixed-api",
+                batch_index=batch_index,
+                succeeded=True,
+            )
+        mark_member_terminal(
+            db,
+            public_job_id="parent-mixed-api",
+            batch_index=3,
+            succeeded=False,
+            failure_code="comfyui_execution_error",
+            failure_message="sampler failed",
+        )
+        db.add_all(
+            [
+                GeneratedArtifact(
+                    job_id="parent-mixed-api",
+                    artifact_type="image",
+                    gallery_path="2026-07-25/member-2.png",
+                    mime_type="image/png",
+                    source_node_type="SaveImage",
+                    metadata_json=json.dumps(
+                        {"batch_index": 2, "seed": 30}
+                    ),
+                ),
+                GeneratedArtifact(
+                    job_id="parent-mixed-api",
+                    artifact_type="image",
+                    gallery_path="2026-07-25/preview-0.png",
+                    mime_type="image/png",
+                    source_node_type="PreviewImage",
+                    metadata_json=json.dumps(
+                        {"batch_index": 0, "seed": 10}
+                    ),
+                ),
+                GeneratedArtifact(
+                    job_id="parent-mixed-api",
+                    artifact_type="image",
+                    gallery_path="2026-07-25/member-0.png",
+                    mime_type="image/png",
+                    source_node_type="SaveImage",
+                    metadata_json=json.dumps(
+                        {"batch_index": 0, "seed": 10}
+                    ),
+                ),
+                GeneratedArtifact(
+                    job_id="parent-mixed-api",
+                    artifact_type="image",
+                    gallery_path="2026-07-25/member-1.png",
+                    mime_type="image/png",
+                    source_node_type="SaveImage",
+                    metadata_json=json.dumps(
+                        {"batch_index": 1, "seed": 20}
+                    ),
+                ),
+                GeneratedArtifact(
+                    job_id="parent-mixed-api",
+                    artifact_type="image",
+                    gallery_path="2026-07-25/leaked-failed-member.png",
+                    mime_type="image/png",
+                    source_node_type="SaveImage",
+                    metadata_json=json.dumps(
+                        {"batch_index": 3, "seed": 40}
+                    ),
+                ),
+            ]
+        )
+        db.commit()
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        response = TestClient(app).get(
+            "/api/generate/job/parent-mixed-api"
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "completed"
+    assert data["batch_total"] == 4
+    assert data["batch_completed"] == 3
+    assert data["batch_failed"] == 1
+    assert data["failed_members"] == [
+        {
+            "batch_index": 3,
+            "seed": 40,
+            "code": "comfyui_execution_error",
+            "message": "sampler failed",
+        }
+    ]
+    assert [item["gallery_path"] for item in data["artifacts"]] == [
+        "2026-07-25/member-0.png",
+        "2026-07-25/member-1.png",
+        "2026-07-25/member-2.png",
+    ]
+    assert [item["batch_index"] for item in data["artifacts"]] == [0, 1, 2]
+    assert [item["seed"] for item in data["artifacts"]] == [10, 20, 30]
+
+
+def test_get_job_status_persisted_all_failed_batch_returns_no_artifacts() -> None:
+    from app.core.generation_batches import create_batch, mark_member_terminal
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    session_factory = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine
+    )
+
+    def override_get_db():
+        db = session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    with session_factory() as db:
+        create_batch(
+            db,
+            public_job_id="parent-all-failed",
+            execution_ids=("a", "b"),
+            seeds=(10, 20),
+            submitted_at="2026-07-25T01:02:03Z",
+        )
+        for batch_index in (0, 1):
+            mark_member_terminal(
+                db,
+                public_job_id="parent-all-failed",
+                batch_index=batch_index,
+                succeeded=False,
+                failure_code="comfyui_execution_error",
+                failure_message=f"member {batch_index} failed",
+            )
+        db.add(
+            GeneratedArtifact(
+                job_id="parent-all-failed",
+                artifact_type="image",
+                gallery_path="2026-07-25/leaked-partial-recording.png",
+                mime_type="image/png",
+                source_node_type="SaveImage",
+                metadata_json=json.dumps(
+                    {"batch_index": 0, "seed": 10}
+                ),
+            )
+        )
+        db.add(
+            GeneratedImage(
+                job_id="parent-all-failed",
+                image_path="2026-07-25/leaked-partial-recording.png",
+                seed=10,
+            )
+        )
+        db.commit()
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        response = TestClient(app).get(
+            "/api/generate/job/parent-all-failed"
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "failed"
+    assert data["batch_total"] == 2
+    assert data["batch_completed"] == 0
+    assert data["batch_failed"] == 2
+    assert data["artifacts"] == []
+    assert "image_id" not in data
+    assert "image_path" not in data
 def test_get_workflow_templates_returns_list(client) -> None:
     """GET /api/generate/workflow-templates 回傳模板列表"""
     r = client.get("/api/generate/workflow-templates")

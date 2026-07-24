@@ -1,5 +1,6 @@
 """自動記錄 Pipeline 單元測試"""
 import pytest
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -66,6 +67,31 @@ def test_save_creates_record_with_minimal_params(db_session) -> None:
     assert record.prompt is None
     assert record.negative_prompt is None
     assert record.created_at is not None
+
+
+def test_save_persists_independent_member_artifact_metadata(db_session) -> None:
+    record = save(
+        image_path="2026-07-25/member.png",
+        job_id="parent-job",
+        seed=987654,
+        artifact_metadata={"batch_index": 2, "seed": 987654},
+        artifact_source_node_id="9",
+        artifact_source_node_type="SaveImage",
+        db=db_session,
+    )
+
+    artifact = (
+        db_session.query(GeneratedArtifact)
+        .filter(GeneratedArtifact.job_id == "parent-job")
+        .one()
+    )
+    assert record.job_id == "parent-job"
+    assert record.seed == 987654
+    assert json.loads(artifact.metadata_json) == {
+        "batch_index": 2,
+        "seed": 987654,
+    }
+    assert artifact.source_node_type == "SaveImage"
 
 
 def test_save_artifact_persists_video_metadata(db_session) -> None:
