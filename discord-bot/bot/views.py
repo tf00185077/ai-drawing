@@ -50,6 +50,9 @@ class DrawModal(discord.ui.Modal, title="生圖設定"):
         except BackendError as exc:
             await interaction.followup.send(f"❌ {exc}", ephemeral=True)
             return
+        except Exception:
+            await interaction.followup.send("❌ 後端連不上，請確認 backend 有啟動", ephemeral=True)
+            return
         await interaction.followup.send(
             f"✅ 已排入生圖（{count} 張）\njob id：`{job_id}`\n用 `/result id:{job_id}` 查詢結果",
             ephemeral=True,

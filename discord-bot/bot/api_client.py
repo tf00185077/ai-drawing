@@ -82,6 +82,8 @@ class ApiClient:
                 "error": job.get("error"),
                 "node_errors": job.get("node_errors", []),
             }
+        if status != "completed":
+            return {"status": status}
         items = await self.list_job_images(job_id)
         images: list[tuple[str, bytes]] = []
         urls: list[str] = []

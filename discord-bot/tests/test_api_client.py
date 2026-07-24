@@ -182,3 +182,39 @@ async def test_collect_job_result_completed_downloads_all():
     assert [name for name, _ in out["images"]] == ["a.png", "b.png"]
     assert [data for _, data in out["images"]] == [b"AAA", b"BBB"]
     assert out["urls"] == ["http://test/gallery/a.png", "http://test/gallery/b.png"]
+
+
+async def test_collect_job_result_unknown_status_does_not_download():
+    calls = {"gallery": 0}
+
+    def handler(req):
+        if req.url.path.startswith("/api/generate/job/"):
+            return httpx.Response(200, json={"status": "weird"})
+        if req.url.path == "/api/gallery/":
+            calls["gallery"] += 1
+            return httpx.Response(200, json={"items": [], "total": 0})
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    out = await api.collect_job_result("Jxxxxxxx")
+    assert out == {"status": "weird"}
+    assert calls["gallery"] == 0
+
+
+async def test_collect_job_result_completed_skips_items_without_image_url():
+    def handler(req):
+        if req.url.path.startswith("/api/generate/job/"):
+            return httpx.Response(200, json={"status": "completed"})
+        if req.url.path == "/api/gallery/":
+            return httpx.Response(200, json={"items": [
+                {"id": 1, "image_url": "/gallery/a.png"},
+                {"id": 2},
+            ], "total": 2})
+        if req.url.path == "/gallery/a.png":
+            return httpx.Response(200, content=b"AAA")
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    out = await api.collect_job_result("Jyyyyyyy")
+    assert [n for n, _ in out["images"]] == ["a.png"]
+    assert out["urls"] == ["http://test/gallery/a.png"]
