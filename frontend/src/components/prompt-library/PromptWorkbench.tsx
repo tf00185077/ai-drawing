@@ -3,6 +3,7 @@ import type { PromptPolarity } from "../../types/api";
 import { appendFragment, emptyComposition, moveFragment, reconcileComposedText, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
+import type { EntryEditorValue } from "./PromptEntryEditor";
 import PromptOverview from "./PromptOverview";
 
 interface CombinationVersion {
@@ -121,12 +122,59 @@ export default function PromptWorkbench() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
   }
 
+  async function saveEntry(value: EntryEditorValue, mode: "create" | "edit") {
+    if (!category) return;
+    setError("");
+    const body = {
+      ...value.fields,
+      expected_revision: category.revision,
+      ...(category.etag ? { expected_etag: category.etag } : {}),
+    };
+    const response = await fetch(`/api/prompt-library/categories/${category.polarity}/${category.id}/entries/${encodeURIComponent(value.id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data?.detail?.message || `HTTP ${response.status}`;
+      setError(String(message));
+      throw new Error(String(message));
+    }
+    await openCategory(category);
+  }
+
+  async function archiveEntry(entry: BrowserEntry) {
+    if (!category) return;
+    setError("");
+    const body = {
+      resource_type: "entry",
+      resource_id: entry.id,
+      polarity: category.polarity,
+      category_id: category.id,
+      expected_revision: category.revision,
+      ...(category.etag ? { expected_etag: category.etag } : {}),
+    };
+    const response = await fetch("/api/prompt-library/archive", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data?.detail?.message || `HTTP ${response.status}`;
+      setError(String(message));
+      throw new Error(String(message));
+    }
+    await openCategory(category);
+  }
+
   return (
     <div className="space-y-6">
       <header><h1 className="text-2xl font-bold text-white">Prompt Workbench</h1><p className="mt-1 text-sm text-slate-400">選取詞條後即時建立正向與負向 Prompt，並可在右側微調。</p></header>
       {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
-        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
+        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} onSaveEntry={saveEntry} onArchiveEntry={archiveEntry} />
         <PromptOverview positive={positive} negative={negative} positiveActions={actions(setPositive)} negativeActions={actions(setNegative)} />
       </div>
       <section className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
