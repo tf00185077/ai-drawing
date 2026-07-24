@@ -71,6 +71,101 @@ class GeneratedArtifact(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class GenerationBatch(Base):
+    """Durable aggregate state for one public independent generation batch."""
+
+    __tablename__ = "generation_batches"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('queued', 'running', 'completed', 'failed')",
+            name="ck_generation_batch_status",
+        ),
+        CheckConstraint("batch_total > 0", name="ck_generation_batch_total"),
+        CheckConstraint(
+            "batch_completed >= 0 AND batch_failed >= 0",
+            name="ck_generation_batch_counts",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    public_job_id = Column(String(64), nullable=False, unique=True, index=True)
+    batch_seed_mode = Column(
+        String(32), nullable=False, default="independent"
+    )
+    status = Column(String(32), nullable=False, default="queued", index=True)
+    batch_total = Column(Integer, nullable=False)
+    batch_completed = Column(Integer, nullable=False, default=0)
+    batch_failed = Column(Integer, nullable=False, default=0)
+    current_batch_index = Column(Integer, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class GenerationBatchMember(Base):
+    """Durable terminal ledger for one private independent execution."""
+
+    __tablename__ = "generation_batch_members"
+    __table_args__ = (
+        UniqueConstraint(
+            "public_job_id",
+            "batch_index",
+            name="uq_generation_batch_member_ordinal",
+        ),
+        UniqueConstraint(
+            "public_job_id",
+            "seed",
+            name="uq_generation_batch_member_seed",
+        ),
+        CheckConstraint(
+            "status IN ('queued', 'running', 'completed', 'failed')",
+            name="ck_generation_batch_member_status",
+        ),
+        CheckConstraint(
+            "batch_index >= 0",
+            name="ck_generation_batch_member_ordinal",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    public_job_id = Column(
+        String(64),
+        ForeignKey("generation_batches.public_job_id"),
+        nullable=False,
+        index=True,
+    )
+    execution_id = Column(String(64), nullable=False, unique=True, index=True)
+    batch_index = Column(Integer, nullable=False)
+    seed = Column(BigInteger, nullable=False)
+    status = Column(String(32), nullable=False, default="queued", index=True)
+    failure_code = Column(String(64), nullable=True)
+    failure_message = Column(Text, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
 class CivitaiSourceAliasBackfillCandidate(Base):
     """CIV-SA-Y durable Gallery-only pending-name candidate; it never reserves aliases."""
     __tablename__ = "civitai_source_alias_backfill_candidates"

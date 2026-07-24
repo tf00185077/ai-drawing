@@ -177,6 +177,7 @@ async def test_compose_and_submit_overrides_full_edited_prompts():
         "height": 600,
         "batch_size": 3,
     }
+    assert calls["generation"]["batch_seed_mode"] == "independent"
 
 
 async def test_compose_and_submit_allows_user_to_clear_negative_prompt():
@@ -279,6 +280,106 @@ async def test_collect_job_result_prefers_saveimage_artifacts_over_preview_image
     assert out["status"] == "completed"
     assert out["images"] == [("final_0.png", b"FINAL")]
     assert out["urls"] == ["http://test/gallery/2026-07-24/final_0.png"]
+
+
+async def test_independent_preview_only_result_never_uses_legacy_gallery_fallback():
+    job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
+
+    def handler(req):
+        if req.url.path == f"/api/generate/job/{job_id}":
+            return httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "batch_total": 1,
+                    "batch_completed": 1,
+                    "batch_failed": 0,
+                    "artifacts": [
+                        {
+                            "source_node_type": "PreviewImage",
+                            "mime_type": "image/png",
+                            "gallery_path": "2026-07-25/preview-only.png",
+                        }
+                    ],
+                },
+            )
+        if req.url.path == "/api/gallery/":
+            raise AssertionError(
+                "independent jobs must not re-enter legacy Gallery fallback"
+            )
+        if "preview-only" in req.url.path:
+            raise AssertionError("PreviewImage must not be delivered")
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    out = await api.collect_job_result(job_id)
+
+    assert out["status"] == "completed"
+    assert out["images"] == []
+    assert out["urls"] == []
+
+
+async def test_collect_job_result_returns_mixed_counts_and_failed_members():
+    job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
+
+    def handler(req):
+        if req.url.path == f"/api/generate/job/{job_id}":
+            return httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "batch_total": 4,
+                    "batch_completed": 3,
+                    "batch_failed": 1,
+                    "failed_members": [
+                        {
+                            "batch_index": 1,
+                            "seed": 22,
+                            "code": "comfyui_execution_error",
+                            "message": "ComfyUI execution error",
+                        }
+                    ],
+                    "artifacts": [
+                        {
+                            "source_node_type": "SaveImage",
+                            "mime_type": "image/png",
+                            "gallery_path": f"2026-07-25/final-{index}.png",
+                            "batch_index": index,
+                        }
+                        for index in (0, 2, 3)
+                    ]
+                    + [
+                        {
+                            "source_node_type": "PreviewImage",
+                            "mime_type": "image/png",
+                            "gallery_path": "2026-07-25/preview.png",
+                            "batch_index": 0,
+                        }
+                    ],
+                },
+            )
+        if req.url.path.startswith("/gallery/2026-07-25/final-"):
+            return httpx.Response(200, content=b"FINAL")
+        if "preview" in req.url.path:
+            raise AssertionError("PreviewImage must not be delivered")
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    out = await api.collect_job_result(job_id)
+
+    assert out["status"] == "completed"
+    assert len(out["images"]) == 3
+    assert out["batch_total"] == 4
+    assert out["batch_completed"] == 3
+    assert out["batch_failed"] == 1
+    assert out["failed_members"] == [
+        {
+            "batch_index": 1,
+            "seed": 22,
+            "code": "comfyui_execution_error",
+            "message": "ComfyUI execution error",
+        }
+    ]
 
 
 async def test_collect_job_result_unknown_status_does_not_download():

@@ -1,5 +1,67 @@
 # 進度追蹤
 
+## 2026-07-25 Discord 獨立批次 Seed（OpenSpec: discord-independent-batch-seeds）
+
+已完成核准的 non-live 實作：Discord 維持既有 `/draw`、張數控制、單一公開
+parent job ID 與 `/result id:<job-id>`，最終 normal generation payload 改為
+`batch_seed_mode="independent"`。Backend 會在同一把 queue lock 內一次保留全部
+child slots、配置互不重複的 backend-owned seeds、建立 durable parent/member
+ledger，並依序排入 private execution ID 的 `batch_size=1` children。既有 API/MCP
+省略此欄位時仍走一個 shared ComfyUI batch；fixed、workflow-default、custom 與
+audited 路徑不會被重新解讀成 independent。
+
+Parent 從第一個 child 開始後保持 `running`，直到所有 members terminal；mixed
+結果只要至少一張成功即為 `completed`，全失敗才是 `failed`。child 失敗不取消
+siblings；計數、實際 seed、bounded/sanitized failure 與 restart reconciliation
+均持久化。成功 artifacts 只會從 completed members 回傳，按 child ordinal 再按
+artifact ID 排序；filename 使用完整 sanitized parent ID、child ordinal 與
+artifact index，metadata 保存 `batch_index`/seed 且保留 `source_node_type`。
+Discord 僅下載 parent 的 `SaveImage`，排除 preview，mixed 時先送成功檔案再送
+精簡警告，全失敗時亦呈現 durable aggregate counts 與 bounded member reasons，
+不會被最後一個 child 的 raw `node_errors` 取代。Independent child 只有實際
+`SaveImage` artifact 才算成功；preview-only child 失敗但不取消 siblings，Discord
+也不會讓 independent job 重新走 legacy Gallery fallback。ComfyUI `/queue` 暫時
+malformed 時保留 running slot 並用已知 prompt ID 查 history；terminal history
+照常處理，只有連續 15 次仍無法判定才 terminalize/release。
+
+### Non-live 驗證證據
+
+- 基線：`openspec validate --all --strict` 為 `12 passed, 0 failed`；Backend 為
+  `1084 passed, 1 failed`，唯一失敗是既有
+  `test_import_alias_failures_are_redacted_and_have_zero_registry_build_queue_side_effects`
+  的 `invalid_payload` code mismatch；Discord Bot 隔離依賴環境為 `44 passed`。
+- TDD/self-review 對 direct queue seed controls、malformed node/execution/history
+  responses、failed-member partial artifact/image leakage、legacy queue JSON shape、
+  full-parent filename identity與 all-failed Discord reporting 都先取得 RED，再做
+  focused GREEN。本輪另對 transient malformed queue 不提早啟動 sibling、terminal
+  history fallback、persistent queue/history uncertainty 最終釋放、aggregate
+  all-failed 與 preview-only/legacy-fallback 取得 RED→GREEN 證據。
+- 最終 focused Backend（generate、queue、completion/failure、durability、
+  recording、artifacts、ComfyUI、audited compatibility）為
+  `105 passed, 2 warnings`。
+- 最終完整 Backend 為 `1127 passed, 1 unchanged baseline failure, 77 warnings`；
+  feature focused tests 全綠，未修改該無關 Civitai alias failure。
+- 最終完整 Discord Bot 為 `49 passed, 6 warnings`；command set 仍精確為
+  `draw`、`result`。
+- Backend 與 Discord `compileall` 均通過；原始 generation-batch Alembic
+  revision 直接透過 Alembic Operations 在 isolated in-memory SQLite 完成
+  upgrade/downgrade。第二輪新增的完整 Alembic CLI environment/config 與
+  round-trip test infrastructure 不在目前產品範圍，已移除；repo 未配置額外
+  Python mypy/ruff/pyright gate。
+- `openspec validate discord-independent-batch-seeds --strict` valid；
+  `openspec validate --all --strict` 為 `13 passed, 0 failed`；
+  `git diff --check` 通過。
+- Worktree interpreter 未安裝 `discord.py`；完整 Discord suite 使用既有
+  read-only Hermes/Homebrew package paths 離線執行，未安裝依賴或連線 Gateway。
+
+Scoped review 已覆蓋 queue identity/status、不重啟遺失既有 terminal 3/1 結果、
+sibling continuation、output collision、seed uniqueness、cancel/capacity lock
+ordering、malformed queue/history 的 bounded slot retention/release、
+secret-bearing failure persistence，以及 shared/custom/audited/Discord command
+相容性。OpenSpec tasks 為 `30/33`：只有需要另行 CTY 核准的 live deployment/GPU E2E、
+archive，以及 integrate/push 三個 gates 保持未勾選。本輪未呼叫 live Backend
+或 ComfyUI、未提交 GPU job、未 restart/reload service、未釋放 ComfyUI 記憶體。
+
 ## 2026-07-24 Discord Bot 直呼本機生圖
 
 新增 `discord-bot/`（discord.py），使用者用 `/draw` 從既有 style preset（含 profile 變體）選畫風、

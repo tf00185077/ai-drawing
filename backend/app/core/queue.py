@@ -15,6 +15,8 @@ import threading
 import time
 import uuid
 from collections import OrderedDict
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
@@ -29,6 +31,14 @@ from app.core.comfyui import (
     get_comfy_client,
     structure_execution_error,
     structure_node_errors,
+)
+from app.core.generation_batches import (
+    cancel_queued_batch,
+    create_batch,
+    mark_member_running,
+    mark_member_terminal,
+    reconcile_interrupted_batches,
+    sanitize_failure_message,
 )
 from app.core.recording import save as recording_save, save_artifact as recording_save_artifact
 from app.core.resources import default_checkpoint
@@ -85,6 +95,7 @@ class GenerateParams(TypedDict, total=False):
     width: int
     height: int
     batch_size: int
+    batch_seed_mode: str
     sampler_name: str
     scheduler: str
     lora_strength: float
@@ -94,28 +105,88 @@ class GenerateParams(TypedDict, total=False):
 
 
 class _Job:
-    __slots__ = ("job_id", "params", "submitted_at", "prompt_id", "completion_polls")
+    __slots__ = (
+        "execution_id",
+        "public_job_id",
+        "batch_index",
+        "params",
+        "submitted_at",
+        "prompt_id",
+        "completion_polls",
+    )
 
-    def __init__(self, job_id: str, params: dict[str, Any], submitted_at: str):
-        self.job_id = job_id
-        self.params = params
+    def __init__(
+        self,
+        job_id: str | None = None,
+        params: dict[str, Any] | None = None,
+        submitted_at: str = "",
+        *,
+        execution_id: str | None = None,
+        public_job_id: str | None = None,
+        batch_index: int | None = None,
+    ):
+        legacy_id = job_id or execution_id or public_job_id
+        if legacy_id is None:
+            raise ValueError("job identity is required")
+        self.execution_id = execution_id or legacy_id
+        self.public_job_id = public_job_id or legacy_id
+        self.batch_index = batch_index
+        self.params = params or {}
         self.submitted_at = submitted_at
         self.prompt_id: str | None = None
-        self.completion_polls = 0  # history 延遲時的等待計數（見 MAX_COMPLETION_POLLS）
+        self.completion_polls = 0  # ComfyUI 狀態不確定時的等待計數
+
+    @property
+    def job_id(self) -> str:
+        """Backward-compatible public identity used by existing callers/tests."""
+        return self.public_job_id
+
+
+@dataclass
+class _BatchProgress:
+    public_job_id: str
+    total: int
+    completed: int
+    failed: int
+    started: bool
+    seeds: tuple[int, ...]
+    submitted_at: str
+    current_batch_index: int | None = None
+    failed_members: list[dict[str, Any]] = field(default_factory=list)
 
 
 MAX_FAILED = 100  # 失敗任務保留上限（含結構化錯誤，供 agent 查詢後自我修正）
-# prompt 離開 ComfyUI 佇列後，history 尚未出現時的最大重試 tick 數（每 tick ~2s）；
-# 超過視為「無結果」標 failed，避免 worker 卡在單一 job。
+# ComfyUI queue/history 暫時無法判定狀態時的最大重試 tick 數（每 tick ~2s）；
+# 超過才標 failed，避免瞬時 malformed response 提早放行 sibling，也避免永久卡槽。
 MAX_COMPLETION_POLLS = 15
 
 _lock = threading.Lock()
 _pending: list[_Job] = []
 _running: _Job | None = None
+_batches: dict[str, _BatchProgress] = {}
 _failed: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
 _our_prompt_ids: set[str] = set()  # 本系統提交的 prompt_id，history watcher 略過
+
+
+def _batch_status_item(
+    progress: _BatchProgress,
+    *,
+    status: str,
+    prompt_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "job_id": progress.public_job_id,
+        "status": status,
+        "submitted_at": progress.submitted_at,
+        "prompt_id": prompt_id,
+        "batch_total": progress.total,
+        "batch_completed": progress.completed,
+        "batch_failed": progress.failed,
+        "current_batch_index": progress.current_batch_index,
+        "failed_members": [dict(item) for item in progress.failed_members],
+    }
 
 
 def _reset_for_test() -> None:
@@ -124,6 +195,7 @@ def _reset_for_test() -> None:
     with _lock:
         _pending.clear()
         _running = None
+        _batches.clear()
         _failed.clear()
 
 
@@ -132,20 +204,121 @@ def _record_failure(
     error: Exception,
     node_errors: list[dict[str, str]] | None = None,
     recording_error: dict[str, Any] | None = None,
+    failure_code: str | None = None,
 ) -> None:
     """記錄失敗任務（不重試）。validation 類錯誤帶 node_errors 供 agent 修正。"""
+    safe_error = sanitize_failure_message(error)
+    if recording_error is not None:
+        recording_error = {
+            **recording_error,
+            "message": sanitize_failure_message(recording_error.get("message")),
+        }
+    if job.batch_index is not None:
+        db = SessionLocal()
+        try:
+            batch_status = mark_member_terminal(
+                db,
+                public_job_id=job.public_job_id,
+                batch_index=job.batch_index,
+                succeeded=False,
+                failure_code=(
+                    failure_code
+                    or (
+                        str(recording_error.get("code"))
+                        if recording_error
+                        else None
+                    )
+                    or ("comfyui_error" if node_errors else "submission_failed")
+                ),
+                failure_message=safe_error,
+            )
+        finally:
+            db.close()
+        with _lock:
+            progress = _batches.get(job.public_job_id)
+            if progress is not None:
+                progress.completed = batch_status["batch_completed"]
+                progress.failed = batch_status["batch_failed"]
+                progress.current_batch_index = batch_status.get(
+                    "current_batch_index"
+                )
+                progress.failed_members = list(
+                    batch_status.get("failed_members") or []
+                )
+                if (
+                    progress.completed + progress.failed
+                    == progress.total
+                ):
+                    _batches.pop(job.public_job_id, None)
+            if batch_status["status"] == "failed":
+                _failed[job.public_job_id] = {
+                    **batch_status,
+                    "error": "all independent batch members failed",
+                    "node_errors": [],
+                    "recording_error": None,
+                    "is_custom": False,
+                }
+                while len(_failed) > MAX_FAILED:
+                    _failed.popitem(last=False)
+        return
+
     with _lock:
         _failed[job.job_id] = {
             "job_id": job.job_id,
             "status": "failed",
             "submitted_at": job.submitted_at,
-            "error": str(error),
+            "error": safe_error,
             "node_errors": node_errors or [],
             "recording_error": recording_error,
             "is_custom": bool(job.params.get("workflow")),
         }
         while len(_failed) > MAX_FAILED:
             _failed.popitem(last=False)
+
+
+def _record_success(job: "_Job") -> None:
+    if job.batch_index is None:
+        return
+    db = SessionLocal()
+    try:
+        batch_status = mark_member_terminal(
+            db,
+            public_job_id=job.public_job_id,
+            batch_index=job.batch_index,
+            succeeded=True,
+        )
+    finally:
+        db.close()
+    with _lock:
+        progress = _batches.get(job.public_job_id)
+        if progress is None:
+            return
+        progress.completed = batch_status["batch_completed"]
+        progress.failed = batch_status["batch_failed"]
+        progress.current_batch_index = batch_status.get("current_batch_index")
+        progress.failed_members = list(batch_status.get("failed_members") or [])
+        if progress.completed + progress.failed == progress.total:
+            _batches.pop(job.public_job_id, None)
+
+
+def _allocate_unique_seeds(count: int, *, max_attempts: int | None = None) -> tuple[int, ...]:
+    """Allocate unique seeds from the template-generation range with a bounded retry."""
+    if count < 1:
+        raise ValueError("independent batch_size must be at least 1")
+    attempt_limit = max_attempts or max(count * 10, count + 8)
+    seeds: list[int] = []
+    seen: set[int] = set()
+    attempts = 0
+    while len(seeds) < count and attempts < attempt_limit:
+        attempts += 1
+        seed = random.randint(0, 2**32 - 1)
+        if seed in seen:
+            continue
+        seen.add(seed)
+        seeds.append(seed)
+    if len(seeds) != count:
+        raise RuntimeError("unable to allocate unique independent batch seeds")
+    return tuple(seeds)
 
 
 def submit(params: GenerateParams) -> str:
@@ -158,15 +331,74 @@ def submit(params: GenerateParams) -> str:
     Raises:
         QueueFullError: 佇列已滿
     """
-    if len(_pending) >= MAX_PENDING:
-        raise QueueFullError("生圖佇列已滿，請稍後再試")
-    job_id = str(uuid.uuid4())
-    submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    job = _Job(job_id=job_id, params=dict(params), submitted_at=submitted_at)
     with _lock:
-        _pending.append(job)
-    logger.info("Job %s queued", job_id)
-    return job_id
+        batch_seed_mode = str(params.get("batch_seed_mode") or "shared")
+        batch_size = int(params.get("batch_size") or 1)
+        if batch_seed_mode not in {"shared", "independent"}:
+            raise ValueError("batch_seed_mode must be shared or independent")
+        if batch_seed_mode == "independent" and (
+            params.get("seed") is not None
+            or params.get("seed_mode") in {"fixed", "workflow_default"}
+        ):
+            raise ValueError(
+                "independent batch seed mode requires server-allocated random seeds"
+            )
+        required_slots = batch_size if batch_seed_mode == "independent" else 1
+        if len(_pending) + required_slots > MAX_PENDING:
+            raise QueueFullError("生圖佇列已滿，請稍後再試")
+
+        public_job_id = str(uuid.uuid4())
+        submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        if batch_seed_mode == "independent":
+            if params.get("workflow") or params.get("recipe_provenance") or params.get("server_owned_verbatim"):
+                raise ValueError("independent batch seed mode only supports template generation")
+            seeds = _allocate_unique_seeds(batch_size)
+            jobs: list[_Job] = []
+            for batch_index, seed in enumerate(seeds):
+                child_params = dict(params)
+                child_params["batch_size"] = 1
+                child_params["seed"] = seed
+                jobs.append(
+                    _Job(
+                        execution_id=str(uuid.uuid4()),
+                        public_job_id=public_job_id,
+                        batch_index=batch_index,
+                        params=child_params,
+                        submitted_at=submitted_at,
+                    )
+                )
+            db = SessionLocal()
+            try:
+                create_batch(
+                    db,
+                    public_job_id=public_job_id,
+                    execution_ids=tuple(job.execution_id for job in jobs),
+                    seeds=seeds,
+                    submitted_at=submitted_at,
+                )
+            finally:
+                db.close()
+            _batches[public_job_id] = _BatchProgress(
+                public_job_id=public_job_id,
+                total=batch_size,
+                completed=0,
+                failed=0,
+                started=False,
+                seeds=seeds,
+                submitted_at=submitted_at,
+            )
+            _pending.extend(jobs)
+        else:
+            _pending.append(
+                _Job(
+                    execution_id=public_job_id,
+                    public_job_id=public_job_id,
+                    params=dict(params),
+                    submitted_at=submitted_at,
+                )
+            )
+    logger.info("Job %s queued", public_job_id)
+    return public_job_id
 
 
 def submit_custom(params: GenerateParams) -> str:
@@ -196,6 +428,10 @@ def submit_audited_recipe(params: GenerateParams, *, job_id: str) -> str:
 
     This is deliberately internal-only: callers cannot select a job id through HTTP/MCP.
     """
+    if params.get("batch_seed_mode") == "independent":
+        raise ValueError(
+            "independent batch seed mode does not support audited workflows"
+        )
     if "workflow" not in params or "recipe_provenance" not in params or not isinstance(job_id, str) or not job_id:
         raise ValueError("audited recipe submission requires immutable workflow, provenance, and job id")
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -219,17 +455,46 @@ def get_status() -> dict[str, Any]:
     """
     with _lock:
         running_list: list[dict[str, Any]] = []
-        if _running:
+        if _running and _running.batch_index is None:
             running_list.append({
-                "job_id": _running.job_id,
+                "job_id": _running.public_job_id,
                 "prompt_id": _running.prompt_id,
                 "status": "running",
                 "submitted_at": _running.submitted_at,
             })
-        pending_list = [
-            {"job_id": j.job_id, "status": "queued", "submitted_at": j.submitted_at}
-            for j in _pending
-        ]
+        for progress in _batches.values():
+            if not progress.started:
+                continue
+            prompt_id = (
+                _running.prompt_id
+                if _running and _running.public_job_id == progress.public_job_id
+                else None
+            )
+            running_list.append(
+                _batch_status_item(progress, status="running", prompt_id=prompt_id)
+            )
+
+        pending_list: list[dict[str, Any]] = []
+        seen_parents: set[str] = set()
+        for job in _pending:
+            if job.batch_index is None:
+                pending_list.append(
+                    {
+                        "job_id": job.public_job_id,
+                        "status": "queued",
+                        "submitted_at": job.submitted_at,
+                    }
+                )
+                continue
+            progress = _batches.get(job.public_job_id)
+            if (
+                progress is None
+                or progress.started
+                or progress.public_job_id in seen_parents
+            ):
+                continue
+            seen_parents.add(progress.public_job_id)
+            pending_list.append(_batch_status_item(progress, status="queued"))
     return {
         "queue_running": running_list,
         "queue_pending": pending_list,
@@ -245,15 +510,24 @@ def get_our_prompt_ids() -> set[str]:
 def get_job_status(job_id: str) -> dict[str, Any] | None:
     """取得單一任務狀態，None 表示不存在"""
     with _lock:
-        if _running and _running.job_id == job_id:
+        progress = _batches.get(job_id)
+        if progress is not None:
+            status = "running" if progress.started else "queued"
+            prompt_id = (
+                _running.prompt_id
+                if _running and _running.public_job_id == job_id
+                else None
+            )
+            return _batch_status_item(progress, status=status, prompt_id=prompt_id)
+        if _running and _running.public_job_id == job_id:
             return {
-                "job_id": _running.job_id,
+                "job_id": _running.public_job_id,
                 "prompt_id": _running.prompt_id,
                 "status": "running",
                 "submitted_at": _running.submitted_at,
             }
         for j in _pending:
-            if j.job_id == job_id:
+            if j.public_job_id == job_id:
                 return {
                     "job_id": j.job_id,
                     "status": "queued",
@@ -276,10 +550,24 @@ def cancel(job_id: str) -> bool:
         ValueError: job 正在執行中（running），無法取消
     """
     with _lock:
-        if _running and _running.job_id == job_id:
+        if _running and _running.public_job_id == job_id:
             raise ValueError(f"Job {job_id} 正在執行中，無法取消")
+        progress = _batches.get(job_id)
+        if progress is not None:
+            if progress.started:
+                raise ValueError(f"Job {job_id} 正在執行中，無法取消")
+            db = SessionLocal()
+            try:
+                cancel_queued_batch(db, job_id)
+            finally:
+                db.close()
+            _pending[:] = [
+                job for job in _pending if job.public_job_id != job_id
+            ]
+            _batches.pop(job_id, None)
+            return True
         for i, j in enumerate(_pending):
-            if j.job_id == job_id:
+            if j.public_job_id == job_id:
                 _pending.pop(i)
                 return True
     return False
@@ -317,8 +605,23 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             return
         job = _pending.pop(0)
         _running = job
+        if job.batch_index is not None:
+            progress = _batches.get(job.public_job_id)
+            if progress is not None:
+                progress.started = True
+                progress.current_batch_index = job.batch_index
 
     try:
+        if job.batch_index is not None:
+            db = SessionLocal()
+            try:
+                mark_member_running(
+                    db,
+                    public_job_id=job.public_job_id,
+                    batch_index=job.batch_index,
+                )
+            finally:
+                db.close()
         if job.params.get("server_owned_verbatim"):
             saved_workflow = job.params.get("workflow")
             if not isinstance(saved_workflow, dict) or not saved_workflow:
@@ -341,7 +644,7 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 )
                 return
             with _lock:
-                if _running and _running.job_id == job.job_id:
+                if _running and _running.execution_id == job.execution_id:
                     _running.prompt_id = prompt_id
                 _our_prompt_ids.add(prompt_id)
             logger.info(
@@ -371,8 +674,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             prompt = copy.deepcopy(audited_workflow)
             job.params["workflow_json"] = prompt
             prompt_id = comfy.submit_prompt(prompt)
+            if not isinstance(prompt_id, str) or not prompt_id.strip():
+                raise ValueError(
+                    "ComfyUI response is missing a non-empty string prompt_id"
+                )
             with _lock:
-                if _running and _running.job_id == job.job_id:
+                if _running and _running.execution_id == job.execution_id:
                     _running.prompt_id = prompt_id
                 _our_prompt_ids.add(prompt_id)
             logger.info("Audited recipe job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
@@ -491,7 +798,10 @@ def _process_pending(comfy: ComfyUIClient) -> None:
             effective_steps = job.params.get("steps")
             effective_cfg = job.params.get("cfg")
             effective_seed = job.params.get("seed")
-            if job.params.get("seed_mode") == "random":
+            if (
+                job.params.get("seed_mode") == "random"
+                and job.params.get("batch_seed_mode") != "independent"
+            ):
                 effective_seed = random.randint(0, 2**32 - 1)
         else:
             effective_steps = job.params.get("steps", 20)
@@ -547,58 +857,82 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         if job.params.get("mask"):
             job.params["source_mask"] = job.params["mask"]
         prompt_id = comfy.submit_prompt(prompt)
+        if not isinstance(prompt_id, str) or not prompt_id.strip():
+            raise ValueError(
+                "ComfyUI response is missing a non-empty string prompt_id"
+            )
         with _lock:
-            if _running and _running.job_id == job.job_id:
+            if _running and _running.execution_id == job.execution_id:
                 _running.prompt_id = prompt_id
             _our_prompt_ids.add(prompt_id)
         logger.info("Job %s submitted to ComfyUI, prompt_id=%s", job.job_id, prompt_id)
     except AuditedWorkflowHashMismatchError as e:
         logger.error("Audited recipe job %s rejected before ComfyUI submit: %s", job.job_id, e)
         with _lock:
-            if _running and _running.job_id == job.job_id:
+            if _running and _running.execution_id == job.execution_id:
                 _running = None
         _record_failure(job, e)
     except ComfyUIError as e:
         # ComfyUI /prompt 驗證/執行被拒：永久性失敗，不重試（過去插回隊首會無限重試而堵塞隊列）。
         # 把 node_errors 結構化記錄，供 agent 查 job 狀態後自我修正並重送。
-        structured = structure_node_errors(e.node_errors, job.params.get("workflow"))
+        try:
+            structured = structure_node_errors(
+                e.node_errors, job.params.get("workflow")
+            )
+        except Exception:
+            structured = []
+            logger.warning(
+                "Could not structure ComfyUI node errors for job %s",
+                job.job_id,
+            )
         logger.error(
             "ComfyUI rejected job %s: %s (node_errors=%s)",
             job.job_id, e, structured,
         )
         with _lock:
-            if _running and _running.job_id == job.job_id:
+            if _running and _running.execution_id == job.execution_id:
                 _running = None
         _record_failure(job, e, structured)
     except FileNotFoundError as e:
         # 參考圖/遮罩等輸入檔不存在：永久性失敗，不重試。
         logger.error("Job %s input file missing: %s", job.job_id, e)
         with _lock:
-            if _running and _running.job_id == job.job_id:
+            if _running and _running.execution_id == job.execution_id:
                 _running = None
         _record_failure(job, e)
     except (httpx.ConnectError, httpx.RequestError) as e:
         # ComfyUI 連線失敗：任務失敗，不重試（記錄以利 agent 查詢，而非靜默消失）。
         logger.exception("ComfyUI connection failed for job %s: %s", job.job_id, e)
         with _lock:
-            if _running and _running.job_id == job.job_id:
+            if _running and _running.execution_id == job.execution_id:
                 _running = None
         _record_failure(job, e)
+    except Exception as e:
+        logger.exception("Job %s submission failed: %s", job.job_id, e)
+        _release_running(job)
+        _record_failure(job, e, failure_code="submission_failed")
 
 
 def _release_running(job: "_Job") -> None:
     """釋放 running 槽（限本 job），讓後續任務可被處理。"""
     global _running
     with _lock:
-        if _running and _running.job_id == job.job_id:
+        if _running and _running.execution_id == job.execution_id:
             _running = None
 
 
-def _prompt_in_comfy_queue(queue_data: dict[str, Any], prompt_id: str) -> bool:
+def _prompt_in_comfy_queue(queue_data: object, prompt_id: str) -> bool:
     """prompt 是否仍在 ComfyUI 佇列（running 或 pending）。
     ComfyUI item 格式：[job_number, prompt_id, workflow, output_node_ids, metadata]。"""
+    if not isinstance(queue_data, Mapping):
+        raise ValueError("ComfyUI queue response must be a mapping")
     for key in ("queue_running", "queue_pending"):
-        for item in queue_data.get(key, []) or []:
+        entries = queue_data.get(key, [])
+        if entries is None:
+            entries = []
+        if not isinstance(entries, (list, tuple)):
+            raise ValueError(f"ComfyUI queue field {key} must be a sequence")
+        for item in entries:
             pid = item[1] if isinstance(item, (list, tuple)) and len(item) > 1 else None
             if pid == prompt_id:
                 return True
@@ -622,7 +956,12 @@ def _save_job_outputs(
             subfolder=artifact.get("subfolder", ""),
             ftype=artifact.get("type", "output"),
         )
-        out_name = gallery_output_filename(artifact["filename"], job.job_id, i)
+        out_name = gallery_output_filename(
+            artifact["filename"],
+            job.public_job_id,
+            i,
+            batch_index=job.batch_index,
+        )
         (out_dir / out_name).write_bytes(data)
         saved_infos.append((str(Path(date_str) / out_name), artifact, len(data)))
 
@@ -653,6 +992,14 @@ def _save_job_outputs(
                     artifact_source_node_id=artifact.get("source_node_id"),
                     artifact_source_node_type=artifact.get("source_node_type"),
                     artifact_file_size=file_size,
+                    artifact_metadata=(
+                        {
+                            "batch_index": job.batch_index,
+                            "seed": job.params.get("seed"),
+                        }
+                        if job.batch_index is not None
+                        else None
+                    ),
                     recipe_provenance=job.params.get("recipe_provenance"),
                     db=db,
                 )
@@ -668,13 +1015,52 @@ def _save_job_outputs(
                     workflow_json=job.params.get("workflow_json"),
                     prompt=job.params.get("prompt"),
                     negative_prompt=job.params.get("negative_prompt"),
-                    metadata={"output_key": artifact.get("output_key")},
+                    metadata={
+                        "output_key": artifact.get("output_key"),
+                        **(
+                            {
+                                "batch_index": job.batch_index,
+                                "seed": job.params.get("seed"),
+                            }
+                            if job.batch_index is not None
+                            else {}
+                        ),
+                    },
                     db=db,
                 )
             count += 1
         finally:
             db.close()
     return count
+
+
+def _defer_uncertain_completion(
+    job: "_Job",
+    *,
+    failure_code: str,
+    message: str,
+) -> None:
+    """Retain the running slot until repeated queue/history uncertainty is bounded."""
+    job.completion_polls += 1
+    if job.completion_polls < MAX_COMPLETION_POLLS:
+        logger.warning(
+            "Job %s status remains uncertain (%d/%d)",
+            job.job_id,
+            job.completion_polls,
+            MAX_COMPLETION_POLLS,
+        )
+        return
+    _release_running(job)
+    _record_failure(
+        job,
+        RuntimeError(message),
+        failure_code=failure_code,
+    )
+    logger.error(
+        "Job %s status remained uncertain for %d polls",
+        job.job_id,
+        MAX_COMPLETION_POLLS,
+    )
 
 
 def _check_running_complete(comfy: ComfyUIClient) -> None:
@@ -692,48 +1078,125 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         if not job or not job.prompt_id:
             return
 
+    queue_failure_code = "comfyui_status_unknown"
+    queue_failure_message = (
+        "ComfyUI returned no result (history missing after completion)"
+    )
     try:
         queue_data = comfy.get_queue()
+        try:
+            if _prompt_in_comfy_queue(queue_data, job.prompt_id):
+                job.completion_polls = 0
+                return  # 仍在 ComfyUI 佇列（執行中或排隊中）
+        except Exception:
+            queue_failure_code = "malformed_queue_response"
+            queue_failure_message = (
+                "ComfyUI queue response remained malformed and history "
+                "did not provide a terminal result"
+            )
     except Exception as e:
-        logger.warning("Failed to get ComfyUI queue: %s", e)
-        return
-    if _prompt_in_comfy_queue(queue_data, job.prompt_id):
-        return  # 仍在 ComfyUI 佇列（執行中或排隊中）
+        logger.warning(
+            "Failed to get ComfyUI queue: %s",
+            e,
+        )
 
     try:
         history = comfy.get_history(job.prompt_id)
     except Exception as e:
-        logger.warning("Failed to get ComfyUI history for job %s: %s", job.job_id, e)
+        logger.warning(
+            "Failed to get ComfyUI history for job %s: %s",
+            job.job_id,
+            e,
+        )
+        _defer_uncertain_completion(
+            job,
+            failure_code=queue_failure_code,
+            message=queue_failure_message,
+        )
         return
 
+    if not isinstance(history, Mapping):
+        _defer_uncertain_completion(
+            job,
+            failure_code=queue_failure_code,
+            message=queue_failure_message,
+        )
+        return
     entry = history.get(job.prompt_id)
     if entry is None:
-        # history 尚未填好（完成後短暫延遲）→ 有上限地等待，超時才判失敗
-        job.completion_polls += 1
-        if job.completion_polls >= MAX_COMPLETION_POLLS:
-            _release_running(job)
-            _record_failure(
-                job, RuntimeError("ComfyUI returned no result (history missing after completion)")
-            )
-            logger.error("Job %s timed out waiting for ComfyUI history", job.job_id)
+        _defer_uncertain_completion(
+            job,
+            failure_code=queue_failure_code,
+            message=queue_failure_message,
+        )
+        return
+    if not isinstance(entry, Mapping):
+        _defer_uncertain_completion(
+            job,
+            failure_code=queue_failure_code,
+            message=queue_failure_message,
+        )
         return
 
-    status = entry.get("status", {}) or {}
-    status_str = status.get("status_str")
-    artifacts_info = get_output_artifacts(
-        history,
-        job.prompt_id,
-        workflow=job.params.get("workflow_json"),
-    )
+    try:
+        status = entry.get("status")
+        if not isinstance(status, Mapping):
+            raise ValueError("history status must be a mapping")
+        status_str = status.get("status_str")
+        if status_str not in {"success", "error"}:
+            raise ValueError("history status is not terminal")
+        artifacts_info = get_output_artifacts(
+            history,
+            job.prompt_id,
+            workflow=job.params.get("workflow_json"),
+        )
+    except Exception:
+        _defer_uncertain_completion(
+            job,
+            failure_code=queue_failure_code,
+            message=queue_failure_message,
+        )
+        return
 
+    job.completion_polls = 0
     _release_running(job)  # 已是終局，先釋放槽
 
     if status_str == "error":
-        node_errors = structure_execution_error(status)
+        try:
+            node_errors = structure_execution_error(status)
+        except Exception:
+            node_errors = []
+            logger.warning(
+                "Could not structure ComfyUI execution error for job %s",
+                job.job_id,
+            )
         reason = node_errors[0]["reason"] if node_errors else "ComfyUI execution error"
         _record_failure(job, RuntimeError(reason), node_errors)
         logger.error("Job %s failed during ComfyUI execution: %s", job.job_id, reason)
         return
+
+    if job.batch_index is not None:
+        artifacts_info = [
+            artifact
+            for artifact in artifacts_info
+            if artifact.get("artifact_type") == "image"
+            and artifact.get("source_node_type") == "SaveImage"
+        ]
+        if not artifacts_info:
+            message = "generation finished without a SaveImage artifact"
+            _record_failure(
+                job,
+                RuntimeError(message),
+                recording_error={
+                    "code": "no_saveimage_artifact",
+                    "message": message,
+                },
+            )
+            logger.warning(
+                "Independent member %s finished without SaveImage output",
+                job.job_id,
+            )
+            return
 
     if not artifacts_info:
         message = "generation finished with no supported output artifact"
@@ -750,6 +1213,7 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
 
     try:
         n = _save_job_outputs(comfy, job, artifacts_info)
+        _record_success(job)
         logger.info("Job %s completed, saved %d artifact(s)", job.job_id, n)
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
@@ -780,6 +1244,7 @@ def start_worker() -> None:
     global _worker_thread
     if _worker_thread and _worker_thread.is_alive():
         return
+    reconcile_interrupted_batches(SessionLocal)
     _stop_event.clear()
     _worker_thread = threading.Thread(target=_worker_loop, daemon=True)
     _worker_thread.start()

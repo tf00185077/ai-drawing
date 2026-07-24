@@ -133,10 +133,21 @@ def get_output_images(history: Mapping[str, Any], prompt_id: str) -> list[dict[s
     ]
 
 
-def gallery_output_filename(filename: str, job_id: str, index: int) -> str:
+def gallery_output_filename(
+    filename: str,
+    job_id: str,
+    index: int,
+    *,
+    batch_index: int | None = None,
+) -> str:
     """Build a gallery filename that preserves extension and avoids path traversal."""
     source = Path(filename)
     stem = source.stem or "artifact"
     ext = source.suffix.lower() or ".bin"
     safe_stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem).strip("._") or "artifact"
-    return f"{safe_stem}_{job_id[:8]}_{index}{ext}"
+    safe_job_id = (
+        re.sub(r"[^A-Za-z0-9_.-]+", "_", job_id).strip("._") or "job"
+    )
+    job_part = safe_job_id if batch_index is not None else safe_job_id[:8]
+    batch_part = f"_b{batch_index:03d}" if batch_index is not None else ""
+    return f"{safe_stem}_{job_part}{batch_part}_{index}{ext}"

@@ -104,3 +104,21 @@ def test_audited_recipe_queue_rejects_workflow_or_digest_mismatch_before_comfy_s
         assert status is not None
         assert status["status"] == "failed"
         assert "audited_workflow_hash_mismatch" in status["error"]
+
+
+def test_audited_recipe_submission_rejects_independent_batch_seed_mode() -> None:
+    queue._reset_for_test()
+    workflow = {"3": {"class_type": "KSampler", "inputs": {"seed": 1}}}
+    bundle = _audited_bundle(workflow)
+
+    import pytest
+
+    with pytest.raises(ValueError, match="independent"):
+        queue.submit_audited_recipe(
+            {
+                "workflow": workflow,
+                "recipe_provenance": bundle,
+                "batch_seed_mode": "independent",
+            },
+            job_id="audited-parent",
+        )

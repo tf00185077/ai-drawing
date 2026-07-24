@@ -86,6 +86,7 @@ def save(
     artifact_source_node_id: str | None = None,
     artifact_source_node_type: str | None = None,
     artifact_file_size: int | None = None,
+    artifact_metadata: dict[str, Any] | str | None = None,
     db: Session,
 ) -> GeneratedImage:
     """
@@ -132,6 +133,7 @@ def save(
             workflow_json=workflow_json,
             prompt=prompt,
             negative_prompt=negative_prompt,
+            metadata_json=_json_or_none(artifact_metadata),
         )
     )
     db.commit()

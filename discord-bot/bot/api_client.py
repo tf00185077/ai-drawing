@@ -94,6 +94,10 @@ class ApiClient:
             profile=profile,
             overrides=overrides,
         )
+        generation = {
+            **generation,
+            "batch_seed_mode": "independent",
+        }
         return await self.submit_generate(generation)
 
     async def collect_job_result(self, job_id: str) -> dict:
@@ -106,6 +110,10 @@ class ApiClient:
                 "status": "failed",
                 "error": job.get("error"),
                 "node_errors": job.get("node_errors", []),
+                "batch_total": job.get("batch_total"),
+                "batch_completed": job.get("batch_completed"),
+                "batch_failed": job.get("batch_failed"),
+                "failed_members": job.get("failed_members", []),
             }
         if status != "completed":
             return {"status": status}
@@ -121,7 +129,7 @@ class ApiClient:
         ]
         # Legacy completed jobs may not expose artifact metadata. Only those
         # jobs use the older filename-prefix Gallery lookup.
-        if not items:
+        if not items and job.get("batch_total") is None:
             items = await self.list_job_images(job_id)
         images: list[tuple[str, bytes]] = []
         urls: list[str] = []
@@ -133,4 +141,12 @@ class ApiClient:
             filename = image_url.rsplit("/", 1)[-1]
             images.append((filename, data))
             urls.append(build_gallery_download_url(self._base_url, image_url))
-        return {"status": "completed", "images": images, "urls": urls}
+        return {
+            "status": "completed",
+            "images": images,
+            "urls": urls,
+            "batch_total": job.get("batch_total"),
+            "batch_completed": job.get("batch_completed"),
+            "batch_failed": job.get("batch_failed"),
+            "failed_members": job.get("failed_members", []),
+        }
