@@ -242,6 +242,45 @@ async def test_collect_job_result_completed_downloads_all():
     assert out["urls"] == ["http://test/gallery/a.png", "http://test/gallery/b.png"]
 
 
+async def test_collect_job_result_prefers_saveimage_artifacts_over_preview_images():
+    job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
+
+    def handler(req):
+        if req.url.path == f"/api/generate/job/{job_id}":
+            return httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "artifacts": [
+                        {
+                            "source_node_type": "SaveImage",
+                            "mime_type": "image/png",
+                            "gallery_path": "2026-07-24/final_0.png",
+                        },
+                        {
+                            "source_node_type": "PreviewImage",
+                            "mime_type": "image/png",
+                            "gallery_path": "2026-07-24/preview_0.png",
+                        },
+                    ],
+                },
+            )
+        if req.url.path == "/gallery/2026-07-24/final_0.png":
+            return httpx.Response(200, content=b"FINAL")
+        if req.url.path == "/api/gallery/":
+            raise AssertionError("artifact metadata should avoid the prefix gallery fallback")
+        if "preview" in req.url.path:
+            raise AssertionError("PreviewImage must not be delivered")
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    out = await api.collect_job_result(job_id)
+
+    assert out["status"] == "completed"
+    assert out["images"] == [("final_0.png", b"FINAL")]
+    assert out["urls"] == ["http://test/gallery/2026-07-24/final_0.png"]
+
+
 async def test_collect_job_result_unknown_status_does_not_download():
     calls = {"gallery": 0}
 

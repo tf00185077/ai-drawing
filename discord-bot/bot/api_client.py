@@ -109,7 +109,20 @@ class ApiClient:
             }
         if status != "completed":
             return {"status": status}
-        items = await self.list_job_images(job_id)
+        artifacts = job.get("artifacts") or []
+        items = [
+            {
+                "image_url": f"/gallery/{str(artifact['gallery_path']).lstrip('/')}",
+            }
+            for artifact in artifacts
+            if artifact.get("source_node_type") == "SaveImage"
+            and str(artifact.get("mime_type") or "").startswith("image/")
+            and artifact.get("gallery_path")
+        ]
+        # Legacy completed jobs may not expose artifact metadata. Only those
+        # jobs use the older filename-prefix Gallery lookup.
+        if not items:
+            items = await self.list_job_images(job_id)
         images: list[tuple[str, bytes]] = []
         urls: list[str] = []
         for item in items:
