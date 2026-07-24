@@ -31,7 +31,7 @@ function response(data: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => data } as Response;
 }
 
-function installFetch() {
+function installFetch({ conflict = false }: { conflict?: boolean } = {}) {
   let savedRevision = 1;
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === "/api/prompt-library/catalog") return response(catalog);
@@ -44,6 +44,7 @@ function installFetch() {
       return response({ saved_combination: { combination: { id: "my-quality", revision: savedRevision }, etag: `combo-${savedRevision}` } });
     }
     if (url.includes("/positive/quality/entries/") && init?.method === "PUT") {
+      if (conflict) return response({ detail: { message: "版本衝突，請重新載入" } }, 409);
       return response({ entry: { id: "masterpiece", revision: 2 }, entry_revision: 2 });
     }
     if (url === "/api/prompt-library/archive" && init?.method === "POST") {
@@ -158,5 +159,17 @@ describe("PromptWorkbench", () => {
       expected_revision: 1,
       expected_etag: "p1",
     });
+  });
+
+  it("keeps the editor open and surfaces the backend message on a save conflict", async () => {
+    installFetch({ conflict: true });
+    render(<PromptWorkbench />);
+    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "編輯 高品質" }));
+    fireEvent.change(screen.getByLabelText("詞條中文名稱"), { target: { value: "大師傑作" } });
+    fireEvent.change(screen.getByLabelText("詞條說明"), { target: { value: "品質詞" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    await waitFor(() => expect(screen.getByText("版本衝突，請重新載入")).toBeVisible());
+    expect(screen.getByLabelText("詞條中文名稱")).toBeInTheDocument();
   });
 });

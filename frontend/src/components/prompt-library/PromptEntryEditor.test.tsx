@@ -45,4 +45,16 @@ describe("PromptEntryEditor", () => {
       fields: { name_zh: "大師傑作", description_zh: "品質", prompt: "masterpiece", aliases: ["a"], keywords: ["k"], order: 10 },
     });
   });
+
+  it("rejects a duplicate id in create mode", () => {
+    const onSubmit = vi.fn();
+    render(<PromptEntryEditor mode="create" existingIds={["masterpiece"]} onSubmit={onSubmit} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText("詞條 ID"), { target: { value: "masterpiece" } });
+    fireEvent.change(screen.getByLabelText("詞條中文名稱"), { target: { value: "傑作" } });
+    fireEvent.change(screen.getByLabelText("詞條說明"), { target: { value: "說明" } });
+    fireEvent.change(screen.getByLabelText("詞條英文 prompt"), { target: { value: "masterpiece" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toBeVisible();
+  });
 });
