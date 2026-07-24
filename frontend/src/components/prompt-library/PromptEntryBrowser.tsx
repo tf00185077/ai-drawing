@@ -4,7 +4,7 @@ import PromptEntryEditor, { type EntryEditorValue } from "./PromptEntryEditor";
 import { suspectReason } from "./suspectChinese";
 
 export interface BrowserCategory { id: string; polarity: PromptPolarity; name_zh: string; revision: number; etag: string; archived: boolean }
-export interface BrowserEntry { id: string; name_zh: string; prompt: string; revision: number; archived: boolean }
+export interface BrowserEntry { id: string; name_zh: string; prompt: string; description_zh: string; aliases: string[]; keywords: string[]; order: number; revision: number; archived: boolean }
 
 interface Props {
   categories: BrowserCategory[];
@@ -72,7 +72,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
             {editingId === entry.id && (
               <PromptEntryEditor
                 mode="edit"
-                initial={{ id: entry.id, name_zh: entry.name_zh, description_zh: "", prompt: entry.prompt, aliases: [], keywords: [], order: 10 }}
+                initial={{ id: entry.id, name_zh: entry.name_zh, description_zh: entry.description_zh, prompt: entry.prompt, aliases: entry.aliases, keywords: entry.keywords, order: entry.order }}
                 submitting={busy}
                 onSubmit={(value) => handleSave(value, "edit")}
                 onCancel={() => setEditingId(null)}

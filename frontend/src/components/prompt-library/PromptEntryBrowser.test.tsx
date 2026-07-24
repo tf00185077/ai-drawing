@@ -4,8 +4,8 @@ import PromptEntryBrowser, { type BrowserCategory, type BrowserEntry } from "./P
 
 const category: BrowserCategory = { id: "quality", polarity: "positive", name_zh: "品質", revision: 1, etag: "p1", archived: false };
 const entries: BrowserEntry[] = [
-  { id: "masterpiece", name_zh: "傑作", prompt: "masterpiece", revision: 1, archived: false },
-  { id: "best-quality", name_zh: "best quality", prompt: "best quality", revision: 1, archived: false },
+  { id: "masterpiece", name_zh: "傑作", prompt: "masterpiece", description_zh: "大師級品質", aliases: ["傑作"], keywords: ["quality"], order: 10, revision: 1, archived: false },
+  { id: "best-quality", name_zh: "best quality", prompt: "best quality", description_zh: "最佳品質", aliases: [], keywords: [], order: 20, revision: 1, archived: false },
 ];
 
 function renderBrowser(overrides: Partial<React.ComponentProps<typeof PromptEntryBrowser>> = {}) {
@@ -40,7 +40,7 @@ describe("PromptEntryBrowser CRUD", () => {
     fireEvent.click(screen.getByRole("button", { name: "儲存" }));
     await waitFor(() => expect(props.onSaveEntry).toHaveBeenCalledTimes(1));
     expect(props.onSaveEntry).toHaveBeenCalledWith(
-      { id: "masterpiece", fields: { name_zh: "大師傑作", description_zh: expect.any(String), prompt: "masterpiece", aliases: [], keywords: [], order: 10 } },
+      { id: "masterpiece", fields: { name_zh: "大師傑作", description_zh: "大師級品質", prompt: "masterpiece", aliases: ["傑作"], keywords: ["quality"], order: 10 } },
       "edit",
     );
   });
