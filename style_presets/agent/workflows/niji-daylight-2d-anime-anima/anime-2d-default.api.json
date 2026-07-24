@@ -1,0 +1,182 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Anima text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Portrait latent"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "masterpiece, best quality, pure hand-drawn 2D Japanese TV anime cel style, high-quality Anima anime illustration, daylight niji coloring, clear blue sky, cool clean rim light, soft crisp anime shadows, bright school-campus friendly palette, flat matte color fills, clean ink line, simple cel shadow shapes, hand-painted Japanese anime background, no 3D lighting, daylight niji lock: clear blue sky, bright school campus; pure hand-drawn 2D Japanese anime, anime only on face, eyes, lineart; flat matte cel colors, hand-painted background",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, score_1, score_2, score_3, artist name, 3d, 3d render, cgi, blender, unreal engine, octane render, photorealistic, realistic skin, skin pores, hyperrealistic, semi-realistic, semi-real rendering, realistic face, uncanny face, glossy skin, glossy highlight rendering, sharp specular highlights, plastic skin, doll-like, game cg, western comic style, oil painting, thick impasto, dark background, night, moonlit, dark cinematic color grading, deep shadow contrast, underexposed, washed out, low contrast, text, watermark, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "anima-highres-aesthetic-boost.safetensors",
+      "strength_model": 0.7
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Anima Highres/Aesthetic Boost @0.7"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "lora_name": "Niji Reol v1 EP11.safetensors",
+      "strength_model": 0.8
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "NijiReol semi-realistic @0.8"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model": [
+        "11",
+        0
+      ],
+      "lora_name": "AnimaNSS4RE.safetensors",
+      "strength_model": 0.65
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Niji Sweet Spot @0.65"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 1372599967,
+      "steps": 30,
+      "cfg": 5.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "12",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "niji_moonlit_honoka_multilora",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  }
+}

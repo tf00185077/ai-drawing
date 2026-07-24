@@ -1,0 +1,154 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Qwen text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Latent 512 square"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "tactile oil painting finish, visible painterly brushwork, controlled impasto texture, atmospheric cinematic rendering, anime oil painting hybrid, preserved anime character design, clean anime facial proportions, expressive anime eyes, soft anime face, warm natural key light on face, healthy soft peach skin, natural blush, non-metallic matte skin, oil painting brushwork visible on hair, clothes, and background, dark teal noir background, teal shadows only in the background, restrained amber-gold rim light behind the character, subtle gold edge light on hair, wet reflective background surfaces, smoggy atmospheric depth, high quality anime portrait with painterly oil finish, keep the character face anime and readable, oil paint texture on rendering not on skin material",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, bad anatomy, deformed, blurry, muddy details, photorealistic face, realistic old face, uncanny face, corpse-like skin, ghostly skin, green skin, blue skin, gray skin, sickly pale skin, metallic skin, golden skin, gold face, bronze face, statue, mask, robot, armor, chrome, reflective face, gold paint on skin, face covered in paint, heavy paint blobs on face, harsh teal light on face",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+      "strength_model": 0.5
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load Anima Masterpiece LoRA"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 2782265067,
+      "steps": 35,
+      "cfg": 3.2,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "10",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_lora_test",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  }
+}
