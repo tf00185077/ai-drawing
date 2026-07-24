@@ -1,5 +1,31 @@
 # 進度追蹤
 
+## 2026-07-24 Discord Bot 直呼本機生圖
+
+新增 `discord-bot/`（discord.py），使用者用 `/draw` 從既有 style preset（含 profile 變體）選畫風、
+填 prompt/寬/高/張數（1–8）後直接呼叫 backend 生圖，全程不經 LLM；`/result id:<job_id>` 反查並貼回圖。
+Bot 只做互動↔HTTP 轉譯，生圖決策（prompt 合併、KSampler 參數、workflow）仍由 backend 端點負責，
+**未改動 backend**。batch 經 compose `overrides.batch_size` 帶入；`/result` 以
+`GET /api/gallery/?image_name=<job_id[:8]>` 撈回同 job 全部圖。指令只註冊到指定 GUILD_ID。
+設計與計畫見 `docs/superpowers/{specs,plans}/2026-07-24-discord-bot*.md`。驗證：`discord-bot` pytest 全綠。
+
+## 2026-07-24 Discord Bot 組裝與 slash 指令（Task 6 完成）
+
+discord-bot `bot/main.py` 與 `tests/test_main.py` 實作完成：
+
+1. `build_bot(config: Config) -> tuple[discord.Client, discord.app_commands.CommandTree, ApiClient]`：
+   - 註冊 `/draw`（列 preset、選擇後顯示 PresetView）、`/result id:<job_id>`（查詢生圖結果）到 `config.guild_id`
+   - 網路隔離：建構不需 token 或網路連線，測試直接驗證命令註冊
+2. `/draw` 命令：list_presets → BackendError/例外/空清單/成功四種路徑，錯誤回訊皆為繁體中文 ephemeral message
+3. `/result` 命令：defer(thinking) → collect_job_result；BackendError 404 → "找不到"；其他 BackendError/例外 → ❌ 訊息；狀態 queued/running → ⏳；failed → ❌ 錯誤詳情；completed → 若總檔案 > 24 MB 貼連結、否則貼 discord.File 附件；空圖檔 → "完成但找不到"
+4. TDD 完成：test_main.py 失敗 → 實作 → 全通過；36/36 全套 pass、import smoke 通過
+5. 常數 `DISCORD_UPLOAD_LIMIT_BYTES = 24 * 1024 * 1024`、entry `main()` 完成
+
+驗證：
+- Step 2 RED（ModuleNotFoundError）→ Step 4 GREEN（test PASSED）
+- 全套測試 36 passed，import smoke 通過
+- 提交：1fdddbd `feat(discord-bot): bot entrypoint with /draw and /result`
+
 ## 2026-07-24 Prompt Library 雙語軟性偵測 + Entry 增刪改查
 
 背景：詞庫改由 agent 經 MCP 寫入後，agent 不知道使用者需要「有意義的中文對照」，可能把 name_zh
