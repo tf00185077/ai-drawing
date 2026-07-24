@@ -2,7 +2,8 @@
 Style Preset Catalog MCP Tools
 
 Corresponds to: GET /api/style-presets/, GET /api/style-presets/{id},
-POST /api/style-presets/{id}/compose
+POST /api/style-presets/{id}/compose, POST /api/style-presets/{id}/workflow/save,
+POST /api/style-presets/{id}/workflow/test
 
 Maintenance (reindex, validate) stays on the backend HTTP API; the MCP surface
 keeps the daily path: list -> get -> compose, plus create (users ask to save a
@@ -20,6 +21,36 @@ import httpx
 
 from mcp_server.server import _get_client, mcp
 from mcp_server.tools.responses import error_json, exception_error_json
+
+
+def _workflow_error_json(tool: str, exc: Exception) -> str:
+    code = exc.__class__.__name__
+    message = str(exc)
+    hint = "Check the backend connection and retry the explicit operation."
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+        try:
+            payload = exc.response.json()
+        except ValueError:
+            payload = {}
+        detail = payload.get("detail") if isinstance(payload, dict) else None
+        if isinstance(detail, dict):
+            code = str(detail.get("code") or "backend_http_error")
+            message = str(detail.get("message") or message)
+            hint = str(
+                detail.get("hint")
+                or "Correct the request using the backend error and retry."
+            )
+        else:
+            code = "backend_http_error"
+            hint = "Inspect the backend response, correct the request, and retry."
+    return json.dumps(
+        {
+            "ok": False,
+            "tool": tool,
+            "error": {"code": code, "message": message, "hint": hint},
+        },
+        ensure_ascii=False,
+    )
 
 
 @mcp.tool()
@@ -183,3 +214,78 @@ def create_style_preset(
         )
     except Exception as e:
         return exception_error_json("create_style_preset", e, where="backend")
+
+
+@mcp.tool()
+def save_successful_workflow_as_style_preset(
+    source: int | str,
+    preset_id: str,
+    prompt_keywords: str | list[str],
+    negative_prompt_keywords: str | list[str] = "",
+    profile: str | None = None,
+) -> str:
+    """Save one already-successful recorded generation workflow into a style preset. MUST NOT be called automatically: call it only after the user explicitly asks to save a successful result. Forward only the compact source locator plus caller-supplied positive/negative keywords; the backend owns, sanitizes, and persists the graph."""
+    tool = "save_successful_workflow_as_style_preset"
+    body: dict[str, object] = {
+        "source": source,
+        "prompt_keywords": prompt_keywords,
+        "negative_prompt_keywords": negative_prompt_keywords,
+    }
+    if profile is not None:
+        body["profile"] = profile
+    try:
+        response = _get_client().post(
+            f"style-presets/{preset_id}/workflow/save", json=body
+        )
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": tool,
+                "preset_id": response.get("preset_id", preset_id),
+                "profile": response.get("profile"),
+                "source": response.get("source"),
+                "workflow_path": response.get("workflow_path"),
+                "prompt_keywords": response.get("prompt_keywords", []),
+                "negative_prompt_keywords": response.get(
+                    "negative_prompt_keywords", []
+                ),
+                "retest_required": response.get("retest_required", True),
+                "next": (
+                    "call test_saved_style_preset_workflow for this preset/profile"
+                ),
+            },
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return _workflow_error_json(tool, exc)
+
+
+@mcp.tool()
+def test_saved_style_preset_workflow(
+    preset_id: str,
+    profile: str | None = None,
+) -> str:
+    """Queue the backend-owned saved workflow verbatim, without workflow JSON or prompt overrides, then poll get_generation_status with the returned job id."""
+    tool = "test_saved_style_preset_workflow"
+    body: dict[str, object] = {}
+    if profile is not None:
+        body["profile"] = profile
+    try:
+        response = _get_client().post(
+            f"style-presets/{preset_id}/workflow/test", json=body
+        )
+        job_id = response.get("job_id")
+        return json.dumps(
+            {
+                "ok": True,
+                "tool": tool,
+                "preset_id": response.get("preset_id", preset_id),
+                "profile": response.get("profile"),
+                "job_id": job_id,
+                "status": response.get("status", "queued"),
+                "next": f"poll get_generation_status with job_id {job_id}",
+            },
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return _workflow_error_json(tool, exc)

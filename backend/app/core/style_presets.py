@@ -521,6 +521,16 @@ class DirStylePresetProvider:
         self._project_root = project_root
         self._cache: dict[str, StylePreset] = {}
 
+    @property
+    def agent_dir(self) -> Path:
+        """Filesystem root for server-owned preset artifacts."""
+        return self._agent_dir
+
+    @property
+    def project_root(self) -> Path | None:
+        """Project root used to produce stable repository-relative paths."""
+        return self._project_root
+
     # --- 索引（輕量）---
     def list_summaries(self) -> list[dict[str, Any]]:
         if not self._index_path.exists():

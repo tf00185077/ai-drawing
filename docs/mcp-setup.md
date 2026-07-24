@@ -150,7 +150,7 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 75 個 server-side registered tool。
+> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 36 個 server-side registered tool。
 >
 > 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
@@ -193,6 +193,8 @@ pip install -e .
 | `list_style_presets` | `json_string` | GET /api/style-presets/ |
 | `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
 | `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
+| `save_successful_workflow_as_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/workflow/save |
+| `test_saved_style_preset_workflow` | `json_string` | POST /api/style-presets/{preset_id}/workflow/test |
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
 | `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
@@ -204,9 +206,14 @@ pip install -e .
 | `lora_train_smoke_test` | `dict` | POST /api/lora-train/jobs/{job_id}/smoke-test |
 <!-- MCP-CATALOG:END -->
 
+`save_successful_workflow_as_style_preset` 僅能在使用者明確要求保存某次已成功結果後呼叫；
+agent 只傳短 source locator 與精簡正／負關鍵字，workflow graph 由 backend 解析、清理與保存，
+不經 MCP 傳輸。保存後用 `test_saved_style_preset_workflow` 原樣排入 server-owned graph，並以
+`get_generation_status` 輪詢 job。
+
 <!-- MCP-OMISSIONS:START -->
-2026-07 工具大幅收斂後，現由 31 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
-style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢等已從 MCP 移除；
+2026-07 工具大幅收斂後，現由 36 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
+style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除；
 對應功能仍在 backend HTTP API（見 docs/api-contract.md），Civitai 流程改用
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->

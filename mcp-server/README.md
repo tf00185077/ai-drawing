@@ -4,7 +4,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 
 ## Tools
 
-> 目前共 31 個意圖級 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
+> 目前共 36 個意圖級 server-side registered tool。`dict` 代表 MCP tool 直接回 JSON-compatible dict；`json_string` 是相容期 JSON 字串（內容仍含 `ok`/`tool` 或可解析 JSON）；`plain_text` 是 legacy human-readable helper。
 >
 > 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
@@ -49,6 +49,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `list_style_presets` | `json_string` | GET /api/style-presets/ |
 | `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
 | `compose_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/compose |
+| `save_successful_workflow_as_style_preset` | `json_string` | POST /api/style-presets/{preset_id}/workflow/save |
+| `test_saved_style_preset_workflow` | `json_string` | POST /api/style-presets/{preset_id}/workflow/test |
 | `caption_image` | `dict` | POST /api/lora-docs/caption-llm/{image_path} |
 | `lora_training_decision_preflight` | `dict` | POST /api/lora-train/datasets/training-decision-preflight |
 | `lora_train_start` | `dict` | POST /api/lora-train/start |
@@ -61,8 +63,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 <!-- MCP-CATALOG:END -->
 
 <!-- MCP-OMISSIONS:START -->
-2026-07 工具大幅收斂後，現由 31 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
-style presets、workflow catalog、自訂 workflow 提交、ComfyUI node 查詢等已從 MCP 移除；
+2026-07 工具大幅收斂後，現由 36 個意圖級工具組成。低階 Civitai recipe/資源/alias 工具、
+style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除；
 對應功能仍在 backend HTTP API（見 docs/api-contract.md），Civitai 流程改用
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->
@@ -153,6 +155,8 @@ prompt / 參數）供檢視，不會送出生圖；確認後再交給 `generate_
 | `get_style_preset` | 取得單一 preset 完整食譜 |
 | `validate_style_presets` | 驗證每個 preset 參照的資源是否已安裝；invalid preset 以資料形式回傳，不隱藏 |
 | `compose_style_preset` | 將 preset + 使用者 `content_prompt`（＋ profile / overrides）組成可餵給 `generate_image` 的 `generation` payload |
+| `save_successful_workflow_as_style_preset` | 僅在使用者明確要求後，把已成功結果的 server-owned graph 以精簡正負關鍵字存入 preset；不傳 workflow JSON |
+| `test_saved_style_preset_workflow` | 原樣排入已儲存的 server-owned graph，回傳 job id 後用 `get_generation_status` 輪詢 |
 
 ### ComfyUI 節點 Schema（自組 workflow 的 grounding）
 

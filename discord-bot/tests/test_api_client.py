@@ -123,14 +123,41 @@ async def test_compose_omits_profile_and_overrides_when_none():
     assert "overrides" not in seen["body"]
 
 
-async def test_compose_and_submit_builds_overrides():
+async def test_prompt_defaults_are_composed_from_selected_preset_and_profile():
+    def handler(req):
+        import json
+
+        assert req.url.path == "/api/style-presets/p/compose"
+        assert json.loads(req.content) == {"content_prompt": " ", "profile": "portrait"}
+        return httpx.Response(
+            200,
+            json={
+                "preset_id": "p",
+                "profile": "portrait",
+                "generation": {
+                    "prompt": "preset positive",
+                    "negative_prompt": "preset negative",
+                },
+            },
+        )
+
+    api = make_api(handler)
+    assert await api.get_prompt_defaults("p", "portrait") == (
+        "preset positive",
+        "preset negative",
+    )
+
+
+async def test_compose_and_submit_overrides_full_edited_prompts():
     calls = {}
 
     def handler(req):
         import json
 
         if req.url.path.endswith("/compose"):
-            calls["overrides"] = json.loads(req.content)["overrides"]
+            body = json.loads(req.content)
+            calls["content_prompt"] = body["content_prompt"]
+            calls["overrides"] = body["overrides"]
             return httpx.Response(200, json={"preset_id": "p", "profile": None, "generation": {"prompt": "x"}})
         if req.url.path == "/api/generate/":
             calls["generation"] = json.loads(req.content)
@@ -138,9 +165,40 @@ async def test_compose_and_submit_builds_overrides():
         raise AssertionError(req.url.path)
 
     api = make_api(handler)
-    job_id = await api.compose_and_submit("p", None, "a dog", 800, 600, 3)
+    job_id = await api.compose_and_submit(
+        "p", None, "edited positive", "edited negative", 800, 600, 3
+    )
     assert job_id == "J1"
-    assert calls["overrides"] == {"width": 800, "height": 600, "batch_size": 3}
+    assert calls["content_prompt"] == " "
+    assert calls["overrides"] == {
+        "prompt": "edited positive",
+        "negative_prompt": "edited negative",
+        "width": 800,
+        "height": 600,
+        "batch_size": 3,
+    }
+
+
+async def test_compose_and_submit_allows_user_to_clear_negative_prompt():
+    calls = {}
+
+    def handler(req):
+        import json
+
+        if req.url.path.endswith("/compose"):
+            calls["overrides"] = json.loads(req.content)["overrides"]
+            return httpx.Response(
+                200,
+                json={"preset_id": "p", "profile": None, "generation": {"prompt": "x"}},
+            )
+        if req.url.path == "/api/generate/":
+            return httpx.Response(201, json={"job_id": "J2", "status": "queued"})
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    job_id = await api.compose_and_submit("p", None, "edited positive", "", 512, 512, 1)
+    assert job_id == "J2"
+    assert calls["overrides"]["negative_prompt"] == ""
 
 
 async def test_collect_job_result_running():

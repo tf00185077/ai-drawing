@@ -6,7 +6,8 @@ compose 產出可直接交給 generate_image / POST /api/generate 的 generation
 """
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.core.resources import (
@@ -17,12 +18,26 @@ from app.core.resources import (
     list_vaes,
 )
 from app.core.style_presets import (
+    DirStylePresetProvider,
     PresetExistsError,
     PresetNotFoundError,
     ProfileNotFoundError,
     ResourceInventory,
     StylePresetProvider,
     get_default_provider,
+)
+from app.core.queue import QueueFullError, submit_saved_workflow
+from app.db.database import get_db
+from app.services.style_preset_workflows import (
+    StylePresetWorkflowError,
+    load_saved_workflow,
+    save_successful_workflow,
+)
+from app.schemas.style_preset_workflows import (
+    SaveStylePresetWorkflowRequest,
+    SaveStylePresetWorkflowResponse,
+    TestStylePresetWorkflowRequest,
+    TestStylePresetWorkflowResponse,
 )
 from app.schemas.style_presets import (
     ComposeRequest,
@@ -42,6 +57,23 @@ router = APIRouter(prefix="/api/style-presets", tags=["風格預設"])
 
 def _provider() -> StylePresetProvider:
     return get_default_provider()
+
+
+def _workflow_provider(
+    provider: StylePresetProvider,
+) -> DirStylePresetProvider:
+    if isinstance(provider, DirStylePresetProvider):
+        return provider
+    raise StylePresetWorkflowError(
+        "invalid_workflow_graph",
+        "The configured style preset provider cannot persist workflow files.",
+        "Use the directory-backed style preset provider.",
+        status_code=500,
+    )
+
+
+def _workflow_http_error(exc: StylePresetWorkflowError) -> HTTPException:
+    return HTTPException(status_code=exc.status_code, detail=exc.detail())
 
 
 def _current_inventory() -> ResourceInventory:
@@ -200,4 +232,88 @@ async def compose_style_preset(
         preset_id=result.preset_id,
         profile=result.profile,
         generation=result.generation,
+    )
+
+
+@router.post(
+    "/{preset_id}/workflow/save",
+    response_model=SaveStylePresetWorkflowResponse,
+    status_code=201,
+)
+async def save_style_preset_workflow(
+    preset_id: str,
+    body: SaveStylePresetWorkflowRequest,
+    provider: StylePresetProvider = Depends(_provider),
+    db: Session = Depends(get_db),
+):
+    """Explicitly promote one already-successful recorded graph."""
+    try:
+        result = save_successful_workflow(
+            db,
+            _workflow_provider(provider),
+            preset_id=preset_id,
+            profile=body.profile,
+            source=body.source,
+            prompt_keywords=body.prompt_keywords,
+            negative_prompt_keywords=body.negative_prompt_keywords,
+        )
+    except StylePresetWorkflowError as exc:
+        raise _workflow_http_error(exc) from exc
+    return SaveStylePresetWorkflowResponse(
+        preset_id=result.preset_id,
+        profile=result.profile,
+        source={"type": result.source_type, "id": result.source_id},
+        workflow_path=result.workflow_path,
+        prompt_keywords=result.prompt_keywords,
+        negative_prompt_keywords=result.negative_prompt_keywords,
+        retest_required=result.retest_required,
+    )
+
+
+@router.get("/{preset_id}/workflow")
+async def get_saved_style_preset_workflow(
+    preset_id: str,
+    profile: str | None = Query(default=None),
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """Return only the raw saved ComfyUI API graph."""
+    try:
+        return load_saved_workflow(
+            _workflow_provider(provider), preset_id, profile
+        )
+    except StylePresetWorkflowError as exc:
+        raise _workflow_http_error(exc) from exc
+
+
+@router.post(
+    "/{preset_id}/workflow/test",
+    response_model=TestStylePresetWorkflowResponse,
+    status_code=202,
+)
+async def test_saved_style_preset_workflow(
+    preset_id: str,
+    body: TestStylePresetWorkflowRequest,
+    provider: StylePresetProvider = Depends(_provider),
+):
+    """Queue the server-owned saved graph without runtime overrides."""
+    try:
+        graph = load_saved_workflow(
+            _workflow_provider(provider), preset_id, body.profile
+        )
+        job_id = submit_saved_workflow(graph)
+    except StylePresetWorkflowError as exc:
+        raise _workflow_http_error(exc) from exc
+    except QueueFullError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "queue_full",
+                "message": str(exc),
+                "hint": "Wait for a queued generation to finish, then retry.",
+            },
+        ) from exc
+    return TestStylePresetWorkflowResponse(
+        preset_id=preset_id,
+        profile=body.profile,
+        job_id=job_id,
     )

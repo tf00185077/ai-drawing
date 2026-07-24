@@ -57,6 +57,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
     ToolCatalogEntry("get_style_preset", "mcp_server.tools.style_presets", "get_style_preset", "json_string", ("GET /api/style-presets/{preset_id}",)),
     ToolCatalogEntry("compose_style_preset", "mcp_server.tools.style_presets", "compose_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/compose",)),
+    ToolCatalogEntry("save_successful_workflow_as_style_preset", "mcp_server.tools.style_presets", "save_successful_workflow_as_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/workflow/save",), notes="explicit user save request only; backend owns the graph"),
+    ToolCatalogEntry("test_saved_style_preset_workflow", "mcp_server.tools.style_presets", "test_saved_style_preset_workflow", "json_string", ("POST /api/style-presets/{preset_id}/workflow/test",), notes="queues the saved server-owned graph verbatim"),
     ToolCatalogEntry("prompt_library_search", "mcp_server.tools.prompt_library", "prompt_library_search", "dict", ("GET /api/prompt-library/catalog", "GET /api/prompt-library/categories/{polarity}/{category_id}", "GET /api/prompt-library/search")),
     ToolCatalogEntry("prompt_library_save", "mcp_server.tools.prompt_library", "prompt_library_save", "dict", ("PUT /api/prompt-library/categories/{polarity}/{category_id}", "PUT /api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}", "PUT /api/prompt-library/combinations/{combination_id}")),
     ToolCatalogEntry("prompt_library_compose", "mcp_server.tools.prompt_library", "prompt_library_compose", "dict", ("POST /api/prompt-library/compose",)),

@@ -90,6 +90,7 @@ class GenerateParams(TypedDict, total=False):
     lora_strength: float
     denoise: float
     recipe_provenance: dict[str, Any]  # CIV-F verified CIV-E bundle, persisted on completion
+    server_owned_verbatim: bool  # internal saved-style-workflow submission marker
 
 
 class _Job:
@@ -176,6 +177,18 @@ def submit_custom(params: GenerateParams) -> str:
     if "workflow" not in params:
         raise ValueError("submit_custom 需要 params.workflow")
     return submit(params)
+
+
+def submit_saved_workflow(workflow: dict[str, Any]) -> str:
+    """Queue a server-owned saved graph without applying runtime parameters."""
+    if not isinstance(workflow, dict) or not workflow:
+        raise ValueError("saved workflow submission requires a nonempty graph object")
+    return submit(
+        {
+            "workflow": copy.deepcopy(workflow),
+            "server_owned_verbatim": True,
+        }
+    )
 
 
 def submit_audited_recipe(params: GenerateParams, *, job_id: str) -> str:
@@ -272,6 +285,30 @@ def cancel(job_id: str) -> bool:
     return False
 
 
+def _fail_saved_workflow_submit(job: "_Job", error: Exception) -> None:
+    """Make every server-owned saved-graph submit exception terminal."""
+    _release_running(job)
+    structured: list[dict[str, str]] = []
+    if isinstance(error, ComfyUIError):
+        try:
+            structured = structure_node_errors(
+                error.node_errors, job.params.get("workflow")
+            )
+        except Exception as structure_error:
+            logger.warning(
+                "Ignored malformed ComfyUI node_errors for saved workflow job %s: %s",
+                job.job_id,
+                structure_error,
+            )
+    _record_failure(job, error, structured)
+    logger.error(
+        "Saved style workflow job %s submit failed: %s (node_errors=%s)",
+        job.job_id,
+        error,
+        structured,
+    )
+
+
 def _process_pending(comfy: ComfyUIClient) -> None:
     """從 pending 取一筆提交至 ComfyUI，移入 running"""
     global _running
@@ -282,6 +319,38 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         _running = job
 
     try:
+        if job.params.get("server_owned_verbatim"):
+            saved_workflow = job.params.get("workflow")
+            if not isinstance(saved_workflow, dict) or not saved_workflow:
+                raise ValueError(
+                    "server-owned saved workflow is missing its graph"
+                )
+            prompt = copy.deepcopy(saved_workflow)
+            job.params["workflow_json"] = copy.deepcopy(prompt)
+            try:
+                prompt_id = comfy.submit_prompt(prompt)
+            except Exception as error:
+                _fail_saved_workflow_submit(job, error)
+                return
+            if not isinstance(prompt_id, str) or not prompt_id.strip():
+                _fail_saved_workflow_submit(
+                    job,
+                    ValueError(
+                        "ComfyUI response is missing a non-empty string prompt_id"
+                    ),
+                )
+                return
+            with _lock:
+                if _running and _running.job_id == job.job_id:
+                    _running.prompt_id = prompt_id
+                _our_prompt_ids.add(prompt_id)
+            logger.info(
+                "Saved style workflow job %s submitted verbatim to ComfyUI, prompt_id=%s",
+                job.job_id,
+                prompt_id,
+            )
+            return
+
         audited_bundle = job.params.get("recipe_provenance")
         if audited_bundle is not None:
             audited_workflow = audited_bundle.get("workflow") if isinstance(audited_bundle, dict) else None

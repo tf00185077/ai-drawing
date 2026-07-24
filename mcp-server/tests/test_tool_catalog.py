@@ -78,3 +78,15 @@ def test_catalog_docs_list_active_tools() -> None:
 
         for name in expected_names:
             assert f"`{name}`" in active, f"{name} missing from {path}"
+
+
+def test_saved_workflow_intents_are_in_the_audited_catalog() -> None:
+    entries = {entry.name: entry for entry in INTENDED_TOOLS}
+    assert entries[
+        "save_successful_workflow_as_style_preset"
+    ].backend_endpoints == (
+        "POST /api/style-presets/{preset_id}/workflow/save",
+    )
+    assert entries["test_saved_style_preset_workflow"].backend_endpoints == (
+        "POST /api/style-presets/{preset_id}/workflow/test",
+    )
