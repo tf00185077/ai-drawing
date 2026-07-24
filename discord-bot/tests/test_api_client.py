@@ -84,3 +84,40 @@ async def test_backend_error_maps_detail_message():
         await api.compose("p9", content_prompt="x")
     assert e.value.status_code == 404
     assert "找不到風格 preset" in str(e.value)
+
+
+async def test_backend_error_maps_dict_detail_message():
+    def handler(req):
+        return httpx.Response(422, json={"detail": {"message": "bad profile", "error": "x"}})
+
+    api = make_api(handler)
+    with pytest.raises(BackendError) as e:
+        await api.get_job("j")
+    assert e.value.status_code == 422
+    assert "bad profile" in str(e.value)
+
+
+async def test_backend_error_maps_dict_detail_error_fallback():
+    def handler(req):
+        return httpx.Response(500, json={"detail": {"error": "boom"}})
+
+    api = make_api(handler)
+    with pytest.raises(BackendError) as e:
+        await api.get_job("j")
+    assert "boom" in str(e.value)
+
+
+async def test_compose_omits_profile_and_overrides_when_none():
+    seen = {}
+
+    def handler(req):
+        import json
+
+        seen["body"] = json.loads(req.content)
+        return httpx.Response(200, json={"preset_id": "p", "profile": None, "generation": {"prompt": "x"}})
+
+    api = make_api(handler)
+    await api.compose("p", content_prompt="hi")
+    assert seen["body"] == {"content_prompt": "hi"}
+    assert "profile" not in seen["body"]
+    assert "overrides" not in seen["body"]
