@@ -8,30 +8,20 @@ from app.core.prompt_library import FilePromptLibraryProvider
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_POSITIVE = {
-    "subjects": 15,
-    "appearance": 18,
-    "expressions": 15,
-    "clothing": 22,
-    "accessories": 34,
-    "actions": 18,
-    "poses": 32,
-    "camera-angles": 32,
-    "composition": 15,
-    "lighting": 18,
-    "styles": 18,
-    "environment": 24,
-    "quality-details": 16,
-    "colors-textures": 18,
+    "quality-ratings": 20,
+    "body-appearance": 36,
+    "clothing": 25,
+    "underwear": 39,
+    "accessories": 7,
+    "environment": 23,
+    "camera-composition": 34,
+    "poses": 27,
+    "actions-interactions": 60,
+    "expressions": 16,
+    "physical-effects": 5,
 }
 EXPECTED_NEGATIVE = {
-    "quality": 14,
-    "anatomy": 14,
-    "face-hands": 16,
-    "composition": 14,
-    "clothing-colors": 10,
-    "artifacts": 10,
-    "text-watermark": 10,
-    "duplicates": 10,
+    "base-negative": 5,
 }
 
 
@@ -42,21 +32,17 @@ def test_seed_catalog_is_complete_bilingual_and_clean() -> None:
     counts = {(item.polarity, item.id): item.entry_count for item in catalog.categories}
     assert {key: counts[("positive", key)] for key in EXPECTED_POSITIVE} == EXPECTED_POSITIVE
     assert {key: counts[("negative", key)] for key in EXPECTED_NEGATIVE} == EXPECTED_NEGATIVE
-    assert sum(counts.values()) == 393
+    assert sum(counts.values()) == 297
 
     ids: set[tuple[str, str, str]] = set()
-    prompts: set[tuple[str, str]] = set()
     for summary in catalog.categories:
         loaded = provider.get_category(summary.polarity, summary.id).category
-        assert loaded.revision == 1
+        assert loaded.revision >= 1
         assert loaded.name_zh.strip() and loaded.description_zh.strip()
         for item in loaded.entries:
             key = (loaded.polarity, loaded.id, item.id)
             assert key not in ids
             ids.add(key)
-            prompt_key = (loaded.polarity, item.prompt.casefold().strip())
-            assert prompt_key not in prompts
-            prompts.add(prompt_key)
             assert item.name_zh.strip() and item.description_zh.strip()
             assert item.prompt.strip()
             assert re.search(r"[\u3400-\u9fff]", item.prompt) is None

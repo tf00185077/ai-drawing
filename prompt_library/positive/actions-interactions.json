@@ -1,0 +1,1101 @@
+{
+    "schema_version":  1,
+    "id":  "actions-interactions",
+    "polarity":  "positive",
+    "name_zh":  "動作與互動",
+    "description_zh":  "收錄「動作與互動」分類的提示詞。",
+    "aliases":  [
+                    "動作與互動",
+                    "actions-interactions"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "actions-interactions"
+                 ],
+    "order":  270,
+    "revision":  61,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "p-extra-acts-touching-breasts-squeezing-breasts",
+                        "name_zh":  "揉捏胸部",
+                        "description_zh":  "加入「揉捏胸部」提示詞。",
+                        "prompt":  "touching breasts, squeezing breasts",
+                        "aliases":  [
+                                        "揉捏胸部 (touching breasts)",
+                                        "touching breasts, squeezing breasts"
+                                    ],
+                        "keywords":  [
+                                         "p_extra_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "p-extra-acts-sucking-nipples-kissing-breasts-sucking-breasts",
+                        "name_zh":  "吸吮乳頭",
+                        "description_zh":  "加入「吸吮乳頭」提示詞。",
+                        "prompt":  "sucking nipples, kissing breasts, sucking breasts",
+                        "aliases":  [
+                                        "吸吮乳頭 (sucking breasts)",
+                                        "sucking nipples, kissing breasts, sucking breasts"
+                                    ],
+                        "keywords":  [
+                                         "p_extra_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "p-extra-acts-kissing-french-kiss-saliva",
+                        "name_zh":  "法式熱吻",
+                        "description_zh":  "加入「法式熱吻」提示詞。",
+                        "prompt":  "kissing, french kiss, saliva",
+                        "aliases":  [
+                                        "法式熱吻 (kissing)",
+                                        "kissing, french kiss, saliva"
+                                    ],
+                        "keywords":  [
+                                         "p_extra_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "p-extra-acts-hair-pulling",
+                        "name_zh":  "抓扯頭髮",
+                        "description_zh":  "加入「抓扯頭髮」提示詞。",
+                        "prompt":  "hair pulling",
+                        "aliases":  [
+                                        "抓扯頭髮 (hair pulling)",
+                                        "hair pulling"
+                                    ],
+                        "keywords":  [
+                                         "p_extra_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "climaxes-orgasm-cum-ejaculation-heavy-breathing",
+                        "name_zh":  "射精瞬間/高潮",
+                        "description_zh":  "加入「射精瞬間/高潮」提示詞。",
+                        "prompt":  "orgasm, cum, ejaculation, heavy breathing",
+                        "aliases":  [
+                                        "射精瞬間/高潮 (orgasm, cum, ejaculation)",
+                                        "orgasm, cum, ejaculation, heavy breathing"
+                                    ],
+                        "keywords":  [
+                                         "climaxes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "climaxes-creampie-orgasm-cum-in-pussy-ejaculation",
+                        "name_zh":  "體內射精/中出",
+                        "description_zh":  "加入「體內射精/中出」提示詞。",
+                        "prompt":  "creampie, orgasm, cum in pussy, ejaculation",
+                        "aliases":  [
+                                        "體內射精/中出 (creampie, orgasm)",
+                                        "creampie, orgasm, cum in pussy, ejaculation"
+                                    ],
+                        "keywords":  [
+                                         "climaxes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "climaxes-facial-cum-on-face-ejaculation-on-face",
+                        "name_zh":  "顏射瞬間",
+                        "description_zh":  "加入「顏射瞬間」提示詞。",
+                        "prompt":  "facial, cum on face, ejaculation on face",
+                        "aliases":  [
+                                        "顏射瞬間 (facial, ejaculation on face)",
+                                        "facial, cum on face, ejaculation on face"
+                                    ],
+                        "keywords":  [
+                                         "climaxes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "climaxes-cum-in-mouth-ejaculation-in-mouth-swallowing",
+                        "name_zh":  "射入口中",
+                        "description_zh":  "加入「射入口中」提示詞。",
+                        "prompt":  "cum in mouth, ejaculation in mouth, swallowing",
+                        "aliases":  [
+                                        "射入口中 (cum in mouth, ejaculation in mouth)",
+                                        "cum in mouth, ejaculation in mouth, swallowing"
+                                    ],
+                        "keywords":  [
+                                         "climaxes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "climaxes-cum-on-breasts-ejaculation-on-breasts",
+                        "name_zh":  "射在胸上",
+                        "description_zh":  "加入「射在胸上」提示詞。",
+                        "prompt":  "cum on breasts, ejaculation on breasts",
+                        "aliases":  [
+                                        "射在胸上 (cum on breasts, ejaculation on breasts)",
+                                        "cum on breasts, ejaculation on breasts"
+                                    ],
+                        "keywords":  [
+                                         "climaxes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-kissing-french-kiss-saliva-closed-eyes",
+                        "name_zh":  "法式熱吻",
+                        "description_zh":  "加入「法式熱吻」提示詞。",
+                        "prompt":  "kissing, french kiss, saliva, closed eyes",
+                        "aliases":  [
+                                        "法式熱吻 (kissing, french kiss...)",
+                                        "kissing, french kiss, saliva, closed eyes"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-licking-ear-teasing-whispering",
+                        "name_zh":  "舔耳呢喃",
+                        "description_zh":  "加入「舔耳呢喃」提示詞。",
+                        "prompt":  "licking ear, teasing, whispering",
+                        "aliases":  [
+                                        "舔耳呢喃 (licking ear, teasing...)",
+                                        "licking ear, teasing, whispering"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-touching-breasts-squeezing-breasts",
+                        "name_zh":  "揉捏胸部",
+                        "description_zh":  "加入「揉捏胸部」提示詞。",
+                        "prompt":  "touching breasts, squeezing breasts",
+                        "aliases":  [
+                                        "揉捏胸部 (touching breasts, squeezing breasts)",
+                                        "touching breasts, squeezing breasts"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-sucking-nipples-kissing-breasts-sucking-breasts",
+                        "name_zh":  "吸吮乳頭/胸部",
+                        "description_zh":  "加入「吸吮乳頭/胸部」提示詞。",
+                        "prompt":  "sucking nipples, kissing breasts, sucking breasts",
+                        "aliases":  [
+                                        "吸吮乳頭/胸部 (sucking breasts)",
+                                        "sucking nipples, kissing breasts, sucking breasts"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts",
+                        "name_zh":  "揉胸 + 吸奶",
+                        "description_zh":  "加入「揉胸 + 吸奶」提示詞。",
+                        "prompt":  "touching breasts, sucking nipples, kissing breasts, sucking breasts",
+                        "aliases":  [
+                                        "揉胸 + 吸奶 (touching \u0026 sucking breasts)",
+                                        "touching breasts, sucking nipples, kissing breasts, sucking breasts"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-fingering-rubbing-crotch",
+                        "name_zh":  "指交/撫摸下體",
+                        "description_zh":  "加入「指交/撫摸下體」提示詞。",
+                        "prompt":  "fingering, rubbing crotch",
+                        "aliases":  [
+                                        "指交/撫摸下體 (fingering, rubbing crotch)",
+                                        "fingering, rubbing crotch"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-straddling-grinding-dry-humping",
+                        "name_zh":  "跨坐/隔衣摩擦",
+                        "description_zh":  "加入「跨坐/隔衣摩擦」提示詞。",
+                        "prompt":  "straddling, grinding, dry humping",
+                        "aliases":  [
+                                        "跨坐/隔衣摩擦 (straddling, grinding...)",
+                                        "straddling, grinding, dry humping"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-hugging-romantic-embrace",
+                        "name_zh":  "擁抱",
+                        "description_zh":  "加入「擁抱」提示詞。",
+                        "prompt":  "hugging, romantic embrace",
+                        "aliases":  [
+                                        "擁抱 (hugging, romantic embrace)",
+                                        "hugging, romantic embrace"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-pinned-against-wall-blush-looking-up",
+                        "name_zh":  "壁咚",
+                        "description_zh":  "加入「壁咚」提示詞。",
+                        "prompt":  "pinned against wall, blush, looking up",
+                        "aliases":  [
+                                        "壁咚 (pinned against wall, blush...)",
+                                        "pinned against wall, blush, looking up"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-acts-cunnilingus",
+                        "name_zh":  "舔陰",
+                        "description_zh":  "加入「舔陰」提示詞。",
+                        "prompt":  "cunnilingus",
+                        "aliases":  [
+                                        "舔陰 (cunnilingus)",
+                                        "cunnilingus"
+                                    ],
+                        "keywords":  [
+                                         "flirt_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-blowjob-fellatio-penis-in-mouth-suck",
+                        "name_zh":  "口交",
+                        "description_zh":  "加入「口交」提示詞。",
+                        "prompt":  "blowjob, fellatio, penis in mouth, suck",
+                        "aliases":  [
+                                        "口交 (blowjob)",
+                                        "blowjob, fellatio, penis in mouth, suck"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-handjob-grasping-penis-rubbing-penis",
+                        "name_zh":  "手交",
+                        "description_zh":  "加入「手交」提示詞。",
+                        "prompt":  "handjob, grasping penis, rubbing penis",
+                        "aliases":  [
+                                        "手交 (handjob)",
+                                        "handjob, grasping penis, rubbing penis"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  30,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-paizuri-penis-between-breasts-titjob",
+                        "name_zh":  "乳交",
+                        "description_zh":  "加入「乳交」提示詞。",
+                        "prompt":  "paizuri, penis between breasts, titjob",
+                        "aliases":  [
+                                        "乳交 (paizuri)",
+                                        "paizuri, penis between breasts, titjob"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  31,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-footjob-foot-on-penis-feet",
+                        "name_zh":  "足交",
+                        "description_zh":  "加入「足交」提示詞。",
+                        "prompt":  "footjob, foot on penis, feet",
+                        "aliases":  [
+                                        "足交 (footjob)",
+                                        "footjob, foot on penis, feet"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  32,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-thighjob-penis-between-thighs",
+                        "name_zh":  "大腿交",
+                        "description_zh":  "加入「大腿交」提示詞。",
+                        "prompt":  "thighjob, penis between thighs",
+                        "aliases":  [
+                                        "大腿交 (thighjob)",
+                                        "thighjob, penis between thighs"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  33,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-armpit-sex-penis-in-armpit-holding-own-arm",
+                        "name_zh":  "腋下交",
+                        "description_zh":  "加入「腋下交」提示詞。",
+                        "prompt":  "armpit sex, penis in armpit, holding own arm",
+                        "aliases":  [
+                                        "腋下交 (armpit sex)",
+                                        "armpit sex, penis in armpit, holding own arm"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  34,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
+                        "name_zh":  "口交 + 手交",
+                        "description_zh":  "加入「口交 + 手交」提示詞。",
+                        "prompt":  "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
+                        "aliases":  [
+                                        "口交 + 手交 (blowjob + handjob)",
+                                        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  35,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
+                        "name_zh":  "口交 + 乳交",
+                        "description_zh":  "加入「口交 + 乳交」提示詞。",
+                        "prompt":  "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
+                        "aliases":  [
+                                        "口交 + 乳交 (blowjob + paizuri)",
+                                        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  36,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts",
+                        "name_zh":  "手交 + 乳交",
+                        "description_zh":  "加入「手交 + 乳交」提示詞。",
+                        "prompt":  "handjob, grasping penis, paizuri, penis between breasts",
+                        "aliases":  [
+                                        "手交 + 乳交 (handjob + paizuri)",
+                                        "handjob, grasping penis, paizuri, penis between breasts"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  37,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-cunnilingus-receiving-oral-oral-on-vagina",
+                        "name_zh":  "被舔陰",
+                        "description_zh":  "加入「被舔陰」提示詞。",
+                        "prompt":  "cunnilingus, receiving oral, oral on vagina",
+                        "aliases":  [
+                                        "被舔陰 (cunnilingus)",
+                                        "cunnilingus, receiving oral, oral on vagina"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  38,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-69-position-mutual-oral-blowjob-cunnilingus-fellatio",
+                        "name_zh":  "69式互相口交 (69 position, mutual)",
+                        "description_zh":  "加入「69式互相口交 (69 position, mutual)」提示詞。",
+                        "prompt":  "69 position, mutual oral, blowjob, cunnilingus, fellatio",
+                        "aliases":  [
+                                        "69式互相口交 (69 position, mutual)",
+                                        "69 position, mutual oral, blowjob, cunnilingus, fellatio"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  39,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "oral-acts-anilingus-rimming",
+                        "name_zh":  "被舔肛",
+                        "description_zh":  "加入「被舔肛」提示詞。",
+                        "prompt":  "anilingus, rimming",
+                        "aliases":  [
+                                        "被舔肛 (anilingus)",
+                                        "anilingus, rimming"
+                                    ],
+                        "keywords":  [
+                                         "oral_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  40,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-lifting-shirt-exposing-midriff-underbust",
+                        "name_zh":  "分鏡：雙手掀起上衣露出下乳",
+                        "description_zh":  "加入「分鏡：雙手掀起上衣露出下乳」提示詞。",
+                        "prompt":  "lifting shirt, exposing midriff, underbust",
+                        "aliases":  [
+                                        "分鏡：雙手掀起上衣露出下乳 (lifting shirt, exposing midriff, underbust)",
+                                        "lifting shirt, exposing midriff, underbust"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  41,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-shirt-over-head-face-visible-arms-up",
+                        "name_zh":  "分鏡：上衣卡在頭上但露出臉",
+                        "description_zh":  "加入「分鏡：上衣卡在頭上但露出臉」提示詞。",
+                        "prompt":  "shirt over head, face visible, arms up",
+                        "aliases":  [
+                                        "分鏡：上衣卡在頭上但露出臉 (shirt over head, face visible, arms up)",
+                                        "shirt over head, face visible, arms up"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  42,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-shirt-removed-holding-clothes",
+                        "name_zh":  "分鏡：單手拿著脫下的上衣",
+                        "description_zh":  "加入「分鏡：單手拿著脫下的上衣」提示詞。",
+                        "prompt":  "shirt removed, holding clothes",
+                        "aliases":  [
+                                        "分鏡：單手拿著脫下的上衣 (shirt removed, holding clothes)",
+                                        "shirt removed, holding clothes"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  43,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-shirt-open-unbuttoned-shirt-revealing-bra",
+                        "name_zh":  "解開鈕扣露出內衣",
+                        "description_zh":  "加入「解開鈕扣露出內衣」提示詞。",
+                        "prompt":  "shirt open, unbuttoned shirt, revealing bra",
+                        "aliases":  [
+                                        "解開鈕扣露出內衣 (shirt open, unbuttoned shirt...)",
+                                        "shirt open, unbuttoned shirt, revealing bra"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  44,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-lifting-shirt-biting-shirt-revealing-bra",
+                        "name_zh":  "咬著衣服下擺往上拉",
+                        "description_zh":  "加入「咬著衣服下擺往上拉」提示詞。",
+                        "prompt":  "lifting shirt, biting shirt, revealing bra",
+                        "aliases":  [
+                                        "咬著衣服下擺往上拉 (lifting shirt, biting shirt...)",
+                                        "lifting shirt, biting shirt, revealing bra"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  45,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-shirt-off-shoulder-bra-strap-slipping",
+                        "name_zh":  "衣服滑落露肩",
+                        "description_zh":  "加入「衣服滑落露肩」提示詞。",
+                        "prompt":  "shirt off shoulder, bra strap slipping",
+                        "aliases":  [
+                                        "衣服滑落露肩 (shirt off shoulder, bra strap slipping)",
+                                        "shirt off shoulder, bra strap slipping"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  46,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-taking-off-skirt-revealing-panties",
+                        "name_zh":  "脫下裙子露出內褲",
+                        "description_zh":  "加入「脫下裙子露出內褲」提示詞。",
+                        "prompt":  "taking off skirt, revealing panties",
+                        "aliases":  [
+                                        "脫下裙子露出內褲 (taking off skirt, revealing panties)",
+                                        "taking off skirt, revealing panties"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  47,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-pulling-down-pants-revealing-panties",
+                        "name_zh":  "拉下褲子露出內褲",
+                        "description_zh":  "加入「拉下褲子露出內褲」提示詞。",
+                        "prompt":  "pulling down pants, revealing panties",
+                        "aliases":  [
+                                        "拉下褲子露出內褲 (pulling down pants, revealing panties)",
+                                        "pulling down pants, revealing panties"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  48,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-hands-behind-back-unhooking-bra",
+                        "name_zh":  "雙手放在背後解內衣",
+                        "description_zh":  "加入「雙手放在背後解內衣」提示詞。",
+                        "prompt":  "hands behind back, unhooking bra",
+                        "aliases":  [
+                                        "雙手放在背後解內衣 (hands behind back, unhooking bra)",
+                                        "hands behind back, unhooking bra"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  49,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-pulling-down-panties-panties-around-thighs",
+                        "name_zh":  "褪下內褲卡在大腿",
+                        "description_zh":  "加入「褪下內褲卡在大腿」提示詞。",
+                        "prompt":  "pulling down panties, panties around thighs",
+                        "aliases":  [
+                                        "褪下內褲卡在大腿 (pulling down panties, panties around thighs)",
+                                        "pulling down panties, panties around thighs"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  50,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "undress-acts-taking-off-shirt",
+                        "name_zh":  "脫下衣服",
+                        "description_zh":  "加入「脫下衣服」提示詞。",
+                        "prompt":  "taking off shirt",
+                        "aliases":  [
+                                        "脫下衣服 (taking off shirt)",
+                                        "taking off shirt"
+                                    ],
+                        "keywords":  [
+                                         "undress_acts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  51,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-wet-opts-wet-saliva-trail-pussy-juice-trail",
+                        "name_zh":  "微濕牽絲",
+                        "description_zh":  "加入「微濕牽絲」提示詞。",
+                        "prompt":  "wet, saliva trail, pussy juice trail",
+                        "aliases":  [
+                                        "微濕牽絲 (wet, pussy juice trail)",
+                                        "wet, saliva trail, pussy juice trail"
+                                    ],
+                        "keywords":  [
+                                         "teasing_wet_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  52,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-wet-opts-dripping-puddle-on-floor-heavy-pussy-juice",
+                        "name_zh":  "淫水滴落/水灘",
+                        "description_zh":  "加入「淫水滴落/水灘」提示詞。",
+                        "prompt":  "dripping, puddle on floor, heavy pussy juice",
+                        "aliases":  [
+                                        "淫水滴落/水灘 (dripping, puddle)",
+                                        "dripping, puddle on floor, heavy pussy juice"
+                                    ],
+                        "keywords":  [
+                                         "teasing_wet_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  53,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-milk-opts-leaking-milk-breast-milk",
+                        "name_zh":  "流出乳汁/滴乳",
+                        "description_zh":  "加入「流出乳汁/滴乳」提示詞。",
+                        "prompt":  "leaking milk, breast milk",
+                        "aliases":  [
+                                        "流出乳汁/滴乳 (leaking milk)",
+                                        "leaking milk, breast milk"
+                                    ],
+                        "keywords":  [
+                                         "teasing_milk_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  54,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-milk-opts-squirting-milk-breast-milk-messy",
+                        "name_zh":  "噴射乳汁",
+                        "description_zh":  "加入「噴射乳汁」提示詞。",
+                        "prompt":  "squirting milk, breast milk, messy",
+                        "aliases":  [
+                                        "噴射乳汁 (squirting milk)",
+                                        "squirting milk, breast milk, messy"
+                                    ],
+                        "keywords":  [
+                                         "teasing_milk_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  55,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-tongues-tongue-out-1-4",
+                        "name_zh":  "微微吐舌",
+                        "description_zh":  "加入「微微吐舌」提示詞。",
+                        "prompt":  "(tongue out:1.4)",
+                        "aliases":  [
+                                        "微微吐舌 (tongue out)",
+                                        "(tongue out:1.4)"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_tongues",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  56,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-tongues-open-mouth-catching-cum-tongue-out-1-4",
+                        "name_zh":  "張嘴接/想喝",
+                        "description_zh":  "加入「張嘴接/想喝」提示詞。",
+                        "prompt":  "open mouth, catching cum, (tongue out:1.4)",
+                        "aliases":  [
+                                        "張嘴接/想喝 (open mouth)",
+                                        "open mouth, catching cum, (tongue out:1.4)"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_tongues",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  57,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-dynamics-flying-semen-bukkake-cum-in-midair-heavy-semen-thick-semen",
+                        "name_zh":  "大量精液飛濺",
+                        "description_zh":  "加入「大量精液飛濺」提示詞。",
+                        "prompt":  "flying semen, bukkake, cum in midair, heavy semen, thick semen",
+                        "aliases":  [
+                                        "大量精液飛濺 (heavy flying semen, bukkake)",
+                                        "flying semen, bukkake, cum in midair, heavy semen, thick semen"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_dynamics",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  58,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-dynamics-flying-semen-cum-towards-face-cum-in-midair",
+                        "name_zh":  "精液飛濺向臉部",
+                        "description_zh":  "加入「精液飛濺向臉部」提示詞。",
+                        "prompt":  "flying semen, cum towards face, cum in midair",
+                        "aliases":  [
+                                        "精液飛濺向臉部 (semen flying to face)",
+                                        "flying semen, cum towards face, cum in midair"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_dynamics",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  59,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-dynamics-flying-semen-cum-towards-breasts-cum-in-midair",
+                        "name_zh":  "精液飛濺向胸部",
+                        "description_zh":  "加入「精液飛濺向胸部」提示詞。",
+                        "prompt":  "flying semen, cum towards breasts, cum in midair",
+                        "aliases":  [
+                                        "精液飛濺向胸部 (semen flying to breasts)",
+                                        "flying semen, cum towards breasts, cum in midair"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_dynamics",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  60,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "wetness-opts-wet-panties-crotch-stained",
+                        "name_zh":  "內褲微濕",
+                        "description_zh":  "加入「內褲微濕」提示詞。",
+                        "prompt":  "wet panties, crotch stained",
+                        "aliases":  [
+                                        "內褲微濕 (wet panties)",
+                                        "wet panties, crotch stained"
+                                    ],
+                        "keywords":  [
+                                         "wetness_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  61,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "wetness-opts-wet-panties-crotch-stained-dripping-puddle-bodily-fluids-on-floor",
+                        "name_zh":  "愛液滿地/淫汁",
+                        "description_zh":  "加入「愛液滿地/淫汁」提示詞。",
+                        "prompt":  "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
+                        "aliases":  [
+                                        "愛液滿地/淫汁 (dripping on floor)",
+                                        "wet panties, crotch stained, dripping, puddle, bodily fluids on floor"
+                                    ],
+                        "keywords":  [
+                                         "wetness_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  62,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-condoms-used-condoms-scattered-around",
+                        "name_zh":  "用過的保險套散落",
+                        "description_zh":  "加入「用過的保險套散落」提示詞。",
+                        "prompt":  "used condoms scattered around",
+                        "aliases":  [
+                                        "用過的保險套散落 (used condoms scattered around)",
+                                        "used condoms scattered around"
+                                    ],
+                        "keywords":  [
+                                         "after_condoms",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  63,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-condoms-used-condom-in-mouth",
+                        "name_zh":  "嘴裡叼著保險套",
+                        "description_zh":  "加入「嘴裡叼著保險套」提示詞。",
+                        "prompt":  "used condom in mouth",
+                        "aliases":  [
+                                        "嘴裡叼著保險套 (used condom in mouth)",
+                                        "used condom in mouth"
+                                    ],
+                        "keywords":  [
+                                         "after_condoms",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  64,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-condoms-holding-used-condom",
+                        "name_zh":  "手裡拿著保險套",
+                        "description_zh":  "加入「手裡拿著保險套」提示詞。",
+                        "prompt":  "holding used condom",
+                        "aliases":  [
+                                        "手裡拿著保險套 (holding used condom)",
+                                        "holding used condom"
+                                    ],
+                        "keywords":  [
+                                         "after_condoms",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  65,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-cums-heavy-semen-covered-in-cum-messy-body-cum-pool-cum-everywhere",
+                        "name_zh":  "渾身精液",
+                        "description_zh":  "加入「渾身精液」提示詞。",
+                        "prompt":  "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
+                        "aliases":  [
+                                        "渾身精液 (heavy semen)",
+                                        "heavy semen, covered in cum, messy body, cum pool, cum everywhere"
+                                    ],
+                        "keywords":  [
+                                         "after_cums",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  66,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
+                        "name_zh":  "多人顏射",
+                        "description_zh":  "加入「多人顏射」提示詞。",
+                        "prompt":  "bukkake, covered in cum, messy body, cum pool, cum everywhere",
+                        "aliases":  [
+                                        "多人顏射 (bukkake)",
+                                        "bukkake, covered in cum, messy body, cum pool, cum everywhere"
+                                    ],
+                        "keywords":  [
+                                         "after_cums",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  67,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-cums-creampie-leaking-cum-pooling",
+                        "name_zh":  "中出溢流",
+                        "description_zh":  "加入「中出溢流」提示詞。",
+                        "prompt":  "creampie leaking, cum pooling",
+                        "aliases":  [
+                                        "中出溢流 (creampie leaking, cum pooling)",
+                                        "creampie leaking, cum pooling"
+                                    ],
+                        "keywords":  [
+                                         "after_cums",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  68,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-cums-cum-on-face-and-breasts",
+                        "name_zh":  "臉與胸滿是精液",
+                        "description_zh":  "加入「臉與胸滿是精液」提示詞。",
+                        "prompt":  "cum on face and breasts",
+                        "aliases":  [
+                                        "臉與胸滿是精液 (cum on face and breasts)",
+                                        "cum on face and breasts"
+                                    ],
+                        "keywords":  [
+                                         "after_cums",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  69,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}
