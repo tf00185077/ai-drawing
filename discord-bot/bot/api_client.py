@@ -1,6 +1,8 @@
 """backend HTTP 包裝——唯一知道 backend 契約的地方。"""
 import httpx
 
+from .validation import build_gallery_download_url
+
 
 class BackendError(Exception):
     def __init__(self, message: str, status_code: int | None = None):
@@ -62,3 +64,33 @@ class ApiClient:
     async def download(self, image_url: str) -> bytes:
         r = self._check(await self._client.get(image_url))
         return r.content
+
+    async def compose_and_submit(self, preset_id: str, profile: str | None,
+                                 prompt: str, width: int, height: int, count: int) -> str:
+        overrides = {"width": width, "height": height, "batch_size": count}
+        generation = await self.compose(preset_id, content_prompt=prompt, profile=profile, overrides=overrides)
+        return await self.submit_generate(generation)
+
+    async def collect_job_result(self, job_id: str) -> dict:
+        job = await self.get_job(job_id)
+        status = job.get("status")
+        if status in ("queued", "running"):
+            return {"status": status}
+        if status == "failed":
+            return {
+                "status": "failed",
+                "error": job.get("error"),
+                "node_errors": job.get("node_errors", []),
+            }
+        items = await self.list_job_images(job_id)
+        images: list[tuple[str, bytes]] = []
+        urls: list[str] = []
+        for item in items:
+            image_url = item.get("image_url")
+            if not image_url:
+                continue
+            data = await self.download(image_url)
+            filename = image_url.rsplit("/", 1)[-1]
+            images.append((filename, data))
+            urls.append(build_gallery_download_url(self._base_url, image_url))
+        return {"status": "completed", "images": images, "urls": urls}
