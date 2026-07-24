@@ -24,6 +24,7 @@ from app.core.prompt_library_models import (
     PromptCategory,
     PromptCombination,
     PromptLibraryManifest,
+    validate_combination_id,
 )
 from app.schemas.prompt_library import PromptLibraryDiagnostic
 
@@ -72,7 +73,13 @@ class PromptLibraryStore:
         return self._confined(self.root / polarity, category_id)
 
     def combination_path(self, combination_id: str) -> Path:
-        return self._confined(self.root / "combinations", combination_id)
+        try:
+            normalized_id = validate_combination_id(combination_id)
+        except ValueError as exc:
+            raise PromptLibraryError.invalid_locator(combination_id) from exc
+        return self._confined(
+            self.root / "combinations", normalized_id, require_slug=False
+        )
 
     def read_manifest(self) -> PromptLibraryManifest:
         return self._domain_read(self.root / "manifest.json", PromptLibraryManifest).model
@@ -270,8 +277,10 @@ class PromptLibraryStore:
             return [(None, _DocumentIssue("io_error", locator, str(exc), {}))]
         return [(path, None) for path in files]
 
-    def _confined(self, parent: Path, resource_id: str) -> Path:
-        if re.fullmatch(SLUG_PATTERN, resource_id) is None:
+    def _confined(
+        self, parent: Path, resource_id: str, *, require_slug: bool = True
+    ) -> Path:
+        if require_slug and re.fullmatch(SLUG_PATTERN, resource_id) is None:
             raise PromptLibraryError.invalid_locator(resource_id)
         candidate = parent / f"{resource_id}.json"
         try:

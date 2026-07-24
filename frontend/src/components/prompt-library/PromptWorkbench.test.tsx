@@ -31,7 +31,12 @@ function response(data: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => data } as Response;
 }
 
-function installFetch({ conflict = false }: { conflict?: boolean } = {}) {
+function installFetch(
+  { conflict = false, composeValidationError = false }: {
+    conflict?: boolean;
+    composeValidationError?: boolean;
+  } = {},
+) {
   let savedRevision = 1;
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === "/api/prompt-library/catalog") return response(catalog);
@@ -40,6 +45,9 @@ function installFetch({ conflict = false }: { conflict?: boolean } = {}) {
     if (url.endsWith("/negative/artifacts")) return response(negativeCategory);
     if (url === "/api/generate/") return response({ job_id: "job-1" });
     if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+      if (composeValidationError) {
+        return response({ detail: [{ loc: ["body", "save_as", "id"], msg: "String should match pattern", type: "string_pattern_mismatch" }] }, 422);
+      }
       savedRevision += 1;
       return response({ saved_combination: { combination: { id: "my-quality", revision: savedRevision }, etag: `combo-${savedRevision}` } });
     }
@@ -90,6 +98,42 @@ describe("PromptWorkbench", () => {
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(2));
     const secondSaveCall = fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")[1] as [string, RequestInit];
     expect(JSON.parse(String(secondSaveCall[1].body)).save_as).toMatchObject({ expected_revision: 2, expected_etag: "combo-2" });
+  });
+
+  it("accepts safe Unicode combination IDs", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+    await screen.findByRole("button", { name: "品質" });
+
+    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "niji基礎瑟瑟" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
+
+    await waitFor(() => expect(screen.getByText("組合已儲存")).toBeVisible());
+    const saveCall = fetchMock.mock.calls.find(([url]) => url === "/api/prompt-library/compose") as [string, RequestInit];
+    expect(JSON.parse(String(saveCall[1].body)).save_as.id).toBe("niji基礎瑟瑟");
+  });
+
+  it("rejects path-unsafe combination IDs before sending compose", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+    await screen.findByRole("button", { name: "品質" });
+
+    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "../逃逸" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unicode 字母、數字與連字號");
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
+  });
+
+  it("shows FastAPI validation details instead of a bare HTTP 422", async () => {
+    installFetch({ composeValidationError: true });
+    render(<PromptWorkbench />);
+    await screen.findByRole("button", { name: "品質" });
+
+    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "valid-id" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("save_as.id：String should match pattern");
   });
 
   it("keeps the overview visible when switching polarity and generates from current text", async () => {

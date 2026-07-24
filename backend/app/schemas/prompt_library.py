@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.core.prompt_library_models import (
+    CombinationId,
     Polarity,
     PromptCategory,
     PromptCombination,
@@ -49,7 +50,7 @@ class CategorySummary(StrictModel):
 
 
 class CombinationSummary(StrictModel):
-    id: Slug
+    id: CombinationId
     name_zh: str
     description_zh: str
     aliases: list[str] = Field(default_factory=list)
@@ -72,7 +73,7 @@ class CatalogResponse(StrictModel):
 
 class SearchHit(StrictModel):
     resource_type: ResourceType
-    id: Slug
+    id: CombinationId
     polarity: Polarity | None = None
     category_id: Slug | None = None
     name_zh: str
@@ -113,18 +114,18 @@ class CombinationWriteRequest(CategoryWriteRequest):
 
 
 class CombinationSaveIntent(CombinationWriteRequest):
-    id: Slug
+    id: CombinationId
 
 
 class ArchiveRequest(ConcurrencyToken):
     resource_type: ResourceType
-    resource_id: Slug
+    resource_id: CombinationId
     polarity: Polarity | None = None
     category_id: Slug | None = None
 
 
 class ComposeRequest(StrictModel):
-    combination_id: Slug | None = None
+    combination_id: CombinationId | None = None
     positive: list[PromptFragment] = Field(default_factory=list)
     negative: list[PromptFragment] = Field(default_factory=list)
     save_as: CombinationSaveIntent | None = None

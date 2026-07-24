@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "niji基礎瑟瑟",
+  "name_zh": "niji基礎瑟瑟",
+  "description_zh": "Niji 基礎正向與負向提示詞組合",
+  "aliases": [],
+  "keywords": [
+    "niji",
+    "Anima"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "legacy_template": false,
+  "positive": [
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "masterpiece, best quality, high-quality Anima anime illustration, daylight niji coloring, explicit, <character>, <suit>, <place>, <action>, <atmosphere>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 10
+    }
+  ],
+  "negative": [
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "worst quality, low quality, score_1, score_2, score_3, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, watermark, signature, username",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 10
+    }
+  ],
+  "positive_prompt_snapshot": "masterpiece, best quality, high-quality Anima anime illustration, daylight niji coloring, explicit, <character>, <suit>, <place>, <action>, <atmosphere>",
+  "negative_prompt_snapshot": "worst quality, low quality, score_1, score_2, score_3, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, watermark, signature, username"
+}

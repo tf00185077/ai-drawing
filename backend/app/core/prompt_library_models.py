@@ -2,15 +2,38 @@
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 Polarity = Literal["positive", "negative"]
 ResourceType = Literal["category", "entry", "combination"]
 Slug = Annotated[str, Field(pattern=SLUG_PATTERN)]
+
+
+def validate_combination_id(value: object) -> str:
+    if not isinstance(value, str):
+        raise ValueError("combination id must be a string")
+    normalized = unicodedata.normalize("NFC", value)
+    if not 1 <= len(normalized) <= 128:
+        raise ValueError("combination id must contain 1 to 128 characters")
+    parts = normalized.split("-")
+    if any(not part for part in parts):
+        raise ValueError("combination id cannot start/end with or repeat hyphens")
+    if any(
+        not all(unicodedata.category(char)[0] in {"L", "N"} for char in part)
+        for part in parts
+    ):
+        raise ValueError(
+            "combination id may contain only Unicode letters, numbers, and hyphens"
+        )
+    return normalized
+
+
+CombinationId = Annotated[str, BeforeValidator(validate_combination_id)]
 
 
 class StrictModel(BaseModel):
@@ -86,7 +109,7 @@ class PromptFragment(StrictModel):
 
 class PromptCombination(StrictModel):
     schema_version: Literal[1] = 1
-    id: Slug
+    id: CombinationId
     name_zh: str = Field(min_length=1)
     description_zh: str = Field(min_length=1)
     aliases: list[str] = Field(default_factory=list)

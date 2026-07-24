@@ -128,6 +128,33 @@ def test_compose_can_optionally_save_combination(
     assert response.json()["saved_combination"]["combination"]["id"] == "my-dress"
 
 
+def test_compose_can_save_and_read_back_safe_unicode_combination_id(
+    client_with_prompt_library: TestClient,
+) -> None:
+    response = client_with_prompt_library.post(
+        "/api/prompt-library/compose",
+        json={
+            "positive": [{"kind": "literal", "snapshot": "masterpiece"}],
+            "negative": [{"kind": "literal", "snapshot": "worst quality"}],
+            "save_as": {
+                "id": "niji基礎瑟瑟",
+                "name_zh": "niji基礎瑟瑟",
+                "description_zh": "niji基礎瑟瑟",
+                "expected_revision": 0,
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    saved = response.json()["saved_combination"]["combination"]
+    assert saved["id"] == "niji基礎瑟瑟"
+    detail = client_with_prompt_library.get(
+        "/api/prompt-library/combinations/niji%E5%9F%BA%E7%A4%8E%E7%91%9F%E7%91%9F"
+    )
+    assert detail.status_code == 200
+    assert detail.json()["combination"]["id"] == "niji基礎瑟瑟"
+
+
 def test_write_list_detail_and_archive_routes(
     client_with_prompt_library: TestClient,
 ) -> None:
