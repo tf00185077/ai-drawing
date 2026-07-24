@@ -43,6 +43,12 @@ function installFetch() {
       savedRevision += 1;
       return response({ saved_combination: { combination: { id: "my-quality", revision: savedRevision }, etag: `combo-${savedRevision}` } });
     }
+    if (url.includes("/positive/quality/entries/") && init?.method === "PUT") {
+      return response({ entry: { id: "masterpiece", revision: 2 }, entry_revision: 2 });
+    }
+    if (url === "/api/prompt-library/archive" && init?.method === "POST") {
+      return response({ entry: { id: "masterpiece", revision: 2 } });
+    }
     return response({}, 404);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -112,5 +118,45 @@ describe("PromptWorkbench", () => {
       seed_mode: "random",
     });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
+  });
+
+  it("edits an entry with the category revision and etag as the concurrency token", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "編輯 高品質" }));
+    fireEvent.change(screen.getByLabelText("詞條中文名稱"), { target: { value: "大師傑作" } });
+    fireEvent.change(screen.getByLabelText("詞條說明"), { target: { value: "品質詞" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/positive/quality/entries/masterpiece") && init?.method === "PUT")).toBe(true));
+    const call = fetchMock.mock.calls.find(([url, init]) => String(url).includes("/entries/masterpiece") && init?.method === "PUT") as [string, RequestInit];
+    expect(JSON.parse(String(call[1].body))).toMatchObject({
+      name_zh: "大師傑作",
+      description_zh: "品質詞",
+      prompt: "masterpiece",
+      expected_revision: 1,
+      expected_etag: "p1",
+    });
+  });
+
+  it("archives an entry via the archive endpoint", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "封存 高品質" }));
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url, init]) => url === "/api/prompt-library/archive" && init?.method === "POST")).toBe(true));
+    const call = fetchMock.mock.calls.find(([url]) => url === "/api/prompt-library/archive") as [string, RequestInit];
+    expect(JSON.parse(String(call[1].body))).toMatchObject({
+      resource_type: "entry",
+      resource_id: "masterpiece",
+      polarity: "positive",
+      category_id: "quality",
+      expected_revision: 1,
+      expected_etag: "p1",
+    });
   });
 });
