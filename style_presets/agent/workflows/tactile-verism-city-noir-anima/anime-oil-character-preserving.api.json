@@ -1,0 +1,154 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Qwen text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Latent 512 square"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "tactile oil painting finish, visible painterly brushwork, controlled impasto texture, atmospheric cinematic rendering, anime oil painting hybrid, preserved anime character design, recognizable character identity, clean anime facial proportions, expressive anime eyes, soft anime face, readable character features, warm natural key light on face, healthy peach anime skin with subtle painterly shading, natural blush, non-metallic matte skin, avoid global color wash on face, painterly but readable anime portrait, oil brushwork as surface rendering rather than skin material, visible oil brush strokes on hair locks, painterly edges on hairstyle silhouette, visible oil brush texture on clothing fabric, broad oil-paint strokes on clothing folds and sleeve shadows, painterly strokes on collar and neck accessory, controlled impasto texture in the background, textured painterly background with visible canvas-like brush grain, teal and amber color grading constrained to background, atmosphere, rim light, and edge light, warm natural face color separated from the background palette, bust portrait, chest-up portrait, cropped above waist, upper body only, hands out of frame, wet reflective background surfaces, smoggy atmospheric depth, high quality anime character portrait with stronger painterly oil finish, anime face preserved while hair, clothing, background, and silhouette edges carry the oil-paint texture, character details remain crisp and recognizable under the painterly finish",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, bad anatomy, deformed, blurry, muddy details, photorealistic face, realistic old face, uncanny face, distorted character identity, lost character identity, face obscured, face covered in paint, heavy paint blobs on face, overpainted face, color wash over face, teal face, blue face, green face, gray face, corpse-like skin, ghostly skin, sickly pale skin, metallic skin, golden skin, gold face, bronze face, chrome skin, reflective face, statue, mask, robot, armor, gold paint on skin, harsh teal light on face, excessive rim light on face, muddy facial details, belt, rope belt, cord around waist, yellow belt, waist rope, body tied, bindings, horizontal straps across torso, torso rope, peace sign, v sign, smile, grin",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+      "strength_model": 0.5
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load Anima Masterpiece LoRA"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 2782265067,
+      "steps": 35,
+      "cfg": 3.2,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "10",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_lora_test",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  }
+}

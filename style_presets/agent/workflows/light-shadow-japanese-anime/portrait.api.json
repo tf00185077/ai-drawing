@@ -1,0 +1,86 @@
+{
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "cfg": 5.0,
+      "denoise": 1,
+      "latent_image": [
+        "5",
+        0
+      ],
+      "model": [
+        "4",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "sampler_name": "euler",
+      "scheduler": "karras",
+      "seed": 2432456975,
+      "steps": 20
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "oneObsession_v23.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "batch_size": 1,
+      "height": 2040,
+      "width": 1360
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "4",
+        1
+      ],
+      "text": "masterpiece, best quality, very aesthetic, high detail, digital art, pure hand-drawn 2D Japanese TV anime style, crisp anime lineart, refined cel shading with controlled gradients, vibrant colors, smooth color gradients, cinematic lighting, mystical atmosphere, soft shadows, soft overhead lighting, nuanced light-and-shadow gradients, high contrast, masterful shading, low-key chiaroscuro, subtle impasto texture, smooth shading, controlled glossy accents, colorful depth"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "4",
+        1
+      ],
+      "text": "anatomical nonsense, interlocked fingers, extra fingers, extra digits, bad hands, bad feet, bad anatomy, deformed anatomy, bad proportions, lowres, low quality, worst quality, jpeg artifacts, watermark, logo, text, signature, username, transparent, photorealistic, realistic skin, 3d, 3d render, cgi, semi-realistic, western comic style, plastic skin, glossy skin"
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    }
+  }
+}

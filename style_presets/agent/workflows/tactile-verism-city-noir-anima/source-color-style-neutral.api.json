@@ -1,0 +1,154 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_baseV10.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "anima_baseV10_txt.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Qwen text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Latent 512 square"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "tactile oil painting finish, visible painterly brushwork, controlled impasto texture, atmospheric cinematic rendering, expressionist oil painting, heavy impasto, visible thick brushstrokes, tactile paint texture, dark teal and gold color palette, moody noir atmosphere, atmospheric haze, mysterious cinematic nocturne lighting, shimmering wet reflections, glowing gold highlights, thick tactile oil-paint treatment, expressive impasto surface, dark teal shadows with gold illumination, wet reflective surfaces, smoggy atmospheric depth, noir mysterious mood, high texture brushwork finish",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, bad anatomy, deformed, blurry, muddy details, exact arched bridge, exact skyline, exact yellow moon, no visible people lock, source composition lock",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "Tactile_Verism-Anima-tcl-vrs-style.safetensors",
+      "strength_model": 1.0
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load Anima Masterpiece LoRA"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 1013599799,
+      "steps": 35,
+      "cfg": 2.5,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "10",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_lora_test",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  }
+}

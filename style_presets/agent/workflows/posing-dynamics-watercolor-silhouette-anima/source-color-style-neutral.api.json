@@ -1,0 +1,154 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "anima_preview3Base.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Anima diffusion model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen_3_06b_base.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load Qwen text encoder"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Qwen image VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "width": 832,
+      "height": 1152,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "Latent 512 square"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "masterpiece, best quality, score_7, safe, PosingDynamicsDaal, airy watercolor anime illustration, luminous backlit silhouette, soft pastel gradient wash, cyan blue and cotton candy pink sky, warm yellow orange foreground glow, translucent watercolor blooms, wet-on-wet color bleeding, fine paint speckles, floating petals, delicate ink-like edge accents, broad white negative space, dreamy high-key lighting, soft rim light, clean elegant composition, soft backlight, pastel cyan pink blue yellow palette, watercolor wash background, paint splatter particles, luminous airy negative space, flower-field color accents, silhouette-friendly lighting",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive prompt"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "worst quality, low quality, score_1, score_2, score_3, artist name, photorealistic, harsh outlines, muddy colors, dull palette, heavy black shadows, noisy texture, cluttered background, text, watermark, logo, signature, oil painting, thick impasto, dark gothic palette, hard cel shading, dense detailed background",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative prompt"
+    }
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "posing-dynamics-anima.safetensors",
+      "strength_model": 0.65
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load Anima Masterpiece LoRA"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 1656287779,
+      "steps": 30,
+      "cfg": 7.0,
+      "sampler_name": "er_sde",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": [
+        "10",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "anima_lora_test",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save"
+    }
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview"
+    }
+  }
+}
