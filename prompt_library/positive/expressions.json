@@ -1,291 +1,309 @@
 {
-  "schema_version": 1,
-  "id": "expressions",
-  "polarity": "positive",
-  "name_zh": "表情",
-  "description_zh": "表情相關的可組合提示詞。",
-  "aliases": [
-    "表情",
-    "expressions"
-  ],
-  "keywords": [
-    "positive",
-    "prompt",
-    "表情"
-  ],
-  "order": 30,
-  "revision": 1,
-  "archived": false,
-  "entries": [
-    {
-      "id": "gentle-smile",
-      "name_zh": "表情：gentle smile",
-      "description_zh": "加入「gentle smile」這個表情提示片段。",
-      "prompt": "gentle smile",
-      "aliases": [
-        "表情",
-        "gentle smile"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "bright-smile",
-      "name_zh": "表情：bright smile",
-      "description_zh": "加入「bright smile」這個表情提示片段。",
-      "prompt": "bright smile",
-      "aliases": [
-        "表情",
-        "bright smile"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "laughing",
-      "name_zh": "表情：laughing",
-      "description_zh": "加入「laughing」這個表情提示片段。",
-      "prompt": "laughing",
-      "aliases": [
-        "表情",
-        "laughing"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 30,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "serious-expression",
-      "name_zh": "表情：serious expression",
-      "description_zh": "加入「serious expression」這個表情提示片段。",
-      "prompt": "serious expression",
-      "aliases": [
-        "表情",
-        "serious expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 40,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "confident-expression",
-      "name_zh": "表情：confident expression",
-      "description_zh": "加入「confident expression」這個表情提示片段。",
-      "prompt": "confident expression",
-      "aliases": [
-        "表情",
-        "confident expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 50,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "shy-expression",
-      "name_zh": "表情：shy expression",
-      "description_zh": "加入「shy expression」這個表情提示片段。",
-      "prompt": "shy expression",
-      "aliases": [
-        "表情",
-        "shy expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 60,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "surprised-expression",
-      "name_zh": "表情：surprised expression",
-      "description_zh": "加入「surprised expression」這個表情提示片段。",
-      "prompt": "surprised expression",
-      "aliases": [
-        "表情",
-        "surprised expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 70,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "angry-expression",
-      "name_zh": "表情：angry expression",
-      "description_zh": "加入「angry expression」這個表情提示片段。",
-      "prompt": "angry expression",
-      "aliases": [
-        "表情",
-        "angry expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 80,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "sad-expression",
-      "name_zh": "表情：sad expression",
-      "description_zh": "加入「sad expression」這個表情提示片段。",
-      "prompt": "sad expression",
-      "aliases": [
-        "表情",
-        "sad expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 90,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "crying",
-      "name_zh": "表情：crying",
-      "description_zh": "加入「crying」這個表情提示片段。",
-      "prompt": "crying",
-      "aliases": [
-        "表情",
-        "crying"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 100,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "sleepy-expression",
-      "name_zh": "表情：sleepy expression",
-      "description_zh": "加入「sleepy expression」這個表情提示片段。",
-      "prompt": "sleepy expression",
-      "aliases": [
-        "表情",
-        "sleepy expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 110,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "determined-expression",
-      "name_zh": "表情：determined expression",
-      "description_zh": "加入「determined expression」這個表情提示片段。",
-      "prompt": "determined expression",
-      "aliases": [
-        "表情",
-        "determined expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 120,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "mischievous-grin",
-      "name_zh": "表情：mischievous grin",
-      "description_zh": "加入「mischievous grin」這個表情提示片段。",
-      "prompt": "mischievous grin",
-      "aliases": [
-        "表情",
-        "mischievous grin"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 130,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "blushing",
-      "name_zh": "表情：blushing",
-      "description_zh": "加入「blushing」這個表情提示片段。",
-      "prompt": "blushing",
-      "aliases": [
-        "表情",
-        "blushing"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 140,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pensive-expression",
-      "name_zh": "表情：pensive expression",
-      "description_zh": "加入「pensive expression」這個表情提示片段。",
-      "prompt": "pensive expression",
-      "aliases": [
-        "表情",
-        "pensive expression"
-      ],
-      "keywords": [
-        "expressions",
-        "positive",
-        "表情"
-      ],
-      "order": 150,
-      "revision": 1,
-      "archived": false
-    }
-  ]
+    "schema_version":  1,
+    "id":  "expressions",
+    "polarity":  "positive",
+    "name_zh":  "表情",
+    "description_zh":  "收錄「表情」分類的提示詞。",
+    "aliases":  [
+                    "表情",
+                    "expressions"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "expressions"
+                 ],
+    "order":  280,
+    "revision":  17,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "expressions-list-surprised-wide-eyes",
+                        "name_zh":  "驚訝睜大眼",
+                        "description_zh":  "加入「驚訝睜大眼」提示詞。",
+                        "prompt":  "surprised, wide eyes",
+                        "aliases":  [
+                                        "驚訝睜大眼 (surprised, wide eyes)",
+                                        "surprised, wide eyes"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-blush-embarrassed",
+                        "name_zh":  "害羞臉紅",
+                        "description_zh":  "加入「害羞臉紅」提示詞。",
+                        "prompt":  "blush, embarrassed",
+                        "aliases":  [
+                                        "害羞臉紅 (blush, embarrassed)",
+                                        "blush, embarrassed"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-frustrated-blush-crying-with-eyes-open-gritting-teeth-embarrassed-tears",
+                        "name_zh":  "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
+                        "description_zh":  "加入「不甘心/眼泛淚光 (くっ殺せ/frustrated...)」提示詞。",
+                        "prompt":  "frustrated, blush, crying with eyes open, gritting teeth, embarrassed, tears",
+                        "aliases":  [
+                                        "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
+                                        "frustrated, blush, crying with eyes open, gritting teeth, embarrassed, tears"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-crying-tears",
+                        "name_zh":  "落淚",
+                        "description_zh":  "加入「落淚」提示詞。",
+                        "prompt":  "crying, tears",
+                        "aliases":  [
+                                        "落淚 (crying, tears)",
+                                        "crying, tears"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-shy-looking-away",
+                        "name_zh":  "害羞撇開視線",
+                        "description_zh":  "加入「害羞撇開視線」提示詞。",
+                        "prompt":  "shy, looking away",
+                        "aliases":  [
+                                        "害羞撇開視線 (shy, looking away)",
+                                        "shy, looking away"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-smile-happy",
+                        "name_zh":  "開心微笑",
+                        "description_zh":  "加入「開心微笑」提示詞。",
+                        "prompt":  "smile, happy",
+                        "aliases":  [
+                                        "開心微笑 (smile, happy)",
+                                        "smile, happy"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-heart-eyes-ahegao",
+                        "name_zh":  "愛心眼阿黑顏",
+                        "description_zh":  "加入「愛心眼阿黑顏」提示詞。",
+                        "prompt":  "heart eyes, ahegao",
+                        "aliases":  [
+                                        "愛心眼阿黑顏 (heart eyes, ahegao)",
+                                        "heart eyes, ahegao"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-expressionless-looking-away",
+                        "name_zh":  "面無表情看旁邊",
+                        "description_zh":  "加入「面無表情看旁邊」提示詞。",
+                        "prompt":  "expressionless, looking away",
+                        "aliases":  [
+                                        "面無表情看旁邊 (expressionless, looking away)",
+                                        "expressionless, looking away"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-ahegao-tongue-out-1-4",
+                        "name_zh":  "吐舌阿黑顏",
+                        "description_zh":  "加入「吐舌阿黑顏」提示詞。",
+                        "prompt":  "ahegao, (tongue out:1.4)",
+                        "aliases":  [
+                                        "吐舌阿黑顏 (ahegao, tongue out)",
+                                        "ahegao, (tongue out:1.4)"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-mind-break-blank-stare-drooling",
+                        "name_zh":  "壞掉流口水",
+                        "description_zh":  "加入「壞掉流口水」提示詞。",
+                        "prompt":  "mind break, blank stare, drooling",
+                        "aliases":  [
+                                        "壞掉流口水 (mind break, blank stare, drooling)",
+                                        "mind break, blank stare, drooling"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-seductive-smile-naughty-face",
+                        "name_zh":  "誘惑(seductive smile, naughty face)",
+                        "description_zh":  "加入「誘惑(seductive smile, naughty face)」提示詞。",
+                        "prompt":  "seductive smile, naughty face",
+                        "aliases":  [
+                                        "誘惑(seductive smile, naughty face)",
+                                        "seductive smile, naughty face"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-furrowed-brow-torogao",
+                        "name_zh":  "皺眉享受",
+                        "description_zh":  "加入「皺眉享受」提示詞。",
+                        "prompt":  "furrowed brow, torogao",
+                        "aliases":  [
+                                        "皺眉享受 (furrowed brow, torogao)",
+                                        "furrowed brow, torogao"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "expressions-list-smirk-v-shaped-eyebrows-licking-lips-1-4",
+                        "name_zh":  "強勢挑逗",
+                        "description_zh":  "加入「強勢挑逗」提示詞。",
+                        "prompt":  "smirk, v-shaped eyebrows, (licking lips:1.4)",
+                        "aliases":  [
+                                        "強勢挑逗 (smirk, v-shaped eyebrows, licking lips)",
+                                        "smirk, v-shaped eyebrows, (licking lips:1.4)"
+                                    ],
+                        "keywords":  [
+                                         "expressions_list",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-exps-smug-teasing-smile-seductively-smiling-proud",
+                        "name_zh":  "得意/誘惑",
+                        "description_zh":  "加入「得意/誘惑」提示詞。",
+                        "prompt":  "smug, teasing smile, seductively smiling, proud",
+                        "aliases":  [
+                                        "得意/誘惑 (smug, teasing smile)",
+                                        "smug, teasing smile, seductively smiling, proud"
+                                    ],
+                        "keywords":  [
+                                         "teasing_exps",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-exps-blush-shy-looking-away",
+                        "name_zh":  "害羞",
+                        "description_zh":  "加入「害羞」提示詞。",
+                        "prompt":  "blush, shy, looking away",
+                        "aliases":  [
+                                        "害羞 (blush, shy)",
+                                        "blush, shy, looking away"
+                                    ],
+                        "keywords":  [
+                                         "teasing_exps",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-exps-lewd-lustful-tongue-out-1-4-blush",
+                        "name_zh":  "發情/吐舌",
+                        "description_zh":  "加入「發情/吐舌」提示詞。",
+                        "prompt":  "lewd, lustful, (tongue out:1.4), blush",
+                        "aliases":  [
+                                        "發情/吐舌 (lewd, lustful)",
+                                        "lewd, lustful, (tongue out:1.4), blush"
+                                    ],
+                        "keywords":  [
+                                         "teasing_exps",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
 }
