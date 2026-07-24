@@ -87,7 +87,7 @@ class Harness:
         if self.bootstrap_log_error is not None:
             raise self.bootstrap_log_error
 
-    def preflight(self):
+    def preflight(self, *, allow_download=True):
         self.events.append("preflight")
         if self.preflight_error is not None:
             raise self.preflight_error
@@ -879,7 +879,7 @@ def test_cli_surfaces_typed_uv_error_without_recovery_or_mutation(
         output_fn=output.append,
     )
     service.host = HostInfo("Linux", "x86_64", tmp_path)
-    service.preflight = lambda: None
+    service.preflight = lambda **_kwargs: None
     service.probe_external = lambda _port: False
 
     if operation == "install":
@@ -1563,7 +1563,7 @@ def test_rejected_live_reconfigure_is_bootstrap_audit_write_free(
     before_base = base.read_bytes()
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
     service.host = HostInfo("Linux", "x86_64", tmp_path)
-    service.preflight = lambda: None
+    service.preflight = lambda **_kwargs: None
     service.probe_external = lambda _port: True
     monkeypatch.setattr(cli, "read_process_identity", lambda *_args: identity)
     args = [
@@ -1980,10 +1980,11 @@ def test_status_reports_each_dependency_and_no_models_hint(tmp_path, monkeypatch
         path.touch()
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
     service.host = HostInfo("Windows", "AMD64", tmp_path)
+    service._compose = cli.docker.ComposeRuntime(("docker", "compose"), (2, 24, 0), "system")
     monkeypatch.setattr(
         cli.docker,
         "compose_service_states",
-        lambda *_args: {"backend": "running", "frontend": "exited"},
+        lambda *_args, **_kwargs: {"backend": "running", "frontend": "exited"},
     )
     service.wait_backend = lambda _port, **_kwargs: True
     service.wait_frontend = lambda _port, **_kwargs: False
@@ -2113,7 +2114,7 @@ def test_logs_include_all_sources_redact_secrets_and_tolerate_missing(tmp_path):
 
 def test_mutating_error_produces_sanitized_bounded_bootstrap_log(tmp_path):
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
-    service.preflight = lambda: (_ for _ in ()).throw(
+    service.preflight = lambda **_kwargs: (_ for _ in ()).throw(
         cli.docker.DockerError(
             "DOCKER_DAEMON_UNAVAILABLE",
             "TOKEN=private-token",
@@ -2131,7 +2132,7 @@ def test_mutating_error_produces_sanitized_bounded_bootstrap_log(tmp_path):
 
 def test_status_and_dry_run_do_not_create_bootstrap_log(tmp_path):
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
-    service.preflight = lambda: None
+    service.preflight = lambda **_kwargs: None
     service.wait_backend = lambda _port, **_kwargs: False
     service.wait_frontend = lambda _port, **_kwargs: False
     assert main(["status"], services=service) == 0
@@ -2180,7 +2181,7 @@ def test_accepted_reconfigure_keeps_begin_and_complete_audit(harness):
 
 
 def test_error_output_is_structured_and_does_not_leak_exception(harness):
-    def explode():
+    def explode(**_kwargs):
         raise RuntimeError("PASSWORD=hunter2")
 
     harness.preflight = explode
