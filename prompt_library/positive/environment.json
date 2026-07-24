@@ -1,453 +1,435 @@
 {
-  "schema_version": 1,
-  "id": "environment",
-  "polarity": "positive",
-  "name_zh": "環境",
-  "description_zh": "環境相關的可組合提示詞。",
-  "aliases": [
-    "環境",
-    "environment"
-  ],
-  "keywords": [
-    "positive",
-    "prompt",
-    "環境"
-  ],
-  "order": 120,
-  "revision": 1,
-  "archived": false,
-  "entries": [
-    {
-      "id": "city-street",
-      "name_zh": "環境：city street",
-      "description_zh": "加入「city street」這個環境提示片段。",
-      "prompt": "city street",
-      "aliases": [
-        "環境",
-        "city street"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "school-classroom",
-      "name_zh": "環境：school classroom",
-      "description_zh": "加入「school classroom」這個環境提示片段。",
-      "prompt": "school classroom",
-      "aliases": [
-        "環境",
-        "school classroom"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "cozy-bedroom",
-      "name_zh": "環境：cozy bedroom",
-      "description_zh": "加入「cozy bedroom」這個環境提示片段。",
-      "prompt": "cozy bedroom",
-      "aliases": [
-        "環境",
-        "cozy bedroom"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 30,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "modern-office",
-      "name_zh": "環境：modern office",
-      "description_zh": "加入「modern office」這個環境提示片段。",
-      "prompt": "modern office",
-      "aliases": [
-        "環境",
-        "modern office"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 40,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "coffee-shop",
-      "name_zh": "環境：coffee shop",
-      "description_zh": "加入「coffee shop」這個環境提示片段。",
-      "prompt": "coffee shop",
-      "aliases": [
-        "環境",
-        "coffee shop"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 50,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "library-interior",
-      "name_zh": "環境：library interior",
-      "description_zh": "加入「library interior」這個環境提示片段。",
-      "prompt": "library interior",
-      "aliases": [
-        "環境",
-        "library interior"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 60,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "train-station",
-      "name_zh": "環境：train station",
-      "description_zh": "加入「train station」這個環境提示片段。",
-      "prompt": "train station",
-      "aliases": [
-        "環境",
-        "train station"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 70,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "rooftop",
-      "name_zh": "環境：rooftop",
-      "description_zh": "加入「rooftop」這個環境提示片段。",
-      "prompt": "rooftop",
-      "aliases": [
-        "環境",
-        "rooftop"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 80,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "flower-garden",
-      "name_zh": "環境：flower garden",
-      "description_zh": "加入「flower garden」這個環境提示片段。",
-      "prompt": "flower garden",
-      "aliases": [
-        "環境",
-        "flower garden"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 90,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "enchanted-forest",
-      "name_zh": "環境：enchanted forest",
-      "description_zh": "加入「enchanted forest」這個環境提示片段。",
-      "prompt": "enchanted forest",
-      "aliases": [
-        "環境",
-        "enchanted forest"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 100,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "mountain-landscape",
-      "name_zh": "環境：mountain landscape",
-      "description_zh": "加入「mountain landscape」這個環境提示片段。",
-      "prompt": "mountain landscape",
-      "aliases": [
-        "環境",
-        "mountain landscape"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 110,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "ocean-beach",
-      "name_zh": "環境：ocean beach",
-      "description_zh": "加入「ocean beach」這個環境提示片段。",
-      "prompt": "ocean beach",
-      "aliases": [
-        "環境",
-        "ocean beach"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 120,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "underwater-scene",
-      "name_zh": "環境：underwater scene",
-      "description_zh": "加入「underwater scene」這個環境提示片段。",
-      "prompt": "underwater scene",
-      "aliases": [
-        "環境",
-        "underwater scene"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 130,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "snowy-field",
-      "name_zh": "環境：snowy field",
-      "description_zh": "加入「snowy field」這個環境提示片段。",
-      "prompt": "snowy field",
-      "aliases": [
-        "環境",
-        "snowy field"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 140,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "desert-landscape",
-      "name_zh": "環境：desert landscape",
-      "description_zh": "加入「desert landscape」這個環境提示片段。",
-      "prompt": "desert landscape",
-      "aliases": [
-        "環境",
-        "desert landscape"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 150,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "ancient-ruins",
-      "name_zh": "環境：ancient ruins",
-      "description_zh": "加入「ancient ruins」這個環境提示片段。",
-      "prompt": "ancient ruins",
-      "aliases": [
-        "環境",
-        "ancient ruins"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 160,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "medieval-village",
-      "name_zh": "環境：medieval village",
-      "description_zh": "加入「medieval village」這個環境提示片段。",
-      "prompt": "medieval village",
-      "aliases": [
-        "環境",
-        "medieval village"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 170,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "fantasy-castle",
-      "name_zh": "環境：fantasy castle",
-      "description_zh": "加入「fantasy castle」這個環境提示片段。",
-      "prompt": "fantasy castle",
-      "aliases": [
-        "環境",
-        "fantasy castle"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 180,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "space-station",
-      "name_zh": "環境：space station",
-      "description_zh": "加入「space station」這個環境提示片段。",
-      "prompt": "space station",
-      "aliases": [
-        "環境",
-        "space station"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 190,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "cyberpunk-city",
-      "name_zh": "環境：cyberpunk city",
-      "description_zh": "加入「cyberpunk city」這個環境提示片段。",
-      "prompt": "cyberpunk city",
-      "aliases": [
-        "環境",
-        "cyberpunk city"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 200,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "steampunk-workshop",
-      "name_zh": "環境：steampunk workshop",
-      "description_zh": "加入「steampunk workshop」這個環境提示片段。",
-      "prompt": "steampunk workshop",
-      "aliases": [
-        "環境",
-        "steampunk workshop"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 210,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "festival-grounds",
-      "name_zh": "環境：festival grounds",
-      "description_zh": "加入「festival grounds」這個環境提示片段。",
-      "prompt": "festival grounds",
-      "aliases": [
-        "環境",
-        "festival grounds"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 220,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "night-sky",
-      "name_zh": "環境：night sky",
-      "description_zh": "加入「night sky」這個環境提示片段。",
-      "prompt": "night sky",
-      "aliases": [
-        "環境",
-        "night sky"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 230,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "abstract-background",
-      "name_zh": "環境：abstract background",
-      "description_zh": "加入「abstract background」這個環境提示片段。",
-      "prompt": "abstract background",
-      "aliases": [
-        "環境",
-        "abstract background"
-      ],
-      "keywords": [
-        "environment",
-        "positive",
-        "環境"
-      ],
-      "order": 240,
-      "revision": 1,
-      "archived": false
-    }
-  ]
+    "schema_version":  1,
+    "id":  "environment",
+    "polarity":  "positive",
+    "name_zh":  "場景與氛圍",
+    "description_zh":  "收錄「場景與氛圍」分類的提示詞。",
+    "aliases":  [
+                    "場景與氛圍",
+                    "environment"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "environment"
+                 ],
+    "order":  240,
+    "revision":  24,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "loc-places-bedroom",
+                        "name_zh":  "臥室",
+                        "description_zh":  "加入「臥室」提示詞。",
+                        "prompt":  "bedroom",
+                        "aliases":  [
+                                        "臥室 (bedroom)",
+                                        "bedroom"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-classroom",
+                        "name_zh":  "教室",
+                        "description_zh":  "加入「教室」提示詞。",
+                        "prompt":  "classroom",
+                        "aliases":  [
+                                        "教室 (classroom)",
+                                        "classroom"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-gym-storage-room",
+                        "name_zh":  "體育器材室",
+                        "description_zh":  "加入「體育器材室」提示詞。",
+                        "prompt":  "gym storage room",
+                        "aliases":  [
+                                        "體育器材室 (gym storage room)",
+                                        "gym storage room"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-love-hotel-pink-room-black-bed",
+                        "name_zh":  "愛情旅館",
+                        "description_zh":  "加入「愛情旅館」提示詞。",
+                        "prompt":  "love hotel, pink room, black bed",
+                        "aliases":  [
+                                        "愛情旅館 (love hotel, pink room, black bed)",
+                                        "love hotel, pink room, black bed"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-living-room",
+                        "name_zh":  "客廳",
+                        "description_zh":  "加入「客廳」提示詞。",
+                        "prompt":  "living room",
+                        "aliases":  [
+                                        "客廳 (living room)",
+                                        "living room"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-bathroom",
+                        "name_zh":  "浴室",
+                        "description_zh":  "加入「浴室」提示詞。",
+                        "prompt":  "bathroom",
+                        "aliases":  [
+                                        "浴室 (bathroom)",
+                                        "bathroom"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-shower-room",
+                        "name_zh":  "淋浴間",
+                        "description_zh":  "加入「淋浴間」提示詞。",
+                        "prompt":  "shower room",
+                        "aliases":  [
+                                        "淋浴間 (shower room)",
+                                        "shower room"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-outdoors",
+                        "name_zh":  "戶外",
+                        "description_zh":  "加入「戶外」提示詞。",
+                        "prompt":  "outdoors",
+                        "aliases":  [
+                                        "戶外 (outdoors)",
+                                        "outdoors"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-public-restroom",
+                        "name_zh":  "公廁",
+                        "description_zh":  "加入「公廁」提示詞。",
+                        "prompt":  "public restroom",
+                        "aliases":  [
+                                        "公廁 (public restroom)",
+                                        "public restroom"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-library",
+                        "name_zh":  "圖書館",
+                        "description_zh":  "加入「圖書館」提示詞。",
+                        "prompt":  "library",
+                        "aliases":  [
+                                        "圖書館 (library)",
+                                        "library"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-rei-no-pool-poolside",
+                        "name_zh":  "例のプール",
+                        "description_zh":  "加入「例のプール」提示詞。",
+                        "prompt":  "rei no pool, poolside",
+                        "aliases":  [
+                                        "例のプール (rei no pool, poolside)",
+                                        "rei no pool, poolside"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-places-changing-room-with-black-lockers",
+                        "name_zh":  "更衣室",
+                        "description_zh":  "加入「更衣室」提示詞。",
+                        "prompt":  "changing room with black lockers",
+                        "aliases":  [
+                                        "更衣室 (changing room with black lockers)",
+                                        "changing room with black lockers"
+                                    ],
+                        "keywords":  [
+                                         "loc_places",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-intimate-atmosphere",
+                        "name_zh":  "親密氛圍",
+                        "description_zh":  "加入「親密氛圍」提示詞。",
+                        "prompt":  "intimate atmosphere",
+                        "aliases":  [
+                                        "親密氛圍 (intimate atmosphere)",
+                                        "intimate atmosphere"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-romantic-atmosphere",
+                        "name_zh":  "浪漫氛圍",
+                        "description_zh":  "加入「浪漫氛圍」提示詞。",
+                        "prompt":  "romantic atmosphere",
+                        "aliases":  [
+                                        "浪漫氛圍 (romantic atmosphere)",
+                                        "romantic atmosphere"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-dark-and-moody",
+                        "name_zh":  "陰暗色調",
+                        "description_zh":  "加入「陰暗色調」提示詞。",
+                        "prompt":  "dark and moody",
+                        "aliases":  [
+                                        "陰暗色調 (dark and moody)",
+                                        "dark and moody"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-morning-light",
+                        "name_zh":  "晨光",
+                        "description_zh":  "加入「晨光」提示詞。",
+                        "prompt":  "morning light",
+                        "aliases":  [
+                                        "晨光 (morning light)",
+                                        "morning light"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-moonlight",
+                        "name_zh":  "月光",
+                        "description_zh":  "加入「月光」提示詞。",
+                        "prompt":  "moonlight",
+                        "aliases":  [
+                                        "月光 (moonlight)",
+                                        "moonlight"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-neon-lights",
+                        "name_zh":  "霓虹燈",
+                        "description_zh":  "加入「霓虹燈」提示詞。",
+                        "prompt":  "neon lights",
+                        "aliases":  [
+                                        "霓虹燈 (neon lights)",
+                                        "neon lights"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-messy-room",
+                        "name_zh":  "凌亂房間",
+                        "description_zh":  "加入「凌亂房間」提示詞。",
+                        "prompt":  "messy room",
+                        "aliases":  [
+                                        "凌亂房間 (messy room)",
+                                        "messy room"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-pristine-room",
+                        "name_zh":  "整潔房間",
+                        "description_zh":  "加入「整潔房間」提示詞。",
+                        "prompt":  "pristine room",
+                        "aliases":  [
+                                        "整潔房間 (pristine room)",
+                                        "pristine room"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-tense-atmosphere",
+                        "name_zh":  "緊張氣氛",
+                        "description_zh":  "加入「緊張氣氛」提示詞。",
+                        "prompt":  "tense atmosphere",
+                        "aliases":  [
+                                        "緊張氣氛 (tense atmosphere)",
+                                        "tense atmosphere"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  30,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-raining-outside",
+                        "name_zh":  "窗外下雨",
+                        "description_zh":  "加入「窗外下雨」提示詞。",
+                        "prompt":  "raining outside",
+                        "aliases":  [
+                                        "窗外下雨 (raining outside)",
+                                        "raining outside"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  31,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "loc-atmos-golden-hour",
+                        "name_zh":  "黃金時刻/夕陽",
+                        "description_zh":  "加入「黃金時刻/夕陽」提示詞。",
+                        "prompt":  "golden hour",
+                        "aliases":  [
+                                        "黃金時刻/夕陽 (golden hour)",
+                                        "golden hour"
+                                    ],
+                        "keywords":  [
+                                         "loc_atmos",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  32,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
 }

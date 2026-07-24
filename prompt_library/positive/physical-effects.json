@@ -1,0 +1,111 @@
+{
+    "schema_version":  1,
+    "id":  "physical-effects",
+    "polarity":  "positive",
+    "name_zh":  "身體效果",
+    "description_zh":  "收錄「身體效果」分類的提示詞。",
+    "aliases":  [
+                    "身體效果",
+                    "physical-effects"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "physical-effects"
+                 ],
+    "order":  290,
+    "revision":  6,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "after-effects-panting-breath-steam-breathing-steam-visible",
+                        "name_zh":  "喘氣白煙",
+                        "description_zh":  "加入「喘氣白煙」提示詞。",
+                        "prompt":  "panting, breath steam, breathing steam visible",
+                        "aliases":  [
+                                        "喘氣白煙 (panting, breath steam)",
+                                        "panting, breath steam, breathing steam visible"
+                                    ],
+                        "keywords":  [
+                                         "after_effects",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-effects-saliva-trail-drooling",
+                        "name_zh":  "嘴邊牽絲/流口水",
+                        "description_zh":  "加入「嘴邊牽絲/流口水」提示詞。",
+                        "prompt":  "saliva trail, drooling",
+                        "aliases":  [
+                                        "嘴邊牽絲/流口水 (saliva trail, drooling)",
+                                        "saliva trail, drooling"
+                                    ],
+                        "keywords":  [
+                                         "after_effects",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-effects-sweaty-glistening-skin",
+                        "name_zh":  "滿身大汗/肌膚泛光",
+                        "description_zh":  "加入「滿身大汗/肌膚泛光」提示詞。",
+                        "prompt":  "sweaty, glistening skin",
+                        "aliases":  [
+                                        "滿身大汗/肌膚泛光 (sweaty, glistening skin)",
+                                        "sweaty, glistening skin"
+                                    ],
+                        "keywords":  [
+                                         "after_effects",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-effects-heart-symbol-floating-hearts",
+                        "name_zh":  "動漫心跳/愛心符號",
+                        "description_zh":  "加入「動漫心跳/愛心符號」提示詞。",
+                        "prompt":  "heart symbol, floating hearts",
+                        "aliases":  [
+                                        "動漫心跳/愛心符號 (heart symbol)",
+                                        "heart symbol, floating hearts"
+                                    ],
+                        "keywords":  [
+                                         "after_effects",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-effects-after-sex-disheveled",
+                        "name_zh":  "高潮餘韻",
+                        "description_zh":  "加入「高潮餘韻」提示詞。",
+                        "prompt":  "after sex, disheveled",
+                        "aliases":  [
+                                        "高潮餘韻 (after sex, disheveled)",
+                                        "after sex, disheveled"
+                                    ],
+                        "keywords":  [
+                                         "after_effects",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}

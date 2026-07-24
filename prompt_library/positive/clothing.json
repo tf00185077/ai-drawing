@@ -1,417 +1,471 @@
 {
-  "schema_version": 1,
-  "id": "clothing",
-  "polarity": "positive",
-  "name_zh": "服裝",
-  "description_zh": "服裝相關的可組合提示詞。",
-  "aliases": [
-    "服裝",
-    "clothing"
-  ],
-  "keywords": [
-    "positive",
-    "prompt",
-    "服裝"
-  ],
-  "order": 40,
-  "revision": 1,
-  "archived": false,
-  "entries": [
-    {
-      "id": "dress",
-      "name_zh": "服裝：dress",
-      "description_zh": "加入「dress」這個服裝提示片段。",
-      "prompt": "dress",
-      "aliases": [
-        "服裝",
-        "dress"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "evening-gown",
-      "name_zh": "服裝：evening gown",
-      "description_zh": "加入「evening gown」這個服裝提示片段。",
-      "prompt": "evening gown",
-      "aliases": [
-        "服裝",
-        "evening gown"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "school-uniform",
-      "name_zh": "服裝：school uniform",
-      "description_zh": "加入「school uniform」這個服裝提示片段。",
-      "prompt": "school uniform",
-      "aliases": [
-        "服裝",
-        "school uniform"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 30,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "business-suit",
-      "name_zh": "服裝：business suit",
-      "description_zh": "加入「business suit」這個服裝提示片段。",
-      "prompt": "business suit",
-      "aliases": [
-        "服裝",
-        "business suit"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 40,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "casual-outfit",
-      "name_zh": "服裝：casual outfit",
-      "description_zh": "加入「casual outfit」這個服裝提示片段。",
-      "prompt": "casual outfit",
-      "aliases": [
-        "服裝",
-        "casual outfit"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 50,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "streetwear",
-      "name_zh": "服裝：streetwear",
-      "description_zh": "加入「streetwear」這個服裝提示片段。",
-      "prompt": "streetwear",
-      "aliases": [
-        "服裝",
-        "streetwear"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 60,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "hoodie",
-      "name_zh": "服裝：hoodie",
-      "description_zh": "加入「hoodie」這個服裝提示片段。",
-      "prompt": "hoodie",
-      "aliases": [
-        "服裝",
-        "hoodie"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 70,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "sweater",
-      "name_zh": "服裝：sweater",
-      "description_zh": "加入「sweater」這個服裝提示片段。",
-      "prompt": "sweater",
-      "aliases": [
-        "服裝",
-        "sweater"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 80,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "jacket",
-      "name_zh": "服裝：jacket",
-      "description_zh": "加入「jacket」這個服裝提示片段。",
-      "prompt": "jacket",
-      "aliases": [
-        "服裝",
-        "jacket"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 90,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "trench-coat",
-      "name_zh": "服裝：trench coat",
-      "description_zh": "加入「trench coat」這個服裝提示片段。",
-      "prompt": "trench coat",
-      "aliases": [
-        "服裝",
-        "trench coat"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 100,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "kimono",
-      "name_zh": "服裝：kimono",
-      "description_zh": "加入「kimono」這個服裝提示片段。",
-      "prompt": "kimono",
-      "aliases": [
-        "服裝",
-        "kimono"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 110,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "yukata",
-      "name_zh": "服裝：yukata",
-      "description_zh": "加入「yukata」這個服裝提示片段。",
-      "prompt": "yukata",
-      "aliases": [
-        "服裝",
-        "yukata"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 120,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "hanfu",
-      "name_zh": "服裝：hanfu",
-      "description_zh": "加入「hanfu」這個服裝提示片段。",
-      "prompt": "hanfu",
-      "aliases": [
-        "服裝",
-        "hanfu"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 130,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "armor",
-      "name_zh": "服裝：armor",
-      "description_zh": "加入「armor」這個服裝提示片段。",
-      "prompt": "armor",
-      "aliases": [
-        "服裝",
-        "armor"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 140,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "fantasy-robe",
-      "name_zh": "服裝：fantasy robe",
-      "description_zh": "加入「fantasy robe」這個服裝提示片段。",
-      "prompt": "fantasy robe",
-      "aliases": [
-        "服裝",
-        "fantasy robe"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 150,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "maid-outfit",
-      "name_zh": "服裝：maid outfit",
-      "description_zh": "加入「maid outfit」這個服裝提示片段。",
-      "prompt": "maid outfit",
-      "aliases": [
-        "服裝",
-        "maid outfit"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 160,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "sportswear",
-      "name_zh": "服裝：sportswear",
-      "description_zh": "加入「sportswear」這個服裝提示片段。",
-      "prompt": "sportswear",
-      "aliases": [
-        "服裝",
-        "sportswear"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 170,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "swimsuit",
-      "name_zh": "服裝：swimsuit",
-      "description_zh": "加入「swimsuit」這個服裝提示片段。",
-      "prompt": "swimsuit",
-      "aliases": [
-        "服裝",
-        "swimsuit"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 180,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pajamas",
-      "name_zh": "服裝：pajamas",
-      "description_zh": "加入「pajamas」這個服裝提示片段。",
-      "prompt": "pajamas",
-      "aliases": [
-        "服裝",
-        "pajamas"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 190,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "wedding-dress",
-      "name_zh": "服裝：wedding dress",
-      "description_zh": "加入「wedding dress」這個服裝提示片段。",
-      "prompt": "wedding dress",
-      "aliases": [
-        "服裝",
-        "wedding dress"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 200,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "gothic-lolita",
-      "name_zh": "服裝：gothic lolita",
-      "description_zh": "加入「gothic lolita」這個服裝提示片段。",
-      "prompt": "gothic lolita",
-      "aliases": [
-        "服裝",
-        "gothic lolita"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 210,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "sci-fi-bodysuit",
-      "name_zh": "服裝：sci-fi bodysuit",
-      "description_zh": "加入「sci-fi bodysuit」這個服裝提示片段。",
-      "prompt": "sci-fi bodysuit",
-      "aliases": [
-        "服裝",
-        "sci fi bodysuit"
-      ],
-      "keywords": [
-        "clothing",
-        "positive",
-        "服裝"
-      ],
-      "order": 220,
-      "revision": 1,
-      "archived": false
-    }
-  ]
+    "schema_version":  1,
+    "id":  "clothing",
+    "polarity":  "positive",
+    "name_zh":  "服裝",
+    "description_zh":  "收錄「服裝」分類的提示詞。",
+    "aliases":  [
+                    "服裝",
+                    "clothing"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "clothing"
+                 ],
+    "order":  210,
+    "revision":  26,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "outerwears-shirt-dress-ribbon-school-uniform-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-opaque-clothes",
+                        "name_zh":  "夏季水手服(整套)",
+                        "description_zh":  "加入「夏季水手服(整套)」提示詞。",
+                        "prompt":  "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
+                        "aliases":  [
+                                        "夏季水手服(整套) (summer uniform)",
+                                        "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
+                        "name_zh":  "夏季水手服-外搭連衣裙",
+                        "description_zh":  "加入「夏季水手服-外搭連衣裙」提示詞。",
+                        "prompt":  "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
+                        "aliases":  [
+                                        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
+                                        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-white-buttoned-shirt-pleated-skirt-opaque-clothes",
+                        "name_zh":  "白襯衫+百褶裙",
+                        "description_zh":  "加入「白襯衫+百褶裙」提示詞。",
+                        "prompt":  "white buttoned shirt, pleated skirt, opaque clothes",
+                        "aliases":  [
+                                        "白襯衫+百褶裙 (white buttoned shirt, pleated skirt)",
+                                        "white buttoned shirt, pleated skirt, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-gym-uniform-buruma-opaque-clothes",
+                        "name_zh":  "體育服+布魯馬",
+                        "description_zh":  "加入「體育服+布魯馬」提示詞。",
+                        "prompt":  "gym uniform, buruma, opaque clothes",
+                        "aliases":  [
+                                        "體育服+布魯馬 (gym uniform, buruma)",
+                                        "gym uniform, buruma, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-casual-oversized-sweater-opaque-clothes",
+                        "name_zh":  "寬鬆大毛衣",
+                        "description_zh":  "加入「寬鬆大毛衣」提示詞。",
+                        "prompt":  "casual oversized sweater, opaque clothes",
+                        "aliases":  [
+                                        "寬鬆大毛衣 (casual oversized sweater)",
+                                        "casual oversized sweater, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-office-lady-suit-tight-skirt-opaque-clothes",
+                        "name_zh":  "OL套裝+窄裙",
+                        "description_zh":  "加入「OL套裝+窄裙」提示詞。",
+                        "prompt":  "office lady suit, tight skirt, opaque clothes",
+                        "aliases":  [
+                                        "OL套裝+窄裙 (office lady suit, tight skirt)",
+                                        "office lady suit, tight skirt, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "outerwears-maid-outfit-opaque-clothes",
+                        "name_zh":  "女僕裝",
+                        "description_zh":  "加入「女僕裝」提示詞。",
+                        "prompt":  "maid outfit, opaque clothes",
+                        "aliases":  [
+                                        "女僕裝 (maid outfit)",
+                                        "maid outfit, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "outerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
+                        "name_zh":  "夏季水手服-內搭短袖襯衫",
+                        "description_zh":  "加入「夏季水手服-內搭短袖襯衫」提示詞。",
+                        "prompt":  "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
+                        "aliases":  [
+                                        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
+                                        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-collared-shirt-long-sleeves-opaque-clothes",
+                        "name_zh":  "長袖襯衫",
+                        "description_zh":  "加入「長袖襯衫」提示詞。",
+                        "prompt":  "collared shirt, long sleeves, opaque clothes",
+                        "aliases":  [
+                                        "長袖襯衫 (collared shirt, long sleeves)",
+                                        "collared shirt, long sleeves, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-collared-shirt-short-sleeves-opaque-clothes",
+                        "name_zh":  "短袖襯衫",
+                        "description_zh":  "加入「短袖襯衫」提示詞。",
+                        "prompt":  "collared shirt, short sleeves, opaque clothes",
+                        "aliases":  [
+                                        "短袖襯衫 (collared shirt, short sleeves)",
+                                        "collared shirt, short sleeves, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-camisole-opaque-clothes",
+                        "name_zh":  "細肩帶背心",
+                        "description_zh":  "加入「細肩帶背心」提示詞。",
+                        "prompt":  "camisole, opaque clothes",
+                        "aliases":  [
+                                        "細肩帶背心 (camisole)",
+                                        "camisole, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-tank-top-opaque-clothes",
+                        "name_zh":  "無袖背心",
+                        "description_zh":  "加入「無袖背心」提示詞。",
+                        "prompt":  "tank top, opaque clothes",
+                        "aliases":  [
+                                        "無袖背心 (tank top)",
+                                        "tank top, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "innerwears-turtleneck-sweater-opaque-clothes",
+                        "name_zh":  "高領毛衣",
+                        "description_zh":  "加入「高領毛衣」提示詞。",
+                        "prompt":  "turtleneck sweater, opaque clothes",
+                        "aliases":  [
+                                        "高領毛衣 (turtleneck sweater)",
+                                        "turtleneck sweater, opaque clothes"
+                                    ],
+                        "keywords":  [
+                                         "innerwears",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-fully-clothed",
+                        "name_zh":  "穿好",
+                        "description_zh":  "加入「穿好」提示詞。",
+                        "prompt":  "fully clothed",
+                        "aliases":  [
+                                        "穿好 (Fully Clothed)",
+                                        "fully clothed"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-half-undressed",
+                        "name_zh":  "半脫/掀起",
+                        "description_zh":  "加入「半脫/掀起」提示詞。",
+                        "prompt":  "half-undressed",
+                        "aliases":  [
+                                        "半脫/掀起 (Half-undressed)",
+                                        "half-undressed"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-bra-and-panties",
+                        "name_zh":  "內衣+內褲",
+                        "description_zh":  "加入「內衣+內褲」提示詞。",
+                        "prompt":  "bra and panties",
+                        "aliases":  [
+                                        "內衣+內褲 (Bra \u0026 Panties)",
+                                        "bra and panties"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-bra-only",
+                        "name_zh":  "只有內衣",
+                        "description_zh":  "加入「只有內衣」提示詞。",
+                        "prompt":  "bra only",
+                        "aliases":  [
+                                        "只有內衣 (Bra only)",
+                                        "bra only"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-panties-only",
+                        "name_zh":  "只有內褲",
+                        "description_zh":  "加入「只有內褲」提示詞。",
+                        "prompt":  "panties only",
+                        "aliases":  [
+                                        "只有內褲 (Panties only)",
+                                        "panties only"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "flirt-clothing-opts-nude",
+                        "name_zh":  "全裸",
+                        "description_zh":  "加入「全裸」提示詞。",
+                        "prompt":  "nude",
+                        "aliases":  [
+                                        "全裸 (Nude)",
+                                        "nude"
+                                    ],
+                        "keywords":  [
+                                         "flirt_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-fully-clothed",
+                        "name_zh":  "穿好",
+                        "description_zh":  "加入「穿好」提示詞。",
+                        "prompt":  "fully clothed",
+                        "aliases":  [
+                                        "穿好 (Fully Clothed)",
+                                        "fully clothed"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-half-undressed",
+                        "name_zh":  "半脫/掀起",
+                        "description_zh":  "加入「半脫/掀起」提示詞。",
+                        "prompt":  "half-undressed",
+                        "aliases":  [
+                                        "半脫/掀起 (Half-undressed)",
+                                        "half-undressed"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  30,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-bra-and-panties",
+                        "name_zh":  "內衣+內褲",
+                        "description_zh":  "加入「內衣+內褲」提示詞。",
+                        "prompt":  "bra and panties",
+                        "aliases":  [
+                                        "內衣+內褲 (Bra \u0026 Panties)",
+                                        "bra and panties"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  31,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-bra-only",
+                        "name_zh":  "只有內衣",
+                        "description_zh":  "加入「只有內衣」提示詞。",
+                        "prompt":  "bra only",
+                        "aliases":  [
+                                        "只有內衣 (Bra only)",
+                                        "bra only"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  32,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-panties-only",
+                        "name_zh":  "只有內褲",
+                        "description_zh":  "加入「只有內褲」提示詞。",
+                        "prompt":  "panties only",
+                        "aliases":  [
+                                        "只有內褲 (Panties only)",
+                                        "panties only"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  33,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "teasing-clothing-opts-nude",
+                        "name_zh":  "全裸",
+                        "description_zh":  "加入「全裸」提示詞。",
+                        "prompt":  "nude",
+                        "aliases":  [
+                                        "全裸 (Nude)",
+                                        "nude"
+                                    ],
+                        "keywords":  [
+                                         "teasing_clothing_opts",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  34,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
 }

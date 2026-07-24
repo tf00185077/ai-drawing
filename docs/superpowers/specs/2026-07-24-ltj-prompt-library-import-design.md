@@ -22,14 +22,25 @@ tool contracts unchanged.
 Each imported entry uses the existing schema without changes:
 
 - `id`: stable lowercase slug.
-- `name_zh`: meaningful Chinese label.
-- `description_zh`: short usage explanation for the selected Prompt fragment.
+- `name_zh`: meaningful, Chinese-only label. Do not expose English source
+  names, abbreviations, or Prompt tags in this user-visible field; translate
+  them to Chinese instead.
+- `description_zh`: Chinese-only short usage explanation for the selected
+  Prompt fragment. English Prompt tags belong only in `prompt`.
 - `prompt`: the exact English tag or comma-separated tag fragment from LTJ.
 - `aliases` and `keywords`: Chinese and English search terms.
 - `order`, `revision`, and `archived`: standard library fields.
 
 There is no model-family partitioning. Model-quality fragments are ordinary
 positive entries and users select them manually.
+
+## MCP Policy
+
+The MCP `prompt_library_save` tool remains permissive. It may warn when a
+Chinese display field is missing or suspicious, but it must not reject a
+write solely because a display label contains English. The Chinese-only rule
+is an import and user-facing library quality requirement, not an MCP schema
+or validation change.
 
 ## Categories
 

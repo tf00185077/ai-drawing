@@ -1,0 +1,633 @@
+{
+    "schema_version":  1,
+    "id":  "camera-composition",
+    "polarity":  "positive",
+    "name_zh":  "鏡頭與構圖",
+    "description_zh":  "收錄「鏡頭與構圖」分類的提示詞。",
+    "aliases":  [
+                    "鏡頭與構圖",
+                    "camera-composition"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "camera-composition"
+                 ],
+    "order":  250,
+    "revision":  35,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "angles-from-front",
+                        "name_zh":  "正面",
+                        "description_zh":  "加入「正面」提示詞。",
+                        "prompt":  "from front",
+                        "aliases":  [
+                                        "正面 (from front)",
+                                        "from front"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-from-above",
+                        "name_zh":  "由上往下",
+                        "description_zh":  "加入「由上往下」提示詞。",
+                        "prompt":  "from above",
+                        "aliases":  [
+                                        "由上往下 (from above)",
+                                        "from above"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-from-below",
+                        "name_zh":  "由下往上",
+                        "description_zh":  "加入「由下往上」提示詞。",
+                        "prompt":  "from below",
+                        "aliases":  [
+                                        "由下往上 (from below)",
+                                        "from below"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-from-behind",
+                        "name_zh":  "從背後",
+                        "description_zh":  "加入「從背後」提示詞。",
+                        "prompt":  "from behind",
+                        "aliases":  [
+                                        "從背後 (from behind)",
+                                        "from behind"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-from-side",
+                        "name_zh":  "從側面",
+                        "description_zh":  "加入「從側面」提示詞。",
+                        "prompt":  "from side",
+                        "aliases":  [
+                                        "從側面 (from side)",
+                                        "from side"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-close-up",
+                        "name_zh":  "特寫",
+                        "description_zh":  "加入「特寫」提示詞。",
+                        "prompt":  "close-up",
+                        "aliases":  [
+                                        "特寫 (close-up)",
+                                        "close-up"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-cowboy-shot",
+                        "name_zh":  "牛仔視角/半身",
+                        "description_zh":  "加入「牛仔視角/半身」提示詞。",
+                        "prompt":  "cowboy shot",
+                        "aliases":  [
+                                        "牛仔視角/半身 (cowboy shot)",
+                                        "cowboy shot"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-wide-shot",
+                        "name_zh":  "廣角全景",
+                        "description_zh":  "加入「廣角全景」提示詞。",
+                        "prompt":  "wide shot",
+                        "aliases":  [
+                                        "廣角全景 (wide shot)",
+                                        "wide shot"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "angles-profile-side-view-full-body",
+                        "name_zh":  "側面全身",
+                        "description_zh":  "加入「側面全身」提示詞。",
+                        "prompt":  "profile, side view, full body",
+                        "aliases":  [
+                                        "側面全身 (side view full body)",
+                                        "profile, side view, full body"
+                                    ],
+                        "keywords":  [
+                                         "angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-from-front",
+                        "name_zh":  "正面",
+                        "description_zh":  "加入「正面」提示詞。",
+                        "prompt":  "from front",
+                        "aliases":  [
+                                        "正面 (from front)",
+                                        "from front"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-from-above",
+                        "name_zh":  "由上往下",
+                        "description_zh":  "加入「由上往下」提示詞。",
+                        "prompt":  "from above",
+                        "aliases":  [
+                                        "由上往下 (from above)",
+                                        "from above"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-from-below",
+                        "name_zh":  "由下往上",
+                        "description_zh":  "加入「由下往上」提示詞。",
+                        "prompt":  "from below",
+                        "aliases":  [
+                                        "由下往上 (from below)",
+                                        "from below"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-from-behind",
+                        "name_zh":  "從背後",
+                        "description_zh":  "加入「從背後」提示詞。",
+                        "prompt":  "from behind",
+                        "aliases":  [
+                                        "從背後 (from behind)",
+                                        "from behind"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-from-side",
+                        "name_zh":  "從側面",
+                        "description_zh":  "加入「從側面」提示詞。",
+                        "prompt":  "from side",
+                        "aliases":  [
+                                        "從側面 (from side)",
+                                        "from side"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-cowboy-shot",
+                        "name_zh":  "牛仔視角/半身",
+                        "description_zh":  "加入「牛仔視角/半身」提示詞。",
+                        "prompt":  "cowboy shot",
+                        "aliases":  [
+                                        "牛仔視角/半身 (cowboy shot)",
+                                        "cowboy shot"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-wide-shot",
+                        "name_zh":  "廣角全景",
+                        "description_zh":  "加入「廣角全景」提示詞。",
+                        "prompt":  "wide shot",
+                        "aliases":  [
+                                        "廣角全景 (wide shot)",
+                                        "wide shot"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-angles-dutch-angle-shot",
+                        "name_zh":  "斜角",
+                        "description_zh":  "加入「斜角」提示詞。",
+                        "prompt":  "dutch angle shot",
+                        "aliases":  [
+                                        "斜角 (dutch angle shot)",
+                                        "dutch angle shot"
+                                    ],
+                        "keywords":  [
+                                         "pg_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-shot-sizes-close-up",
+                        "name_zh":  "特寫",
+                        "description_zh":  "加入「特寫」提示詞。",
+                        "prompt":  "close-up",
+                        "aliases":  [
+                                        "特寫 (close-up)",
+                                        "close-up"
+                                    ],
+                        "keywords":  [
+                                         "pg_shot_sizes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-shot-sizes-full-body",
+                        "name_zh":  "全身像",
+                        "description_zh":  "加入「全身像」提示詞。",
+                        "prompt":  "full body",
+                        "aliases":  [
+                                        "全身像 (full body)",
+                                        "full body"
+                                    ],
+                        "keywords":  [
+                                         "pg_shot_sizes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-shot-sizes-upper-body",
+                        "name_zh":  "上半身",
+                        "description_zh":  "加入「上半身」提示詞。",
+                        "prompt":  "upper body",
+                        "aliases":  [
+                                        "上半身 (upper body)",
+                                        "upper body"
+                                    ],
+                        "keywords":  [
+                                         "pg_shot_sizes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-shot-sizes-bust-shot",
+                        "name_zh":  "胸像",
+                        "description_zh":  "加入「胸像」提示詞。",
+                        "prompt":  "bust shot",
+                        "aliases":  [
+                                        "胸像 (bust shot)",
+                                        "bust shot"
+                                    ],
+                        "keywords":  [
+                                         "pg_shot_sizes",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  30,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-angles-crotch-close-up-faceless-groin",
+                        "name_zh":  "下體/陰部特寫",
+                        "description_zh":  "加入「下體/陰部特寫」提示詞。",
+                        "prompt":  "crotch close-up, faceless, groin",
+                        "aliases":  [
+                                        "下體/陰部特寫 (crotch close-up, faceless, groin)",
+                                        "crotch close-up, faceless, groin"
+                                    ],
+                        "keywords":  [
+                                         "after_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  31,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-angles-upper-body-close-up-breasts-visible",
+                        "name_zh":  "上半身特寫",
+                        "description_zh":  "加入「上半身特寫」提示詞。",
+                        "prompt":  "upper body close-up, breasts visible",
+                        "aliases":  [
+                                        "上半身特寫 (upper body close-up, breasts visible)",
+                                        "upper body close-up, breasts visible"
+                                    ],
+                        "keywords":  [
+                                         "after_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  32,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-angles-close-up-face-focus",
+                        "name_zh":  "臉部特寫",
+                        "description_zh":  "加入「臉部特寫」提示詞。",
+                        "prompt":  "close-up, face focus",
+                        "aliases":  [
+                                        "臉部特寫 (face close-up)",
+                                        "close-up, face focus"
+                                    ],
+                        "keywords":  [
+                                         "after_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  33,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-angles-from-above-full-body",
+                        "name_zh":  "從上俯視全身",
+                        "description_zh":  "加入「從上俯視全身」提示詞。",
+                        "prompt":  "from above, full body",
+                        "aliases":  [
+                                        "從上俯視全身 (from above, full body)",
+                                        "from above, full body"
+                                    ],
+                        "keywords":  [
+                                         "after_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  34,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "after-angles-from-below-thighs-focus",
+                        "name_zh":  "仰角大腿特寫",
+                        "description_zh":  "加入「仰角大腿特寫」提示詞。",
+                        "prompt":  "from below, thighs focus",
+                        "aliases":  [
+                                        "仰角大腿特寫 (from below, thighs focus)",
+                                        "from below, thighs focus"
+                                    ],
+                        "keywords":  [
+                                         "after_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  35,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-upper-body-close-up-breasts-focus-face-focus",
+                        "name_zh":  "特寫：強調頭部與胸部",
+                        "description_zh":  "加入「特寫：強調頭部與胸部」提示詞。",
+                        "prompt":  "upper body close-up, breasts focus, face focus",
+                        "aliases":  [
+                                        "特寫：強調頭部與胸部 (upper body close-up, breasts focus, face focus)",
+                                        "upper body close-up, breasts focus, face focus"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  36,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-from-above",
+                        "name_zh":  "由上往下俯視",
+                        "description_zh":  "加入「由上往下俯視」提示詞。",
+                        "prompt":  "from above",
+                        "aliases":  [
+                                        "由上往下俯視 (from above)",
+                                        "from above"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  37,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-from-below",
+                        "name_zh":  "由下往上仰角",
+                        "description_zh":  "加入「由下往上仰角」提示詞。",
+                        "prompt":  "from below",
+                        "aliases":  [
+                                        "由下往上仰角 (from below)",
+                                        "from below"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  38,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-from-side",
+                        "name_zh":  "從側面",
+                        "description_zh":  "加入「從側面」提示詞。",
+                        "prompt":  "from side",
+                        "aliases":  [
+                                        "從側面 (from side)",
+                                        "from side"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  39,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-cowboy-shot-thighs-visible",
+                        "name_zh":  "半身/能看見腿",
+                        "description_zh":  "加入「半身/能看見腿」提示詞。",
+                        "prompt":  "cowboy shot, thighs visible",
+                        "aliases":  [
+                                        "半身/能看見腿 (cowboy shot, thighs visible)",
+                                        "cowboy shot, thighs visible"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  40,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "cum-shower-angles-wide-shot-full-body",
+                        "name_zh":  "全身廣角",
+                        "description_zh":  "加入「全身廣角」提示詞。",
+                        "prompt":  "wide shot, full body",
+                        "aliases":  [
+                                        "全身廣角 (wide shot, full body)",
+                                        "wide shot, full body"
+                                    ],
+                        "keywords":  [
+                                         "cum_shower_angles",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  41,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "perspectives-third-person",
+                        "name_zh":  "第三人稱視角",
+                        "description_zh":  "加入「第三人稱視角」提示詞。",
+                        "prompt":  "Third Person",
+                        "aliases":  [
+                                        "Third Person (第三人稱 - 推薦)",
+                                        "Third Person"
+                                    ],
+                        "keywords":  [
+                                         "perspectives",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  42,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "perspectives-pov",
+                        "name_zh":  "第一人稱視角（POV）",
+                        "description_zh":  "加入「第一人稱視角（POV）」提示詞。",
+                        "prompt":  "POV",
+                        "aliases":  [
+                                        "POV (第一人稱)",
+                                        "POV"
+                                    ],
+                        "keywords":  [
+                                         "perspectives",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  43,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}

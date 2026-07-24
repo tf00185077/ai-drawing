@@ -1,0 +1,396 @@
+{
+    "schema_version":  1,
+    "id":  "quality-ratings",
+    "polarity":  "positive",
+    "name_zh":  "品質與分級",
+    "description_zh":  "收錄「品質與分級」分類的提示詞。",
+    "aliases":  [
+                    "quality",
+                    "rating"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "quality",
+                     "rating"
+                 ],
+    "order":  10,
+    "revision":  21,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "pony-quality",
+                        "name_zh":  "Pony 品質詞",
+                        "description_zh":  "加入「Pony 品質詞」提示詞。",
+                        "prompt":  "score_9, score_8_up, score_7_up, source_anime",
+                        "aliases":  [
+                                        "Pony",
+                                        "quality"
+                                    ],
+                        "keywords":  [
+                                         "quality",
+                                         "pony",
+                                         "ltj"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pony-rating-safe",
+                        "name_zh":  "Pony 分級：普遍",
+                        "description_zh":  "加入「Pony 分級：普遍」提示詞。",
+                        "prompt":  "rating_safe",
+                        "aliases":  [
+                                        "Pony",
+                                        "rating_safe",
+                                        "rating_safe"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "pony",
+                                         "ltj"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pony-rating-questionable",
+                        "name_zh":  "Pony 分級：輔導",
+                        "description_zh":  "加入「Pony 分級：輔導」提示詞。",
+                        "prompt":  "rating_questionable",
+                        "aliases":  [
+                                        "Pony",
+                                        "rating_questionable",
+                                        "rating_questionable"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "pony",
+                                         "ltj"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pony-rating-explicit",
+                        "name_zh":  "Pony 分級：限制",
+                        "description_zh":  "加入「Pony 分級：限制」提示詞。",
+                        "prompt":  "rating_explicit",
+                        "aliases":  [
+                                        "Pony",
+                                        "rating_explicit",
+                                        "rating_explicit"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "pony",
+                                         "ltj"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "illustrious-quality",
+                        "name_zh":  "Illustrious 品質詞",
+                        "description_zh":  "加入「Illustrious 品質詞」提示詞。",
+                        "prompt":  "masterpiece, best quality, amazing quality, absurdres",
+                        "aliases":  [
+                                        "Illustrious",
+                                        "quality"
+                                    ],
+                        "keywords":  [
+                                         "quality",
+                                         "illustrious",
+                                         "ltj"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "illustrious-rating-safe",
+                        "name_zh":  "Illustrious 分級：普遍",
+                        "description_zh":  "加入「Illustrious 分級：普遍」提示詞。",
+                        "prompt":  "general",
+                        "aliases":  [
+                                        "Illustrious",
+                                        "rating_safe",
+                                        "general"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "illustrious",
+                                         "ltj"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "illustrious-rating-questionable",
+                        "name_zh":  "Illustrious 分級：輔導",
+                        "description_zh":  "加入「Illustrious 分級：輔導」提示詞。",
+                        "prompt":  "sensitive",
+                        "aliases":  [
+                                        "Illustrious",
+                                        "rating_questionable",
+                                        "sensitive"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "illustrious",
+                                         "ltj"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "illustrious-rating-explicit",
+                        "name_zh":  "Illustrious 分級：限制",
+                        "description_zh":  "加入「Illustrious 分級：限制」提示詞。",
+                        "prompt":  "explicit",
+                        "aliases":  [
+                                        "Illustrious",
+                                        "rating_explicit",
+                                        "explicit"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "illustrious",
+                                         "ltj"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "noobai-quality",
+                        "name_zh":  "NoobAI 品質詞",
+                        "description_zh":  "加入「NoobAI 品質詞」提示詞。",
+                        "prompt":  "masterpiece, best quality, newest, absurdres, highres",
+                        "aliases":  [
+                                        "NoobAI",
+                                        "quality"
+                                    ],
+                        "keywords":  [
+                                         "quality",
+                                         "noobai",
+                                         "ltj"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "noobai-rating-safe",
+                        "name_zh":  "NoobAI 分級：普遍",
+                        "description_zh":  "加入「NoobAI 分級：普遍」提示詞。",
+                        "prompt":  "general",
+                        "aliases":  [
+                                        "NoobAI",
+                                        "rating_safe",
+                                        "general"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "noobai",
+                                         "ltj"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "noobai-rating-questionable",
+                        "name_zh":  "NoobAI 分級：輔導",
+                        "description_zh":  "加入「NoobAI 分級：輔導」提示詞。",
+                        "prompt":  "questionable",
+                        "aliases":  [
+                                        "NoobAI",
+                                        "rating_questionable",
+                                        "questionable"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "noobai",
+                                         "ltj"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "noobai-rating-explicit",
+                        "name_zh":  "NoobAI 分級：限制",
+                        "description_zh":  "加入「NoobAI 分級：限制」提示詞。",
+                        "prompt":  "explicit",
+                        "aliases":  [
+                                        "NoobAI",
+                                        "rating_explicit",
+                                        "explicit"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "noobai",
+                                         "ltj"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "anima-quality",
+                        "name_zh":  "Anima 品質詞",
+                        "description_zh":  "加入「Anima 品質詞」提示詞。",
+                        "prompt":  "masterpiece, best quality, very aesthetic",
+                        "aliases":  [
+                                        "Anima",
+                                        "quality"
+                                    ],
+                        "keywords":  [
+                                         "quality",
+                                         "anima",
+                                         "ltj"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "anima-rating-safe",
+                        "name_zh":  "Anima 分級：普遍",
+                        "description_zh":  "加入「Anima 分級：普遍」提示詞。",
+                        "prompt":  "safe",
+                        "aliases":  [
+                                        "Anima",
+                                        "rating_safe",
+                                        "safe"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "anima",
+                                         "ltj"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "anima-rating-questionable",
+                        "name_zh":  "Anima 分級：輔導",
+                        "description_zh":  "加入「Anima 分級：輔導」提示詞。",
+                        "prompt":  "sensitive",
+                        "aliases":  [
+                                        "Anima",
+                                        "rating_questionable",
+                                        "sensitive"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "anima",
+                                         "ltj"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "anima-rating-explicit",
+                        "name_zh":  "Anima 分級：限制",
+                        "description_zh":  "加入「Anima 分級：限制」提示詞。",
+                        "prompt":  "explicit",
+                        "aliases":  [
+                                        "Anima",
+                                        "rating_explicit",
+                                        "explicit"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "anima",
+                                         "ltj"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "sd1-5-quality",
+                        "name_zh":  "SD1.5 品質詞",
+                        "description_zh":  "加入「SD1.5 品質詞」提示詞。",
+                        "prompt":  "masterpiece, best quality",
+                        "aliases":  [
+                                        "SD1.5",
+                                        "quality"
+                                    ],
+                        "keywords":  [
+                                         "quality",
+                                         "sd1.5",
+                                         "ltj"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "sd1-5-rating-safe",
+                        "name_zh":  "SD1.5 分級：普遍",
+                        "description_zh":  "加入「SD1.5 分級：普遍」提示詞。",
+                        "prompt":  "general",
+                        "aliases":  [
+                                        "SD1.5",
+                                        "rating_safe",
+                                        "general"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "sd1.5",
+                                         "ltj"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "sd1-5-rating-questionable",
+                        "name_zh":  "SD1.5 分級：輔導",
+                        "description_zh":  "加入「SD1.5 分級：輔導」提示詞。",
+                        "prompt":  "sensitive",
+                        "aliases":  [
+                                        "SD1.5",
+                                        "rating_questionable",
+                                        "sensitive"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "sd1.5",
+                                         "ltj"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "sd1-5-rating-explicit",
+                        "name_zh":  "SD1.5 分級：限制",
+                        "description_zh":  "加入「SD1.5 分級：限制」提示詞。",
+                        "prompt":  "explicit",
+                        "aliases":  [
+                                        "SD1.5",
+                                        "rating_explicit",
+                                        "explicit"
+                                    ],
+                        "keywords":  [
+                                         "rating",
+                                         "sd1.5",
+                                         "ltj"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}

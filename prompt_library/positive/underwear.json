@@ -1,0 +1,731 @@
+{
+    "schema_version":  1,
+    "id":  "underwear",
+    "polarity":  "positive",
+    "name_zh":  "內衣褲",
+    "description_zh":  "收錄「內衣褲」分類的提示詞。",
+    "aliases":  [
+                    "內衣褲",
+                    "underwear"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "positive",
+                     "underwear"
+                 ],
+    "order":  220,
+    "revision":  40,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "bra-types-two-piece-lingerie-set-lingerie-matching-underwear-bra-and-panties",
+                        "name_zh":  "性感內衣套裝(兩件式)",
+                        "description_zh":  "加入「性感內衣套裝(兩件式)」提示詞。",
+                        "prompt":  "two-piece lingerie set, lingerie, matching underwear, bra and panties",
+                        "aliases":  [
+                                        "性感內衣套裝(兩件式) (lingerie set)",
+                                        "two-piece lingerie set, lingerie, matching underwear, bra and panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-push-up-bra",
+                        "name_zh":  "集中托高",
+                        "description_zh":  "加入「集中托高」提示詞。",
+                        "prompt":  "push-up bra",
+                        "aliases":  [
+                                        "集中托高 (push-up bra)",
+                                        "push-up bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-sports-bra",
+                        "name_zh":  "運動內衣",
+                        "description_zh":  "加入「運動內衣」提示詞。",
+                        "prompt":  "sports bra",
+                        "aliases":  [
+                                        "運動內衣 (sports bra)",
+                                        "sports bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-strapless-bra",
+                        "name_zh":  "無肩帶內衣",
+                        "description_zh":  "加入「無肩帶內衣」提示詞。",
+                        "prompt":  "strapless bra",
+                        "aliases":  [
+                                        "無肩帶內衣 (strapless bra)",
+                                        "strapless bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-micro-bra",
+                        "name_zh":  "微型內衣",
+                        "description_zh":  "加入「微型內衣」提示詞。",
+                        "prompt":  "micro bra",
+                        "aliases":  [
+                                        "微型內衣 (micro bra)",
+                                        "micro bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-front-tie-bra",
+                        "name_zh":  "前綁帶內衣",
+                        "description_zh":  "加入「前綁帶內衣」提示詞。",
+                        "prompt":  "front-tie bra",
+                        "aliases":  [
+                                        "前綁帶內衣 (front-tie bra)",
+                                        "front-tie bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  15,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-types-lace-bra",
+                        "name_zh":  "蕾絲內衣",
+                        "description_zh":  "加入「蕾絲內衣」提示詞。",
+                        "prompt":  "lace bra",
+                        "aliases":  [
+                                        "蕾絲內衣 (lace bra)",
+                                        "lace bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  16,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-lace-trimmed-bra",
+                        "name_zh":  "蕾絲邊",
+                        "description_zh":  "加入「蕾絲邊」提示詞。",
+                        "prompt":  "lace-trimmed bra",
+                        "aliases":  [
+                                        "蕾絲邊 (lace-trimmed bra)",
+                                        "lace-trimmed bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  17,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-see-through-bra",
+                        "name_zh":  "透視/薄紗",
+                        "description_zh":  "加入「透視/薄紗」提示詞。",
+                        "prompt":  "see-through bra",
+                        "aliases":  [
+                                        "透視/薄紗 (see-through bra)",
+                                        "see-through bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  18,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-silk-bra",
+                        "name_zh":  "絲綢",
+                        "description_zh":  "加入「絲綢」提示詞。",
+                        "prompt":  "silk bra",
+                        "aliases":  [
+                                        "絲綢 (silk bra)",
+                                        "silk bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  19,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-leather-bra",
+                        "name_zh":  "皮革",
+                        "description_zh":  "加入「皮革」提示詞。",
+                        "prompt":  "leather bra",
+                        "aliases":  [
+                                        "皮革 (leather bra)",
+                                        "leather bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  20,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-latex-bra",
+                        "name_zh":  "乳膠",
+                        "description_zh":  "加入「乳膠」提示詞。",
+                        "prompt":  "latex bra",
+                        "aliases":  [
+                                        "乳膠 (latex bra)",
+                                        "latex bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  21,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-mats-mesh-bra",
+                        "name_zh":  "網底",
+                        "description_zh":  "加入「網底」提示詞。",
+                        "prompt":  "mesh bra",
+                        "aliases":  [
+                                        "網底 (mesh bra)",
+                                        "mesh bra"
+                                    ],
+                        "keywords":  [
+                                         "bra_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  22,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-types-thong",
+                        "name_zh":  "丁字褲",
+                        "description_zh":  "加入「丁字褲」提示詞。",
+                        "prompt":  "thong",
+                        "aliases":  [
+                                        "丁字褲 (thong)",
+                                        "thong"
+                                    ],
+                        "keywords":  [
+                                         "panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  23,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-types-highleg-panties",
+                        "name_zh":  "高衩內褲",
+                        "description_zh":  "加入「高衩內褲」提示詞。",
+                        "prompt":  "highleg panties",
+                        "aliases":  [
+                                        "高衩內褲 (highleg panties)",
+                                        "highleg panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  24,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-types-side-tie-panties",
+                        "name_zh":  "側綁帶內褲",
+                        "description_zh":  "加入「側綁帶內褲」提示詞。",
+                        "prompt":  "side-tie panties",
+                        "aliases":  [
+                                        "側綁帶內褲 (side-tie panties)",
+                                        "side-tie panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  25,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-lace-panties",
+                        "name_zh":  "蕾絲內褲",
+                        "description_zh":  "加入「蕾絲內褲」提示詞。",
+                        "prompt":  "lace panties",
+                        "aliases":  [
+                                        "蕾絲內褲 (lace panties)",
+                                        "lace panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  26,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-see-through-panties",
+                        "name_zh":  "透視內褲",
+                        "description_zh":  "加入「透視內褲」提示詞。",
+                        "prompt":  "see-through panties",
+                        "aliases":  [
+                                        "透視內褲 (see-through panties)",
+                                        "see-through panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  27,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-silk-panties",
+                        "name_zh":  "絲綢內褲",
+                        "description_zh":  "加入「絲綢內褲」提示詞。",
+                        "prompt":  "silk panties",
+                        "aliases":  [
+                                        "絲綢內褲 (silk panties)",
+                                        "silk panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  28,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-leather-panties",
+                        "name_zh":  "皮革內褲",
+                        "description_zh":  "加入「皮革內褲」提示詞。",
+                        "prompt":  "leather panties",
+                        "aliases":  [
+                                        "皮革內褲 (leather panties)",
+                                        "leather panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  29,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-latex-panties",
+                        "name_zh":  "乳膠內褲",
+                        "description_zh":  "加入「乳膠內褲」提示詞。",
+                        "prompt":  "latex panties",
+                        "aliases":  [
+                                        "乳膠內褲 (latex panties)",
+                                        "latex panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  30,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "panties-mats-mesh-panties",
+                        "name_zh":  "網底內褲",
+                        "description_zh":  "加入「網底內褲」提示詞。",
+                        "prompt":  "mesh panties",
+                        "aliases":  [
+                                        "網底內褲 (mesh panties)",
+                                        "mesh panties"
+                                    ],
+                        "keywords":  [
+                                         "panties_mats",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  31,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-bra-types-lace-bra",
+                        "name_zh":  "蕾絲內衣",
+                        "description_zh":  "加入「蕾絲內衣」提示詞。",
+                        "prompt":  "lace bra",
+                        "aliases":  [
+                                        "蕾絲內衣 (lace bra)",
+                                        "lace bra"
+                                    ],
+                        "keywords":  [
+                                         "pg_bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  32,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-bra-types-two-piece-lingerie-set-lingerie-matching-underwear-bra-and-panties",
+                        "name_zh":  "性感內衣套裝(兩件式)",
+                        "description_zh":  "加入「性感內衣套裝(兩件式)」提示詞。",
+                        "prompt":  "two-piece lingerie set, lingerie, matching underwear, bra and panties",
+                        "aliases":  [
+                                        "性感內衣套裝(兩件式) (lingerie set)",
+                                        "two-piece lingerie set, lingerie, matching underwear, bra and panties"
+                                    ],
+                        "keywords":  [
+                                         "pg_bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  33,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-bra-types-push-up-bra",
+                        "name_zh":  "集中托高",
+                        "description_zh":  "加入「集中托高」提示詞。",
+                        "prompt":  "push-up bra",
+                        "aliases":  [
+                                        "集中托高 (push-up bra)",
+                                        "push-up bra"
+                                    ],
+                        "keywords":  [
+                                         "pg_bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  34,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-bra-types-sports-bra",
+                        "name_zh":  "運動內衣",
+                        "description_zh":  "加入「運動內衣」提示詞。",
+                        "prompt":  "sports bra",
+                        "aliases":  [
+                                        "運動內衣 (sports bra)",
+                                        "sports bra"
+                                    ],
+                        "keywords":  [
+                                         "pg_bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  35,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-bra-types-strapless-bra",
+                        "name_zh":  "無肩帶內衣",
+                        "description_zh":  "加入「無肩帶內衣」提示詞。",
+                        "prompt":  "strapless bra",
+                        "aliases":  [
+                                        "無肩帶內衣 (strapless bra)",
+                                        "strapless bra"
+                                    ],
+                        "keywords":  [
+                                         "pg_bra_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  36,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-panties-types-lace-panties",
+                        "name_zh":  "蕾絲內褲",
+                        "description_zh":  "加入「蕾絲內褲」提示詞。",
+                        "prompt":  "lace panties",
+                        "aliases":  [
+                                        "蕾絲內褲 (lace panties)",
+                                        "lace panties"
+                                    ],
+                        "keywords":  [
+                                         "pg_panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  37,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-panties-types-thong",
+                        "name_zh":  "丁字褲",
+                        "description_zh":  "加入「丁字褲」提示詞。",
+                        "prompt":  "thong",
+                        "aliases":  [
+                                        "丁字褲 (thong)",
+                                        "thong"
+                                    ],
+                        "keywords":  [
+                                         "pg_panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  38,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-panties-types-highleg-panties",
+                        "name_zh":  "高衩內褲",
+                        "description_zh":  "加入「高衩內褲」提示詞。",
+                        "prompt":  "highleg panties",
+                        "aliases":  [
+                                        "高衩內褲 (highleg panties)",
+                                        "highleg panties"
+                                    ],
+                        "keywords":  [
+                                         "pg_panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  39,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "pg-panties-types-side-tie-panties",
+                        "name_zh":  "側綁帶內褲",
+                        "description_zh":  "加入「側綁帶內褲」提示詞。",
+                        "prompt":  "side-tie panties",
+                        "aliases":  [
+                                        "側綁帶內褲 (side-tie panties)",
+                                        "side-tie panties"
+                                    ],
+                        "keywords":  [
+                                         "pg_panties_types",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  40,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-black",
+                        "name_zh":  "內衣褲顏色：黑色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「black bra, black panties」。",
+                        "prompt":  "black bra, black panties",
+                        "aliases":  [
+                                        "黑 (black)",
+                                        "black",
+                                        "black bra, black panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  41,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-white",
+                        "name_zh":  "內衣褲顏色：白色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「white bra, white panties」。",
+                        "prompt":  "white bra, white panties",
+                        "aliases":  [
+                                        "白 (white)",
+                                        "white",
+                                        "white bra, white panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  42,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-red",
+                        "name_zh":  "內衣褲顏色：紅色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「red bra, red panties」。",
+                        "prompt":  "red bra, red panties",
+                        "aliases":  [
+                                        "紅 (red)",
+                                        "red",
+                                        "red bra, red panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  43,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-pink",
+                        "name_zh":  "內衣褲顏色：粉紅色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「pink bra, pink panties」。",
+                        "prompt":  "pink bra, pink panties",
+                        "aliases":  [
+                                        "粉紅 (pink)",
+                                        "pink",
+                                        "pink bra, pink panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  44,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-purple",
+                        "name_zh":  "內衣褲顏色：紫色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「purple bra, purple panties」。",
+                        "prompt":  "purple bra, purple panties",
+                        "aliases":  [
+                                        "紫 (purple)",
+                                        "purple",
+                                        "purple bra, purple panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  45,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-blue",
+                        "name_zh":  "內衣褲顏色：藍色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「blue bra, blue panties」。",
+                        "prompt":  "blue bra, blue panties",
+                        "aliases":  [
+                                        "藍 (blue)",
+                                        "blue",
+                                        "blue bra, blue panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  46,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-pastel-pink",
+                        "name_zh":  "內衣褲顏色：淺粉色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「pastel pink bra, pastel pink panties」。",
+                        "prompt":  "pastel pink bra, pastel pink panties",
+                        "aliases":  [
+                                        "淺粉 (pastel pink)",
+                                        "pastel pink",
+                                        "pastel pink bra, pastel pink panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  47,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "bra-colors-mint-green",
+                        "name_zh":  "內衣褲顏色：薄荷綠色",
+                        "description_zh":  "設定內衣與內褲的共用顏色；加入「mint green bra, mint green panties」。",
+                        "prompt":  "mint green bra, mint green panties",
+                        "aliases":  [
+                                        "薄荷綠 (mint green)",
+                                        "mint green",
+                                        "mint green bra, mint green panties"
+                                    ],
+                        "keywords":  [
+                                         "bra_colors",
+                                         "ltj",
+                                         "prompt"
+                                     ],
+                        "order":  48,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}
