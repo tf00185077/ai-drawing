@@ -47,6 +47,19 @@ class ApiClient:
         r = self._check(await self._client.post(f"/api/style-presets/{preset_id}/compose", json=body))
         return r.json()["generation"]
 
+    async def get_prompt_defaults(
+        self, preset_id: str, profile: str | None
+    ) -> tuple[str, str]:
+        generation = await self.compose(
+            preset_id,
+            content_prompt=" ",
+            profile=profile,
+        )
+        return (
+            str(generation.get("prompt") or ""),
+            str(generation.get("negative_prompt") or ""),
+        )
+
     async def submit_generate(self, generation: dict) -> str:
         r = self._check(await self._client.post("/api/generate/", json=generation))
         return r.json()["job_id"]
@@ -66,9 +79,21 @@ class ApiClient:
         return r.content
 
     async def compose_and_submit(self, preset_id: str, profile: str | None,
-                                 prompt: str, width: int, height: int, count: int) -> str:
-        overrides = {"width": width, "height": height, "batch_size": count}
-        generation = await self.compose(preset_id, content_prompt=prompt, profile=profile, overrides=overrides)
+                                 positive_prompt: str, negative_prompt: str,
+                                 width: int, height: int, count: int) -> str:
+        overrides: dict[str, object] = {
+            "prompt": positive_prompt,
+            "negative_prompt": negative_prompt,
+            "width": width,
+            "height": height,
+            "batch_size": count,
+        }
+        generation = await self.compose(
+            preset_id,
+            content_prompt=" ",
+            profile=profile,
+            overrides=overrides,
+        )
         return await self.submit_generate(generation)
 
     async def collect_job_result(self, job_id: str) -> dict:

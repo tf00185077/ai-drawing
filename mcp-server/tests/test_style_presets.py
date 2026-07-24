@@ -9,6 +9,8 @@ from mcp_server.tools.style_presets import (
     create_style_preset,
     get_style_preset,
     list_style_presets,
+    save_successful_workflow_as_style_preset,
+    test_saved_style_preset_workflow as queue_saved_style_preset_workflow,
 )
 
 
@@ -182,3 +184,205 @@ def test_create_style_preset_duplicate_409() -> None:
         result = json.loads(create_style_preset("dup", "Y"))
     assert result["ok"] is False
     assert result["error"]["code"] == "already_exists"
+
+
+def test_save_successful_workflow_forwards_loose_inputs_without_graph() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "preset_id": "creator-a",
+        "profile": "portrait",
+        "source": {"type": "artifact", "id": "44"},
+        "workflow_path": (
+            "style_presets/agent/workflows/creator-a/portrait.api.json"
+        ),
+        "prompt_keywords": ["ink wash", "soft light"],
+        "negative_prompt_keywords": ["watermark"],
+        "retest_required": True,
+    }
+
+    with patch(
+        "mcp_server.tools.style_presets._get_client",
+        return_value=mock_client,
+    ):
+        result = save_successful_workflow_as_style_preset(
+            source="artifact:44",
+            preset_id="creator-a",
+            profile="portrait",
+            prompt_keywords="ink wash,\nsoft light",
+            negative_prompt_keywords=["watermark", ""],
+        )
+
+    data = json.loads(result)
+    assert data == {
+        "ok": True,
+        "tool": "save_successful_workflow_as_style_preset",
+        "preset_id": "creator-a",
+        "profile": "portrait",
+        "source": {"type": "artifact", "id": "44"},
+        "workflow_path": (
+            "style_presets/agent/workflows/creator-a/portrait.api.json"
+        ),
+        "prompt_keywords": ["ink wash", "soft light"],
+        "negative_prompt_keywords": ["watermark"],
+        "retest_required": True,
+        "next": (
+            "call test_saved_style_preset_workflow for this preset/profile"
+        ),
+    }
+    mock_client.post.assert_called_once_with(
+        "style-presets/creator-a/workflow/save",
+        json={
+            "source": "artifact:44",
+            "profile": "portrait",
+            "prompt_keywords": "ink wash,\nsoft light",
+            "negative_prompt_keywords": ["watermark", ""],
+        },
+    )
+    assert "workflow_json" not in result
+    assert "full prompt" not in result
+
+
+def test_save_successful_workflow_forwards_numeric_source_and_omits_profile() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "preset_id": "creator-a",
+        "profile": None,
+        "source": {"type": "image", "id": "7"},
+        "workflow_path": (
+            "style_presets/agent/workflows/creator-a/__base__.api.json"
+        ),
+        "prompt_keywords": ["line art"],
+        "negative_prompt_keywords": [],
+        "retest_required": True,
+    }
+
+    with patch(
+        "mcp_server.tools.style_presets._get_client",
+        return_value=mock_client,
+    ):
+        save_successful_workflow_as_style_preset(
+            source=7,
+            preset_id="creator-a",
+            prompt_keywords=["line art"],
+            negative_prompt_keywords="",
+        )
+
+    assert mock_client.post.call_args.kwargs["json"] == {
+        "source": 7,
+        "prompt_keywords": ["line art"],
+        "negative_prompt_keywords": "",
+    }
+
+
+def test_save_successful_workflow_returns_backend_repair_hint() -> None:
+    mock_client = MagicMock()
+    request = httpx.Request(
+        "POST",
+        "http://x/style-presets/creator-a/workflow/save",
+    )
+    response = httpx.Response(
+        404,
+        request=request,
+        json={
+            "detail": {
+                "code": "source_not_found",
+                "message": "Gallery image 404 was not found.",
+                "hint": "Use an id returned by get_gallery_image.",
+            }
+        },
+    )
+    mock_client.post.side_effect = httpx.HTTPStatusError(
+        "404", request=request, response=response
+    )
+
+    with patch(
+        "mcp_server.tools.style_presets._get_client",
+        return_value=mock_client,
+    ):
+        result = save_successful_workflow_as_style_preset(
+            source=404,
+            preset_id="creator-a",
+            prompt_keywords="line art",
+            negative_prompt_keywords="",
+        )
+
+    data = json.loads(result)
+    assert data == {
+        "ok": False,
+        "tool": "save_successful_workflow_as_style_preset",
+        "error": {
+            "code": "source_not_found",
+            "message": "Gallery image 404 was not found.",
+            "hint": "Use an id returned by get_gallery_image.",
+        },
+    }
+
+
+def test_saved_workflow_retest_returns_job_and_polling_instruction() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "preset_id": "creator-a",
+        "profile": "portrait",
+        "job_id": "job-saved-1",
+        "status": "queued",
+    }
+
+    with patch(
+        "mcp_server.tools.style_presets._get_client",
+        return_value=mock_client,
+    ):
+        result = queue_saved_style_preset_workflow(
+            "creator-a", profile="portrait"
+        )
+
+    data = json.loads(result)
+    assert data == {
+        "ok": True,
+        "tool": "test_saved_style_preset_workflow",
+        "preset_id": "creator-a",
+        "profile": "portrait",
+        "job_id": "job-saved-1",
+        "status": "queued",
+        "next": "poll get_generation_status with job_id job-saved-1",
+    }
+    mock_client.post.assert_called_once_with(
+        "style-presets/creator-a/workflow/test",
+        json={"profile": "portrait"},
+    )
+
+
+def test_saved_workflow_retest_error_is_stable() -> None:
+    mock_client = MagicMock()
+    request = httpx.Request(
+        "POST",
+        "http://x/style-presets/creator-a/workflow/test",
+    )
+    response = httpx.Response(
+        404,
+        request=request,
+        json={
+            "detail": {
+                "code": "saved_workflow_not_found",
+                "message": "No saved workflow exists.",
+                "hint": "Explicitly save a successful workflow first.",
+            }
+        },
+    )
+    mock_client.post.side_effect = httpx.HTTPStatusError(
+        "404", request=request, response=response
+    )
+
+    with patch(
+        "mcp_server.tools.style_presets._get_client",
+        return_value=mock_client,
+    ):
+        result = queue_saved_style_preset_workflow("creator-a")
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "test_saved_style_preset_workflow"
+    assert data["error"] == {
+        "code": "saved_workflow_not_found",
+        "message": "No saved workflow exists.",
+        "hint": "Explicitly save a successful workflow first.",
+    }
