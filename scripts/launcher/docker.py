@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import os
 import re
 import ipaddress
 import json
@@ -11,7 +13,13 @@ from pathlib import Path
 from typing import Any
 from urllib.request import urlopen
 
-from .constants import COMPOSE_MINIMUM
+from .constants import (
+    COMPOSE_ASSET_SHA256,
+    COMPOSE_BUNDLED_VERSION,
+    COMPOSE_MINIMUM,
+    COMPOSE_RELEASE_URL,
+)
+from .models import HostInfo
 from .runner import Runner
 
 
@@ -33,7 +41,15 @@ class DockerError(RuntimeError):
 @dataclass(frozen=True)
 class DockerPreflight:
     docker_version: str
-    compose_version: tuple[int, int, int]
+    compose: "ComposeRuntime"
+
+    @property
+    def compose_version(self) -> tuple[int, int, int]:
+        return self.compose.version
+
+    @property
+    def invocation(self) -> tuple[str, ...]:
+        return self.compose.invocation
 
 
 def _run(runner: Runner, args: list[str], *, cwd: Path | None = None):
@@ -54,7 +70,177 @@ def _parse_compose_version(value: str) -> tuple[int, int, int] | None:
     return tuple(int(item or 0) for item in match.groups())
 
 
-def preflight(runner: Runner) -> DockerPreflight:
+def normalize_arch(machine: str) -> str:
+    key = machine.lower()
+    if key in {"x86_64", "amd64"}:
+        return "x86_64"
+    if key in {"aarch64", "arm64"}:
+        return "aarch64"
+    raise DockerError(
+        "COMPOSE_BUNDLED_UNSUPPORTED_ARCH",
+        f"沒有對應此架構（{machine}）的自帶 Docker Compose。",
+        "請改用系統套件管理員安裝 Docker Compose v2.24 以上版本。",
+    )
+
+
+_COMPOSE_OS = {"Windows": "windows", "Darwin": "darwin", "Linux": "linux"}
+
+
+def compose_asset_name(host: HostInfo) -> str:
+    os_name = _COMPOSE_OS.get(host.system)
+    if os_name is None:
+        raise DockerError(
+            "COMPOSE_BUNDLED_UNSUPPORTED_ARCH",
+            f"沒有對應此作業系統（{host.system}）的自帶 Docker Compose。",
+            "請改用系統套件管理員安裝 Docker Compose v2.24 以上版本。",
+        )
+    arch = normalize_arch(host.machine)
+    suffix = ".exe" if os_name == "windows" else ""
+    return f"docker-compose-{os_name}-{arch}{suffix}"
+
+
+def compose_download_url(host: HostInfo) -> str:
+    return f"{COMPOSE_RELEASE_URL}/v{COMPOSE_BUNDLED_VERSION}/{compose_asset_name(host)}"
+
+
+def compose_expected_sha256(host: HostInfo) -> str:
+    asset = compose_asset_name(host)
+    digest = COMPOSE_ASSET_SHA256.get(asset)
+    if digest is None:
+        raise DockerError(
+            "COMPOSE_BUNDLED_UNSUPPORTED_ARCH",
+            f"沒有為 {asset} 釘選的校驗碼。",
+            "請改用系統套件管理員安裝 Docker Compose v2.24 以上版本。",
+        )
+    return digest
+
+
+def _default_cache_root(host: HostInfo) -> Path:
+    if host.system == "Windows":
+        base = os.environ.get("LOCALAPPDATA") or os.environ.get("USERPROFILE")
+        return Path(base) if base else host.home
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    return Path(xdg) if xdg else host.home / ".cache"
+
+
+def _bundled_filename(host: HostInfo) -> str:
+    return "docker-compose.exe" if host.system == "Windows" else "docker-compose"
+
+
+def compose_cache_path(host: HostInfo, *, cache_root: Path | None = None) -> Path:
+    root = cache_root if cache_root is not None else _default_cache_root(host)
+    return (
+        Path(root)
+        / "ai-drawing"
+        / "compose"
+        / COMPOSE_BUNDLED_VERSION
+        / _bundled_filename(host)
+    )
+
+
+Downloader = Callable[[str, Path], None]
+
+
+def urlopen_download(url: str, dest: Path) -> None:
+    with urlopen(url, timeout=60) as response:
+        data = response.read()
+    dest.write_bytes(data)
+
+
+def _download_compose(
+    url: str,
+    dest: Path,
+    expected_sha256: str,
+    *,
+    downloader: Downloader,
+) -> None:
+    partial = dest.with_name(dest.name + ".partial")
+    partial.unlink(missing_ok=True)
+    try:
+        downloader(url, partial)
+    except OSError as error:
+        partial.unlink(missing_ok=True)
+        raise DockerError(
+            "COMPOSE_DOWNLOAD_FAILED",
+            "自帶 Docker Compose 下載失敗。",
+            "請確認網路與 github.com 可連線後重試；或安裝系統 Docker Compose v2.24 以上。",
+        ) from error
+    digest = hashlib.sha256(partial.read_bytes()).hexdigest()
+    if digest != expected_sha256:
+        partial.unlink(missing_ok=True)
+        raise DockerError(
+            "COMPOSE_CHECKSUM_MISMATCH",
+            "自帶 Docker Compose 的校驗碼不符，已刪除下載檔。",
+            "請重試下載；若持續失敗，請改安裝系統 Docker Compose v2.24 以上。",
+        )
+    if os.name != "nt":
+        partial.chmod(0o755)
+    os.replace(partial, dest)
+
+
+@dataclass(frozen=True)
+class ComposeRuntime:
+    invocation: tuple[str, ...]
+    version: tuple[int, int, int]
+    source: str
+
+
+_SYSTEM_COMPOSE = ("docker", "compose")
+
+
+def _compose_short_version(runner: Runner, invocation: tuple[str, ...]):
+    result = _run(runner, [*invocation, "version", "--short"])
+    if result.returncode != 0:
+        return None
+    return _parse_compose_version(result.stdout)
+
+
+def resolve_compose_runtime(
+    host: HostInfo,
+    runner: Runner,
+    *,
+    allow_download: bool = True,
+    downloader: Downloader | None = None,
+    cache_root: Path | None = None,
+) -> ComposeRuntime:
+    system_version = _compose_short_version(runner, _SYSTEM_COMPOSE)
+    if system_version is not None and system_version >= COMPOSE_MINIMUM:
+        return ComposeRuntime(_SYSTEM_COMPOSE, system_version, "system")
+
+    path = compose_cache_path(host, cache_root=cache_root)
+    if not path.is_file():
+        if not allow_download:
+            raise DockerError(
+                "COMPOSE_UNAVAILABLE",
+                "無法使用 Docker Compose。",
+                "請安裝 Docker Compose v2.24 以上，或執行 setup 以自動下載自帶版本。",
+            )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _download_compose(
+            compose_download_url(host),
+            path,
+            compose_expected_sha256(host),
+            downloader=downloader or urlopen_download,
+        )
+
+    bundled_version = _compose_short_version(runner, (str(path),))
+    if bundled_version is None:
+        raise DockerError(
+            "COMPOSE_BUNDLED_UNUSABLE",
+            "自帶 Docker Compose 無法執行。",
+            "請刪除 cache 目錄下的 compose 後重試，或安裝系統 Docker Compose v2.24 以上。",
+        )
+    return ComposeRuntime((str(path),), bundled_version, "bundled")
+
+
+def preflight(
+    runner: Runner,
+    host: HostInfo,
+    *,
+    allow_download: bool = True,
+    downloader: Downloader | None = None,
+    cache_root: Path | None = None,
+) -> DockerPreflight:
     daemon = _run(
         runner,
         ["docker", "version", "--format", "{{.Server.Version}}"],
@@ -66,23 +252,14 @@ def preflight(runner: Runner) -> DockerPreflight:
             "Docker daemon 尚未就緒。",
             "請啟動 Docker Desktop 或 Docker Engine，確認 `docker version` 可用。",
         )
-
-    compose = _run(runner, ["docker", "compose", "version", "--short"])
-    version = _parse_compose_version(compose.stdout)
-    if compose.returncode != 0 or version is None:
-        raise DockerError(
-            "COMPOSE_UNAVAILABLE",
-            "無法讀取 Docker Compose 版本。",
-            "請安裝 Docker Compose v2.24 以上版本。",
-        )
-    if version < COMPOSE_MINIMUM:
-        minimum = ".".join(str(item) for item in COMPOSE_MINIMUM)
-        raise DockerError(
-            "COMPOSE_VERSION_UNSUPPORTED",
-            f"Docker Compose 版本過舊，需要 {minimum} 以上。",
-            "請更新 Docker Desktop 或 Docker Compose plugin。",
-        )
-    return DockerPreflight(docker_version=docker_version, compose_version=version)
+    runtime = resolve_compose_runtime(
+        host,
+        runner,
+        allow_download=allow_download,
+        downloader=downloader,
+        cache_root=cache_root,
+    )
+    return DockerPreflight(docker_version=docker_version, compose=runtime)
 
 
 def _validate_port(port: int) -> int:
@@ -136,6 +313,7 @@ def compose_command(
     *arguments: str,
     env_file: Path | None = None,
     override_file: Path | None = None,
+    invocation: tuple[str, ...] = ("docker", "compose"),
 ) -> list[str]:
     root = Path(project_root).resolve()
     env = Path(env_file).resolve() if env_file is not None else root / ".env"
@@ -145,8 +323,7 @@ def compose_command(
         else root / ".ai-drawing/compose.local.yaml"
     )
     return [
-        "docker",
-        "compose",
+        *invocation,
         "--env-file",
         str(env),
         "-f",
@@ -163,9 +340,10 @@ def _compose_required(
     *arguments: str,
     code: str,
     message: str,
+    invocation: tuple[str, ...] = ("docker", "compose"),
 ) -> None:
     root = Path(project_root).resolve()
-    result = _run(runner, compose_command(root, *arguments), cwd=root)
+    result = _run(runner, compose_command(root, *arguments, invocation=invocation), cwd=root)
     if result.returncode != 0:
         raise DockerError(
             code,
@@ -179,6 +357,7 @@ def validate_compose(
     env_file: Path,
     override_file: Path,
     runner: Runner,
+    invocation: tuple[str, ...] = ("docker", "compose"),
 ) -> bool:
     root = Path(project_root).resolve()
     result = _run(
@@ -189,13 +368,18 @@ def validate_compose(
             "--quiet",
             env_file=env_file,
             override_file=override_file,
+            invocation=invocation,
         ),
         cwd=root,
     )
     return result.returncode == 0
 
 
-def compose_up(project_root: Path, runner: Runner) -> None:
+def compose_up(
+    project_root: Path,
+    runner: Runner,
+    invocation: tuple[str, ...] = ("docker", "compose"),
+) -> None:
     _compose_required(
         project_root,
         runner,
@@ -205,10 +389,15 @@ def compose_up(project_root: Path, runner: Runner) -> None:
         "--remove-orphans",
         code="COMPOSE_UP_FAILED",
         message="Docker 服務啟動失敗。",
+        invocation=invocation,
     )
 
 
-def compose_down(project_root: Path, runner: Runner) -> None:
+def compose_down(
+    project_root: Path,
+    runner: Runner,
+    invocation: tuple[str, ...] = ("docker", "compose"),
+) -> None:
     _compose_required(
         project_root,
         runner,
@@ -217,14 +406,19 @@ def compose_down(project_root: Path, runner: Runner) -> None:
         "--timeout=10",
         code="COMPOSE_DOWN_FAILED",
         message="Docker 服務停止失敗。",
+        invocation=invocation,
     )
 
 
-def compose_service_states(project_root: Path, runner: Runner) -> dict[str, str]:
+def compose_service_states(
+    project_root: Path,
+    runner: Runner,
+    invocation: tuple[str, ...] = ("docker", "compose"),
+) -> dict[str, str]:
     root = Path(project_root).resolve()
     result = _run(
         runner,
-        compose_command(root, "ps", "--all", "--format", "json"),
+        compose_command(root, "ps", "--all", "--format", "json", invocation=invocation),
         cwd=root,
     )
     if result.returncode != 0:
@@ -263,6 +457,7 @@ def compose_up_services(
     project_root: Path,
     runner: Runner,
     services: frozenset[str],
+    invocation: tuple[str, ...] = ("docker", "compose"),
 ) -> None:
     if not services:
         return
@@ -275,6 +470,7 @@ def compose_up_services(
         *sorted(services),
         code="COMPOSE_RESTORE_FAILED",
         message="無法還原先前的 Docker Compose 服務集合。",
+        invocation=invocation,
     )
 
 
