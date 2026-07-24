@@ -52,7 +52,7 @@ export default function PromptEntryEditor({ mode, initial, submitting, onSubmit,
       setError("詞條 ID 只能使用小寫英文字母、數字與單一連字號，例如 detailed-eyes");
       return;
     }
-    if (!nameZh.trim() || !descriptionZh.trim() || !prompt.trim()) {
+    if (!nameZh.trim() || !prompt.trim() || (mode === "create" && !descriptionZh.trim())) {
       setError("請填寫中文名稱、說明與英文 prompt");
       return;
     }
