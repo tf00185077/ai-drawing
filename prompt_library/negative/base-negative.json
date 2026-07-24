@@ -1,0 +1,109 @@
+{
+    "schema_version":  1,
+    "id":  "base-negative",
+    "polarity":  "negative",
+    "name_zh":  "基礎負向詞",
+    "description_zh":  "收錄「基礎負向詞」分類的提示詞。",
+    "aliases":  [
+                    "negative"
+                ],
+    "keywords":  [
+                     "ltj",
+                     "negative"
+                 ],
+    "order":  10,
+    "revision":  6,
+    "archived":  false,
+    "entries":  [
+                    {
+                        "id":  "pony-negative",
+                        "name_zh":  "Pony 基礎負向詞",
+                        "description_zh":  "加入「Pony 基礎負向詞」提示詞。",
+                        "prompt":  "score_4, score_3, score_2, score_1, monochrome, text, signature, watermark, artist name, twitter username, patreon username, weibo username, english text, chinese text, bad anatomy, bad hands, missing fingers, extra digits, fewer digits, extra limbs, extra arms, extra legs, extra hands, mutated hands, poorly drawn hands, deformed, disconnected limbs, backwards hands, multiple heads, two heads, disembodied head, floating head, amputee",
+                        "aliases":  [
+                                        "Pony",
+                                        "negative"
+                                    ],
+                        "keywords":  [
+                                         "negative",
+                                         "pony",
+                                         "ltj"
+                                     ],
+                        "order":  10,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "illustrious-negative",
+                        "name_zh":  "Illustrious 基礎負向詞",
+                        "description_zh":  "加入「Illustrious 基礎負向詞」提示詞。",
+                        "prompt":  "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, blurry, username",
+                        "aliases":  [
+                                        "Illustrious",
+                                        "negative"
+                                    ],
+                        "keywords":  [
+                                         "negative",
+                                         "illustrious",
+                                         "ltj"
+                                     ],
+                        "order":  11,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "noobai-negative",
+                        "name_zh":  "NoobAI 基礎負向詞",
+                        "description_zh":  "加入「NoobAI 基礎負向詞」提示詞。",
+                        "prompt":  "lowres, bad anatomy, blurry, worst quality, low quality, bad hands, mutated hands, extra arms, duplicate, cropped, watermark, signature, ugly, monochrome",
+                        "aliases":  [
+                                        "NoobAI",
+                                        "negative"
+                                    ],
+                        "keywords":  [
+                                         "negative",
+                                         "noobai",
+                                         "ltj"
+                                     ],
+                        "order":  12,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "anima-negative",
+                        "name_zh":  "Anima 基礎負向詞",
+                        "description_zh":  "加入「Anima 基礎負向詞」提示詞。",
+                        "prompt":  "worst quality, low quality, score_1, score_2, score_3, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, watermark, signature, username",
+                        "aliases":  [
+                                        "Anima",
+                                        "negative"
+                                    ],
+                        "keywords":  [
+                                         "negative",
+                                         "anima",
+                                         "ltj"
+                                     ],
+                        "order":  13,
+                        "revision":  1,
+                        "archived":  false
+                    },
+                    {
+                        "id":  "sd1-5-negative",
+                        "name_zh":  "SD1.5 基礎負向詞",
+                        "description_zh":  "加入「SD1.5 基礎負向詞」提示詞。",
+                        "prompt":  "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, blurry, extra legs, extra feet, extra arms, extra fingers, missing legs, missing arms, ugly, monochrome, signature, watermark, username",
+                        "aliases":  [
+                                        "SD1.5",
+                                        "negative"
+                                    ],
+                        "keywords":  [
+                                         "negative",
+                                         "sd1.5",
+                                         "ltj"
+                                     ],
+                        "order":  14,
+                        "revision":  1,
+                        "archived":  false
+                    }
+                ]
+}

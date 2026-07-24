@@ -1,0 +1,67 @@
+# LTJ Prompt Library Import Design
+
+## Goal
+
+Replace the test Prompt Library content with a user-facing library extracted from
+`LTJ/scenario_gui.py`. Keep the existing AI Drawing application, API, UI, and MCP
+tool contracts unchanged.
+
+## Scope
+
+- Permanently remove the existing category JSON documents under
+  `prompt_library/positive/` and `prompt_library/negative/`.
+- Keep `prompt_library/manifest.json` and the Prompt Library implementation.
+- The initial replacement was created through `prompt_library_save`; future
+  maintenance is performed directly inside AI Drawing's Prompt Library.
+- Import selectable LTJ Prompt fragments only. Do not import LTJ's model-family
+  selection, automatic ordering, conflict rules, generation settings, or LoRA
+  filesystem discovery behavior.
+
+## Data Model
+
+Each imported entry uses the existing schema without changes:
+
+- `id`: stable lowercase slug.
+- `name_zh`: meaningful, Chinese-only label. Do not expose English source
+  names, abbreviations, or Prompt tags in this user-visible field; translate
+  them to Chinese instead.
+- `description_zh`: Chinese-only short usage explanation for the selected
+  Prompt fragment. English Prompt tags belong only in `prompt`.
+- `prompt`: the exact English tag or comma-separated tag fragment from LTJ.
+- `aliases` and `keywords`: Chinese and English search terms.
+- `order`, `revision`, and `archived`: standard library fields.
+
+There is no model-family partitioning. Model-quality fragments are ordinary
+positive entries and users select them manually.
+
+## MCP Policy
+
+The MCP `prompt_library_save` tool remains permissive. It may warn when a
+Chinese display field is missing or suspicious, but it must not reject a
+write solely because a display label contains English. The Chinese-only rule
+is an import and user-facing library quality requirement, not an MCP schema
+or validation change.
+
+## Categories
+
+Positive categories: quality-ratings, body-appearance, clothing, underwear,
+accessories, environment, camera-composition, poses, actions-interactions,
+expressions, physical-effects, and lora-manual.
+
+Negative categories: base-negative and solo-negative, populated only when LTJ
+defines reusable negative Prompt fragments.
+
+## Import Flow
+
+The LTJ extraction was a one-time bootstrap operation. The shipped AI Drawing
+project must not read, parse, test against, or otherwise depend on the LTJ
+folder after this initial library has been created.
+
+## Safety and Verification
+
+- No files outside `ai-drawing/prompt_library/positive/` and
+  `ai-drawing/prompt_library/negative/` are deleted.
+- The import fails rather than silently falling back to direct JSON writes if MCP
+  is unavailable.
+- Existing tests for Prompt Library models, API, and MCP tools are run after the
+  import tooling is added.

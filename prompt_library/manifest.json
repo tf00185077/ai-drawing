@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "library_id": "default",
-  "name": "AI Drawing Prompt Library",
-  "description_zh": "AI Drawing 專案共用的中英雙語提示詞庫"
+    "schema_version":  1,
+    "library_id":  "default",
+    "name":  "AI Drawing Prompt Library",
+    "description_zh":  "提示詞組合。"
 }
