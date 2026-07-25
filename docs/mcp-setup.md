@@ -172,6 +172,7 @@ pip install -e .
 | `prompt_library_save` | `dict` | PUT /api/prompt-library/categories, entries, combinations |
 | `prompt_library_compose` | `dict` | POST /api/prompt-library/compose |
 | `prompt_library_archive` | `dict` | POST /api/prompt-library/archive |
+| `prompt_library_restore` | `dict` | POST /api/prompt-library/restore |
 | `mcp_ping` | `plain_text` | GET /health |
 | `civitai_source_info` | `dict` | GET /api/civitai/source-info |
 | `civitai_generate_like` | `dict` | POST /api/civitai/generate-like |
