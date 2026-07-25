@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getPromptCategory } from "../components/prompt-library/promptLibraryApi";
 import PromptCategoryDetail from "./PromptCategoryDetail";
@@ -33,6 +33,37 @@ function renderAt(path: string) {
   );
 }
 
+function NavigationHarness() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate("/prompt-library/categories/negative/bad-anatomy")}>前往不良結構</button>
+      <Routes>
+        <Route path="/prompt-library/categories/:polarity/:categoryId" element={<PromptCategoryDetail />} />
+      </Routes>
+    </>
+  );
+}
+
+function renderNavigable(path: string) {
+  return render(<MemoryRouter initialEntries={[path]}><NavigationHarness /></MemoryRouter>);
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+function categoryFor(id: string, polarity: "positive" | "negative", name: string) {
+  return {
+    ...versionedCategory,
+    category: { ...versionedCategory.category, id, polarity, name_zh: name },
+  };
+}
+
 afterEach(() => vi.clearAllMocks());
 
 describe("PromptCategoryDetail", () => {
@@ -44,6 +75,7 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByText("Revision 7")).toBeVisible();
     expect(screen.getByText("已封存")).toBeVisible();
     expect(screen.getByText("etag-7")).toBeVisible();
+    expect(screen.getByText("ETag").closest("dl")).not.toBeNull();
     expect(screen.getByText("品質與評分提示詞")).toBeVisible();
   });
 
@@ -78,5 +110,43 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByRole("button", { name: "重新載入" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "重新載入" }));
     await waitFor(() => expect(getPromptCategory).toHaveBeenCalledTimes(2));
+  });
+
+  it("clears the previous category as soon as route params change", async () => {
+    const nextRequest = deferred<ReturnType<typeof categoryFor>>();
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockReturnValueOnce(nextRequest.promise);
+
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    expect(await screen.findByRole("heading", { name: "品質評分" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("載入分類中");
+    expect(screen.queryByRole("heading", { name: "品質評分" })).not.toBeInTheDocument();
+    nextRequest.resolve(categoryFor("bad-anatomy", "negative", "不良結構"));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+  });
+
+  it("ignores an older request that resolves after the current route", async () => {
+    const oldRequest = deferred<ReturnType<typeof categoryFor>>();
+    const currentRequest = deferred<ReturnType<typeof categoryFor>>();
+    vi.mocked(getPromptCategory)
+      .mockReturnValueOnce(oldRequest.promise)
+      .mockReturnValueOnce(currentRequest.promise);
+
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    await waitFor(() => expect(getPromptCategory).toHaveBeenLastCalledWith("negative", "bad-anatomy"));
+
+    currentRequest.resolve(categoryFor("bad-anatomy", "negative", "不良結構"));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    await act(async () => {
+      oldRequest.resolve(categoryFor("quality-ratings", "positive", "品質評分"));
+      await oldRequest.promise;
+    });
+
+    expect(screen.queryByRole("heading", { name: "品質評分" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "不良結構" })).toBeVisible();
   });
 });

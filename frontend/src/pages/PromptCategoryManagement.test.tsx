@@ -104,11 +104,25 @@ describe("PromptCategoryManagement", () => {
     expect(screen.getByText("已封存", { selector: "span" })).toBeVisible();
   });
 
-  it("navigates to the encoded category detail when a card is clicked", async () => {
+  it("links quality-ratings to its exact category detail href", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     renderPage();
-    fireEvent.click(await screen.findByRole("link", { name: /品質/ }));
+    const link = await screen.findByRole("link", { name: /品質/ });
+    expect(link).toHaveAttribute("href", "/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(link);
     expect(screen.getByText("Category detail destination")).toBeVisible();
+  });
+
+  it("encodes arbitrary category IDs in the detail href", async () => {
+    vi.mocked(getPromptCatalog).mockResolvedValue({
+      ...catalog,
+      categories: [{ ...positive, id: "quality ratings/精選", name_zh: "需編碼品質" }],
+    });
+    renderPage();
+    expect(await screen.findByRole("link", { name: /需編碼品質/ })).toHaveAttribute(
+      "href",
+      "/prompt-library/categories/positive/quality%20ratings%2F%E7%B2%BE%E9%81%B8",
+    );
   });
 
   it("preserves rendered cards and offers retry when refresh fails", async () => {
