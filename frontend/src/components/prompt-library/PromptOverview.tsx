@@ -1,4 +1,4 @@
-import type { CompositionState } from "./compositionState";
+import type { CompositionState, RawCommitResult } from "./compositionState";
 import PromptComposerPanel from "./PromptComposerPanel";
 
 interface PanelActions {
@@ -6,7 +6,9 @@ interface PanelActions {
   onWeightChange: (id: string, weight: string) => void;
   onMove: (id: string, direction: -1 | 1) => void;
   onRemove: (id: string) => void;
-  onComposedTextChange: (text: string) => void;
+  onCommitRawText: (raw: string) => RawCommitResult;
+  onRawDraftStateChange: (open: boolean) => void;
+  rawResetVersion: number;
 }
 
 export default function PromptOverview({ positive, negative, positiveActions, negativeActions }: { positive: CompositionState; negative: CompositionState; positiveActions: PanelActions; negativeActions: PanelActions }) {
