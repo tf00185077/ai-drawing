@@ -171,10 +171,11 @@ function parseRawFragment(part: string): ParsedRawFragment | { error: string } {
 
   const fragmentText = inner.slice(0, weightSeparator).trim();
   const rawWeight = inner.slice(weightSeparator + 1).trim();
-  const weight = Number(rawWeight);
-  if (!rawWeight || !Number.isFinite(weight)) {
-    return { error: `權重「${rawWeight || "空白"}」必須是有效數字。` };
+  const decimalWeight = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;
+  if (!rawWeight || !decimalWeight.test(rawWeight)) {
+    return { error: `權重「${rawWeight || "空白"}」必須是有效的十進位數字。` };
   }
+  const weight = Number(rawWeight);
   if (weight <= 0) return { error: `權重 ${rawWeight} 必須大於 0。` };
   if (weight > 2) return { error: `權重 ${rawWeight} 必須不大於 2。` };
   if (!fragmentText) return { error: "加權 Prompt 不可為空白。" };
