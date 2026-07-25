@@ -94,8 +94,9 @@ export default function PromptWorkbench() {
     if (!category) return;
     const nextSequence = sequence + 1;
     setSequence(nextSequence);
-    const displayName = entry.name_zh?.trim() || entry.prompt || entry.id;
-    const fragment = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: entry.prompt || "", text: entry.prompt || "", weight: "" };
+    const promptText = entry.prompt?.trim() || entry.id;
+    const displayName = entry.name_zh?.trim() || promptText;
+    const fragment = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: promptText, text: promptText, weight: "" };
     (activePolarity === "positive" ? setPositive : setNegative)((state) => appendFragment(state, fragment));
   }
 
