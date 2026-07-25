@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PromptCatalogCategorySummary, PromptLibraryCatalogResponse } from "../types/api";
@@ -26,6 +26,13 @@ const catalog: PromptLibraryCatalogResponse = {
   manifest: { schema_version: 1, library_id: "default", name: "Prompt Library", description_zh: "提示詞庫" },
   categories: [positive, negative, archived], combinations: [], diagnostics: [],
 };
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => { resolve = nextResolve; reject = nextReject; });
+  return { promise, resolve, reject };
+}
 
 function renderPage() {
   return render(
@@ -72,6 +79,61 @@ describe("PromptCategoryManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("分類 ID 只能使用小寫英文字母");
     expect(putPromptCategory).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank category order without a PUT", async () => {
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
+    renderPage();
+    await screen.findByText("品質");
+    fillRequiredFields();
+    fireEvent.change(screen.getByLabelText(/排序/), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("排序必須是大於或等於 0 的整數");
+    expect(putPromptCategory).not.toHaveBeenCalled();
+  });
+
+  it("does not let a pre-create catalog response overwrite the create follow-up refresh", async () => {
+    const initial = deferred<PromptLibraryCatalogResponse>();
+    const followUp = deferred<PromptLibraryCatalogResponse>();
+    vi.mocked(getPromptCatalog).mockReturnValueOnce(initial.promise).mockReturnValueOnce(followUp.promise);
+    vi.mocked(putPromptCategory).mockResolvedValue({
+      category: { category: { schema_version: 1, ...positive, id: "street-scenes", name_zh: "街景", entries: [] }, etag: "created-etag" },
+      combination: null, entry: null, entry_revision: null, affected_combinations: [],
+    });
+    renderPage();
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
+    await waitFor(() => expect(getPromptCatalog).toHaveBeenCalledTimes(2));
+
+    const created = { ...positive, id: "street-scenes", name_zh: "街景", etag: "created-etag" };
+    await act(async () => {
+      followUp.resolve({ ...catalog, categories: [created] });
+    });
+    expect(screen.getByText("街景")).toBeVisible();
+    await act(async () => {
+      initial.resolve({ ...catalog, categories: [] });
+    });
+    expect(screen.getByText("街景")).toBeVisible();
+  });
+
+  it("keeps newest refresh loading and error ownership against an older rejection", async () => {
+    const initial = deferred<PromptLibraryCatalogResponse>();
+    const newest = deferred<PromptLibraryCatalogResponse>();
+    vi.mocked(getPromptCatalog).mockReturnValueOnce(initial.promise).mockReturnValueOnce(newest.promise);
+    renderPage();
+    await waitFor(() => expect(getPromptCatalog).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: "重新整理分類" }));
+    await act(async () => {
+      initial.reject(new Error("obsolete catalog error"));
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("載入分類中");
+    expect(screen.queryByText("obsolete catalog error")).not.toBeInTheDocument();
+    await act(async () => {
+      newest.resolve(catalog);
+    });
+    expect(screen.getByText("品質")).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("keeps a structured conflict actionable", async () => {

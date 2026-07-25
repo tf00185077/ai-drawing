@@ -234,15 +234,12 @@ export interface PromptCategorySummary {
   order: number;
   revision: number;
   archived: boolean;
-  entry_count?: number;
-  etag?: string;
-}
-
-/** Exact CategorySummary shape returned inside the Prompt Library catalog. */
-export interface PromptCatalogCategorySummary extends PromptCategorySummary {
   entry_count: number;
   etag: string;
 }
+
+/** @deprecated PromptCategorySummary is the exact catalog wire DTO. */
+export type PromptCatalogCategorySummary = PromptCategorySummary;
 
 export interface PromptCombinationSummary {
   id: string;

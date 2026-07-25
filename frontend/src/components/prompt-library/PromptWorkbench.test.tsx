@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import PromptWorkbench from "./PromptWorkbench";
 
@@ -10,6 +10,7 @@ const catalog = {
   manifest: { schema_version: 1, library_id: "test", name: "test", description_zh: "" },
   categories: [
     { id: "quality", polarity: "positive", name_zh: "品質", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 3, etag: "p1" },
+    { id: "style", polarity: "positive", name_zh: "風格", description_zh: "", aliases: [], keywords: [], order: 20, revision: 1, archived: false, entry_count: 1, etag: "p2" },
     { id: "artifacts", polarity: "negative", name_zh: "瑕疵", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 1, etag: "n1" },
   ],
   combinations: [summary("my-quality", 1), summary("second", 1), summary("old", 2, true)],
@@ -69,6 +70,7 @@ function installFetch(handler?: FetchHandler) {
     if (url === "/api/prompt-library/combinations/my-quality") return response(combinationDetail());
     if (url === "/api/prompt-library/combinations/second") return response(combinationDetail("second", 5));
     if (url.endsWith("/categories/positive/quality")) return response(categoryResponse("positive", "quality"));
+    if (url.endsWith("/categories/positive/style")) return response(categoryResponse("positive", "style"));
     if (url.endsWith("/categories/negative/artifacts")) return response(categoryResponse("negative", "artifacts"));
     if (url === "/api/generate/") return response({ job_id: "job-1" });
     return response({}, 404);
@@ -391,12 +393,69 @@ describe("PromptWorkbench saved combinations", () => {
 });
 
 describe("PromptWorkbench existing flows", () => {
+  it("keeps the newest category selection when an older category read resolves last", async () => {
+    const older = deferred<Response>();
+    const newest = deferred<Response>();
+    installFetch((url) => {
+      if (url.endsWith("/categories/positive/quality")) return older.promise;
+      if (url.endsWith("/categories/positive/style")) return newest.promise;
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    newest.resolve(response(categoryResponse("positive", "style")));
+    expect(await screen.findByRole("button", { name: "加入 中文名稱" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+
+    await act(async () => {
+      older.resolve(response(categoryResponse("positive", "quality")));
+    });
+    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+  });
+
+  it("keeps a newer category and error state when an older category read rejects last", async () => {
+    const older = deferred<Response>();
+    installFetch((url) => url.endsWith("/categories/positive/quality") ? older.promise : undefined);
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    expect(await screen.findByRole("button", { name: "加入 中文名稱" })).toBeVisible();
+    await act(async () => {
+      older.reject(new Error("obsolete category error"));
+    });
+
+    expect(screen.queryByText("obsolete category error")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+  });
+
+  it("invalidates an in-flight category read when polarity changes", async () => {
+    const pending = deferred<Response>();
+    installFetch((url) => url.endsWith("/categories/positive/quality") ? pending.promise : undefined);
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "負向" }));
+    await act(async () => {
+      pending.resolve(response(categoryResponse("positive", "quality")));
+    });
+
+    expect(screen.queryByRole("button", { name: "加入 中文名稱" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "負向" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("keeps source interactions read-only and generates from current positive/negative text", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
     await ready();
     fireEvent.click(screen.getByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
+    const loadedEntry = await screen.findByRole("button", { name: "加入 中文名稱" });
+    expect(screen.queryByRole("button", { name: /新增|編輯|封存|恢復/ })).not.toBeInTheDocument();
+    fireEvent.click(loadedEntry);
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
     fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
