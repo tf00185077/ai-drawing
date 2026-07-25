@@ -82,28 +82,26 @@ export default function PromptEntryEditor({ mode, initial, submitting, existingI
 
   return (
     <form className="mt-3 space-y-2 rounded-lg border border-slate-600 bg-slate-800/60 p-3" onSubmit={(event) => { event.preventDefault(); submit(); }} noValidate>
-      {mode === "create" && (
-        <label className="block text-xs text-slate-400">詞條 ID
-          <input aria-label="詞條 ID" value={id} onChange={(e) => setId(e.target.value)} className={inputClass} />
-        </label>
-      )}
+      <label className="block text-xs text-slate-400">詞條 ID
+        <input aria-label="詞條 ID" disabled={submitting || mode === "edit"} value={mode === "edit" ? initial?.id ?? "" : id} onChange={(e) => setId(e.target.value)} className={inputClass} />
+      </label>
       <label className="block text-xs text-slate-400">中文名稱
-        <input aria-label="詞條中文名稱" value={nameZh} onChange={(e) => setNameZh(e.target.value)} className={inputClass} />
+        <input aria-label="詞條中文名稱" disabled={submitting} value={nameZh} onChange={(e) => setNameZh(e.target.value)} className={inputClass} />
       </label>
       <label className="block text-xs text-slate-400">說明
-        <input aria-label="詞條說明" value={descriptionZh} onChange={(e) => setDescriptionZh(e.target.value)} className={inputClass} />
+        <input aria-label="詞條說明" disabled={submitting} value={descriptionZh} onChange={(e) => setDescriptionZh(e.target.value)} className={inputClass} />
       </label>
       <label className="block text-xs text-slate-400">英文 prompt
-        <input aria-label="詞條英文 prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} className={inputClass} />
+        <input aria-label="詞條英文 prompt" disabled={submitting} value={prompt} onChange={(e) => setPrompt(e.target.value)} className={inputClass} />
       </label>
       <label className="block text-xs text-slate-400">別名（逗號分隔）
-        <input aria-label="詞條別名" value={aliases} onChange={(e) => setAliases(e.target.value)} className={inputClass} />
+        <input aria-label="詞條別名" disabled={submitting} value={aliases} onChange={(e) => setAliases(e.target.value)} className={inputClass} />
       </label>
       <label className="block text-xs text-slate-400">關鍵字（逗號分隔）
-        <input aria-label="詞條關鍵字" value={keywords} onChange={(e) => setKeywords(e.target.value)} className={inputClass} />
+        <input aria-label="詞條關鍵字" disabled={submitting} value={keywords} onChange={(e) => setKeywords(e.target.value)} className={inputClass} />
       </label>
       <label className="block text-xs text-slate-400">排序
-        <input aria-label="詞條排序" type="number" min={0} value={order} onChange={(e) => setOrder(e.target.value)} className={inputClass} />
+        <input aria-label="詞條排序" type="number" min={0} disabled={submitting} value={order} onChange={(e) => setOrder(e.target.value)} className={inputClass} />
       </label>
       {error && <p role="alert" className="text-xs text-red-300">{error}</p>}
       <div className="flex gap-2">
