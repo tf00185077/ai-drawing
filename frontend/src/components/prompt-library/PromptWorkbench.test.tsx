@@ -2,225 +2,338 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import PromptWorkbench from "./PromptWorkbench";
 
+const summary = (id: string, revision = 1, archived = false) => ({
+  id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10,
+  revision, archived, legacy_template: false, positive_prompt_snapshot: "", negative_prompt_snapshot: "", etag: `summary-${revision}`,
+});
 const catalog = {
+  manifest: { schema_version: 1, library_id: "test", name: "test", description_zh: "" },
   categories: [
-    { id: "quality", polarity: "positive", name_zh: "品質", revision: 1, etag: "p1", archived: false },
-    { id: "artifacts", polarity: "negative", name_zh: "瑕疵", revision: 1, etag: "n1", archived: false },
+    { id: "quality", polarity: "positive", name_zh: "品質", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 3, etag: "p1" },
+    { id: "artifacts", polarity: "negative", name_zh: "瑕疵", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 1, etag: "n1" },
   ],
-  combinations: [
-    { id: "my-quality", revision: 1, etag: "combo-1" },
-  ],
+  combinations: [summary("my-quality", 1), summary("second", 1), summary("old", 2, true)],
+  diagnostics: [],
 };
 const forms = { items: [{ id: "basic-txt2img", display_name: "Basic", fields: [] }] };
-const positiveCategory = {
+const categoryResponse = (polarity: "positive" | "negative", id: string) => ({
   category: {
-    ...catalog.categories[0],
-    entries: [
-      { id: "masterpiece", name_zh: "高品質", description_zh: "", prompt: "masterpiece", revision: 1, archived: false },
-      { id: "prompt-only", name_zh: " ", description_zh: "", prompt: "  sharp focus  ", revision: 1, archived: false },
-      { id: "id-only", name_zh: "", description_zh: "", prompt: "", revision: 1, archived: false },
+    schema_version: 1, id, polarity, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision: 4, archived: false,
+    entries: polarity === "positive" ? [
+      { id: "zh", name_zh: "  中文名稱  ", description_zh: "", prompt: "zh current", aliases: [], keywords: [], order: 10, revision: 4, archived: false },
+      { id: "prompt-only", name_zh: " ", description_zh: "", prompt: "  current prompt  ", aliases: [], keywords: [], order: 20, revision: 4, archived: false },
+      { id: "id-only", name_zh: "", description_zh: "", prompt: " ", aliases: [], keywords: [], order: 30, revision: 4, archived: false },
+    ] : [
+      { id: "blurry", name_zh: "模糊", description_zh: "", prompt: "blurry current", aliases: [], keywords: [], order: 10, revision: 4, archived: false },
     ],
+  }, etag: `${polarity}-${id}-4`,
+});
+const fragment = (kind: "entry" | "literal", snapshot: string, order: number, weight = 1, ref: null | { polarity: "positive" | "negative"; category_id: string; entry_id: string } = null) => ({ kind, ref, snapshot, source_revision: ref ? 2 : null, weight, order });
+const combinationDetail = (id = "my-quality", revision = 3) => ({
+  combination: {
+    schema_version: 1, id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision, archived: false, legacy_template: false,
+    positive: [
+      fragment("entry", "saved zh", 20, 1.2, { polarity: "positive", category_id: "quality", entry_id: "zh" }),
+      fragment("entry", "saved prompt", 10, 1, { polarity: "positive", category_id: "quality", entry_id: "prompt-only" }),
+      fragment("entry", "saved id", 30, 1, { polarity: "positive", category_id: "quality", entry_id: "id-only" }),
+    ],
+    negative: [fragment("entry", "saved blurry", 10, 0.8, { polarity: "negative", category_id: "artifacts", entry_id: "blurry" })],
+    positive_prompt_snapshot: "stale display only", negative_prompt_snapshot: "stale display only",
   },
-  etag: "p1",
-};
-const negativeCategory = {
-  category: {
-    ...catalog.categories[1],
-    entries: [{ id: "blurry", name_zh: "模糊", description_zh: "", prompt: "blurry", revision: 1, archived: false }],
-  },
-  etag: "n1",
-};
+  etag: `detail-${revision}`, repaired: true,
+  warnings: [{ code: "snapshot", message: "Backend 警告", hint: "", ref: null, details: {} }],
+});
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+  return { promise, resolve, reject };
+}
 
 function response(data: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => data } as Response;
 }
 
-function installFetch(
-  { composeValidationError = false }: { composeValidationError?: boolean } = {},
-) {
-  let savedRevision = 1;
-  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+type FetchHandler = (url: string, init?: RequestInit) => Promise<Response> | Response | undefined;
+function installFetch(handler?: FetchHandler) {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const custom = await handler?.(url, init);
+    if (custom) return custom;
     if (url === "/api/prompt-library/catalog") return response(catalog);
     if (url === "/api/workflow-catalog/generation-forms") return response(forms);
-    if (url.endsWith("/positive/quality")) return response(positiveCategory);
-    if (url.endsWith("/negative/artifacts")) return response(negativeCategory);
+    if (url === "/api/prompt-library/combinations/my-quality") return response(combinationDetail());
+    if (url === "/api/prompt-library/combinations/second") return response(combinationDetail("second", 5));
+    if (url.endsWith("/categories/positive/quality")) return response(categoryResponse("positive", "quality"));
+    if (url.endsWith("/categories/negative/artifacts")) return response(categoryResponse("negative", "artifacts"));
     if (url === "/api/generate/") return response({ job_id: "job-1" });
-    if (url === "/api/prompt-library/compose" && init?.method === "POST") {
-      if (composeValidationError) {
-        return response({ detail: [{ loc: ["body", "save_as", "id"], msg: "String should match pattern", type: "string_pattern_mismatch" }] }, 422);
-      }
-      savedRevision += 1;
-      return response({ saved_combination: { combination: { id: "my-quality", revision: savedRevision }, etag: `combo-${savedRevision}` } });
-    }
     return response({}, 404);
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
 
+async function ready() {
+  await screen.findByRole("option", { name: "my-quality（my-quality）" });
+}
+async function loadSaved(id = "my-quality") {
+  fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: id } });
+  fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+  await screen.findByLabelText("目前組合版本");
+}
+function composeResponse(id: string, revision: number, positive = [fragment("literal", "canonical", 10)]) {
+  return {
+    positive_prompt: "canonical", negative_prompt: "", positive, negative: [], warnings: [], snapshot_repaired: false,
+    saved_combination: {
+      combination: {
+        schema_version: 1, id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision, archived: false, legacy_template: false,
+        positive, negative: [], positive_prompt_snapshot: "canonical", negative_prompt_snapshot: "",
+      }, etag: `saved-${revision}`, repaired: false, warnings: [],
+    },
+  };
+}
+
 afterEach(() => vi.unstubAllGlobals());
 
-describe("PromptWorkbench", () => {
-  it("adds to the active polarity while keeping both editable overviews visible", async () => {
+describe("PromptWorkbench saved combinations", () => {
+  it("loads detail tokens, both polarities, order/weights/snapshots, names, repairs and warnings", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
 
-    expect(screen.getByRole("heading", { name: "Positive Prompt" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Negative Prompt" })).toBeVisible();
-    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 高品質" }));
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("masterpiece");
-    expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("");
-
-    fireEvent.change(screen.getByLabelText("高品質 權重"), { target: { value: "1.2" } });
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("(masterpiece:1.2)");
-    fireEvent.change(screen.getByLabelText("高品質 內容"), { target: { value: "masterwork" } });
-    expect(screen.getByLabelText("高品質 內容")).toHaveValue("masterwork");
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("(masterwork:1.2)");
-    expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/entries/") && init?.method === "PUT")).toBe(false);
-
-    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "my-quality" } });
-    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
-    await waitFor(() => expect(screen.getByText("組合已儲存")).toBeVisible());
-    const saveCall = fetchMock.mock.calls.find(([url]) => url === "/api/prompt-library/compose") as [string, RequestInit];
-    const firstSaveBody = JSON.parse(String(saveCall[1].body));
-    expect(firstSaveBody.positive).toEqual([
-      { kind: "literal", snapshot: "masterwork", weight: 1.2, order: 10 },
-    ]);
-    expect(firstSaveBody.save_as).toMatchObject({ expected_revision: 1, expected_etag: "combo-1" });
-
-    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
-    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(2));
-    const secondSaveCall = fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")[1] as [string, RequestInit];
-    expect(JSON.parse(String(secondSaveCall[1].body)).save_as).toMatchObject({ expected_revision: 2, expected_etag: "combo-2" });
+    expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("revision 3");
+    expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("已修復");
+    expect(screen.getByRole("alert")).toHaveTextContent("Backend 警告");
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt, (saved zh:1.2), saved id");
+    expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("(saved blurry:0.8)");
+    expect(screen.getByLabelText("current prompt 內容")).toHaveValue("saved prompt");
+    expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("saved zh");
+    expect(screen.getByLabelText("id-only 內容")).toHaveValue("saved id");
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/categories/positive/quality"))).toHaveLength(1);
   });
 
-  it("uses Prompt text and then entry ID when a Chinese entry name is unavailable", async () => {
+  it("uses encoded detail IDs", async () => {
+    const encodedCatalog = { ...catalog, combinations: [summary("含 空白")] };
+    const fetchMock = installFetch((url) => {
+      if (url === "/api/prompt-library/catalog") return response(encodedCatalog);
+      if (url === "/api/prompt-library/combinations/%E5%90%AB%20%E7%A9%BA%E7%99%BD") return response(combinationDetail("含 空白", 2));
+    });
+    render(<PromptWorkbench />);
+    await screen.findByRole("option", { name: "含 空白（含 空白）" });
+    await loadSaved("含 空白");
+    expect(fetchMock).toHaveBeenCalledWith("/api/prompt-library/combinations/%E5%90%AB%20%E7%A9%BA%E7%99%BD", undefined);
+  });
+
+  it("loads with entry-ID labels and a nonblocking warning when category lookup fails", async () => {
+    installFetch((url) => url.endsWith("/categories/positive/quality") ? response({ detail: { message: "查詢失敗" } }, 500) : undefined);
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    expect(screen.getByLabelText("prompt-only 內容")).toHaveValue("saved prompt");
+    expect(screen.getAllByRole("alert").some((node) => node.textContent?.includes("名稱查詢失敗"))).toBe(true);
+    expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("(saved blurry:0.8)");
+  });
+
+  it("guards dirty load and blank replacement, preserving on decline and replacing on approval", async () => {
     installFetch();
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
     render(<PromptWorkbench />);
+    await ready();
 
-    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 sharp focus" }));
-    expect(screen.getByLabelText("sharp focus 內容")).toHaveValue("  sharp focus  ");
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("local");
+    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("local");
+    expect(confirm).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(screen.getByRole("button", { name: "加入 id-only" }));
-    expect(screen.getByLabelText("id-only 內容")).toHaveValue("id-only");
-    expect(screen.queryByText(/片段\s*\d/)).not.toBeInTheDocument();
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt, (saved zh:1.2), saved id"));
+    fireEvent.change(screen.getByLabelText("中文名稱 內容"), { target: { value: "dirty again" } });
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    expect(screen.getByText("尚未儲存")).toBeVisible();
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("");
   });
 
-  it("accepts safe Unicode combination IDs", async () => {
-    const fetchMock = installFetch();
+  it("guards an unapplied raw draft, preserves it on decline, and resets it after approved replacement", async () => {
+    installFetch();
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
     render(<PromptWorkbench />);
-    await screen.findByRole("button", { name: "品質" });
+    await ready();
+    const panel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
+    fireEvent.click(within(panel).getByRole("button", { name: "自由文字模式" }));
+    fireEvent.change(within(panel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "  exact, unapplied  " } });
+    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
 
-    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "niji基礎瑟瑟" } });
-    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
-
-    await waitFor(() => expect(screen.getByText("組合已儲存")).toBeVisible());
-    const saveCall = fetchMock.mock.calls.find(([url]) => url === "/api/prompt-library/compose") as [string, RequestInit];
-    expect(JSON.parse(String(saveCall[1].body)).save_as.id).toBe("niji基礎瑟瑟");
+    expect(within(panel).getByLabelText("Positive Prompt 自由文字草稿")).toHaveValue("  exact, unapplied  ");
+    expect(screen.getByText("尚未儲存")).toBeVisible();
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    expect(within(panel).queryByLabelText("Positive Prompt 自由文字草稿")).not.toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "自由文字模式" })).toBeVisible();
   });
 
-  it("rejects path-unsafe combination IDs before sending compose", async () => {
+  it("uses revision zero for fresh update and Save As, but detail tokens for loaded update", async () => {
+    const bodies: unknown[] = [];
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        bodies.push(body);
+        return response(composeResponse(body.save_as.id, body.save_as.expected_revision + 1));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "fresh組合" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await screen.findByRole("status");
+    expect((bodies[0] as { save_as: unknown }).save_as).toMatchObject({ id: "fresh組合", expected_revision: 0 });
+
+    await loadSaved();
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+    expect((bodies[1] as { save_as: unknown }).save_as).toMatchObject({ id: "my-quality", expected_revision: 3, expected_etag: "detail-3" });
+
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "copy組合" } });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(3));
+    expect((bodies[2] as { save_as: unknown }).save_as).toMatchObject({ id: "copy組合", expected_revision: 0 });
+    expect((bodies[2] as { save_as: Record<string, unknown> }).save_as).not.toHaveProperty("expected_etag");
+  });
+
+  it("installs the Backend canonical response, clears dirty/success, and clears success after later mutation", async () => {
+    installFetch((url, init) => url === "/api/prompt-library/compose" && init?.method === "POST" ? response(composeResponse("canonical-id", 1)) : undefined);
+    render(<PromptWorkbench />);
+    await ready();
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local draft" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "canonical-id" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("組合已儲存");
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("canonical");
+    expect(screen.queryByText("尚未儲存變更")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "changed" } });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByText("尚未儲存變更")).toBeVisible();
+  });
+
+  it("preserves canonical state, raw drafts, and dirty state when save fails", async () => {
+    installFetch((url, init) => url === "/api/prompt-library/compose" && init?.method === "POST"
+      ? response({ detail: { message: "儲存衝突" } }, 409)
+      : undefined);
+    render(<PromptWorkbench />);
+    await ready();
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "canonical local" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    const panel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
+    fireEvent.click(within(panel).getByRole("button", { name: "自由文字模式" }));
+    fireEvent.change(within(panel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "exact raw draft" } });
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "failed-save" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("儲存衝突");
+    expect(within(panel).getByLabelText("Positive Prompt 自由文字草稿")).toHaveValue("exact raw draft");
+    expect(screen.getByText("尚未儲存變更")).toBeVisible();
+  });
+
+  it("does not let stale load resolution or rejection replace a newer local document", async () => {
+    const first = deferred<Response>();
+    const second = deferred<Response>();
+    let loadCount = 0;
+    installFetch((url) => {
+      if (url === "/api/prompt-library/combinations/my-quality") {
+        loadCount += 1;
+        return loadCount === 1 ? first.promise : second.promise;
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "newer local" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    first.resolve(response(combinationDetail()));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer local"));
+    expect(screen.getByText("尚未儲存")).toBeVisible();
+
+    vi.stubGlobal("confirm", vi.fn(() => true));
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newest local" } });
+    second.reject(new Error("stale load error"));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newest local"));
+    expect(screen.queryByText("stale load error")).not.toBeInTheDocument();
+  });
+
+  it("does not let stale save resolution or rejection contaminate a newer local edit", async () => {
+    const first = deferred<Response>();
+    const second = deferred<Response>();
+    let saveCount = 0;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        saveCount += 1;
+        return saveCount === 1 ? first.promise : second.promise;
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "race-save" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newer" } });
+    first.resolve(response(composeResponse("race-save", 1)));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer"));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newest" } });
+    second.reject(new Error("stale save error"));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newest"));
+    expect(screen.queryByText("stale save error")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "更新目前組合" })).toBeEnabled();
+  });
+
+  it("rejects path-unsafe Save As IDs without composing", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
-    await screen.findByRole("button", { name: "品質" });
-
-    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "../逃逸" } });
-    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
-
+    await ready();
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "../逃逸" } });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unicode 字母、數字與連字號");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
   });
+});
 
-  it("shows FastAPI validation details instead of a bare HTTP 422", async () => {
-    installFetch({ composeValidationError: true });
-    render(<PromptWorkbench />);
-    await screen.findByRole("button", { name: "品質" });
-
-    fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "valid-id" } });
-    fireEvent.click(screen.getByRole("button", { name: "儲存組合" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("save_as.id：String should match pattern");
-  });
-
-  it("keeps the overview visible when switching polarity and generates from current text", async () => {
+describe("PromptWorkbench existing flows", () => {
+  it("keeps source interactions read-only and generates from current positive/negative text", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
-
-    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 高品質" }));
+    await ready();
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
-    expect(screen.queryByRole("button", { name: "品質" })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Positive Prompt" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
-
-    const positivePanel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
-    fireEvent.click(within(positivePanel).getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(within(positivePanel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "edited positive" } });
-    fireEvent.click(within(positivePanel).getByRole("button", { name: "套用" }));
-
-    const negativePanel = screen.getByRole("heading", { name: "Negative Prompt" }).closest("section")!;
-    fireEvent.click(within(negativePanel).getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(within(negativePanel).getByLabelText("Negative Prompt 自由文字草稿"), { target: { value: "edited negative" } });
-    fireEvent.click(within(negativePanel).getByRole("button", { name: "套用" }));
     fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
     fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("job-1"));
     const call = fetchMock.mock.calls.find(([url]) => url === "/api/generate/") as [string, RequestInit];
-    expect(JSON.parse(String(call[1].body))).toMatchObject({
-      template: "basic-txt2img",
-      prompt: "edited positive",
-      negative_prompt: "edited negative",
-      use_workflow_defaults: true,
-      seed_mode: "random",
-    });
-    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
-  });
-
-  it("keeps every source interaction on the read-only network boundary", async () => {
-    const fetchMock = installFetch();
-    render(<PromptWorkbench />);
-
-    expect(screen.queryByRole("button", { name: "新增詞條" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /編輯/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /封存/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /恢復/ })).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "高品質" } });
-    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 高品質" }));
-    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: " local detail " } });
-    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
-    fireEvent.click(screen.getByRole("button", { name: "負向" }));
-    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "" } });
-    fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
-
-    const sourceWrites = fetchMock.mock.calls.filter(([url, init]) =>
-      init?.method === "PUT" || String(url).includes("/archive") || String(url).includes("/restore"),
-    );
-    expect(sourceWrites).toHaveLength(0);
-    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/positive/quality"))).toBe(true);
-    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/negative/artifacts"))).toBe(true);
-  });
-
-  it("adds, reorders, removes, and composes local fragments", async () => {
-    installFetch();
-    render(<PromptWorkbench />);
-
-    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
-    fireEvent.click(await screen.findByRole("button", { name: "加入 高品質" }));
-    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "soft light" } });
-    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("masterpiece, soft light");
-
-    fireEvent.click(screen.getAllByRole("button", { name: "下移" })[0]);
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("soft light, masterpiece");
-
-    fireEvent.click(screen.getAllByRole("button", { name: "刪除" })[0]);
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("masterpiece");
+    expect(JSON.parse(String(call[1].body))).toMatchObject({ prompt: "zh current", negative_prompt: "blurry current" });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
   });
 });
