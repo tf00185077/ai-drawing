@@ -1,5 +1,20 @@
 # 進度追蹤
 
+## 2026-07-25 Prompt Library 管理與 Workbench 組合生命週期
+
+已在隔離 branch `feature/prompt-library-management` 完成 source/offline 實作與雙層審查：
+
+- Backend 新增分類／詞條 restore contract、樂觀鎖與結構化錯誤；MCP 新增 audited `prompt_library_restore` 工具與文件。
+- Frontend 改為 typed Prompt Library API；分類清單提供 active/archived filter 與獨立詳情 route，分類 metadata 與詞條 create/edit/archive/restore 全移至詳情頁。
+- Workbench 詞庫來源維持唯讀，只能複製進組合；片段卡以 `name_zh` 顯示，缺中文時回退 Prompt，再缺才回退 entry ID，不再顯示「片段 N」。
+- 自由文字改為明確 draft／套用交易，保留原始逗號與空白；final text 唯讀，錯誤不破壞 canonical fragments。
+- 新增已儲存組合 selector、detail load、建立空白、更新、另存、dirty/raw-draft guard；更新使用 detail revision/etag，另存使用 revision 0，成功後安裝 Backend canonical response。
+- 補齊 category/catalog/route/load/save stale-response ownership、NFC Unicode ID、cross-polarity refs、空白 order 驗證與人類可讀 label fallback。
+
+隔離完整驗證：Backend `1147 passed`、MCP `99 passed`、Frontend `128 passed`，`tsc --noEmit` 與 Vite production build 通過。第二輪 fail-closed 靜態審查結論為 source/offline code readiness APPROVED，無具體 release blocker。
+
+目前尚未整合至主 checkout／遠端，也未重啟或操作 live Backend、Discord Bot、ComfyUI 或 Hermes Gateway。真實 browser management/Workbench smoke、Gateway schema activation、live MCP restore 與 Discord E2E 仍依使用者 no-service 限制保持 blocked/unverified。
+
 ## 2026-07-25 Discord 獨立批次 Seed（OpenSpec: discord-independent-batch-seeds）
 
 已完成核准的 non-live 實作：Discord 維持既有 `/draw`、張數控制、單一公開
