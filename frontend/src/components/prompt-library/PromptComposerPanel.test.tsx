@@ -179,10 +179,12 @@ describe("PromptComposerPanel", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "光影" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 細緻光影" }));
-    fireEvent.click(screen.getByRole("button", { name: "加入" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入 cinematic glow" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入 arbitrary-id-only" }));
 
     await waitFor(() => expect(screen.getByLabelText("細緻光影 內容")).toHaveValue("detailed light"));
     expect(screen.getByLabelText("cinematic glow 內容")).toHaveValue("cinematic glow");
+    expect(screen.getByLabelText("arbitrary-id-only 內容")).toHaveValue("arbitrary-id-only");
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
   });
 });

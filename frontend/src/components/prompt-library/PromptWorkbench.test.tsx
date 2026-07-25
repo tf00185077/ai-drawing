@@ -15,7 +15,11 @@ const forms = { items: [{ id: "basic-txt2img", display_name: "Basic", fields: []
 const positiveCategory = {
   category: {
     ...catalog.categories[0],
-    entries: [{ id: "masterpiece", name_zh: "高品質", description_zh: "", prompt: "masterpiece", revision: 1, archived: false }],
+    entries: [
+      { id: "masterpiece", name_zh: "高品質", description_zh: "", prompt: "masterpiece", revision: 1, archived: false },
+      { id: "prompt-only", name_zh: " ", description_zh: "", prompt: "sharp focus", revision: 1, archived: false },
+      { id: "id-only", name_zh: "", description_zh: "", prompt: "", revision: 1, archived: false },
+    ],
   },
   etag: "p1",
 };
@@ -89,6 +93,19 @@ describe("PromptWorkbench", () => {
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(2));
     const secondSaveCall = fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")[1] as [string, RequestInit];
     expect(JSON.parse(String(secondSaveCall[1].body)).save_as).toMatchObject({ expected_revision: 2, expected_etag: "combo-2" });
+  });
+
+  it("uses Prompt text and then entry ID when a Chinese entry name is unavailable", async () => {
+    installFetch();
+    render(<PromptWorkbench />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 sharp focus" }));
+    expect(screen.getByLabelText("sharp focus 內容")).toHaveValue("sharp focus");
+
+    fireEvent.click(screen.getByRole("button", { name: "加入 id-only" }));
+    expect(screen.getByLabelText("id-only 內容")).toHaveValue("id-only");
+    expect(screen.queryByText(/片段\s*\d/)).not.toBeInTheDocument();
   });
 
   it("accepts safe Unicode combination IDs", async () => {

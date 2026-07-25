@@ -31,18 +31,19 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
       <div className="mt-3 flex flex-wrap gap-2">{categories.filter((category) => !category.archived && category.polarity === activePolarity).map((category) => <button key={category.id} type="button" onClick={() => onOpenCategory(category)} className={`rounded-lg px-3 py-2 text-sm ${selectedCategory?.id === category.id ? "bg-emerald-700 text-white" : "bg-slate-800 text-slate-300"}`}>{category.name_zh}</button>)}</div>
       <ul className="mt-4 space-y-2">{visibleEntries.map((entry) => {
         const reason = suspectReason(entry.name_zh, entry.prompt);
+        const displayName = entry.name_zh?.trim() || entry.prompt?.trim() || entry.id;
         return (
           <li key={entry.id} className="rounded-lg bg-slate-800 p-3">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1 font-medium text-white">
                   {reason && <span title="name_zh 可能沒有有意義的中文對照，建議編輯修正" aria-label={`${entry.name_zh} 中文對照可能未填好`} className="text-amber-400">⚠️</span>}
-                  <span className="truncate">{entry.name_zh}</span>
+                  <span className="truncate">{displayName}</span>
                 </p>
                 <p className="mt-1 break-words text-xs text-slate-400">{entry.prompt}</p>
               </div>
               <div className="flex shrink-0 gap-1">
-                <button type="button" aria-label={`加入 ${entry.name_zh}`} onClick={() => onAddEntry(entry)} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm text-white">加入</button>
+                <button type="button" aria-label={`加入 ${displayName}`} onClick={() => onAddEntry(entry)} className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-sm text-white">加入</button>
               </div>
             </div>
           </li>
