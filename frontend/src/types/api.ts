@@ -167,6 +167,62 @@ export interface PromptTemplateApplyResponse {
 // ---- Prompt Library ----
 
 export type PromptPolarity = "positive" | "negative";
+export type PromptResourceType = "category" | "entry" | "combination";
+export type PromptRestoreResourceType = "category" | "entry";
+
+export interface PromptLibraryManifest {
+  schema_version: 1;
+  library_id: string;
+  name: string;
+  description_zh: string;
+}
+
+export interface PromptEntryRef {
+  polarity: PromptPolarity;
+  category_id: string;
+  entry_id: string;
+}
+
+export interface PromptFragment {
+  kind: "entry" | "literal";
+  ref: PromptEntryRef | null;
+  snapshot: string;
+  source_revision: number | null;
+  weight: number;
+  order: number;
+}
+
+export interface PromptFragmentInput
+  extends Omit<PromptFragment, "ref" | "source_revision"> {
+  ref?: PromptEntryRef | null;
+  source_revision?: number | null;
+}
+
+export interface PromptEntry {
+  id: string;
+  name_zh: string;
+  description_zh: string;
+  prompt: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+}
+
+export interface PromptCategory {
+  schema_version: 1;
+  id: string;
+  polarity: PromptPolarity;
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+  entries: PromptEntry[];
+}
 
 export interface PromptCategorySummary {
   id: string;
@@ -178,21 +234,160 @@ export interface PromptCategorySummary {
   order: number;
   revision: number;
   archived: boolean;
+  entry_count?: number;
+  etag?: string;
+}
+
+/** Exact CategorySummary shape returned inside the Prompt Library catalog. */
+export interface PromptCatalogCategorySummary extends PromptCategorySummary {
   entry_count: number;
   etag: string;
 }
 
+export interface PromptCombinationSummary {
+  id: string;
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+  legacy_template: boolean;
+  positive_prompt_snapshot: string;
+  negative_prompt_snapshot: string;
+  etag: string;
+}
+
+export interface PromptCombination {
+  schema_version: 1;
+  id: string;
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+  legacy_template: boolean;
+  positive: PromptFragment[];
+  negative: PromptFragment[];
+  positive_prompt_snapshot: string;
+  negative_prompt_snapshot: string;
+}
+
+export interface PromptVersionedCategory {
+  category: PromptCategory;
+  etag: string;
+}
+
+export interface PromptWarning {
+  code: string;
+  message: string;
+  hint: string;
+  ref: PromptEntryRef | null;
+  details: Record<string, unknown>;
+}
+
+export interface PromptLibraryDiagnostic {
+  code: string;
+  message: string;
+  hint: string;
+  path: string;
+  details: Record<string, unknown>;
+}
+
+export interface PromptVersionedCombination {
+  combination: PromptCombination;
+  etag: string;
+  repaired: boolean;
+  warnings: PromptWarning[];
+}
+
 export interface PromptLibraryCatalogResponse {
-  categories: PromptCategorySummary[];
-  combinations: unknown[];
-  diagnostics: unknown[];
+  manifest: PromptLibraryManifest;
+  categories: PromptCatalogCategorySummary[];
+  combinations: PromptCombinationSummary[];
+  diagnostics: PromptLibraryDiagnostic[];
+}
+
+export interface PromptConcurrencyToken {
+  expected_revision: number;
+  expected_etag?: string;
+}
+
+export interface PromptCategoryWriteRequest extends PromptConcurrencyToken {
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+}
+
+export interface PromptEntryWriteRequest extends PromptCategoryWriteRequest {
+  prompt: string;
+}
+
+export interface PromptCombinationWriteRequest extends PromptCategoryWriteRequest {
+  legacy_template: boolean;
+  positive: PromptFragmentInput[];
+  negative: PromptFragmentInput[];
+}
+
+export interface PromptCombinationSaveIntent extends PromptCombinationWriteRequest {
+  id: string;
+}
+
+export interface PromptArchiveRequest extends PromptConcurrencyToken {
+  resource_type: PromptResourceType;
+  resource_id: string;
+  polarity?: PromptPolarity;
+  category_id?: string;
+}
+
+export interface PromptRestoreRequest extends PromptConcurrencyToken {
+  resource_type: PromptRestoreResourceType;
+  resource_id: string;
+  polarity: PromptPolarity;
+  category_id?: string;
+}
+
+export interface PromptComposeRequest {
+  combination_id?: string;
+  positive: PromptFragmentInput[];
+  negative: PromptFragmentInput[];
+  save_as?: PromptCombinationSaveIntent;
+}
+
+export interface PromptComposeResponse {
+  positive_prompt: string;
+  negative_prompt: string;
+  positive: PromptFragment[];
+  negative: PromptFragment[];
+  warnings: PromptWarning[];
+  snapshot_repaired: boolean;
+  saved_combination: PromptVersionedCombination | null;
 }
 
 export interface PromptLibraryWriteResponse {
-  category?: {
-    category: PromptCategorySummary;
-    etag: string;
-  } | null;
+  category: PromptVersionedCategory | null;
+  combination: PromptVersionedCombination | null;
+  entry: PromptEntry | null;
+  entry_revision: number | null;
+  affected_combinations: string[];
+}
+
+export interface PromptLibraryErrorDetail {
+  code: string;
+  message: string;
+  hint: string;
+  details: Record<string, unknown>;
+}
+
+export interface FastApiValidationError {
+  loc: Array<string | number>;
+  msg: string;
+  type?: string;
 }
 
 export interface UsageItem {
