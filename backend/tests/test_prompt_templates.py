@@ -49,7 +49,16 @@ class TestApplyVariables:
 def tmp_prompt_library(tmp_path: Path) -> FilePromptLibraryProvider:
     source = Path(__file__).resolve().parents[2] / "prompt_library"
     root = tmp_path / "prompt_library"
-    shutil.copytree(source, root)
+    shutil.copytree(
+        source,
+        root,
+        ignore=shutil.ignore_patterns(
+            ".comma-atomic-migration.json",
+            ".comma-atomic-rollbacks",
+            ".comma-atomic-stage",
+            ".prompt-library.lock",
+        ),
+    )
     ordinary = json.loads(
         (root / "combinations" / "portrait.json").read_text(encoding="utf-8")
     )
@@ -83,7 +92,12 @@ class TestDefaultProvider:
         path = tmp_prompt_library.root / "combinations" / "portrait.json"
         document = json.loads(path.read_text(encoding="utf-8"))
         corrected = "1person, {人物}, {風格}, solo"
-        document["positive"][0]["snapshot"] = corrected
+        for fragment, snapshot in zip(
+            document["positive"],
+            corrected.split(","),
+            strict=True,
+        ):
+            fragment["snapshot"] = snapshot
         document["positive_prompt_snapshot"] = corrected
         path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
         assert provider.get("portrait").template == corrected
@@ -102,6 +116,22 @@ class TestDefaultProvider:
 
 class TestPromptTemplatesAPI:
     """API 端點測試"""
+
+    @pytest.fixture(autouse=True)
+    def _isolated_prompt_library(
+        self,
+        tmp_prompt_library: FilePromptLibraryProvider,
+    ):
+        app.dependency_overrides[prompt_templates_api._prompt_library_provider] = (
+            lambda: tmp_prompt_library
+        )
+        try:
+            yield
+        finally:
+            app.dependency_overrides.pop(
+                prompt_templates_api._prompt_library_provider,
+                None,
+            )
 
     def test_list_templates_returns_200(self) -> None:
         """GET /api/prompt-templates/ 回傳 200"""
@@ -136,15 +166,7 @@ class TestPromptTemplatesAPI:
     def test_underlying_prompt_library_dependency_can_be_overridden(
         self, tmp_prompt_library: FilePromptLibraryProvider
     ) -> None:
-        app.dependency_overrides[prompt_templates_api._prompt_library_provider] = (
-            lambda: tmp_prompt_library
-        )
-        try:
-            response = TestClient(app).get("/api/prompt-templates/")
-        finally:
-            app.dependency_overrides.pop(
-                prompt_templates_api._prompt_library_provider, None
-            )
+        response = TestClient(app).get("/api/prompt-templates/")
         assert response.status_code == 200
         assert [item["id"] for item in response.json()["items"]] == [
             "character",

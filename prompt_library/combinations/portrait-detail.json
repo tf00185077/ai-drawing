@@ -1,32 +1,62 @@
 {
-    "schema_version":  1,
-    "id":  "portrait-detail",
-    "name_zh":  "細節肖像",
-    "description_zh":  "提示詞組合。",
-    "aliases":  [
-                    "細節肖像"
-                ],
-    "keywords":  [
-                     "legacy",
-                     "template"
-                 ],
-    "order":  20,
-    "revision":  1,
-    "archived":  false,
-    "legacy_template":  true,
-    "positive":  [
-                     {
-                         "kind":  "literal",
-                         "ref":  null,
-                         "snapshot":  "1girl, {人物}, {風格}, solo, {細節}",
-                         "source_revision":  null,
-                         "weight":  1.0,
-                         "order":  10
-                     }
-                 ],
-    "negative":  [
-
-                 ],
-    "positive_prompt_snapshot":  "1girl, {人物}, {風格}, solo, {細節}",
-    "negative_prompt_snapshot":  ""
+  "schema_version": 1,
+  "id": "portrait-detail",
+  "name_zh": "細節肖像",
+  "description_zh": "提示詞組合。",
+  "aliases": [
+    "細節肖像"
+  ],
+  "keywords": [
+    "legacy",
+    "template"
+  ],
+  "order": 20,
+  "revision": 2,
+  "archived": false,
+  "legacy_template": true,
+  "positive": [
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "1girl",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 10
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": " {人物}",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 20
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": " {風格}",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 30
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": " solo",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 40
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": " {細節}",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 50
+    }
+  ],
+  "negative": [],
+  "positive_prompt_snapshot": "1girl, {人物}, {風格}, solo, {細節}",
+  "negative_prompt_snapshot": ""
 }

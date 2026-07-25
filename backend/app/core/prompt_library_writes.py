@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
+from collections import Counter
+import hashlib
+import json
+
+from app.core.prompt_atomic import atomize_nonblank, render_prompt_lane
 from app.core.prompt_composer import PromptComposer
+from app.core.prompt_document_context import PromptDocumentContextCodec
 from app.core.prompt_library_errors import PromptLibraryError
 from app.core.prompt_library_models import (
     Polarity,
     PromptCategory,
     PromptCombination,
     PromptEntry,
+    PromptEntryRef,
+    PromptFragment,
 )
 from app.core.prompt_library_store import PromptLibraryStore
 from app.schemas.prompt_library import (
@@ -17,10 +25,17 @@ from app.schemas.prompt_library import (
     CombinationWriteRequest,
     ComposeRequest,
     EntryWriteRequest,
+    LiteralConversionAcknowledgeRequest,
+    LiteralConversionAcknowledgeResponse,
+    PromptWarning,
     RestoreRequest,
     VersionedCategory,
     VersionedCombination,
     WriteResponse,
+)
+from app.schemas.prompt_library_migration import (
+    BlockingDocumentDiagnostic,
+    LegacyRefLocator,
 )
 
 
@@ -43,9 +58,15 @@ def assert_precondition(
 
 
 class PromptLibraryWriter:
-    def __init__(self, store: PromptLibraryStore) -> None:
+    def __init__(
+        self,
+        store: PromptLibraryStore,
+        *,
+        document_context: PromptDocumentContextCodec | None = None,
+    ) -> None:
         self.store = store
         self.composer = PromptComposer(store)
+        self.document_context = document_context or PromptDocumentContextCodec()
 
     def save_category(
         self, polarity: Polarity, category_id: str, request: CategoryWriteRequest
@@ -82,6 +103,12 @@ class PromptLibraryWriter:
         entry_id: str,
         request: EntryWriteRequest,
     ) -> WriteResponse:
+        if not request.prompt.strip():
+            raise PromptLibraryError.blank_fragment(
+                polarity=polarity, positions=[1]
+            )
+        if "," in request.prompt:
+            raise PromptLibraryError.comma_not_atomic(field="prompt")
         with self.store.locked():
             current = self.store.read_category(polarity, category_id)
             assert_precondition(
@@ -134,6 +161,16 @@ class PromptLibraryWriter:
                 expected_revision=request.expected_revision,
                 expected_etag=request.expected_etag,
             )
+            blocked_source = None
+            if current is not None:
+                blocked_source = self._blocked_version(current)
+            if request.source_combination_id is not None:
+                source = self.store.read_combination(request.source_combination_id)
+                source_blocked = self._blocked_version(source)
+                if source_blocked is not None:
+                    blocked_source = source_blocked
+            if blocked_source is not None:
+                self._assert_explicit_resolution(request, blocked_source)
             composed = self.composer.compose(
                 ComposeRequest(positive=request.positive, negative=request.negative)
             )
@@ -181,6 +218,9 @@ class PromptLibraryWriter:
     def repair_combination(self, combination_id: str) -> VersionedCombination:
         with self.store.locked():
             current = self.store.read_combination(combination_id)
+            blocked = self._blocked_version(current)
+            if blocked is not None:
+                return blocked
             composed = self.composer.compose(
                 ComposeRequest(
                     positive=current.model.positive,
@@ -210,6 +250,345 @@ class PromptLibraryWriter:
                 repaired=True,
                 warnings=composed.warnings,
             )
+
+    def acknowledge_literal_conversion(
+        self,
+        combination_id: str,
+        request: LiteralConversionAcknowledgeRequest,
+    ) -> LiteralConversionAcknowledgeResponse:
+        with self.store.locked():
+            current = self.store.read_combination(combination_id)
+            blocked = self._blocked_version(current)
+            if blocked is None:
+                raise PromptLibraryError(
+                    code="document_not_blocked",
+                    message="The combination has no unresolved legacy provenance.",
+                    hint="Reload the combination; no literal-conversion acknowledgment is needed.",
+                    status_code=409,
+                )
+            self.document_context.validate_document_context(
+                request.document_context_token,
+                blocked.blocking_diagnostics,
+            )
+            token = self.document_context.issue_literal_conversion(
+                request.document_context_token,
+                blocked.blocking_diagnostics,
+            )
+            return LiteralConversionAcknowledgeResponse(
+                literal_conversion_token=token,
+                diagnostic_ids=[
+                    diagnostic.id for diagnostic in blocked.blocking_diagnostics
+                ],
+            )
+
+    def _blocked_version(
+        self, current
+    ) -> VersionedCombination | None:
+        categories, _ = self.store.scan_categories()
+        entries = {
+            (category.model.polarity, category.model.id, entry.id): entry
+            for category in categories
+            for entry in category.model.entries
+        }
+        registry = self.composer._legacy_registry()
+        diagnostics: list[BlockingDocumentDiagnostic] = []
+        warnings: list[PromptWarning] = []
+        lanes: dict[Polarity, list[PromptFragment]] = {
+            "positive": [],
+            "negative": [],
+        }
+        for polarity in ("positive", "negative"):
+            for fragment in sorted(
+                getattr(current.model, polarity),
+                key=lambda item: item.order,
+            ):
+                ref = fragment.ref
+                if (
+                    fragment.kind != "entry"
+                    or ref is None
+                    or (
+                        ref.polarity,
+                        ref.category_id,
+                        ref.entry_id,
+                    )
+                    in entries
+                    or (
+                        ref.polarity,
+                        ref.category_id,
+                        ref.entry_id,
+                    )
+                    in registry
+                ):
+                    lanes[polarity].append(fragment.model_copy(deep=True))
+                    continue
+                try:
+                    atoms = (
+                        atomize_nonblank(fragment.snapshot)
+                        if "," in fragment.snapshot
+                        else [fragment.snapshot]
+                    )
+                except ValueError:
+                    raise PromptLibraryError.blank_fragment(
+                        polarity=polarity,
+                        positions=[
+                            index + 1
+                            for index, atom in enumerate(
+                                fragment.snapshot.split(",")
+                            )
+                            if not atom.strip()
+                        ],
+                    )
+                atom_hashes = [
+                    hashlib.sha256(atom.encode("utf-8")).hexdigest()
+                    for atom in atoms
+                ]
+                diagnostic_material = json.dumps(
+                    {
+                        "combination_id": current.model.id,
+                        "revision": current.model.revision,
+                        "etag": current.etag,
+                        "ref": ref.model_dump(mode="json"),
+                        "polarity": polarity,
+                        "fallback_start_position": len(lanes[polarity]) + 1,
+                        "fallback_count": len(atoms),
+                        "atom_hashes": atom_hashes,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+                diagnostic_id = hashlib.sha256(diagnostic_material).hexdigest()
+                diagnostic = BlockingDocumentDiagnostic(
+                    id=diagnostic_id,
+                    original_ref=LegacyRefLocator.model_validate(
+                        ref.model_dump(mode="json")
+                    ),
+                    combination_id=current.model.id,
+                    revision=current.model.revision,
+                    etag=current.etag,
+                    polarity=polarity,
+                    fallback_start_position=len(lanes[polarity]) + 1,
+                    fallback_count=len(atoms),
+                    fallback_atom_hashes=atom_hashes,
+                )
+                diagnostics.append(diagnostic)
+                warnings.append(
+                    PromptWarning(
+                        code="legacy_reference_unresolved",
+                        message=(
+                            "A legacy source ref could not be transferred; "
+                            "literal fallback atoms are blocked from persistence."
+                        ),
+                        hint=(
+                            "Choose replacement entries or explicitly acknowledge "
+                            "conversion to literals."
+                        ),
+                        ref=ref,
+                        details={
+                            "diagnostic_id": diagnostic_id,
+                            "polarity": polarity,
+                            "fallback_atom_hashes": atom_hashes,
+                            "resolution": "explicit_action_required",
+                        },
+                    )
+                )
+                lanes[polarity].extend(
+                    PromptFragment(
+                        kind="literal",
+                        snapshot=atom,
+                        weight=fragment.weight,
+                        order=10,
+                    )
+                    for atom in atoms
+                )
+        if not diagnostics:
+            return None
+        for polarity in ("positive", "negative"):
+            lanes[polarity] = [
+                fragment.model_copy(update={"order": (index + 1) * 10})
+                for index, fragment in enumerate(lanes[polarity])
+            ]
+        fallback = current.model.model_copy(
+            deep=True,
+            update={
+                "positive": lanes["positive"],
+                "negative": lanes["negative"],
+                "positive_prompt_snapshot": (
+                    render_prompt_lane(
+                        [
+                            (fragment.snapshot, fragment.weight)
+                            for fragment in lanes["positive"]
+                        ]
+                    )
+                    if lanes["positive"]
+                    else ""
+                ),
+                "negative_prompt_snapshot": (
+                    render_prompt_lane(
+                        [
+                            (fragment.snapshot, fragment.weight)
+                            for fragment in lanes["negative"]
+                        ]
+                    )
+                    if lanes["negative"]
+                    else ""
+                ),
+            },
+        )
+        context_token = self.document_context.issue_document_context(diagnostics)
+        return VersionedCombination(
+            combination=fallback,
+            etag=current.etag,
+            repaired=False,
+            warnings=warnings,
+            blocking_diagnostics=diagnostics,
+            document_context_token=context_token,
+        )
+
+    def _assert_explicit_resolution(
+        self,
+        request: CombinationWriteRequest,
+        blocked: VersionedCombination,
+    ) -> None:
+        diagnostics = blocked.blocking_diagnostics
+        if request.document_context_token is None:
+            raise self._provenance_blocked(diagnostics)
+        self.document_context.validate_document_context(
+            request.document_context_token, diagnostics
+        )
+        if request.literal_conversion_token is not None:
+            self.document_context.validate_literal_conversion(
+                request.literal_conversion_token,
+                request.document_context_token,
+                diagnostics,
+            )
+            return
+        resolutions = {
+            resolution.diagnostic_id: resolution
+            for resolution in request.provenance_resolutions
+        }
+        if set(resolutions) != {item.id for item in diagnostics}:
+            raise self._provenance_blocked(diagnostics)
+        requested_refs = {
+            (
+                fragment.ref.polarity,
+                fragment.ref.category_id,
+                fragment.ref.entry_id,
+            )
+            for fragment in [*request.positive, *request.negative]
+            if fragment.ref is not None
+        }
+        categories, _ = self.store.scan_categories()
+        valid_refs = {
+            (category.model.polarity, category.model.id, entry.id)
+            for category in categories
+            for entry in category.model.entries
+        }
+        diagnostic_by_id = {item.id: item for item in diagnostics}
+        ordered_diagnostics = sorted(
+            diagnostics,
+            key=lambda item: (
+                item.polarity,
+                item.fallback_start_position,
+                item.id,
+            ),
+        )
+        replacement_sizes = {
+            diagnostic.id: len(resolutions[diagnostic.id].replacement_refs)
+            for diagnostic in ordered_diagnostics
+        }
+        for resolution in resolutions.values():
+            if resolution.action not in {
+                "reviewed_mapping",
+                "replacement_entries",
+            }:
+                raise self._provenance_blocked(diagnostics)
+            ordered_replacement_refs = [
+                (item.polarity, item.category_id, item.entry_id)
+                for item in resolution.replacement_refs
+            ]
+            replacement_refs = set(ordered_replacement_refs)
+            if (
+                not replacement_refs
+                or not replacement_refs <= valid_refs
+                or not replacement_refs <= requested_refs
+            ):
+                raise self._provenance_blocked(diagnostics)
+            diagnostic = diagnostic_by_id[resolution.diagnostic_id]
+            shift = sum(
+                replacement_sizes[item.id] - item.fallback_count
+                for item in ordered_diagnostics
+                if item.polarity == diagnostic.polarity
+                and item.fallback_start_position
+                < diagnostic.fallback_start_position
+            )
+            start = diagnostic.fallback_start_position - 1 + shift
+            lane = (
+                request.positive
+                if diagnostic.polarity == "positive"
+                else request.negative
+            )
+            installed_refs = [
+                (
+                    fragment.ref.polarity,
+                    fragment.ref.category_id,
+                    fragment.ref.entry_id,
+                )
+                if fragment.kind == "entry" and fragment.ref is not None
+                else None
+                for fragment in lane[
+                    start : start + len(ordered_replacement_refs)
+                ]
+            ]
+            if installed_refs != ordered_replacement_refs:
+                raise self._provenance_blocked(diagnostics)
+        for polarity in ("positive", "negative"):
+            lane_diagnostics = [
+                item for item in diagnostics if item.polarity == polarity
+            ]
+            if not lane_diagnostics:
+                continue
+            baseline_lane = getattr(blocked.combination, polarity)
+            request_lane = getattr(request, polarity)
+            baseline_literal_hashes = Counter(
+                hashlib.sha256(fragment.snapshot.encode("utf-8")).hexdigest()
+                for fragment in baseline_lane
+                if fragment.kind == "literal"
+            )
+            diagnostic_hashes = Counter(
+                atom_hash
+                for diagnostic in lane_diagnostics
+                for atom_hash in diagnostic.fallback_atom_hashes
+            )
+            submitted_literal_hashes = Counter(
+                hashlib.sha256(fragment.snapshot.encode("utf-8")).hexdigest()
+                for fragment in request_lane
+                if fragment.kind == "literal"
+            )
+            if any(
+                submitted_literal_hashes[atom_hash]
+                > baseline_literal_hashes[atom_hash] - fallback_count
+                for atom_hash, fallback_count in diagnostic_hashes.items()
+            ):
+                raise self._provenance_blocked(diagnostics)
+
+    @staticmethod
+    def _provenance_blocked(
+        diagnostics: list[BlockingDocumentDiagnostic],
+    ) -> PromptLibraryError:
+        return PromptLibraryError(
+            code="unresolved_legacy_provenance",
+            message="This document still has unresolved legacy source provenance.",
+            hint=(
+                "Resolve every diagnostic with reviewed mapping or replacement "
+                "entries, or explicitly acknowledge conversion to literals."
+            ),
+            status_code=409,
+            details={
+                "diagnostic_ids": [item.id for item in diagnostics],
+                "blocking": True,
+            },
+        )
 
     def _propagate_entry(
         self, polarity: Polarity, category_id: str, entry: PromptEntry

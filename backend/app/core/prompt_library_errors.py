@@ -120,3 +120,61 @@ class PromptLibraryError(Exception):
             status_code=423,
             details={"timeout": timeout},
         )
+
+    @classmethod
+    def migration_unavailable(
+        cls,
+        *,
+        state: str,
+        run_id: str | None,
+        atomic_enforcement_active: bool,
+    ) -> "PromptLibraryError":
+        return cls(
+            code="comma_atomic_migration_unavailable",
+            message="Prompt Library is unavailable while comma-atomic migration is incomplete.",
+            hint=(
+                "Wait for an operator to finish, resume, or roll back the migration. "
+                "Do not retry catalog-dependent operations until readiness is true."
+            ),
+            status_code=503,
+            details={
+                "state": state,
+                "run_id": run_id,
+                "comma_atomic_ready": False,
+                "atomic_enforcement_active": atomic_enforcement_active,
+            },
+        )
+
+    @classmethod
+    def comma_not_atomic(cls, *, field: str = "prompt") -> "PromptLibraryError":
+        return cls(
+            code="comma_not_atomic",
+            message="Prompt Library entries must contain exactly one comma-free prompt.",
+            hint="Create one separately curated entry for each ASCII-comma segment.",
+            status_code=422,
+            details={"field": field, "delimiter": "U+002C"},
+        )
+
+    @classmethod
+    def blank_fragment(
+        cls, *, polarity: str, positions: list[int]
+    ) -> "PromptLibraryError":
+        return cls(
+            code="blank_prompt_fragment",
+            message="A prompt fragment is blank or whitespace-only.",
+            hint="Fill or remove every empty fragment; no fragment was composed or saved.",
+            status_code=422,
+            details={"polarity": polarity, "positions": positions},
+        )
+
+    @classmethod
+    def unresolved_legacy_reference(
+        cls, *, ref: dict[str, object]
+    ) -> "PromptLibraryError":
+        return cls(
+            code="legacy_reference_unresolved",
+            message="A legacy Prompt Library reference has no reviewed atomic expansion.",
+            hint="Resolve it with a reviewed mapping, replacement entries, or explicit literal conversion.",
+            status_code=409,
+            details={"ref": ref},
+        )

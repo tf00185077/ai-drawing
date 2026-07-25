@@ -1,0 +1,34 @@
+{
+  "comma_literal": {
+    "kind": "literal",
+    "snapshot": "a, b",
+    "weight": 1.0,
+    "order": 10
+  },
+  "comma_reference": {
+    "kind": "entry",
+    "ref": {
+      "polarity": "positive",
+      "category_id": "quality-ratings",
+      "entry_id": "illustrious-quality"
+    },
+    "snapshot": "masterpiece, best quality, amazing quality, absurdres",
+    "source_revision": 1,
+    "weight": 1.2,
+    "order": 20
+  },
+  "duplicate_references": [
+    "positive/quality-ratings/illustrious-quality",
+    "positive/quality-ratings/illustrious-quality"
+  ],
+  "parenthesized": "(a,b:1.2)",
+  "quoted": "\"a,b\"",
+  "blank_subsegments": ["a,,b", ",a", "a,"],
+  "unknown_reference": "positive/unknown/missing",
+  "archived_reference": "positive/archived/source",
+  "resolution_paths": [
+    "ordinary_edit",
+    "replacement_refs",
+    "acknowledge_convert_to_literals"
+  ]
+}

@@ -2,13 +2,18 @@ import { useState } from "react";
 
 export interface GenerationForm { id: string; display_name: string }
 
-export default function GenerationPanel({ forms, positivePrompt, negativePrompt }: { forms: GenerationForm[]; positivePrompt: string; negativePrompt: string }) {
+export default function GenerationPanel({ forms, positivePrompt, negativePrompt, preflight }: { forms: GenerationForm[]; positivePrompt: string; negativePrompt: string; preflight: () => string | null }) {
   const [workflow, setWorkflow] = useState("");
   const [seedMode, setSeedMode] = useState("random");
   const [job, setJob] = useState("");
   const [error, setError] = useState("");
   async function generate() {
     setError("");
+    const preflightError = preflight();
+    if (preflightError) {
+      setError(preflightError);
+      return;
+    }
     const response = await fetch("/api/generate/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ template: workflow, prompt: positivePrompt, negative_prompt: negativePrompt, use_workflow_defaults: true, seed_mode: seedMode }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) { setError(data?.detail?.message || `HTTP ${response.status}`); return; }

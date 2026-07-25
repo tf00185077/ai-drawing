@@ -87,6 +87,13 @@ backend/.file_sha256_cache.json
 
 # Prompt Library runtime write lock
 prompt_library/.lock
+prompt_library/.prompt-library.lock
+prompt_library/.comma-atomic-rollbacks/
+prompt_library/.comma-atomic-stage/
+!prompt_library/.comma-atomic-rollbacks/
+prompt_library/.comma-atomic-rollbacks/*
+!prompt_library/.comma-atomic-rollbacks/comma-atomic-v1/
+!prompt_library/.comma-atomic-rollbacks/comma-atomic-v1/rollback.json
 
 # Agent implementation worktrees
 .worktrees/
