@@ -63,6 +63,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("prompt_library_save", "mcp_server.tools.prompt_library", "prompt_library_save", "dict", ("PUT /api/prompt-library/categories/{polarity}/{category_id}", "PUT /api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}", "PUT /api/prompt-library/combinations/{combination_id}")),
     ToolCatalogEntry("prompt_library_compose", "mcp_server.tools.prompt_library", "prompt_library_compose", "dict", ("POST /api/prompt-library/compose",)),
     ToolCatalogEntry("prompt_library_archive", "mcp_server.tools.prompt_library", "prompt_library_archive", "dict", ("POST /api/prompt-library/archive",)),
+    ToolCatalogEntry("prompt_library_restore", "mcp_server.tools.prompt_library", "prompt_library_restore", "dict", ("POST /api/prompt-library/restore",)),
     # LoRA training
     ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
     ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",)),

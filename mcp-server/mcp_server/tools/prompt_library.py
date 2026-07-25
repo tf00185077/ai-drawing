@@ -112,3 +112,58 @@ def prompt_library_archive(resource_type: str, resource_id: str, expected_revisi
     if category_id: body["category_id"] = category_id
     try: return {"ok": True, "tool": tool, **_get_client().post("prompt-library/archive", json=body), "next": "reload catalog"}
     except Exception as exc: return _error(tool, exc)
+
+
+@mcp.tool()
+def prompt_library_restore(
+    resource_type: str,
+    resource_id: str,
+    expected_revision: int,
+    expected_etag: str,
+    polarity: str | None = None,
+    category_id: str | None = None,
+) -> dict[str, Any]:
+    tool = "prompt_library_restore"
+    if resource_type not in {"category", "entry"}:
+        return {
+            "ok": False,
+            "tool": tool,
+            "error": {
+                "code": "invalid_resource_locator",
+                "message": "restore supports only category and entry resources",
+                "hint": "provide resource_type category or entry; combinations cannot be restored",
+                "details": {"resource_type": resource_type},
+            },
+        }
+    if not polarity or (resource_type == "entry" and not category_id):
+        return {
+            "ok": False,
+            "tool": tool,
+            "error": {
+                "code": "invalid_resource_locator",
+                "message": "resource locator is incomplete",
+                "hint": "category needs polarity; entry needs polarity and category_id",
+                "details": {"resource_type": resource_type},
+            },
+        }
+
+    body: dict[str, Any] = {
+        "resource_type": resource_type,
+        "resource_id": resource_id,
+        "polarity": polarity,
+        "expected_revision": expected_revision,
+        "expected_etag": expected_etag,
+    }
+    if resource_type == "entry":
+        body["category_id"] = category_id
+
+    try:
+        response = _get_client().post("prompt-library/restore", json=body)
+        return {
+            "ok": True,
+            "tool": tool,
+            **response,
+            "next": "reload the category and use its new revision and etag",
+        }
+    except Exception as exc:
+        return _error(tool, exc)

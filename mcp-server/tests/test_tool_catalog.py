@@ -54,6 +54,20 @@ async def test_civitai_generate_like_exposes_intent_level_schema() -> None:
 
 
 @pytest.mark.asyncio
+async def test_prompt_library_restore_exposes_exact_locator_schema() -> None:
+    registered = {tool.name: tool for tool in await mcp.list_tools()}
+    schema = registered["prompt_library_restore"].inputSchema
+
+    assert set(schema["required"]) == {
+        "resource_type",
+        "resource_id",
+        "expected_revision",
+        "expected_etag",
+    }
+    assert {"polarity", "category_id"} <= set(schema["properties"])
+
+
+@pytest.mark.asyncio
 async def test_response_categories_match_fastmcp_output_schema() -> None:
     """Structured dict tools expose object output; transitional string tools expose result strings."""
     registered = {tool.name: tool for tool in await mcp.list_tools()}
