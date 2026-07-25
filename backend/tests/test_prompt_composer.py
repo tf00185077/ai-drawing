@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from app.core.prompt_library import FilePromptLibraryProvider
+from app.core.prompt_library_errors import PromptLibraryError
 from app.core.prompt_library_models import PromptEntryRef, PromptFragment
 from app.schemas.prompt_library import ComposeRequest
 
@@ -18,10 +19,12 @@ def library_root(tmp_path: Path) -> Path:
     (root / "manifest.json").write_text(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": 2,
                 "library_id": "default",
                 "name": "Test Prompt Library",
                 "description_zh": "測試提示詞資料庫",
+                "comma_atomic_version": 1,
+                "comma_atomic_migration_required": False,
             },
             ensure_ascii=False,
         ),
@@ -175,7 +178,7 @@ def test_compose_resolves_current_prompt_and_formats_weight(
 
     result = provider.compose(request)
 
-    assert result.positive_prompt == "1girl, (dress:1.2)"
+    assert result.positive_prompt == "1girl,(dress:1.2)"
     assert result.negative_prompt == "low quality"
     assert result.positive[1].snapshot == "dress"
     assert result.positive[1].source_revision == 3
@@ -196,7 +199,7 @@ def test_stable_order_uses_input_index_when_orders_are_equal(
         )
     )
 
-    assert result.positive_prompt == "first, second, third"
+    assert result.positive_prompt == "first,second,third"
     assert [fragment.snapshot for fragment in result.positive] == [
         "first",
         "second",
@@ -218,7 +221,7 @@ def test_first_duplicate_reference_wins_but_literals_are_kept(
         )
     )
 
-    assert result.positive_prompt == "(dress:1.1), soft light, soft light"
+    assert result.positive_prompt == "(dress:1.1),soft light,soft light"
     assert [warning.code for warning in result.warnings] == ["duplicate_reference"]
     assert result.warnings[0].ref == first.ref
 
@@ -280,8 +283,8 @@ def test_compose_imports_repaired_saved_combination_then_appends_request_fragmen
         )
     )
 
-    assert result.positive_prompt == "1girl, dress, soft lighting"
-    assert result.negative_prompt == "low quality, watermark"
+    assert result.positive_prompt == "1girl,dress,soft lighting"
+    assert result.negative_prompt == "low quality,watermark"
     assert result.snapshot_repaired is True
 
 
@@ -323,13 +326,12 @@ def test_compose_result_is_deeply_isolated_from_cache_request_and_disk(
     assert disk["positive"][1]["ref"]["entry_id"] == "dress"
     assert request_fragment.snapshot == "soft lighting"
     assert request.positive[0].snapshot == "soft lighting"
-    assert next_result.positive_prompt == "1girl, dress, soft lighting"
+    assert next_result.positive_prompt == "1girl,dress,soft lighting"
 
 
 @pytest.mark.parametrize(
     ("text", "weight", "rendered"),
     [
-        (" , detailed, ", 1.0, "detailed"),
         ("detail", 1.2344, "(detail:1.234)"),
         ("detail", 1.2, "(detail:1.2)"),
         ("detail", 0.875, "(detail:0.875)"),
@@ -343,3 +345,30 @@ def test_compose_formats_fragment_weights_exactly(
     )
 
     assert result.positive_prompt == rendered
+
+
+def test_compose_rejects_blank_atoms_instead_of_trimming_them(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    with pytest.raises(PromptLibraryError) as captured:
+        provider.compose(
+            ComposeRequest(positive=[literal(" , detailed, ", weight=1.0)])
+        )
+
+    assert captured.value.code == "blank_prompt_fragment"
+    assert captured.value.details["positions"] == [1, 3]
+
+
+def test_comma_literal_atomizes_exact_whitespace_and_copies_weight(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    result = provider.compose(
+        ComposeRequest(positive=[literal("a, b,c", weight=1.2)])
+    )
+
+    assert [fragment.snapshot for fragment in result.positive] == ["a", " b", "c"]
+    assert [fragment.weight for fragment in result.positive] == [1.2, 1.2, 1.2]
+    assert result.positive_prompt == "(a:1.2),( b:1.2),(c:1.2)"
+    assert [warning.code for warning in result.warnings] == [
+        "legacy_literal_atomized"
+    ]

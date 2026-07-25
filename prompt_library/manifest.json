@@ -1,6 +1,8 @@
 {
-    "schema_version":  1,
-    "library_id":  "default",
-    "name":  "AI Drawing Prompt Library",
-    "description_zh":  "提示詞組合。"
+  "schema_version": 2,
+  "library_id": "default",
+  "name": "AI Drawing Prompt Library",
+  "description_zh": "提示詞組合。",
+  "comma_atomic_version": 1,
+  "comma_atomic_migration_required": false
 }

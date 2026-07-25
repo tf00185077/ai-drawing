@@ -8,7 +8,9 @@ from typing import Protocol
 
 from app.config import get_settings
 from app.core.prompt_composer import PromptComposer
+from app.core.prompt_document_context import PromptDocumentContextCodec
 from app.core.prompt_library_models import Polarity, ResourceType
+from app.core.prompt_library_migration_control import CommaAtomicMigrationControl
 from app.core.prompt_search import PromptSearchIndex
 from app.core.prompt_library_store import PromptLibraryStore, StoredDocument
 from app.core.prompt_library_writes import PromptLibraryWriter
@@ -27,10 +29,15 @@ from app.schemas.prompt_library import (
     VersionedCategory,
     VersionedCombination,
     WriteResponse,
+    LiteralConversionAcknowledgeRequest,
+    LiteralConversionAcknowledgeResponse,
 )
+from app.schemas.prompt_library_migration import CommaAtomicMigrationStatus
 
 
 class PromptLibraryProvider(Protocol):
+    def migration_status(self) -> CommaAtomicMigrationStatus: ...
+
     def catalog(self) -> CatalogResponse: ...
 
     def get_category(self, polarity: Polarity, category_id: str) -> VersionedCategory: ...
@@ -71,19 +78,39 @@ class PromptLibraryProvider(Protocol):
 
     def restore(self, request: RestoreRequest) -> WriteResponse: ...
 
+    def acknowledge_literal_conversion(
+        self,
+        combination_id: str,
+        request: LiteralConversionAcknowledgeRequest,
+    ) -> LiteralConversionAcknowledgeResponse: ...
+
 
 class FilePromptLibraryProvider:
     def __init__(self, root: Path, lock_timeout: float = 5.0) -> None:
+        self._migration = CommaAtomicMigrationControl(
+            root, lock_timeout=lock_timeout
+        )
+        self._migration.bootstrap()
         self.store = PromptLibraryStore(root, lock_timeout=lock_timeout)
         self.root = self.store.root
         # Kept as an observable provider attribute while the store owns the
         # single RLock-protected snapshot/cache transaction.
         self._cache = self.store._cache
+        self._document_context = PromptDocumentContextCodec()
         self._composer = PromptComposer(self.store)
         self._search = PromptSearchIndex(self.store)
-        self._writer = PromptLibraryWriter(self.store)
+        self._writer = PromptLibraryWriter(
+            self.store, document_context=self._document_context
+        )
+
+    def migration_status(self) -> CommaAtomicMigrationStatus:
+        return self._migration.status()
+
+    def _guard(self) -> None:
+        self._migration.guard_ordinary_operation()
 
     def catalog(self) -> CatalogResponse:
+        self._guard()
         manifest = self.store.read_manifest()
         categories, category_diagnostics = self.store.scan_categories()
         combinations, combination_diagnostics = self.store.scan_combinations()
@@ -101,13 +128,16 @@ class FilePromptLibraryProvider:
         )
 
     def get_category(self, polarity: Polarity, category_id: str) -> VersionedCategory:
+        self._guard()
         document = self.store.read_category(polarity, category_id)
         return VersionedCategory(category=document.model, etag=document.etag)
 
     def get_combination(self, combination_id: str) -> VersionedCombination:
+        self._guard()
         return self._writer.repair_combination(combination_id)
 
     def compose(self, request: ComposeRequest) -> ComposeResponse:
+        self._guard()
         composed = self._composer.compose(request)
         if request.save_as is None:
             return composed
@@ -136,6 +166,7 @@ class FilePromptLibraryProvider:
         threshold: int = 45,
         limit: int = 50,
     ) -> SearchResponse:
+        self._guard()
         return self._search.search(
             query,
             polarity=polarity,
@@ -149,6 +180,7 @@ class FilePromptLibraryProvider:
     def save_category(
         self, polarity: Polarity, category_id: str, request: CategoryWriteRequest
     ) -> WriteResponse:
+        self._guard()
         return self._writer.save_category(polarity, category_id, request)
 
     def save_entry(
@@ -158,18 +190,32 @@ class FilePromptLibraryProvider:
         entry_id: str,
         request: EntryWriteRequest,
     ) -> WriteResponse:
+        self._guard()
         return self._writer.save_entry(polarity, category_id, entry_id, request)
 
     def save_combination(
         self, combination_id: str, request: CombinationWriteRequest
     ) -> WriteResponse:
+        self._guard()
         return self._writer.save_combination(combination_id, request)
 
     def archive(self, request: ArchiveRequest) -> WriteResponse:
+        self._guard()
         return self._writer.archive(request)
 
     def restore(self, request: RestoreRequest) -> WriteResponse:
+        self._guard()
         return self._writer.restore(request)
+
+    def acknowledge_literal_conversion(
+        self,
+        combination_id: str,
+        request: LiteralConversionAcknowledgeRequest,
+    ) -> LiteralConversionAcknowledgeResponse:
+        self._guard()
+        return self._writer.acknowledge_literal_conversion(
+            combination_id, request
+        )
 
     @staticmethod
     def _category_summary(document: StoredDocument) -> CategorySummary:

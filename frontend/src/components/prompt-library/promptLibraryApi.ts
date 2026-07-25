@@ -1,5 +1,6 @@
 import type {
   FastApiValidationError,
+  CommaAtomicMigrationStatus,
   PromptArchiveRequest,
   PromptCategoryWriteRequest,
   PromptComposeRequest,
@@ -7,6 +8,7 @@ import type {
   PromptEntryWriteRequest,
   PromptLibraryCatalogResponse,
   PromptLibraryWriteResponse,
+  PromptLiteralConversionAcknowledgeResponse,
   PromptPolarity,
   PromptRestoreRequest,
   PromptVersionedCategory,
@@ -68,6 +70,10 @@ const categoryWriteBody = (input: PromptCategoryWriteRequest): PromptCategoryWri
 
 export function getPromptCatalog(): Promise<PromptLibraryCatalogResponse> {
   return requestJson<PromptLibraryCatalogResponse>(`${API_ROOT}/catalog`);
+}
+
+export function getPromptLibraryMigrationStatus(): Promise<CommaAtomicMigrationStatus> {
+  return requestJson<CommaAtomicMigrationStatus>(`${API_ROOT}/migration-status`);
 }
 
 export function getPromptCategory(
@@ -146,6 +152,16 @@ export function getPromptCombination(combinationId: string): Promise<PromptVersi
   );
 }
 
+export function acknowledgeLiteralConversion(
+  combinationId: string,
+  documentContextToken: string,
+): Promise<PromptLiteralConversionAcknowledgeResponse> {
+  return requestJson<PromptLiteralConversionAcknowledgeResponse>(
+    `${API_ROOT}/combinations/${segment(combinationId)}/acknowledge-literal-conversion`,
+    jsonWrite("POST", { document_context_token: documentContextToken }),
+  );
+}
+
 export function composeAndSaveCombination(
   input: PromptComposeRequest,
 ): Promise<PromptComposeResponse> {
@@ -164,6 +180,18 @@ export function composeAndSaveCombination(
         legacy_template: input.save_as.legacy_template,
         positive: input.save_as.positive,
         negative: input.save_as.negative,
+        ...(input.save_as.source_combination_id !== undefined
+          ? { source_combination_id: input.save_as.source_combination_id }
+          : {}),
+        ...(input.save_as.document_context_token !== undefined
+          ? { document_context_token: input.save_as.document_context_token }
+          : {}),
+        ...(input.save_as.literal_conversion_token !== undefined
+          ? { literal_conversion_token: input.save_as.literal_conversion_token }
+          : {}),
+        ...(input.save_as.provenance_resolutions !== undefined
+          ? { provenance_resolutions: input.save_as.provenance_resolutions }
+          : {}),
       }
     : undefined;
   const body: PromptComposeRequest = {

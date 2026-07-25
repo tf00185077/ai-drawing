@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import math
+import json
 from collections.abc import Iterable
 
+from app.core.prompt_atomic import atomize_nonblank, render_prompt_atom
+from app.core.prompt_library_errors import PromptLibraryError
 from app.core.prompt_library_models import (
     Polarity,
     PromptCategory,
@@ -16,13 +18,7 @@ from app.schemas.prompt_library import ComposeRequest, ComposeResponse, PromptWa
 
 
 def render_fragment(text: str, weight: float) -> str:
-    clean = text.strip().strip(",").strip()
-    if not clean:
-        return ""
-    if math.isclose(weight, 1.0):
-        return clean
-    rendered_weight = f"{weight:.3f}".rstrip("0").rstrip(".")
-    return f"({clean}:{rendered_weight})"
+    return render_prompt_atom(text, weight)
 
 
 class PromptComposer:
@@ -46,13 +42,26 @@ class PromptComposer:
         }
         repaired = False
         warnings: list[PromptWarning] = []
+        positive, positive_atomized = self._atomize_compatibility(
+            "positive", positive, categories, warnings
+        )
+        negative, negative_atomized = self._atomize_compatibility(
+            "negative", negative, categories, warnings
+        )
         resolved_positive, positive_repaired = self._resolve(
             "positive", positive, categories, warnings
         )
         resolved_negative, negative_repaired = self._resolve(
             "negative", negative, categories, warnings
         )
-        repaired = positive_repaired or negative_repaired
+        repaired = (
+            positive_atomized
+            or negative_atomized
+            or positive_repaired
+            or negative_repaired
+        )
+        resolved_positive = self._renumber(resolved_positive)
+        resolved_negative = self._renumber(resolved_negative)
 
         return ComposeResponse(
             positive_prompt=self._render(resolved_positive),
@@ -63,6 +72,130 @@ class PromptComposer:
             snapshot_repaired=repaired,
             saved_combination=None,
         )
+
+    def _atomize_compatibility(
+        self,
+        polarity: Polarity,
+        fragments: Iterable[PromptFragment],
+        categories: dict[tuple[Polarity, str], PromptCategory],
+        warnings: list[PromptWarning],
+    ) -> tuple[list[PromptFragment], bool]:
+        registry = self._legacy_registry()
+        ordered = sorted(
+            enumerate(fragments), key=lambda item: (item[1].order, item[0])
+        )
+        result: list[PromptFragment] = []
+        changed = False
+        for input_index, (_, fragment) in enumerate(ordered):
+            if fragment.kind == "literal" and "," in fragment.snapshot:
+                try:
+                    atoms = atomize_nonblank(fragment.snapshot)
+                except ValueError:
+                    positions = [
+                        index + 1
+                        for index, atom in enumerate(fragment.snapshot.split(","))
+                        if not atom.strip()
+                    ]
+                    raise PromptLibraryError.blank_fragment(
+                        polarity=polarity, positions=positions
+                    )
+                result.extend(
+                    fragment.model_copy(
+                        deep=True,
+                        update={"snapshot": atom, "order": len(result) * 10 + 10},
+                    )
+                    for atom in atoms
+                )
+                warnings.append(
+                    PromptWarning(
+                        code="legacy_literal_atomized",
+                        message="A comma-bearing literal was split into atomic prompts.",
+                        hint="Review the expanded atoms; the original weight was copied to each.",
+                        details={
+                            "polarity": polarity,
+                            "position": input_index + 1,
+                            "count": len(atoms),
+                            "weight_policy": "copied_to_each_atom",
+                            "resolution": "literal_atoms_created",
+                        },
+                    )
+                )
+                changed = True
+                continue
+
+            if fragment.kind == "entry" and fragment.ref is not None:
+                ref_key = (
+                    fragment.ref.polarity,
+                    fragment.ref.category_id,
+                    fragment.ref.entry_id,
+                )
+                expansion = registry.get(ref_key)
+                if expansion:
+                    expanded_keys = [
+                        (item.polarity, item.category_id, item.entry_id)
+                        for item in expansion
+                    ]
+                    if len(expanded_keys) != len(set(expanded_keys)):
+                        raise PromptLibraryError(
+                            code="legacy_reference_duplicate_expansion",
+                            message="Reviewed legacy expansion contains duplicate refs.",
+                            hint="Correct the reviewed registry; no fragment was composed.",
+                            status_code=409,
+                            details={"ref": fragment.ref.model_dump(mode="json")},
+                        )
+                    for locator in expansion:
+                        category = categories.get(
+                            (locator.polarity, locator.category_id)
+                        )
+                        entry = next(
+                            (
+                                candidate
+                                for candidate in category.entries
+                                if candidate.id == locator.entry_id
+                            ),
+                            None,
+                        ) if category else None
+                        if entry is None:
+                            raise PromptLibraryError.unresolved_legacy_reference(
+                                ref=fragment.ref.model_dump(mode="json")
+                            )
+                        result.append(
+                            PromptFragment(
+                                kind="entry",
+                                ref=locator,
+                                snapshot=entry.prompt,
+                                source_revision=entry.revision,
+                                weight=fragment.weight,
+                                order=len(result) * 10 + 10,
+                            )
+                        )
+                    warnings.append(
+                        PromptWarning(
+                            code="legacy_reference_expanded",
+                            message="A legacy source ref was expanded to reviewed atomic refs.",
+                            hint="Review the expanded refs and copied per-atom weight.",
+                            ref=fragment.ref,
+                            details={
+                                "polarity": polarity,
+                                "position": input_index + 1,
+                                "new_refs": [
+                                    item.model_dump(mode="json")
+                                    for item in expansion
+                                ],
+                                "count": len(expansion),
+                                "weight_policy": "copied_to_each_atom",
+                                "resolution": "reviewed_registry_expansion",
+                            },
+                        )
+                    )
+                    changed = True
+                    continue
+                if "," in fragment.snapshot:
+                    raise PromptLibraryError.unresolved_legacy_reference(
+                        ref=fragment.ref.model_dump(mode="json")
+                    )
+            result.append(fragment)
+        return result, changed
 
     def _resolve(
         self,
@@ -140,12 +273,46 @@ class PromptComposer:
 
     @staticmethod
     def _render(fragments: Iterable[PromptFragment]) -> str:
-        rendered = [
-            text
+        return ",".join(
+            render_fragment(fragment.snapshot, fragment.weight)
             for fragment in fragments
-            if (text := render_fragment(fragment.snapshot, fragment.weight))
+        )
+
+    @staticmethod
+    def _renumber(fragments: list[PromptFragment]) -> list[PromptFragment]:
+        return [
+            fragment.model_copy(update={"order": (index + 1) * 10})
+            for index, fragment in enumerate(fragments)
         ]
-        return ", ".join(rendered)
+
+    def _legacy_registry(
+        self,
+    ) -> dict[tuple[Polarity, str, str], list[PromptEntryRef]]:
+        path = (
+            self.store.root
+            / "migrations"
+            / "comma-atomic-v1"
+            / "legacy-ref-registry.json"
+        )
+        if not path.exists():
+            return {}
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            result: dict[tuple[Polarity, str, str], list[PromptEntryRef]] = {}
+            for item in payload.get("expansions", []):
+                source = PromptEntryRef.model_validate(item["source"])
+                result[
+                    (source.polarity, source.category_id, source.entry_id)
+                ] = [
+                    PromptEntryRef.model_validate(locator)
+                    for locator in item["derived"]
+                ]
+            return result
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise PromptLibraryError.invalid_document(
+                "migrations/comma-atomic-v1/legacy-ref-registry.json",
+                str(exc),
+            ) from exc
 
     @staticmethod
     def _duplicate_warning(ref: PromptEntryRef) -> PromptWarning:
