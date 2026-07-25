@@ -76,6 +76,32 @@ class PromptLibraryError(Exception):
         )
 
     @classmethod
+    def already_active(cls, resource_type: str, resource_id: str) -> "PromptLibraryError":
+        return cls(
+            code="resource_already_active",
+            message=f"{resource_type} '{resource_id}' is already active",
+            hint="Reload the resource and restore only archived data.",
+            status_code=409,
+            details={"resource_type": resource_type, "resource_id": resource_id},
+        )
+
+    @classmethod
+    def archived_parent(
+        cls, polarity: str, category_id: str, entry_id: str
+    ) -> "PromptLibraryError":
+        return cls(
+            code="parent_category_archived",
+            message=f"entry '{entry_id}' cannot be restored while category '{category_id}' is archived",
+            hint="Restore the parent category first, then retry the entry restore.",
+            status_code=409,
+            details={
+                "polarity": polarity,
+                "category_id": category_id,
+                "entry_id": entry_id,
+            },
+        )
+
+    @classmethod
     def invalid_document(cls, path: str, reason: str) -> "PromptLibraryError":
         return cls(
             code="invalid_document",

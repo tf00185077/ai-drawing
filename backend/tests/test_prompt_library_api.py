@@ -209,6 +209,7 @@ def test_openapi_contains_prompt_library_route_table() -> None:
         "/api/prompt-library/search",
         "/api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}",
         "/api/prompt-library/archive",
+        "/api/prompt-library/restore",
         "/api/prompt-library/compose",
         "/api/prompt-library/combinations",
         "/api/prompt-library/combinations/{combination_id}",
@@ -222,3 +223,120 @@ def test_openapi_contains_prompt_library_route_table() -> None:
         "get",
         "put",
     }
+    assert "post" in paths["/api/prompt-library/restore"]
+
+
+def _archive_via_api(client: TestClient, resource_type: str) -> dict[str, object]:
+    current = client.get("/api/prompt-library/categories/positive/clothing").json()
+    payload: dict[str, object] = {
+        "resource_type": resource_type,
+        "resource_id": "clothing" if resource_type == "category" else "dress",
+        "polarity": "positive",
+        "expected_revision": current["category"]["revision"],
+        "expected_etag": current["etag"],
+    }
+    if resource_type == "entry":
+        payload["category_id"] = "clothing"
+    response = client.post("/api/prompt-library/archive", json=payload)
+    assert response.status_code == 200
+    return response.json()
+
+
+def test_category_restore_route_returns_new_versioned_category(
+    client_with_prompt_library: TestClient,
+) -> None:
+    archived = _archive_via_api(client_with_prompt_library, "category")["category"]
+    response = client_with_prompt_library.post(
+        "/api/prompt-library/restore",
+        json={
+            "resource_type": "category",
+            "resource_id": "clothing",
+            "polarity": "positive",
+            "expected_revision": archived["category"]["revision"],
+            "expected_etag": archived["etag"],
+        },
+    )
+
+    assert response.status_code == 200
+    versioned = response.json()["category"]
+    assert versioned["category"]["archived"] is False
+    assert versioned["category"]["revision"] == archived["category"]["revision"] + 1
+    assert versioned["etag"] != archived["etag"]
+
+
+def test_entry_restore_route_returns_entry_and_parent_version(
+    client_with_prompt_library: TestClient,
+) -> None:
+    archived = _archive_via_api(client_with_prompt_library, "entry")
+    response = client_with_prompt_library.post(
+        "/api/prompt-library/restore",
+        json={
+            "resource_type": "entry",
+            "resource_id": "dress",
+            "polarity": "positive",
+            "category_id": "clothing",
+            "expected_revision": archived["category"]["category"]["revision"],
+            "expected_etag": archived["category"]["etag"],
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["entry"]["archived"] is False
+    assert body["entry_revision"] == body["entry"]["revision"]
+    assert body["category"]["category"]["revision"] == (
+        archived["category"]["category"]["revision"] + 1
+    )
+
+
+def test_restore_conflict_is_actionable(client_with_prompt_library: TestClient) -> None:
+    response = client_with_prompt_library.post(
+        "/api/prompt-library/restore",
+        json={
+            "resource_type": "category",
+            "resource_id": "clothing",
+            "polarity": "positive",
+            "expected_revision": 999,
+            "expected_etag": "stale",
+        },
+    )
+
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert detail["code"] == "revision_conflict"
+    assert detail["message"]
+    assert detail["hint"]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "resource_type": "combination",
+            "resource_id": "portrait-dress",
+            "polarity": "positive",
+            "expected_revision": 1,
+        },
+        {
+            "resource_type": "entry",
+            "resource_id": "dress",
+            "polarity": "positive",
+            "expected_revision": 1,
+        },
+        {
+            "resource_type": "category",
+            "resource_id": "clothing",
+            "polarity": "positive",
+            "category_id": "clothing",
+            "expected_revision": 1,
+        },
+    ],
+)
+def test_restore_rejects_unsupported_or_invalid_locator_shapes(
+    client_with_prompt_library: TestClient, payload: dict[str, object]
+) -> None:
+    response = client_with_prompt_library.post(
+        "/api/prompt-library/restore", json=payload
+    )
+
+    assert response.status_code == 422

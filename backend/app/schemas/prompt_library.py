@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from typing import Literal
+
+from pydantic import Field, model_validator
 
 from app.core.prompt_library_models import (
     CombinationId,
@@ -122,6 +124,24 @@ class ArchiveRequest(ConcurrencyToken):
     resource_id: CombinationId
     polarity: Polarity | None = None
     category_id: Slug | None = None
+
+
+RestoreResourceType = Literal["category", "entry"]
+
+
+class RestoreRequest(ConcurrencyToken):
+    resource_type: RestoreResourceType
+    resource_id: Slug
+    polarity: Polarity
+    category_id: Slug | None = None
+
+    @model_validator(mode="after")
+    def validate_locator(self) -> "RestoreRequest":
+        if self.resource_type == "entry" and self.category_id is None:
+            raise ValueError("category_id is required for entry restore")
+        if self.resource_type == "category" and self.category_id is not None:
+            raise ValueError("category_id is not allowed for category restore")
+        return self
 
 
 class ComposeRequest(StrictModel):
