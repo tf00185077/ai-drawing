@@ -2,34 +2,215 @@
   "schema_version": 1,
   "id": "niji基礎瑟瑟",
   "name_zh": "niji基礎瑟瑟",
-  "description_zh": "Niji 基礎正向與負向提示詞組合",
+  "description_zh": "Prompt Workbench 儲存組合",
   "aliases": [],
-  "keywords": [
-    "niji",
-    "Anima"
-  ],
+  "keywords": [],
   "order": 10,
-  "revision": 1,
+  "revision": 2,
   "archived": false,
   "legacy_template": false,
   "positive": [
     {
       "kind": "literal",
       "ref": null,
-      "snapshot": "masterpiece, best quality, high-quality Anima anime illustration, daylight niji coloring, explicit, <character>, <suit>, <place>, <action>, <atmosphere>",
+      "snapshot": "masterpiece",
       "source_revision": null,
       "weight": 1.0,
       "order": 10
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "best quality",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 20
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "high-quality Anima anime illustration",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 30
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "daylight niji coloring",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 40
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "explicit",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 50
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "<character>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 60
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "<suit>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 70
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "<place>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 80
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "<action>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 90
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "<atmosphere>",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 100
     }
   ],
   "negative": [
     {
       "kind": "literal",
       "ref": null,
-      "snapshot": "worst quality, low quality, score_1, score_2, score_3, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, watermark, signature, username",
+      "snapshot": "worst quality",
       "source_revision": null,
       "weight": 1.0,
       "order": 10
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "low quality",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 20
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "score_1",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 30
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "score_2",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 40
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "score_3",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 50
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "artist name",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 60
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "bad anatomy",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 70
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "bad hands",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 80
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "missing fingers",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 90
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "extra digit",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 100
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "fewer digits",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 110
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "blurry",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 120
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "watermark",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 130
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "signature",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 140
+    },
+    {
+      "kind": "literal",
+      "ref": null,
+      "snapshot": "username",
+      "source_revision": null,
+      "weight": 1.0,
+      "order": 150
     }
   ],
   "positive_prompt_snapshot": "masterpiece, best quality, high-quality Anima anime illustration, daylight niji coloring, explicit, <character>, <suit>, <place>, <action>, <atmosphere>",
