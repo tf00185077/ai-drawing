@@ -52,6 +52,12 @@ const reloadedCategory = {
   category: { ...versionedCategory.category, name_zh: "新版品質", revision: 8 },
   etag: "etag-8",
 };
+function versionAt(revision: number, overrides: Partial<typeof versionedCategory.category> = {}) {
+  return {
+    category: { ...versionedCategory.category, revision, ...overrides },
+    etag: `etag-${revision}`,
+  };
+}
 const writeResponse = { category: null, combination: null, entry: null, entry_revision: null, affected_combinations: [] };
 
 function renderAt(path = "/prompt-library/categories/positive/quality-ratings") {
@@ -107,11 +113,20 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByText("etag-8")).toBeVisible();
   });
 
-  it("confirms category archive, skips a declined archive, and restores archived categories", async () => {
-    vi.mocked(getPromptCategory).mockResolvedValue(versionedCategory);
+  it("reloads category archive/restore state, preserves archived entries, and uses each new token", async () => {
+    const afterArchive = versionAt(8, { archived: true });
+    const afterRestore = versionAt(9, { archived: false });
+    const afterSave = versionAt(10, { name_zh: "恢復後品質" });
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(versionedCategory)
+      .mockResolvedValueOnce(afterArchive)
+      .mockResolvedValueOnce(afterRestore)
+      .mockResolvedValueOnce(afterSave);
     vi.mocked(archivePromptResource).mockResolvedValue(writeResponse);
+    vi.mocked(restorePromptResource).mockResolvedValue(writeResponse);
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
     confirmSpy.mockReturnValueOnce(false).mockReturnValueOnce(true);
-    const view = renderAt();
+    renderAt();
     await screen.findByRole("heading", { name: "品質評分" });
     fireEvent.click(screen.getByRole("button", { name: "封存分類" }));
     expect(archivePromptResource).not.toHaveBeenCalled();
@@ -119,15 +134,22 @@ describe("PromptCategoryDetail", () => {
     await waitFor(() => expect(archivePromptResource).toHaveBeenCalledWith({
       resource_type: "category", resource_id: "quality-ratings", polarity: "positive", expected_revision: 7, expected_etag: "etag-7",
     }));
+    expect(await screen.findByText("Revision 8")).toBeVisible();
 
-    view.unmount();
-    vi.mocked(getPromptCategory).mockResolvedValue(archivedCategory);
-    vi.mocked(restorePromptResource).mockResolvedValue(writeResponse);
-    renderAt();
-    fireEvent.click(await screen.findByRole("button", { name: "恢復分類" }));
+    fireEvent.click(screen.getByRole("button", { name: "恢復分類" }));
     await waitFor(() => expect(restorePromptResource).toHaveBeenCalledWith({
-      resource_type: "category", resource_id: "quality-ratings", polarity: "positive", expected_revision: 7, expected_etag: "etag-7",
+      resource_type: "category", resource_id: "quality-ratings", polarity: "positive", expected_revision: 8, expected_etag: "etag-8",
     }));
+    expect(await screen.findByText("Revision 9")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "已封存詞條" }));
+    expect(screen.getByText("舊風格")).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("分類中文名稱"), { target: { value: "恢復後品質" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(putPromptCategory).toHaveBeenCalledWith("positive", "quality-ratings", expect.objectContaining({
+      expected_revision: 9, expected_etag: "etag-9",
+    })));
+    expect(getPromptCategory).toHaveBeenCalledTimes(4);
   });
 
   it("preserves category draft and displays an actionable mutation error", async () => {
@@ -180,10 +202,39 @@ describe("PromptCategoryDetail", () => {
     expect(await screen.findByText("已同步更新 2 個組合：combo-a、combo-b")).toBeVisible();
   });
 
-  it("archives and restores entries with confirmation and the latest parent token", async () => {
-    vi.mocked(getPromptCategory).mockResolvedValue(versionedCategory);
+  it("clears an affected-combination notice on the next mutation and empty response", async () => {
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(versionedCategory)
+      .mockResolvedValueOnce(versionAt(8))
+      .mockResolvedValueOnce(versionAt(9));
+    vi.mocked(putPromptEntry)
+      .mockResolvedValueOnce({ ...writeResponse, affected_combinations: ["combo-a"] })
+      .mockResolvedValueOnce(writeResponse);
+    renderAt();
+    fireEvent.click(await screen.findByRole("button", { name: "編輯 masterpiece" }));
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(await screen.findByText("已同步更新 1 個組合：combo-a")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "編輯 masterpiece" }));
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(screen.queryByText("已同步更新 1 個組合：combo-a")).not.toBeInTheDocument();
+    await waitFor(() => expect(getPromptCategory).toHaveBeenCalledTimes(3));
+    expect(screen.queryByText("已同步更新 1 個組合：combo-a")).not.toBeInTheDocument();
+  });
+
+  it("reloads entry archive/restore state and uses reloaded tokens for later writes", async () => {
+    const afterArchive = versionAt(8, { entries: [{ ...activeEntry, archived: true }, archivedEntry] });
+    const restoredOldEntry = { ...archivedEntry, archived: false };
+    const afterRestore = versionAt(9, { entries: [{ ...activeEntry, archived: true }, restoredOldEntry] });
+    const afterEdit = versionAt(10, { entries: [{ ...activeEntry, archived: true }, restoredOldEntry] });
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(versionedCategory)
+      .mockResolvedValueOnce(afterArchive)
+      .mockResolvedValueOnce(afterRestore)
+      .mockResolvedValueOnce(afterEdit);
     vi.mocked(archivePromptResource).mockResolvedValue(writeResponse);
     vi.mocked(restorePromptResource).mockResolvedValue(writeResponse);
+    vi.mocked(putPromptEntry).mockResolvedValue(writeResponse);
     confirmSpy.mockReturnValueOnce(false).mockReturnValueOnce(true);
     renderAt();
     const activeCard = (await screen.findByText("傑作")).closest("article")!;
@@ -193,11 +244,20 @@ describe("PromptCategoryDetail", () => {
     await waitFor(() => expect(archivePromptResource).toHaveBeenCalledWith({
       resource_type: "entry", resource_id: "masterpiece", category_id: "quality-ratings", polarity: "positive", expected_revision: 7, expected_etag: "etag-7",
     }));
+    expect(await screen.findByText("Revision 8")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "已封存詞條" }));
     fireEvent.click(within(screen.getByText("舊風格").closest("article")!).getByRole("button", { name: "恢復" }));
     await waitFor(() => expect(restorePromptResource).toHaveBeenCalledWith({
-      resource_type: "entry", resource_id: "old-style", category_id: "quality-ratings", polarity: "positive", expected_revision: 7, expected_etag: "etag-7",
+      resource_type: "entry", resource_id: "old-style", category_id: "quality-ratings", polarity: "positive", expected_revision: 8, expected_etag: "etag-8",
     }));
+    expect(await screen.findByText("Revision 9")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "使用中詞條" }));
+    fireEvent.click(screen.getByRole("button", { name: "編輯 old-style" }));
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    await waitFor(() => expect(putPromptEntry).toHaveBeenCalledWith("positive", "quality-ratings", "old-style", expect.objectContaining({
+      expected_revision: 9, expected_etag: "etag-9",
+    })));
+    expect(getPromptCategory).toHaveBeenCalledTimes(4);
   });
 
   it("keeps a rejected entry editor and draft mounted", async () => {
@@ -232,10 +292,25 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByText("請先恢復分類")).toBeVisible();
   });
 
-  it("rejects invalid polarity without fetching and provides loading/error retry", async () => {
+  it("rejects invalid polarity without fetching", async () => {
     renderAt("/prompt-library/categories/neutral/quality-ratings");
     expect(await screen.findByRole("alert")).toHaveTextContent("分類類型無效");
     expect(getPromptCategory).not.toHaveBeenCalled();
+  });
+
+  it("shows loading and fetch errors and retries the category request", async () => {
+    const initialRequest = deferred<typeof versionedCategory>();
+    vi.mocked(getPromptCategory)
+      .mockReturnValueOnce(initialRequest.promise)
+      .mockResolvedValueOnce(versionedCategory);
+    renderAt();
+    expect(screen.getByRole("status")).toHaveTextContent("載入分類中");
+    await act(async () => initialRequest.reject(new Error("暫時無法讀取")));
+    expect(await screen.findByRole("alert")).toHaveTextContent("暫時無法讀取");
+    fireEvent.click(screen.getByRole("button", { name: "重新載入" }));
+    expect(screen.getByRole("status")).toHaveTextContent("載入分類中");
+    expect(await screen.findByRole("heading", { name: "品質評分" })).toBeVisible();
+    expect(getPromptCategory).toHaveBeenCalledTimes(2);
   });
 
   it("clears the previous category as soon as route params change", async () => {
@@ -262,9 +337,102 @@ describe("PromptCategoryDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
     fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
     expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
     await act(async () => { oldMutation.resolve(writeResponse); await oldMutation.promise; });
     await waitFor(() => expect(getPromptCategory).toHaveBeenCalledTimes(2));
     expect(screen.getByRole("heading", { name: "不良結構" })).toBeVisible();
+  });
+
+  it("rejects an old-route write without changing route B error, loading, or controls", async () => {
+    const oldMutation = deferred<typeof writeResponse>();
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"));
+    vi.mocked(putPromptCategory).mockReturnValue(oldMutation.promise);
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(await screen.findByRole("button", { name: "儲存分類" }));
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+    await act(async () => oldMutation.reject(new Error("A 寫入失敗")));
+    expect(screen.queryByText("A 寫入失敗")).not.toBeInTheDocument();
+    expect(screen.queryByText("載入分類中…")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+  });
+
+  it("ignores an old post-write reload that resolves after route B", async () => {
+    const oldReload = deferred<ReturnType<typeof categoryFor>>();
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockReturnValueOnce(oldReload.promise)
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(await screen.findByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(getPromptCategory).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    await act(async () => oldReload.resolve(categoryFor("quality-ratings", "positive", "舊分類重載")));
+    expect(screen.getByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "舊分類重載" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+  });
+
+  it("rejects an old post-write reload without changing route B", async () => {
+    const oldReload = deferred<ReturnType<typeof categoryFor>>();
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockReturnValueOnce(oldReload.promise)
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(await screen.findByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(getPromptCategory).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+    await act(async () => oldReload.reject(new Error("A reload 失敗")));
+    expect(screen.queryByText("A reload 失敗")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+  });
+
+  it("does not let an old operation finally clear route B's newer busy state", async () => {
+    const oldMutation = deferred<typeof writeResponse>();
+    const currentMutation = deferred<typeof writeResponse>();
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"))
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"));
+    vi.mocked(putPromptCategory)
+      .mockReturnValueOnce(oldMutation.promise)
+      .mockReturnValueOnce(currentMutation.promise);
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(await screen.findByRole("button", { name: "儲存分類" }));
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    expect(screen.getByRole("button", { name: "處理中…" })).toBeDisabled();
+    await act(async () => oldMutation.reject(new Error("舊操作失敗")));
+    expect(screen.getByRole("button", { name: "處理中…" })).toBeDisabled();
+    await act(async () => currentMutation.resolve(writeResponse));
+    await waitFor(() => expect(screen.getByRole("button", { name: "儲存分類" })).toBeEnabled());
+  });
+
+  it("clears affected-combination notices when navigating to another category", async () => {
+    vi.mocked(getPromptCategory)
+      .mockResolvedValueOnce(categoryFor("quality-ratings", "positive", "品質評分"))
+      .mockResolvedValueOnce(versionAt(8))
+      .mockResolvedValueOnce(categoryFor("bad-anatomy", "negative", "不良結構"));
+    vi.mocked(putPromptEntry).mockResolvedValue({ ...writeResponse, affected_combinations: ["combo-a"] });
+    renderNavigable("/prompt-library/categories/positive/quality-ratings");
+    fireEvent.click(await screen.findByRole("button", { name: "編輯 masterpiece" }));
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(await screen.findByText("已同步更新 1 個組合：combo-a")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "前往不良結構" }));
+    expect(await screen.findByRole("heading", { name: "不良結構" })).toBeVisible();
+    expect(screen.queryByText("已同步更新 1 個組合：combo-a")).not.toBeInTheDocument();
   });
 
   it("ignores an older request that resolves after the current route", async () => {
