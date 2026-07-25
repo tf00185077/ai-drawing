@@ -113,6 +113,16 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByText("etag-8")).toBeVisible();
   });
 
+  it("rejects a blank category order without writing", async () => {
+    vi.mocked(getPromptCategory).mockResolvedValue(versionedCategory);
+    renderAt();
+    fireEvent.change(await screen.findByLabelText("分類排序"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("分類排序必須是大於或等於 0 的整數");
+    expect(screen.getByLabelText("分類排序")).toHaveValue(null);
+    expect(putPromptCategory).not.toHaveBeenCalled();
+  });
+
   it("reloads category archive/restore state, preserves archived entries, and uses each new token", async () => {
     const afterArchive = versionAt(8, { archived: true });
     const afterRestore = versionAt(9, { archived: false });

@@ -109,6 +109,7 @@ export default function PromptWorkbench() {
   const [negativeRawDraftOpen, setNegativeRawDraftOpen] = useState(false);
   const [rawResetVersion, setRawResetVersion] = useState(0);
   const operationId = useRef(0);
+  const sourceRequestId = useRef(0);
   const labelMap = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -119,6 +120,9 @@ export default function PromptWorkbench() {
         setForms(descriptor.items || []);
       })
       .catch((reason) => setError(reason instanceof Error ? reason.message : String(reason)));
+    return () => {
+      sourceRequestId.current += 1;
+    };
   }, []);
 
   useEffect(() => {
@@ -161,15 +165,22 @@ export default function PromptWorkbench() {
   }
 
   async function openCategory(next: BrowserCategory) {
+    const requestId = ++sourceRequestId.current;
     setError("");
+    setCategory(next);
+    setEntries([]);
     try {
       const data = await getPromptCategory(next.polarity, next.id);
+      if (sourceRequestId.current !== requestId) return;
       setCategory({ ...data.category, etag: data.etag });
       setEntries(data.category.entries || []);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : String(reason)); }
+    } catch (reason) {
+      if (sourceRequestId.current === requestId) setError(reason instanceof Error ? reason.message : String(reason));
+    }
   }
 
   function changePolarity(polarity: PromptPolarity) {
+    sourceRequestId.current += 1;
     setActivePolarity(polarity);
     setCategory(null);
     setEntries([]);

@@ -16,7 +16,7 @@ function isPromptPolarity(value: string | undefined): value is PromptPolarity {
 function commaSeparated(value: string): string[] {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
-type CategoryDraft = Pick<PromptCategory, "name_zh" | "description_zh" | "order"> & { aliases: string; keywords: string };
+type CategoryDraft = Pick<PromptCategory, "name_zh" | "description_zh"> & { aliases: string; keywords: string; order: string };
 type OpenEditor = { mode: "create" } | { mode: "edit"; entry: PromptEntry };
 const fieldClass = "mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200 disabled:opacity-50";
 const actionClass = "rounded-lg px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40";
@@ -27,7 +27,7 @@ function draftFrom(category: PromptCategory): CategoryDraft {
     description_zh: category.description_zh,
     aliases: category.aliases.join(", "),
     keywords: category.keywords.join(", "),
-    order: category.order,
+    order: String(category.order),
   };
 }
 
@@ -136,7 +136,7 @@ export default function PromptCategoryDetail() {
       setError("請填寫分類中文名稱與說明");
       return;
     }
-    if (!Number.isInteger(order) || order < 0) {
+    if (categoryDraft!.order.trim() === "" || !Number.isInteger(order) || order < 0) {
       setError("分類排序必須是大於或等於 0 的整數");
       return;
     }
@@ -187,7 +187,7 @@ export default function PromptCategoryDetail() {
           <Field label="說明"><input aria-label="分類說明" disabled={busy} value={categoryDraft.description_zh} onChange={(event) => setCategoryDraft({ ...categoryDraft, description_zh: event.target.value })} className={fieldClass} /></Field>
           <Field label="別名（逗號分隔）"><input aria-label="分類別名" disabled={busy} value={categoryDraft.aliases} onChange={(event) => setCategoryDraft({ ...categoryDraft, aliases: event.target.value })} className={fieldClass} /></Field>
           <Field label="關鍵字（逗號分隔）"><input aria-label="分類關鍵字" disabled={busy} value={categoryDraft.keywords} onChange={(event) => setCategoryDraft({ ...categoryDraft, keywords: event.target.value })} className={fieldClass} /></Field>
-          <Field label="排序"><input aria-label="分類排序" type="number" min={0} disabled={busy} value={categoryDraft.order} onChange={(event) => setCategoryDraft({ ...categoryDraft, order: Number(event.target.value) })} className={fieldClass} /></Field>
+          <Field label="排序"><input aria-label="分類排序" type="number" min={0} disabled={busy} value={categoryDraft.order} onChange={(event) => setCategoryDraft({ ...categoryDraft, order: event.target.value })} className={fieldClass} /></Field>
         </div>
         <div className="mt-4 flex gap-2"><button type="button" disabled={busy} onClick={saveCategory} className={`${actionClass} bg-emerald-600`}>{busy ? "處理中…" : "儲存分類"}</button>{details.archived ? <button type="button" disabled={busy} onClick={restoreCategory} className={`${actionClass} bg-sky-600`}>恢復分類</button> : <button type="button" disabled={busy} onClick={archiveCategory} className={`${actionClass} bg-amber-700`}>封存分類</button>}</div>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><Metadata label="ETag" value={etag} /><Metadata label="項目數" value={String(details.entries.length)} /></dl>

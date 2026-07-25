@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useInRouterContext } from "react-router-dom";
 import type {
+  PromptCategory,
   PromptCategorySummary,
   PromptPolarity,
 } from "../types/api";
@@ -33,23 +34,30 @@ export default function PromptCategoryManagement() {
   const [order, setOrder] = useState("10");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<PromptCategorySummary | null>(null);
+  const [success, setSuccess] = useState<PromptCategory | null>(null);
+  const catalogRequestId = useRef(0);
 
   const loadCatalog = useCallback(async () => {
+    const requestId = ++catalogRequestId.current;
     setCatalogLoading(true);
     setCatalogError(null);
     try {
       const data = await getPromptCatalog();
-      setCatalog(data.categories ?? []);
+      if (catalogRequestId.current === requestId) setCatalog(data.categories ?? []);
     } catch (error) {
-      setCatalogError(error instanceof Error ? error.message : "分類清單載入失敗");
+      if (catalogRequestId.current === requestId) {
+        setCatalogError(error instanceof Error ? error.message : "分類清單載入失敗");
+      }
     } finally {
-      setCatalogLoading(false);
+      if (catalogRequestId.current === requestId) setCatalogLoading(false);
     }
   }, []);
 
   useEffect(() => {
     loadCatalog();
+    return () => {
+      catalogRequestId.current += 1;
+    };
   }, [loadCatalog]);
 
   const visibleCategories = useMemo(
@@ -78,7 +86,7 @@ export default function PromptCategoryManagement() {
         setSubmitError("請填寫中文名稱與分類說明");
         return;
       }
-      if (!Number.isInteger(orderNumber) || orderNumber < 0) {
+      if (order.trim() === "" || !Number.isInteger(orderNumber) || orderNumber < 0) {
         setSubmitError("排序必須是大於或等於 0 的整數");
         return;
       }
