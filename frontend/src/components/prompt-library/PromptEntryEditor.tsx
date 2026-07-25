@@ -62,7 +62,7 @@ export default function PromptEntryEditor({ mode, initial, submitting, existingI
       return;
     }
     const orderNumber = Number(order);
-    if (!Number.isInteger(orderNumber) || orderNumber < 0) {
+    if (order.trim() === "" || !Number.isInteger(orderNumber) || orderNumber < 0) {
       setError("排序必須是大於或等於 0 的整數");
       return;
     }
