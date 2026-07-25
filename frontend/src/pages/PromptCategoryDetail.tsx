@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPromptCategory } from "../components/prompt-library/promptLibraryApi";
 import type { PromptPolarity, PromptVersionedCategory } from "../types/api";
@@ -13,21 +13,36 @@ export default function PromptCategoryDetail() {
   const [category, setCategory] = useState<PromptVersionedCategory | null>(null);
   const [loading, setLoading] = useState(validPolarity);
   const [error, setError] = useState<string | null>(null);
+  const [retryGeneration, setRetryGeneration] = useState(0);
+  const requestGeneration = useRef(0);
 
-  const loadCategory = useCallback(async () => {
-    if (!validPolarity || !categoryId) return;
-    setLoading(true);
+  useEffect(() => {
+    const requestId = ++requestGeneration.current;
+    setCategory(null);
     setError(null);
-    try {
-      setCategory(await getPromptCategory(polarity, categoryId));
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "分類讀取失敗，請稍後重試");
-    } finally {
+    if (!validPolarity || !categoryId) {
       setLoading(false);
+      return;
     }
-  }, [categoryId, polarity, validPolarity]);
 
-  useEffect(() => { void loadCategory(); }, [loadCategory]);
+    setLoading(true);
+    void getPromptCategory(polarity, categoryId)
+      .then((loadedCategory) => {
+        if (requestGeneration.current === requestId) setCategory(loadedCategory);
+      })
+      .catch((loadError: unknown) => {
+        if (requestGeneration.current === requestId) {
+          setError(loadError instanceof Error ? loadError.message : "分類讀取失敗，請稍後重試");
+        }
+      })
+      .finally(() => {
+        if (requestGeneration.current === requestId) setLoading(false);
+      });
+
+    return () => {
+      if (requestGeneration.current === requestId) requestGeneration.current += 1;
+    };
+  }, [categoryId, polarity, retryGeneration, validPolarity]);
 
   if (!validPolarity || !categoryId) {
     return (
@@ -49,7 +64,7 @@ export default function PromptCategoryDetail() {
         <div role="alert" className="rounded-xl border border-red-500/50 bg-red-500/10 p-5 text-red-200">
           <h1 className="text-xl font-semibold">無法載入分類</h1>
           <p className="mt-2 text-sm">{error}</p>
-          <button type="button" onClick={loadCategory} className="mt-4 rounded-lg bg-red-700 px-3 py-2 text-sm text-white hover:bg-red-600">重新載入</button>
+          <button type="button" onClick={() => setRetryGeneration((value) => value + 1)} className="mt-4 rounded-lg bg-red-700 px-3 py-2 text-sm text-white hover:bg-red-600">重新載入</button>
         </div>
         <BackLink />
       </section>
@@ -83,11 +98,13 @@ export default function PromptCategoryDetail() {
           分類 ID
           <input aria-label="分類 ID" readOnly value={details.id} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200" />
         </label>
-        <Metadata label="ETag" value={etag} />
-        <Metadata label="排序" value={String(details.order)} />
-        <Metadata label="項目數" value={String(details.entries.length)} />
-        <Metadata label="別名" value={details.aliases.join("、") || "無"} />
-        <Metadata label="關鍵字" value={details.keywords.join("、") || "無"} />
+        <dl className="contents">
+          <Metadata label="ETag" value={etag} />
+          <Metadata label="排序" value={String(details.order)} />
+          <Metadata label="項目數" value={String(details.entries.length)} />
+          <Metadata label="別名" value={details.aliases.join("、") || "無"} />
+          <Metadata label="關鍵字" value={details.keywords.join("、") || "無"} />
+        </dl>
       </section>
     </div>
   );
