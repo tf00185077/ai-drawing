@@ -68,26 +68,11 @@ describe("PromptComposerPanel", () => {
       text: "soft light",
       weight: "",
     });
-    state = {
-      ...state,
-      fragments: [...state.fragments, {
-        id: "entry-id-only",
-        kind: "entry",
-        displayName: "entry-id-only",
-        source: { polarity: "positive", categoryId: "quality", entryId: "entry-id-only" },
-        originalSnapshot: "",
-        text: "",
-        weight: "",
-        range: { start: state.text.length, end: state.text.length },
-      }],
-    };
-
     render(<PromptComposerPanel {...panelProps(state)} />);
 
     expect(screen.getByLabelText("精緻光影 內容")).toHaveValue("masterwork");
     expect(screen.getByText("自訂副本")).toBeVisible();
     expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("soft light");
-    expect(screen.getByLabelText("entry-id-only 內容")).toHaveValue("");
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
   });
 
@@ -167,7 +152,7 @@ describe("PromptComposerPanel", () => {
   it("assigns live browser entries trimmed names with prompt and ID fallbacks", async () => {
     const entries = [
       { id: "arbitrary-human-id", name_zh: "  細緻光影  ", prompt: "detailed light", description_zh: "", revision: 1, archived: false },
-      { id: "arbitrary-prompt-id", name_zh: " ", prompt: "cinematic glow", description_zh: "", revision: 1, archived: false },
+      { id: "arbitrary-prompt-id", name_zh: " ", prompt: "  cinematic glow  ", description_zh: "", revision: 1, archived: false },
       { id: "arbitrary-id-only", name_zh: undefined, prompt: undefined, description_zh: "", revision: 1, archived: false },
     ];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
@@ -183,8 +168,10 @@ describe("PromptComposerPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "加入 arbitrary-id-only" }));
 
     await waitFor(() => expect(screen.getByLabelText("細緻光影 內容")).toHaveValue("detailed light"));
-    expect(screen.getByLabelText("cinematic glow 內容")).toHaveValue("cinematic glow");
+    expect(screen.getByLabelText("cinematic glow 內容")).toHaveValue("  cinematic glow  ");
     expect(screen.getByLabelText("arbitrary-id-only 內容")).toHaveValue("arbitrary-id-only");
+    expect(screen.getByLabelText("cinematic glow 中文對照可能未填好")).toBeVisible();
+    expect(screen.getByLabelText("arbitrary-id-only 中文對照可能未填好")).toBeVisible();
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
   });
 });

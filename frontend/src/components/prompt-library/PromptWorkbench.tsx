@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { PromptPolarity } from "../../types/api";
 import { appendFragment, commitRawText, emptyComposition, moveFragment, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
-import PromptEntryBrowser, { type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
+import PromptEntryBrowser, { promptEntryContent, promptEntryLabel, type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
 import PromptOverview from "./PromptOverview";
 
 interface CombinationVersion {
@@ -94,8 +94,8 @@ export default function PromptWorkbench() {
     if (!category) return;
     const nextSequence = sequence + 1;
     setSequence(nextSequence);
-    const promptText = entry.prompt?.trim() || entry.id;
-    const displayName = entry.name_zh?.trim() || promptText;
+    const promptText = promptEntryContent(entry);
+    const displayName = promptEntryLabel(entry);
     const fragment = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: promptText, text: promptText, weight: "" };
     (activePolarity === "positive" ? setPositive : setNegative)((state) => appendFragment(state, fragment));
   }
