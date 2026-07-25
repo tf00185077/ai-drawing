@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import PromptWorkbench from "./PromptWorkbench";
 
@@ -70,8 +70,9 @@ describe("PromptWorkbench", () => {
 
     fireEvent.change(screen.getByLabelText("高品質 權重"), { target: { value: "1.2" } });
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("(masterpiece:1.2)");
-    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "(masterwork:1.2)" } });
+    fireEvent.change(screen.getByLabelText("高品質 內容"), { target: { value: "masterwork" } });
     expect(screen.getByLabelText("高品質 內容")).toHaveValue("masterwork");
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("(masterwork:1.2)");
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/entries/") && init?.method === "PUT")).toBe(false);
 
     fireEvent.change(screen.getByLabelText("組合 ID"), { target: { value: "my-quality" } });
@@ -138,8 +139,15 @@ describe("PromptWorkbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
 
-    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "edited positive" } });
-    fireEvent.change(screen.getByLabelText("Negative Prompt 最終文字"), { target: { value: "edited negative" } });
+    const positivePanel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
+    fireEvent.click(within(positivePanel).getByRole("button", { name: "自由文字模式" }));
+    fireEvent.change(within(positivePanel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "edited positive" } });
+    fireEvent.click(within(positivePanel).getByRole("button", { name: "套用" }));
+
+    const negativePanel = screen.getByRole("heading", { name: "Negative Prompt" }).closest("section")!;
+    fireEvent.click(within(negativePanel).getByRole("button", { name: "自由文字模式" }));
+    fireEvent.change(within(negativePanel).getByLabelText("Negative Prompt 自由文字草稿"), { target: { value: "edited negative" } });
+    fireEvent.click(within(negativePanel).getByRole("button", { name: "套用" }));
     fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
     fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
 
