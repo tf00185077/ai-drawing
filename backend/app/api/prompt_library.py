@@ -22,12 +22,15 @@ from app.schemas.prompt_library import (
     ComposeRequest,
     ComposeResponse,
     EntryWriteRequest,
+    LiteralConversionAcknowledgeRequest,
+    LiteralConversionAcknowledgeResponse,
     RestoreRequest,
     SearchResponse,
     VersionedCategory,
     VersionedCombination,
     WriteResponse,
 )
+from app.schemas.prompt_library_migration import CommaAtomicMigrationStatus
 
 
 router = APIRouter(prefix="/api/prompt-library", tags=["Prompt Library"])
@@ -45,6 +48,13 @@ def _call(operation: Callable[..., Result], *args, **kwargs) -> Result:
         raise HTTPException(
             status_code=error.status_code, detail=error.as_dict()
         ) from error
+
+
+@router.get("/migration-status", response_model=CommaAtomicMigrationStatus)
+def migration_status(
+    provider: PromptLibraryProvider = Depends(_provider),
+) -> CommaAtomicMigrationStatus:
+    return _call(provider.migration_status)
 
 
 @router.get("/catalog", response_model=CatalogResponse)
@@ -160,3 +170,19 @@ def save_combination(
     provider: PromptLibraryProvider = Depends(_provider),
 ) -> WriteResponse:
     return _call(provider.save_combination, combination_id, body)
+
+
+@router.post(
+    "/combinations/{combination_id}/acknowledge-literal-conversion",
+    response_model=LiteralConversionAcknowledgeResponse,
+)
+def acknowledge_literal_conversion(
+    combination_id: str,
+    body: LiteralConversionAcknowledgeRequest,
+    provider: PromptLibraryProvider = Depends(_provider),
+) -> LiteralConversionAcknowledgeResponse:
+    return _call(
+        provider.acknowledge_literal_conversion,
+        combination_id,
+        body,
+    )

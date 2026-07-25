@@ -8,12 +8,18 @@ from filelock import FileLock
 
 from app.core.prompt_library import FilePromptLibraryProvider
 from app.core.prompt_library_errors import PromptLibraryError
+from app.core.prompt_library_models import PromptEntryRef, PromptFragment
 from app.schemas.prompt_library import (
     ArchiveRequest,
     CategoryWriteRequest,
     CombinationWriteRequest,
     EntryWriteRequest,
+    LiteralConversionAcknowledgeRequest,
     RestoreRequest,
+)
+from app.schemas.prompt_library_migration import (
+    LegacyRefLocator,
+    ProvenanceResolutionRequest,
 )
 
 
@@ -30,10 +36,12 @@ def provider(tmp_path: Path) -> FilePromptLibraryProvider:
     _write_json(
         root / "manifest.json",
         {
-            "schema_version": 1,
+            "schema_version": 2,
             "library_id": "default",
             "name": "Test Prompt Library",
             "description_zh": "測試提示詞庫",
+            "comma_atomic_version": 1,
+            "comma_atomic_migration_required": False,
         },
     )
     _write_json(
@@ -119,6 +127,41 @@ def entry_write(**overrides: object) -> EntryWriteRequest:
     return EntryWriteRequest.model_validate(values | overrides)
 
 
+def write_unknown_legacy_combination(provider: FilePromptLibraryProvider) -> None:
+    _write_json(
+        provider.root / "combinations" / "unknown-legacy.json",
+        {
+            "schema_version": 1,
+            "id": "unknown-legacy",
+            "name_zh": "未知舊來源",
+            "description_zh": "測試阻擋來源診斷",
+            "aliases": [],
+            "keywords": [],
+            "order": 30,
+            "revision": 1,
+            "archived": False,
+            "legacy_template": False,
+            "positive": [
+                {
+                    "kind": "entry",
+                    "ref": {
+                        "polarity": "positive",
+                        "category_id": "removed",
+                        "entry_id": "legacy-group",
+                    },
+                    "snapshot": "a, b",
+                    "source_revision": 1,
+                    "weight": 1.2,
+                    "order": 10,
+                }
+            ],
+            "negative": [],
+            "positive_prompt_snapshot": "(a, b:1.2)",
+            "negative_prompt_snapshot": "",
+        },
+    )
+
+
 def test_existing_write_requires_matching_revision_and_etag(provider) -> None:
     current = provider.get_category("positive", "clothing")
     with pytest.raises(PromptLibraryError) as revision:
@@ -192,7 +235,7 @@ def test_entry_correction_repairs_referencing_combinations(provider) -> None:
     referenced = next(item for item in combination.combination.positive if item.ref)
     assert referenced.snapshot == "evening dress"
     assert referenced.source_revision == saved.entry_revision
-    assert combination.combination.positive_prompt_snapshot == "1girl, evening dress"
+    assert combination.combination.positive_prompt_snapshot == "1girl,evening dress"
     assert saved.affected_combinations == ["portrait-dress"]
 
 
@@ -209,7 +252,314 @@ def test_lazy_read_repairs_partial_eager_update(provider) -> None:
     loaded = provider.get_combination("portrait-dress")
     assert loaded.repaired is True
     assert loaded.combination.revision == before + 1
-    assert loaded.combination.positive_prompt_snapshot == "1girl, corrected dress"
+    assert loaded.combination.positive_prompt_snapshot == "1girl,corrected dress"
+
+
+def test_unresolved_legacy_ref_loads_literal_fallback_without_persisting(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    path = provider.root / "combinations" / "unknown-legacy.json"
+    before = path.read_bytes()
+
+    loaded = provider.get_combination("unknown-legacy")
+
+    assert [item.kind for item in loaded.combination.positive] == [
+        "literal",
+        "literal",
+    ]
+    assert [item.snapshot for item in loaded.combination.positive] == ["a", " b"]
+    assert [item.weight for item in loaded.combination.positive] == [1.2, 1.2]
+    assert loaded.combination.positive_prompt_snapshot == "(a:1.2),( b:1.2)"
+    assert [item.code for item in loaded.warnings] == [
+        "legacy_reference_unresolved"
+    ]
+    assert len(loaded.blocking_diagnostics) == 1
+    assert loaded.blocking_diagnostics[0].polarity == "positive"
+    assert loaded.blocking_diagnostics[0].fallback_start_position == 1
+    assert loaded.blocking_diagnostics[0].fallback_count == 2
+    assert loaded.document_context_token
+    assert path.read_bytes() == before
+
+
+def test_ordinary_update_and_save_as_cannot_drop_blocking_diagnostic(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    loaded = provider.get_combination("unknown-legacy")
+    edited_literals = [
+        PromptFragment(kind="literal", snapshot="edited", order=10)
+    ]
+
+    with pytest.raises(PromptLibraryError) as update:
+        provider.save_combination(
+            "unknown-legacy",
+            CombinationWriteRequest(
+                name_zh="未知舊來源",
+                description_zh="普通編輯不是確認",
+                positive=edited_literals,
+                expected_revision=loaded.combination.revision,
+                expected_etag=loaded.etag,
+            ),
+        )
+    assert update.value.code == "unresolved_legacy_provenance"
+
+    with pytest.raises(PromptLibraryError) as save_as:
+        provider.save_combination(
+            "copied-legacy",
+            CombinationWriteRequest(
+                name_zh="複製舊來源",
+                description_zh="另存也不可繞過",
+                positive=edited_literals,
+                expected_revision=0,
+                source_combination_id="unknown-legacy",
+            ),
+        )
+    assert save_as.value.code == "unresolved_legacy_provenance"
+    assert not (provider.root / "combinations" / "copied-legacy.json").exists()
+
+
+def test_explicit_literal_conversion_token_allows_update(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    loaded = provider.get_combination("unknown-legacy")
+    assert loaded.document_context_token is not None
+    acknowledgement = provider.acknowledge_literal_conversion(
+        "unknown-legacy",
+        LiteralConversionAcknowledgeRequest(
+            document_context_token=loaded.document_context_token
+        ),
+    )
+
+    saved = provider.save_combination(
+        "unknown-legacy",
+        CombinationWriteRequest(
+            name_zh="未知舊來源",
+            description_zh="已明示轉為文字",
+            positive=loaded.combination.positive,
+            expected_revision=loaded.combination.revision,
+            expected_etag=loaded.etag,
+            document_context_token=loaded.document_context_token,
+            literal_conversion_token=acknowledgement.literal_conversion_token,
+        ),
+    )
+
+    assert saved.combination is not None
+    assert saved.combination.blocking_diagnostics == []
+    assert [item.kind for item in saved.combination.combination.positive] == [
+        "literal",
+        "literal",
+    ]
+
+
+def test_tampered_conversion_token_and_partial_resolution_fail_closed(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    loaded = provider.get_combination("unknown-legacy")
+    assert loaded.document_context_token is not None
+    acknowledgement = provider.acknowledge_literal_conversion(
+        "unknown-legacy",
+        LiteralConversionAcknowledgeRequest(
+            document_context_token=loaded.document_context_token
+        ),
+    )
+    request_values = {
+        "name_zh": "未知舊來源",
+        "description_zh": "不可接受竄改 token",
+        "positive": loaded.combination.positive,
+        "expected_revision": loaded.combination.revision,
+        "expected_etag": loaded.etag,
+        "document_context_token": loaded.document_context_token,
+    }
+
+    with pytest.raises(PromptLibraryError) as tampered:
+        provider.save_combination(
+            "unknown-legacy",
+            CombinationWriteRequest(
+                **request_values,
+                literal_conversion_token=(
+                    acknowledgement.literal_conversion_token + "tampered"
+                ),
+            ),
+        )
+    assert tampered.value.code == "invalid_document_resolution_token"
+
+    with pytest.raises(PromptLibraryError) as partial:
+        provider.save_combination(
+            "unknown-legacy",
+            CombinationWriteRequest(**request_values),
+        )
+    assert partial.value.code == "unresolved_legacy_provenance"
+
+
+def test_explicit_replacement_ref_resolves_block(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    loaded = provider.get_combination("unknown-legacy")
+    assert loaded.document_context_token is not None
+    diagnostic_id = loaded.blocking_diagnostics[0].id
+    replacement = PromptEntryRef(
+        polarity="positive",
+        category_id="clothing",
+        entry_id="dress",
+    )
+
+    saved = provider.save_combination(
+        "unknown-legacy",
+        CombinationWriteRequest(
+            name_zh="替換舊來源",
+            description_zh="使用明確詞庫來源",
+            positive=[
+                PromptFragment(
+                    kind="entry",
+                    ref=replacement,
+                    snapshot="dress",
+                    source_revision=1,
+                    order=10,
+                )
+            ],
+            expected_revision=loaded.combination.revision,
+            expected_etag=loaded.etag,
+            document_context_token=loaded.document_context_token,
+            provenance_resolutions=[
+                ProvenanceResolutionRequest(
+                    document_context_token=loaded.document_context_token,
+                    diagnostic_id=diagnostic_id,
+                    action="replacement_entries",
+                    replacement_refs=[
+                        LegacyRefLocator(
+                            polarity="positive",
+                            category_id="clothing",
+                            entry_id="dress",
+                        )
+                    ],
+                )
+            ],
+        ),
+    )
+
+    assert saved.combination is not None
+    assert saved.combination.combination.positive[0].ref == replacement
+
+
+def test_unrelated_ref_cannot_resolve_while_diagnostic_fallback_remains(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    loaded = provider.get_combination("unknown-legacy")
+    assert loaded.document_context_token is not None
+    diagnostic_id = loaded.blocking_diagnostics[0].id
+    replacement = PromptEntryRef(
+        polarity="positive",
+        category_id="clothing",
+        entry_id="dress",
+    )
+
+    with pytest.raises(PromptLibraryError) as captured:
+        provider.save_combination(
+            "unknown-legacy",
+            CombinationWriteRequest(
+                name_zh="錯誤替換",
+                description_zh="fallback 仍在，額外 ref 不算替換",
+                positive=[
+                    *loaded.combination.positive,
+                    PromptFragment(
+                        kind="entry",
+                        ref=replacement,
+                        snapshot="dress",
+                        source_revision=1,
+                        order=30,
+                    ),
+                ],
+                expected_revision=loaded.combination.revision,
+                expected_etag=loaded.etag,
+                document_context_token=loaded.document_context_token,
+                provenance_resolutions=[
+                    ProvenanceResolutionRequest(
+                        document_context_token=loaded.document_context_token,
+                        diagnostic_id=diagnostic_id,
+                        action="replacement_entries",
+                        replacement_refs=[
+                            LegacyRefLocator(
+                                polarity="positive",
+                                category_id="clothing",
+                                entry_id="dress",
+                            )
+                        ],
+                    )
+                ],
+            ),
+        )
+
+    assert captured.value.code == "unresolved_legacy_provenance"
+
+
+def test_replacement_preserves_unrelated_equal_literal(
+    provider: FilePromptLibraryProvider,
+) -> None:
+    write_unknown_legacy_combination(provider)
+    path = provider.root / "combinations" / "unknown-legacy.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["positive"].insert(
+        0,
+        {
+            "kind": "literal",
+            "snapshot": "a",
+            "weight": 1.0,
+            "order": 5,
+        },
+    )
+    _write_json(path, document)
+    loaded = provider.get_combination("unknown-legacy")
+    diagnostic = loaded.blocking_diagnostics[0]
+    replacement = PromptEntryRef(
+        polarity="positive",
+        category_id="clothing",
+        entry_id="dress",
+    )
+
+    saved = provider.save_combination(
+        "unknown-legacy",
+        CombinationWriteRequest(
+            name_zh="保留同文 literal",
+            description_zh="只替換診斷範圍",
+            positive=[
+                loaded.combination.positive[0],
+                PromptFragment(
+                    kind="entry",
+                    ref=replacement,
+                    snapshot="dress",
+                    source_revision=1,
+                    order=20,
+                ),
+            ],
+            expected_revision=loaded.combination.revision,
+            expected_etag=loaded.etag,
+            document_context_token=loaded.document_context_token,
+            provenance_resolutions=[
+                ProvenanceResolutionRequest(
+                    document_context_token=loaded.document_context_token,
+                    diagnostic_id=diagnostic.id,
+                    action="replacement_entries",
+                    replacement_refs=[
+                        LegacyRefLocator(
+                            polarity="positive",
+                            category_id="clothing",
+                            entry_id="dress",
+                        )
+                    ],
+                )
+            ],
+        ),
+    )
+
+    assert [
+        (fragment.kind, fragment.snapshot)
+        for fragment in saved.combination.combination.positive
+    ] == [("literal", "a"), ("entry", "dress")]
 
 
 def test_archive_entry_uses_parent_token_and_marks_entry_archived(provider) -> None:

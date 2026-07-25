@@ -65,6 +65,14 @@ function installFetch(handler?: FetchHandler) {
     const url = String(input);
     const custom = await handler?.(url, init);
     if (custom) return custom;
+    if (url === "/api/prompt-library/migration-status") return response({
+      state: "finalized",
+      marker_present: false,
+      comma_atomic_ready: true,
+      atomic_enforcement_active: true,
+      run_id: null,
+      data_validated: true,
+    });
     if (url === "/api/prompt-library/catalog") return response(catalog);
     if (url === "/api/workflow-catalog/generation-forms") return response(forms);
     if (url === "/api/prompt-library/combinations/my-quality") return response(combinationDetail());
@@ -87,13 +95,26 @@ async function loadSaved(id = "my-quality") {
   fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
   await screen.findByLabelText("目前組合版本");
 }
-function composeResponse(id: string, revision: number, positive = [fragment("literal", "canonical", 10)]) {
+function renderedPrompt(fragments: ReturnType<typeof fragment>[]) {
+  return [...fragments]
+    .sort((left, right) => left.order - right.order)
+    .map((item) => item.weight === 1 ? item.snapshot : `(${item.snapshot}:${item.weight})`)
+    .join(",");
+}
+function composeResponse(
+  id: string,
+  revision: number,
+  positive: ReturnType<typeof fragment>[] = [],
+  negative: ReturnType<typeof fragment>[] = [],
+) {
+  const positivePrompt = renderedPrompt(positive);
+  const negativePrompt = renderedPrompt(negative);
   return {
-    positive_prompt: "canonical", negative_prompt: "", positive, negative: [], warnings: [], snapshot_repaired: false,
+    positive_prompt: positivePrompt, negative_prompt: negativePrompt, positive, negative, warnings: [], snapshot_repaired: false,
     saved_combination: {
       combination: {
         schema_version: 1, id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision, archived: false, legacy_template: false,
-        positive, negative: [], positive_prompt_snapshot: "canonical", negative_prompt_snapshot: "",
+        positive, negative, positive_prompt_snapshot: positivePrompt, negative_prompt_snapshot: negativePrompt,
       }, etag: `saved-${revision}`, repaired: false, warnings: [],
     },
   };
@@ -102,6 +123,28 @@ function composeResponse(id: string, revision: number, positive = [fragment("lit
 afterEach(() => vi.unstubAllGlobals());
 
 describe("PromptWorkbench saved combinations", () => {
+  it("reads only migration status and stays non-editing until finalized enforcement", async () => {
+    const fetchMock = installFetch((url) => {
+      if (url === "/api/prompt-library/migration-status") {
+        return response({
+          state: "validating",
+          marker_present: true,
+          comma_atomic_ready: false,
+          atomic_enforcement_active: true,
+          run_id: "migration-run",
+          data_validated: true,
+        });
+      }
+    });
+    render(<PromptWorkbench />);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("遷移尚未完成");
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      "/api/prompt-library/migration-status",
+    ]);
+    expect(screen.queryByLabelText("Positive Prompt 最終文字")).not.toBeInTheDocument();
+  });
+
   it("loads detail tokens, both polarities, order/weights/snapshots, names, repairs and warnings", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
@@ -111,12 +154,226 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("revision 3");
     expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("已修復");
     expect(screen.getByRole("alert")).toHaveTextContent("Backend 警告");
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt, (saved zh:1.2), saved id");
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt,(saved zh:1.2),saved id");
     expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("(saved blurry:0.8)");
     expect(screen.getByLabelText("current prompt 內容")).toHaveValue("saved prompt");
     expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("saved zh");
     expect(screen.getByLabelText("id-only 內容")).toHaveValue("saved id");
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/categories/positive/quality"))).toHaveLength(1);
+  });
+
+  it("round-trips non-1 weights and refs, then demotes an edited rendered atom", async () => {
+    let current: any = combinationDetail();
+    const bodies: any[] = [];
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/combinations/my-quality") {
+        return response(current);
+      }
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        bodies.push(body);
+        const saved = composeResponse(
+          "my-quality",
+          body.save_as.expected_revision + 1,
+          body.positive,
+          body.negative,
+        );
+        current = saved.saved_combination;
+        return response(saved);
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("組合已儲存");
+    expect(bodies[0].positive[1]).toMatchObject({
+      kind: "entry",
+      snapshot: "saved zh",
+      weight: 1.2,
+      ref: { polarity: "positive", category_id: "quality", entry_id: "zh" },
+    });
+    expect(bodies[0].negative[0]).toMatchObject({
+      kind: "entry",
+      snapshot: "saved blurry",
+      weight: 0.8,
+    });
+
+    await loadSaved();
+    expect(screen.getByLabelText("Positive Prompt 最終文字"))
+      .toHaveValue("saved prompt,(saved zh:1.2),saved id");
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), {
+      target: { value: "saved prompt,(saved zh:1.3),saved id" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+    expect(bodies[1].positive[1]).toMatchObject({
+      kind: "literal",
+      snapshot: "(saved zh:1.3)",
+      weight: 1,
+    });
+    expect(bodies[1].positive[1]).not.toHaveProperty("ref");
+  });
+
+  it("requires explicit Backend acknowledgment before persisting blocked provenance", async () => {
+    const blocked: any = combinationDetail();
+    blocked.combination.positive = [fragment("literal", "legacy fallback", 10)];
+    blocked.combination.negative = [];
+    blocked.blocking_diagnostics = [{
+      id: "diagnostic-1",
+      code: "legacy_reference_unresolved",
+      original_ref: {
+        polarity: "positive",
+        category_id: "legacy",
+        entry_id: "removed",
+      },
+      combination_id: "my-quality",
+      revision: 3,
+      etag: "detail-3",
+      polarity: "positive",
+      fallback_start_position: 1,
+      fallback_count: 1,
+      fallback_atom_hashes: ["atom-hash"],
+      blocking: true,
+    }];
+    blocked.document_context_token = "document-token";
+    let acknowledgeBody: any;
+    let successfulSaveBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/combinations/my-quality") {
+        return response(blocked);
+      }
+      if (
+        url === "/api/prompt-library/combinations/my-quality/acknowledge-literal-conversion"
+        && init?.method === "POST"
+      ) {
+        acknowledgeBody = JSON.parse(String(init.body));
+        return response({
+          literal_conversion_token: "literal-token",
+          diagnostic_ids: ["diagnostic-1"],
+        });
+      }
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        if (body.save_as.literal_conversion_token !== "literal-token") {
+          return response({
+            detail: {
+              message: "舊來源尚未明示解決",
+              code: "unresolved_legacy_reference",
+            },
+          }, 409);
+        }
+        successfulSaveBody = body;
+        return response(composeResponse(
+          body.save_as.id,
+          1,
+          body.positive,
+          body.negative,
+        ));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    expect(screen.getByText("舊來源尚未解決")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(
+      screen.getAllByRole("alert").some((node) =>
+        node.textContent?.includes("舊來源尚未明示解決"),
+      ),
+    ).toBe(true));
+
+    fireEvent.click(screen.getByRole("button", { name: "明示轉為自訂文字" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("已明示確認");
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "resolved-copy" } });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+    await waitFor(() => expect(successfulSaveBody).toBeDefined());
+    expect(acknowledgeBody).toEqual({ document_context_token: "document-token" });
+    expect(successfulSaveBody.save_as).toMatchObject({
+      id: "resolved-copy",
+      source_combination_id: "my-quality",
+      document_context_token: "document-token",
+      literal_conversion_token: "literal-token",
+    });
+  });
+
+  it("replaces only the diagnostic fallback with newly selected source entries", async () => {
+    const blocked: any = combinationDetail();
+    blocked.combination.positive = [fragment("literal", "legacy fallback", 10)];
+    blocked.combination.negative = [];
+    blocked.blocking_diagnostics = [{
+      id: "diagnostic-1",
+      code: "legacy_reference_unresolved",
+      original_ref: {
+        polarity: "positive",
+        category_id: "legacy",
+        entry_id: "removed",
+      },
+      combination_id: "my-quality",
+      revision: 3,
+      etag: "detail-3",
+      polarity: "positive",
+      fallback_start_position: 1,
+      fallback_count: 1,
+      fallback_atom_hashes: ["atom-hash"],
+      blocking: true,
+    }];
+    blocked.document_context_token = "document-token";
+    let composeBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/combinations/my-quality") {
+        return response(blocked);
+      }
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        return response(composeResponse(
+          composeBody.save_as.id,
+          1,
+          composeBody.positive,
+          composeBody.negative,
+        ));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
+    fireEvent.click(screen.getByRole("button", {
+      name: "使用目前加入的詞庫來源解決此診斷",
+    }));
+
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue(
+      "zh current",
+    );
+    expect(screen.queryByDisplayValue("legacy fallback")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(composeBody).toBeDefined());
+    expect(composeBody.positive).toEqual([
+      expect.objectContaining({
+        kind: "entry",
+        snapshot: "zh current",
+        ref: {
+          polarity: "positive",
+          category_id: "quality",
+          entry_id: "zh",
+        },
+      }),
+    ]);
+    expect(composeBody.save_as.provenance_resolutions).toEqual([
+      expect.objectContaining({
+        diagnostic_id: "diagnostic-1",
+        replacement_refs: [{
+          polarity: "positive",
+          category_id: "quality",
+          entry_id: "zh",
+        }],
+      }),
+    ]);
   });
 
   it("resolves and preserves a saved ref using its own polarity instead of its destination list", async () => {
@@ -148,7 +405,7 @@ describe("PromptWorkbench saved combinations", () => {
     await loadSaved();
 
     expect(fetchMock).toHaveBeenCalledWith("/api/prompt-library/categories/negative/quality", undefined);
-    expect(fetchMock.mock.calls.some(([url]) => url === "/api/prompt-library/categories/positive/quality")).toBe(false);
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/categories/positive/quality")).toHaveLength(1);
     expect(screen.getByLabelText("負向品質名稱 內容")).toHaveValue("saved cross-polarity snapshot");
 
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
@@ -200,7 +457,7 @@ describe("PromptWorkbench saved combinations", () => {
 
     confirm.mockReturnValue(true);
     fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt, (saved zh:1.2), saved id"));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt,(saved zh:1.2),saved id"));
     fireEvent.change(screen.getByLabelText("中文名稱 內容"), { target: { value: "dirty again" } });
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
     expect(screen.getByText("尚未儲存")).toBeVisible();
@@ -225,7 +482,7 @@ describe("PromptWorkbench saved combinations", () => {
 
     confirm.mockReturnValue(true);
     fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-    await waitFor(() => expect(finalText).toHaveValue("saved prompt, (saved zh:1.2), saved id"));
+    await waitFor(() => expect(finalText).toHaveValue("saved prompt,(saved zh:1.2),saved id"));
     fireEvent.change(finalText, { target: { value: "new direct draft" } });
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
     expect(finalText).toHaveValue("");
@@ -282,10 +539,12 @@ describe("PromptWorkbench saved combinations", () => {
   });
 
   it("installs the Backend canonical response, clears dirty/success, and clears success after later mutation", async () => {
-    installFetch((url, init) => url === "/api/prompt-library/compose" && init?.method === "POST" ? response(composeResponse("canonical-id", 1)) : undefined);
+    installFetch((url, init) => url === "/api/prompt-library/compose" && init?.method === "POST"
+      ? response(composeResponse("canonical-id", 1, [fragment("literal", "canonical", 10)]))
+      : undefined);
     render(<PromptWorkbench />);
     await ready();
-    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local draft" } });
+    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "canonical" } });
     fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "canonical-id" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
@@ -298,9 +557,9 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
   });
 
-  it("saves whitespace-only visible text as an empty fragment list", async () => {
+  it("blocks Update and Save As before requests when visible text is whitespace-only", async () => {
     let composeBody: any;
-    installFetch((url, init) => {
+    const fetchMock = installFetch((url, init) => {
       if (url === "/api/prompt-library/compose" && init?.method === "POST") {
         composeBody = JSON.parse(String(init.body));
         return response(composeResponse("blank-prompt", 1, []));
@@ -312,10 +571,50 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("  \t ");
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "blank-prompt" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("正向第 1 段");
+    expect(screen.getByRole("alert")).toHaveTextContent("每個 ASCII 逗號都會建立一個 prompt");
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "valid," } });
+    fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
+    fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
+    expect(screen.getAllByRole("alert").every((node) =>
+      node.textContent?.includes("正向第 2 段"),
+    )).toBe(true);
+    expect(composeBody).toBeUndefined();
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/generate/")).toHaveLength(0);
+  });
 
-    await waitFor(() => expect(composeBody).toBeDefined());
-    expect(composeBody.positive).toEqual([]);
-    expect(composeBody.save_as.positive).toEqual([]);
+  it("atomizes free-text Add and blocks its empty atom before Generate", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("自由文字"), {
+      target: { value: "a,,b" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("a,,b");
+    expect(
+      screen.getAllByLabelText("自訂文字 內容").map(
+        (node) => (node as HTMLTextAreaElement).value,
+      ),
+    ).toEqual(["a", "", "b"]);
+
+    fireEvent.change(screen.getByLabelText("Workflow"), {
+      target: { value: "basic-txt2img" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
+
+    expect(
+      (await screen.findAllByRole("alert")).some((node) =>
+        node.textContent?.includes("正向第 2 段"),
+      ),
+    ).toBe(true);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/generate/"),
+    ).toHaveLength(0);
   });
 
   it("materializes an exact direct edit before save and preserves it when save fails", async () => {
@@ -336,10 +635,12 @@ describe("PromptWorkbench saved combinations", () => {
     await waitFor(() => expect(screen.getAllByRole("alert").some((node) => node.textContent?.includes("儲存衝突"))).toBe(true));
     expect(finalText).toHaveValue("  exact raw, (unfinished  ");
     expect(composeBody.positive).toEqual([
-      { kind: "literal", snapshot: "  exact raw, (unfinished  ", weight: 1, order: 10 },
+      { kind: "literal", snapshot: "  exact raw", weight: 1, order: 10 },
+      { kind: "literal", snapshot: " (unfinished  ", weight: 1, order: 20 },
     ]);
     expect(composeBody.save_as.positive).toEqual(composeBody.positive);
-    expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("  exact raw, (unfinished  ");
+    expect(screen.getAllByLabelText("自訂文字 內容").map((node) => (node as HTMLTextAreaElement).value))
+      .toEqual(["  exact raw", " (unfinished  "]);
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
   });
 
@@ -386,11 +687,11 @@ describe("PromptWorkbench saved combinations", () => {
     fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "local direct" } });
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "race-save" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
-    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "newer direct, " } });
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "newer direct,filled" } });
     await act(async () => {
       first.resolve(response(composeResponse("race-save", 1)));
     });
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer direct, ");
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer direct,filled");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
@@ -433,6 +734,99 @@ describe("PromptWorkbench saved combinations", () => {
     expect(await screen.findByLabelText("目前組合版本")).toHaveTextContent("Café");
   });
 
+  it("preserves loaded combination metadata on Update and Save As", async () => {
+    const loaded = combinationDetail();
+    Object.assign(loaded.combination, {
+      name_zh: "精緻肖像",
+      description_zh: "保留這段說明",
+      aliases: ["portrait", "人像"],
+      keywords: ["detail", "細節"],
+      order: 77,
+      legacy_template: true,
+    });
+    const bodies: any[] = [];
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/combinations/my-quality") {
+        return response(loaded);
+      }
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        bodies.push(body);
+        const result = composeResponse(
+          body.save_as.id,
+          body.save_as.expected_revision + 1,
+          body.positive,
+          body.negative,
+        );
+        Object.assign(result.saved_combination.combination, {
+          name_zh: body.save_as.name_zh,
+          description_zh: body.save_as.description_zh,
+          aliases: body.save_as.aliases,
+          keywords: body.save_as.keywords,
+          order: body.save_as.order,
+          legacy_template: body.save_as.legacy_template,
+        });
+        return response(result);
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+
+    await loadSaved();
+    fireEvent.change(screen.getByLabelText("新組合 ID"), {
+      target: { value: "portrait-copy" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+
+    for (const body of bodies) {
+      expect(body.save_as).toMatchObject({
+        name_zh: "精緻肖像",
+        description_zh: "保留這段說明",
+        aliases: ["portrait", "人像"],
+        keywords: ["detail", "細節"],
+        order: 77,
+        legacy_template: true,
+      });
+    }
+  });
+
+  it("uses Backend-canonical three-decimal weights for save retry and reload", async () => {
+    let composeBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        const canonical = fragment("literal", "detail", 10, 1.234);
+        return response(composeResponse("weighted-canonical", 1, [canonical]));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("自由文字"), {
+      target: { value: "detail" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    fireEvent.change(screen.getByLabelText("自訂文字 權重"), {
+      target: { value: "1.2345" },
+    });
+    fireEvent.change(screen.getByLabelText("新組合 ID"), {
+      target: { value: "weighted-canonical" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("組合已儲存");
+    expect(composeBody.positive[0].weight).toBe(1.234);
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue(
+      "(detail:1.234)",
+    );
+    expect(screen.getByLabelText("自訂文字 權重")).toHaveValue(1.234);
+  });
+
   it("rejects a combination ID longer than 128 characters after NFC normalization", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
@@ -450,9 +844,21 @@ describe("PromptWorkbench existing flows", () => {
   it("keeps the newest category selection when an older category read resolves last", async () => {
     const older = deferred<Response>();
     const newest = deferred<Response>();
+    let qualityReads = 0;
+    let styleReads = 0;
     installFetch((url) => {
-      if (url.endsWith("/categories/positive/quality")) return older.promise;
-      if (url.endsWith("/categories/positive/style")) return newest.promise;
+      if (url.endsWith("/categories/positive/quality")) {
+        qualityReads += 1;
+        return qualityReads === 1
+          ? response(categoryResponse("positive", "quality"))
+          : older.promise;
+      }
+      if (url.endsWith("/categories/positive/style")) {
+        styleReads += 1;
+        return styleReads === 1
+          ? response(categoryResponse("positive", "style"))
+          : newest.promise;
+      }
     });
     render(<PromptWorkbench />);
     await ready();
@@ -471,7 +877,14 @@ describe("PromptWorkbench existing flows", () => {
 
   it("keeps a newer category and error state when an older category read rejects last", async () => {
     const older = deferred<Response>();
-    installFetch((url) => url.endsWith("/categories/positive/quality") ? older.promise : undefined);
+    let qualityReads = 0;
+    installFetch((url) => {
+      if (!url.endsWith("/categories/positive/quality")) return undefined;
+      qualityReads += 1;
+      return qualityReads === 1
+        ? response(categoryResponse("positive", "quality"))
+        : older.promise;
+    });
     render(<PromptWorkbench />);
     await ready();
 
@@ -488,7 +901,14 @@ describe("PromptWorkbench existing flows", () => {
 
   it("invalidates an in-flight category read when polarity changes", async () => {
     const pending = deferred<Response>();
-    installFetch((url) => url.endsWith("/categories/positive/quality") ? pending.promise : undefined);
+    let qualityReads = 0;
+    installFetch((url) => {
+      if (!url.endsWith("/categories/positive/quality")) return undefined;
+      qualityReads += 1;
+      return qualityReads === 1
+        ? response(categoryResponse("positive", "quality"))
+        : pending.promise;
+    });
     render(<PromptWorkbench />);
     await ready();
 
@@ -514,17 +934,17 @@ describe("PromptWorkbench existing flows", () => {
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
     fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
-    fireEvent.change(screen.getByLabelText("Negative Prompt 最終文字"), { target: { value: "blurry current, " } });
+    fireEvent.change(screen.getByLabelText("Negative Prompt 最終文字"), { target: { value: "blurry current" } });
     fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
     fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("job-1"));
     const call = fetchMock.mock.calls.find(([url]) => url === "/api/generate/") as [string, RequestInit];
-    expect(JSON.parse(String(call[1].body))).toMatchObject({ prompt: "zh current,  (unfinished ", negative_prompt: "blurry current, " });
+    expect(JSON.parse(String(call[1].body))).toMatchObject({ prompt: "zh current,  (unfinished ", negative_prompt: "blurry current" });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
   });
 
-  it("immediately replaces source identity with one stable direct literal whose card actions work", async () => {
+  it("splits a direct edit into exact atomic literals whose card actions work", async () => {
     installFetch();
     render(<PromptWorkbench />);
     await ready();
@@ -534,13 +954,14 @@ describe("PromptWorkbench existing flows", () => {
     const finalText = screen.getByLabelText("Positive Prompt 最終文字");
     fireEvent.change(finalText, { target: { value: "  raw, (unfinished  " } });
     expect(screen.queryByLabelText("中文名稱 內容")).not.toBeInTheDocument();
-    const literalCard = screen.getByLabelText("自訂文字 內容");
-    expect(literalCard).toHaveValue("  raw, (unfinished  ");
-    expect(screen.getByRole("button", { name: "上移" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "下移" })).toBeDisabled();
+    const literalCards = screen.getAllByLabelText("自訂文字 內容");
+    expect(literalCards.map((node) => (node as HTMLTextAreaElement).value))
+      .toEqual(["  raw", " (unfinished  "]);
+    expect(screen.getAllByRole("button", { name: "上移" })[0]).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: "下移" })[1]).toBeDisabled();
 
-    fireEvent.change(finalText, { target: { value: "second direct, " } });
-    expect(screen.getByLabelText("自訂文字 內容")).toBe(literalCard);
+    fireEvent.change(finalText, { target: { value: "second direct" } });
+    const literalCard = screen.getByLabelText("自訂文字 內容");
     fireEvent.change(literalCard, { target: { value: "card edited" } });
     expect(finalText).toHaveValue("card edited");
 
@@ -561,8 +982,9 @@ describe("PromptWorkbench existing flows", () => {
     fireEvent.click(screen.getByRole("button", { name: "品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
 
-    expect(finalText).toHaveValue("raw, (unfinished, zh current");
-    expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("  raw, (unfinished  ");
+    expect(finalText).toHaveValue("  raw, (unfinished  ,zh current");
+    expect(screen.getAllByLabelText("自訂文字 內容").map((node) => (node as HTMLTextAreaElement).value))
+      .toEqual(["  raw", " (unfinished  "]);
     expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("zh current");
   });
 });

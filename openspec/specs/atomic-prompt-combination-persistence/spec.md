@@ -1,5 +1,8 @@
-## ADDED Requirements
+# atomic-prompt-combination-persistence Specification
 
+## Purpose
+TBD - created by archiving change comma-delimited-atomic-prompts. Update Purpose after archive.
+## Requirements
 ### Requirement: Backend rejects blank fragments in every contract
 Backend persisted models, compose requests, combination writes, repairs, and canonical responses SHALL reject any present fragment whose `snapshotRaw` (wire field `snapshot`) is empty or whitespace-only. It MUST NOT filter, skip, trim into validity, or partially persist such a fragment. An absent polarity list remains valid.
 
@@ -79,7 +82,7 @@ Backend migration and repair SHALL use the reviewed legacy-ref registry to map o
 - **AND** does not silently apply first-reference-wins behavior
 
 ### Requirement: Unresolved legacy provenance is never silently lost
-If a legacy source ref has no unique registry expansion, repository migration SHALL fail closed. For an externally introduced legacy combination after finalized readiness, Backend MAY expose nonblank snapshots as ordered literal fallback atoms only with a blocking `legacy_reference_unresolved` document diagnostic containing the original ref, combination revision/etag, diagnostic ID, and fallback atom hashes. The blocking diagnostic SHALL survive ordinary content edits. Backend MUST reject Update and Save As—and any ordinary persistence derived from that loaded document—until the diagnostic is explicitly resolved by a reviewed mapping, selection of replacement source entries, or an explicit acknowledge-convert-to-literals action/token. Ordinary edit or save intent is not acknowledgment.
+If a legacy source ref has no unique registry expansion, repository migration SHALL fail closed. For an externally introduced legacy combination after finalized readiness, Backend MAY expose nonblank snapshots as ordered literal fallback atoms only with a blocking `legacy_reference_unresolved` document diagnostic containing the original ref, combination revision/etag, diagnostic ID, fallback polarity, 1-based fallback start/count, and fallback atom hashes. The blocking diagnostic SHALL survive ordinary content edits. Backend MUST reject Update and Save As—and any ordinary persistence derived from that loaded document—until the diagnostic is explicitly resolved by a reviewed mapping, diagnostic-specific selection of replacement source entries that occupy its fallback range and remove its fallback atoms, or an explicit acknowledge-convert-to-literals action/token. Ordinary edit or save intent and unrelated existing refs are not acknowledgment.
 
 #### Scenario: Repository combination with unresolved ref blocks apply
 - **WHEN** dry-run finds an existing repository combination ref without one unique reviewed expansion
@@ -109,8 +112,14 @@ If a legacy source ref has no unique registry expansion, repository migration SH
 
 #### Scenario: Reviewed mapping or replacement refs resolve the block
 - **WHEN** the diagnostic is resolved by a reviewed legacy mapping or explicit user selection of replacement source entries
-- **THEN** Backend validates the resulting refs against the current catalog and document concurrency tokens
+- **THEN** Backend validates the resulting refs against the current catalog and document concurrency tokens and verifies them at that diagnostic's fallback location
+- **AND** the diagnostic's fallback literals are absent while unrelated equal-text literals may remain
 - **AND** a subsequent Update or Save As may proceed without literal-conversion acknowledgment
+
+#### Scenario: Unrelated source ref cannot clear a diagnostic
+- **WHEN** a request leaves the diagnostic fallback atoms in place and merely appends another valid source ref
+- **THEN** Backend rejects the provenance resolution
+- **AND** no combination is written
 
 #### Scenario: Explicit conversion requires a bound token
 - **WHEN** the user invokes an explicit acknowledge-convert-to-literals action for all blocking diagnostics
@@ -166,6 +175,11 @@ After finalized readiness, Save, Update, and Save As SHALL validate and resolve 
 - **WHEN** valid canonical atoms from a loaded combination are saved under a new ID with expected revision zero
 - **THEN** Backend creates a distinct combination
 - **AND** the loaded source combination is not modified
+
+#### Scenario: Combination metadata survives Update and Save As
+- **WHEN** a loaded combination carries its existing name, description, aliases, keywords, order, and `legacy_template`
+- **THEN** Update preserves those values
+- **AND** Save As copies the intentional loaded values instead of substituting hardcoded defaults
 
 #### Scenario: Non-one weight survives Backend save load round trip
 - **WHEN** a referenced fragment with `snapshotRaw=detail`, weight 1.2, and `renderedRaw=(detail:1.2)` is saved

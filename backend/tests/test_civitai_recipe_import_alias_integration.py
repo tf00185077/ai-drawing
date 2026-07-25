@@ -38,6 +38,24 @@ def _recipe(*, image_id: int | None = 123, media_url: str | None = None) -> Gene
     })
 
 
+@contextmanager
+def _registry_corrupt_failure():
+    with (
+        patch(
+            "app.services.civitai_recipe_pipeline.acquire_civitai_recipe",
+            return_value=_acquisition(),
+        ),
+        patch(
+            "app.services.civitai_recipe_pipeline.remember_source_alias",
+            return_value=CivitaiSourceAliasDomainResult(
+                status="corrupt",
+                code="record_invalid",
+            ),
+        ),
+    ):
+        yield
+
+
 def _acquisition(*, image_id: int | None = 123, media_url: str | None = "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/fixture.jpg") -> AcquisitionResult:
     recipe = _recipe(image_id=image_id, media_url=media_url if image_id is None else None)
     return AcquisitionResult(
@@ -209,7 +227,7 @@ def test_import_alias_failures_are_redacted_and_have_zero_registry_build_queue_s
         (
             "registry_integrity",
             {"locator": 123, "remember_alias": "hero"},
-            patch("app.services.civitai_recipe_pipeline.remember_source_alias", return_value=CivitaiSourceAliasDomainResult(status="corrupt", code="record_invalid")),
+            _registry_corrupt_failure(),
         ),
     ]
     with _client(tmp_path) as (client, Session), \
@@ -227,7 +245,12 @@ def test_import_alias_failures_are_redacted_and_have_zero_registry_build_queue_s
             assert before == after
             detail = response.json()["detail"]
             assert isinstance(detail, dict)
-            assert detail["code"] in {"not_found", "embedded_metadata_invalid", "alias_identity_invalid", "alias_registry_corrupt"}
+            assert detail["code"] in {
+                "not_found",
+                "embedded_metadata_invalid",
+                "alias_identity_invalid",
+                "alias_registry_corrupt",
+            }, (_name, detail)
             assert sentinel not in json.dumps(response.json())
 
     compile_workflow.assert_not_called()

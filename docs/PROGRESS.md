@@ -1,5 +1,14 @@
 # 進度追蹤
 
+## 2026-07-26 Prompt Library ASCII 逗號原子化與 migration-first 交付
+
+- Prompt Library 現以每個 ASCII 逗號（U+002C）作為無條件 atomic Prompt 邊界；前導、尾端與連續逗號會保留成可編輯的空白卡片。Save、Update、Save As 與 Generate 皆在任何 request 前攔截空白片段，列出 polarity 與 1-based 位置；Backend 仍拒絕空白或含逗號的 persisted atom。
+- 既有詞庫由 297 entries（146 個含逗號、151 個既有 atomic entries）migration 為 683 個非空且不含逗號的 entries；532 個 derived atoms 使用 checked-in deterministic curation，四個既有 combinations 原子化為 2／25／5／4 fragments，共 36 fragments。最終 dry-run 為 0 mutations、0 diagnostics，且 151 個 retained entries 與真實 predecessor bytes 均經 hash 驗證。
+- Backend 實作 fail-closed migration marker、privileged dry-run/apply/resume/rollback/finalize、atomic enforcement、weighted canonical rendering，以及 unresolved legacy provenance 的 blocking resolution。隔離資料已驗證真實 predecessor 的 gate、`dry-run → apply → activate → finalize → rollback`、byte-exact restore 與第二次 dry-run idempotency。
+- Workbench 使用 lossless weighted fragment state；自由文字、final textarea 與卡片編輯皆依 ASCII 逗號即時 atomize。Update 保留既有 combination metadata；replacement source 必須實際取代對應 fallback；Frontend／Backend 權重統一為最多三位小數的 canonical rendering。
+- Offline 最終驗證：Backend `1193 passed`、MCP `104 passed`、Frontend `130 passed`，TypeScript typecheck、Vite production build、`git diff --check`、target strict OpenSpec 與全體 OpenSpec `14 passed, 0 failed` 均通過。兩輪務實獨立 review 最終皆無正常產品路徑 release blocker。
+- 依 CTY 指示，本次不由 agent 重啟或操作 live Backend、Discord Bot、ComfyUI 或 Hermes Gateway，也不提交真實生圖。Live migration gate、真實 browser／Discord／generation E2E 由 CTY 在 merge/push 後自行驗證；本節不宣稱 live pass。
+
 ## 2026-07-25 Prompt Workbench 最終文字直接編輯與單一 CompositionState
 
 - Positive／Negative 的「最終文字」永遠是可直接編輯的 controlled textarea；已移除自由文字 mode、套用、取消以及獨立 raw draft。每次 `onChange` 立即以 `materializeRawText` 更新該 polarity 唯一的 `CompositionState`，不 trim、不拆逗號、不 parse、不 debounce，因此尾端逗號／空白與暫時未閉合括號都會逐字保留。

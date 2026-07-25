@@ -1,111 +1,362 @@
 {
-    "schema_version":  1,
-    "id":  "physical-effects",
-    "polarity":  "positive",
-    "name_zh":  "身體效果",
-    "description_zh":  "收錄「身體效果」分類的提示詞。",
-    "aliases":  [
-                    "身體效果",
-                    "physical-effects"
-                ],
-    "keywords":  [
-                     "ltj",
-                     "positive",
-                     "physical-effects"
-                 ],
-    "order":  290,
-    "revision":  6,
-    "archived":  false,
-    "entries":  [
-                    {
-                        "id":  "after-effects-panting-breath-steam-breathing-steam-visible",
-                        "name_zh":  "喘氣白煙",
-                        "description_zh":  "加入「喘氣白煙」提示詞。",
-                        "prompt":  "panting, breath steam, breathing steam visible",
-                        "aliases":  [
-                                        "喘氣白煙 (panting, breath steam)",
-                                        "panting, breath steam, breathing steam visible"
-                                    ],
-                        "keywords":  [
-                                         "after_effects",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  10,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "after-effects-saliva-trail-drooling",
-                        "name_zh":  "嘴邊牽絲/流口水",
-                        "description_zh":  "加入「嘴邊牽絲/流口水」提示詞。",
-                        "prompt":  "saliva trail, drooling",
-                        "aliases":  [
-                                        "嘴邊牽絲/流口水 (saliva trail, drooling)",
-                                        "saliva trail, drooling"
-                                    ],
-                        "keywords":  [
-                                         "after_effects",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  11,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "after-effects-sweaty-glistening-skin",
-                        "name_zh":  "滿身大汗/肌膚泛光",
-                        "description_zh":  "加入「滿身大汗/肌膚泛光」提示詞。",
-                        "prompt":  "sweaty, glistening skin",
-                        "aliases":  [
-                                        "滿身大汗/肌膚泛光 (sweaty, glistening skin)",
-                                        "sweaty, glistening skin"
-                                    ],
-                        "keywords":  [
-                                         "after_effects",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  12,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "after-effects-heart-symbol-floating-hearts",
-                        "name_zh":  "動漫心跳/愛心符號",
-                        "description_zh":  "加入「動漫心跳/愛心符號」提示詞。",
-                        "prompt":  "heart symbol, floating hearts",
-                        "aliases":  [
-                                        "動漫心跳/愛心符號 (heart symbol)",
-                                        "heart symbol, floating hearts"
-                                    ],
-                        "keywords":  [
-                                         "after_effects",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  13,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "after-effects-after-sex-disheveled",
-                        "name_zh":  "高潮餘韻",
-                        "description_zh":  "加入「高潮餘韻」提示詞。",
-                        "prompt":  "after sex, disheveled",
-                        "aliases":  [
-                                        "高潮餘韻 (after sex, disheveled)",
-                                        "after sex, disheveled"
-                                    ],
-                        "keywords":  [
-                                         "after_effects",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  14,
-                        "revision":  1,
-                        "archived":  false
-                    }
-                ]
+  "schema_version": 1,
+  "id": "physical-effects",
+  "polarity": "positive",
+  "name_zh": "身體效果",
+  "description_zh": "收錄「身體效果」分類的提示詞。",
+  "aliases": [
+    "身體效果",
+    "physical-effects"
+  ],
+  "keywords": [
+    "ltj",
+    "positive",
+    "physical-effects"
+  ],
+  "order": 290,
+  "revision": 7,
+  "archived": false,
+  "entries": [
+    {
+      "id": "after-effects-panting-breath-steam-breathing-ste-panting-6354dba3",
+      "name_zh": "喘息",
+      "description_zh": "經人工拆分審閱的原子提示詞「panting」，來源為「喘氣白煙」。",
+      "prompt": "panting",
+      "aliases": [
+        "喘氣白煙 (panting, breath steam)",
+        "panting, breath steam, breathing steam visible",
+        "panting"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-panting-breath-steam-breathing-steam-visible",
+        "source_prompt_sha256": "2ea3e687ca9d5c42682717841687de862449bf24d6445aae61b38965a2c6a04d",
+        "segment_index": 0,
+        "raw_segment_sha256": "066cf412d264cf49a6950f8e9107d9b2203b5985b6c681b8692f44a2059c69d8",
+        "identity_sha256": "6354dba3dd52233fa3c3faa660addb4a12fb573d6bbaabdc34cb8ba9afbeb001"
+      }
+    },
+    {
+      "id": "after-effects-panting-breath-steam-breathing-ste-breath-steam-201f3edc",
+      "name_zh": "呼吸白霧",
+      "description_zh": "經人工拆分審閱的原子提示詞「breath steam」，來源為「喘氣白煙」。",
+      "prompt": " breath steam",
+      "aliases": [
+        "喘氣白煙 (panting, breath steam)",
+        "panting, breath steam, breathing steam visible",
+        "breath steam"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-panting-breath-steam-breathing-steam-visible",
+        "source_prompt_sha256": "2ea3e687ca9d5c42682717841687de862449bf24d6445aae61b38965a2c6a04d",
+        "segment_index": 1,
+        "raw_segment_sha256": "5aa7936d8f220821bd2223e88102a5c625870ca7787f9ec5f0d7a23ce7050493",
+        "identity_sha256": "201f3edc124bed65fa64fce0866f911b84aaa92b97bfa19d411db5895ae10844"
+      }
+    },
+    {
+      "id": "after-effects-panting-breath-steam-breathing-ste-breathing-steam-visible-c0b89942",
+      "name_zh": "可見呼吸白霧",
+      "description_zh": "經人工拆分審閱的原子提示詞「breathing steam visible」，來源為「喘氣白煙」。",
+      "prompt": " breathing steam visible",
+      "aliases": [
+        "喘氣白煙 (panting, breath steam)",
+        "panting, breath steam, breathing steam visible",
+        "breathing steam visible"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-panting-breath-steam-breathing-steam-visible",
+        "source_prompt_sha256": "2ea3e687ca9d5c42682717841687de862449bf24d6445aae61b38965a2c6a04d",
+        "segment_index": 2,
+        "raw_segment_sha256": "7edf0335166922e217f438bb26bb11ae1fd1f75195b1569ae0c520b451318521",
+        "identity_sha256": "c0b899428a88be366ca9780212d3e31644c127d2960323c534f4fdaeebb9296a"
+      }
+    },
+    {
+      "id": "after-effects-saliva-trail-drooling-saliva-trail-022d1025",
+      "name_zh": "唾液牽絲",
+      "description_zh": "經人工拆分審閱的原子提示詞「saliva trail」，來源為「嘴邊牽絲/流口水」。",
+      "prompt": "saliva trail",
+      "aliases": [
+        "嘴邊牽絲/流口水 (saliva trail, drooling)",
+        "saliva trail, drooling",
+        "saliva trail"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-saliva-trail-drooling",
+        "source_prompt_sha256": "88ca9e52167cb1ddefffba788cd3466eff34f211e47d259d2c5618108f372baa",
+        "segment_index": 0,
+        "raw_segment_sha256": "36451e91a92087f7a5b2d9f35413a6ad98aa76742944e8584699568739f4393c",
+        "identity_sha256": "022d1025a6deb1c8469e8d2689a5eec75e316a53bda08cb789c35841af83453f"
+      }
+    },
+    {
+      "id": "after-effects-saliva-trail-drooling-drooling-e46c4d4a",
+      "name_zh": "流口水",
+      "description_zh": "經人工拆分審閱的原子提示詞「drooling」，來源為「嘴邊牽絲/流口水」。",
+      "prompt": " drooling",
+      "aliases": [
+        "嘴邊牽絲/流口水 (saliva trail, drooling)",
+        "saliva trail, drooling",
+        "drooling"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-saliva-trail-drooling",
+        "source_prompt_sha256": "88ca9e52167cb1ddefffba788cd3466eff34f211e47d259d2c5618108f372baa",
+        "segment_index": 1,
+        "raw_segment_sha256": "bad5b6a09bbf8fbecc4a5038eeec89f99dd31c4333cc274ecd6abb998c885a8f",
+        "identity_sha256": "e46c4d4a6b22618c0859b2357d6793f6d5fffde1475889a48bf897f38d03e7f3"
+      }
+    },
+    {
+      "id": "after-effects-sweaty-glistening-skin-sweaty-1c3dcd26",
+      "name_zh": "滿身汗水",
+      "description_zh": "經人工拆分審閱的原子提示詞「sweaty」，來源為「滿身大汗/肌膚泛光」。",
+      "prompt": "sweaty",
+      "aliases": [
+        "滿身大汗/肌膚泛光 (sweaty, glistening skin)",
+        "sweaty, glistening skin",
+        "sweaty"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-sweaty-glistening-skin",
+        "source_prompt_sha256": "b65a257a4054005bf9034604a1de0d587c3d936b086653f7ede2f09b420f8ff5",
+        "segment_index": 0,
+        "raw_segment_sha256": "75be46971b2eacdc203ac39d8475499853075467528096602bada71d0ea6e0ce",
+        "identity_sha256": "1c3dcd2618dbab6351129df5118c5b8b0cee3354da3f5928ef8fadb3bab1240b"
+      }
+    },
+    {
+      "id": "after-effects-sweaty-glistening-skin-glistening-skin-5266dd94",
+      "name_zh": "泛光肌膚",
+      "description_zh": "經人工拆分審閱的原子提示詞「glistening skin」，來源為「滿身大汗/肌膚泛光」。",
+      "prompt": " glistening skin",
+      "aliases": [
+        "滿身大汗/肌膚泛光 (sweaty, glistening skin)",
+        "sweaty, glistening skin",
+        "glistening skin"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-sweaty-glistening-skin",
+        "source_prompt_sha256": "b65a257a4054005bf9034604a1de0d587c3d936b086653f7ede2f09b420f8ff5",
+        "segment_index": 1,
+        "raw_segment_sha256": "5ca6dd364ee304327374651ef8b5b28ff742053ec2e7fcb4460f2e53a1876c73",
+        "identity_sha256": "5266dd94f7ab26b7451e96aac866afbccac5ed467c719a385f5ad4c45ead5796"
+      }
+    },
+    {
+      "id": "after-effects-heart-symbol-floating-hearts-heart-symbol-b191ab45",
+      "name_zh": "愛心符號",
+      "description_zh": "經人工拆分審閱的原子提示詞「heart symbol」，來源為「動漫心跳/愛心符號」。",
+      "prompt": "heart symbol",
+      "aliases": [
+        "動漫心跳/愛心符號 (heart symbol)",
+        "heart symbol, floating hearts",
+        "heart symbol"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-heart-symbol-floating-hearts",
+        "source_prompt_sha256": "b90553d8661302bbfaff54b1bcb64122c4262b68f9764600f24261be2704576a",
+        "segment_index": 0,
+        "raw_segment_sha256": "e4a794f5badc09e18621abd015290a59f30325938140158da52d449b8be5bbee",
+        "identity_sha256": "b191ab45fe438c21b6a93d7fd1ca49dcdea4a1cb0957588256cc9775349f6cc0"
+      }
+    },
+    {
+      "id": "after-effects-heart-symbol-floating-hearts-floating-hearts-c178ddd2",
+      "name_zh": "漂浮愛心",
+      "description_zh": "經人工拆分審閱的原子提示詞「floating hearts」，來源為「動漫心跳/愛心符號」。",
+      "prompt": " floating hearts",
+      "aliases": [
+        "動漫心跳/愛心符號 (heart symbol)",
+        "heart symbol, floating hearts",
+        "floating hearts"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-heart-symbol-floating-hearts",
+        "source_prompt_sha256": "b90553d8661302bbfaff54b1bcb64122c4262b68f9764600f24261be2704576a",
+        "segment_index": 1,
+        "raw_segment_sha256": "e884b663d568e2e34ec3e6195e55931723abb98d40170201f394860b73143feb",
+        "identity_sha256": "c178ddd2d530ce6b75f1376811ac0d5f195ff800d0e3c9283a47175f5d5b4dfd"
+      }
+    },
+    {
+      "id": "after-effects-after-sex-disheveled-after-sex-7128edd9",
+      "name_zh": "性交後",
+      "description_zh": "經人工拆分審閱的原子提示詞「after sex」，來源為「高潮餘韻」。",
+      "prompt": "after sex",
+      "aliases": [
+        "高潮餘韻 (after sex, disheveled)",
+        "after sex, disheveled",
+        "after sex"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-after-sex-disheveled",
+        "source_prompt_sha256": "dfd9d21f87300ea26c1ca18459eb7edf7e25de6c39617707c2330001282e1ac8",
+        "segment_index": 0,
+        "raw_segment_sha256": "e88a0fc0e3aa7ea4b949495fbc5fe489e9bc64aa03befc31746cf40e31962f5d",
+        "identity_sha256": "7128edd92d993d4a3b5858e08ad6db25913ca4fd60317e60974de0a9644f9971"
+      }
+    },
+    {
+      "id": "after-effects-after-sex-disheveled-disheveled-3f8a9e8a",
+      "name_zh": "凌亂儀容",
+      "description_zh": "經人工拆分審閱的原子提示詞「disheveled」，來源為「高潮餘韻」。",
+      "prompt": " disheveled",
+      "aliases": [
+        "高潮餘韻 (after sex, disheveled)",
+        "after sex, disheveled",
+        "disheveled"
+      ],
+      "keywords": [
+        "after_effects",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "physical-effects"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "physical-effects",
+        "source_entry_id": "after-effects-after-sex-disheveled",
+        "source_prompt_sha256": "dfd9d21f87300ea26c1ca18459eb7edf7e25de6c39617707c2330001282e1ac8",
+        "segment_index": 1,
+        "raw_segment_sha256": "a7b7b701fce28f8d9b61f0fc94d8f3d2aabc9db332bd617b61a185e32b3b2676",
+        "identity_sha256": "3f8a9e8ac7fac3bd9206a0f9a9ecd493537555dddc51bc08a063ba4dbf7aa3ce"
+      }
+    }
+  ]
 }

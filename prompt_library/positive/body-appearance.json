@@ -1,669 +1,1344 @@
 {
-    "schema_version":  1,
-    "id":  "body-appearance",
-    "polarity":  "positive",
-    "name_zh":  "人物與身形",
-    "description_zh":  "收錄「人物與身形」分類的提示詞。",
-    "aliases":  [
-                    "人物與身形",
-                    "body-appearance"
-                ],
-    "keywords":  [
-                     "ltj",
-                     "positive",
-                     "body-appearance"
-                 ],
-    "order":  200,
-    "revision":  37,
-    "archived":  false,
-    "entries":  [
-                    {
-                        "id":  "body-breasts-huge-breasts-0-9",
-                        "name_zh":  "巨乳",
-                        "description_zh":  "加入「巨乳」提示詞。",
-                        "prompt":  "(huge breasts:0.9)",
-                        "aliases":  [
-                                        "巨乳 (huge breasts:0.9)",
-                                        "(huge breasts:0.9)"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  10,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-breasts-gigantic-breasts",
-                        "name_zh":  "特大巨乳",
-                        "description_zh":  "加入「特大巨乳」提示詞。",
-                        "prompt":  "gigantic breasts",
-                        "aliases":  [
-                                        "特大巨乳 (gigantic breasts)",
-                                        "gigantic breasts"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  11,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-breasts-large-breasts",
-                        "name_zh":  "大乳",
-                        "description_zh":  "加入「大乳」提示詞。",
-                        "prompt":  "large breasts",
-                        "aliases":  [
-                                        "大乳 (large breasts)",
-                                        "large breasts"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  12,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-breasts-medium-breasts",
-                        "name_zh":  "中等胸部",
-                        "description_zh":  "加入「中等胸部」提示詞。",
-                        "prompt":  "medium breasts",
-                        "aliases":  [
-                                        "中等胸部 (medium breasts)",
-                                        "medium breasts"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  13,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-breasts-small-breasts",
-                        "name_zh":  "貧乳",
-                        "description_zh":  "加入「貧乳」提示詞。",
-                        "prompt":  "small breasts",
-                        "aliases":  [
-                                        "貧乳 (small breasts)",
-                                        "small breasts"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  14,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-breasts-flat-chest",
-                        "name_zh":  "平胸",
-                        "description_zh":  "加入「平胸」提示詞。",
-                        "prompt":  "flat chest",
-                        "aliases":  [
-                                        "平胸 (flat chest)",
-                                        "flat chest"
-                                    ],
-                        "keywords":  [
-                                         "body_breasts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  15,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-thighs-curvy-thick-thighs",
-                        "name_zh":  "豐滿大腿",
-                        "description_zh":  "加入「豐滿大腿」提示詞。",
-                        "prompt":  "curvy, thick thighs",
-                        "aliases":  [
-                                        "豐滿大腿 (curvy, thick thighs)",
-                                        "curvy, thick thighs"
-                                    ],
-                        "keywords":  [
-                                         "body_thighs",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  16,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-thighs-thick-thighs",
-                        "name_zh":  "粗大腿",
-                        "description_zh":  "加入「粗大腿」提示詞。",
-                        "prompt":  "thick thighs",
-                        "aliases":  [
-                                        "粗大腿 (thick thighs)",
-                                        "thick thighs"
-                                    ],
-                        "keywords":  [
-                                         "body_thighs",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  17,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-thighs-slim-legs",
-                        "name_zh":  "纖細美腿",
-                        "description_zh":  "加入「纖細美腿」提示詞。",
-                        "prompt":  "slim legs",
-                        "aliases":  [
-                                        "纖細美腿 (slim legs)",
-                                        "slim legs"
-                                    ],
-                        "keywords":  [
-                                         "body_thighs",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  18,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-thighs-muscular-thighs",
-                        "name_zh":  "肌肉大腿",
-                        "description_zh":  "加入「肌肉大腿」提示詞。",
-                        "prompt":  "muscular thighs",
-                        "aliases":  [
-                                        "肌肉大腿 (muscular thighs)",
-                                        "muscular thighs"
-                                    ],
-                        "keywords":  [
-                                         "body_thighs",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  19,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-ass-wide-hips",
-                        "name_zh":  "寬臀",
-                        "description_zh":  "加入「寬臀」提示詞。",
-                        "prompt":  "wide hips",
-                        "aliases":  [
-                                        "寬臀 (wide hips)",
-                                        "wide hips"
-                                    ],
-                        "keywords":  [
-                                         "body_ass",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  20,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-ass-big-ass",
-                        "name_zh":  "大屁股",
-                        "description_zh":  "加入「大屁股」提示詞。",
-                        "prompt":  "big ass",
-                        "aliases":  [
-                                        "大屁股 (big ass)",
-                                        "big ass"
-                                    ],
-                        "keywords":  [
-                                         "body_ass",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  21,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-ass-huge-ass",
-                        "name_zh":  "巨大屁股",
-                        "description_zh":  "加入「巨大屁股」提示詞。",
-                        "prompt":  "huge ass",
-                        "aliases":  [
-                                        "巨大屁股 (huge ass)",
-                                        "huge ass"
-                                    ],
-                        "keywords":  [
-                                         "body_ass",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  22,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-ass-slim-waist",
-                        "name_zh":  "纖細腰身",
-                        "description_zh":  "加入「纖細腰身」提示詞。",
-                        "prompt":  "slim waist",
-                        "aliases":  [
-                                        "纖細腰身 (slim waist)",
-                                        "slim waist"
-                                    ],
-                        "keywords":  [
-                                         "body_ass",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  23,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-frame-petite",
-                        "name_zh":  "嬌小",
-                        "description_zh":  "加入「嬌小」提示詞。",
-                        "prompt":  "petite",
-                        "aliases":  [
-                                        "嬌小 (petite)",
-                                        "petite"
-                                    ],
-                        "keywords":  [
-                                         "body_frame",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  24,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-frame-tall",
-                        "name_zh":  "高挑",
-                        "description_zh":  "加入「高挑」提示詞。",
-                        "prompt":  "tall",
-                        "aliases":  [
-                                        "高挑 (tall)",
-                                        "tall"
-                                    ],
-                        "keywords":  [
-                                         "body_frame",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  25,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-frame-chubby",
-                        "name_zh":  "肉感",
-                        "description_zh":  "加入「肉感」提示詞。",
-                        "prompt":  "chubby",
-                        "aliases":  [
-                                        "肉感 (chubby)",
-                                        "chubby"
-                                    ],
-                        "keywords":  [
-                                         "body_frame",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  26,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-frame-athletic",
-                        "name_zh":  "健美",
-                        "description_zh":  "加入「健美」提示詞。",
-                        "prompt":  "athletic",
-                        "aliases":  [
-                                        "健美 (athletic)",
-                                        "athletic"
-                                    ],
-                        "keywords":  [
-                                         "body_frame",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  27,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "body-frame-voluptuous",
-                        "name_zh":  "豐滿",
-                        "description_zh":  "加入「豐滿」提示詞。",
-                        "prompt":  "voluptuous",
-                        "aliases":  [
-                                        "豐滿 (voluptuous)",
-                                        "voluptuous"
-                                    ],
-                        "keywords":  [
-                                         "body_frame",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  28,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-faceless-male",
-                        "name_zh":  "無臉男性",
-                        "description_zh":  "加入「無臉男性」提示詞。",
-                        "prompt":  "faceless male",
-                        "aliases":  [
-                                        "Faceless Male (無臉男/預設)",
-                                        "faceless male"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  29,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-muscular-male-blonde-hair-dark-skin",
-                        "name_zh":  "金髮肌肉男性",
-                        "description_zh":  "加入「金髮肌肉男性」提示詞。",
-                        "prompt":  "muscular male, blonde hair, dark skin",
-                        "aliases":  [
-                                        "Muscular Blonde (肌肉金毛)",
-                                        "muscular male, blonde hair, dark skin"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  30,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-shota-young-boy-cute-male",
-                        "name_zh":  "少年男性",
-                        "description_zh":  "加入「少年男性」提示詞。",
-                        "prompt":  "shota, young boy, cute male",
-                        "aliases":  [
-                                        "Shota (正太)",
-                                        "shota, young boy, cute male"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  31,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-ugly-bastard-overweight-male-fat-man",
-                        "name_zh":  "肥胖醜陋男性",
-                        "description_zh":  "加入「肥胖醜陋男性」提示詞。",
-                        "prompt":  "ugly bastard, overweight male, fat man",
-                        "aliases":  [
-                                        "Ugly Bastard (肥宅/醜男)",
-                                        "ugly bastard, overweight male, fat man"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  32,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-old-man-wrinkled-skin",
-                        "name_zh":  "年長男性",
-                        "description_zh":  "加入「年長男性」提示詞。",
-                        "prompt":  "old man, wrinkled skin",
-                        "aliases":  [
-                                        "Old Man (老頭)",
-                                        "old man, wrinkled skin"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  33,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-prompts-delinquent-male-piercings-dyed-hair",
-                        "name_zh":  "不良少年",
-                        "description_zh":  "加入「不良少年」提示詞。",
-                        "prompt":  "delinquent male, piercings, dyed hair",
-                        "aliases":  [
-                                        "Delinquent (不良少年)",
-                                        "delinquent male, piercings, dyed hair"
-                                    ],
-                        "keywords":  [
-                                         "male_prompts",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  34,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-faces-faceless-male",
-                        "name_zh":  "不露臉/只露口鼻",
-                        "description_zh":  "加入「不露臉/只露口鼻」提示詞。",
-                        "prompt":  "faceless male",
-                        "aliases":  [
-                                        "不露臉/只露口鼻 (Cut off / Jaw only)",
-                                        "faceless male"
-                                    ],
-                        "keywords":  [
-                                         "male_faces",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  35,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "male-faces-full-face-male-focus",
-                        "name_zh":  "露出全臉",
-                        "description_zh":  "加入「露出全臉」提示詞。",
-                        "prompt":  "full face, male focus",
-                        "aliases":  [
-                                        "露出全臉 (Full Face)",
-                                        "full face, male focus"
-                                    ],
-                        "keywords":  [
-                                         "male_faces",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  36,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-types-fleshy-penis",
-                        "name_zh":  "預設膚色",
-                        "description_zh":  "加入「預設膚色」提示詞。",
-                        "prompt":  "fleshy penis",
-                        "aliases":  [
-                                        "預設膚色 (fleshy)",
-                                        "fleshy penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_types",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  37,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
-                        "name_zh":  "黑人大鵰",
-                        "description_zh":  "加入「黑人大鵰」提示詞。",
-                        "prompt":  "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
-                        "aliases":  [
-                                        "黑人大鵰 (dark-skinned, BBC)",
-                                        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc"
-                                    ],
-                        "keywords":  [
-                                         "penis_types",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  38,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-types-pale-penis",
-                        "name_zh":  "蒼白膚色",
-                        "description_zh":  "加入「蒼白膚色」提示詞。",
-                        "prompt":  "pale penis",
-                        "aliases":  [
-                                        "蒼白膚色 (pale)",
-                                        "pale penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_types",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  39,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-types-monster-penis-alien-penis",
-                        "name_zh":  "獸人/異形",
-                        "description_zh":  "加入「獸人/異形」提示詞。",
-                        "prompt":  "monster penis, alien penis",
-                        "aliases":  [
-                                        "獸人/異形 (monster/alien)",
-                                        "monster penis, alien penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_types",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  40,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-mods-huge-penis",
-                        "name_zh":  "巨大",
-                        "description_zh":  "加入「巨大」提示詞。",
-                        "prompt":  "huge penis",
-                        "aliases":  [
-                                        "巨大 (huge)",
-                                        "huge penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_mods",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  41,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-mods-hyper-penis",
-                        "name_zh":  "超大",
-                        "description_zh":  "加入「超大」提示詞。",
-                        "prompt":  "hyper penis",
-                        "aliases":  [
-                                        "超大 (hyper)",
-                                        "hyper penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_mods",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  42,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-mods-veiny-penis",
-                        "name_zh":  "青筋暴露",
-                        "description_zh":  "加入「青筋暴露」提示詞。",
-                        "prompt":  "veiny penis",
-                        "aliases":  [
-                                        "青筋暴露 (veiny)",
-                                        "veiny penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_mods",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  43,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-mods-uncircumcised",
-                        "name_zh":  "包莖",
-                        "description_zh":  "加入「包莖」提示詞。",
-                        "prompt":  "uncircumcised",
-                        "aliases":  [
-                                        "包莖 (uncircumcised)",
-                                        "uncircumcised"
-                                    ],
-                        "keywords":  [
-                                         "penis_mods",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  44,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "penis-mods-erect-penis",
-                        "name_zh":  "勃起",
-                        "description_zh":  "加入「勃起」提示詞。",
-                        "prompt":  "erect penis",
-                        "aliases":  [
-                                        "勃起 (erect)",
-                                        "erect penis"
-                                    ],
-                        "keywords":  [
-                                         "penis_mods",
-                                         "ltj",
-                                         "prompt"
-                                     ],
-                        "order":  45,
-                        "revision":  1,
-                        "archived":  false
-                    }
-                ]
+  "schema_version": 1,
+  "id": "body-appearance",
+  "polarity": "positive",
+  "name_zh": "人物與身形",
+  "description_zh": "收錄「人物與身形」分類的提示詞。",
+  "aliases": [
+    "人物與身形",
+    "body-appearance"
+  ],
+  "keywords": [
+    "ltj",
+    "positive",
+    "body-appearance"
+  ],
+  "order": 200,
+  "revision": 38,
+  "archived": false,
+  "entries": [
+    {
+      "id": "body-breasts-huge-breasts-0-9",
+      "name_zh": "巨乳",
+      "description_zh": "加入「巨乳」提示詞。",
+      "prompt": "(huge breasts:0.9)",
+      "aliases": [
+        "巨乳 (huge breasts:0.9)",
+        "(huge breasts:0.9)"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-breasts-gigantic-breasts",
+      "name_zh": "特大巨乳",
+      "description_zh": "加入「特大巨乳」提示詞。",
+      "prompt": "gigantic breasts",
+      "aliases": [
+        "特大巨乳 (gigantic breasts)",
+        "gigantic breasts"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-breasts-large-breasts",
+      "name_zh": "大乳",
+      "description_zh": "加入「大乳」提示詞。",
+      "prompt": "large breasts",
+      "aliases": [
+        "大乳 (large breasts)",
+        "large breasts"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-breasts-medium-breasts",
+      "name_zh": "中等胸部",
+      "description_zh": "加入「中等胸部」提示詞。",
+      "prompt": "medium breasts",
+      "aliases": [
+        "中等胸部 (medium breasts)",
+        "medium breasts"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-breasts-small-breasts",
+      "name_zh": "貧乳",
+      "description_zh": "加入「貧乳」提示詞。",
+      "prompt": "small breasts",
+      "aliases": [
+        "貧乳 (small breasts)",
+        "small breasts"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-breasts-flat-chest",
+      "name_zh": "平胸",
+      "description_zh": "加入「平胸」提示詞。",
+      "prompt": "flat chest",
+      "aliases": [
+        "平胸 (flat chest)",
+        "flat chest"
+      ],
+      "keywords": [
+        "body_breasts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 15,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-thighs-curvy-thick-thighs-curvy-a6269ed4",
+      "name_zh": "曲線豐滿",
+      "description_zh": "經人工拆分審閱的原子提示詞「curvy」，來源為「豐滿大腿」。",
+      "prompt": "curvy",
+      "aliases": [
+        "豐滿大腿 (curvy, thick thighs)",
+        "curvy, thick thighs",
+        "curvy"
+      ],
+      "keywords": [
+        "body_thighs",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "body-thighs-curvy-thick-thighs",
+        "source_prompt_sha256": "7f77950bd3c17b8a3b5d13a883171100670009a23bbc61ccfa44229692bb0b3f",
+        "segment_index": 0,
+        "raw_segment_sha256": "c25432628a20d5643b0ad381a39d1a473370de994b655aa7e37303a1d5ba53a0",
+        "identity_sha256": "a6269ed4c41f2b3af584c8555e312ebb88821191b35a3e4869ca3d7e503d925e"
+      }
+    },
+    {
+      "id": "body-thighs-curvy-thick-thighs-thick-thighs-f0305425",
+      "name_zh": "豐滿大腿",
+      "description_zh": "經人工拆分審閱的原子提示詞「thick thighs」，來源為「豐滿大腿」。",
+      "prompt": " thick thighs",
+      "aliases": [
+        "豐滿大腿 (curvy, thick thighs)",
+        "curvy, thick thighs",
+        "thick thighs"
+      ],
+      "keywords": [
+        "body_thighs",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "body-thighs-curvy-thick-thighs",
+        "source_prompt_sha256": "7f77950bd3c17b8a3b5d13a883171100670009a23bbc61ccfa44229692bb0b3f",
+        "segment_index": 1,
+        "raw_segment_sha256": "91d9c1cf8664e71db8356a552a9bb81ea7f939580393666ec97ea52fbed608d5",
+        "identity_sha256": "f03054258c26a231ef737d59678cea0330c23e322e111cb30db05c524ab87885"
+      }
+    },
+    {
+      "id": "body-thighs-thick-thighs",
+      "name_zh": "粗大腿",
+      "description_zh": "加入「粗大腿」提示詞。",
+      "prompt": "thick thighs",
+      "aliases": [
+        "粗大腿 (thick thighs)",
+        "thick thighs"
+      ],
+      "keywords": [
+        "body_thighs",
+        "ltj",
+        "prompt"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-thighs-slim-legs",
+      "name_zh": "纖細美腿",
+      "description_zh": "加入「纖細美腿」提示詞。",
+      "prompt": "slim legs",
+      "aliases": [
+        "纖細美腿 (slim legs)",
+        "slim legs"
+      ],
+      "keywords": [
+        "body_thighs",
+        "ltj",
+        "prompt"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-thighs-muscular-thighs",
+      "name_zh": "肌肉大腿",
+      "description_zh": "加入「肌肉大腿」提示詞。",
+      "prompt": "muscular thighs",
+      "aliases": [
+        "肌肉大腿 (muscular thighs)",
+        "muscular thighs"
+      ],
+      "keywords": [
+        "body_thighs",
+        "ltj",
+        "prompt"
+      ],
+      "order": 19,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-ass-wide-hips",
+      "name_zh": "寬臀",
+      "description_zh": "加入「寬臀」提示詞。",
+      "prompt": "wide hips",
+      "aliases": [
+        "寬臀 (wide hips)",
+        "wide hips"
+      ],
+      "keywords": [
+        "body_ass",
+        "ltj",
+        "prompt"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-ass-big-ass",
+      "name_zh": "大屁股",
+      "description_zh": "加入「大屁股」提示詞。",
+      "prompt": "big ass",
+      "aliases": [
+        "大屁股 (big ass)",
+        "big ass"
+      ],
+      "keywords": [
+        "body_ass",
+        "ltj",
+        "prompt"
+      ],
+      "order": 21,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-ass-huge-ass",
+      "name_zh": "巨大屁股",
+      "description_zh": "加入「巨大屁股」提示詞。",
+      "prompt": "huge ass",
+      "aliases": [
+        "巨大屁股 (huge ass)",
+        "huge ass"
+      ],
+      "keywords": [
+        "body_ass",
+        "ltj",
+        "prompt"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-ass-slim-waist",
+      "name_zh": "纖細腰身",
+      "description_zh": "加入「纖細腰身」提示詞。",
+      "prompt": "slim waist",
+      "aliases": [
+        "纖細腰身 (slim waist)",
+        "slim waist"
+      ],
+      "keywords": [
+        "body_ass",
+        "ltj",
+        "prompt"
+      ],
+      "order": 23,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-frame-petite",
+      "name_zh": "嬌小",
+      "description_zh": "加入「嬌小」提示詞。",
+      "prompt": "petite",
+      "aliases": [
+        "嬌小 (petite)",
+        "petite"
+      ],
+      "keywords": [
+        "body_frame",
+        "ltj",
+        "prompt"
+      ],
+      "order": 24,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-frame-tall",
+      "name_zh": "高挑",
+      "description_zh": "加入「高挑」提示詞。",
+      "prompt": "tall",
+      "aliases": [
+        "高挑 (tall)",
+        "tall"
+      ],
+      "keywords": [
+        "body_frame",
+        "ltj",
+        "prompt"
+      ],
+      "order": 25,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-frame-chubby",
+      "name_zh": "肉感",
+      "description_zh": "加入「肉感」提示詞。",
+      "prompt": "chubby",
+      "aliases": [
+        "肉感 (chubby)",
+        "chubby"
+      ],
+      "keywords": [
+        "body_frame",
+        "ltj",
+        "prompt"
+      ],
+      "order": 26,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-frame-athletic",
+      "name_zh": "健美",
+      "description_zh": "加入「健美」提示詞。",
+      "prompt": "athletic",
+      "aliases": [
+        "健美 (athletic)",
+        "athletic"
+      ],
+      "keywords": [
+        "body_frame",
+        "ltj",
+        "prompt"
+      ],
+      "order": 27,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "body-frame-voluptuous",
+      "name_zh": "豐滿",
+      "description_zh": "加入「豐滿」提示詞。",
+      "prompt": "voluptuous",
+      "aliases": [
+        "豐滿 (voluptuous)",
+        "voluptuous"
+      ],
+      "keywords": [
+        "body_frame",
+        "ltj",
+        "prompt"
+      ],
+      "order": 28,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "male-prompts-faceless-male",
+      "name_zh": "無臉男性",
+      "description_zh": "加入「無臉男性」提示詞。",
+      "prompt": "faceless male",
+      "aliases": [
+        "Faceless Male (無臉男/預設)",
+        "faceless male"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 29,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "male-prompts-muscular-male-blonde-hair-dark-skin-muscular-male-22a2548e",
+      "name_zh": "肌肉男性",
+      "description_zh": "經人工拆分審閱的原子提示詞「muscular male」，來源為「金髮肌肉男性」。",
+      "prompt": "muscular male",
+      "aliases": [
+        "Muscular Blonde (肌肉金毛)",
+        "muscular male, blonde hair, dark skin",
+        "muscular male"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin",
+        "source_prompt_sha256": "dd00aa73f63a601fedc92b0b1f6fcb703fcf0995d03c6417d9fba544ddce281d",
+        "segment_index": 0,
+        "raw_segment_sha256": "9b04a5b53436ed6392c49c1d656559784f9a7eaefac28b9adfa21457f33854d2",
+        "identity_sha256": "22a2548ed541f245a0cb9785967029f39732d6647f6e7a8779a71bfa5ef4dfa5"
+      }
+    },
+    {
+      "id": "male-prompts-muscular-male-blonde-hair-dark-skin-blonde-hair-85f79fbf",
+      "name_zh": "金髮",
+      "description_zh": "經人工拆分審閱的原子提示詞「blonde hair」，來源為「金髮肌肉男性」。",
+      "prompt": " blonde hair",
+      "aliases": [
+        "Muscular Blonde (肌肉金毛)",
+        "muscular male, blonde hair, dark skin",
+        "blonde hair"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin",
+        "source_prompt_sha256": "dd00aa73f63a601fedc92b0b1f6fcb703fcf0995d03c6417d9fba544ddce281d",
+        "segment_index": 1,
+        "raw_segment_sha256": "10629095eb39e9d173415ad6c41fea4040bf2cbf7dd70379b82c60fb2fa1d1f9",
+        "identity_sha256": "85f79fbf52a1cdcbfe6a9c59e4141209b85be385d68a7ec1683f659b478cb0f0"
+      }
+    },
+    {
+      "id": "male-prompts-muscular-male-blonde-hair-dark-skin-dark-skin-b9d1c932",
+      "name_zh": "深色皮膚",
+      "description_zh": "經人工拆分審閱的原子提示詞「dark skin」，來源為「金髮肌肉男性」。",
+      "prompt": " dark skin",
+      "aliases": [
+        "Muscular Blonde (肌肉金毛)",
+        "muscular male, blonde hair, dark skin",
+        "dark skin"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin",
+        "source_prompt_sha256": "dd00aa73f63a601fedc92b0b1f6fcb703fcf0995d03c6417d9fba544ddce281d",
+        "segment_index": 2,
+        "raw_segment_sha256": "1b86aa5800162658473175680f7c75d3fa4b938ce53b28ecd01118a092de7e5a",
+        "identity_sha256": "b9d1c9329f861d20ee54155b612192b303eeb95cf8c095dd2c1b1e312d5ebb05"
+      }
+    },
+    {
+      "id": "male-prompts-shota-young-boy-cute-male-shota-cad93f20",
+      "name_zh": "少年男性・第 1 詞（shota）",
+      "description_zh": "經人工拆分審閱的原子提示詞「shota」，來源為「少年男性」。",
+      "prompt": "shota",
+      "aliases": [
+        "Shota (正太)",
+        "shota, young boy, cute male",
+        "shota"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 31,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-shota-young-boy-cute-male",
+        "source_prompt_sha256": "792c098fe50fd198afee4e65c04017bb03e89e9ef8d9960323259a33366e9a2a",
+        "segment_index": 0,
+        "raw_segment_sha256": "c55fd8a7f68dd354b6fa95d27909c4be931f56bdb28dc094cbfa1392f61ee0e1",
+        "identity_sha256": "cad93f20fa9ac18fc85ecd805ff9abe88da94f1aaee1388f4296d9f7872d1969"
+      }
+    },
+    {
+      "id": "male-prompts-shota-young-boy-cute-male-young-boy-f84d9fdc",
+      "name_zh": "少年",
+      "description_zh": "經人工拆分審閱的原子提示詞「young boy」，來源為「少年男性」。",
+      "prompt": " young boy",
+      "aliases": [
+        "Shota (正太)",
+        "shota, young boy, cute male",
+        "young boy"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 31,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-shota-young-boy-cute-male",
+        "source_prompt_sha256": "792c098fe50fd198afee4e65c04017bb03e89e9ef8d9960323259a33366e9a2a",
+        "segment_index": 1,
+        "raw_segment_sha256": "4a9d07ee5d73daecb511217fa626d879ca80979fba1dd9eb69eb388caceb6040",
+        "identity_sha256": "f84d9fdc260f4a3ed9229093961b15fbb220d5a5ff8a16a0a70aa815822327b7"
+      }
+    },
+    {
+      "id": "male-prompts-shota-young-boy-cute-male-cute-male-65452584",
+      "name_zh": "可愛男性",
+      "description_zh": "經人工拆分審閱的原子提示詞「cute male」，來源為「少年男性」。",
+      "prompt": " cute male",
+      "aliases": [
+        "Shota (正太)",
+        "shota, young boy, cute male",
+        "cute male"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 31,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-shota-young-boy-cute-male",
+        "source_prompt_sha256": "792c098fe50fd198afee4e65c04017bb03e89e9ef8d9960323259a33366e9a2a",
+        "segment_index": 2,
+        "raw_segment_sha256": "19653a16c2ed60b8b66fc05b113cf2bbe517a45684f8b722af44020fc9f0952d",
+        "identity_sha256": "6545258497eb3698f48340f1e819df04e77947c5a142bf491a2e58beb02b184a"
+      }
+    },
+    {
+      "id": "male-prompts-ugly-bastard-overweight-male-fat-ma-ugly-bastard-7fa59c40",
+      "name_zh": "肥胖醜陋男性・第 1 詞（ugly bastard）",
+      "description_zh": "經人工拆分審閱的原子提示詞「ugly bastard」，來源為「肥胖醜陋男性」。",
+      "prompt": "ugly bastard",
+      "aliases": [
+        "Ugly Bastard (肥宅/醜男)",
+        "ugly bastard, overweight male, fat man",
+        "ugly bastard"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 32,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-ugly-bastard-overweight-male-fat-man",
+        "source_prompt_sha256": "64da34b678d32996c6005fe6ab41e7853c3d879bfaf1b5acff14d019a4e23c57",
+        "segment_index": 0,
+        "raw_segment_sha256": "da020b1cccaaf705c876c736651b50f0e379e6e1af953a0005f74ae7650e92d1",
+        "identity_sha256": "7fa59c4049cbd8196ea5528cdcc6a03054ee3959c7cfdfb367f95e0964cb7833"
+      }
+    },
+    {
+      "id": "male-prompts-ugly-bastard-overweight-male-fat-ma-overweight-male-ef2df7b7",
+      "name_zh": "肥胖醜陋男性・第 2 詞（overweight male）",
+      "description_zh": "經人工拆分審閱的原子提示詞「overweight male」，來源為「肥胖醜陋男性」。",
+      "prompt": " overweight male",
+      "aliases": [
+        "Ugly Bastard (肥宅/醜男)",
+        "ugly bastard, overweight male, fat man",
+        "overweight male"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 32,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-ugly-bastard-overweight-male-fat-man",
+        "source_prompt_sha256": "64da34b678d32996c6005fe6ab41e7853c3d879bfaf1b5acff14d019a4e23c57",
+        "segment_index": 1,
+        "raw_segment_sha256": "5bed7a85142a24e31675f7253aa1188b9870e8c9ba739d2d169686d3d3754e9e",
+        "identity_sha256": "ef2df7b79feedfdd66fcca509c0e048f5238da6eee997981eaaaee1e3d399831"
+      }
+    },
+    {
+      "id": "male-prompts-ugly-bastard-overweight-male-fat-ma-fat-man-56bf9caa",
+      "name_zh": "肥胖醜陋男性・第 3 詞（fat man）",
+      "description_zh": "經人工拆分審閱的原子提示詞「fat man」，來源為「肥胖醜陋男性」。",
+      "prompt": " fat man",
+      "aliases": [
+        "Ugly Bastard (肥宅/醜男)",
+        "ugly bastard, overweight male, fat man",
+        "fat man"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 32,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-ugly-bastard-overweight-male-fat-man",
+        "source_prompt_sha256": "64da34b678d32996c6005fe6ab41e7853c3d879bfaf1b5acff14d019a4e23c57",
+        "segment_index": 2,
+        "raw_segment_sha256": "800cda2bc3a22cba3fc8631bbca39366b27f1c00f6eb6ee76a4881ca9f8c33ce",
+        "identity_sha256": "56bf9caa72d8b3b16f0964d5aa5f59f57876c3222114423361340d1b45cc71ba"
+      }
+    },
+    {
+      "id": "male-prompts-old-man-wrinkled-skin-old-man-795e15e1",
+      "name_zh": "老年男性",
+      "description_zh": "經人工拆分審閱的原子提示詞「old man」，來源為「年長男性」。",
+      "prompt": "old man",
+      "aliases": [
+        "Old Man (老頭)",
+        "old man, wrinkled skin",
+        "old man"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 33,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-old-man-wrinkled-skin",
+        "source_prompt_sha256": "8315a2368f35e6562bf6ebbe1e10fbcc1ead389d6d1652c8c58ed7c2e2395f33",
+        "segment_index": 0,
+        "raw_segment_sha256": "0ca5329b5cb1edb3d70cac5aa87159ac1835653dcee3674b7390a7d10fc198d0",
+        "identity_sha256": "795e15e1fc7ae24f7fc8391c8a139c0e3810711f2b49503fa32329764d8d03ae"
+      }
+    },
+    {
+      "id": "male-prompts-old-man-wrinkled-skin-wrinkled-skin-77739678",
+      "name_zh": "皺紋皮膚",
+      "description_zh": "經人工拆分審閱的原子提示詞「wrinkled skin」，來源為「年長男性」。",
+      "prompt": " wrinkled skin",
+      "aliases": [
+        "Old Man (老頭)",
+        "old man, wrinkled skin",
+        "wrinkled skin"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 33,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-old-man-wrinkled-skin",
+        "source_prompt_sha256": "8315a2368f35e6562bf6ebbe1e10fbcc1ead389d6d1652c8c58ed7c2e2395f33",
+        "segment_index": 1,
+        "raw_segment_sha256": "4780aa2b6f916eec601d40d43ef77eecac8001f5b679b5035385ad2d33f94af0",
+        "identity_sha256": "77739678e8ebb9f62e5234b0f27a731d367fd1e558e6da5a8d9df878bb199a04"
+      }
+    },
+    {
+      "id": "male-prompts-delinquent-male-piercings-dyed-hair-delinquent-male-183e87f4",
+      "name_zh": "不良少年・第 1 詞（delinquent male）",
+      "description_zh": "經人工拆分審閱的原子提示詞「delinquent male」，來源為「不良少年」。",
+      "prompt": "delinquent male",
+      "aliases": [
+        "Delinquent (不良少年)",
+        "delinquent male, piercings, dyed hair",
+        "delinquent male"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 34,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-delinquent-male-piercings-dyed-hair",
+        "source_prompt_sha256": "89cb47598f88dd1d30fc2f99feae91f3b90e163268c8ff5c1ab6ae7eebb1e218",
+        "segment_index": 0,
+        "raw_segment_sha256": "9e12b5537d9bebdd11fc4c58535eb125293956ea3b4ed66d60c1765c29684fcf",
+        "identity_sha256": "183e87f4fffcf63a85f97914a7e0334dd1a6cf11ca79f22f6e3989c4f9ecd6ef"
+      }
+    },
+    {
+      "id": "male-prompts-delinquent-male-piercings-dyed-hair-piercings-d0213194",
+      "name_zh": "穿環飾品",
+      "description_zh": "經人工拆分審閱的原子提示詞「piercings」，來源為「不良少年」。",
+      "prompt": " piercings",
+      "aliases": [
+        "Delinquent (不良少年)",
+        "delinquent male, piercings, dyed hair",
+        "piercings"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 34,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-delinquent-male-piercings-dyed-hair",
+        "source_prompt_sha256": "89cb47598f88dd1d30fc2f99feae91f3b90e163268c8ff5c1ab6ae7eebb1e218",
+        "segment_index": 1,
+        "raw_segment_sha256": "d225a6eceafe6620b9f5f484b2894407a39d786167716a5fcc3257db227c376d",
+        "identity_sha256": "d0213194f9f15a50e04151447150d2d6fbf5d3673ee5c23ec558380e47c0f18d"
+      }
+    },
+    {
+      "id": "male-prompts-delinquent-male-piercings-dyed-hair-dyed-hair-f660c529",
+      "name_zh": "染髮",
+      "description_zh": "經人工拆分審閱的原子提示詞「dyed hair」，來源為「不良少年」。",
+      "prompt": " dyed hair",
+      "aliases": [
+        "Delinquent (不良少年)",
+        "delinquent male, piercings, dyed hair",
+        "dyed hair"
+      ],
+      "keywords": [
+        "male_prompts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 34,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-prompts-delinquent-male-piercings-dyed-hair",
+        "source_prompt_sha256": "89cb47598f88dd1d30fc2f99feae91f3b90e163268c8ff5c1ab6ae7eebb1e218",
+        "segment_index": 2,
+        "raw_segment_sha256": "89972480454b696894be5c639979abb15d36c8b6fb0c55164e83162bfabe87b7",
+        "identity_sha256": "f660c529ce8014525f17c043e10763acc17839e7a44e14bd12bad233d155bf35"
+      }
+    },
+    {
+      "id": "male-faces-faceless-male",
+      "name_zh": "不露臉/只露口鼻",
+      "description_zh": "加入「不露臉/只露口鼻」提示詞。",
+      "prompt": "faceless male",
+      "aliases": [
+        "不露臉/只露口鼻 (Cut off / Jaw only)",
+        "faceless male"
+      ],
+      "keywords": [
+        "male_faces",
+        "ltj",
+        "prompt"
+      ],
+      "order": 35,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "male-faces-full-face-male-focus-full-face-b8173e95",
+      "name_zh": "完整臉部",
+      "description_zh": "經人工拆分審閱的原子提示詞「full face」，來源為「露出全臉」。",
+      "prompt": "full face",
+      "aliases": [
+        "露出全臉 (Full Face)",
+        "full face, male focus",
+        "full face"
+      ],
+      "keywords": [
+        "male_faces",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 36,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-faces-full-face-male-focus",
+        "source_prompt_sha256": "933fc86b5b8e159b61cb39a55b4e3ff93160739523dc063644242edf0529a896",
+        "segment_index": 0,
+        "raw_segment_sha256": "0cefd3de89d5a2b3ba2fa9940415ad6b934bc1a838457075c9ca1c78cbe4fbf7",
+        "identity_sha256": "b8173e95dcf46f7d4a62958dc04fc1b48ab41368cbd993fa0a454f61a8cb355b"
+      }
+    },
+    {
+      "id": "male-faces-full-face-male-focus-male-focus-02ac4a18",
+      "name_zh": "男性焦點",
+      "description_zh": "經人工拆分審閱的原子提示詞「male focus」，來源為「露出全臉」。",
+      "prompt": " male focus",
+      "aliases": [
+        "露出全臉 (Full Face)",
+        "full face, male focus",
+        "male focus"
+      ],
+      "keywords": [
+        "male_faces",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 36,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "male-faces-full-face-male-focus",
+        "source_prompt_sha256": "933fc86b5b8e159b61cb39a55b4e3ff93160739523dc063644242edf0529a896",
+        "segment_index": 1,
+        "raw_segment_sha256": "46331e34a0795511fd246b5bca013f28df70996998871a411de6b5e7895c582b",
+        "identity_sha256": "02ac4a186073cc42aecbff23d667d467bc992e8eec5b19e5d1708a1a02765534"
+      }
+    },
+    {
+      "id": "penis-types-fleshy-penis",
+      "name_zh": "預設膚色",
+      "description_zh": "加入「預設膚色」提示詞。",
+      "prompt": "fleshy penis",
+      "aliases": [
+        "預設膚色 (fleshy)",
+        "fleshy penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt"
+      ],
+      "order": 37,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skinned-male-6d9c9949",
+      "name_zh": "黑人大鵰・第 1 詞（dark-skinned male）",
+      "description_zh": "經人工拆分審閱的原子提示詞「dark-skinned male」，來源為「黑人大鵰」。",
+      "prompt": "dark-skinned male",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "dark-skinned male"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 0,
+        "raw_segment_sha256": "b26860b2e3f6ec818e96b6e8a58c121053e86df6e07a9602d649b1897ce54a11",
+        "identity_sha256": "6d9c9949c1a3d1235f77936995ba96d5560bded01615a0d56b18d06d920f8bb3"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skin-1f14236c",
+      "name_zh": "深色皮膚",
+      "description_zh": "經人工拆分審閱的原子提示詞「dark skin」，來源為「黑人大鵰」。",
+      "prompt": " dark skin",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "dark skin"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 1,
+        "raw_segment_sha256": "1b86aa5800162658473175680f7c75d3fa4b938ce53b28ecd01118a092de7e5a",
+        "identity_sha256": "1f14236c14bb741d93d502500f0e8595a9f45146cdd3fef11336de5ff71a7bea"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skinned-penis-4f6de490",
+      "name_zh": "黑人大鵰・第 3 詞（dark-skinned penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「dark-skinned penis」，來源為「黑人大鵰」。",
+      "prompt": " dark-skinned penis",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "dark-skinned penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 2,
+        "raw_segment_sha256": "f12906dfa8e48f065bc56325ee8d8df4053665a79293e7dcc11431644c4ad552",
+        "identity_sha256": "4f6de490fbf4a0920d1514c110c2aa42c203020389b605dadee25b58045da9bb"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-black-penis-2a00723c",
+      "name_zh": "黑人大鵰・第 4 詞（black penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「black penis」，來源為「黑人大鵰」。",
+      "prompt": " black penis",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "black penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 3,
+        "raw_segment_sha256": "4785a36aa965cf3d3d9e21107345f454cf12f7058f14226e3193c7891b4d5d31",
+        "identity_sha256": "2a00723cbf1052b6195c6b8a7421abef0c67dcf37f5dbc4fd6fc371487383680"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-huge-penis-3d4e4ee2",
+      "name_zh": "黑人大鵰・第 5 詞（huge penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「huge penis」，來源為「黑人大鵰」。",
+      "prompt": " huge penis",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "huge penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 4,
+        "raw_segment_sha256": "cddba7fdc8f245a7668b9d61ab0e7eb5da4ee248d4e1ef357e4418e2dc684c65",
+        "identity_sha256": "3d4e4ee260dcc9f6ae763d300656f88ed4e9866229c41e90530267cfa73374a3"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-veiny-penis-cb7040f8",
+      "name_zh": "黑人大鵰・第 6 詞（veiny penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「veiny penis」，來源為「黑人大鵰」。",
+      "prompt": " veiny penis",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "veiny penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 5,
+        "raw_segment_sha256": "22e6314c99fefd66a3432ee2a141e9aa6e4c35f6fd35f89bbb80f5e52eb43699",
+        "identity_sha256": "cb7040f82c2393731a08a3638d4d72fbf3d9cb7cad827806d7c933d4c92ab831"
+      }
+    },
+    {
+      "id": "penis-types-dark-skinned-male-dark-skin-dark-ski-bbc-fc4cbf3f",
+      "name_zh": "黑人大鵰・第 7 詞（bbc）",
+      "description_zh": "經人工拆分審閱的原子提示詞「bbc」，來源為「黑人大鵰」。",
+      "prompt": " bbc",
+      "aliases": [
+        "黑人大鵰 (dark-skinned, BBC)",
+        "dark-skinned male, dark skin, dark-skinned penis, black penis, huge penis, veiny penis, bbc",
+        "bbc"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 38,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc",
+        "source_prompt_sha256": "e1c3283576e06e764e2c71515700d34bc7ff450f0d7681c2b0ad419c0afd9d0c",
+        "segment_index": 6,
+        "raw_segment_sha256": "9f32778b52653eae5d85d69679ecc6271d95ccfc0ea7d6995a5cb15aeaa0ca96",
+        "identity_sha256": "fc4cbf3f579efd0df20ecd4218f7fde7e5394a9e63c843287155cb80226a8426"
+      }
+    },
+    {
+      "id": "penis-types-pale-penis",
+      "name_zh": "蒼白膚色",
+      "description_zh": "加入「蒼白膚色」提示詞。",
+      "prompt": "pale penis",
+      "aliases": [
+        "蒼白膚色 (pale)",
+        "pale penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt"
+      ],
+      "order": 39,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-types-monster-penis-alien-penis-monster-penis-6886fc86",
+      "name_zh": "獸人/異形・第 1 詞（monster penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「monster penis」，來源為「獸人/異形」。",
+      "prompt": "monster penis",
+      "aliases": [
+        "獸人/異形 (monster/alien)",
+        "monster penis, alien penis",
+        "monster penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-monster-penis-alien-penis",
+        "source_prompt_sha256": "2bc597042cff790c7480bfde66391f615995cd7ae11806557fad600d516f81af",
+        "segment_index": 0,
+        "raw_segment_sha256": "e3a11ab3238abf657ba970d560c3daaca73ce8bf3fc1d747901f64079338a304",
+        "identity_sha256": "6886fc8690bbf33781b10df45d2b5a532a312117b8ae45d8e17455a90c711500"
+      }
+    },
+    {
+      "id": "penis-types-monster-penis-alien-penis-alien-penis-f9a844a7",
+      "name_zh": "獸人/異形・第 2 詞（alien penis）",
+      "description_zh": "經人工拆分審閱的原子提示詞「alien penis」，來源為「獸人/異形」。",
+      "prompt": " alien penis",
+      "aliases": [
+        "獸人/異形 (monster/alien)",
+        "monster penis, alien penis",
+        "alien penis"
+      ],
+      "keywords": [
+        "penis_types",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "body-appearance"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "body-appearance",
+        "source_entry_id": "penis-types-monster-penis-alien-penis",
+        "source_prompt_sha256": "2bc597042cff790c7480bfde66391f615995cd7ae11806557fad600d516f81af",
+        "segment_index": 1,
+        "raw_segment_sha256": "186723975ec4c1bf23d72c32417df59d91f588d89b941b85b40654e337df934a",
+        "identity_sha256": "f9a844a7836611acf38e503c5f3cad34087b9964edcda1c1f893b8dd00442fca"
+      }
+    },
+    {
+      "id": "penis-mods-huge-penis",
+      "name_zh": "巨大",
+      "description_zh": "加入「巨大」提示詞。",
+      "prompt": "huge penis",
+      "aliases": [
+        "巨大 (huge)",
+        "huge penis"
+      ],
+      "keywords": [
+        "penis_mods",
+        "ltj",
+        "prompt"
+      ],
+      "order": 41,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-mods-hyper-penis",
+      "name_zh": "超大",
+      "description_zh": "加入「超大」提示詞。",
+      "prompt": "hyper penis",
+      "aliases": [
+        "超大 (hyper)",
+        "hyper penis"
+      ],
+      "keywords": [
+        "penis_mods",
+        "ltj",
+        "prompt"
+      ],
+      "order": 42,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-mods-veiny-penis",
+      "name_zh": "青筋暴露",
+      "description_zh": "加入「青筋暴露」提示詞。",
+      "prompt": "veiny penis",
+      "aliases": [
+        "青筋暴露 (veiny)",
+        "veiny penis"
+      ],
+      "keywords": [
+        "penis_mods",
+        "ltj",
+        "prompt"
+      ],
+      "order": 43,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-mods-uncircumcised",
+      "name_zh": "包莖",
+      "description_zh": "加入「包莖」提示詞。",
+      "prompt": "uncircumcised",
+      "aliases": [
+        "包莖 (uncircumcised)",
+        "uncircumcised"
+      ],
+      "keywords": [
+        "penis_mods",
+        "ltj",
+        "prompt"
+      ],
+      "order": 44,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "penis-mods-erect-penis",
+      "name_zh": "勃起",
+      "description_zh": "加入「勃起」提示詞。",
+      "prompt": "erect penis",
+      "aliases": [
+        "勃起 (erect)",
+        "erect penis"
+      ],
+      "keywords": [
+        "penis_mods",
+        "ltj",
+        "prompt"
+      ],
+      "order": 45,
+      "revision": 1,
+      "archived": false
+    }
+  ]
 }

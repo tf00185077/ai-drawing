@@ -4,7 +4,13 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from mcp_server.tools.prompt_library import prompt_library_restore, prompt_library_save
+from mcp_server.tools.prompt_library import (
+    prompt_library_archive,
+    prompt_library_compose,
+    prompt_library_restore,
+    prompt_library_save,
+    prompt_library_search,
+)
 
 
 def _save(resource_type, payload, **kwargs):
@@ -188,3 +194,78 @@ def test_restore_success_envelope_includes_backend_response_and_next():
         "etag": "restored-etag",
         "next": "reload the category and use its new revision and etag",
     }
+
+
+@pytest.mark.parametrize(
+    ("invoke", "client_method"),
+    [
+        (lambda: prompt_library_search(), "get"),
+        (
+            lambda: prompt_library_save(
+                resource_type="entry",
+                resource_id="atom",
+                polarity="positive",
+                category_id="quality",
+                payload={
+                    "name_zh": "原子",
+                    "description_zh": "原子詞",
+                    "prompt": "atom",
+                },
+            ),
+            "put",
+        ),
+        (lambda: prompt_library_compose(positive=[]), "post"),
+        (
+            lambda: prompt_library_archive(
+                resource_type="category",
+                resource_id="quality",
+                polarity="positive",
+                expected_revision=1,
+                expected_etag="etag",
+            ),
+            "post",
+        ),
+        (
+            lambda: prompt_library_restore(
+                resource_type="category",
+                resource_id="quality",
+                polarity="positive",
+                expected_revision=1,
+                expected_etag="etag",
+            ),
+            "post",
+        ),
+    ],
+)
+def test_all_prompt_library_mcp_reads_and_writes_preserve_fail_closed_error(
+    invoke,
+    client_method,
+):
+    request = httpx.Request(
+        "GET" if client_method == "get" else "POST",
+        "http://backend.test/api/prompt-library/catalog",
+    )
+    detail = {
+        "code": "comma_atomic_migration_unavailable",
+        "message": "Prompt Library migration is incomplete.",
+        "hint": "Use only the privileged offline migration path.",
+        "details": {"state": "validating"},
+    }
+    backend_response = httpx.Response(
+        503,
+        json={"detail": detail},
+        request=request,
+    )
+    client = MagicMock()
+    getattr(client, client_method).side_effect = httpx.HTTPStatusError(
+        "503 Service Unavailable",
+        request=request,
+        response=backend_response,
+    )
+
+    with patch("mcp_server.tools.prompt_library._get_client", return_value=client):
+        result = invoke()
+
+    assert result["ok"] is False
+    assert result["error"] == detail
+    assert result["status_code"] == 503
