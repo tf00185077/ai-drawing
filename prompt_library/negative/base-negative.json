@@ -1,109 +1,3139 @@
 {
-    "schema_version":  1,
-    "id":  "base-negative",
-    "polarity":  "negative",
-    "name_zh":  "基礎負向詞",
-    "description_zh":  "收錄「基礎負向詞」分類的提示詞。",
-    "aliases":  [
-                    "negative"
-                ],
-    "keywords":  [
-                     "ltj",
-                     "negative"
-                 ],
-    "order":  10,
-    "revision":  6,
-    "archived":  false,
-    "entries":  [
-                    {
-                        "id":  "pony-negative",
-                        "name_zh":  "Pony 基礎負向詞",
-                        "description_zh":  "加入「Pony 基礎負向詞」提示詞。",
-                        "prompt":  "score_4, score_3, score_2, score_1, monochrome, text, signature, watermark, artist name, twitter username, patreon username, weibo username, english text, chinese text, bad anatomy, bad hands, missing fingers, extra digits, fewer digits, extra limbs, extra arms, extra legs, extra hands, mutated hands, poorly drawn hands, deformed, disconnected limbs, backwards hands, multiple heads, two heads, disembodied head, floating head, amputee",
-                        "aliases":  [
-                                        "Pony",
-                                        "negative"
-                                    ],
-                        "keywords":  [
-                                         "negative",
-                                         "pony",
-                                         "ltj"
-                                     ],
-                        "order":  10,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "illustrious-negative",
-                        "name_zh":  "Illustrious 基礎負向詞",
-                        "description_zh":  "加入「Illustrious 基礎負向詞」提示詞。",
-                        "prompt":  "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, blurry, username",
-                        "aliases":  [
-                                        "Illustrious",
-                                        "negative"
-                                    ],
-                        "keywords":  [
-                                         "negative",
-                                         "illustrious",
-                                         "ltj"
-                                     ],
-                        "order":  11,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "noobai-negative",
-                        "name_zh":  "NoobAI 基礎負向詞",
-                        "description_zh":  "加入「NoobAI 基礎負向詞」提示詞。",
-                        "prompt":  "lowres, bad anatomy, blurry, worst quality, low quality, bad hands, mutated hands, extra arms, duplicate, cropped, watermark, signature, ugly, monochrome",
-                        "aliases":  [
-                                        "NoobAI",
-                                        "negative"
-                                    ],
-                        "keywords":  [
-                                         "negative",
-                                         "noobai",
-                                         "ltj"
-                                     ],
-                        "order":  12,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "anima-negative",
-                        "name_zh":  "Anima 基礎負向詞",
-                        "description_zh":  "加入「Anima 基礎負向詞」提示詞。",
-                        "prompt":  "worst quality, low quality, score_1, score_2, score_3, artist name, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, watermark, signature, username",
-                        "aliases":  [
-                                        "Anima",
-                                        "negative"
-                                    ],
-                        "keywords":  [
-                                         "negative",
-                                         "anima",
-                                         "ltj"
-                                     ],
-                        "order":  13,
-                        "revision":  1,
-                        "archived":  false
-                    },
-                    {
-                        "id":  "sd1-5-negative",
-                        "name_zh":  "SD1.5 基礎負向詞",
-                        "description_zh":  "加入「SD1.5 基礎負向詞」提示詞。",
-                        "prompt":  "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, blurry, extra legs, extra feet, extra arms, extra fingers, missing legs, missing arms, ugly, monochrome, signature, watermark, username",
-                        "aliases":  [
-                                        "SD1.5",
-                                        "negative"
-                                    ],
-                        "keywords":  [
-                                         "negative",
-                                         "sd1.5",
-                                         "ltj"
-                                     ],
-                        "order":  14,
-                        "revision":  1,
-                        "archived":  false
-                    }
-                ]
+  "schema_version": 1,
+  "id": "base-negative",
+  "polarity": "negative",
+  "name_zh": "基礎負向詞",
+  "description_zh": "收錄「基礎負向詞」分類的提示詞。",
+  "aliases": [
+    "negative"
+  ],
+  "keywords": [
+    "ltj",
+    "negative"
+  ],
+  "order": 10,
+  "revision": 7,
+  "archived": false,
+  "entries": [
+    {
+      "id": "pony-negative-score-4-a70c2e44",
+      "name_zh": "Pony 基礎負向詞・第 1 詞（score_4）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_4」，來源為「Pony 基礎負向詞」。",
+      "prompt": "score_4",
+      "aliases": [
+        "Pony",
+        "negative",
+        "score_4"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 0,
+        "raw_segment_sha256": "716b4f5e3d7388f2570836f795eb187234d5fdc9bf9b79e140856f77fd887fc6",
+        "identity_sha256": "a70c2e44d06a0d9ccb81addebf20a204dba44cf86a02778ad072ab7f8aeabbc2"
+      }
+    },
+    {
+      "id": "pony-negative-score-3-67d34b41",
+      "name_zh": "Pony 基礎負向詞・第 2 詞（score_3）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_3」，來源為「Pony 基礎負向詞」。",
+      "prompt": " score_3",
+      "aliases": [
+        "Pony",
+        "negative",
+        "score_3"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 1,
+        "raw_segment_sha256": "cfe6d53cb059f9b5bfb103ad7eb3dcb61e0a165d8e6f994d91eed1c8c0aba061",
+        "identity_sha256": "67d34b4192c9903757d25a4e7690e0f68c78d6ce60b8da2e01051ca29a36406c"
+      }
+    },
+    {
+      "id": "pony-negative-score-2-75dc3a22",
+      "name_zh": "Pony 基礎負向詞・第 3 詞（score_2）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_2」，來源為「Pony 基礎負向詞」。",
+      "prompt": " score_2",
+      "aliases": [
+        "Pony",
+        "negative",
+        "score_2"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 2,
+        "raw_segment_sha256": "cf16e310085b1cab26051293f8662eb330acb83edfdee5a71261133dcd3b562c",
+        "identity_sha256": "75dc3a223cfc7f25f8774b112c8c2ec1f924e1dc26ede14e68c2bee3f485bf9b"
+      }
+    },
+    {
+      "id": "pony-negative-score-1-25a212cc",
+      "name_zh": "Pony 基礎負向詞・第 4 詞（score_1）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_1」，來源為「Pony 基礎負向詞」。",
+      "prompt": " score_1",
+      "aliases": [
+        "Pony",
+        "negative",
+        "score_1"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 3,
+        "raw_segment_sha256": "34759ea90e213ca8a71bf3d07fb3382ddfeab1a59825a5b77a65b23baeaf1c11",
+        "identity_sha256": "25a212cc49b02dd0019f566421ab6bbcab79e943371baaa2a3abdae079be411a"
+      }
+    },
+    {
+      "id": "pony-negative-monochrome-6e9f2039",
+      "name_zh": "單色",
+      "description_zh": "經人工拆分審閱的原子提示詞「monochrome」，來源為「Pony 基礎負向詞」。",
+      "prompt": " monochrome",
+      "aliases": [
+        "Pony",
+        "negative",
+        "monochrome"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 4,
+        "raw_segment_sha256": "19be3c99bf763404a24c6565189ee20d13622763ba4b29ad24572930e16d98ff",
+        "identity_sha256": "6e9f2039dd71b9726dd6305a208a7f34762aab7951cb7b62ee51d8029c55b124"
+      }
+    },
+    {
+      "id": "pony-negative-text-c9d4e026",
+      "name_zh": "文字",
+      "description_zh": "經人工拆分審閱的原子提示詞「text」，來源為「Pony 基礎負向詞」。",
+      "prompt": " text",
+      "aliases": [
+        "Pony",
+        "negative",
+        "text"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 5,
+        "raw_segment_sha256": "42b013ab06a9a4c06a3d1d9b107b7f2ac4627fc89e07494cb4d2e6034e79b3e6",
+        "identity_sha256": "c9d4e026a7a89b172642bba2330ea2e5a781b31be234974fe4254d9ab7d4c0cc"
+      }
+    },
+    {
+      "id": "pony-negative-signature-58a0378c",
+      "name_zh": "簽名",
+      "description_zh": "經人工拆分審閱的原子提示詞「signature」，來源為「Pony 基礎負向詞」。",
+      "prompt": " signature",
+      "aliases": [
+        "Pony",
+        "negative",
+        "signature"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 6,
+        "raw_segment_sha256": "d693277781c82f33f700c6089badd2a5cc46398d8df35df31603599558658bb6",
+        "identity_sha256": "58a0378c2ee20d331d4da121c4d1987cd259b38de52fcc286a603fafa8ac6cb0"
+      }
+    },
+    {
+      "id": "pony-negative-watermark-564634b7",
+      "name_zh": "浮水印",
+      "description_zh": "經人工拆分審閱的原子提示詞「watermark」，來源為「Pony 基礎負向詞」。",
+      "prompt": " watermark",
+      "aliases": [
+        "Pony",
+        "negative",
+        "watermark"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 7,
+        "raw_segment_sha256": "be0d8d916b4705cb912ba4881a7fc9dc45360b2d131d5d7eacce7abe68e649db",
+        "identity_sha256": "564634b765f4ec6c4297a223b03e1e1810e28d3db5743a125257c8afa7911ba4"
+      }
+    },
+    {
+      "id": "pony-negative-artist-name-bcdab1af",
+      "name_zh": "藝術家名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「artist name」，來源為「Pony 基礎負向詞」。",
+      "prompt": " artist name",
+      "aliases": [
+        "Pony",
+        "negative",
+        "artist name"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 8,
+        "raw_segment_sha256": "78a46479ae276f1ef63a3707fd2d5c46cd51b8a4d28e17f3bdee4fdf1fa9f910",
+        "identity_sha256": "bcdab1af63722314a2729abfef76c641719b4f279ed5ef21d84cd4a2b493c97e"
+      }
+    },
+    {
+      "id": "pony-negative-twitter-username-97dcd766",
+      "name_zh": "推特使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「twitter username」，來源為「Pony 基礎負向詞」。",
+      "prompt": " twitter username",
+      "aliases": [
+        "Pony",
+        "negative",
+        "twitter username"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 9,
+        "raw_segment_sha256": "601cc259ff908d4698cf6c2cb8c2fbd5a3bf9baa7968bd71941b946465c50b64",
+        "identity_sha256": "97dcd766023f795cbe520e058fb4dd2d79f4a4f55dd7271a4047b7afd1147929"
+      }
+    },
+    {
+      "id": "pony-negative-patreon-username-c10da6de",
+      "name_zh": "Patreon 使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「patreon username」，來源為「Pony 基礎負向詞」。",
+      "prompt": " patreon username",
+      "aliases": [
+        "Pony",
+        "negative",
+        "patreon username"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 10,
+        "raw_segment_sha256": "2d34a296f492852fcc00998d8a70e811c3cf12830a33d7d8fb3fe3428713d324",
+        "identity_sha256": "c10da6de00e78758116735a9fe7136f1ec0b57d89484d06de2d7efefdc0b9d20"
+      }
+    },
+    {
+      "id": "pony-negative-weibo-username-deefc246",
+      "name_zh": "微博使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「weibo username」，來源為「Pony 基礎負向詞」。",
+      "prompt": " weibo username",
+      "aliases": [
+        "Pony",
+        "negative",
+        "weibo username"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 11,
+        "raw_segment_sha256": "7da4183ca24930aa08b2488749f8348c20d4fed1871a3561531d60d645969b6a",
+        "identity_sha256": "deefc246e8f0a9f26c7b95f1d81fbc848944bc99655077295a6290584745b3c7"
+      }
+    },
+    {
+      "id": "pony-negative-english-text-a5c90b61",
+      "name_zh": "英文文字",
+      "description_zh": "經人工拆分審閱的原子提示詞「english text」，來源為「Pony 基礎負向詞」。",
+      "prompt": " english text",
+      "aliases": [
+        "Pony",
+        "negative",
+        "english text"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 12,
+        "raw_segment_sha256": "337b229e1597a998011d13e429f28311869aa5305cfbfc0f88abf57a1c8b3306",
+        "identity_sha256": "a5c90b610e2fd9a24d673e96b68d785edd955f8c17e65bfda1735838181d2b8e"
+      }
+    },
+    {
+      "id": "pony-negative-chinese-text-a9b8b673",
+      "name_zh": "中文字",
+      "description_zh": "經人工拆分審閱的原子提示詞「chinese text」，來源為「Pony 基礎負向詞」。",
+      "prompt": " chinese text",
+      "aliases": [
+        "Pony",
+        "negative",
+        "chinese text"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 13,
+        "raw_segment_sha256": "938376b1dfc754f29e92aa193ae4a57b07f933274eff112507d0a5af702d5219",
+        "identity_sha256": "a9b8b673c5b166acfa20548c6d35603c1cb48b8eca17444b02e0492ed38f0843"
+      }
+    },
+    {
+      "id": "pony-negative-bad-anatomy-85cf16c8",
+      "name_zh": "錯誤人體結構",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad anatomy」，來源為「Pony 基礎負向詞」。",
+      "prompt": " bad anatomy",
+      "aliases": [
+        "Pony",
+        "negative",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 14,
+        "raw_segment_sha256": "1311fcc5428ca441b87f6f6e1935c72192b59aadaf0f2b6f28607c38fb1a4247",
+        "identity_sha256": "85cf16c8365c0fb5983511de3692418a460a6e32a0526ff7d1dfbd76e4dc44db"
+      }
+    },
+    {
+      "id": "pony-negative-bad-hands-d7982e2c",
+      "name_zh": "錯誤手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad hands」，來源為「Pony 基礎負向詞」。",
+      "prompt": " bad hands",
+      "aliases": [
+        "Pony",
+        "negative",
+        "bad hands"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 15,
+        "raw_segment_sha256": "a7a8f1f53a32c69fd8e7dc6a3fc6eeaff62a2c710f76bbe6d9a2c42b9dbe6064",
+        "identity_sha256": "d7982e2cfdd6411b9f1d4a8a76b21a3ccde1f87d0f998aa3f911c2cc5d5b0018"
+      }
+    },
+    {
+      "id": "pony-negative-missing-fingers-2bd9c66a",
+      "name_zh": "手指缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing fingers」，來源為「Pony 基礎負向詞」。",
+      "prompt": " missing fingers",
+      "aliases": [
+        "Pony",
+        "negative",
+        "missing fingers"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 16,
+        "raw_segment_sha256": "d7a05a7de2f002dbcbaa06fa8d5600344d1bd5302a140f49a22c1b6d8278539e",
+        "identity_sha256": "2bd9c66a6aeaabbd95485d8dd60de1126ae1308adea1ac13331c9b67d2befa47"
+      }
+    },
+    {
+      "id": "pony-negative-extra-digits-e4d76bae",
+      "name_zh": "多餘指頭",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra digits」，來源為「Pony 基礎負向詞」。",
+      "prompt": " extra digits",
+      "aliases": [
+        "Pony",
+        "negative",
+        "extra digits"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 17,
+        "raw_segment_sha256": "d44967e50fb92ba981fb76fdc3e58468b639a4462bb0257093614ba9739c996c",
+        "identity_sha256": "e4d76bae124a110defa4ac88a0add38270577cd7e4c6437b82db75d9ac68cc59"
+      }
+    },
+    {
+      "id": "pony-negative-fewer-digits-f435f8c6",
+      "name_zh": "指頭數量不足",
+      "description_zh": "經人工拆分審閱的原子提示詞「fewer digits」，來源為「Pony 基礎負向詞」。",
+      "prompt": " fewer digits",
+      "aliases": [
+        "Pony",
+        "negative",
+        "fewer digits"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 18,
+        "raw_segment_sha256": "13dd23bdabe6e0071c2ea8951b8f5033e298038a575273616fe49990ebbdc921",
+        "identity_sha256": "f435f8c6c8a062b62ac3ee99d0cef335111839a4ee15b186de2c29fe1d3e5934"
+      }
+    },
+    {
+      "id": "pony-negative-extra-limbs-04d5c31d",
+      "name_zh": "多餘肢體",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra limbs」，來源為「Pony 基礎負向詞」。",
+      "prompt": " extra limbs",
+      "aliases": [
+        "Pony",
+        "negative",
+        "extra limbs"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 19,
+        "raw_segment_sha256": "f264a34315b924f87b7675fdb95532794199e6d04db17647dcca81f74dc3540c",
+        "identity_sha256": "04d5c31dd898f7c72541655a4f4a4f3d00b66039c3534fb070be2b6e79c19e9a"
+      }
+    },
+    {
+      "id": "pony-negative-extra-arms-6ed2ebc0",
+      "name_zh": "多餘手臂",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra arms」，來源為「Pony 基礎負向詞」。",
+      "prompt": " extra arms",
+      "aliases": [
+        "Pony",
+        "negative",
+        "extra arms"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 20,
+        "raw_segment_sha256": "490c5b3b025d2def54147c052ef50ad0a77073ecf4beca52e8c11562494285a6",
+        "identity_sha256": "6ed2ebc035db5bb09739a228b5b82ef6b00b2e0ebf7cd541a9ef7423834e6421"
+      }
+    },
+    {
+      "id": "pony-negative-extra-legs-252f2d03",
+      "name_zh": "多餘腿部",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra legs」，來源為「Pony 基礎負向詞」。",
+      "prompt": " extra legs",
+      "aliases": [
+        "Pony",
+        "negative",
+        "extra legs"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 21,
+        "raw_segment_sha256": "dd0b01aab576a9389afc331de2cb1f37a5de0d9baf346e5ea1140b47eaa725e1",
+        "identity_sha256": "252f2d039939ea530c10bcaee063f264c4c5dca91ccf61543fa594de4895dbe6"
+      }
+    },
+    {
+      "id": "pony-negative-extra-hands-6f19d6bc",
+      "name_zh": "多餘手掌",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra hands」，來源為「Pony 基礎負向詞」。",
+      "prompt": " extra hands",
+      "aliases": [
+        "Pony",
+        "negative",
+        "extra hands"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 22,
+        "raw_segment_sha256": "31e66262a01f561d26df747d86d421a62efc3979e2e0f47dd4da4079c49819c4",
+        "identity_sha256": "6f19d6bcfb8c0c4c925c540b910994c8ab2e8ec12fe484b5035b210b36951720"
+      }
+    },
+    {
+      "id": "pony-negative-mutated-hands-e4b190e5",
+      "name_zh": "變形手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「mutated hands」，來源為「Pony 基礎負向詞」。",
+      "prompt": " mutated hands",
+      "aliases": [
+        "Pony",
+        "negative",
+        "mutated hands"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 23,
+        "raw_segment_sha256": "ed05e62c5cc8cc0e9c78c4881fca351b96c0d12edfabca9650b13da3644584da",
+        "identity_sha256": "e4b190e5d31ad174ff2ea5b32172c6ed7d8e0bbceb23f4d1a89d3db2ce8b5e99"
+      }
+    },
+    {
+      "id": "pony-negative-poorly-drawn-hands-44d2177d",
+      "name_zh": "手部繪製不良",
+      "description_zh": "經人工拆分審閱的原子提示詞「poorly drawn hands」，來源為「Pony 基礎負向詞」。",
+      "prompt": " poorly drawn hands",
+      "aliases": [
+        "Pony",
+        "negative",
+        "poorly drawn hands"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 24,
+        "raw_segment_sha256": "142f20d12237ee978289b58e3c336a9311d2997f720267edd0cbb5cfc4a2a895",
+        "identity_sha256": "44d2177de2a285c2ce159b2473fc1f3e94b4d667cfbb38541df080858caf584b"
+      }
+    },
+    {
+      "id": "pony-negative-deformed-0ebf9b98",
+      "name_zh": "身體變形",
+      "description_zh": "經人工拆分審閱的原子提示詞「deformed」，來源為「Pony 基礎負向詞」。",
+      "prompt": " deformed",
+      "aliases": [
+        "Pony",
+        "negative",
+        "deformed"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 25,
+        "raw_segment_sha256": "304070ce53f53c553dc28463a91ebb4c50bed5978917642e407c204a0dca5738",
+        "identity_sha256": "0ebf9b9853deac0f5930dde3dad06dc7f0607728371135a5967701eacf3b97cb"
+      }
+    },
+    {
+      "id": "pony-negative-disconnected-limbs-ff30e3c3",
+      "name_zh": "肢體斷裂",
+      "description_zh": "經人工拆分審閱的原子提示詞「disconnected limbs」，來源為「Pony 基礎負向詞」。",
+      "prompt": " disconnected limbs",
+      "aliases": [
+        "Pony",
+        "negative",
+        "disconnected limbs"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 26,
+        "raw_segment_sha256": "f27c960397f408dc83ec6e62c08f8e41984bf63752f951dbc7164da6a0d83b9f",
+        "identity_sha256": "ff30e3c3f35ba882b3e411f2ae3e64da4fc4681b3a35e62187c924d97869b22c"
+      }
+    },
+    {
+      "id": "pony-negative-backwards-hands-bbae1383",
+      "name_zh": "手掌方向錯誤",
+      "description_zh": "經人工拆分審閱的原子提示詞「backwards hands」，來源為「Pony 基礎負向詞」。",
+      "prompt": " backwards hands",
+      "aliases": [
+        "Pony",
+        "negative",
+        "backwards hands"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 27,
+        "raw_segment_sha256": "480768f2f640a76fa31ac32fa1e346955fe12486ffe331f747896d88c885a81f",
+        "identity_sha256": "bbae13838e63d9fae403f5e87e08ffaa7656114b6c19070f4a1881c7643b4389"
+      }
+    },
+    {
+      "id": "pony-negative-multiple-heads-f4ad232d",
+      "name_zh": "多個頭部",
+      "description_zh": "經人工拆分審閱的原子提示詞「multiple heads」，來源為「Pony 基礎負向詞」。",
+      "prompt": " multiple heads",
+      "aliases": [
+        "Pony",
+        "negative",
+        "multiple heads"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 28,
+        "raw_segment_sha256": "69004d50429ba10f18fa29a42a6e12ad25a079095e787cffa31ac48b87f3a979",
+        "identity_sha256": "f4ad232d5487114bb50b310aa886b4c1b62a597635c711bda3229beb6fcc1fb3"
+      }
+    },
+    {
+      "id": "pony-negative-two-heads-dcf494d2",
+      "name_zh": "兩個頭部",
+      "description_zh": "經人工拆分審閱的原子提示詞「two heads」，來源為「Pony 基礎負向詞」。",
+      "prompt": " two heads",
+      "aliases": [
+        "Pony",
+        "negative",
+        "two heads"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 29,
+        "raw_segment_sha256": "20203eb5af1878453867a9aa7daf5ddd9926a8b5450664f8fece97360ca4b7b1",
+        "identity_sha256": "dcf494d22bff35cbfe3b1a17655110d72dc475398b08530e14659a339b99bd66"
+      }
+    },
+    {
+      "id": "pony-negative-disembodied-head-aedf9ec1",
+      "name_zh": "無身體頭部",
+      "description_zh": "經人工拆分審閱的原子提示詞「disembodied head」，來源為「Pony 基礎負向詞」。",
+      "prompt": " disembodied head",
+      "aliases": [
+        "Pony",
+        "negative",
+        "disembodied head"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 30,
+        "raw_segment_sha256": "17403655441f2b0af346b1cdd5687c31b2937de2a617e249ca08491f6c21cf6b",
+        "identity_sha256": "aedf9ec13753e3c5ceb562ef72b6e9eefbda441fb310a573d50e9026b025c042"
+      }
+    },
+    {
+      "id": "pony-negative-floating-head-0dda824e",
+      "name_zh": "漂浮頭部",
+      "description_zh": "經人工拆分審閱的原子提示詞「floating head」，來源為「Pony 基礎負向詞」。",
+      "prompt": " floating head",
+      "aliases": [
+        "Pony",
+        "negative",
+        "floating head"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 31,
+        "raw_segment_sha256": "73250dec6815dd6bc7d01e1eafa142d4621659a72ef56d06604d04cbfa4201e9",
+        "identity_sha256": "0dda824e900dc92345fe26f68e2ec75376bfa9a5fcd08f5ef28f74fb17aae48e"
+      }
+    },
+    {
+      "id": "pony-negative-amputee-4591a631",
+      "name_zh": "肢體截斷",
+      "description_zh": "經人工拆分審閱的原子提示詞「amputee」，來源為「Pony 基礎負向詞」。",
+      "prompt": " amputee",
+      "aliases": [
+        "Pony",
+        "negative",
+        "amputee"
+      ],
+      "keywords": [
+        "negative",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "pony-negative",
+        "source_prompt_sha256": "5406c8f2d14c11458c03b26f0900924c77be98db0a6c001a722ceea87f33a3aa",
+        "segment_index": 32,
+        "raw_segment_sha256": "d00530d3713c4ed3ea913bbc902d7c555efbfc05c6f65dce4670890b9d373316",
+        "identity_sha256": "4591a63112d3193be3779055fcaece321120cf87a6d4b24d93ac7c28e0707df6"
+      }
+    },
+    {
+      "id": "illustrious-negative-lowres-0a7b6d07",
+      "name_zh": "低解析度",
+      "description_zh": "經人工拆分審閱的原子提示詞「lowres」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": "lowres",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "lowres"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 0,
+        "raw_segment_sha256": "dc6b16dc9a2d03f705aec6616316e7cf8ae3fd579ce7a3eb93054faa04edc3a6",
+        "identity_sha256": "0a7b6d07c76ad9ce221059daff273fef648f2624df35bb61dd0c9e3cab263d17"
+      }
+    },
+    {
+      "id": "illustrious-negative-bad-anatomy-95dff7aa",
+      "name_zh": "錯誤人體結構",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad anatomy」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " bad anatomy",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 1,
+        "raw_segment_sha256": "1311fcc5428ca441b87f6f6e1935c72192b59aadaf0f2b6f28607c38fb1a4247",
+        "identity_sha256": "95dff7aa343b56bfd293bdc95c98d58effe030cfa40c55f2bf5b3def230f3726"
+      }
+    },
+    {
+      "id": "illustrious-negative-bad-hands-864655f6",
+      "name_zh": "錯誤手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad hands」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " bad hands",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "bad hands"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 2,
+        "raw_segment_sha256": "a7a8f1f53a32c69fd8e7dc6a3fc6eeaff62a2c710f76bbe6d9a2c42b9dbe6064",
+        "identity_sha256": "864655f6b817dbf348982a0270dc523cdd0e0ffc5e70c34359be0283c91e6f3e"
+      }
+    },
+    {
+      "id": "illustrious-negative-text-e319bec0",
+      "name_zh": "文字",
+      "description_zh": "經人工拆分審閱的原子提示詞「text」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " text",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "text"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 3,
+        "raw_segment_sha256": "42b013ab06a9a4c06a3d1d9b107b7f2ac4627fc89e07494cb4d2e6034e79b3e6",
+        "identity_sha256": "e319bec0e364c1a7b090357a03ade2d840d9de4778e8af9a5350b2e0377aa3fb"
+      }
+    },
+    {
+      "id": "illustrious-negative-error-9ee6d8f0",
+      "name_zh": "畫面錯誤",
+      "description_zh": "經人工拆分審閱的原子提示詞「error」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " error",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "error"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 4,
+        "raw_segment_sha256": "fc80a47b5ef226e04534bf5d6d562e29dfc2c2bdc78390da329b12ea41e605a5",
+        "identity_sha256": "9ee6d8f0e7369ee99aa87bed911b23cfbddbcd1c3c09d7c3bbe2eb3f92029f5e"
+      }
+    },
+    {
+      "id": "illustrious-negative-missing-fingers-f51b3a74",
+      "name_zh": "手指缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing fingers」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " missing fingers",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "missing fingers"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 5,
+        "raw_segment_sha256": "d7a05a7de2f002dbcbaa06fa8d5600344d1bd5302a140f49a22c1b6d8278539e",
+        "identity_sha256": "f51b3a74b3339c998c8a432c6e60115dd7513a7fb321b62c3ff2111ae87b31bb"
+      }
+    },
+    {
+      "id": "illustrious-negative-extra-digit-60196bb7",
+      "name_zh": "多餘指頭",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra digit」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " extra digit",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "extra digit"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 6,
+        "raw_segment_sha256": "60c0766e1abdac705c8f7abe5c6d9b67afd444176366fd76d4e7e9e02cc6f819",
+        "identity_sha256": "60196bb79edf098f13fd642b2ce33d2d4a04f19d311e01395e0f7254febf2ed9"
+      }
+    },
+    {
+      "id": "illustrious-negative-fewer-digits-a698dfa6",
+      "name_zh": "指頭數量不足",
+      "description_zh": "經人工拆分審閱的原子提示詞「fewer digits」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " fewer digits",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "fewer digits"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 7,
+        "raw_segment_sha256": "13dd23bdabe6e0071c2ea8951b8f5033e298038a575273616fe49990ebbdc921",
+        "identity_sha256": "a698dfa66ce3752e391ac54af87de1c40665f452b274c6568799951a92253dea"
+      }
+    },
+    {
+      "id": "illustrious-negative-cropped-647ba075",
+      "name_zh": "裁切不完整",
+      "description_zh": "經人工拆分審閱的原子提示詞「cropped」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " cropped",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "cropped"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 8,
+        "raw_segment_sha256": "fff28d02472bed5888c686db18aa57f2fff1c392c2e6b457e54438e081ca3468",
+        "identity_sha256": "647ba07587c389786d1af5da87611dab112669b6201be4079dd491450665146b"
+      }
+    },
+    {
+      "id": "illustrious-negative-worst-quality-54bb5b55",
+      "name_zh": "最差品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「worst quality」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " worst quality",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "worst quality"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 9,
+        "raw_segment_sha256": "1bfba4408be1571f0ede3a168635671e8a1612dde2d7bb4e626a43032c595c99",
+        "identity_sha256": "54bb5b5512f930b3bf185183ebc71fa13952885b84870d940928e6b98de7bf42"
+      }
+    },
+    {
+      "id": "illustrious-negative-low-quality-d6e69259",
+      "name_zh": "低品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「low quality」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " low quality",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "low quality"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 10,
+        "raw_segment_sha256": "1042b918c64218b8d456f57786b9eea96e43965e77c70e9d407e00630e03172e",
+        "identity_sha256": "d6e692598d18a0c3f74b31233d1a31ac74b6d7fd1b47fdba5b9d8ffe96973a5e"
+      }
+    },
+    {
+      "id": "illustrious-negative-normal-quality-9f274c32",
+      "name_zh": "普通品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「normal quality」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " normal quality",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "normal quality"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 11,
+        "raw_segment_sha256": "6341a1780153c81e4ef2c571336375440b0d0e9b543164a93dcf8749ba39c8fe",
+        "identity_sha256": "9f274c328c60759e958154619b6b080dfc5b7c890477810aa3f4cffc62ee266e"
+      }
+    },
+    {
+      "id": "illustrious-negative-jpeg-artifacts-e1b9fd40",
+      "name_zh": "JPEG 壓縮瑕疵",
+      "description_zh": "經人工拆分審閱的原子提示詞「jpeg artifacts」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " jpeg artifacts",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "jpeg artifacts"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 12,
+        "raw_segment_sha256": "afd451c6b25c780ccc67842d7d4a8d9c41ca648f4a5b6a72446b4122f7d91a4b",
+        "identity_sha256": "e1b9fd40e24f4ba91f48312cb40afbc914366ad7d9f066285611859710895a94"
+      }
+    },
+    {
+      "id": "illustrious-negative-signature-61985151",
+      "name_zh": "簽名",
+      "description_zh": "經人工拆分審閱的原子提示詞「signature」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " signature",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "signature"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 13,
+        "raw_segment_sha256": "d693277781c82f33f700c6089badd2a5cc46398d8df35df31603599558658bb6",
+        "identity_sha256": "6198515197baad6f6d7d2fdf92756dcb4d28efa630b2ce02724a888ab7660633"
+      }
+    },
+    {
+      "id": "illustrious-negative-watermark-44eadff0",
+      "name_zh": "浮水印",
+      "description_zh": "經人工拆分審閱的原子提示詞「watermark」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " watermark",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "watermark"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 14,
+        "raw_segment_sha256": "be0d8d916b4705cb912ba4881a7fc9dc45360b2d131d5d7eacce7abe68e649db",
+        "identity_sha256": "44eadff043e834ba3976d3a169369455037a969bc803de9fbb9b19d7e095f31b"
+      }
+    },
+    {
+      "id": "illustrious-negative-blurry-63ebdc25",
+      "name_zh": "模糊",
+      "description_zh": "經人工拆分審閱的原子提示詞「blurry」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " blurry",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "blurry"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 15,
+        "raw_segment_sha256": "fcc0226b11528315b741e20d6bc106149a03dd0268b0237980d23ba136c43a53",
+        "identity_sha256": "63ebdc25fa2e59bce1c8d69111c31c1f670150593d6eb888753328847e7d710d"
+      }
+    },
+    {
+      "id": "illustrious-negative-username-354bb6b7",
+      "name_zh": "使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「username」，來源為「Illustrious 基礎負向詞」。",
+      "prompt": " username",
+      "aliases": [
+        "Illustrious",
+        "negative",
+        "username"
+      ],
+      "keywords": [
+        "negative",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "illustrious-negative",
+        "source_prompt_sha256": "93ab39f172d01c2b97603f0e1e7326a07ce939eddffa5ad06df8a69c644fc184",
+        "segment_index": 16,
+        "raw_segment_sha256": "3ce476a31ad75c76f00f2a3f0c4c217a33f4d6f24efd093983504ab3907b699e",
+        "identity_sha256": "354bb6b7e84eac09562cf241e92740496fc89b21ece78ea2213575c710fc68df"
+      }
+    },
+    {
+      "id": "noobai-negative-lowres-04515550",
+      "name_zh": "低解析度",
+      "description_zh": "經人工拆分審閱的原子提示詞「lowres」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": "lowres",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "lowres"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 0,
+        "raw_segment_sha256": "dc6b16dc9a2d03f705aec6616316e7cf8ae3fd579ce7a3eb93054faa04edc3a6",
+        "identity_sha256": "04515550190857b9a1a7f53a142c2b9ecd6ee173ba6c458232e72e1dfc2658eb"
+      }
+    },
+    {
+      "id": "noobai-negative-bad-anatomy-f8172b83",
+      "name_zh": "錯誤人體結構",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad anatomy」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " bad anatomy",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 1,
+        "raw_segment_sha256": "1311fcc5428ca441b87f6f6e1935c72192b59aadaf0f2b6f28607c38fb1a4247",
+        "identity_sha256": "f8172b83c8568ed27e61af0932479b3368b46696f395709a9652aee11d1f4f07"
+      }
+    },
+    {
+      "id": "noobai-negative-blurry-70ce4d98",
+      "name_zh": "模糊",
+      "description_zh": "經人工拆分審閱的原子提示詞「blurry」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " blurry",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "blurry"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 2,
+        "raw_segment_sha256": "fcc0226b11528315b741e20d6bc106149a03dd0268b0237980d23ba136c43a53",
+        "identity_sha256": "70ce4d983278bb8f6d060d8fa6a2c514d0de39b3063668aee72f496802710d33"
+      }
+    },
+    {
+      "id": "noobai-negative-worst-quality-67127dab",
+      "name_zh": "最差品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「worst quality」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " worst quality",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "worst quality"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 3,
+        "raw_segment_sha256": "1bfba4408be1571f0ede3a168635671e8a1612dde2d7bb4e626a43032c595c99",
+        "identity_sha256": "67127dab5ef74c54a06ab76cca460cf88d5fda0e33b0f0e5b9b78585f452cb67"
+      }
+    },
+    {
+      "id": "noobai-negative-low-quality-d08cc1a8",
+      "name_zh": "低品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「low quality」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " low quality",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "low quality"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 4,
+        "raw_segment_sha256": "1042b918c64218b8d456f57786b9eea96e43965e77c70e9d407e00630e03172e",
+        "identity_sha256": "d08cc1a877d67bacb79b2e979fc2270078e720439fb1f0d2c17fcd02438f89ef"
+      }
+    },
+    {
+      "id": "noobai-negative-bad-hands-e1b131bb",
+      "name_zh": "錯誤手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad hands」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " bad hands",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "bad hands"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 5,
+        "raw_segment_sha256": "a7a8f1f53a32c69fd8e7dc6a3fc6eeaff62a2c710f76bbe6d9a2c42b9dbe6064",
+        "identity_sha256": "e1b131bbab2632640128909bcfc378765f9a143944062f26f51941586299385e"
+      }
+    },
+    {
+      "id": "noobai-negative-mutated-hands-7962b037",
+      "name_zh": "變形手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「mutated hands」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " mutated hands",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "mutated hands"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 6,
+        "raw_segment_sha256": "ed05e62c5cc8cc0e9c78c4881fca351b96c0d12edfabca9650b13da3644584da",
+        "identity_sha256": "7962b037265ea3d48670ea890f0f3ad3af023ff65662f9279aaeb2ef62d771da"
+      }
+    },
+    {
+      "id": "noobai-negative-extra-arms-2877bbf0",
+      "name_zh": "多餘手臂",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra arms」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " extra arms",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "extra arms"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 7,
+        "raw_segment_sha256": "490c5b3b025d2def54147c052ef50ad0a77073ecf4beca52e8c11562494285a6",
+        "identity_sha256": "2877bbf0b5374d3bee0e4b36864d583691d45bda26b42a41935b52466da951f9"
+      }
+    },
+    {
+      "id": "noobai-negative-duplicate-e416e1ec",
+      "name_zh": "重複物件",
+      "description_zh": "經人工拆分審閱的原子提示詞「duplicate」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " duplicate",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "duplicate"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 8,
+        "raw_segment_sha256": "b406811192bba023f4fa3e5c05665ad15eaf77b4866a67c3fc3f6b981c11a127",
+        "identity_sha256": "e416e1ecbb059ff9a3bf836f69a971102d7897c94a7f95372fdfdbfc220ca6e3"
+      }
+    },
+    {
+      "id": "noobai-negative-cropped-95c50524",
+      "name_zh": "裁切不完整",
+      "description_zh": "經人工拆分審閱的原子提示詞「cropped」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " cropped",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "cropped"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 9,
+        "raw_segment_sha256": "fff28d02472bed5888c686db18aa57f2fff1c392c2e6b457e54438e081ca3468",
+        "identity_sha256": "95c505242269608135d595746a9906329664317dafc08cb11cbbcb891c460d04"
+      }
+    },
+    {
+      "id": "noobai-negative-watermark-437a703f",
+      "name_zh": "浮水印",
+      "description_zh": "經人工拆分審閱的原子提示詞「watermark」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " watermark",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "watermark"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 10,
+        "raw_segment_sha256": "be0d8d916b4705cb912ba4881a7fc9dc45360b2d131d5d7eacce7abe68e649db",
+        "identity_sha256": "437a703fd712f5e9c41c9e339c7a5d325144f8b05892d5ef31468663c6c3b08f"
+      }
+    },
+    {
+      "id": "noobai-negative-signature-b37dce5d",
+      "name_zh": "簽名",
+      "description_zh": "經人工拆分審閱的原子提示詞「signature」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " signature",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "signature"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 11,
+        "raw_segment_sha256": "d693277781c82f33f700c6089badd2a5cc46398d8df35df31603599558658bb6",
+        "identity_sha256": "b37dce5ddcd7f1320a0493d1bec6f259fea5d84fcec8a9ac073a972c5e44fabe"
+      }
+    },
+    {
+      "id": "noobai-negative-ugly-419388aa",
+      "name_zh": "醜陋",
+      "description_zh": "經人工拆分審閱的原子提示詞「ugly」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " ugly",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "ugly"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 12,
+        "raw_segment_sha256": "20ee861cd33f5e21c67b1ecb178cf511bb86ac381f1db8c5948a21a860e88a23",
+        "identity_sha256": "419388aa87d34436b7c80dc33baf111850060e386ab07131f19a0ae7346a4361"
+      }
+    },
+    {
+      "id": "noobai-negative-monochrome-517e6c2b",
+      "name_zh": "單色",
+      "description_zh": "經人工拆分審閱的原子提示詞「monochrome」，來源為「NoobAI 基礎負向詞」。",
+      "prompt": " monochrome",
+      "aliases": [
+        "NoobAI",
+        "negative",
+        "monochrome"
+      ],
+      "keywords": [
+        "negative",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "noobai-negative",
+        "source_prompt_sha256": "c34d65b844bc2fce7b4929297dc134580a907c5d543e865e3968aebb3d1821a8",
+        "segment_index": 13,
+        "raw_segment_sha256": "19be3c99bf763404a24c6565189ee20d13622763ba4b29ad24572930e16d98ff",
+        "identity_sha256": "517e6c2b8a6da25e63b2608c1a8fd28efbf93a73fa99efe4b92a6c4196e451ce"
+      }
+    },
+    {
+      "id": "anima-negative-worst-quality-01a25207",
+      "name_zh": "最差品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「worst quality」，來源為「Anima 基礎負向詞」。",
+      "prompt": "worst quality",
+      "aliases": [
+        "Anima",
+        "negative",
+        "worst quality"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 0,
+        "raw_segment_sha256": "5a3b6e0c61c765d07c13e8a944120b57c40f73afaec83a84de9ed8f14fffd0e3",
+        "identity_sha256": "01a25207ceb436bb7b99f4b3329b8763cc9e54ad9989cf6be05fd4a582410725"
+      }
+    },
+    {
+      "id": "anima-negative-low-quality-bb110d45",
+      "name_zh": "低品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「low quality」，來源為「Anima 基礎負向詞」。",
+      "prompt": " low quality",
+      "aliases": [
+        "Anima",
+        "negative",
+        "low quality"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 1,
+        "raw_segment_sha256": "1042b918c64218b8d456f57786b9eea96e43965e77c70e9d407e00630e03172e",
+        "identity_sha256": "bb110d45d3bc0433f20deda37446cd55ab4ed6e53d331bd1734140797ef80309"
+      }
+    },
+    {
+      "id": "anima-negative-score-1-daea52c5",
+      "name_zh": "Anima 基礎負向詞・第 3 詞（score_1）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_1」，來源為「Anima 基礎負向詞」。",
+      "prompt": " score_1",
+      "aliases": [
+        "Anima",
+        "negative",
+        "score_1"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 2,
+        "raw_segment_sha256": "34759ea90e213ca8a71bf3d07fb3382ddfeab1a59825a5b77a65b23baeaf1c11",
+        "identity_sha256": "daea52c59acf220ecf98e2a7d0f434eafd1cceb5da560d4c41b977e01c7a102b"
+      }
+    },
+    {
+      "id": "anima-negative-score-2-eae9ed73",
+      "name_zh": "Anima 基礎負向詞・第 4 詞（score_2）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_2」，來源為「Anima 基礎負向詞」。",
+      "prompt": " score_2",
+      "aliases": [
+        "Anima",
+        "negative",
+        "score_2"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 3,
+        "raw_segment_sha256": "cf16e310085b1cab26051293f8662eb330acb83edfdee5a71261133dcd3b562c",
+        "identity_sha256": "eae9ed7314197b13708f16af17536a81d5bd483ec2486f3668ad553fdb7eb521"
+      }
+    },
+    {
+      "id": "anima-negative-score-3-0e8328ca",
+      "name_zh": "Anima 基礎負向詞・第 5 詞（score_3）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_3」，來源為「Anima 基礎負向詞」。",
+      "prompt": " score_3",
+      "aliases": [
+        "Anima",
+        "negative",
+        "score_3"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 4,
+        "raw_segment_sha256": "cfe6d53cb059f9b5bfb103ad7eb3dcb61e0a165d8e6f994d91eed1c8c0aba061",
+        "identity_sha256": "0e8328ca0b0159243870c9be25ffde658912daba350160f3af1d11749f94c3e2"
+      }
+    },
+    {
+      "id": "anima-negative-artist-name-5fa67369",
+      "name_zh": "藝術家名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「artist name」，來源為「Anima 基礎負向詞」。",
+      "prompt": " artist name",
+      "aliases": [
+        "Anima",
+        "negative",
+        "artist name"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 5,
+        "raw_segment_sha256": "78a46479ae276f1ef63a3707fd2d5c46cd51b8a4d28e17f3bdee4fdf1fa9f910",
+        "identity_sha256": "5fa67369f37ae74abde8a215a4dd1c022ff827d0d4f7d06d443e23a5dc351635"
+      }
+    },
+    {
+      "id": "anima-negative-bad-anatomy-e65c19b0",
+      "name_zh": "錯誤人體結構",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad anatomy」，來源為「Anima 基礎負向詞」。",
+      "prompt": " bad anatomy",
+      "aliases": [
+        "Anima",
+        "negative",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 6,
+        "raw_segment_sha256": "1311fcc5428ca441b87f6f6e1935c72192b59aadaf0f2b6f28607c38fb1a4247",
+        "identity_sha256": "e65c19b01b22cdfb83504af52789e74c7973867d9d915bff7f5da486f335da57"
+      }
+    },
+    {
+      "id": "anima-negative-bad-hands-778492a1",
+      "name_zh": "錯誤手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad hands」，來源為「Anima 基礎負向詞」。",
+      "prompt": " bad hands",
+      "aliases": [
+        "Anima",
+        "negative",
+        "bad hands"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 7,
+        "raw_segment_sha256": "a7a8f1f53a32c69fd8e7dc6a3fc6eeaff62a2c710f76bbe6d9a2c42b9dbe6064",
+        "identity_sha256": "778492a1ec423bf335be256b1c443ce66c19d6865c9b07f9aa38d72651cc822e"
+      }
+    },
+    {
+      "id": "anima-negative-missing-fingers-f569cc5a",
+      "name_zh": "手指缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing fingers」，來源為「Anima 基礎負向詞」。",
+      "prompt": " missing fingers",
+      "aliases": [
+        "Anima",
+        "negative",
+        "missing fingers"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 8,
+        "raw_segment_sha256": "d7a05a7de2f002dbcbaa06fa8d5600344d1bd5302a140f49a22c1b6d8278539e",
+        "identity_sha256": "f569cc5a8dba4d0274aea2c6fb14e7200f66715b3b7d6b4b6d50c529048e5f63"
+      }
+    },
+    {
+      "id": "anima-negative-extra-digit-b3ead93d",
+      "name_zh": "多餘指頭",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra digit」，來源為「Anima 基礎負向詞」。",
+      "prompt": " extra digit",
+      "aliases": [
+        "Anima",
+        "negative",
+        "extra digit"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 9,
+        "raw_segment_sha256": "60c0766e1abdac705c8f7abe5c6d9b67afd444176366fd76d4e7e9e02cc6f819",
+        "identity_sha256": "b3ead93da92f9d63324a771777fdba7099d8e6fce881245efb978bdf4cbe2378"
+      }
+    },
+    {
+      "id": "anima-negative-fewer-digits-8b527127",
+      "name_zh": "指頭數量不足",
+      "description_zh": "經人工拆分審閱的原子提示詞「fewer digits」，來源為「Anima 基礎負向詞」。",
+      "prompt": " fewer digits",
+      "aliases": [
+        "Anima",
+        "negative",
+        "fewer digits"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 10,
+        "raw_segment_sha256": "13dd23bdabe6e0071c2ea8951b8f5033e298038a575273616fe49990ebbdc921",
+        "identity_sha256": "8b5271279c38f4637e37fafb651202f155c6d977a8ad313402346525e20b6e42"
+      }
+    },
+    {
+      "id": "anima-negative-blurry-930af09c",
+      "name_zh": "模糊",
+      "description_zh": "經人工拆分審閱的原子提示詞「blurry」，來源為「Anima 基礎負向詞」。",
+      "prompt": " blurry",
+      "aliases": [
+        "Anima",
+        "negative",
+        "blurry"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 11,
+        "raw_segment_sha256": "fcc0226b11528315b741e20d6bc106149a03dd0268b0237980d23ba136c43a53",
+        "identity_sha256": "930af09c99d13d3601058c90fefd6d73027788b7798f0ad0cb2fcac00ea62ff1"
+      }
+    },
+    {
+      "id": "anima-negative-watermark-476c1f08",
+      "name_zh": "浮水印",
+      "description_zh": "經人工拆分審閱的原子提示詞「watermark」，來源為「Anima 基礎負向詞」。",
+      "prompt": " watermark",
+      "aliases": [
+        "Anima",
+        "negative",
+        "watermark"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 12,
+        "raw_segment_sha256": "be0d8d916b4705cb912ba4881a7fc9dc45360b2d131d5d7eacce7abe68e649db",
+        "identity_sha256": "476c1f08e6f1b13571ef1c92426917ed6fc5fd62b44eb6bf864213113cadffef"
+      }
+    },
+    {
+      "id": "anima-negative-signature-905d8c1d",
+      "name_zh": "簽名",
+      "description_zh": "經人工拆分審閱的原子提示詞「signature」，來源為「Anima 基礎負向詞」。",
+      "prompt": " signature",
+      "aliases": [
+        "Anima",
+        "negative",
+        "signature"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 13,
+        "raw_segment_sha256": "d693277781c82f33f700c6089badd2a5cc46398d8df35df31603599558658bb6",
+        "identity_sha256": "905d8c1d2dc7e34b4b19445546cf4f9889e875b18e464dabb0debb49f059f6f8"
+      }
+    },
+    {
+      "id": "anima-negative-username-dae609f8",
+      "name_zh": "使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「username」，來源為「Anima 基礎負向詞」。",
+      "prompt": " username",
+      "aliases": [
+        "Anima",
+        "negative",
+        "username"
+      ],
+      "keywords": [
+        "negative",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "anima-negative",
+        "source_prompt_sha256": "307e9a24dfd22ea146b24e1c1f18040b5e09497d99668c639fccaabc0e3e8adf",
+        "segment_index": 14,
+        "raw_segment_sha256": "3ce476a31ad75c76f00f2a3f0c4c217a33f4d6f24efd093983504ab3907b699e",
+        "identity_sha256": "dae609f8324ca38fd0bb30575c0d5dcec09f53a85fd5dbe913b2a863c43e304f"
+      }
+    },
+    {
+      "id": "sd1-5-negative-lowres-d42b22f2",
+      "name_zh": "低解析度",
+      "description_zh": "經人工拆分審閱的原子提示詞「lowres」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": "lowres",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "lowres"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 0,
+        "raw_segment_sha256": "dc6b16dc9a2d03f705aec6616316e7cf8ae3fd579ce7a3eb93054faa04edc3a6",
+        "identity_sha256": "d42b22f2c213793139ab6f2c160cf66e142f57fa6a54035a501755e86ebf06a4"
+      }
+    },
+    {
+      "id": "sd1-5-negative-bad-anatomy-48f35b8a",
+      "name_zh": "錯誤人體結構",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad anatomy」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " bad anatomy",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "bad anatomy"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 1,
+        "raw_segment_sha256": "1311fcc5428ca441b87f6f6e1935c72192b59aadaf0f2b6f28607c38fb1a4247",
+        "identity_sha256": "48f35b8a32e97cf17c7f19e2304b9f811ad89e0e009d3e613bf3bc5ae3817f8c"
+      }
+    },
+    {
+      "id": "sd1-5-negative-bad-hands-770de745",
+      "name_zh": "錯誤手部",
+      "description_zh": "經人工拆分審閱的原子提示詞「bad hands」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " bad hands",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "bad hands"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 2,
+        "raw_segment_sha256": "a7a8f1f53a32c69fd8e7dc6a3fc6eeaff62a2c710f76bbe6d9a2c42b9dbe6064",
+        "identity_sha256": "770de74503f279cd402eb9e38aa3ba64bd3a9e83a82c465abf070ceb1a7c58ac"
+      }
+    },
+    {
+      "id": "sd1-5-negative-text-0df84f97",
+      "name_zh": "文字",
+      "description_zh": "經人工拆分審閱的原子提示詞「text」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " text",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "text"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 3,
+        "raw_segment_sha256": "42b013ab06a9a4c06a3d1d9b107b7f2ac4627fc89e07494cb4d2e6034e79b3e6",
+        "identity_sha256": "0df84f97d356c3876cfb401ecdd364cc4ae52907bd9b4797356b6990a7bf4159"
+      }
+    },
+    {
+      "id": "sd1-5-negative-error-412935dd",
+      "name_zh": "畫面錯誤",
+      "description_zh": "經人工拆分審閱的原子提示詞「error」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " error",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "error"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 4,
+        "raw_segment_sha256": "fc80a47b5ef226e04534bf5d6d562e29dfc2c2bdc78390da329b12ea41e605a5",
+        "identity_sha256": "412935dd3912fe00347b5071cc90fc505bbdb084a94fae0fd2ab65bffdc93b97"
+      }
+    },
+    {
+      "id": "sd1-5-negative-missing-fingers-88f0d7c2",
+      "name_zh": "手指缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing fingers」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " missing fingers",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "missing fingers"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 5,
+        "raw_segment_sha256": "d7a05a7de2f002dbcbaa06fa8d5600344d1bd5302a140f49a22c1b6d8278539e",
+        "identity_sha256": "88f0d7c205099f2f3ce1bf99d94d41479bc68cf0293fd06a640f47cbfa8d8ac0"
+      }
+    },
+    {
+      "id": "sd1-5-negative-extra-digit-65468f34",
+      "name_zh": "多餘指頭",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra digit」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " extra digit",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "extra digit"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 6,
+        "raw_segment_sha256": "60c0766e1abdac705c8f7abe5c6d9b67afd444176366fd76d4e7e9e02cc6f819",
+        "identity_sha256": "65468f34ed6391b5fb80ae8a3197dbd9a6d9600cbf0a12625da3705b901c588c"
+      }
+    },
+    {
+      "id": "sd1-5-negative-fewer-digits-c68ac278",
+      "name_zh": "指頭數量不足",
+      "description_zh": "經人工拆分審閱的原子提示詞「fewer digits」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " fewer digits",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "fewer digits"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 7,
+        "raw_segment_sha256": "13dd23bdabe6e0071c2ea8951b8f5033e298038a575273616fe49990ebbdc921",
+        "identity_sha256": "c68ac278d23f00becd286d81fcb916cac8701309476351c6f38c15f921a3256b"
+      }
+    },
+    {
+      "id": "sd1-5-negative-cropped-2f5db21d",
+      "name_zh": "裁切不完整",
+      "description_zh": "經人工拆分審閱的原子提示詞「cropped」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " cropped",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "cropped"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 8,
+        "raw_segment_sha256": "fff28d02472bed5888c686db18aa57f2fff1c392c2e6b457e54438e081ca3468",
+        "identity_sha256": "2f5db21d678527b1d8e3baae73c961193153c7c537cfc923f41b2dc73cf1fe73"
+      }
+    },
+    {
+      "id": "sd1-5-negative-worst-quality-78181e3b",
+      "name_zh": "最差品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「worst quality」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " worst quality",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "worst quality"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 9,
+        "raw_segment_sha256": "1bfba4408be1571f0ede3a168635671e8a1612dde2d7bb4e626a43032c595c99",
+        "identity_sha256": "78181e3bc0203be7d02889ec2648baf24aa99bfe3dff5004beed4aaacd0d7d39"
+      }
+    },
+    {
+      "id": "sd1-5-negative-low-quality-f1f836ed",
+      "name_zh": "低品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「low quality」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " low quality",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "low quality"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 10,
+        "raw_segment_sha256": "1042b918c64218b8d456f57786b9eea96e43965e77c70e9d407e00630e03172e",
+        "identity_sha256": "f1f836ed4fd61e8229346c1faf60785e1fb5f63b237cbbaadcf63b4402608de5"
+      }
+    },
+    {
+      "id": "sd1-5-negative-normal-quality-76fe4e27",
+      "name_zh": "普通品質",
+      "description_zh": "經人工拆分審閱的原子提示詞「normal quality」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " normal quality",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "normal quality"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 11,
+        "raw_segment_sha256": "6341a1780153c81e4ef2c571336375440b0d0e9b543164a93dcf8749ba39c8fe",
+        "identity_sha256": "76fe4e27a63e8c0584f7a68ab6745d61e467ab5cc2a02cd3d8151c25c9a01d3e"
+      }
+    },
+    {
+      "id": "sd1-5-negative-jpeg-artifacts-78e38dac",
+      "name_zh": "JPEG 壓縮瑕疵",
+      "description_zh": "經人工拆分審閱的原子提示詞「jpeg artifacts」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " jpeg artifacts",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "jpeg artifacts"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 12,
+        "raw_segment_sha256": "afd451c6b25c780ccc67842d7d4a8d9c41ca648f4a5b6a72446b4122f7d91a4b",
+        "identity_sha256": "78e38daccca5334ca92d80f1dcad6c59795a3727cc93b08abf4917c03c772487"
+      }
+    },
+    {
+      "id": "sd1-5-negative-blurry-91a446ac",
+      "name_zh": "模糊",
+      "description_zh": "經人工拆分審閱的原子提示詞「blurry」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " blurry",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "blurry"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 13,
+        "raw_segment_sha256": "fcc0226b11528315b741e20d6bc106149a03dd0268b0237980d23ba136c43a53",
+        "identity_sha256": "91a446ac32df7fca8c2f60eb14e01568c2e95a6994d5e49465d8c7a9326690f4"
+      }
+    },
+    {
+      "id": "sd1-5-negative-extra-legs-2fcdd864",
+      "name_zh": "多餘腿部",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra legs」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " extra legs",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "extra legs"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 14,
+        "raw_segment_sha256": "dd0b01aab576a9389afc331de2cb1f37a5de0d9baf346e5ea1140b47eaa725e1",
+        "identity_sha256": "2fcdd8649a05a89274c4943b54ee3ea1313938e919c51520dcb7557ec1164ae6"
+      }
+    },
+    {
+      "id": "sd1-5-negative-extra-feet-09e0942f",
+      "name_zh": "多餘腳部",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra feet」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " extra feet",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "extra feet"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 15,
+        "raw_segment_sha256": "a8ef154ecd1cdb8cc6d95dd1210b14aed1bb39c41d55a787a6382edf8a92d25d",
+        "identity_sha256": "09e0942f54c0766918d032da22c41f7d83200eccf72fec96de5ed6695fbbd1bf"
+      }
+    },
+    {
+      "id": "sd1-5-negative-extra-arms-d368c5d4",
+      "name_zh": "多餘手臂",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra arms」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " extra arms",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "extra arms"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 16,
+        "raw_segment_sha256": "490c5b3b025d2def54147c052ef50ad0a77073ecf4beca52e8c11562494285a6",
+        "identity_sha256": "d368c5d4e58d071e7840990d4c2de019f46acb9c4f6f748563ac4a2a8fd7a8fa"
+      }
+    },
+    {
+      "id": "sd1-5-negative-extra-fingers-d7fb0c0d",
+      "name_zh": "多餘手指",
+      "description_zh": "經人工拆分審閱的原子提示詞「extra fingers」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " extra fingers",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "extra fingers"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 17,
+        "raw_segment_sha256": "287375b0ad326cff2a44e59d9f6a5bf2e664e21eb1e74a85601a8e008506c3c7",
+        "identity_sha256": "d7fb0c0d9b31e906da8943399d0cd796027be13e0bb2ca34ed8045ff441d1547"
+      }
+    },
+    {
+      "id": "sd1-5-negative-missing-legs-89a487b7",
+      "name_zh": "腿部缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing legs」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " missing legs",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "missing legs"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 18,
+        "raw_segment_sha256": "1918809d59fede5bfe2659072d4feb9ecd6f60bccbaa17b42728abff84245243",
+        "identity_sha256": "89a487b72a6ad9bf6a9532759b1ac2657a36c9ff2971d6f44c886c2828d45325"
+      }
+    },
+    {
+      "id": "sd1-5-negative-missing-arms-7fb7ea6d",
+      "name_zh": "手臂缺失",
+      "description_zh": "經人工拆分審閱的原子提示詞「missing arms」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " missing arms",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "missing arms"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 19,
+        "raw_segment_sha256": "8295e8101ed8d5e0c5ae4fc328fed7b498933ea9e211012eecb1ab853cee00cb",
+        "identity_sha256": "7fb7ea6da8869aca2c742c84db8551d6c8eb3cc1e238d3cdee5ce1f52db52a40"
+      }
+    },
+    {
+      "id": "sd1-5-negative-ugly-115a71aa",
+      "name_zh": "醜陋",
+      "description_zh": "經人工拆分審閱的原子提示詞「ugly」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " ugly",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "ugly"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 20,
+        "raw_segment_sha256": "20ee861cd33f5e21c67b1ecb178cf511bb86ac381f1db8c5948a21a860e88a23",
+        "identity_sha256": "115a71aa04fd6e38142e3fdd2f7eadc128fd3c831c1058939d1a707d994f6d86"
+      }
+    },
+    {
+      "id": "sd1-5-negative-monochrome-7c5e3e54",
+      "name_zh": "單色",
+      "description_zh": "經人工拆分審閱的原子提示詞「monochrome」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " monochrome",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "monochrome"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 21,
+        "raw_segment_sha256": "19be3c99bf763404a24c6565189ee20d13622763ba4b29ad24572930e16d98ff",
+        "identity_sha256": "7c5e3e54822ee596cb9a3ea69f0e752c6b38806b8f8d5b01d0e4ca94d2d81bc1"
+      }
+    },
+    {
+      "id": "sd1-5-negative-signature-cf1cc67c",
+      "name_zh": "簽名",
+      "description_zh": "經人工拆分審閱的原子提示詞「signature」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " signature",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "signature"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 22,
+        "raw_segment_sha256": "d693277781c82f33f700c6089badd2a5cc46398d8df35df31603599558658bb6",
+        "identity_sha256": "cf1cc67c76397acfb65961b77952297cb90065c72f4cbc64e579dc31d394c677"
+      }
+    },
+    {
+      "id": "sd1-5-negative-watermark-96beff2b",
+      "name_zh": "浮水印",
+      "description_zh": "經人工拆分審閱的原子提示詞「watermark」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " watermark",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "watermark"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 23,
+        "raw_segment_sha256": "be0d8d916b4705cb912ba4881a7fc9dc45360b2d131d5d7eacce7abe68e649db",
+        "identity_sha256": "96beff2b5e8fb6868015880d8034eab8a9c536936a2bc4aa5c3f322e6a9ce5fd"
+      }
+    },
+    {
+      "id": "sd1-5-negative-username-7893ff07",
+      "name_zh": "使用者名稱",
+      "description_zh": "經人工拆分審閱的原子提示詞「username」，來源為「SD1.5 基礎負向詞」。",
+      "prompt": " username",
+      "aliases": [
+        "SD1.5",
+        "negative",
+        "username"
+      ],
+      "keywords": [
+        "negative",
+        "sd1.5",
+        "ltj",
+        "comma-atomic",
+        "base-negative"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "negative",
+        "source_category_id": "base-negative",
+        "source_entry_id": "sd1-5-negative",
+        "source_prompt_sha256": "2c6a21d3624ce94113b830646b91e089af4b508574c04e9418ef3ef85a2b7d47",
+        "segment_index": 24,
+        "raw_segment_sha256": "3ce476a31ad75c76f00f2a3f0c4c217a33f4d6f24efd093983504ab3907b699e",
+        "identity_sha256": "7893ff0742c826f8508f66ba38f854b1e7c67377bb66789796e44ff7e68e0f2c"
+      }
+    }
+  ]
 }

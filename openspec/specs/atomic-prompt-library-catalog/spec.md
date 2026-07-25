@@ -1,5 +1,8 @@
-## ADDED Requirements
+# atomic-prompt-library-catalog Specification
 
+## Purpose
+TBD - created by archiving change comma-delimited-atomic-prompts. Update Purpose after archive.
+## Requirements
 ### Requirement: Prompt Library source entries are comma-atomic
 Before rollout readiness can become true, Backend atomic enforcement SHALL be active and every Prompt Library entry prompt SHALL contain exactly one nonblank atomic prompt without ASCII comma U+002C. Entry prompt whitespace SHALL be preserved exactly; trim/normalization is allowed only for validation, matching, search, and display. Once atomic enforcement is active, every ordinary category-management, API, MCP, and import entry write containing U+002C MUST be rejected; privileged migration may persist only its separately curated comma-free staged entries.
 
@@ -30,6 +33,11 @@ The migration-compatible Backend gate SHALL be deployed before audit or migratio
 - **WHEN** the migration-compatible Backend starts against the reviewed legacy library
 - **THEN** it reports readiness false and a migration-required marker
 - **AND** it does not expose the legacy catalog through ordinary operations
+
+#### Scenario: Actual predecessor manifest needs no synthetic opt-in
+- **WHEN** Backend starts against the predecessor schema-v1 manifest bytes with no comma-atomic fields
+- **THEN** it creates the required marker before provider access
+- **AND** ordinary catalog operations fail closed
 
 #### Scenario: Migrated data alone cannot remove the marker
 - **WHEN** data migration and idempotency checks pass but atomic Backend enforcement is inactive
@@ -85,13 +93,18 @@ The migration SHALL audit the current repository before any write and SHALL requ
 - **AND** the report identifies each mismatch for review
 
 ### Requirement: Dry-run report is complete and write-free
-Audit and dry-run SHALL make no filesystem or API writes. The machine-readable dry-run report SHALL include source and target counts, every source locator and exact raw atom, revisions/etags, deterministic ID decisions, collisions, mapping coverage, aliases/keywords/order changes, archive propagation, saved-combination repairs, legacy ref expansions, unresolved items, planned file mutations, and expected post-write hashes.
+Audit and dry-run SHALL make no Prompt Library or repository-tree writes. Their cross-process lock SHALL use a stable resolved-library key outside those trees. A caller MAY explicitly request a report output path; that operator-directed report is not a planned product mutation. The machine-readable dry-run report SHALL include source and target counts, every source locator and exact raw atom, revisions/etags, deterministic ID decisions, collisions, mapping coverage, aliases/keywords/order changes, archive propagation, saved-combination repairs, legacy ref expansions, unresolved items, planned file mutations, and expected post-write hashes.
 
 #### Scenario: Dry-run produces a reviewable plan
 - **WHEN** the operator runs dry-run against the reviewed baseline
 - **THEN** the report enumerates all 146 multi-token source entries and 532 derived atoms
 - **AND** it accounts for all 683 final entries and all four combinations
 - **AND** no Prompt Library file, revision, etag, or manifest byte changes
+
+#### Scenario: Dry-run lock leaves the product tree byte-stable
+- **WHEN** dry-run completes without an explicit in-tree report path
+- **THEN** a digest over every Prompt Library file is unchanged
+- **AND** no `.prompt-library.lock` file is created inside the Prompt Library or repository tree
 
 #### Scenario: Dry-run exposes unresolved work
 - **WHEN** a token lacks a curated mapping or has an ambiguous target
@@ -162,7 +175,7 @@ All 151 retained single-token entries SHALL retain IDs, revisions, prompt bytes,
 - **AND** reruns produce the same complete category ordering
 
 ### Requirement: Migration apply is staged and fail closed
-Apply SHALL require the previously deployed Backend gate, a clean reviewed dry-run, exactly 532 curated derived-atom records, valid retained-entry invariants, zero unresolved mappings, zero blocking collisions, matching source revisions/etags, operator privilege, and the migration lock. It SHALL save exact pre-image bytes and checksums, stage and validate every destination, and use atomic replacements. The pre-existing marker SHALL remain through apply, post-write validation, atomic-enforcement activation, and finalize. All ordinary catalog-dependent reads and writes and frontend editor readiness MUST remain disabled while the marker exists. Any failed precondition or post-write/enforcement gate MUST prevent finalize.
+Apply SHALL require the previously deployed Backend gate, a clean reviewed dry-run, exactly 532 curated derived-atom records, valid retained-entry invariants, zero unresolved mappings, zero blocking collisions, matching source revisions/etags, operator privilege, and the migration lock. It SHALL save exact predecessor pre-image bytes and checksums, stage and validate every destination, and use atomic replacements. The pre-existing marker SHALL remain through apply, post-write validation, and atomic-enforcement activation until finalize. All ordinary catalog-dependent reads and writes and frontend editor readiness MUST remain disabled while the marker exists. Any failed precondition or post-write/enforcement gate MUST prevent finalize.
 
 #### Scenario: Concurrent change blocks apply
 - **WHEN** a category etag changes after dry-run and before apply
@@ -189,7 +202,7 @@ After a successful apply, rerunning audit or dry-run with the same catalog and m
 - **AND** all recorded document hashes match the first apply's post-image hashes
 
 ### Requirement: Rollback restores exact pre-images without overwriting later edits
-Each apply SHALL create a run-specific rollback manifest containing exact pre-image bytes/checksums and expected post-image etags. Privileged rollback SHALL acquire the migration lock, stage and validate restored documents, and restore exact pre-images only when every affected current etag equals its recorded post-image etag. Any divergence MUST fail closed. Successful rollback SHALL leave a `rolled_back_required` marker, readiness false, and all ordinary catalog-dependent operations blocked.
+Each apply SHALL create a run-specific rollback manifest containing exact predecessor pre-image bytes/checksums and expected post-image hashes. Privileged rollback SHALL remain available for that run after finalize during the rollout window. It SHALL acquire the migration lock, fail ordinary operations closed before validation, stage and validate restored documents, and restore exact pre-images only when every affected current hash equals its recorded post-image hash. Any divergence MUST fail without replacing a document; a post-finalize divergence SHALL remove the temporary marker and preserve the unchanged finalized ready state. Successful rollback SHALL leave a `rolled_back_required` marker, readiness false, and all ordinary catalog-dependent operations blocked.
 
 #### Scenario: Immediate rollback restores the legacy catalog
 - **WHEN** rollback is invoked for a completed run before any affected document changes
@@ -201,6 +214,11 @@ Each apply SHALL create a run-specific rollback manifest containing exact pre-im
 - **WHEN** an affected category or combination etag differs from the recorded post-image etag
 - **THEN** rollback does not overwrite any affected file
 - **AND** it reports the divergent locator and required manual recovery
+
+#### Scenario: Post-finalize rollback remains safe
+- **WHEN** finalize removed the migration marker but every affected document still matches the recorded post-image hash
+- **THEN** privileged rollback temporarily blocks ordinary operations, restores exact predecessor bytes, and publishes `rolled_back_required`
+- **AND** if any post-image diverged it restores the unchanged finalized ready state without replacing files
 
 ### Requirement: Import reruns use the same atomic curation contract
 Any future import of comma-containing source data, including LTJ-derived data, SHALL split with raw `split(",")`, preserve segment whitespace, require deterministic per-token curation, use the same stable ID/collision policy, and emit the same unresolved and dry-run reports. Runtime SHALL not depend on the LTJ source tree or execute source modules.

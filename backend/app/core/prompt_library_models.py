@@ -41,10 +41,22 @@ class StrictModel(BaseModel):
 
 
 class PromptLibraryManifest(StrictModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     library_id: Slug
     name: str = Field(min_length=1)
     description_zh: str = Field(min_length=1)
+    comma_atomic_version: Literal[0, 1] = 0
+    comma_atomic_migration_required: bool = False
+
+
+class PromptEntryProvenance(StrictModel):
+    source_polarity: Polarity
+    source_category_id: Slug
+    source_entry_id: Slug
+    source_prompt_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    segment_index: int = Field(ge=0)
+    raw_segment_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    identity_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class PromptEntry(StrictModel):
@@ -57,6 +69,15 @@ class PromptEntry(StrictModel):
     order: int = Field(default=10, ge=0)
     revision: int = Field(default=1, ge=1)
     archived: bool = False
+    comma_atomic_provenance: PromptEntryProvenance | None = None
+
+    @model_validator(mode="after")
+    def validate_atomic_prompt(self) -> "PromptEntry":
+        if not self.prompt.strip():
+            raise ValueError("prompt entry cannot be blank")
+        if "," in self.prompt:
+            raise ValueError("prompt entry must contain exactly one comma-free atom")
+        return self
 
 
 class PromptCategory(StrictModel):

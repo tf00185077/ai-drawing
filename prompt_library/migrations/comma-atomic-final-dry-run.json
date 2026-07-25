@@ -1,0 +1,4034 @@
+{
+  "mode": "dry-run",
+  "inventory": {
+    "source_entries": 683,
+    "comma_entries": 0,
+    "retained_entries": 151,
+    "derived_atoms": 532,
+    "final_entries": 683,
+    "blank_atoms": 0,
+    "combination_ids": [
+      "character",
+      "niji基礎瑟瑟",
+      "portrait",
+      "portrait-detail"
+    ],
+    "combination_atoms": {
+      "character": 2,
+      "niji基礎瑟瑟": 25,
+      "portrait-detail": 5,
+      "portrait": 4
+    }
+  },
+  "curation_records": 532,
+  "source_hashes": {
+    "combinations/character.json": "a124657a7cb76a61240d5b82386462cc6bad03547c020cc080954de0f642c911",
+    "combinations/niji基礎瑟瑟.json": "a4f6e76a6604f3dbce3bf8fcf8af33112c2a7d2d107e45ee8aa73a609c40e6fb",
+    "combinations/portrait-detail.json": "f12922a9f8b6eb681df01f8da5e67dd56775f49af3ca959e0b3418d793897a57",
+    "combinations/portrait.json": "fb3a4f1310197bcc043663aef87f8d87be05d4cbce2c74834af2e7175c3d004d",
+    "manifest.json": "95d18eb7ee049cdff7375d5b1e90bdcae863a74111abaa3fa5bb47ac500007c4",
+    "negative/base-negative.json": "f15bf07fdc51a2790fc5846fe2f8f76c4d774c684e3081f6fc74b7020a020206",
+    "positive/accessories.json": "fb8a72d0f1e2db2e2e0e2ce77c62a6d22d11c61e2d6fd535dc19ceda7aab6a07",
+    "positive/actions-interactions.json": "f5d2bad5a98c193b6cd83722ee0978d43d08d7c42105ee640d373b4baa99351a",
+    "positive/body-appearance.json": "dbbddd0bb1edf873a42956760ab4982c36d837ae5b73d7c506b897cf791eede1",
+    "positive/camera-composition.json": "bde29d5b50585d5a6e3450fa29675d84a4bf4c97c532bdb4390acaa64cd410c0",
+    "positive/clothing.json": "e1304a39ec2b4631a3efbe09a8cf677b723ed3db0b491e711740e4e112abd897",
+    "positive/environment.json": "b91440e712ff7f8bd0bbebb86207a13bc3a2ef0133f685a01287b86c43d641e3",
+    "positive/expressions.json": "54b815ce2e233b21837c2cc68eeaa7c9ec4ac25c745235d5ac2961d017ab856c",
+    "positive/physical-effects.json": "9e0ab409504a6fabd1dae6020b0da06ef98f4fd62b5737e634fa160671a4542b",
+    "positive/poses.json": "a3e92101f83047c39838ccc6568001ffd9b9f7df6eb7772b7e8ae95b36f7d6cf",
+    "positive/quality-ratings.json": "f9650a8aa559c9832c2fd3c36f9cac8e58d436180927b04c4c75f2dbe0ddab52",
+    "positive/underwear.json": "54f70182814d0b99586768411be876649ecaccf452663d33618345a459dac487"
+  },
+  "target_hashes": {},
+  "legacy_ref_expansions": [
+    {
+      "source": {
+        "polarity": "negative",
+        "category_id": "base-negative",
+        "entry_id": "anima-negative"
+      },
+      "derived": [
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-worst-quality-01a25207"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-low-quality-bb110d45"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-score-1-daea52c5"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-score-2-eae9ed73"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-score-3-0e8328ca"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-artist-name-5fa67369"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-bad-anatomy-e65c19b0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-bad-hands-778492a1"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-missing-fingers-f569cc5a"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-extra-digit-b3ead93d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-fewer-digits-8b527127"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-blurry-930af09c"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-watermark-476c1f08"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-signature-905d8c1d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "anima-negative-username-dae609f8"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "negative",
+        "category_id": "base-negative",
+        "entry_id": "illustrious-negative"
+      },
+      "derived": [
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-lowres-0a7b6d07"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-bad-anatomy-95dff7aa"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-bad-hands-864655f6"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-text-e319bec0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-error-9ee6d8f0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-missing-fingers-f51b3a74"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-extra-digit-60196bb7"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-fewer-digits-a698dfa6"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-cropped-647ba075"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-worst-quality-54bb5b55"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-low-quality-d6e69259"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-normal-quality-9f274c32"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-jpeg-artifacts-e1b9fd40"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-signature-61985151"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-watermark-44eadff0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-blurry-63ebdc25"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "illustrious-negative-username-354bb6b7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "negative",
+        "category_id": "base-negative",
+        "entry_id": "noobai-negative"
+      },
+      "derived": [
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-lowres-04515550"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-bad-anatomy-f8172b83"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-blurry-70ce4d98"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-worst-quality-67127dab"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-low-quality-d08cc1a8"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-bad-hands-e1b131bb"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-mutated-hands-7962b037"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-extra-arms-2877bbf0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-duplicate-e416e1ec"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-cropped-95c50524"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-watermark-437a703f"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-signature-b37dce5d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-ugly-419388aa"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "noobai-negative-monochrome-517e6c2b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "negative",
+        "category_id": "base-negative",
+        "entry_id": "pony-negative"
+      },
+      "derived": [
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-score-4-a70c2e44"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-score-3-67d34b41"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-score-2-75dc3a22"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-score-1-25a212cc"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-monochrome-6e9f2039"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-text-c9d4e026"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-signature-58a0378c"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-watermark-564634b7"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-artist-name-bcdab1af"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-twitter-username-97dcd766"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-patreon-username-c10da6de"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-weibo-username-deefc246"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-english-text-a5c90b61"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-chinese-text-a9b8b673"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-bad-anatomy-85cf16c8"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-bad-hands-d7982e2c"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-missing-fingers-2bd9c66a"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-extra-digits-e4d76bae"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-fewer-digits-f435f8c6"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-extra-limbs-04d5c31d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-extra-arms-6ed2ebc0"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-extra-legs-252f2d03"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-extra-hands-6f19d6bc"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-mutated-hands-e4b190e5"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-poorly-drawn-hands-44d2177d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-deformed-0ebf9b98"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-disconnected-limbs-ff30e3c3"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-backwards-hands-bbae1383"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-multiple-heads-f4ad232d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-two-heads-dcf494d2"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-disembodied-head-aedf9ec1"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-floating-head-0dda824e"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "pony-negative-amputee-4591a631"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "negative",
+        "category_id": "base-negative",
+        "entry_id": "sd1-5-negative"
+      },
+      "derived": [
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-lowres-d42b22f2"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-bad-anatomy-48f35b8a"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-bad-hands-770de745"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-text-0df84f97"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-error-412935dd"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-missing-fingers-88f0d7c2"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-extra-digit-65468f34"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-fewer-digits-c68ac278"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-cropped-2f5db21d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-worst-quality-78181e3b"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-low-quality-f1f836ed"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-normal-quality-76fe4e27"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-jpeg-artifacts-78e38dac"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-blurry-91a446ac"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-extra-legs-2fcdd864"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-extra-feet-09e0942f"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-extra-arms-d368c5d4"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-extra-fingers-d7fb0c0d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-missing-legs-89a487b7"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-missing-arms-7fb7ea6d"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-ugly-115a71aa"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-monochrome-7c5e3e54"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-signature-cf1cc67c"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-watermark-96beff2b"
+        },
+        {
+          "polarity": "negative",
+          "category_id": "base-negative",
+          "entry_id": "sd1-5-negative-username-7893ff07"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "accessories",
+        "entry_id": "special-acc-garter-straps-thighhighs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "accessories",
+          "entry_id": "special-acc-garter-straps-thighhighs-garter-straps-232590b2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "accessories",
+          "entry_id": "special-acc-garter-straps-thighhighs-thighhighs-9ffc2797"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-bukkake-74d20a52"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-covered-in-cum-b836b32d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-messy-body-600c477e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-cum-pool-b65c5725"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-cum-everywhere-f51130fa"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "after-cums-creampie-leaking-cum-pooling"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-creampie-leaking-cum-pooling-creampie-leaking-a7b78279"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-creampie-leaking-cum-pooling-cum-pooling-44cfff57"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-pool-cum-everywhere"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-heavy-semen-5ba34c68"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-covered-in-cum-46c5e9e1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-messy-body-2fa9a38f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-pool-f5c4618e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-everywhere-f21b1667"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculation"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-creampie-158dd815"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-orgasm-222a58b3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-cum-in-pussy-fdca1321"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-ejaculation-c2241e80"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swallowing"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-cum-in-mouth-2ee08549"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-ejaculation-in-mouth-dc5882d4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-swallowing-3857880c"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "climaxes-cum-on-breasts-ejaculation-on-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-cum-on-breasts-ejaculation-on-breasts-cum-on-breasts-d0b44a74"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-cum-on-breasts-ejaculation-on-breasts-ejaculation-on-breasts-52421eee"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "climaxes-facial-cum-on-face-ejaculation-on-face"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-facial-cum-on-face-ejaculation-on-face-facial-bc454663"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-facial-cum-on-face-ejaculation-on-face-cum-on-face-a226e56e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-facial-cum-on-face-ejaculation-on-face-ejaculation-on-face-c78ca05c"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "climaxes-orgasm-cum-ejaculation-heavy-breathing"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-orgasm-7eca5639"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-cum-4fe0efb6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-ejaculation-219b67a6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-heavy-breathing-fb482df9"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-midair-heavy-semen-thick-semen"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-flying-semen-c426ca58"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-bukkake-6598a903"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-cum-in-midair-6a1f5abf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-heavy-semen-0eb9dbd0"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-thick-semen-c7102463"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-breasts-cum-in-midair"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-bre-flying-semen-d86ba28c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-bre-cum-towards-breasts-c4d3784d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-bre-cum-in-midair-45e8c37e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-face-cum-in-midair"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-fac-flying-semen-7b02c3ea"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-fac-cum-towards-face-36143bfc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-dynamics-flying-semen-cum-towards-fac-cum-in-midair-67752b6c"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "cum-shower-tongues-open-mouth-catching-cum-tongue-out-1-4"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-tongues-open-mouth-catching-cum-tongu-open-mouth-1588c6d5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-tongues-open-mouth-catching-cum-tongu-catching-cum-a85bd9df"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "cum-shower-tongues-open-mouth-catching-cum-tongu-tongue-out-1-4-624b8721"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-fingering-rubbing-crotch"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-fingering-rubbing-crotch-fingering-8f776575"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-fingering-rubbing-crotch-rubbing-crotch-9fc6670c"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-hugging-romantic-embrace"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-hugging-romantic-embrace-hugging-7471b352"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-hugging-romantic-embrace-romantic-embrace-59b6519e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eyes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-kissing-3a6ca067"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-french-kiss-ab059986"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-saliva-630b9242"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-closed-eyes-47d17798"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-licking-ear-teasing-whispering"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-licking-ear-teasing-whispering-licking-ear-cbe48dec"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-licking-ear-teasing-whispering-teasing-9da2ee70"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-licking-ear-teasing-whispering-whispering-343ecbd3"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-pinned-against-wall-blush-looking-up"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-pinned-against-wall-blush-looking-up-pinned-against-wall-59928f9b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-pinned-against-wall-blush-looking-up-blush-2682aef6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-pinned-against-wall-blush-looking-up-looking-up-d5a07bc2"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-straddling-grinding-dry-humping"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-straddling-grinding-dry-humping-straddling-0a36046e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-straddling-grinding-dry-humping-grinding-4556cb2c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-straddling-grinding-dry-humping-dry-humping-e8cb0942"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucking-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-sucking-nipples-5ba60137"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-kissing-breasts-7ad1f4ac"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-sucking-breasts-5d3ed6c3"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-touching-breasts-squeezing-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-squeezing-breasts-touching-breasts-53dd64e8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-squeezing-breasts-squeezing-breasts-378764dd"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-sucking-nipples-kiss-touching-breasts-56ce3118"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-sucking-nipples-kiss-sucking-nipples-5db8f357"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-sucking-nipples-kiss-kissing-breasts-8c4f351f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "flirt-acts-touching-breasts-sucking-nipples-kiss-sucking-breasts-5332a788"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnilingus-fellatio"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-69-position-b6888fc8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-mutual-oral-1f69639c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-blowjob-cb55de06"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-cunnilingus-41945bcc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-fellatio-8351b22d"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-anilingus-rimming"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-anilingus-rimming-anilingus-29c07771"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-anilingus-rimming-rimming-e6c72b61"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-arm"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-armpit-sex-2a579bf3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-penis-in-armpit-b1923fc9"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-holding-own-arm-d23c55e0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-blowjob-3e5a6fdf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-fellatio-dedb18df"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-penis-in-mouth-e7476bd3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-suck-5303ac25"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-blowjob-ef6a0be5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-fellatio-fdc6d375"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-penis-in-mouth-4893ce12"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-suck-fc004a7e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-handjob-9c4a5b19"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-grasping-penis-9439f760"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-blowjob-7e9bf03d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-fellatio-b6db4844"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-penis-in-mouth-1415bd93"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-suck-8304f038"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-paizuri-6a0172c0"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-penis-between-breasts-9ed37d2d"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-cunnilingus-receiving-oral-oral-on-vagina"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-cunnilingus-88867829"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-receiving-oral-a615da69"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-oral-on-vagina-10c09f02"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-footjob-foot-on-penis-feet"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-footjob-foot-on-penis-feet-footjob-7d13a4ac"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-footjob-foot-on-penis-feet-foot-on-penis-c7519652"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-footjob-foot-on-penis-feet-feet-ad846fc7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-handjob-9980536b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-grasping-penis-e0213519"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-paizuri-34c881b7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-penis-between-breasts-6ab7dc90"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-handjob-grasping-penis-rubbing-penis"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-rubbing-penis-handjob-de1f54d1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-rubbing-penis-grasping-penis-53b98e8f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-handjob-grasping-penis-rubbing-penis-rubbing-penis-f59ff1f5"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-paizuri-penis-between-breasts-titjob"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-paizuri-penis-between-breasts-titjob-paizuri-778f2b8c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-paizuri-penis-between-breasts-titjob-penis-between-breasts-53c9ee16"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-paizuri-penis-between-breasts-titjob-titjob-e249a05a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "oral-acts-thighjob-penis-between-thighs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-thighjob-penis-between-thighs-thighjob-9953fc4e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "oral-acts-thighjob-penis-between-thighs-penis-between-thighs-5d3df9f5"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "p-extra-acts-kissing-french-kiss-saliva"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-kissing-french-kiss-saliva-kissing-c70c38fd"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-kissing-french-kiss-saliva-french-kiss-63a98b0c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-kissing-french-kiss-saliva-saliva-111886c0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "p-extra-acts-sucking-nipples-kissing-breasts-sucking-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-sucking-nipples-kissing-breasts-suc-sucking-nipples-8ed61135"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-sucking-nipples-kissing-breasts-suc-kissing-breasts-7848b9cf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-sucking-nipples-kissing-breasts-suc-sucking-breasts-2ec1566e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "p-extra-acts-touching-breasts-squeezing-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-touching-breasts-squeezing-breasts-touching-breasts-c8660976"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "p-extra-acts-touching-breasts-squeezing-breasts-squeezing-breasts-23b9ac32"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "teasing-milk-opts-leaking-milk-breast-milk"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-milk-opts-leaking-milk-breast-milk-leaking-milk-d1feeadb"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-milk-opts-leaking-milk-breast-milk-breast-milk-2387f5b5"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "teasing-milk-opts-squirting-milk-breast-milk-messy"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-milk-opts-squirting-milk-breast-milk-mes-squirting-milk-cf53b389"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-milk-opts-squirting-milk-breast-milk-mes-breast-milk-6ca48d72"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-milk-opts-squirting-milk-breast-milk-mes-messy-c1311fdc"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-pussy-juice"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-dripping-f0799dac"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-puddle-on-floor-3a36b0f1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-heavy-pussy-juice-89c028e0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-trail"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-wet-41fb781a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-saliva-trail-94660725"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-pussy-juice-trail-d67bbc53"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-hands-behind-back-unhooking-bra"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-hands-behind-back-unhooking-bra-hands-behind-back-fbf1581e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-hands-behind-back-unhooking-bra-unhooking-bra-9f8605d4"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-lifting-shirt-biting-shirt-revealing-bra"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-biting-shirt-revealin-lifting-shirt-b5a37116"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-biting-shirt-revealin-biting-shirt-ed22bd27"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-biting-shirt-revealin-revealing-bra-b28d0f2f"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-lifting-shirt-exposing-midriff-underbust"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-exposing-midriff-unde-lifting-shirt-7196fca4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-exposing-midriff-unde-exposing-midriff-c06c8ef0"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-lifting-shirt-exposing-midriff-unde-underbust-0c619247"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-pulling-down-panties-panties-around-thighs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-pulling-down-panties-panties-around-pulling-down-panties-b467a8cb"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-pulling-down-panties-panties-around-panties-around-thighs-b8993a9b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-pulling-down-pants-revealing-panties"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-pulling-down-pants-revealing-pantie-pulling-down-pants-9b847a19"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-pulling-down-pants-revealing-pantie-revealing-panties-e8ac6538"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-shirt-off-shoulder-bra-strap-slipping"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-off-shoulder-bra-strap-slippi-shirt-off-shoulder-bf0d4149"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-off-shoulder-bra-strap-slippi-bra-strap-slipping-96a35feb"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-shirt-open-unbuttoned-shirt-revealing-bra"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-shirt-open-1a3f6450"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-unbuttoned-shirt-e39377b6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-revealing-bra-f5422a59"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-shirt-over-head-face-visible-arms-up"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-over-head-face-visible-arms-u-shirt-over-head-f49a4dd8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-over-head-face-visible-arms-u-face-visible-bba6152d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-over-head-face-visible-arms-u-arms-up-e9a7d7b6"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-shirt-removed-holding-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-removed-holding-clothes-shirt-removed-2765bc1b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-shirt-removed-holding-clothes-holding-clothes-887eb963"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "undress-acts-taking-off-skirt-revealing-panties"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-taking-off-skirt-revealing-panties-taking-off-skirt-9debbb5b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "undress-acts-taking-off-skirt-revealing-panties-revealing-panties-abb694f3"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "wetness-opts-wet-panties-crotch-stained"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-wet-panties-32f04755"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-crotch-stained-ada4e04e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "actions-interactions",
+        "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-bodily-fluids-on-floor"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-wet-panties-8741f5b9"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-crotch-stained-5810e7ad"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-dripping-c240cb12"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-8293dc2d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "actions-interactions",
+          "entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-bodily-fluids-on-floor-28be2c64"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "body-thighs-curvy-thick-thighs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "body-thighs-curvy-thick-thighs-curvy-a6269ed4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "body-thighs-curvy-thick-thighs-thick-thighs-f0305425"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-faces-full-face-male-focus"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-faces-full-face-male-focus-full-face-b8173e95"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-faces-full-face-male-focus-male-focus-02ac4a18"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-prompts-delinquent-male-piercings-dyed-hair"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-delinquent-male-piercings-dyed-hair-delinquent-male-183e87f4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-delinquent-male-piercings-dyed-hair-piercings-d0213194"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-delinquent-male-piercings-dyed-hair-dyed-hair-f660c529"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin-muscular-male-22a2548e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin-blonde-hair-85f79fbf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-muscular-male-blonde-hair-dark-skin-dark-skin-b9d1c932"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-prompts-old-man-wrinkled-skin"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-old-man-wrinkled-skin-old-man-795e15e1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-old-man-wrinkled-skin-wrinkled-skin-77739678"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-prompts-shota-young-boy-cute-male"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-shota-young-boy-cute-male-shota-cad93f20"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-shota-young-boy-cute-male-young-boy-f84d9fdc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-shota-young-boy-cute-male-cute-male-65452584"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "male-prompts-ugly-bastard-overweight-male-fat-man"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-ugly-bastard-overweight-male-fat-ma-ugly-bastard-7fa59c40"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-ugly-bastard-overweight-male-fat-ma-overweight-male-ef2df7b7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "male-prompts-ugly-bastard-overweight-male-fat-ma-fat-man-56bf9caa"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-skinned-penis-black-penis-huge-penis-veiny-penis-bbc"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skinned-male-6d9c9949"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skin-1f14236c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-dark-skinned-penis-4f6de490"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-black-penis-2a00723c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-huge-penis-3d4e4ee2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-veiny-penis-cb7040f8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-dark-skinned-male-dark-skin-dark-ski-bbc-fc4cbf3f"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "body-appearance",
+        "entry_id": "penis-types-monster-penis-alien-penis"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-monster-penis-alien-penis-monster-penis-6886fc86"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "body-appearance",
+          "entry_id": "penis-types-monster-penis-alien-penis-alien-penis-f9a844a7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "after-angles-close-up-face-focus"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-close-up-face-focus-close-up-40f968e5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-close-up-face-focus-face-focus-c8b2f2d6"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "after-angles-crotch-close-up-faceless-groin"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-crotch-close-up-faceless-groin-crotch-close-up-c2b792e8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-crotch-close-up-faceless-groin-faceless-92fc4655"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-crotch-close-up-faceless-groin-groin-0ad72728"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "after-angles-from-above-full-body"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-from-above-full-body-from-above-7f434f6c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-from-above-full-body-full-body-ea9349d1"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "after-angles-from-below-thighs-focus"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-from-below-thighs-focus-from-below-6abef040"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-from-below-thighs-focus-thighs-focus-75b75d4e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "after-angles-upper-body-close-up-breasts-visible"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-upper-body-close-up-breasts-visible-upper-body-close-up-d88896ec"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "after-angles-upper-body-close-up-breasts-visible-breasts-visible-5b429460"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "angles-profile-side-view-full-body"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "angles-profile-side-view-full-body-profile-1f56f8ed"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "angles-profile-side-view-full-body-side-view-5819d747"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "angles-profile-side-view-full-body-full-body-59821560"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "cum-shower-angles-cowboy-shot-thighs-visible"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-cowboy-shot-thighs-visible-cowboy-shot-a1f6d3b6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-cowboy-shot-thighs-visible-thighs-visible-3ef1a243"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "cum-shower-angles-upper-body-close-up-breasts-focus-face-focus"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-upper-body-close-up-breasts-fo-upper-body-close-up-838ca784"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-upper-body-close-up-breasts-fo-breasts-focus-f51add8b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-upper-body-close-up-breasts-fo-face-focus-3182a835"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "camera-composition",
+        "entry_id": "cum-shower-angles-wide-shot-full-body"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-wide-shot-full-body-wide-shot-fbb08514"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "camera-composition",
+          "entry_id": "cum-shower-angles-wide-shot-full-body-full-body-235d17b7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-camisole-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-camisole-opaque-clothes-camisole-5b1dd0f2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-camisole-opaque-clothes-opaque-clothes-20a11ab5"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-collared-shirt-long-sleeves-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-long-sleeves-opaque-cl-collared-shirt-ec63d902"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-long-sleeves-opaque-cl-long-sleeves-8af5d8d2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-long-sleeves-opaque-cl-opaque-clothes-4d6328b6"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-collared-shirt-short-sleeves-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-short-sleeves-opaque-c-collared-shirt-427ddade"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-short-sleeves-opaque-c-short-sleeves-ea9d881b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-collared-shirt-short-sleeves-opaque-c-opaque-clothes-9abfeb4f"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-tank-top-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-tank-top-opaque-clothes-tank-top-ec01dad5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-tank-top-opaque-clothes-opaque-clothes-fbf5d070"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-turtleneck-sweater-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-turtleneck-sweater-opaque-clothes-turtleneck-sweater-dfd00c5e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-turtleneck-sweater-opaque-clothes-opaque-clothes-52613bb8"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-white-shirt-710a38ff"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-short-sleeves-413449e7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-collared-shirt-056cb97c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-red-ribbon-7d928b8f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-neck-ribbon-f272eaa8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "innerwears-white-shirt-short-sleeves-collared-sh-opaque-clothes-62cbb3ce"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-casual-oversized-sweater-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-casual-oversized-sweater-opaque-cloth-casual-oversized-sweater-83fd77c5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-casual-oversized-sweater-opaque-cloth-opaque-clothes-bfe1d877"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-gym-uniform-buruma-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-gym-uniform-buruma-opaque-clothes-gym-uniform-4b2cfb08"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-gym-uniform-buruma-opaque-clothes-buruma-98aaa60f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-gym-uniform-buruma-opaque-clothes-opaque-clothes-3fbec068"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-maid-outfit-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-maid-outfit-opaque-clothes-maid-outfit-84419eba"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-maid-outfit-opaque-clothes-opaque-clothes-4c978b06"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-office-lady-suit-tight-skirt-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-office-lady-suit-tight-skirt-opaque-c-office-lady-suit-85061aef"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-office-lady-suit-tight-skirt-opaque-c-tight-skirt-c93b3d28"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-office-lady-suit-tight-skirt-opaque-c-opaque-clothes-04f8c130"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-pinafore-dress-b164dbc0"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-grey-dress-5283f371"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-summer-uniform-98a0b155"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-yuigaoka-school-uniform-560da909"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-school-uniform-6658b3c2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-pinafore-dress-grey-dress-summer-unif-opaque-clothes-ebe11c91"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-shirt-0c4786ef"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-dress-0345e4f1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-ribbon-5c030b14"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-school-uniform-d0c6cbfe"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-white-shirt-7a7c8520"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-short-sleeves-48cd3e1e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-collared-shirt-8e03be18"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-red-ribbon-fe798d17"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-neck-ribbon-405f215a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-pinafore-dress-783a8656"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-grey-dress-7c22695b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-summer-uniform-2e774487"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-yuigaoka-school-uniform-20e4d782"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-shirt-dress-ribbon-school-uniform-whi-opaque-clothes-b54502c7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "outerwears-white-buttoned-shirt-pleated-skirt-opaque-clothes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-white-buttoned-shirt-pleated-skirt-op-white-buttoned-shirt-70075336"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-white-buttoned-shirt-pleated-skirt-op-pleated-skirt-97e40d4d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "clothing",
+          "entry_id": "outerwears-white-buttoned-shirt-pleated-skirt-op-opaque-clothes-aeba6e5a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "environment",
+        "entry_id": "loc-places-love-hotel-pink-room-black-bed"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "environment",
+          "entry_id": "loc-places-love-hotel-pink-room-black-bed-love-hotel-6d25ee1d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "environment",
+          "entry_id": "loc-places-love-hotel-pink-room-black-bed-pink-room-44cade1e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "environment",
+          "entry_id": "loc-places-love-hotel-pink-room-black-bed-black-bed-700c1f9e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "environment",
+        "entry_id": "loc-places-rei-no-pool-poolside"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "environment",
+          "entry_id": "loc-places-rei-no-pool-poolside-rei-no-pool-a88eedb8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "environment",
+          "entry_id": "loc-places-rei-no-pool-poolside-poolside-02573782"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-ahegao-tongue-out-1-4"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-ahegao-tongue-out-1-4-ahegao-94629dbc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-ahegao-tongue-out-1-4-tongue-out-1-4-b5105fe3"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-blush-embarrassed"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-blush-embarrassed-blush-645c7b87"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-blush-embarrassed-embarrassed-b0342daa"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-crying-tears"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-crying-tears-crying-b81c296c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-crying-tears-tears-dc658e0e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-expressionless-looking-away"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-expressionless-looking-away-expressionless-54a5aae7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-expressionless-looking-away-looking-away-efd5e800"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-frustrated-blush-crying-with-eyes-open-gritting-teeth-embarrassed-tears"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-frustrated-8fea8bba"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-blush-cc03963e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-crying-with-eyes-open-f7d76855"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-gritting-teeth-bf31333a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-embarrassed-61bcb55a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-frustrated-blush-crying-with-ey-tears-14c5b365"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-furrowed-brow-torogao"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-furrowed-brow-torogao-furrowed-brow-e2f9bcaf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-furrowed-brow-torogao-torogao-7054df02"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-heart-eyes-ahegao"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-heart-eyes-ahegao-heart-eyes-ce80d281"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-heart-eyes-ahegao-ahegao-17993ba6"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-mind-break-blank-stare-drooling"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-mind-break-blank-stare-drooling-mind-break-c9ea695d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-mind-break-blank-stare-drooling-blank-stare-ad0c7955"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-mind-break-blank-stare-drooling-drooling-7d38f7d9"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-seductive-smile-naughty-face"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-seductive-smile-naughty-face-seductive-smile-6efd8b47"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-seductive-smile-naughty-face-naughty-face-6b91ee9b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-shy-looking-away"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-shy-looking-away-shy-528bd908"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-shy-looking-away-looking-away-26172a6a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-smile-happy"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-smile-happy-smile-151be7c9"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-smile-happy-happy-b2412308"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-lips-1-4"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-smirk-f4e0636e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-v-shaped-eyebrows-0f3166f4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-licking-lips-1-4-2f243694"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "expressions-list-surprised-wide-eyes"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-surprised-wide-eyes-surprised-ef5d24bf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "expressions-list-surprised-wide-eyes-wide-eyes-e7fae8c7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "teasing-exps-blush-shy-looking-away"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-blush-shy-looking-away-blush-3ddbd1b3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-blush-shy-looking-away-shy-a874ba42"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-blush-shy-looking-away-looking-away-eb066ff7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush-lewd-02fa046b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush-lustful-8abc38e8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush-tongue-out-1-4-8375cdd3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush-blush-e0bd77b4"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "expressions",
+        "entry_id": "teasing-exps-smug-teasing-smile-seductively-smiling-proud"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-smug-teasing-smile-seductively-smil-smug-96f1ccfe"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-smug-teasing-smile-seductively-smil-teasing-smile-d37ce6ae"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-smug-teasing-smile-seductively-smil-seductively-smiling-ab7533a1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "expressions",
+          "entry_id": "teasing-exps-smug-teasing-smile-seductively-smil-proud-7bedeb90"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "physical-effects",
+        "entry_id": "after-effects-after-sex-disheveled"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-after-sex-disheveled-after-sex-7128edd9"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-after-sex-disheveled-disheveled-3f8a9e8a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "physical-effects",
+        "entry_id": "after-effects-heart-symbol-floating-hearts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-heart-symbol-floating-hearts-heart-symbol-b191ab45"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-heart-symbol-floating-hearts-floating-hearts-c178ddd2"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "physical-effects",
+        "entry_id": "after-effects-panting-breath-steam-breathing-steam-visible"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-panting-breath-steam-breathing-ste-panting-6354dba3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-panting-breath-steam-breathing-ste-breath-steam-201f3edc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-panting-breath-steam-breathing-ste-breathing-steam-visible-c0b89942"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "physical-effects",
+        "entry_id": "after-effects-saliva-trail-drooling"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-saliva-trail-drooling-saliva-trail-022d1025"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-saliva-trail-drooling-drooling-e46c4d4a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "physical-effects",
+        "entry_id": "after-effects-sweaty-glistening-skin"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-sweaty-glistening-skin-sweaty-1c3dcd26"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "physical-effects",
+          "entry_id": "after-effects-sweaty-glistening-skin-glistening-skin-5266dd94"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-body-kneeling-legs-visible-thighs-visible"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-kneeling-legs-visible-thighs-vis-kneeling-d92ba44c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-kneeling-legs-visible-thighs-vis-legs-visible-8223335b"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-kneeling-legs-visible-thighs-vis-thighs-visible-303a75cf"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-body-lying-down-spread-legs-legs-up"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-lying-down-spread-legs-legs-up-lying-down-8c938a3c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-lying-down-spread-legs-legs-up-spread-legs-a1d579b3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-body-lying-down-spread-legs-legs-up-legs-up-53869463"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-poses-hands-behind-head-exposing-chest"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-behind-head-exposing-ches-hands-behind-head-d011b7fd"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-behind-head-exposing-ches-exposing-chest-89f79fc6"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-poses-hands-on-own-breasts-pushing-breasts-together-presenting-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-on-own-breasts-pushing-br-hands-on-own-breasts-40d2232f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-on-own-breasts-pushing-br-pushing-breasts-together-499940f2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-on-own-breasts-pushing-br-presenting-breasts-972a9d17"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-poses-hands-resting-on-breasts-palms-down-presenting-breasts"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-resting-on-breasts-palms-hands-resting-on-breasts-cdb44f48"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-resting-on-breasts-palms-palms-down-f30d1809"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-hands-resting-on-breasts-palms-presenting-breasts-d4ea51b2"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "cum-shower-poses-reaching-out-palms-up-waiting-for-cum"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-reaching-out-palms-up-waiting-f-reaching-out-41f39c31"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-reaching-out-palms-up-waiting-f-palms-up-bcaccf45"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "cum-shower-poses-reaching-out-palms-up-waiting-f-waiting-for-cum-e0ab8aa0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-69-position-mutual-oral-blowjob"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-69-position-mutual-oral-blowjob-69-position-48329523"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-69-position-mutual-oral-blowjob-mutual-oral-8e6f7348"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-69-position-mutual-oral-blowjob-blowjob-7cd107f1"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-cowgirl-position-leaning-back-arching-back"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-cowgirl-position-leaning-back-arching-cowgirl-position-366e821c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-cowgirl-position-leaning-back-arching-leaning-back-9553d636"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-cowgirl-position-leaning-back-arching-arching-back-f870a945"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-doggy-style-from-behind-grabbing-hands-holding-wrists"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-doggy-style-from-behind-grabbing-hands-doggy-style-88b1771e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-doggy-style-from-behind-grabbing-hands-from-behind-243bf757"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-doggy-style-from-behind-grabbing-hands-grabbing-hands-c204e1f2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-doggy-style-from-behind-grabbing-hands-holding-wrists-01563a06"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-lateral-position-spooning-sex"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lateral-position-spooning-sex-lateral-position-15fe9200"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lateral-position-spooning-sex-spooning-sex-bca52c70"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-lifting-person-carrying-holding-up-midair-suspended-facing-each-other-hugging-legs-around-waist-sex"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-lifting-person-4996e5cf"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-carrying-28e795da"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-holding-up-4ba9b097"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-midair-61dd0725"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-suspended-a373a334"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-facing-each-other-807b62cc"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-hugging-5b99824f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-legs-around-waist-4d516670"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lifting-person-carrying-holding-up-mid-sex-9a852da0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-lotus-position-facing-each-other-sitting-hugging"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lotus-position-facing-each-other-sitti-lotus-position-a6b7ea1a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lotus-position-facing-each-other-sitti-facing-each-other-99f14ba8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lotus-position-facing-each-other-sitti-sitting-559e3423"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-lotus-position-facing-each-other-sitti-hugging-a256b371"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-on-all-fours-kneeling-doggystyle"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-on-all-fours-kneeling-doggystyle-on-all-fours-374f1553"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-on-all-fours-kneeling-doggystyle-kneeling-4bdbc096"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-on-all-fours-kneeling-doggystyle-doggystyle-fba08b56"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-prone-bone-from-behind-lying-on-stomach"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-prone-bone-from-behind-lying-on-stomac-prone-bone-0de81179"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-prone-bone-from-behind-lying-on-stomac-from-behind-7d090b90"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-prone-bone-from-behind-lying-on-stomac-lying-on-stomach-7dcaf5bc"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-sex-on-desk-sitting-on-desk-spread-legs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-sex-on-desk-sitting-on-desk-spread-leg-sex-on-desk-5e5b022d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-sex-on-desk-sitting-on-desk-spread-leg-sitting-on-desk-1b9ef699"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-sex-on-desk-sitting-on-desk-spread-leg-spread-legs-65945e2e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-spread-eagle-lying-on-back-spread-legs"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-spread-eagle-lying-on-back-spread-legs-spread-eagle-14735b41"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-spread-eagle-lying-on-back-spread-legs-lying-on-back-94819cef"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-spread-eagle-lying-on-back-spread-legs-spread-legs-ba6c30a1"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-standing-sex-doggy-style-from-behind-leaning-forward"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-doggy-style-from-behind-l-standing-sex-e5c55e49"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-doggy-style-from-behind-l-doggy-style-dc94ea91"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-doggy-style-from-behind-l-from-behind-8fda8dd6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-doggy-style-from-behind-l-leaning-forward-f37f108e"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-standing-sex-one-leg-up-leaning-forward"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-one-leg-up-leaning-forwar-standing-sex-cf4dd01d"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-one-leg-up-leaning-forwar-one-leg-up-d5a50ba8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-one-leg-up-leaning-forwar-leaning-forward-7021e8b8"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "poses",
+        "entry_id": "positions-standing-sex-sex-from-front-facing-each-other"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-sex-from-front-facing-eac-standing-sex-75f8a167"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-sex-from-front-facing-eac-sex-from-front-2a482fe4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "poses",
+          "entry_id": "positions-standing-sex-sex-from-front-facing-eac-facing-each-other-99ce8944"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "quality-ratings",
+        "entry_id": "anima-quality"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "anima-quality-masterpiece-5d3c18a5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "anima-quality-best-quality-b870f8e8"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "anima-quality-very-aesthetic-caea0057"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "quality-ratings",
+        "entry_id": "illustrious-quality"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "illustrious-quality-masterpiece-905adc41"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "illustrious-quality-best-quality-94d0f8f7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "illustrious-quality-amazing-quality-bd0b636a"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "illustrious-quality-absurdres-d8cdf00b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "quality-ratings",
+        "entry_id": "noobai-quality"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "noobai-quality-masterpiece-6812d6c3"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "noobai-quality-best-quality-f5173132"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "noobai-quality-newest-3e8f4562"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "noobai-quality-absurdres-8a4ddaf1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "noobai-quality-highres-b2fe9ee7"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "quality-ratings",
+        "entry_id": "pony-quality"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "pony-quality-score-9-88364ce6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "pony-quality-score-8-up-00f075e5"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "pony-quality-score-7-up-64eefb3e"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "pony-quality-source-anime-7e53856d"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "quality-ratings",
+        "entry_id": "sd1-5-quality"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "sd1-5-quality-masterpiece-934c50a1"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "quality-ratings",
+          "entry_id": "sd1-5-quality-best-quality-7064319a"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-black"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-black-black-bra-c771e267"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-black-black-panties-9614ecf3"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-blue"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-blue-blue-bra-c4633318"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-blue-blue-panties-c53f99d0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-mint-green"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-mint-green-mint-green-bra-93824e93"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-mint-green-mint-green-panties-c8fbccd2"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-pastel-pink"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-pastel-pink-pastel-pink-bra-ec7274db"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-pastel-pink-pastel-pink-panties-5e99883c"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-pink"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-pink-pink-bra-8da88e5f"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-pink-pink-panties-6b85086b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-purple"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-purple-purple-bra-4ef390f2"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-purple-purple-panties-a891ec38"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-red"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-red-red-bra-8e55a5d6"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-red-red-panties-79f11607"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-colors-white"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-white-white-bra-6cbac0b7"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-colors-white-white-panties-0df4b4f0"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "bra-types-two-piece-lingerie-set-lingerie-matching-underwear-bra-and-panties"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-types-two-piece-lingerie-set-lingerie-matchi-two-piece-lingerie-set-547392fb"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-types-two-piece-lingerie-set-lingerie-matchi-lingerie-f31cfc0c"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-types-two-piece-lingerie-set-lingerie-matchi-matching-underwear-c7ee67a4"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "bra-types-two-piece-lingerie-set-lingerie-matchi-bra-and-panties-fd00c50b"
+        }
+      ]
+    },
+    {
+      "source": {
+        "polarity": "positive",
+        "category_id": "underwear",
+        "entry_id": "pg-bra-types-two-piece-lingerie-set-lingerie-matching-underwear-bra-and-panties"
+      },
+      "derived": [
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "pg-bra-types-two-piece-lingerie-set-lingerie-mat-two-piece-lingerie-set-50880259"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "pg-bra-types-two-piece-lingerie-set-lingerie-mat-lingerie-eda5fb00"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "pg-bra-types-two-piece-lingerie-set-lingerie-mat-matching-underwear-e12368ea"
+        },
+        {
+          "polarity": "positive",
+          "category_id": "underwear",
+          "entry_id": "pg-bra-types-two-piece-lingerie-set-lingerie-mat-bra-and-panties-823a6e3a"
+        }
+      ]
+    }
+  ],
+  "planned_mutations": [],
+  "diagnostics": [],
+  "details": {
+    "atom_projections": [],
+    "retained_locators": [],
+    "collision_policy": [
+      8,
+      12,
+      16,
+      64
+    ]
+  },
+  "plan_hash": "0fde746b64282678538d3acb40269565573fb5358ac231c2f9989fc99fbc7f0a",
+  "eligible": true
+}

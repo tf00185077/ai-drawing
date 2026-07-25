@@ -1,5 +1,8 @@
-## ADDED Requirements
+# comma-atomic-composition Specification
 
+## Purpose
+TBD - created by archiving change comma-delimited-atomic-prompts. Update Purpose after archive.
+## Requirements
 ### Requirement: ASCII comma is the unconditional composition boundary
 The Workbench SHALL treat every ASCII comma U+002C as a boundary between adjacent prompt segments. For every non-empty lane it SHALL derive segments with behavior equivalent to `raw.split(",")`, retain each exact segment string, and reconstruct the lane with behavior equivalent to `segments.join(",")`. It MUST NOT recognize parentheses, weights, quotes, backslashes, CSV quoting, or any escape syntax as exceptions. An entirely empty lane SHALL contain zero segments; all other input, including whitespace-only input, SHALL contain the exact split segments.
 
@@ -21,8 +24,18 @@ The Workbench SHALL treat every ASCII comma U+002C as a boundary between adjacen
 - **WHEN** a prompt lane's raw text is exactly the empty string
 - **THEN** the lane contains zero segments and no blank-fragment error
 
+#### Scenario: Free-text Add atomizes every comma
+- **WHEN** the user adds free text `a,,b`
+- **THEN** the lane receives exact atoms `a`, ``, and `b`
+- **AND** Generate, Save, Update, or Save As preflight reports the new blank atom before any request
+
+#### Scenario: Card content edit atomizes every comma
+- **WHEN** the user changes one card content field to `a,,b`
+- **THEN** that card becomes three literal cards containing `a`, ``, and `b`
+- **AND** the lane reconstructs exactly `a,,b` without hiding a comma inside one fragment
+
 ### Requirement: Final textarea editing is lossless and caret-safe
-The Positive and Negative final textareas SHALL always be directly editable after Backend readiness is true. Each structured segment SHALL contain exact unweighted `snapshotRaw` (the Backend `snapshot` field), numeric `weight`, and derived `renderedRaw=render(snapshotRaw, weight)`. The final textarea SHALL equal `renderedAtoms.join(",")`. On each input event the Workbench SHALL first store the browser's exact value, split it into edited rendered atoms, derive cards without normalizing that value, and preserve the current selection and caret. Reconciliation MUST compare exact `renderedRaw`. Exact non-overlapping common-prefix and common-suffix matches MAY retain UI identity, `snapshotRaw`, weight, and genuine source metadata; every changed or ambiguous middle rendered atom MUST become a literal with `snapshotRaw` equal to the exact edited atom, weight 1, and no source ref. The Workbench MUST NOT parse apparent weight syntax from edited textarea text. A segment created by direct typing MUST remain literal even if its text matches a catalog prompt.
+The Positive and Negative final textareas SHALL always be directly editable after Backend readiness is true. Each structured segment SHALL contain exact unweighted `snapshotRaw` (the Backend `snapshot` field), numeric `weight`, and derived `renderedRaw=render(snapshotRaw, weight)`. Frontend SHALL canonicalize finite editable weights to Backend's at-most-three-decimal form before rendering, sending, or comparing. The final textarea SHALL equal `renderedAtoms.join(",")`. On each input event the Workbench SHALL first store the browser's exact value, split it into edited rendered atoms, derive cards without normalizing that value, and preserve the current selection and caret. Reconciliation MUST compare exact `renderedRaw`. Exact non-overlapping common-prefix and common-suffix matches MAY retain UI identity, `snapshotRaw`, weight, and genuine source metadata; every changed or ambiguous middle rendered atom MUST become a literal with `snapshotRaw` equal to the exact edited atom, weight 1, and no source ref. The Workbench MUST NOT parse apparent weight syntax from edited textarea text. A segment created by direct typing MUST remain literal even if its text matches a catalog prompt.
 
 #### Scenario: Typing a comma immediately adds a card without moving caret
 - **WHEN** the caret is in the middle of a final textarea and the user types one ASCII comma
@@ -56,6 +69,11 @@ The Positive and Negative final textareas SHALL always be directly editable afte
 - **THEN** the segment becomes a literal with `snapshotRaw=(detail:1.3)` and weight 1
 - **AND** its `renderedRaw` remains exactly `(detail:1.3)`
 - **AND** no source ref or parsed weight 1.3 is retained
+
+#### Scenario: Editable weight uses Backend canonical precision
+- **WHEN** the user enters weight `1.2345`
+- **THEN** the visible rendered atom and outgoing structured weight use canonical `1.234`
+- **AND** save response comparison, retry, and reload do not produce a stale etag or canonical mismatch
 
 ### Requirement: Cards preserve empty slots and exact raw segment text
 The card collection SHALL contain empty and whitespace-only transient rendered segments, count them in pagination, and expose content edit, weight, reorder, and delete operations without trimming or filtering. Empty cards SHALL display the fixed label `自訂文字`, SHALL show an invalid state, and SHALL keep their exact content. Reorder SHALL move the exact structured segment. Delete SHALL remove the selected segment and the single adjacent delimiter needed to join the remaining rendered atoms deterministically.
@@ -161,6 +179,11 @@ Load, Save, Update, and Save As SHALL use ordered atomic fragments and SHALL pre
 - **WHEN** the user invokes Save As with valid segments and a new ID
 - **THEN** the request uses expected revision zero and no existing etag
 - **AND** the original loaded combination remains unchanged
+
+#### Scenario: Update and Save As preserve document metadata
+- **WHEN** a loaded combination has non-default name, description, aliases, keywords, order, and `legacy_template`
+- **THEN** Update submits those loaded values unchanged
+- **AND** Save As intentionally copies those values to the new document rather than replacing them with Workbench defaults
 
 #### Scenario: Dirty guard protects temporary empty slots
 - **WHEN** the document is dirty and contains a temporary trailing empty segment

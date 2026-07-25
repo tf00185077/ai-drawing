@@ -20,10 +20,12 @@ def client_with_prompt_library(tmp_path: Path):
     (root / "combinations").mkdir()
     documents = {
         root / "manifest.json": {
-            "schema_version": 1,
+            "schema_version": 2,
             "library_id": "default",
             "name": "Test Prompt Library",
             "description_zh": "測試提示詞庫",
+            "comma_atomic_version": 1,
+            "comma_atomic_migration_required": False,
         },
         root / "positive" / "clothing.json": {
             "schema_version": 1,
@@ -92,6 +94,41 @@ def test_entry_write_conflict_is_actionable(
     assert response.json()["detail"]["code"] == "revision_conflict"
     assert response.json()["detail"]["message"]
     assert response.json()["detail"]["hint"]
+
+
+@pytest.mark.parametrize(
+    ("prompt", "error_code"),
+    [
+        ("masterpiece, best quality", "comma_not_atomic"),
+        ("   ", "blank_prompt_fragment"),
+    ],
+)
+def test_entry_write_rejects_non_atomic_or_blank_without_token_change(
+    client_with_prompt_library: TestClient,
+    prompt: str,
+    error_code: str,
+) -> None:
+    before = client_with_prompt_library.get(
+        "/api/prompt-library/categories/positive/clothing"
+    ).json()
+    response = client_with_prompt_library.put(
+        "/api/prompt-library/categories/positive/clothing/entries/dress",
+        json={
+            "name_zh": "洋裝",
+            "description_zh": "一件式裙裝",
+            "prompt": prompt,
+            "expected_revision": before["category"]["revision"],
+            "expected_etag": before["etag"],
+        },
+    )
+    after = client_with_prompt_library.get(
+        "/api/prompt-library/categories/positive/clothing"
+    ).json()
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == error_code
+    assert after["category"]["revision"] == before["category"]["revision"]
+    assert after["etag"] == before["etag"]
 
 
 def test_compose_can_optionally_save_combination(
@@ -204,6 +241,7 @@ def test_write_list_detail_and_archive_routes(
 def test_openapi_contains_prompt_library_route_table() -> None:
     paths = app.openapi()["paths"]
     expected = {
+        "/api/prompt-library/migration-status",
         "/api/prompt-library/catalog",
         "/api/prompt-library/categories/{polarity}/{category_id}",
         "/api/prompt-library/search",
@@ -213,6 +251,7 @@ def test_openapi_contains_prompt_library_route_table() -> None:
         "/api/prompt-library/compose",
         "/api/prompt-library/combinations",
         "/api/prompt-library/combinations/{combination_id}",
+        "/api/prompt-library/combinations/{combination_id}/acknowledge-literal-conversion",
     }
     assert expected <= set(paths)
     assert set(paths["/api/prompt-library/categories/{polarity}/{category_id}"]) >= {

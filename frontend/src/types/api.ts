@@ -171,10 +171,21 @@ export type PromptResourceType = "category" | "entry" | "combination";
 export type PromptRestoreResourceType = "category" | "entry";
 
 export interface PromptLibraryManifest {
-  schema_version: 1;
+  schema_version: 1 | 2;
   library_id: string;
   name: string;
   description_zh: string;
+  comma_atomic_version?: 0 | 1;
+  comma_atomic_migration_required?: boolean;
+}
+
+export interface CommaAtomicMigrationStatus {
+  state: "required" | "applying" | "incomplete" | "validating" | "rolled_back_required" | "finalized";
+  marker_present: boolean;
+  comma_atomic_ready: boolean;
+  atomic_enforcement_active: boolean;
+  run_id: string | null;
+  data_validated: boolean;
 }
 
 export interface PromptEntryRef {
@@ -299,6 +310,29 @@ export interface PromptVersionedCombination {
   etag: string;
   repaired: boolean;
   warnings: PromptWarning[];
+  blocking_diagnostics: PromptBlockingDocumentDiagnostic[];
+  document_context_token: string | null;
+}
+
+export interface PromptBlockingDocumentDiagnostic {
+  id: string;
+  code: "legacy_reference_unresolved";
+  original_ref: PromptEntryRef;
+  combination_id: string;
+  revision: number;
+  etag: string;
+  polarity: PromptPolarity;
+  fallback_start_position: number;
+  fallback_count: number;
+  fallback_atom_hashes: string[];
+  blocking: true;
+}
+
+export interface PromptProvenanceResolution {
+  document_context_token: string;
+  diagnostic_id: string;
+  action: "reviewed_mapping" | "replacement_entries" | "acknowledge_convert_to_literals";
+  replacement_refs: PromptEntryRef[];
 }
 
 export interface PromptLibraryCatalogResponse {
@@ -329,6 +363,10 @@ export interface PromptCombinationWriteRequest extends PromptCategoryWriteReques
   legacy_template: boolean;
   positive: PromptFragmentInput[];
   negative: PromptFragmentInput[];
+  source_combination_id?: string;
+  document_context_token?: string;
+  literal_conversion_token?: string;
+  provenance_resolutions?: PromptProvenanceResolution[];
 }
 
 export interface PromptCombinationSaveIntent extends PromptCombinationWriteRequest {
@@ -372,6 +410,11 @@ export interface PromptLibraryWriteResponse {
   entry: PromptEntry | null;
   entry_revision: number | null;
   affected_combinations: string[];
+}
+
+export interface PromptLiteralConversionAcknowledgeResponse {
+  literal_conversion_token: string;
+  diagnostic_ids: string[];
 }
 
 export interface PromptLibraryErrorDetail {

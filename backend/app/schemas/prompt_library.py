@@ -19,6 +19,10 @@ from app.core.prompt_library_models import (
     Slug,
     StrictModel,
 )
+from app.schemas.prompt_library_migration import (
+    BlockingDocumentDiagnostic,
+    ProvenanceResolutionRequest,
+)
 
 
 class PromptWarning(StrictModel):
@@ -113,6 +117,12 @@ class CombinationWriteRequest(CategoryWriteRequest):
     legacy_template: bool = False
     positive: list[PromptFragment] = Field(default_factory=list)
     negative: list[PromptFragment] = Field(default_factory=list)
+    source_combination_id: CombinationId | None = None
+    document_context_token: str | None = None
+    literal_conversion_token: str | None = None
+    provenance_resolutions: list[ProvenanceResolutionRequest] = Field(
+        default_factory=list
+    )
 
 
 class CombinationSaveIntent(CombinationWriteRequest):
@@ -161,6 +171,19 @@ class VersionedCombination(StrictModel):
     etag: str
     repaired: bool = False
     warnings: list[PromptWarning] = Field(default_factory=list)
+    blocking_diagnostics: list[BlockingDocumentDiagnostic] = Field(
+        default_factory=list
+    )
+    document_context_token: str | None = None
+
+
+class LiteralConversionAcknowledgeRequest(StrictModel):
+    document_context_token: str
+
+
+class LiteralConversionAcknowledgeResponse(StrictModel):
+    literal_conversion_token: str
+    diagnostic_ids: list[str]
 
 
 class ComposeResponse(StrictModel):

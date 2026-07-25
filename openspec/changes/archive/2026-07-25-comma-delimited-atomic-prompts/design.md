@@ -45,11 +45,11 @@ The latest product decision keeps Backend blank validation strict. Empty slots c
 
 ### 1. Deploy a fail-closed Backend gate before migration
 
-The first production change is a migration-compatible Backend gate, not the data migration or frontend editor. On deployment it creates or recognizes a durable migration control marker with `state=required`, reports `comma_atomic_ready=false`, and exposes a catalog-independent status response.
+The first production change is a migration-compatible Backend gate, not the data migration or frontend editor. On deployment it treats the actual predecessor `schema_version=1` manifest as migration-required even though that manifest has no comma-atomic opt-in fields, creates or recognizes a durable migration control marker with `state=required`, reports `comma_atomic_ready=false`, and exposes a catalog-independent status response.
 
 While the marker is in `required`, `applying`, `incomplete`, `validating`, or `rolled_back_required`, every ordinary Prompt Library catalog-dependent operation fails closed with a structured service-unavailable error. The blocked surface includes catalog/list/search, category and entry reads, combination list/load, compose, category/entry/combination save, archive/restore, and their API/MCP equivalents. No ordinary request can observe a mixed old/staged/new catalog.
 
-Only a local/operator-privileged migration capability may invoke audit/dry-run, apply, resume, rollback, validate, or finalize. Each privileged operation acquires the migration lock before reading live or staged Prompt Library state; it is not exposed as a general Workbench or MCP tool. The ordinary health endpoint remains available, and the migration status endpoint returns state/readiness only, never catalog contents.
+Only a local/operator-privileged migration capability may invoke audit/dry-run, apply, resume, rollback, validate, or finalize. Each privileged operation acquires the same lock keyed by the resolved library path before reading live or staged Prompt Library state; the lock file lives in the OS temporary lock directory rather than the Prompt Library or repository tree. It is not exposed as a general Workbench or MCP tool. The ordinary health endpoint remains available, and the migration status endpoint returns state/readiness only, never catalog contents.
 
 The same deployed Backend contains the atomic enforcement mode, but readiness cannot become true merely because data files were migrated. After post-write validation, the Backend activates and self-tests comma-free entry-write enforcement plus canonical atomic compose/repair while the marker and ordinary-operation block remain. One guarded finalize transition may remove the marker and set `comma_atomic_ready=true` only if `atomic_enforcement_active=true` and all data gates still pass. Rollback restores pre-images but leaves a `rolled_back_required` marker and readiness false.
 
@@ -90,7 +90,7 @@ segments[]:
   displayLabel: derived presentation only
 ```
 
-The Backend wire field `snapshot` is `snapshotRaw`. Rendering is defined exactly once: when `weight == 1`, `renderedRaw = snapshotRaw`; otherwise `renderedRaw = "(" + snapshotRaw + ":" + formatWeight(weight) + ")"`. The final textarea value is always `segments.map(segment => segment.renderedRaw).join(",")`.
+The Backend wire field `snapshot` is `snapshotRaw`. Rendering is defined exactly once: weights are canonicalized to at most three decimal places with trailing zeroes removed; when the canonical `weight == 1`, `renderedRaw = snapshotRaw`; otherwise `renderedRaw = "(" + snapshotRaw + ":" + formatWeight(weight) + ")"`. Frontend canonicalizes the editable weight before serialization and exact response comparison, using the same semantics as Backend. The final textarea value is always `segments.map(segment => segment.renderedRaw).join(",")`.
 
 On every final-textarea `onChange`:
 
@@ -107,7 +107,7 @@ Prefix/suffix matches consume each old card at most once. Duplicate text inside 
 
 The textarea records `selectionStart`, `selectionEnd`, and `selectionDirection`. A layout effect restores the clamped selection only if React or a derived render moved it. IME composition keeps accepting the exact browser value; card derivation never rewrites it.
 
-Card content edits update `snapshotRaw`; editing the content of an entry card demotes it to literal, while changing only weight preserves the entry ref and snapshot. Card edits, reorder, delete, entry insertion, and weight changes recompute `renderedRaw` and rebuild the lane with exact `renderedAtoms.join(",")`. Because those operations originate outside final-textarea typing, they do not participate in textarea caret restoration.
+Card content edits and free-text Add also pass through unconditional U+002C splitting. Editing the content of an entry card demotes every resulting atom to a literal; changing only weight preserves the entry ref and snapshot. Appending to a lane that already contains an empty card retains that card and inserts the new comma boundary. Card edits, reorder, delete, entry insertion, and weight changes recompute `renderedRaw` and rebuild the lane with exact `renderedAtoms.join(",")`. Because those operations originate outside final-textarea typing, they do not participate in textarea caret restoration.
 
 For example, loading `{snapshotRaw:"detail", weight:1.2, ref:...}` displays `(detail:1.2)`. Saving without a textarea change preserves all three structured fields. Editing the textarea atom to `(detail:1.3)` produces `{kind:"literal", snapshotRaw:"(detail:1.3)", weight:1}` with no ref; its visible value stays exactly `(detail:1.3)`.
 
@@ -175,7 +175,7 @@ Compatibility behavior is deterministic:
 
 For `weight == 1`, rendering returns `snapshotRaw` byte-for-byte. For another weight, rendering wraps exact `snapshotRaw` as `(<snapshotRaw>:<weight>)`. Lanes are rendered with literal `",".join(renderedRaw_atoms)` and never strip or filter atoms. Exact source whitespace therefore round-trips.
 
-The Backend response remains the canonical state installed after save. Frontend computes every returned fragment's `renderedRaw` from its returned `snapshot` and `weight`, then verifies that joining those rendered atoms reproduces the visible lane. Comparing or joining unweighted snapshots is incorrect. A mismatch is an error and does not clear dirty state.
+The Backend response remains the canonical state installed after save. Frontend canonicalizes weights before sending, computes every returned fragment's `renderedRaw` from its returned `snapshot` and canonical weight, then verifies that joining those rendered atoms reproduces the visible lane. Comparing or joining unweighted snapshots is incorrect. A mismatch is an error and does not clear dirty state. Update preserves the loaded combination's descriptive, search, ordering, and `legacy_template` metadata; Save As deliberately copies that metadata unless a separate metadata-editing surface has changed it.
 
 Alternative considered: accept comma-bearing source entries and split only in the UI. It was rejected because MCP, external API clients, saved combinations, and lazy repair would still disagree.
 
@@ -250,9 +250,9 @@ If the registry has no unique expansion:
 
 - migration apply fails closed for repository-owned combinations;
 - runtime load of an externally introduced legacy combination keeps the snapshot available, splits it into literals only when all atoms are nonblank, and returns `legacy_reference_unresolved`;
-- the diagnostic includes the old ref, fallback atom hashes, combination revision/etag, and states that provenance was not transferred;
+- the diagnostic includes the old ref, fallback polarity and 1-based range, fallback atom hashes, combination revision/etag, and states that provenance was not transferred;
 - the diagnostic remains blocking across ordinary content edits; it is not cleared by Save, Update, or Save As;
-- Update and Save As fail unless the diagnostic is resolved by a newly reviewed mapping, explicit replacement source-entry selection, or an explicit acknowledge-convert-to-literals action;
+- Update and Save As fail unless the diagnostic is resolved by a newly reviewed mapping, explicit diagnostic-specific replacement source-entry selection that occupies the fallback range and removes the fallback atoms, or an explicit acknowledge-convert-to-literals action; unrelated existing refs cannot satisfy a resolution;
 - the acknowledge action obtains an opaque Backend token bound to combination ID, source revision/etag, diagnostic IDs, and fallback atom hashes. Backend requires and validates that token on conversion persistence; ordinary edit/save cannot mint or substitute it;
 - automatic lazy persistence is disabled until one of those explicit resolution paths succeeds.
 
@@ -262,7 +262,7 @@ No fragment is silently discarded. Duplicate derived refs are not collapsed duri
 
 The command has `audit`, `dry-run`, `apply`, and `rollback <run-id>` modes.
 
-`audit` and `dry-run` are read-only. The machine-readable report includes:
+`audit` and `dry-run` are read-only with respect to the repository and Prompt Library tree. Their cross-process lock is keyed in the OS temporary directory; a requested `--report` output is the only operator-directed output file. The machine-readable report includes:
 
 - source and post-migration counts;
 - all 146 source locators and 532 derived atoms;
@@ -291,7 +291,7 @@ Post-write gates re-read from disk and require:
 
 Passing data gates does not remove the marker or set readiness true. The Backend must next activate atomic enforcement and prove that comma-bearing/blank entry writes are rejected and canonical weighted compose/repair uses `snapshotRaw`, `weight`, and `renderedRaw` correctly. Only the privileged finalize operation may then remove the marker and publish readiness true in one guarded transition.
 
-Rollback restores exact pre-image bytes only when current etags equal the recorded post-image etags. A later edit causes rollback to fail rather than overwrite it. Rollback also uses staged validation, atomic replace, and the write lock. Successful rollback moves the marker to `rolled_back_required`; it does not remove the marker, reopen ordinary operations, or publish readiness true.
+Rollback restores exact pre-image bytes only when current hashes equal every recorded post-image hash. A later edit causes rollback to fail rather than overwrite it. The run-specific rollback artifact remains usable after finalize during the normal rollout window: the privileged rollback operation acquires the lock and atomically installs a temporary fail-closed marker before validating post-images. If validation diverges before any restore, it removes that temporary marker and preserves the finalized ready state and files. Successful rollback uses staged validation and atomic replacement, then moves the marker to `rolled_back_required`; it does not reopen ordinary operations or publish readiness true.
 
 ### 12. Editor enablement follows Backend-finalized readiness
 
@@ -303,7 +303,7 @@ Deployment order is fixed:
 2. Use only the privileged locked path to audit/dry-run and review exactly 532 curated derived-atom records plus retained-entry invariants.
 3. Back up, apply/resume, validate, and prove idempotency while keeping the marker and ordinary-operation block.
 4. Activate and test atomic Backend entry-write enforcement and canonical weighted compose/repair while the marker remains.
-5. Run privileged finalize, which rechecks data/enforcement and atomically removes the marker plus publishes readiness true.
+5. Run privileged finalize, which rechecks data/enforcement and atomically removes the marker plus publishes readiness true while retaining the checksummed rollback artifact for the rollout window.
 6. Enable the frontend editor and preflight only after observing the finalized status.
 
 There is no supported mixed mode where any ordinary API/MCP client reads old, staged, partially migrated, or migrated-but-not-enforced catalog data.
@@ -334,7 +334,7 @@ Browser acceptance must exercise `a,,b,`, leading comma, quotes, parentheses, we
 - **[Fail-closed migration blocks normal Prompt Library use]** → Deploy the status/privileged recovery gate first, make the outage explicit, and keep resume/rollback available under the lock.
 - **[Unresolved fallback can launder lost provenance through Save As]** → Keep a Backend-enforced blocking diagnostic and require mapping, replacement refs, or an opaque explicit conversion token.
 - **[Frontend validation could be bypassed]** → Retain Backend blank rejection and canonical atomic validation.
-- **[Rollback could overwrite post-migration edits]** → Require recorded post-image etags before restoring any file.
+- **[Rollback could overwrite post-migration edits]** → Require every recorded post-image hash before restoring any file, including post-finalize rollback; on divergence restore the unchanged finalized ready state.
 
 ## Migration Plan
 
@@ -348,7 +348,7 @@ Browser acceptance must exercise `a,,b,`, leading comma, quotes, parentheses, we
 8. Enable frontend segmentation, weighted reconciliation, fixed labels, blocking-diagnostic resolution, blank preflight, and document flows.
 9. Run focused/full suites, production build, and browser request-only round trip.
 
-Rollback uses the migration command and recorded run ID. It is permitted only before any affected document diverges from its recorded post-image etag.
+Rollback uses the migration command and recorded run ID before or after finalize during the rollout window. It is permitted only while every affected document exactly matches its recorded post-image hash.
 
 ## Open Questions
 

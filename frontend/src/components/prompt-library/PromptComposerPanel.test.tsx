@@ -14,8 +14,8 @@ function fragments(count = 6): CompositionState {
       id: `fragment-${index}`,
       kind: "literal",
       displayName: "自訂文字",
-      originalSnapshot: `prompt ${index}`,
-      text: `prompt ${index}`,
+      sourceSnapshotRaw: `prompt ${index}`,
+      snapshotRaw: `prompt ${index}`,
       weight: "",
     });
   }
@@ -48,38 +48,39 @@ describe("PromptComposerPanel", () => {
     expect(screen.getByText("2 / 2")).toBeVisible();
   });
 
-  it("uses human fragment labels, marks edited entry copies, and exposes literal content", () => {
+  it("uses fixed labels, true positions, and exposes exact literal content", () => {
     let state = emptyComposition();
     state = appendFragment(state, {
       id: "entry-human",
       kind: "entry",
       displayName: "精緻光影",
       source: { polarity: "positive", categoryId: "quality", entryId: "masterpiece" },
-      originalSnapshot: "masterpiece",
-      text: "masterwork",
+      sourceSnapshotRaw: "masterpiece",
+      snapshotRaw: "masterpiece",
       weight: "",
     });
     state = appendFragment(state, {
       id: "literal",
       kind: "literal",
       displayName: "自訂文字",
-      originalSnapshot: "soft light",
-      text: "soft light",
+      sourceSnapshotRaw: "soft light",
+      snapshotRaw: "soft light",
       weight: "",
     });
     render(<PromptComposerPanel {...panelProps(state)} />);
 
-    expect(screen.getByLabelText("精緻光影 內容")).toHaveValue("masterwork");
-    expect(screen.getByText("自訂副本")).toBeVisible();
+    expect(screen.getByLabelText("精緻光影 內容")).toHaveValue("masterpiece");
     expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("soft light");
-    expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
+    expect(screen.getByText("第 1 段")).toBeVisible();
+    expect(screen.getByText("第 2 段")).toBeVisible();
   });
 
   it("rerenders the controlled final text on every exact keystroke", () => {
+    let sequence = 0;
     function Harness() {
       const [state, setState] = useState(() => fragments(1));
       return <PromptComposerPanel {...panelProps(state)} onFinalTextChange={(text) => {
-        setState((current) => materializeRawText(current, text, () => "direct-literal"));
+        setState((current) => materializeRawText(current, text, () => `direct-literal-${++sequence}`));
       }} />;
     }
     render(<Harness />);
@@ -93,6 +94,33 @@ describe("PromptComposerPanel", () => {
     expect(screen.queryByRole("button", { name: /自由文字模式|套用|取消/ })).not.toBeInTheDocument();
   });
 
+  it("preserves caret selection through comma-driven controlled rerenders", () => {
+    let sequence = 0;
+    function Harness() {
+      const [state, setState] = useState(() => fragments(1));
+      return <PromptComposerPanel {...panelProps(state)} onFinalTextChange={(text) => {
+        setState((current) => materializeRawText(current, text, () => `caret-${++sequence}`));
+      }} />;
+    }
+    render(<Harness />);
+
+    const editor = screen.getByLabelText("Positive Prompt 最終文字") as HTMLTextAreaElement;
+    editor.focus();
+    fireEvent.change(editor, {
+      target: {
+        value: "prompt, 1",
+        selectionStart: 7,
+        selectionEnd: 7,
+        selectionDirection: "none",
+      },
+    });
+
+    expect(editor).toHaveFocus();
+    expect(editor).toHaveValue("prompt, 1");
+    expect(editor.selectionStart).toBe(7);
+    expect(editor.selectionEnd).toBe(7);
+  });
+
   it("assigns live browser entries trimmed names with prompt and ID fallbacks", async () => {
     const entries = [
       { id: "arbitrary-human-id", name_zh: "  細緻光影  ", prompt: "detailed light", description_zh: "", revision: 1, archived: false },
@@ -100,6 +128,7 @@ describe("PromptComposerPanel", () => {
       { id: "arbitrary-id-only", name_zh: undefined, prompt: undefined, description_zh: "", revision: 1, archived: false },
     ];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/api/prompt-library/migration-status") return { ok: true, status: 200, json: async () => ({ state: "finalized", marker_present: false, comma_atomic_ready: true, atomic_enforcement_active: true, run_id: null, data_validated: true }) };
       if (url === "/api/prompt-library/catalog") return { ok: true, status: 200, json: async () => ({ categories: [{ id: "lighting", polarity: "positive", name_zh: "光影", revision: 1, etag: "e1", archived: false }], combinations: [] }) };
       if (url === "/api/workflow-catalog/generation-forms") return { ok: true, status: 200, json: async () => ({ items: [] }) };
       return { ok: true, status: 200, json: async () => ({ category: { id: "lighting", polarity: "positive", name_zh: "光影", revision: 1, etag: "e1", archived: false, entries }, etag: "e1" }) };

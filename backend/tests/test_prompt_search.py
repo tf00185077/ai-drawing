@@ -17,10 +17,12 @@ def library_root(tmp_path: Path) -> Path:
     (root / "manifest.json").write_text(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": 2,
                 "library_id": "default",
                 "name": "Test Prompt Library",
                 "description_zh": "測試提示詞資料庫",
+                "comma_atomic_version": 1,
+                "comma_atomic_migration_required": False,
             },
             ensure_ascii=False,
         ),
