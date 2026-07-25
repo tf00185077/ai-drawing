@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { PromptPolarity } from "../../types/api";
-import { appendFragment, emptyComposition, moveFragment, reconcileComposedText, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
+import { appendFragment, commitRawText, emptyComposition, moveFragment, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
 import PromptOverview from "./PromptOverview";
@@ -52,6 +52,8 @@ export default function PromptWorkbench() {
   const [saveId, setSaveId] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
   const [combinationVersions, setCombinationVersions] = useState<Record<string, CombinationVersion>>({});
+  const [positiveRawDraftOpen, setPositiveRawDraftOpen] = useState(false);
+  const [negativeRawDraftOpen, setNegativeRawDraftOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([jsonFetch("/api/prompt-library/catalog"), jsonFetch("/api/workflow-catalog/generation-forms")])
@@ -62,6 +64,16 @@ export default function PromptWorkbench() {
       })
       .catch((reason) => setError(String(reason.message || reason)));
   }, []);
+
+  useEffect(() => {
+    if (!positiveRawDraftOpen && !negativeRawDraftOpen) return;
+    const guardUnsavedRawDraft = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", guardUnsavedRawDraft);
+    return () => window.removeEventListener("beforeunload", guardUnsavedRawDraft);
+  }, [positiveRawDraftOpen, negativeRawDraftOpen]);
 
   async function openCategory(next: BrowserCategory) {
     setError("");
@@ -82,23 +94,41 @@ export default function PromptWorkbench() {
     if (!category) return;
     const nextSequence = sequence + 1;
     setSequence(nextSequence);
-    const fragment = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: entry.prompt, text: entry.prompt, weight: "" };
+    const displayName = entry.name_zh?.trim() || entry.prompt || entry.id;
+    const fragment = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: entry.prompt || "", text: entry.prompt || "", weight: "" };
     (activePolarity === "positive" ? setPositive : setNegative)((state) => appendFragment(state, fragment));
   }
 
   function addLiteral(text: string) {
     const nextSequence = sequence + 1;
     setSequence(nextSequence);
-    const fragment = { id: `literal-${nextSequence}`, kind: "literal" as const, originalSnapshot: text, text, weight: "" };
+    const fragment = { id: `literal-${nextSequence}`, kind: "literal" as const, displayName: "自訂文字", originalSnapshot: text, text, weight: "" };
     (activePolarity === "positive" ? setPositive : setNegative)((state) => appendFragment(state, fragment));
   }
 
-  const actions = (setter: React.Dispatch<React.SetStateAction<CompositionState>>) => ({
+  const actions = (
+    state: CompositionState,
+    setter: React.Dispatch<React.SetStateAction<CompositionState>>,
+    onRawDraftStateChange: (open: boolean) => void,
+  ) => ({
     onTextChange: (id: string, text: string) => setter((state) => setFragmentText(state, id, text)),
     onWeightChange: (id: string, weight: string) => setter((state) => setFragmentWeight(state, id, weight)),
     onMove: (id: string, direction: -1 | 1) => setter((state) => moveFragment(state, id, direction)),
     onRemove: (id: string) => setter((state) => removeFragment(state, id)),
-    onComposedTextChange: (text: string) => setter((state) => reconcileComposedText(state, text)),
+    onCommitRawText: (raw: string) => {
+      let nextSequence = sequence;
+      const result = commitRawText(state, raw, () => {
+        nextSequence += 1;
+        return `literal-${nextSequence}`;
+      });
+      if (result.ok) {
+        setSequence(nextSequence);
+        setter(result.state);
+      }
+      return result;
+    },
+    onRawDraftStateChange,
+    rawResetVersion: 0,
   });
 
   async function saveCombination() {
@@ -154,7 +184,7 @@ export default function PromptWorkbench() {
       {error && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
         <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
-        <PromptOverview positive={positive} negative={negative} positiveActions={actions(setPositive)} negativeActions={actions(setNegative)} />
+        <PromptOverview positive={positive} negative={negative} positiveActions={actions(positive, setPositive, setPositiveRawDraftOpen)} negativeActions={actions(negative, setNegative, setNegativeRawDraftOpen)} />
       </div>
       <section className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
