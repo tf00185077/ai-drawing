@@ -12,7 +12,7 @@ export default function PromptLibraryLayout() {
         <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Prompt Library</p>
         <nav className="space-y-1">
           <NavLink end to="workbench" className={linkClass}>Prompt Workbench</NavLink>
-          <NavLink end to="categories" className={linkClass}>分類管理</NavLink>
+          <NavLink to="categories" className={linkClass}>分類管理</NavLink>
         </nav>
       </aside>
       <main className="min-w-0"><Outlet /></main>
