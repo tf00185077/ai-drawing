@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { PromptCombinationSummary, PromptFragment, PromptPolarity, PromptVersionedCombination, PromptWarning } from "../../types/api";
-import { appendFragment, commitRawText, deserializeFragments, emptyComposition, moveFragment, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
+import { appendFragment, deserializeFragments, emptyComposition, materializeRawText, moveFragment, removeFragment, serializeFragments, setFragmentText, setFragmentWeight, type CompositionState } from "./compositionState";
 import CombinationToolbar from "./CombinationToolbar";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { promptEntryContent, promptEntryLabel, type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
@@ -104,10 +104,7 @@ export default function PromptWorkbench() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sequence, setSequence] = useState(0);
-  const [positiveRawDraftOpen, setPositiveRawDraftOpen] = useState(false);
-  const [negativeRawDraftOpen, setNegativeRawDraftOpen] = useState(false);
-  const [rawResetVersion, setRawResetVersion] = useState(0);
+  const sequence = useRef(0);
   const operationId = useRef(0);
   const sourceRequestId = useRef(0);
   const labelMap = useRef<Map<string, string>>(new Map());
@@ -126,14 +123,14 @@ export default function PromptWorkbench() {
   }, []);
 
   useEffect(() => {
-    if (!positiveRawDraftOpen && !negativeRawDraftOpen) return;
-    const guardUnsavedRawDraft = (event: BeforeUnloadEvent) => {
+    if (!document.dirty) return;
+    const guardUnsavedDocument = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
-    window.addEventListener("beforeunload", guardUnsavedRawDraft);
-    return () => window.removeEventListener("beforeunload", guardUnsavedRawDraft);
-  }, [positiveRawDraftOpen, negativeRawDraftOpen]);
+    window.addEventListener("beforeunload", guardUnsavedDocument);
+    return () => window.removeEventListener("beforeunload", guardUnsavedDocument);
+  }, [document.dirty]);
 
   function beginOperation() {
     const id = operationId.current + 1;
@@ -154,14 +151,22 @@ export default function PromptWorkbench() {
     setSuccess("");
   }
 
-  function mutate(setter: React.Dispatch<React.SetStateAction<CompositionState>>, transform: (state: CompositionState) => CompositionState) {
+  function nextId(prefix: string) {
+    sequence.current += 1;
+    return `${prefix}-${sequence.current}`;
+  }
+
+  function mutate(
+    setter: React.Dispatch<React.SetStateAction<CompositionState>>,
+    transform: (state: CompositionState) => CompositionState,
+  ) {
     setter((state) => transform(state));
     markDirty();
   }
 
   function canReplace() {
-    if (!document.dirty && !positiveRawDraftOpen && !negativeRawDraftOpen) return true;
-    return window.confirm("目前組合有未儲存變更或未套用草稿，確定要取代嗎？");
+    if (!document.dirty) return true;
+    return window.confirm("目前組合有未儲存變更，確定要取代嗎？");
   }
 
   async function openCategory(next: BrowserCategory) {
@@ -188,51 +193,42 @@ export default function PromptWorkbench() {
 
   function addEntry(entry: BrowserEntry) {
     if (!category) return;
-    const nextSequence = sequence + 1;
-    setSequence(nextSequence);
     const promptText = promptEntryContent(entry);
     const displayName = promptEntryLabel(entry);
-    const item = { id: `${category.polarity}-${category.id}-${entry.id}-${nextSequence}`, kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: promptText, text: promptText, weight: "" };
-    mutate(activePolarity === "positive" ? setPositive : setNegative, (state) => appendFragment(state, item));
+    const item = { id: nextId(`${category.polarity}-${category.id}-${entry.id}`), kind: "entry" as const, displayName, source: { polarity: category.polarity, categoryId: category.id, entryId: entry.id, revision: entry.revision }, originalSnapshot: promptText, text: promptText, weight: "" };
+    if (activePolarity === "positive") {
+      mutate(setPositive, (state) => appendFragment(state, item));
+    } else {
+      mutate(setNegative, (state) => appendFragment(state, item));
+    }
   }
 
   function addLiteral(text: string) {
-    const nextSequence = sequence + 1;
-    setSequence(nextSequence);
-    const item = { id: `literal-${nextSequence}`, kind: "literal" as const, displayName: "自訂文字", originalSnapshot: text, text, weight: "" };
-    mutate(activePolarity === "positive" ? setPositive : setNegative, (state) => appendFragment(state, item));
+    const item = { id: nextId("literal"), kind: "literal" as const, displayName: "自訂文字", originalSnapshot: text, text, weight: "" };
+    if (activePolarity === "positive") {
+      mutate(setPositive, (state) => appendFragment(state, item));
+    } else {
+      mutate(setNegative, (state) => appendFragment(state, item));
+    }
   }
 
   const actions = (
-    state: CompositionState,
     setter: React.Dispatch<React.SetStateAction<CompositionState>>,
-    onRawDraftStateChange: (open: boolean) => void,
+    state: CompositionState,
   ) => ({
     onTextChange: (id: string, text: string) => mutate(setter, (current) => setFragmentText(current, id, text)),
     onWeightChange: (id: string, weight: string) => mutate(setter, (current) => setFragmentWeight(current, id, weight)),
     onMove: (id: string, direction: -1 | 1) => mutate(setter, (current) => moveFragment(current, id, direction)),
     onRemove: (id: string) => mutate(setter, (current) => removeFragment(current, id)),
-    onCommitRawText: (raw: string) => {
-      let nextSequence = sequence;
-      const result = commitRawText(state, raw, () => {
-        nextSequence += 1;
-        return `literal-${nextSequence}`;
-      });
-      if (result.ok) {
-        setSequence(nextSequence);
-        setter(result.state);
-        markDirty();
-      }
-      return result;
+    onFinalTextChange: (text: string) => {
+      setter((current) => materializeRawText(current, text, () => nextId("literal")));
+      markDirty();
     },
-    onRawDraftStateChange,
-    rawResetVersion,
   });
 
-  function installCombination(saved: PromptVersionedCombination, labels: Map<string, string>, extraWarnings: string[], nextSequence: number) {
-    const nextPositive = deserializeWithReferenceLabels(saved.combination.positive, "positive", () => `loaded-${++nextSequence}`, labels);
-    const nextNegative = deserializeWithReferenceLabels(saved.combination.negative, "negative", () => `loaded-${++nextSequence}`, labels);
-    setSequence(nextSequence);
+  function installCombination(saved: PromptVersionedCombination, labels: Map<string, string>, extraWarnings: string[]) {
+    const nextPositive = deserializeWithReferenceLabels(saved.combination.positive, "positive", () => nextId("loaded"), labels);
+    const nextNegative = deserializeWithReferenceLabels(saved.combination.negative, "negative", () => nextId("loaded"), labels);
     setPositive(nextPositive);
     setNegative(nextNegative);
     labelMap.current = labels;
@@ -244,9 +240,6 @@ export default function PromptWorkbench() {
       warnings: [...warningMessages(saved.warnings), ...extraWarnings],
       dirty: false,
     });
-    setRawResetVersion((value) => value + 1);
-    setPositiveRawDraftOpen(false);
-    setNegativeRawDraftOpen(false);
   }
 
   async function loadCombination() {
@@ -257,7 +250,7 @@ export default function PromptWorkbench() {
       const detail = await getPromptCombination(selectedId);
       const names = await resolveEntryNames(detail.combination.positive, detail.combination.negative);
       if (operationId.current !== id) return;
-      installCombination(detail, names.labels, names.warnings, sequence);
+      installCombination(detail, names.labels, names.warnings);
     } catch (reason) {
       if (operationId.current === id) setError(reason instanceof Error ? reason.message : String(reason));
     } finally { finishOperation(id); }
@@ -273,9 +266,6 @@ export default function PromptWorkbench() {
     setSuccess("");
     setError("");
     labelMap.current = new Map();
-    setRawResetVersion((value) => value + 1);
-    setPositiveRawDraftOpen(false);
-    setNegativeRawDraftOpen(false);
   }
 
   async function saveCombination(saveAs: boolean) {
@@ -316,7 +306,7 @@ export default function PromptWorkbench() {
       const saved = data.saved_combination;
       const names = await resolveEntryNames(saved.combination.positive, saved.combination.negative, labelMap.current);
       if (operationId.current !== operation) return;
-      installCombination(saved, names.labels, names.warnings, sequence);
+      installCombination(saved, names.labels, names.warnings);
       setSelectedId(saved.combination.id);
       setCombinations((items) => {
         if (items.some((item) => item.id === saved.combination.id)) return items;
@@ -355,7 +345,7 @@ export default function PromptWorkbench() {
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
         <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
-        <PromptOverview positive={positive} negative={negative} positiveActions={actions(positive, setPositive, setPositiveRawDraftOpen)} negativeActions={actions(negative, setNegative, setNegativeRawDraftOpen)} />
+        <PromptOverview positive={positive} negative={negative} positiveActions={actions(setPositive, positive)} negativeActions={actions(setNegative, negative)} />
       </div>
       <GenerationPanel forms={forms} positivePrompt={positive.text} negativePrompt={negative.text} />
     </div>

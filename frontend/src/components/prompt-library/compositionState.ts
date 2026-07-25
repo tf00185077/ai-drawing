@@ -16,6 +16,8 @@ export interface WorkbenchFragment {
   text: string;
   weight: EditableWeight;
   range: { start: number; end: number };
+  /** Marks the single literal installed by direct editing of the final textarea. */
+  directEdit?: true;
 }
 
 export type NewWorkbenchFragment = Omit<WorkbenchFragment, "range" | "displayName"> & {
@@ -71,6 +73,32 @@ export function appendFragment(state: CompositionState, fragment: NewWorkbenchFr
   return rebuild([...state.fragments, { ...fragment, displayName, range: { start: 0, end: 0 } }]);
 }
 
+/** Replace structured identity with one exact literal without parsing or normalization. */
+export function materializeRawText(
+  originalState: CompositionState,
+  rawText: string,
+  idFactory: () => string,
+): CompositionState {
+  if (!rawText.trim()) return { fragments: [], text: rawText, warning: null };
+  const currentLiteral = originalState.fragments.length === 1 && originalState.fragments[0].directEdit
+    ? originalState.fragments[0]
+    : null;
+  return {
+    fragments: [{
+      id: currentLiteral?.id ?? idFactory(),
+      kind: "literal",
+      displayName: "自訂文字",
+      originalSnapshot: rawText,
+      text: rawText,
+      weight: "",
+      range: { start: 0, end: rawText.length },
+      directEdit: true,
+    }],
+    text: rawText,
+    warning: null,
+  };
+}
+
 export function setFragmentText(state: CompositionState, id: string, text: string): CompositionState {
   return rebuild(state.fragments.map((fragment) => fragment.id === id ? { ...fragment, text } : fragment));
 }
@@ -124,102 +152,6 @@ export function deserializeFragments(
     }
     return base;
   }));
-}
-
-function balancedParentheses(text: string): boolean {
-  let depth = 0;
-  for (const character of text) {
-    if (character === "(") depth += 1;
-    if (character === ")") depth -= 1;
-    if (depth < 0) return false;
-  }
-  return depth === 0;
-}
-
-function splitTopLevel(text: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let start = 0;
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    if (character === "(") depth += 1;
-    if (character === ")") depth -= 1;
-    if (character === "," && depth === 0) {
-      parts.push(text.slice(start, index).trim());
-      start = index + 1;
-    }
-  }
-  parts.push(text.slice(start).trim());
-  return parts.filter(Boolean);
-}
-
-type ParsedRawFragment = { text: string; weight: string };
-
-function parseRawFragment(part: string): ParsedRawFragment | { error: string } {
-  if (!(part.startsWith("(") && part.endsWith(")"))) return { text: part, weight: "" };
-
-  const inner = part.slice(1, -1);
-  let depth = 0;
-  let weightSeparator = -1;
-  for (let index = 0; index < inner.length; index += 1) {
-    const character = inner[index];
-    if (character === "(") depth += 1;
-    if (character === ")") depth -= 1;
-    if (character === ":" && depth === 0) weightSeparator = index;
-  }
-  if (weightSeparator < 0) return { text: part, weight: "" };
-
-  const fragmentText = inner.slice(0, weightSeparator).trim();
-  const rawWeight = inner.slice(weightSeparator + 1).trim();
-  const decimalWeight = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/;
-  if (!rawWeight || !decimalWeight.test(rawWeight)) {
-    return { error: `權重「${rawWeight || "空白"}」必須是有效的十進位數字。` };
-  }
-  const weight = Number(rawWeight);
-  if (weight <= 0) return { error: `權重 ${rawWeight} 必須大於 0。` };
-  if (weight > 2) return { error: `權重 ${rawWeight} 必須不大於 2。` };
-  if (!fragmentText) return { error: "加權 Prompt 不可為空白。" };
-  return { text: fragmentText, weight: rawWeight };
-}
-
-export type RawCommitResult =
-  | { ok: true; state: CompositionState }
-  | { ok: false; state: CompositionState; error: string };
-
-export function commitRawText(
-  originalState: CompositionState,
-  rawText: string,
-  idFactory: () => string,
-): RawCommitResult {
-  if (!balancedParentheses(rawText)) {
-    return { ok: false, state: originalState, error: "Prompt 括號不平衡，請補上缺少的左括號或右括號後再套用。" };
-  }
-  if (!rawText.trim()) return { ok: true, state: emptyComposition() };
-
-  const parsed: ParsedRawFragment[] = [];
-  for (const part of splitTopLevel(rawText)) {
-    const result = parseRawFragment(part);
-    if ("error" in result) return { ok: false, state: originalState, error: result.error };
-    parsed.push(result);
-  }
-
-  return {
-    ok: true,
-    state: rebuild(parsed.map((part) => ({
-      id: idFactory(),
-      kind: "literal",
-      displayName: "自訂文字",
-      originalSnapshot: part.text,
-      text: part.text,
-      weight: part.weight,
-      range: { start: 0, end: 0 },
-    }))),
-  };
-}
-
-/** @deprecated Task 8 will replace the UI callback with draft state plus commitRawText. */
-export function reconcileComposedText(state: CompositionState, _nextText: string): CompositionState {
-  return state;
 }
 
 export function serializeFragments(state: CompositionState): ApiPromptFragment[] {

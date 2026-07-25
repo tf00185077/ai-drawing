@@ -207,24 +207,49 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("");
   });
 
-  it("guards an unapplied raw draft, preserves it on decline, and resets it after approved replacement", async () => {
+  it("guards a direct final edit and resets it after approved load/new replacement", async () => {
     installFetch();
     const confirm = vi.fn(() => false);
     vi.stubGlobal("confirm", confirm);
     render(<PromptWorkbench />);
     await ready();
-    const panel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
-    fireEvent.click(within(panel).getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(within(panel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "  exact, unapplied  " } });
+
+    const finalText = screen.getByLabelText("Positive Prompt 最終文字");
+    fireEvent.change(finalText, { target: { value: "  exact, (unfinished  " } });
     fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
     fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
 
-    expect(within(panel).getByLabelText("Positive Prompt 自由文字草稿")).toHaveValue("  exact, unapplied  ");
-    expect(screen.getByText("尚未儲存")).toBeVisible();
+    expect(finalText).toHaveValue("  exact, (unfinished  ");
+    expect(screen.getByText("尚未儲存變更")).toBeVisible();
+    expect(confirm).toHaveBeenCalledOnce();
+
     confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    await waitFor(() => expect(finalText).toHaveValue("saved prompt, (saved zh:1.2), saved id"));
+    fireEvent.change(finalText, { target: { value: "new direct draft" } });
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
-    expect(within(panel).queryByLabelText("Positive Prompt 自由文字草稿")).not.toBeInTheDocument();
-    expect(within(panel).getByRole("button", { name: "自由文字模式" })).toBeVisible();
+    expect(finalText).toHaveValue("");
+  });
+
+  it("guards beforeunload exactly while the document is dirty", async () => {
+    installFetch();
+    vi.stubGlobal("confirm", vi.fn(() => true));
+    render(<PromptWorkbench />);
+    await ready();
+
+    const cleanEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(cleanEvent);
+    expect(cleanEvent.defaultPrevented).toBe(false);
+
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "dirty direct" } });
+    const dirtyEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(dirtyEvent);
+    expect(dirtyEvent.defaultPrevented).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    const resetEvent = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(resetEvent);
+    expect(resetEvent.defaultPrevented).toBe(false);
   });
 
   it("uses revision zero for fresh update and Save As, but detail tokens for loaded update", async () => {
@@ -273,22 +298,48 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
   });
 
-  it("preserves canonical state, raw drafts, and dirty state when save fails", async () => {
-    installFetch((url, init) => url === "/api/prompt-library/compose" && init?.method === "POST"
-      ? response({ detail: { message: "儲存衝突" } }, 409)
-      : undefined);
+  it("saves whitespace-only visible text as an empty fragment list", async () => {
+    let composeBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        return response(composeResponse("blank-prompt", 1, []));
+      }
+    });
     render(<PromptWorkbench />);
     await ready();
-    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "canonical local" } });
-    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
-    const panel = screen.getByRole("heading", { name: "Positive Prompt" }).closest("section")!;
-    fireEvent.click(within(panel).getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(within(panel).getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "exact raw draft" } });
-    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "failed-save" } });
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "  \t " } });
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("  \t ");
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "blank-prompt" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("儲存衝突");
-    expect(within(panel).getByLabelText("Positive Prompt 自由文字草稿")).toHaveValue("exact raw draft");
+    await waitFor(() => expect(composeBody).toBeDefined());
+    expect(composeBody.positive).toEqual([]);
+    expect(composeBody.save_as.positive).toEqual([]);
+  });
+
+  it("materializes an exact direct edit before save and preserves it when save fails", async () => {
+    let composeBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        return response({ detail: { message: "儲存衝突" } }, 409);
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+    const finalText = screen.getByLabelText("Positive Prompt 最終文字");
+    fireEvent.change(finalText, { target: { value: "  exact raw, (unfinished  " } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+
+    await waitFor(() => expect(screen.getAllByRole("alert").some((node) => node.textContent?.includes("儲存衝突"))).toBe(true));
+    expect(finalText).toHaveValue("  exact raw, (unfinished  ");
+    expect(composeBody.positive).toEqual([
+      { kind: "literal", snapshot: "  exact raw, (unfinished  ", weight: 1, order: 10 },
+    ]);
+    expect(composeBody.save_as.positive).toEqual(composeBody.positive);
+    expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("  exact raw, (unfinished  ");
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
   });
 
@@ -332,19 +383,22 @@ describe("PromptWorkbench saved combinations", () => {
     });
     render(<PromptWorkbench />);
     await ready();
-    fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local" } });
-    fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "local direct" } });
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "race-save" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
-    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newer" } });
-    first.resolve(response(composeResponse("race-save", 1)));
-    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer"));
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "newer direct, " } });
+    await act(async () => {
+      first.resolve(response(composeResponse("race-save", 1)));
+    });
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer direct, ");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
-    fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newest" } });
-    second.reject(new Error("stale save error"));
-    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newest"));
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "newest direct (unfinished" } });
+    await act(async () => {
+      second.reject(new Error("stale save error"));
+    });
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newest direct (unfinished");
     expect(screen.queryByText("stale save error")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "更新目前組合" })).toBeEnabled();
   });
@@ -448,7 +502,7 @@ describe("PromptWorkbench existing flows", () => {
     expect(screen.getByRole("button", { name: "負向" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("keeps source interactions read-only and generates from current positive/negative text", async () => {
+  it("keeps source interactions read-only and generates from the exact visible direct text", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
     await ready();
@@ -456,15 +510,59 @@ describe("PromptWorkbench existing flows", () => {
     const loadedEntry = await screen.findByRole("button", { name: "加入 中文名稱" });
     expect(screen.queryByRole("button", { name: /新增|編輯|封存|恢復/ })).not.toBeInTheDocument();
     fireEvent.click(loadedEntry);
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "zh current,  (unfinished " } });
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
     fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
+    fireEvent.change(screen.getByLabelText("Negative Prompt 最終文字"), { target: { value: "blurry current, " } });
     fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
     fireEvent.click(screen.getByRole("button", { name: "開始生圖" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("job-1"));
     const call = fetchMock.mock.calls.find(([url]) => url === "/api/generate/") as [string, RequestInit];
-    expect(JSON.parse(String(call[1].body))).toMatchObject({ prompt: "zh current", negative_prompt: "blurry current" });
+    expect(JSON.parse(String(call[1].body))).toMatchObject({ prompt: "zh current,  (unfinished ", negative_prompt: "blurry current, " });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
+  });
+
+  it("immediately replaces source identity with one stable direct literal whose card actions work", async () => {
+    installFetch();
+    render(<PromptWorkbench />);
+    await ready();
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
+
+    const finalText = screen.getByLabelText("Positive Prompt 最終文字");
+    fireEvent.change(finalText, { target: { value: "  raw, (unfinished  " } });
+    expect(screen.queryByLabelText("中文名稱 內容")).not.toBeInTheDocument();
+    const literalCard = screen.getByLabelText("自訂文字 內容");
+    expect(literalCard).toHaveValue("  raw, (unfinished  ");
+    expect(screen.getByRole("button", { name: "上移" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "下移" })).toBeDisabled();
+
+    fireEvent.change(finalText, { target: { value: "second direct, " } });
+    expect(screen.getByLabelText("自訂文字 內容")).toBe(literalCard);
+    fireEvent.change(literalCard, { target: { value: "card edited" } });
+    expect(finalText).toHaveValue("card edited");
+
+    fireEvent.change(finalText, { target: { value: "weighted direct" } });
+    fireEvent.change(screen.getByLabelText("自訂文字 權重"), { target: { value: "1.5" } });
+    expect(finalText).toHaveValue("(weighted direct:1.5)");
+    fireEvent.click(screen.getByRole("button", { name: "刪除" }));
+    expect(finalText).toHaveValue("");
+    expect(screen.queryByLabelText("自訂文字 內容")).not.toBeInTheDocument();
+  });
+
+  it("materializes a direct edit before appending a source entry", async () => {
+    installFetch();
+    render(<PromptWorkbench />);
+    await ready();
+    const finalText = screen.getByLabelText("Positive Prompt 最終文字");
+    fireEvent.change(finalText, { target: { value: "  raw, (unfinished  " } });
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
+
+    expect(finalText).toHaveValue("raw, (unfinished, zh current");
+    expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("  raw, (unfinished  ");
+    expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("zh current");
   });
 });
