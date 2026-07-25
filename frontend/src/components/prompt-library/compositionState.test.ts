@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   appendFragment,
-  commitRawText,
   deserializeFragments,
   emptyComposition,
+  materializeRawText,
   moveFragment,
   removeFragment,
   serializeFragments,
@@ -123,108 +123,42 @@ describe("compositionState", () => {
     expect(first.fragments[0].source?.polarity).toBe("positive");
   });
 
-  it("keeps a trailing-comma raw draft outside canonical state until commit", () => {
+  it("materializes exact visible text as one identity-safe literal without parsing", () => {
     const original = appendFragment(emptyComposition(), entry);
-    const rawDraft = "masterpiece, ";
+    const state = materializeRawText(original, "  masterpiece,  (unfinished ", sequentialIds("raw"));
 
-    expect(original.text).toBe("masterpiece");
-    expect(original.fragments).toHaveLength(1);
-    expect(rawDraft).not.toBe(original.text);
-  });
-
-  it("commits raw text by replacing every canonical fragment with fresh literals", () => {
-    let original = appendFragment(emptyComposition(), entry);
-    original = appendFragment(original, {
-      id: "old-literal",
-      kind: "literal",
-      displayName: "自訂文字",
-      originalSnapshot: "sharp focus",
-      text: "sharp focus",
-      weight: "",
-    });
-
-    const result = commitRawText(original, "masterpiece, cinematic, sharp focus", sequentialIds("commit"));
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error("expected successful commit");
-    expect(result.state.fragments.map((fragment) => fragment.id)).toEqual(["commit-1", "commit-2", "commit-3"]);
-    expect(result.state.fragments.map((fragment) => fragment.text)).toEqual(["masterpiece", "cinematic", "sharp focus"]);
-    expect(result.state.fragments.every((fragment) => fragment.kind === "literal" && !fragment.source)).toBe(true);
-    expect(result.state.fragments.every((fragment) => fragment.displayName === "自訂文字")).toBe(true);
-  });
-
-  it("does not retain old refs after middle insertion or deletion", () => {
-    let original = appendFragment(emptyComposition(), entry);
-    original = appendFragment(original, {
-      id: "second-entry",
-      kind: "entry",
-      displayName: "清晰",
-      source: { polarity: "positive", categoryId: "quality", entryId: "sharp", revision: 2 },
-      originalSnapshot: "sharp focus",
-      text: "sharp focus",
-      weight: "",
-    });
-
-    const inserted = commitRawText(original, "masterpiece, cinematic, sharp focus", sequentialIds());
-    const deleted = commitRawText(original, "sharp focus", sequentialIds("delete"));
-
-    expect(inserted.ok && inserted.state.fragments.every((fragment) => fragment.source === undefined)).toBe(true);
-    expect(deleted.ok && deleted.state.fragments).toMatchObject([{ kind: "literal", text: "sharp focus" }]);
-    expect(deleted.ok && deleted.state.fragments[0].source).toBeUndefined();
-  });
-
-  it("splits only top-level commas and parses a valid nested weighted fragment", () => {
-    const result = commitRawText(emptyComposition(), "(portrait, close-up), (lighting (warm, soft):1.4), final", sequentialIds());
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error("expected successful commit");
-    expect(result.state.fragments.map(({ text, weight }) => ({ text, weight }))).toEqual([
-      { text: "(portrait, close-up)", weight: "" },
-      { text: "lighting (warm, soft)", weight: "1.4" },
-      { text: "final", weight: "" },
+    expect(state.text).toBe("  masterpiece,  (unfinished ");
+    expect(state.fragments).toMatchObject([{
+      id: "raw-1", kind: "literal", displayName: "自訂文字",
+      originalSnapshot: "  masterpiece,  (unfinished ", text: "  masterpiece,  (unfinished ", weight: "", directEdit: true,
+    }]);
+    expect(state.fragments[0].source).toBeUndefined();
+    expect(serializeFragments(state)).toEqual([
+      { kind: "literal", snapshot: "  masterpiece,  (unfinished ", weight: 1, order: 10 },
     ]);
   });
 
-  it("rejects malformed parentheses without changing the original state object", () => {
-    const original = appendFragment(emptyComposition(), entry);
-    const result = commitRawText(original, "((broken:1.2), sharp focus", sequentialIds());
+  it("preserves the direct literal ID across edits and allocates a fresh ID only for the first edit", () => {
+    const idFactory = vi.fn(sequentialIds("raw"));
+    const structured = appendFragment(emptyComposition(), entry);
+    const first = materializeRawText(structured, "first, ", idFactory);
+    const second = materializeRawText(first, "second (unfinished", idFactory);
 
-    expect(result.ok).toBe(false);
-    if ("error" in result) {
-      expect(result.state).toBe(original);
-      expect(result.error).toContain("括號");
-    } else {
-      throw new Error("expected failed commit");
-    }
+    expect(first.fragments[0].id).toBe("raw-1");
+    expect(second.fragments[0].id).toBe("raw-1");
+    expect(idFactory).toHaveBeenCalledOnce();
+    expect(second.fragments[0].source).toBeUndefined();
   });
 
-  it.each([
-    ["(prompt:abc)", "數字"],
-    ["(prompt:NaN)", "數字"],
-    ["(prompt:0x1)", "十進位"],
-    ["(prompt:0b1)", "十進位"],
-    ["(prompt:+1)", "十進位"],
-    ["(prompt:1e0)", "十進位"],
-    ["(prompt:0)", "大於 0"],
-    ["(prompt:-0.1)", "大於 0"],
-    ["(prompt:2.01)", "不大於 2"],
-  ])("rejects invalid weight in %s and leaves the original unchanged", (rawText, message) => {
-    const original = appendFragment(emptyComposition(), entry);
-    const result = commitRawText(original, rawText, sequentialIds());
+  it("keeps blank visible text exactly while serializing empty and resets direct identity after blank", () => {
+    const idFactory = vi.fn(sequentialIds("raw"));
+    const direct = materializeRawText(emptyComposition(), "literal", idFactory);
+    const whitespace = materializeRawText(direct, "  \t ", idFactory);
+    const resumed = materializeRawText(whitespace, "literal again", idFactory);
 
-    expect(result.ok).toBe(false);
-    if ("error" in result) {
-      expect(result.state).toBe(original);
-      expect(result.error).toContain(message);
-    } else {
-      throw new Error("expected failed commit");
-    }
-  });
-
-  it("commits empty raw text as an empty canonical state", () => {
-    const result = commitRawText(appendFragment(emptyComposition(), entry), "   ", sequentialIds());
-
-    expect(result).toEqual({ ok: true, state: emptyComposition() });
+    expect(whitespace).toEqual({ fragments: [], text: "  \t ", warning: null });
+    expect(serializeFragments(whitespace)).toEqual([]);
+    expect(resumed.fragments[0].id).toBe("raw-2");
   });
 
   it("serializes edited library copies as literals without changing the source", () => {

@@ -1,5 +1,14 @@
 # 進度追蹤
 
+## 2026-07-25 Prompt Workbench 最終文字直接編輯與單一 CompositionState
+
+- Positive／Negative 的「最終文字」永遠是可直接編輯的 controlled textarea；已移除自由文字 mode、套用、取消以及獨立 raw draft。每次 `onChange` 立即以 `materializeRawText` 更新該 polarity 唯一的 `CompositionState`，不 trim、不拆逗號、不 parse、不 debounce，因此尾端逗號／空白與暫時未閉合括號都會逐字保留。
+- 第一次從結構片段直接編輯時會立即移除全部 source refs，改成單一「自訂文字」literal；後續 direct keystrokes 重用同一 literal ID，避免 card remount。片段內容／weight／刪除直接作用於目前 literal；單一 card 的移動自然 disabled，新增來源詞條則接在 literal 後方。
+- 空字串與純空白 direct text 保留畫面上的 exact `CompositionState.text`，但使用零 fragments，故 `serializeFragments` 與 save/update/save-as payload 都是 `[]`，符合 Backend 的空 Prompt 契約。非空白 direct text 則序列化為一個 exact literal。
+- 儲存直接序列化目前 CompositionState，生圖直接使用目前 `state.text`，沒有隱式 materialization／async flush。任何新編輯都會由 `markDirty` 使 pending operation token 失效，舊 load/save response 不可覆蓋較新的本機文字。
+- Load 與 New 經 dirty confirm guard 後直接安裝／重置兩個 CompositionState；`beforeunload` 僅由 `document.dirty` 控制。
+- Non-live 驗證：focused Prompt tests `34 passed`、完整 Frontend suite `116 passed`、TypeScript `tsc --noEmit` 與 Vite production build 均通過。全程未操作或重啟 live Backend、Discord、ComfyUI 或 Gateway。
+
 ## 2026-07-25 Prompt Library 管理與 Workbench 組合生命週期
 
 已在隔離 branch `feature/prompt-library-management` 完成 source/offline 實作與雙層審查：

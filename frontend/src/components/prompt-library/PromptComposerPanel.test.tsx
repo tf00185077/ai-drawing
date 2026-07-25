@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { appendFragment, emptyComposition, type CompositionState, type RawCommitResult } from "./compositionState";
+import { appendFragment, emptyComposition, materializeRawText, type CompositionState } from "./compositionState";
 import PromptComposerPanel from "./PromptComposerPanel";
 import PromptWorkbench from "./PromptWorkbench";
 
@@ -29,9 +30,7 @@ function panelProps(state: CompositionState = fragments(1)) {
     onWeightChange: vi.fn(),
     onMove: vi.fn(),
     onRemove: vi.fn(),
-    onCommitRawText: vi.fn<(raw: string) => RawCommitResult>(() => ({ ok: true, state })),
-    onRawDraftStateChange: vi.fn(),
-    rawResetVersion: 0,
+    onFinalTextChange: vi.fn(),
   };
 }
 
@@ -76,77 +75,22 @@ describe("PromptComposerPanel", () => {
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
   });
 
-  it("keeps exact raw typing as a local draft and cancel leaves canonical fragments unchanged", () => {
-    const props = panelProps();
-    render(<PromptComposerPanel {...props} />);
+  it("rerenders the controlled final text on every exact keystroke", () => {
+    function Harness() {
+      const [state, setState] = useState(() => fragments(1));
+      return <PromptComposerPanel {...panelProps(state)} onFinalTextChange={(text) => {
+        setState((current) => materializeRawText(current, text, () => "direct-literal"));
+      }} />;
+    }
+    render(<Harness />);
 
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("prompt 1");
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveAttribute("readonly");
-    fireEvent.click(screen.getByRole("button", { name: "自由文字模式" }));
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(true);
-
-    const editor = screen.getByLabelText("Positive Prompt 自由文字草稿");
-    expect(editor).toHaveValue("prompt 1");
-    fireEvent.change(editor, { target: { value: "masterpiece, " } });
-    expect(editor).toHaveValue("masterpiece, ");
-    expect(props.onCommitRawText).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: "取消" }));
-    expect(props.onCommitRawText).not.toHaveBeenCalled();
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(false);
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("prompt 1");
-    expect(screen.getByLabelText("自訂文字 內容")).toHaveValue("prompt 1");
-  });
-
-  it("applies raw text only through commit and closes after success", () => {
-    const props = panelProps();
-    props.onCommitRawText.mockReturnValue({ ok: true, state: emptyComposition() });
-    render(<PromptComposerPanel {...props} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(screen.getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "masterpiece, " } });
-    fireEvent.click(screen.getByRole("button", { name: "套用" }));
-
-    expect(props.onCommitRawText).toHaveBeenCalledOnce();
-    expect(props.onCommitRawText).toHaveBeenCalledWith("masterpiece, ");
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(false);
-    expect(screen.queryByLabelText("Positive Prompt 自由文字草稿")).not.toBeInTheDocument();
-  });
-
-  it("preserves the exact draft and shows an actionable commit error", () => {
-    const props = panelProps();
-    props.onCommitRawText.mockReturnValue({ ok: false, state: props.state, error: "Prompt 括號不平衡，請補上右括號。" });
-    render(<PromptComposerPanel {...props} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(screen.getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "(masterpiece:1.2" } });
-    fireEvent.click(screen.getByRole("button", { name: "套用" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent("請補上右括號");
-    expect(screen.getByLabelText("Positive Prompt 自由文字草稿")).toHaveValue("(masterpiece:1.2");
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(true);
-  });
-
-  it("resets an open raw draft when reset version changes", () => {
-    const props = panelProps();
-    const { rerender } = render(<PromptComposerPanel {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: "自由文字模式" }));
-    fireEvent.change(screen.getByLabelText("Positive Prompt 自由文字草稿"), { target: { value: "unsaved exact, " } });
-
-    rerender(<PromptComposerPanel {...props} rawResetVersion={1} />);
-
-    expect(screen.queryByLabelText("Positive Prompt 自由文字草稿")).not.toBeInTheDocument();
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(false);
-  });
-
-  it("reports raw mode closed on cleanup", () => {
-    const props = panelProps();
-    const { unmount } = render(<PromptComposerPanel {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: "自由文字模式" }));
-
-    unmount();
-
-    expect(props.onRawDraftStateChange).toHaveBeenLastCalledWith(false);
+    const editor = screen.getByLabelText("Positive Prompt 最終文字");
+    expect(editor).not.toHaveAttribute("readonly");
+    for (const text of ["masterpiece,", "masterpiece, ", "masterpiece,  (unfinished"]) {
+      fireEvent.change(editor, { target: { value: text } });
+      expect(editor).toHaveValue(text);
+    }
+    expect(screen.queryByRole("button", { name: /自由文字模式|套用|取消/ })).not.toBeInTheDocument();
   });
 
   it("assigns live browser entries trimmed names with prompt and ID fallbacks", async () => {
