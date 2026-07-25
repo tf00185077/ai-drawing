@@ -6,6 +6,7 @@ import LoraDocs from "./pages/LoraDocs";
 import LoraTrain from "./pages/LoraTrain";
 import PromptLibraryLayout from "./pages/PromptLibraryLayout";
 import PromptCategoryManagement from "./pages/PromptCategoryManagement";
+import PromptCategoryDetail from "./pages/PromptCategoryDetail";
 import PromptWorkbench from "./components/prompt-library/PromptWorkbench";
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route index element={<Navigate replace to="workbench" />} />
               <Route path="workbench" element={<PromptWorkbench />} />
               <Route path="categories" element={<PromptCategoryManagement />} />
+              <Route path="categories/:polarity/:categoryId" element={<PromptCategoryDetail />} />
             </Route>
             <Route path="/lora-docs" element={<LoraDocs />} />
             <Route path="/lora-train" element={<LoraTrain />} />
