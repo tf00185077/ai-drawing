@@ -61,7 +61,7 @@ describe("PromptEntryEditor", () => {
     expect(screen.getByRole("alert")).toBeVisible();
   });
 
-  it("rejects non-integer order and disables every field and action while submitting", () => {
+  it("rejects missing or non-integer order and disables every field and action while submitting", () => {
     const onSubmit = vi.fn();
     const onCancel = vi.fn();
     const view = render(<PromptEntryEditor mode="create" onSubmit={onSubmit} onCancel={onCancel} />);
@@ -70,6 +70,11 @@ describe("PromptEntryEditor", () => {
     fireEvent.change(screen.getByLabelText("詞條說明"), { target: { value: "說明" } });
     fireEvent.change(screen.getByLabelText("詞條英文 prompt"), { target: { value: "new entry" } });
     fireEvent.change(screen.getByLabelText("詞條排序"), { target: { value: "1.5" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("整數");
+
+    fireEvent.change(screen.getByLabelText("詞條排序"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "儲存" }));
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("整數");
