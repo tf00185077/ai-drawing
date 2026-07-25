@@ -22,6 +22,7 @@ from app.schemas.prompt_library import (
     ComposeRequest,
     ComposeResponse,
     EntryWriteRequest,
+    RestoreRequest,
     SearchResponse,
     VersionedCategory,
     VersionedCombination,
@@ -67,6 +68,8 @@ class PromptLibraryProvider(Protocol):
     ) -> WriteResponse: ...
 
     def archive(self, request: ArchiveRequest) -> WriteResponse: ...
+
+    def restore(self, request: RestoreRequest) -> WriteResponse: ...
 
 
 class FilePromptLibraryProvider:
@@ -164,6 +167,9 @@ class FilePromptLibraryProvider:
 
     def archive(self, request: ArchiveRequest) -> WriteResponse:
         return self._writer.archive(request)
+
+    def restore(self, request: RestoreRequest) -> WriteResponse:
+        return self._writer.restore(request)
 
     @staticmethod
     def _category_summary(document: StoredDocument) -> CategorySummary:

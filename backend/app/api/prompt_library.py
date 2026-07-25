@@ -22,6 +22,7 @@ from app.schemas.prompt_library import (
     ComposeRequest,
     ComposeResponse,
     EntryWriteRequest,
+    RestoreRequest,
     SearchResponse,
     VersionedCategory,
     VersionedCombination,
@@ -117,6 +118,14 @@ def archive(
     provider: PromptLibraryProvider = Depends(_provider),
 ) -> WriteResponse:
     return _call(provider.archive, body)
+
+
+@router.post("/restore", response_model=WriteResponse)
+def restore(
+    body: RestoreRequest,
+    provider: PromptLibraryProvider = Depends(_provider),
+) -> WriteResponse:
+    return _call(provider.restore, body)
 
 
 @router.post("/compose", response_model=ComposeResponse)

@@ -13,6 +13,7 @@ from app.schemas.prompt_library import (
     CategoryWriteRequest,
     CombinationWriteRequest,
     EntryWriteRequest,
+    RestoreRequest,
 )
 
 
@@ -295,3 +296,258 @@ def test_stale_lock_timeout_maps_to_domain_error(provider) -> None:
     finally:
         held_lock.release()
     assert caught.value.code == "lock_timeout"
+
+
+def _archive_category(provider: FilePromptLibraryProvider):
+    current = provider.get_category("positive", "clothing")
+    return provider.archive(
+        ArchiveRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=current.category.revision,
+            expected_etag=current.etag,
+        )
+    )
+
+
+def _archive_entry(provider: FilePromptLibraryProvider):
+    current = provider.get_category("positive", "clothing")
+    return provider.archive(
+        ArchiveRequest(
+            resource_type="entry",
+            resource_id="dress",
+            polarity="positive",
+            category_id="clothing",
+            expected_revision=current.category.revision,
+            expected_etag=current.etag,
+        )
+    )
+
+
+def test_archive_then_restore_category_increments_version_and_changes_etag(provider) -> None:
+    archived = _archive_category(provider)
+    assert archived.category is not None
+
+    restored = provider.restore(
+        RestoreRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=archived.category.category.revision,
+            expected_etag=archived.category.etag,
+        )
+    )
+
+    assert restored.category is not None
+    assert restored.category.category.archived is False
+    assert restored.category.category.revision == archived.category.category.revision + 1
+    assert restored.category.etag != archived.category.etag
+
+
+def test_restore_category_preserves_entry_archive_state_and_revision(provider) -> None:
+    archived_entry = _archive_entry(provider)
+    assert archived_entry.category is not None and archived_entry.entry is not None
+    archived_category = provider.archive(
+        ArchiveRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=archived_entry.category.category.revision,
+            expected_etag=archived_entry.category.etag,
+        )
+    )
+    assert archived_category.category is not None
+
+    restored = provider.restore(
+        RestoreRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=archived_category.category.category.revision,
+            expected_etag=archived_category.category.etag,
+        )
+    )
+
+    assert restored.category is not None
+    entry = restored.category.category.entries[0]
+    assert entry.archived is True
+    assert entry.revision == archived_entry.entry.revision
+
+
+def test_archive_then_restore_entry_increments_entry_and_parent_versions(provider) -> None:
+    archived = _archive_entry(provider)
+    assert archived.category is not None and archived.entry is not None
+
+    restored = provider.restore(
+        RestoreRequest(
+            resource_type="entry",
+            resource_id="dress",
+            polarity="positive",
+            category_id="clothing",
+            expected_revision=archived.category.category.revision,
+            expected_etag=archived.category.etag,
+        )
+    )
+
+    assert restored.category is not None and restored.entry is not None
+    assert restored.entry.archived is False
+    assert restored.entry.revision == archived.entry.revision + 1
+    assert restored.entry_revision == restored.entry.revision
+    assert restored.category.category.revision == archived.category.category.revision + 1
+    assert restored.category.etag != archived.category.etag
+    assert restored.affected_combinations == []
+
+
+@pytest.mark.parametrize(
+    ("expected_revision_delta", "expected_etag", "code"),
+    [(1, "current", "revision_conflict"), (0, "stale", "external_change")],
+)
+def test_restore_rejects_stale_parent_token_without_mutation(
+    provider, expected_revision_delta: int, expected_etag: str, code: str
+) -> None:
+    archived = _archive_entry(provider)
+    assert archived.category is not None
+    path = provider.root / "positive" / "clothing.json"
+    before = path.read_bytes()
+
+    with pytest.raises(PromptLibraryError) as caught:
+        provider.restore(
+            RestoreRequest(
+                resource_type="entry",
+                resource_id="dress",
+                polarity="positive",
+                category_id="clothing",
+                expected_revision=(
+                    archived.category.category.revision + expected_revision_delta
+                ),
+                expected_etag=(
+                    archived.category.etag if expected_etag == "current" else expected_etag
+                ),
+            )
+        )
+
+    assert caught.value.code == code
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("resource_type", ["category", "entry"])
+def test_restore_rejects_already_active_resource_without_mutation(
+    provider, resource_type: str
+) -> None:
+    current = provider.get_category("positive", "clothing")
+    path = provider.root / "positive" / "clothing.json"
+    before = path.read_bytes()
+
+    with pytest.raises(PromptLibraryError) as caught:
+        provider.restore(
+            RestoreRequest(
+                resource_type=resource_type,
+                resource_id="clothing" if resource_type == "category" else "dress",
+                polarity="positive",
+                category_id="clothing" if resource_type == "entry" else None,
+                expected_revision=current.category.revision,
+                expected_etag=current.etag,
+            )
+        )
+
+    assert caught.value.code == "resource_already_active"
+    assert path.read_bytes() == before
+
+
+def test_restore_missing_entry_returns_not_found_without_mutation(provider) -> None:
+    current = provider.get_category("positive", "clothing")
+    path = provider.root / "positive" / "clothing.json"
+    before = path.read_bytes()
+
+    with pytest.raises(PromptLibraryError) as caught:
+        provider.restore(
+            RestoreRequest(
+                resource_type="entry",
+                resource_id="missing",
+                polarity="positive",
+                category_id="clothing",
+                expected_revision=current.category.revision,
+                expected_etag=current.etag,
+            )
+        )
+
+    assert caught.value.code == "not_found"
+    assert path.read_bytes() == before
+
+
+def test_restore_entry_rejects_archived_parent_without_mutation(provider) -> None:
+    archived_entry = _archive_entry(provider)
+    assert archived_entry.category is not None
+    archived_category = provider.archive(
+        ArchiveRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=archived_entry.category.category.revision,
+            expected_etag=archived_entry.category.etag,
+        )
+    )
+    assert archived_category.category is not None
+    path = provider.root / "positive" / "clothing.json"
+    before = path.read_bytes()
+
+    with pytest.raises(PromptLibraryError) as caught:
+        provider.restore(
+            RestoreRequest(
+                resource_type="entry",
+                resource_id="dress",
+                polarity="positive",
+                category_id="clothing",
+                expected_revision=archived_category.category.category.revision,
+                expected_etag=archived_category.category.etag,
+            )
+        )
+
+    assert caught.value.code == "parent_category_archived"
+    assert caught.value.details == {
+        "polarity": "positive",
+        "category_id": "clothing",
+        "entry_id": "dress",
+    }
+    assert path.read_bytes() == before
+
+
+def test_restore_checks_concurrency_before_active_or_parent_state(provider) -> None:
+    current = provider.get_category("positive", "clothing")
+    with pytest.raises(PromptLibraryError) as active_conflict:
+        provider.restore(
+            RestoreRequest(
+                resource_type="category",
+                resource_id="clothing",
+                polarity="positive",
+                expected_revision=current.category.revision + 1,
+                expected_etag=current.etag,
+            )
+        )
+    assert active_conflict.value.code == "revision_conflict"
+
+    archived_entry = _archive_entry(provider)
+    assert archived_entry.category is not None
+    archived_category = provider.archive(
+        ArchiveRequest(
+            resource_type="category",
+            resource_id="clothing",
+            polarity="positive",
+            expected_revision=archived_entry.category.category.revision,
+            expected_etag=archived_entry.category.etag,
+        )
+    )
+    assert archived_category.category is not None
+    with pytest.raises(PromptLibraryError) as parent_conflict:
+        provider.restore(
+            RestoreRequest(
+                resource_type="entry",
+                resource_id="dress",
+                polarity="positive",
+                category_id="clothing",
+                expected_revision=archived_category.category.category.revision + 1,
+                expected_etag=archived_category.category.etag,
+            )
+        )
+    assert parent_conflict.value.code == "revision_conflict"

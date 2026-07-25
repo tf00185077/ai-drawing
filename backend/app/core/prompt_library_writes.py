@@ -17,6 +17,7 @@ from app.schemas.prompt_library import (
     CombinationWriteRequest,
     ComposeRequest,
     EntryWriteRequest,
+    RestoreRequest,
     VersionedCategory,
     VersionedCombination,
     WriteResponse,
@@ -172,6 +173,11 @@ class PromptLibraryWriter:
             return self._archive_category(request)
         return self._archive_combination(request)
 
+    def restore(self, request: RestoreRequest) -> WriteResponse:
+        if request.resource_type == "entry":
+            return self._restore_entry(request)
+        return self._restore_category(request)
+
     def repair_combination(self, combination_id: str) -> VersionedCombination:
         with self.store.locked():
             current = self.store.read_combination(combination_id)
@@ -324,3 +330,64 @@ class PromptLibraryWriter:
         return WriteResponse(
             combination=VersionedCombination(combination=combination, etag=etag)
         )
+
+    def _restore_entry(self, request: RestoreRequest) -> WriteResponse:
+        assert request.category_id is not None
+        with self.store.locked():
+            current = self.store.read_category(request.polarity, request.category_id)
+            assert_precondition(
+                exists=True,
+                actual_revision=current.model.revision,
+                actual_etag=current.etag,
+                expected_revision=request.expected_revision,
+                expected_etag=request.expected_etag,
+            )
+            entry = next(
+                (item for item in current.model.entries if item.id == request.resource_id),
+                None,
+            )
+            if entry is None:
+                raise PromptLibraryError.not_found("entry", request.resource_id)
+            if current.model.archived:
+                raise PromptLibraryError.archived_parent(
+                    request.polarity, request.category_id, request.resource_id
+                )
+            if not entry.archived:
+                raise PromptLibraryError.already_active("entry", request.resource_id)
+            restored = entry.model_copy(
+                deep=True,
+                update={"archived": False, "revision": entry.revision + 1},
+            )
+            entries = [
+                restored if item.id == restored.id else item
+                for item in current.model.entries
+            ]
+            category = current.model.model_copy(
+                deep=True,
+                update={"entries": entries, "revision": current.model.revision + 1},
+            )
+            etag = self.store.replace_json(current.path, category)
+        return WriteResponse(
+            category=VersionedCategory(category=category, etag=etag),
+            entry=restored,
+            entry_revision=restored.revision,
+        )
+
+    def _restore_category(self, request: RestoreRequest) -> WriteResponse:
+        with self.store.locked():
+            current = self.store.read_category(request.polarity, request.resource_id)
+            assert_precondition(
+                exists=True,
+                actual_revision=current.model.revision,
+                actual_etag=current.etag,
+                expected_revision=request.expected_revision,
+                expected_etag=request.expected_etag,
+            )
+            if not current.model.archived:
+                raise PromptLibraryError.already_active("category", request.resource_id)
+            category = current.model.model_copy(
+                deep=True,
+                update={"archived": False, "revision": current.model.revision + 1},
+            )
+            etag = self.store.replace_json(current.path, category)
+        return WriteResponse(category=VersionedCategory(category=category, etag=etag))
