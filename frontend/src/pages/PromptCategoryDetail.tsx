@@ -44,13 +44,17 @@ export default function PromptCategoryDetail() {
   const [entryFilter, setEntryFilter] = useState<"active" | "archived">("active");
   const [editor, setEditor] = useState<OpenEditor | null>(null);
   const requestGeneration = useRef(0);
+  const operationGeneration = useRef(0);
 
   useEffect(() => {
+    operationGeneration.current += 1;
     const requestId = ++requestGeneration.current;
     setCategory(null);
     setCategoryDraft(null);
     setError(null);
+    setNotice(null);
     setEditor(null);
+    setBusy(false);
     if (!validPolarity || !categoryId) {
       setLoading(false);
       return;
@@ -74,34 +78,40 @@ export default function PromptCategoryDetail() {
     };
   }, [categoryId, polarity, retryGeneration, validPolarity]);
 
-  async function mutate(operation: () => Promise<{ affected_combinations: string[] }>, options?: { closeEditor?: boolean }) {
+  async function mutate(
+    operation: () => Promise<{ affected_combinations: string[] }>,
+    options?: { closeEditor?: boolean; showAffectedCombinations?: boolean },
+  ) {
     if (busy) return;
+    const operationId = ++operationGeneration.current;
     setBusy(true);
     setError(null);
-    const mutationGeneration = requestGeneration.current;
+    setNotice(null);
     try {
       const response = await operation();
-      if (requestGeneration.current !== mutationGeneration) return;
+      if (operationGeneration.current !== operationId) return;
       const reloadId = ++requestGeneration.current;
       setLoading(true);
       const loadedCategory = await getPromptCategory(
         polarity as PromptPolarity,
         categoryId as string,
       );
-      if (requestGeneration.current === reloadId) {
+      if (operationGeneration.current === operationId && requestGeneration.current === reloadId) {
         setCategory(loadedCategory);
         setCategoryDraft(draftFrom(loadedCategory.category));
         setLoading(false);
         if (options?.closeEditor) setEditor(null);
-        if (response.affected_combinations.length > 0) {
-          setNotice(`已同步更新 ${response.affected_combinations.length} 個組合：${response.affected_combinations.join("、")}`);
-        }
+        setNotice(options?.showAffectedCombinations && response.affected_combinations.length > 0
+          ? `已同步更新 ${response.affected_combinations.length} 個組合：${response.affected_combinations.join("、")}`
+          : null);
       }
     } catch (mutationError: unknown) {
-      setError(messageOf(mutationError, "操作失敗，請確認資料後重試"));
-      setLoading(false);
+      if (operationGeneration.current === operationId) {
+        setError(messageOf(mutationError, "操作失敗，請確認資料後重試"));
+        setLoading(false);
+      }
     } finally {
-      setBusy(false);
+      if (operationGeneration.current === operationId) setBusy(false);
     }
   }
 
@@ -140,7 +150,10 @@ export default function PromptCategoryDetail() {
     }));
   }
   function saveEntry(value: EntryEditorValue) {
-    void mutate(() => putPromptEntry(currentPolarity, currentCategoryId, value.id, { ...value.fields, ...token }), { closeEditor: true });
+    void mutate(() => putPromptEntry(currentPolarity, currentCategoryId, value.id, { ...value.fields, ...token }), {
+      closeEditor: true,
+      showAffectedCombinations: true,
+    });
   }
   function archiveCategory() {
     if (!window.confirm(`確定要封存分類「${details.name_zh}」嗎？`)) return;
