@@ -201,6 +201,10 @@ describe("compositionState", () => {
   it.each([
     ["(prompt:abc)", "數字"],
     ["(prompt:NaN)", "數字"],
+    ["(prompt:0x1)", "十進位"],
+    ["(prompt:0b1)", "十進位"],
+    ["(prompt:+1)", "十進位"],
+    ["(prompt:1e0)", "十進位"],
     ["(prompt:0)", "大於 0"],
     ["(prompt:-0.1)", "大於 0"],
     ["(prompt:2.01)", "不大於 2"],
