@@ -19,6 +19,7 @@ interface DocumentState {
 const blankDocument = (): DocumentState => ({ id: null, revision: null, etag: null, repaired: false, warnings: [], dirty: false });
 const COMBINATION_ID_PATTERN = /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u;
 const unsafeIdMessage = "組合 ID 只能使用 Unicode 字母、數字與連字號，例如 niji基礎瑟瑟";
+const combinationIdLengthMessage = "組合 ID 必須包含 1 到 128 個字元";
 
 async function jsonFetch(url: string) {
   const response = await fetch(url);
@@ -33,10 +34,11 @@ const entryKey = (polarity: PromptPolarity, categoryId: string, entryId: string)
 
 function referencedCategories(positive: readonly PromptFragment[], negative: readonly PromptFragment[]) {
   const refs = new Map<string, { polarity: PromptPolarity; categoryId: string }>();
-  for (const [polarity, fragments] of [["positive", positive], ["negative", negative]] as const) {
+  for (const fragments of [positive, negative]) {
     for (const fragment of fragments) {
       if (fragment.kind === "entry" && fragment.ref) {
-        refs.set(categoryKey(polarity, fragment.ref.category_id), { polarity, categoryId: fragment.ref.category_id });
+        const { polarity, category_id: categoryId } = fragment.ref;
+        refs.set(categoryKey(polarity, categoryId), { polarity, categoryId });
       }
     }
   }
@@ -49,9 +51,10 @@ async function resolveEntryNames(
   retained: ReadonlyMap<string, string> = new Map(),
 ): Promise<{ labels: Map<string, string>; warnings: string[] }> {
   const labels = new Map(retained);
+  const fragments = [...positive, ...negative];
   const refs = referencedCategories(positive, negative).filter(({ polarity, categoryId }) => {
-    const fragments = polarity === "positive" ? positive : negative;
-    return fragments.some((item) => item.ref?.category_id === categoryId && !labels.has(entryKey(polarity, categoryId, item.ref.entry_id)));
+    return fragments.some((item) => item.ref?.polarity === polarity && item.ref.category_id === categoryId
+      && !labels.has(entryKey(item.ref.polarity, categoryId, item.ref.entry_id)));
   });
   const results = await Promise.allSettled(refs.map(({ polarity, categoryId }) => getPromptCategory(polarity, categoryId)));
   const warnings: string[] = [];
@@ -67,6 +70,23 @@ async function resolveEntryNames(
     }
   });
   return { labels, warnings };
+}
+
+function deserializeWithReferenceLabels(
+  fragments: readonly PromptFragment[],
+  destinationPolarity: PromptPolarity,
+  idFactory: () => string,
+  labels: ReadonlyMap<string, string>,
+): CompositionState {
+  const state = deserializeFragments(fragments, destinationPolarity, idFactory, labels);
+  return {
+    ...state,
+    fragments: state.fragments.map((fragment) => fragment.source ? {
+      ...fragment,
+      displayName: labels.get(entryKey(fragment.source.polarity, fragment.source.categoryId, fragment.source.entryId))
+        ?? fragment.source.entryId,
+    } : fragment),
+  };
 }
 
 export default function PromptWorkbench() {
@@ -199,8 +219,8 @@ export default function PromptWorkbench() {
   });
 
   function installCombination(saved: PromptVersionedCombination, labels: Map<string, string>, extraWarnings: string[], nextSequence: number) {
-    const nextPositive = deserializeFragments(saved.combination.positive, "positive", () => `loaded-${++nextSequence}`, labels);
-    const nextNegative = deserializeFragments(saved.combination.negative, "negative", () => `loaded-${++nextSequence}`, labels);
+    const nextPositive = deserializeWithReferenceLabels(saved.combination.positive, "positive", () => `loaded-${++nextSequence}`, labels);
+    const nextNegative = deserializeWithReferenceLabels(saved.combination.negative, "negative", () => `loaded-${++nextSequence}`, labels);
     setSequence(nextSequence);
     setPositive(nextPositive);
     setNegative(nextNegative);
@@ -248,12 +268,17 @@ export default function PromptWorkbench() {
   }
 
   async function saveCombination(saveAs: boolean) {
-    const id = (saveAs || !document.id ? targetId : document.id)?.trim() || "";
+    const id = ((saveAs || !document.id ? targetId : document.id)?.trim() || "").normalize("NFC");
     if (!id) return;
+    if (Array.from(id).length > 128) {
+      setError(combinationIdLengthMessage);
+      return;
+    }
     if (!COMBINATION_ID_PATTERN.test(id)) {
       setError(unsafeIdMessage);
       return;
     }
+    setTargetId(id);
     const operation = beginOperation();
     setSuccess("");
     const positiveFragments = serializeFragments(positive);

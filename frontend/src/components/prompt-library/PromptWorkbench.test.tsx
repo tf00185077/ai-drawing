@@ -117,6 +117,46 @@ describe("PromptWorkbench saved combinations", () => {
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/categories/positive/quality"))).toHaveLength(1);
   });
 
+  it("resolves and preserves a saved ref using its own polarity instead of its destination list", async () => {
+    const crossPolarity = combinationDetail();
+    crossPolarity.combination.positive = [
+      fragment("entry", "saved cross-polarity snapshot", 10, 1, {
+        polarity: "negative", category_id: "quality", entry_id: "zh",
+      }),
+    ];
+    crossPolarity.combination.negative = [];
+    let composeBody: any;
+    const fetchMock = installFetch((url, init) => {
+      if (url === "/api/prompt-library/combinations/my-quality") return response(crossPolarity);
+      if (url === "/api/prompt-library/categories/negative/quality") {
+        const data = categoryResponse("negative", "quality");
+        data.category.entries = [{
+          id: "zh", name_zh: "負向品質名稱", description_zh: "", prompt: "current negative quality",
+          aliases: [], keywords: [], order: 10, revision: 4, archived: false,
+        }];
+        return response(data);
+      }
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        return response(composeResponse("my-quality", 4, composeBody.positive));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+    await loadSaved();
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/prompt-library/categories/negative/quality", undefined);
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/prompt-library/categories/positive/quality")).toBe(false);
+    expect(screen.getByLabelText("負向品質名稱 內容")).toHaveValue("saved cross-polarity snapshot");
+
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(composeBody).toBeDefined());
+    expect(composeBody.positive[0]).toMatchObject({
+      snapshot: "saved cross-polarity snapshot",
+      ref: { polarity: "negative", category_id: "quality", entry_id: "zh" },
+    });
+  });
+
   it("uses encoded detail IDs", async () => {
     const encodedCatalog = { ...catalog, combinations: [summary("含 空白")] };
     const fetchMock = installFetch((url) => {
@@ -314,6 +354,38 @@ describe("PromptWorkbench saved combinations", () => {
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "../逃逸" } });
     fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Unicode 字母、數字與連字號");
+    expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
+  });
+
+  it("NFC-normalizes a decomposed safe Unicode ID before validating and saving", async () => {
+    let composeBody: any;
+    installFetch((url, init) => {
+      if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeBody = JSON.parse(String(init.body));
+        return response(composeResponse(composeBody.save_as.id, 1));
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "Cafe\u0301" } });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+
+    await waitFor(() => expect(composeBody).toBeDefined());
+    expect(composeBody.save_as).toMatchObject({ id: "Café", name_zh: "Café", expected_revision: 0 });
+    expect(screen.getByLabelText("新組合 ID")).toHaveValue("Café");
+    expect(await screen.findByLabelText("目前組合版本")).toHaveTextContent("Café");
+  });
+
+  it("rejects a combination ID longer than 128 characters after NFC normalization", async () => {
+    const fetchMock = installFetch();
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: `Cafe\u0301${"a".repeat(125)}` } });
+    fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("1 到 128 個字元");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
   });
 });
