@@ -26,6 +26,9 @@ function panelProps(state: CompositionState = fragments(1)) {
   return {
     title: "Positive Prompt" as const,
     state,
+    arrangement: "auto" as const,
+    categoryInfoOf: () => null,
+    onReapplySort: vi.fn(),
     onTextChange: vi.fn(),
     onWeightChange: vi.fn(),
     onMove: vi.fn(),
@@ -35,17 +38,14 @@ function panelProps(state: CompositionState = fragments(1)) {
 }
 
 describe("PromptComposerPanel", () => {
-  it("shows six options per page in a responsive two-column grid", () => {
+  it("renders all fragments in a responsive two-column grid without pagination", () => {
     const state = fragments(7);
     render(<PromptComposerPanel {...panelProps(state)} />);
 
-    expect(screen.getByTestId("prompt-option-grid")).toHaveClass("grid", "grid-cols-1", "md:grid-cols-2");
-    expect(screen.getAllByLabelText(/內容$/)).toHaveLength(6);
-    expect(screen.getByText("1 / 2")).toBeVisible();
-
-    fireEvent.click(screen.getByRole("button", { name: "下一頁" }));
-    expect(screen.getAllByLabelText(/內容$/)).toHaveLength(1);
-    expect(screen.getByText("2 / 2")).toBeVisible();
+    expect(screen.getByTestId("prompt-option-grid")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/內容$/)).toHaveLength(7);
+    expect(screen.queryByRole("button", { name: "上一頁" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "下一頁" })).not.toBeInTheDocument();
   });
 
   it("uses fixed labels, true positions, and exposes exact literal content", () => {
@@ -91,7 +91,7 @@ describe("PromptComposerPanel", () => {
       fireEvent.change(editor, { target: { value: text } });
       expect(editor).toHaveValue(text);
     }
-    expect(screen.queryByRole("button", { name: /自由文字模式|套用|取消/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^(自由文字模式|套用|取消)$/ })).not.toBeInTheDocument();
   });
 
   it("preserves caret selection through comma-driven controlled rerenders", () => {
@@ -146,5 +146,74 @@ describe("PromptComposerPanel", () => {
     expect(screen.getByLabelText("cinematic glow 中文對照可能未填好")).toBeVisible();
     expect(screen.getByLabelText("arbitrary-id-only 中文對照可能未填好")).toBeVisible();
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
+  });
+
+  it("groups cards by category heading and keeps final text unchanged", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, {
+      id: "entry-quality",
+      kind: "entry",
+      displayName: "傑作",
+      source: { polarity: "positive", categoryId: "quality-ratings", entryId: "masterpiece" },
+      sourceSnapshotRaw: "masterpiece",
+      snapshotRaw: "masterpiece",
+      weight: "",
+    });
+    state = appendFragment(state, {
+      id: "entry-environment",
+      kind: "entry",
+      displayName: "屋頂",
+      source: { polarity: "positive", categoryId: "environment", entryId: "rooftop" },
+      sourceSnapshotRaw: "rooftop",
+      snapshotRaw: "rooftop",
+      weight: "",
+    });
+    const infoOf = (fragment: { source?: { categoryId: string } }) => {
+      const meta: Record<string, { displayName: string; order: number }> = {
+        "quality-ratings": { displayName: "品質與分級", order: 10 },
+        environment: { displayName: "場景與氛圍", order: 20 },
+      };
+      const found = fragment.source ? meta[fragment.source.categoryId] : undefined;
+      return found ? { key: fragment.source!.categoryId, ...found } : null;
+    };
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="auto"
+        categoryInfoOf={infoOf as never}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+    expect(screen.getByText("品質與分級")).toBeInTheDocument();
+    expect(screen.getByText("場景與氛圍")).toBeInTheDocument();
+    expect((screen.getByLabelText("Positive Prompt 最終文字") as HTMLTextAreaElement).value).toBe(
+      "masterpiece,rooftop",
+    );
+  });
+
+  it("fires onReapplySort when the button is clicked", () => {
+    const onReapplySort = vi.fn();
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={{ fragments: [], text: "", warning: null }}
+        arrangement="manual"
+        categoryInfoOf={() => null}
+        onReapplySort={onReapplySort}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Positive Prompt 重新套用推薦排序"));
+    expect(onReapplySort).toHaveBeenCalledTimes(1);
   });
 });
