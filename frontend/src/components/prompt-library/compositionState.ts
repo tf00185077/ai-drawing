@@ -462,3 +462,51 @@ export function blankSegmentMessage(
     .join("；");
   return `${summary}：每個 ASCII 逗號都會建立一個 prompt；請填入內容或移除該空白段。`;
 }
+
+export function sortFragmentsByRecommendation(
+  state: CompositionState,
+  rankOf: (fragment: WorkbenchFragment) => number,
+): CompositionState {
+  const ranked = state.fragments.map((fragment, index) => ({
+    fragment,
+    index,
+    rank: rankOf(fragment),
+  }));
+  ranked.sort((left, right) => left.rank - right.rank || left.index - right.index);
+  return rebuild(ranked.map((item) => item.fragment));
+}
+
+export interface FragmentGroup {
+  key: string;
+  displayName: string;
+  order: number;
+  fragments: WorkbenchFragment[];
+}
+
+const LITERAL_GROUP_KEY = "__literal__";
+
+export function groupFragmentsByCategory(
+  fragments: readonly WorkbenchFragment[],
+  categoryInfoOf: (
+    fragment: WorkbenchFragment,
+  ) => { key: string; displayName: string; order: number } | null,
+  literalLabel = "自訂文字",
+): FragmentGroup[] {
+  const groups: FragmentGroup[] = [];
+  fragments.forEach((fragment) => {
+    const info = categoryInfoOf(fragment);
+    const key = info?.key ?? LITERAL_GROUP_KEY;
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.fragments.push(fragment);
+      return;
+    }
+    groups.push({
+      key,
+      displayName: info?.displayName ?? literalLabel,
+      order: info ? info.order : Number.POSITIVE_INFINITY,
+      fragments: [fragment],
+    });
+  });
+  return groups;
+}
