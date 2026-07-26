@@ -437,7 +437,7 @@ describe("groupFragmentsByCategory", () => {
     return found ? { key: fragment.source.categoryId, ...found } : null;
   };
 
-  it("groups by category ordered by rank, literals into 自訂文字 last", () => {
+  it("groups fragments into contiguous runs preserving global order", () => {
     let state = emptyComposition();
     state = appendFragment(state, entryFrag("environment", "rooftop"));
     state = appendLiteralText(state, "custom", ids);
@@ -446,12 +446,25 @@ describe("groupFragmentsByCategory", () => {
 
     const groups = groupFragmentsByCategory(state.fragments, info);
 
+    // contiguous runs in global order — environment appears twice, not merged or re-sorted
     expect(groups.map((group) => group.displayName)).toEqual([
-      "品質與分級",
       "場景與氛圍",
       "自訂文字",
+      "品質與分級",
+      "場景與氛圍",
     ]);
-    expect(groups[1].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["rooftop", "sunset"]);
-    expect(groups[2].key).toBe("__literal__");
+    expect(groups[0].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["rooftop"]);
+    expect(groups[1].key).toBe("__literal__");
+    expect(groups[3].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["sunset"]);
+  });
+
+  it("merges adjacent same-category fragments into one run", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("quality-ratings", "a"));
+    state = appendFragment(state, entryFrag("quality-ratings", "b"));
+    state = appendFragment(state, entryFrag("environment", "c"));
+    const groups = groupFragmentsByCategory(state.fragments, info);
+    expect(groups.map((group) => group.key)).toEqual(["quality-ratings", "environment"]);
+    expect(groups[0].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["a", "b"]);
   });
 });

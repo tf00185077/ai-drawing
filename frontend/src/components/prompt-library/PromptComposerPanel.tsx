@@ -64,7 +64,7 @@ export default function PromptComposerPanel({
     pendingSelection.current = null;
   }, [state.text, state.fragments]);
 
-  const groups = groupFragmentsByCategory(state.fragments, categoryInfoOf ?? (() => null));
+  const groups = groupFragmentsByCategory(state.fragments, categoryInfoOf);
 
   return (
     <section className="rounded-xl border border-slate-700 bg-slate-900/70 p-4">
@@ -99,8 +99,8 @@ export default function PromptComposerPanel({
         {state.fragments.length === 0 && (
           <p className="rounded-lg border border-dashed border-slate-700 p-3 text-sm text-slate-500">尚未加入 Prompt</p>
         )}
-        {groups.map((group) => (
-          <div key={group.key} data-testid={`prompt-group-${group.key}`}>
+        {groups.map((group, groupIndex) => (
+          <div key={`${group.key}-${groupIndex}`} data-testid={`prompt-group-${group.key}`}>
             <h4 className="mb-2 border-b border-slate-700 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
               {group.displayName}
               <span className="ml-2 text-slate-500">{group.fragments.length}</span>

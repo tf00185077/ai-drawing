@@ -261,6 +261,7 @@ export default function PromptWorkbench() {
       const meta = categoryMeta.get(catKey);
       if (!meta) return Number.POSITIVE_INFINITY;
       const entryOrder = entryOrderByRef.current.get(`${catKey}/${fragment.source.entryId}`) ?? 10;
+      // entry order is small (<100000); category order dominates the composite rank
       return meta.order * 100000 + entryOrder;
     },
     [categoryMeta],

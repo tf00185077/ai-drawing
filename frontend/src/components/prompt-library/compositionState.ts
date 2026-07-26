@@ -492,21 +492,21 @@ export function groupFragmentsByCategory(
   ) => { key: string; displayName: string; order: number } | null,
   literalLabel = "自訂文字",
 ): FragmentGroup[] {
-  const groups = new Map<string, FragmentGroup>();
+  const groups: FragmentGroup[] = [];
   fragments.forEach((fragment) => {
     const info = categoryInfoOf(fragment);
     const key = info?.key ?? LITERAL_GROUP_KEY;
-    const existing = groups.get(key);
-    if (existing) {
-      existing.fragments.push(fragment);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.fragments.push(fragment);
       return;
     }
-    groups.set(key, {
+    groups.push({
       key,
       displayName: info?.displayName ?? literalLabel,
       order: info ? info.order : Number.POSITIVE_INFINITY,
       fragments: [fragment],
     });
   });
-  return [...groups.values()].sort((left, right) => left.order - right.order);
+  return groups;
 }
