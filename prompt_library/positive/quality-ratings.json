@@ -14,12 +14,12 @@
     "rating"
   ],
   "order": 10,
-  "revision": 22,
+  "revision": 23,
   "archived": false,
   "entries": [
     {
       "id": "pony-quality-score-9-88364ce6",
-      "name_zh": "評分九",
+      "name_zh": "評分九（Pony）",
       "description_zh": "經人工拆分審閱的原子提示詞「score_9」，來源為「Pony 品質詞」。",
       "prompt": "score_9",
       "aliases": [
@@ -50,7 +50,7 @@
     },
     {
       "id": "pony-quality-score-8-up-00f075e5",
-      "name_zh": "評分八以上",
+      "name_zh": "評分八以上（Pony）",
       "description_zh": "經人工拆分審閱的原子提示詞「score_8_up」，來源為「Pony 品質詞」。",
       "prompt": " score_8_up",
       "aliases": [
@@ -81,7 +81,7 @@
     },
     {
       "id": "pony-quality-score-7-up-64eefb3e",
-      "name_zh": "評分七以上",
+      "name_zh": "評分七以上（Pony）",
       "description_zh": "經人工拆分審閱的原子提示詞「score_7_up」，來源為「Pony 品質詞」。",
       "prompt": " score_7_up",
       "aliases": [
@@ -112,7 +112,7 @@
     },
     {
       "id": "pony-quality-source-anime-7e53856d",
-      "name_zh": "動漫來源",
+      "name_zh": "動漫來源（Pony）",
       "description_zh": "經人工拆分審閱的原子提示詞「source_anime」，來源為「Pony 品質詞」。",
       "prompt": " source_anime",
       "aliases": [
@@ -200,7 +200,7 @@
     },
     {
       "id": "illustrious-quality-masterpiece-905adc41",
-      "name_zh": "傑作",
+      "name_zh": "傑作（Illustrious）",
       "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「Illustrious 品質詞」。",
       "prompt": "masterpiece",
       "aliases": [
@@ -231,7 +231,7 @@
     },
     {
       "id": "illustrious-quality-best-quality-94d0f8f7",
-      "name_zh": "最佳品質",
+      "name_zh": "最佳品質（Illustrious）",
       "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「Illustrious 品質詞」。",
       "prompt": " best quality",
       "aliases": [
@@ -262,7 +262,7 @@
     },
     {
       "id": "illustrious-quality-amazing-quality-bd0b636a",
-      "name_zh": "驚艷品質",
+      "name_zh": "驚艷品質（Illustrious）",
       "description_zh": "經人工拆分審閱的原子提示詞「amazing quality」，來源為「Illustrious 品質詞」。",
       "prompt": " amazing quality",
       "aliases": [
@@ -293,7 +293,7 @@
     },
     {
       "id": "illustrious-quality-absurdres-d8cdf00b",
-      "name_zh": "超高解析度",
+      "name_zh": "超高解析度（Illustrious）",
       "description_zh": "經人工拆分審閱的原子提示詞「absurdres」，來源為「Illustrious 品質詞」。",
       "prompt": " absurdres",
       "aliases": [
@@ -381,7 +381,7 @@
     },
     {
       "id": "noobai-quality-masterpiece-6812d6c3",
-      "name_zh": "傑作",
+      "name_zh": "傑作（NoobAI）",
       "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「NoobAI 品質詞」。",
       "prompt": "masterpiece",
       "aliases": [
@@ -412,7 +412,7 @@
     },
     {
       "id": "noobai-quality-best-quality-f5173132",
-      "name_zh": "最佳品質",
+      "name_zh": "最佳品質（NoobAI）",
       "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「NoobAI 品質詞」。",
       "prompt": " best quality",
       "aliases": [
@@ -443,7 +443,7 @@
     },
     {
       "id": "noobai-quality-newest-3e8f4562",
-      "name_zh": "最新風格",
+      "name_zh": "最新風格（NoobAI）",
       "description_zh": "經人工拆分審閱的原子提示詞「newest」，來源為「NoobAI 品質詞」。",
       "prompt": " newest",
       "aliases": [
@@ -474,7 +474,7 @@
     },
     {
       "id": "noobai-quality-absurdres-8a4ddaf1",
-      "name_zh": "超高解析度",
+      "name_zh": "超高解析度（NoobAI）",
       "description_zh": "經人工拆分審閱的原子提示詞「absurdres」，來源為「NoobAI 品質詞」。",
       "prompt": " absurdres",
       "aliases": [
@@ -505,7 +505,7 @@
     },
     {
       "id": "noobai-quality-highres-b2fe9ee7",
-      "name_zh": "高解析度",
+      "name_zh": "高解析度（NoobAI）",
       "description_zh": "經人工拆分審閱的原子提示詞「highres」，來源為「NoobAI 品質詞」。",
       "prompt": " highres",
       "aliases": [
@@ -593,7 +593,7 @@
     },
     {
       "id": "anima-quality-masterpiece-5d3c18a5",
-      "name_zh": "傑作",
+      "name_zh": "傑作（Anima）",
       "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「Anima 品質詞」。",
       "prompt": "masterpiece",
       "aliases": [
@@ -624,7 +624,7 @@
     },
     {
       "id": "anima-quality-best-quality-b870f8e8",
-      "name_zh": "最佳品質",
+      "name_zh": "最佳品質（Anima）",
       "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「Anima 品質詞」。",
       "prompt": " best quality",
       "aliases": [
@@ -655,7 +655,7 @@
     },
     {
       "id": "anima-quality-very-aesthetic-caea0057",
-      "name_zh": "高度美感",
+      "name_zh": "高度美感（Anima）",
       "description_zh": "經人工拆分審閱的原子提示詞「very aesthetic」，來源為「Anima 品質詞」。",
       "prompt": " very aesthetic",
       "aliases": [
@@ -743,7 +743,7 @@
     },
     {
       "id": "sd1-5-quality-masterpiece-934c50a1",
-      "name_zh": "傑作",
+      "name_zh": "傑作（SD1.5）",
       "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「SD1.5 品質詞」。",
       "prompt": "masterpiece",
       "aliases": [
@@ -774,7 +774,7 @@
     },
     {
       "id": "sd1-5-quality-best-quality-7064319a",
-      "name_zh": "最佳品質",
+      "name_zh": "最佳品質（SD1.5）",
       "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「SD1.5 品質詞」。",
       "prompt": " best quality",
       "aliases": [
