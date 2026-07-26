@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CompositionState, WorkbenchFragment } from "./compositionState";
 import { distinctCategoriesOf, LITERAL_GROUP_KEY } from "./compositionState";
 
@@ -50,13 +50,15 @@ export default function PromptComposerPanel({
     return info?.key === filterKey;
   };
 
-  const filterOptions = distinctCategoriesOf(state.fragments, categoryInfoOf);
+  const filterOptions = useMemo(
+    () => distinctCategoriesOf(state.fragments, categoryInfoOf),
+    [state.fragments, categoryInfoOf],
+  );
   const filtered = state.fragments.filter(matchesFilter);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageFragments = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
-  // Reset to page 1 when the filter changes; clamp when the page count shrinks.
-  useEffect(() => { setPage(0); }, [filterKey]);
+  // Clamp when the page count shrinks (e.g. a filter or removal reduces the total).
   useEffect(() => { if (page >= pageCount) setPage(pageCount - 1); }, [page, pageCount]);
   // If the active filter no longer exists (its last fragment removed), fall back to 全部.
   useEffect(() => {
@@ -128,9 +130,9 @@ export default function PromptComposerPanel({
       </div>
 
       <div role="group" aria-label={`${title} 分類篩選`} className="mt-3 flex flex-wrap gap-2">
-        <button type="button" aria-pressed={filterKey === ALL_KEY} onClick={() => setFilterKey(ALL_KEY)} className={filterButtonClass(filterKey === ALL_KEY)}>全部</button>
+        <button type="button" aria-pressed={filterKey === ALL_KEY} onClick={() => { setFilterKey(ALL_KEY); setPage(0); }} className={filterButtonClass(filterKey === ALL_KEY)}>全部</button>
         {filterOptions.map((option) => (
-          <button key={option.key} type="button" aria-pressed={filterKey === option.key} onClick={() => setFilterKey(option.key)} className={filterButtonClass(filterKey === option.key)}>
+          <button key={option.key} type="button" aria-pressed={filterKey === option.key} onClick={() => { setFilterKey(option.key); setPage(0); }} className={filterButtonClass(filterKey === option.key)}>
             {option.displayName}
           </button>
         ))}
