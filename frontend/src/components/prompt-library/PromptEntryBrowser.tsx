@@ -62,7 +62,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
               onClick={() => onAddEntry(entry)}
               className="inline-flex max-w-[16rem] items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-emerald-500 hover:bg-slate-700"
             >
-              {reason && <span title="name_zh 可能沒有有意義的中文對照，建議編輯修正" className="text-amber-400">⚠️</span>}
+              {reason && <span title="name_zh 可能沒有有意義的中文對照，建議編輯修正" aria-label={`${displayName} 中文對照可能未填好`} className="text-amber-400">⚠️</span>}
               <span className="truncate">{displayName}</span>
             </button>
           );
