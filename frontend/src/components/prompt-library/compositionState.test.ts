@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   appendFragment,
   appendLiteralText,
+  appendFragmentsDeduped,
   blankSegmentMessage,
   blankSegmentPreflight,
   buildLiteralLabelIndex,
   deserializeFragments,
+  distinctCategoriesOf,
   emptyComposition,
   materializeRawText,
   moveFragment,
@@ -16,6 +18,7 @@ import {
   groupFragmentsByCategory,
   setFragmentText,
   setFragmentWeight,
+  LITERAL_GROUP_KEY,
   type ApiPromptFragment,
 } from "./compositionState";
 
@@ -466,5 +469,91 @@ describe("groupFragmentsByCategory", () => {
     const groups = groupFragmentsByCategory(state.fragments, info);
     expect(groups.map((group) => group.key)).toEqual(["quality-ratings", "environment"]);
     expect(groups[0].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["a", "b"]);
+  });
+});
+
+describe("appendFragmentsDeduped", () => {
+  const ids = sequentialIds("ap");
+  const entryFrag = (categoryId: string, entryId: string) => ({
+    id: ids(),
+    kind: "entry" as const,
+    displayName: entryId,
+    source: { polarity: "positive" as const, categoryId, entryId, revision: 1 },
+    sourceSnapshotRaw: entryId,
+    snapshotRaw: entryId,
+    weight: "",
+  });
+
+  it("appends only non-duplicate entry refs and keeps the single comma-joined text", () => {
+    let target = emptyComposition();
+    target = appendFragment(target, entryFrag("quality-ratings", "masterpiece"));
+    const incoming = [
+      entryFrag("quality-ratings", "masterpiece"), // duplicate ref → skipped
+      entryFrag("environment", "rooftop"), // new → kept
+    ];
+    const result = appendFragmentsDeduped(target, incoming as never);
+    expect(result.fragments.map((f) => f.snapshotRaw)).toEqual(["masterpiece", "rooftop"]);
+    expect(result.text).toBe("masterpiece,rooftop");
+  });
+
+  it("always appends literals and dedupes duplicates within the incoming batch", () => {
+    let target = emptyComposition();
+    target = appendLiteralText(target, "solo", ids);
+    const incoming = [
+      { id: ids(), kind: "literal" as const, displayName: "自訂文字", snapshotRaw: "solo", sourceSnapshotRaw: "solo", weight: "" },
+      entryFrag("environment", "rooftop"),
+      entryFrag("environment", "rooftop"), // duplicate within batch → skipped
+    ];
+    const result = appendFragmentsDeduped(target, incoming as never);
+    // literal "solo" appended again (literals are not deduped); rooftop appears once
+    expect(result.fragments.map((f) => f.snapshotRaw)).toEqual(["solo", "solo", "rooftop"]);
+  });
+
+  it("returns the same target when nothing new is added", () => {
+    let target = emptyComposition();
+    target = appendFragment(target, entryFrag("quality-ratings", "a"));
+    const result = appendFragmentsDeduped(target, [entryFrag("quality-ratings", "a")] as never);
+    expect(result).toBe(target);
+  });
+});
+
+describe("distinctCategoriesOf", () => {
+  const ids = sequentialIds("dc");
+  const entryFrag = (categoryId: string, entryId: string) => ({
+    id: ids(),
+    kind: "entry" as const,
+    displayName: entryId,
+    source: { polarity: "positive" as const, categoryId, entryId, revision: 1 },
+    sourceSnapshotRaw: entryId,
+    snapshotRaw: entryId,
+    weight: "",
+  });
+  const info = (fragment: { kind: string; source?: { categoryId: string } }) => {
+    if (fragment.kind !== "entry" || !fragment.source) return null;
+    const meta: Record<string, { displayName: string; order: number }> = {
+      "quality-ratings": { displayName: "品質與分級", order: 10 },
+      environment: { displayName: "場景與氛圍", order: 20 },
+    };
+    const found = meta[fragment.source.categoryId];
+    return found ? { key: fragment.source.categoryId, ...found } : null;
+  };
+
+  it("returns distinct categories ordered by order, literals last", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("environment", "rooftop"));
+    state = appendLiteralText(state, "custom", ids);
+    state = appendFragment(state, entryFrag("quality-ratings", "masterpiece"));
+    state = appendFragment(state, entryFrag("environment", "sunset"));
+
+    const categories = distinctCategoriesOf(state.fragments, info);
+    expect(categories.map((c) => c.key)).toEqual(["quality-ratings", "environment", LITERAL_GROUP_KEY]);
+    expect(categories[2].displayName).toBe("自訂文字");
+  });
+
+  it("omits the literal entry when there are no literals", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("quality-ratings", "a"));
+    const categories = distinctCategoriesOf(state.fragments, info);
+    expect(categories.map((c) => c.key)).toEqual(["quality-ratings"]);
   });
 });

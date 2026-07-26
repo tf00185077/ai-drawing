@@ -483,7 +483,7 @@ export interface FragmentGroup {
   fragments: WorkbenchFragment[];
 }
 
-const LITERAL_GROUP_KEY = "__literal__";
+export const LITERAL_GROUP_KEY = "__literal__";
 
 export function groupFragmentsByCategory(
   fragments: readonly WorkbenchFragment[],
@@ -509,4 +509,54 @@ export function groupFragmentsByCategory(
     });
   });
   return groups;
+}
+
+export function appendFragmentsDeduped(
+  target: CompositionState,
+  incoming: readonly WorkbenchFragment[],
+): CompositionState {
+  const seen = new Set<string>();
+  const refKey = (fragment: WorkbenchFragment) =>
+    fragment.kind === "entry" && fragment.source
+      ? `${fragment.source.polarity}/${fragment.source.categoryId}/${fragment.source.entryId}`
+      : null;
+  for (const fragment of target.fragments) {
+    const key = refKey(fragment);
+    if (key) seen.add(key);
+  }
+  const additions: WorkbenchFragment[] = [];
+  for (const fragment of incoming) {
+    const key = refKey(fragment);
+    if (key) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+    }
+    additions.push(fragment);
+  }
+  if (additions.length === 0) return target;
+  return rebuild([...target.fragments, ...additions]);
+}
+
+export function distinctCategoriesOf(
+  fragments: readonly WorkbenchFragment[],
+  categoryInfoOf: (
+    fragment: WorkbenchFragment,
+  ) => { key: string; displayName: string; order: number } | null,
+  literalLabel = "自訂文字",
+): { key: string; displayName: string; order: number }[] {
+  const byKey = new Map<string, { key: string; displayName: string; order: number }>();
+  let hasLiteral = false;
+  fragments.forEach((fragment) => {
+    const info = categoryInfoOf(fragment);
+    if (!info) {
+      hasLiteral = true;
+      return;
+    }
+    if (!byKey.has(info.key)) byKey.set(info.key, info);
+  });
+  const result = [...byKey.values()].sort((left, right) => left.order - right.order);
+  if (hasLiteral) {
+    result.push({ key: LITERAL_GROUP_KEY, displayName: literalLabel, order: Number.POSITIVE_INFINITY });
+  }
+  return result;
 }
