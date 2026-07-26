@@ -173,18 +173,18 @@ git commit -m "data(prompt-library): suffix model family onto quality-word name_
 - Consumes: 無。
 - Produces: 各 positive 分類 top-level `order` 為推薦值；改動的檔 `revision` +1。前端 Task 5 的 `rankOf` 靠這些 `order` 排序。
 
-推薦值（`quality-ratings` 維持 10，不改）：
+推薦值（`quality-ratings` 維持 10，不改；場景依研究移到後段）：
 
 | id | 新 order |
 |---|---|
-| environment | 20 |
-| body-appearance | 30 |
-| expressions | 40 |
-| poses | 50 |
-| actions-interactions | 60 |
-| clothing | 70 |
-| underwear | 80 |
-| accessories | 90 |
+| body-appearance | 20 |
+| clothing | 30 |
+| underwear | 40 |
+| accessories | 50 |
+| expressions | 60 |
+| poses | 70 |
+| actions-interactions | 80 |
+| environment | 90 |
 | camera-composition | 100 |
 | physical-effects | 110 |
 
@@ -195,14 +195,14 @@ git commit -m "data(prompt-library): suffix model family onto quality-word name_
 import json, io
 
 ORDERS = {
-    "environment": 20,
-    "body-appearance": 30,
-    "expressions": 40,
-    "poses": 50,
-    "actions-interactions": 60,
-    "clothing": 70,
-    "underwear": 80,
-    "accessories": 90,
+    "body-appearance": 20,
+    "clothing": 30,
+    "underwear": 40,
+    "accessories": 50,
+    "expressions": 60,
+    "poses": 70,
+    "actions-interactions": 80,
+    "environment": 90,
     "camera-composition": 100,
     "physical-effects": 110,
 }
@@ -234,8 +234,8 @@ Run:
 export PYTHONUTF8=1 PYTHONPATH=backend && python -c "
 import json, glob
 from app.core.prompt_library_models import PromptCategory
-expected = {'quality-ratings':10,'environment':20,'body-appearance':30,'expressions':40,'poses':50,
-            'actions-interactions':60,'clothing':70,'underwear':80,'accessories':90,
+expected = {'quality-ratings':10,'body-appearance':20,'clothing':30,'underwear':40,'accessories':50,
+            'expressions':60,'poses':70,'actions-interactions':80,'environment':90,
             'camera-composition':100,'physical-effects':110}
 got = {}
 for path in glob.glob('prompt_library/positive/*.json'):
@@ -1086,7 +1086,7 @@ Expected: 無輸出（無行尾空白/衝突標記）。
 ## 2026-07-26 Prompt Workbench 系列標註 · 推薦排序 · 分類分區
 
 - 品質與分級的品質詞 `name_zh` 補上家族後綴（Pony / Illustrious / NoobAI / Anima / SD1.5），台上可分辨同名品質詞屬哪個系列；分級詞本就有系列故不動。純資料變更，`name_zh` 非 snapshot，不影響任何已存組合的生圖。
-- positive 分類 `order` 調成「場景靠前」的推薦順序（品質→場景→人物身形→表情→姿勢→動作→服裝→內衣褲→配件→鏡頭構圖→身體效果），作為組裝排序依據。
+- positive 分類 `order` 依 Pony / Illustrious / Animagine 官方與主流指南調成推薦順序（品質→人物身形→服裝→內衣褲→配件→表情→姿勢→動作→場景→鏡頭構圖→身體效果），作為組裝排序依據；場景/背景依研究放後段。
 - Workbench 加入詞條/自由文字時，若該 polarity 為 `auto` 會依（分類 order → entry order → 加入序）自動排序；一旦手動上/下移即切 `manual` 不再自動重排，並提供「重新套用推薦排序」切回 auto。載入既有組合為 manual（尊重存檔順序），新建空白為 auto。
 - 最終文字卡片區改為依分類分組檢視（品質/場景/動作…各一區，literal 歸「自訂文字」），方便一眼看到各分類選了哪些；最終文字 textarea 仍是單一 raw 逗號字串，送 ComfyUI 的輸出逐字不變。後端 `PromptComposer` 與 API/schema 零改動。
 - 驗證：前端 vitest 全綠、`tsc --noEmit` 與 Vite build 通過；prompt library JSON 通過 Pydantic 嚴格 schema 驗證。
