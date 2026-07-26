@@ -982,9 +982,32 @@ describe("PromptWorkbench existing flows", () => {
     fireEvent.click(screen.getByRole("button", { name: "品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
 
-    expect(finalText).toHaveValue("  raw, (unfinished  ,zh current");
+    // The positive lane is still "auto" (no manual move/load happened yet), so the
+    // newly added catalog entry is auto-sorted ahead of the pre-existing free-text
+    // literals, which carry no category and therefore sort last.
+    expect(finalText).toHaveValue("zh current,  raw, (unfinished  ");
     expect(screen.getAllByLabelText("自訂文字 內容").map((node) => (node as HTMLTextAreaElement).value))
       .toEqual(["  raw", " (unfinished  "]);
     expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("zh current");
+  });
+
+  it("auto-sorts newly added entries by category order, even out of insertion order", async () => {
+    installFetch();
+    render(<PromptWorkbench />);
+    await ready();
+
+    // Add the "style" category's entry first (catalog order 20 — sorts later)...
+    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 id-only" }));
+
+    // ...then add the "quality" category's entry second (catalog order 10 — sorts earlier).
+    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
+
+    const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
+    // Despite being added second, the "quality" (order 10) entry sorts before the
+    // "style" (order 20) entry that was added first — proving auto-sort by category
+    // order, not insertion order.
+    expect((finalText as HTMLTextAreaElement).value).toBe("zh current,id-only");
   });
 });
