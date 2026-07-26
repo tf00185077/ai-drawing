@@ -7,6 +7,7 @@
 - Workbench 加入詞條/自由文字時，若該 polarity 為 `auto` 會依（分類 order → entry order → 加入序）自動排序；一旦手動上/下移即切 `manual` 不再自動重排，並提供「重新套用推薦排序」切回 auto。載入既有組合為 manual（尊重存檔順序），新建空白為 auto。
 - 最終文字卡片區改為依分類分組檢視（品質/場景/動作…各一區，literal 歸「自訂文字」），方便一眼看到各分類選了哪些；最終文字 textarea 仍是單一 raw 逗號字串，送 ComfyUI 的輸出逐字不變。後端 `PromptComposer` 與 API/schema 零改動。
 - 驗證：前端 vitest 全綠、`tsc --noEmit` 與 Vite build 通過；prompt library JSON 通過 Pydantic 嚴格 schema 驗證。
+- **Review fix（`feature/prompt-workbench-series-ordering`）**：分類分區改為「依全域片段順序走訪、分類 key 一變就開新區塊」的 contiguous-run 分組，取代先前「依分類桶裝再依 order 排序」的做法——manual 模式下卡片分區現在會跟 上移/下移／「第 N 段」所依賴的全域 index 同步；同一分類非相鄰出現時會拆成兩個區塊（此為預期行為，忠實反映真實順序）。auto 模式視覺不變。同步修正 `PromptComposerPanel.tsx` 的 React key（改用 `` `${group.key}-${groupIndex}` ``，因同一分類 key 現在可能出現在多個群組）、移除已死的 `categoryInfoOf ?? (() => null)` fallback，並在 `PromptWorkbench.tsx` 的 composite-rank 計算加註解說明 entry order 上限假設。更新 `compositionState.test.ts` 分組測試為新行為並新增鄰接合併測試。驗證：`compositionState.test.ts` 18 passed、`PromptComposerPanel.test.tsx` 7 passed、全套前端 137 passed、`tsc --noEmit` 通過、Vite build 通過。詳細報告見 `.superpowers/sdd/task-5-report.md`「Review fixes」段落。
 
 ## 2026-07-26 Prompt Library ASCII 逗號原子化與 migration-first 交付
 
