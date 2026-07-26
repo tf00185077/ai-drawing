@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PromptBlockingDocumentDiagnostic, PromptCombinationSummary, PromptEntryRef, PromptFragment, PromptPolarity, PromptProvenanceResolution, PromptVersionedCombination, PromptWarning } from "../../types/api";
-import { appendFragment, appendLiteralText, blankSegmentMessage, blankSegmentPreflight, buildLiteralLabelIndex, deserializeFragments, emptyComposition, materializeRawText, moveFragment, removeFragment, replaceDiagnosticFallback, resolveLiteralDisplayLabel, serializeFragments, setFragmentText, setFragmentWeight, tagDiagnosticFallback, type CompositionState, type LiteralLabelIndex } from "./compositionState";
+import { appendFragment, appendLiteralText, blankSegmentMessage, blankSegmentPreflight, buildLiteralLabelIndex, deserializeFragments, emptyComposition, materializeRawText, moveFragment, removeFragment, replaceDiagnosticFallback, resolveLiteralDisplayLabel, serializeFragments, setFragmentText, setFragmentWeight, sortFragmentsByRecommendation, tagDiagnosticFallback, type CompositionState, type LiteralLabelIndex, type WorkbenchFragment } from "./compositionState";
 import CombinationToolbar from "./CombinationToolbar";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { promptEntryContent, promptEntryLabel, type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
@@ -125,6 +125,12 @@ export default function PromptWorkbench() {
   const [entries, setEntries] = useState<BrowserEntry[]>([]);
   const [positive, setPositive] = useState<CompositionState>(emptyComposition);
   const [negative, setNegative] = useState<CompositionState>(emptyComposition);
+  const [arrangement, setArrangement] = useState<{ positive: "auto" | "manual"; negative: "auto" | "manual" }>({
+    positive: "auto",
+    negative: "auto",
+  });
+  const [categoryMeta, setCategoryMeta] = useState<Map<string, { order: number; nameZh: string }>>(new Map());
+  const entryOrderByRef = useRef<Map<string, number>>(new Map());
   const [document, setDocument] = useState<DocumentState>(blankDocument);
   const [selectedId, setSelectedId] = useState("");
   const [targetId, setTargetId] = useState("");
@@ -161,6 +167,11 @@ export default function PromptWorkbench() {
         setCategories(catalog.categories || []);
         setCombinations(catalog.combinations || []);
         setForms(descriptor.items || []);
+        const meta = new Map<string, { order: number; nameZh: string }>();
+        (catalog.categories || []).forEach((item) =>
+          meta.set(`${item.polarity}/${item.id}`, { order: item.order, nameZh: item.name_zh }),
+        );
+        setCategoryMeta(meta);
         const categoryResults = await Promise.allSettled(
           (catalog.categories || []).map((item) =>
             getPromptCategory(item.polarity, item.id),
@@ -190,6 +201,13 @@ export default function PromptWorkbench() {
             });
           });
           labelMap.current = labels;
+          const orders = new Map<string, number>();
+          categoryResults.forEach((result) => {
+            if (result.status !== "fulfilled") return;
+            const cat = result.value.category;
+            cat.entries.forEach((entry) => orders.set(`${cat.polarity}/${cat.id}/${entry.id}`, entry.order));
+          });
+          entryOrderByRef.current = orders;
         } else {
           literalLabelIndex.current = new Map();
         }
@@ -235,6 +253,29 @@ export default function PromptWorkbench() {
     sequence.current += 1;
     return `${prefix}-${sequence.current}`;
   }
+
+  const rankOf = useCallback(
+    (fragment: WorkbenchFragment): number => {
+      if (fragment.kind !== "entry" || !fragment.source) return Number.POSITIVE_INFINITY;
+      const catKey = `${fragment.source.polarity}/${fragment.source.categoryId}`;
+      const meta = categoryMeta.get(catKey);
+      if (!meta) return Number.POSITIVE_INFINITY;
+      const entryOrder = entryOrderByRef.current.get(`${catKey}/${fragment.source.entryId}`) ?? 10;
+      return meta.order * 100000 + entryOrder;
+    },
+    [categoryMeta],
+  );
+
+  const categoryInfoOf = useCallback(
+    (fragment: WorkbenchFragment) => {
+      if (fragment.kind !== "entry" || !fragment.source) return null;
+      const catKey = `${fragment.source.polarity}/${fragment.source.categoryId}`;
+      const meta = categoryMeta.get(catKey);
+      if (!meta) return null;
+      return { key: fragment.source.categoryId, displayName: meta.nameZh, order: meta.order };
+    },
+    [categoryMeta],
+  );
 
   function mutate(
     setter: React.Dispatch<React.SetStateAction<CompositionState>>,
@@ -290,11 +331,13 @@ export default function PromptWorkbench() {
       weight: "",
       userAddedSource: true,
     };
-    if (activePolarity === "positive") {
-      mutate(setPositive, (state) => appendFragment(state, item));
-    } else {
-      mutate(setNegative, (state) => appendFragment(state, item));
-    }
+    const setter = activePolarity === "positive" ? setPositive : setNegative;
+    mutate(setter, (state) => {
+      const appended = appendFragment(state, item);
+      return arrangement[activePolarity] === "auto"
+        ? sortFragmentsByRecommendation(appended, rankOf)
+        : appended;
+    });
   }
 
   function addLiteral(text: string) {
@@ -306,16 +349,18 @@ export default function PromptWorkbench() {
         (snapshot) =>
           resolveLiteralDisplayLabel(snapshot, literalLabelIndex.current),
       );
-    if (activePolarity === "positive") {
-      mutate(setPositive, append);
-    } else {
-      mutate(setNegative, append);
-    }
+    const setter = activePolarity === "positive" ? setPositive : setNegative;
+    mutate(setter, (state) => {
+      const appended = append(state);
+      return arrangement[activePolarity] === "auto"
+        ? sortFragmentsByRecommendation(appended, rankOf)
+        : appended;
+    });
   }
 
   const actions = (
+    polarity: PromptPolarity,
     setter: React.Dispatch<React.SetStateAction<CompositionState>>,
-    state: CompositionState,
   ) => ({
     onTextChange: (id: string, text: string) => mutate(setter, (current) =>
       setFragmentText(
@@ -326,7 +371,10 @@ export default function PromptWorkbench() {
         () => nextId("literal"),
       )),
     onWeightChange: (id: string, weight: string) => mutate(setter, (current) => setFragmentWeight(current, id, weight)),
-    onMove: (id: string, direction: -1 | 1) => mutate(setter, (current) => moveFragment(current, id, direction)),
+    onMove: (id: string, direction: -1 | 1) => {
+      mutate(setter, (current) => moveFragment(current, id, direction));
+      setArrangement((current) => ({ ...current, [polarity]: "manual" }));
+    },
     onRemove: (id: string) => mutate(setter, (current) => removeFragment(current, id)),
     onFinalTextChange: (text: string) => {
       setter((current) => materializeRawText(
@@ -336,6 +384,10 @@ export default function PromptWorkbench() {
         (snapshot) => resolveLiteralDisplayLabel(snapshot, literalLabelIndex.current),
       ));
       markDirty();
+    },
+    onReapplySort: () => {
+      mutate(setter, (current) => sortFragmentsByRecommendation(current, rankOf));
+      setArrangement((current) => ({ ...current, [polarity]: "auto" }));
     },
   });
 
@@ -362,6 +414,7 @@ export default function PromptWorkbench() {
     }
     setPositive(nextPositive);
     setNegative(nextNegative);
+    setArrangement({ positive: "manual", negative: "manual" });
     labelMap.current = labels;
     setDocument({
       id: saved.combination.id,
@@ -409,6 +462,7 @@ export default function PromptWorkbench() {
     setBusy(false);
     setPositive(emptyComposition());
     setNegative(emptyComposition());
+    setArrangement({ positive: "auto", negative: "auto" });
     setDocument(blankDocument());
     setSuccess("");
     setError("");
@@ -641,7 +695,15 @@ export default function PromptWorkbench() {
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
         <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
-        <PromptOverview positive={positive} negative={negative} positiveActions={actions(setPositive, positive)} negativeActions={actions(setNegative, negative)} />
+        <PromptOverview
+          positive={positive}
+          negative={negative}
+          positiveActions={actions("positive", setPositive)}
+          negativeActions={actions("negative", setNegative)}
+          positiveArrangement={arrangement.positive}
+          negativeArrangement={arrangement.negative}
+          categoryInfoOf={categoryInfoOf}
+        />
       </div>
       <GenerationPanel forms={forms} positivePrompt={positive.text} negativePrompt={negative.text} preflight={runBlankPreflight} />
     </div>
