@@ -73,7 +73,53 @@ describe("PromptEntryBrowser read-only source catalog", () => {
 
   it("flags entries whose name_zh has no meaningful Chinese", () => {
     renderBrowser();
-    expect(screen.getByLabelText("best quality 中文對照可能未填好")).toBeInTheDocument();
-    expect(screen.queryByLabelText("傑作 中文對照可能未填好")).not.toBeInTheDocument();
+    const suspectWarningTitle = "name_zh 可能沒有有意義的中文對照，建議編輯修正";
+    const suspectChip = screen.getByRole("button", { name: "加入 best quality" });
+    expect(suspectChip.querySelector(`[title="${suspectWarningTitle}"]`)).toBeInTheDocument();
+    const okChip = screen.getByRole("button", { name: "加入 傑作" });
+    expect(okChip.querySelector(`[title="${suspectWarningTitle}"]`)).not.toBeInTheDocument();
+  });
+
+  it("renders entries as content-width chips with prompt in the title and fires onAddEntry", () => {
+    const onAddEntry = vi.fn();
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={[{ id: "e1", name_zh: "傑作", prompt: "masterpiece", description_zh: "d", aliases: [], keywords: [], order: 10, revision: 1, archived: false }]}
+        onOpenCategory={() => {}}
+        onAddEntry={onAddEntry}
+        onAddLiteral={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: "加入 傑作" });
+    expect(chip).toHaveAttribute("title", "masterpiece");
+    fireEvent.click(chip);
+    expect(onAddEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it("paginates at 30 entries per page", () => {
+    const entries = Array.from({ length: 31 }, (_, index) => ({
+      id: `e${index}`, name_zh: `詞${index}`, prompt: `p${index}`, description_zh: "d",
+      aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+    }));
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={entries}
+        onOpenCategory={() => {}}
+        onAddEntry={() => {}}
+        onAddLiteral={() => {}}
+      />,
+    );
+    // 30 chips on page 1, pagination present
+    expect(screen.getAllByRole("button", { name: /^加入 / })).toHaveLength(30);
+    fireEvent.click(screen.getByLabelText("下一頁"));
+    expect(screen.getAllByRole("button", { name: /^加入 / })).toHaveLength(1);
   });
 });
