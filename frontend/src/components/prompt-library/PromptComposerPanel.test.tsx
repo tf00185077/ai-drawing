@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appendFragment, emptyComposition, materializeRawText, type CompositionState } from "./compositionState";
 import PromptComposerPanel from "./PromptComposerPanel";
@@ -273,6 +273,86 @@ describe("PromptComposerPanel", () => {
     expect(screen.getAllByLabelText(/ 內容$/)).toHaveLength(9);
     fireEvent.click(screen.getByLabelText("Positive Prompt 分頁").querySelector('[aria-label="下一頁"]')!);
     expect(screen.getAllByLabelText(/ 內容$/)).toHaveLength(1);
+  });
+
+  it("resets to page 1 when the filter changes", () => {
+    let state = emptyComposition();
+    for (let index = 1; index <= 10; index += 1) {
+      state = appendFragment(state, {
+        id: `entry-${index}`,
+        kind: "entry",
+        displayName: `entry ${index}`,
+        source: { polarity: "positive", categoryId: "quality-ratings", entryId: `entry-${index}` },
+        sourceSnapshotRaw: `entry ${index}`,
+        snapshotRaw: `entry ${index}`,
+        weight: "",
+      });
+    }
+    const categoryInfoOf = (fragment: { source?: { categoryId: string } }) =>
+      fragment.source ? { key: fragment.source.categoryId, displayName: "品質與分級", order: 10 } : null;
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="manual"
+        categoryInfoOf={categoryInfoOf as never}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+
+    const nav = screen.getByLabelText("Positive Prompt 分頁");
+    fireEvent.click(nav.querySelector('[aria-label="下一頁"]')!);
+    expect(screen.getByText("2 / 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "品質與分級" }));
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+  });
+
+  it("navigates to the correct page on a focus event even when a filter is active", () => {
+    let state = emptyComposition();
+    for (let index = 1; index <= 10; index += 1) {
+      state = appendFragment(state, {
+        id: `entry-${index}`,
+        kind: "entry",
+        displayName: `entry ${index}`,
+        source: { polarity: "positive", categoryId: "quality-ratings", entryId: `entry-${index}` },
+        sourceSnapshotRaw: `entry ${index}`,
+        snapshotRaw: `entry ${index}`,
+        weight: "",
+      });
+    }
+    const categoryInfoOf = (fragment: { source?: { categoryId: string } }) =>
+      fragment.source ? { key: fragment.source.categoryId, displayName: "品質與分級", order: 10 } : null;
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="manual"
+        categoryInfoOf={categoryInfoOf as never}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "品質與分級" }));
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent("prompt-workbench-focus", { detail: { polarity: "positive", position: 10 } }),
+      );
+    });
+
+    expect(document.querySelector('textarea[data-segment-position="10"]')).not.toBeNull();
+    expect(screen.getByRole("button", { name: "全部" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("fires onReapplySort when the button is clicked", () => {
