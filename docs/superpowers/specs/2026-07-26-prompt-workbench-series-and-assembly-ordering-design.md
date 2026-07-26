@@ -11,7 +11,7 @@ Prompt Workbench（`frontend/src/components/prompt-library/`）目前有兩個�
 
 2. **組裝順序全靠手動、最終文字要逐段看**。台上每個 polarity 是一串扁平片段，順序＝加入順序，只能用「上移／下移」手動調（[PromptComposerPanel.tsx](../../../frontend/src/components/prompt-library/PromptComposerPanel.tsx)）。後端 [`PromptComposer`](../../../backend/app/core/prompt_composer.py) 完全照前端送來的 `order` 排、再 `_renumber`，不套用任何推薦排序。最終文字是單一 textarea，沒有分類分區，要一段一段看才知道各類選了什麼。
 
-Prompt 組裝有經驗法則（場景靠前、品質詞在最前……），使用者希望「組裝好的 prompt 本身就照推薦規則排好，除非手動調整」，並希望能一眼看到每個分類各選了哪些。
+Prompt 組裝有經驗法則（品質詞在前、主體/外觀早段、場景/背景後段……，詳見排序依據），使用者希望「組裝好的 prompt 本身就照推薦規則排好，除非手動調整」，並希望能一眼看到每個分類各選了哪些。
 
 ## 設計原則
 
@@ -63,21 +63,23 @@ Prompt 組裝有經驗法則（場景靠前、品質詞在最前……），使�
 
 ### 推薦分類順序（調整 `order` 值）
 
-為落實「場景靠前」，把 positive 分類 `order` 調成下列順序（實作時給定明確整數，間距 10 以利日後插入）：
+依 Pony / Illustrious / Animagine 官方與主流社群指南（見文末參考），把 positive 分類 `order` 調成下列順序（實作時給定明確整數，間距 10 以利日後插入）。三系列一致：主體/外觀最前段（品質之後）、場景/背景放後段、光影效果殿後。
 
-| 順位 | 分類 | id | 現在 order | 新 order |
-|---|---|---|---|---|
-| 1 | 品質與分級 | quality-ratings | 10 | 10 |
-| 2 | 場景與氛圍 | environment | 240 | 20 |
-| 3 | 人物與身形 | body-appearance | 200 | 30 |
-| 4 | 表情 | expressions | 280 | 40 |
-| 5 | 姿勢與體位 | poses | 260 | 50 |
-| 6 | 動作與互動 | actions-interactions | 270 | 60 |
-| 7 | 服裝 | clothing | 210 | 70 |
-| 8 | 內衣褲 | underwear | 220 | 80 |
-| 9 | 配件 | accessories | 230 | 90 |
-| 10 | 鏡頭與構圖 | camera-composition | 250 | 100 |
-| 11 | 身體效果 | physical-effects | 290 | 110 |
+| 順位 | 分類 | id | 現在 order | 新 order | 依據 |
+|---|---|---|---|---|---|
+| 1 | 品質與分級 | quality-ratings | 10 | 10 | Pony 必須前置＋社群多數前置；純 Animagine 想放最後可手動下移 |
+| 2 | 人物與身形 | body-appearance | 200 | 20 | 主體/外觀最前段（三系列一致） |
+| 3 | 服裝 | clothing | 210 | 30 | 外觀後接服裝 |
+| 4 | 內衣褲 | underwear | 220 | 40 | 同上 |
+| 5 | 配件 | accessories | 230 | 50 | 同上 |
+| 6 | 表情 | expressions | 280 | 60 | 角色狀態中段 |
+| 7 | 姿勢與體位 | poses | 260 | 70 | 中段 |
+| 8 | 動作與互動 | actions-interactions | 270 | 80 | 中段 |
+| 9 | 場景與氛圍 | environment | 240 | 90 | 場景/背景放後段（研究一致，非靠前） |
+| 10 | 鏡頭與構圖 | camera-composition | 250 | 100 | Illustrious 構圖與背景同段偏後 |
+| 11 | 身體效果 | physical-effects | 290 | 110 | 光影/效果殿後 |
+
+「特定主題靠前」不設預設，交由使用者手動調整（見手動優先）。
 
 （negative 只有 `base-negative`，順序無意義，不動。）
 
@@ -192,3 +194,13 @@ PromptComposerPanel (依 categoryNameByRef 把 fragments 分組渲染；
 ## 未決／待實作時確認
 
 - 各分類新 `order` 整數值以上表為準；若使用者另有「特定主題靠前」清單，於實作前併入。
+
+## 排序參考來源
+
+推薦順序綜合下列各系列官方與主流指南（2026-07 查證）：
+
+- Pony Diffusion：[Stable Diffusion Art — Pony prompt tags](https://stable-diffusion-art.com/pony-diffusion-prompt-tags/)、[anakin.ai Pony prompt guide](http://anakin.ai/blog/pony-diffusion-prompt-guide/)（score/rating 前置；場景/背景靠後）。
+- Illustrious / Animagine：[kazumu 順序專文](https://note.com/kazumu/n/n6390a899bdce?hl=en)、[Animagine XL 4.0 官方優化指南](https://cagliostrolab.net/posts/optimizing-animagine-xl-40-in-depth-guideline-and-update)（主體→角色→rating→容姿→服裝/構圖/背景→品質；品質可置後）。
+- NoobAI / Illustrious 社群：[SeaArt Illustrious 指南](https://www.seaart.ai/articleDetail/d182mq5e878c73cnnbo0)、[SeaArt NoobAI 指南](https://docs.seaart.ai/guide-1/6-permanent-events/high-quality-models-recommendation/noobai-xl)（主體/外觀早段、品質詞多前置）。
+
+分歧點：品質詞前置（Pony／社群）vs 置後（Illustrious／Animagine 官方最新）。本設計預設前置（最不易因 77 token 截斷被切、且 Pony 硬性要求），需置後時由使用者手動下移「品質與分級」整組。
