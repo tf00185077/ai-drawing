@@ -148,7 +148,7 @@ describe("PromptComposerPanel", () => {
     expect(screen.queryByText(/片段\s*\d+/)).not.toBeInTheDocument();
   });
 
-  it("groups cards by category heading and keeps final text unchanged", () => {
+  it("shows each fragment's category label on its card and keeps final text unchanged", () => {
     let state = emptyComposition();
     state = appendFragment(state, {
       id: "entry-quality",
@@ -190,11 +190,89 @@ describe("PromptComposerPanel", () => {
         onRemove={() => {}}
       />,
     );
-    expect(screen.getByText("品質與分級")).toBeInTheDocument();
-    expect(screen.getByText("場景與氛圍")).toBeInTheDocument();
+    // each label appears twice: once as a filter chip, once as the per-card category badge.
+    expect(screen.getAllByText("品質與分級")).toHaveLength(2);
+    expect(screen.getAllByText("場景與氛圍")).toHaveLength(2);
     expect((screen.getByLabelText("Positive Prompt 最終文字") as HTMLTextAreaElement).value).toBe(
       "masterpiece,rooftop",
     );
+  });
+
+  it("shows a category filter that narrows the visible cards and keeps final text unchanged", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, {
+      id: "entry-quality",
+      kind: "entry",
+      displayName: "傑作",
+      source: { polarity: "positive", categoryId: "quality-ratings", entryId: "masterpiece" },
+      sourceSnapshotRaw: "masterpiece",
+      snapshotRaw: "masterpiece",
+      weight: "",
+    });
+    state = appendFragment(state, {
+      id: "entry-environment",
+      kind: "entry",
+      displayName: "rooftop",
+      source: { polarity: "positive", categoryId: "environment", entryId: "rooftop" },
+      sourceSnapshotRaw: "rooftop",
+      snapshotRaw: "rooftop",
+      weight: "",
+    });
+    const info = (fragment: { source?: { categoryId: string } }) => {
+      const meta: Record<string, { displayName: string; order: number }> = {
+        "quality-ratings": { displayName: "品質與分級", order: 10 },
+        environment: { displayName: "場景與氛圍", order: 20 },
+      };
+      const found = fragment.source ? meta[fragment.source.categoryId] : undefined;
+      return found ? { key: fragment.source!.categoryId, ...found } : null;
+    };
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="auto"
+        categoryInfoOf={info as never}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+    // filter chips present; category labels shown on cards
+    expect(screen.getByRole("button", { name: "全部" })).toBeInTheDocument();
+    const envFilter = screen.getByRole("button", { name: "場景與氛圍" });
+    // clicking a filter shows only that category's card content
+    fireEvent.click(envFilter);
+    expect(screen.getByLabelText("rooftop 內容")).toBeInTheDocument();
+    expect(screen.queryByLabelText("傑作 內容")).not.toBeInTheDocument();
+    // final text is untouched by filtering
+    expect((screen.getByLabelText("Positive Prompt 最終文字") as HTMLTextAreaElement).value).toBe(
+      "masterpiece,rooftop",
+    );
+  });
+
+  it("paginates selected cards at 9 per page", () => {
+    const state = fragments(10);
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="manual"
+        categoryInfoOf={() => null}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+    // 9 content textareas on page 1
+    expect(screen.getAllByLabelText(/ 內容$/)).toHaveLength(9);
+    fireEvent.click(screen.getByLabelText("Positive Prompt 分頁").querySelector('[aria-label="下一頁"]')!);
+    expect(screen.getAllByLabelText(/ 內容$/)).toHaveLength(1);
   });
 
   it("fires onReapplySort when the button is clicked", () => {
