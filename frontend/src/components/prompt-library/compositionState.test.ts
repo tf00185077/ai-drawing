@@ -12,6 +12,8 @@ import {
   removeFragment,
   resolveLiteralDisplayLabel,
   serializeFragments,
+  sortFragmentsByRecommendation,
+  groupFragmentsByCategory,
   setFragmentText,
   setFragmentWeight,
   type ApiPromptFragment,
@@ -365,5 +367,91 @@ describe("comma-atomic compositionState", () => {
     const second = materializeRawText(first, "second", ids);
     expect(second.fragments[0].id).toBe(first.fragments[0].id);
     expect(ids).toHaveBeenCalledOnce();
+  });
+});
+
+describe("sortFragmentsByRecommendation", () => {
+  const ids = sequentialIds("s");
+  const entryFrag = (categoryId: string, entryId: string) => ({
+    id: ids(),
+    kind: "entry" as const,
+    displayName: entryId,
+    source: { polarity: "positive" as const, categoryId, entryId, revision: 1 },
+    sourceSnapshotRaw: entryId,
+    snapshotRaw: entryId,
+    weight: "",
+  });
+
+  // 分類 rank：environment=20, quality=10；entry order 忽略時同 rank
+  const rankOf = (fragment: { kind: string; source?: { categoryId: string } }): number => {
+    if (fragment.kind !== "entry" || !fragment.source) return Number.POSITIVE_INFINITY;
+    return { "quality-ratings": 10, environment: 20, actions: 60 }[fragment.source.categoryId] ?? Infinity;
+  };
+
+  it("sorts entries by category rank and pushes literals last, stably", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("actions", "hug"));
+    state = appendLiteralText(state, "custom tag", ids);
+    state = appendFragment(state, entryFrag("quality-ratings", "masterpiece"));
+    state = appendFragment(state, entryFrag("environment", "rooftop"));
+
+    const sorted = sortFragmentsByRecommendation(state, rankOf);
+
+    expect(sorted.fragments.map((fragment) => fragment.snapshotRaw)).toEqual([
+      "masterpiece",
+      "rooftop",
+      "hug",
+      "custom tag",
+    ]);
+    // 輸出字串仍是逗號串接、與片段順序一致
+    expect(sorted.text).toBe("masterpiece,rooftop,hug,custom tag");
+  });
+
+  it("keeps original order among same-rank fragments (stable)", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("actions", "first"));
+    state = appendFragment(state, entryFrag("actions", "second"));
+    const sorted = sortFragmentsByRecommendation(state, rankOf);
+    expect(sorted.fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["first", "second"]);
+  });
+});
+
+describe("groupFragmentsByCategory", () => {
+  const ids = sequentialIds("g");
+  const entryFrag = (categoryId: string, entryId: string) => ({
+    id: ids(),
+    kind: "entry" as const,
+    displayName: entryId,
+    source: { polarity: "positive" as const, categoryId, entryId, revision: 1 },
+    sourceSnapshotRaw: entryId,
+    snapshotRaw: entryId,
+    weight: "",
+  });
+  const info = (fragment: { kind: string; source?: { categoryId: string } }) => {
+    if (fragment.kind !== "entry" || !fragment.source) return null;
+    const meta: Record<string, { displayName: string; order: number }> = {
+      "quality-ratings": { displayName: "品質與分級", order: 10 },
+      environment: { displayName: "場景與氛圍", order: 20 },
+    };
+    const found = meta[fragment.source.categoryId];
+    return found ? { key: fragment.source.categoryId, ...found } : null;
+  };
+
+  it("groups by category ordered by rank, literals into 自訂文字 last", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, entryFrag("environment", "rooftop"));
+    state = appendLiteralText(state, "custom", ids);
+    state = appendFragment(state, entryFrag("quality-ratings", "masterpiece"));
+    state = appendFragment(state, entryFrag("environment", "sunset"));
+
+    const groups = groupFragmentsByCategory(state.fragments, info);
+
+    expect(groups.map((group) => group.displayName)).toEqual([
+      "品質與分級",
+      "場景與氛圍",
+      "自訂文字",
+    ]);
+    expect(groups[1].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["rooftop", "sunset"]);
+    expect(groups[2].key).toBe("__literal__");
   });
 });
