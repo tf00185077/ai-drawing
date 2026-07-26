@@ -122,4 +122,34 @@ describe("PromptEntryBrowser read-only source catalog", () => {
     fireEvent.click(screen.getByLabelText("下一頁"));
     expect(screen.getAllByRole("button", { name: /^加入 / })).toHaveLength(1);
   });
+
+  it("resets to the first page when the search query changes", () => {
+    // 62 entries -> 3 pages initially; the first 32 carry a "keep" marker so that
+    // filtering to "keep" still yields 2 pages, keeping the pagination nav visible
+    // (a query that narrowed results to <=30 matches would hide the nav entirely).
+    const entries = Array.from({ length: 62 }, (_, index) => ({
+      id: `e${index}`,
+      name_zh: index < 32 ? `詞${index}keep` : `詞${index}`,
+      prompt: `p${index}`,
+      description_zh: "d",
+      aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+    }));
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={entries}
+        onOpenCategory={() => {}}
+        onAddEntry={() => {}}
+        onAddLiteral={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("下一頁"));
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "keep" } });
+    // query narrows results to 32 matches (2 pages) and page snaps back to page 1
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
+  });
 });
