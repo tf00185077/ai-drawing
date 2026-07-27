@@ -1093,16 +1093,19 @@ describe("PromptWorkbench existing flows", () => {
 
   it("auto-sorts nested-category entries by ancestor-path order", async () => {
     // A nested catalog: "quality" (root, order 10) alongside a "chars" root
-    // (order 15) that has a child "chars-2nd" (order 30, parent_id "chars").
-    // "chars-2nd" only inherits its root's order (15), which is still less than
-    // "quality" would be if compared by the child's own order (30) alone — so
-    // this proves ancestor-path aggregation, not flat per-category order.
+    // (order 20) that has a child "chars-2nd" (own order 5, parent_id "chars").
+    // The child's own order (5) is deliberately BELOW quality's (10) while its
+    // root "chars" order (20) is ABOVE quality's — this makes the two hypotheses
+    // diverge: correct ancestor-path aggregation ranks "chars-2nd" by its root's
+    // order (20), sorting it AFTER "quality"; a buggy leaf-own-order-only
+    // implementation would rank it by its own order (5), sorting it BEFORE
+    // "quality" instead. Only ancestor-path aggregation satisfies the assertion.
     const nestedCatalog = {
       manifest: catalog.manifest,
       categories: [
         { id: "quality", polarity: "positive", name_zh: "quality", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 1, etag: "nq1", parent_id: null },
-        { id: "chars", polarity: "positive", name_zh: "chars", description_zh: "", aliases: [], keywords: [], order: 15, revision: 1, archived: false, entry_count: 0, etag: "nc1", parent_id: null },
-        { id: "chars-2nd", polarity: "positive", name_zh: "chars2nd", description_zh: "", aliases: [], keywords: [], order: 30, revision: 1, archived: false, entry_count: 1, etag: "nc2", parent_id: "chars" },
+        { id: "chars", polarity: "positive", name_zh: "chars", description_zh: "", aliases: [], keywords: [], order: 20, revision: 1, archived: false, entry_count: 0, etag: "nc1", parent_id: null },
+        { id: "chars-2nd", polarity: "positive", name_zh: "chars2nd", description_zh: "", aliases: [], keywords: [], order: 5, revision: 1, archived: false, entry_count: 1, etag: "nc2", parent_id: "chars" },
       ],
       combinations: [],
       diagnostics: [],
@@ -1133,7 +1136,7 @@ describe("PromptWorkbench existing flows", () => {
     render(<PromptWorkbench />);
     await screen.findByText("Prompt Workbench");
 
-    // Add the deep "chars-2nd" entry (root "chars", order 15) first...
+    // Add the deep "chars-2nd" entry (own order 5, root "chars" order 20) first...
     fireEvent.click(screen.getByRole("button", { name: "chars2nd" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 honoka" }));
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("honoka");
@@ -1144,8 +1147,10 @@ describe("PromptWorkbench existing flows", () => {
 
     const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
     // Despite being added second, "masterpiece" (root order 10) sorts ahead of
-    // "honoka" (root order 15, via its "chars-2nd" child) — proving the auto lane
-    // ranks by each entry's full ancestor-path order, not just its own category's.
+    // "honoka" (root "chars" order 20, via its "chars-2nd" child) — proving the
+    // auto lane ranks by each entry's full ancestor-path order. If a regression
+    // ranked by the leaf's own order (5) instead, "honoka" would sort BEFORE
+    // "masterpiece" and this assertion would fail.
     await waitFor(() => expect((finalText as HTMLTextAreaElement).value).toBe("masterpiece,honoka"));
   });
 });
