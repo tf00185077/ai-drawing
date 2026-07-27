@@ -232,6 +232,7 @@ class FilePromptLibraryProvider:
             archived=category.archived,
             entry_count=len(category.entries),
             etag=document.etag,
+            parent_id=category.parent_id,
         )
 
     @staticmethod

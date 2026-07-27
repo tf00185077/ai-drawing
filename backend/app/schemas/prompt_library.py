@@ -53,6 +53,7 @@ class CategorySummary(StrictModel):
     archived: bool
     entry_count: int
     etag: str
+    parent_id: Slug | None = None
 
 
 class CombinationSummary(StrictModel):
@@ -107,6 +108,7 @@ class CategoryWriteRequest(ConcurrencyToken):
     aliases: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
     order: int = Field(default=10, ge=0)
+    parent_id: Slug | None = None
 
 
 class EntryWriteRequest(CategoryWriteRequest):
