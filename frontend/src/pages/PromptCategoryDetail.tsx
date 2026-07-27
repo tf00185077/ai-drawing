@@ -3,12 +3,14 @@ import { Link, useParams } from "react-router-dom";
 import PromptEntryEditor, { type EntryEditorValue } from "../components/prompt-library/PromptEntryEditor";
 import {
   archivePromptResource,
+  getPromptCatalog,
   getPromptCategory,
   putPromptCategory,
   putPromptEntry,
   restorePromptResource,
 } from "../components/prompt-library/promptLibraryApi";
-import type { PromptCategory, PromptEntry, PromptPolarity, PromptVersionedCategory } from "../types/api";
+import { ancestorChain, descendantIds, orderedCategoryRows } from "../components/prompt-library/categoryTree";
+import type { PromptCategory, PromptCategorySummary, PromptEntry, PromptPolarity, PromptVersionedCategory } from "../types/api";
 
 function isPromptPolarity(value: string | undefined): value is PromptPolarity {
   return value === "positive" || value === "negative";
@@ -16,7 +18,7 @@ function isPromptPolarity(value: string | undefined): value is PromptPolarity {
 function commaSeparated(value: string): string[] {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
-type CategoryDraft = Pick<PromptCategory, "name_zh" | "description_zh"> & { aliases: string; keywords: string; order: string };
+type CategoryDraft = Pick<PromptCategory, "name_zh" | "description_zh"> & { aliases: string; keywords: string; order: string; parentId: string };
 type OpenEditor = { mode: "create" } | { mode: "edit"; entry: PromptEntry };
 const fieldClass = "mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-200 disabled:opacity-50";
 const actionClass = "rounded-lg px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40";
@@ -28,6 +30,7 @@ function draftFrom(category: PromptCategory): CategoryDraft {
     aliases: category.aliases.join(", "),
     keywords: category.keywords.join(", "),
     order: String(category.order),
+    parentId: category.parent_id ?? "",
   };
 }
 
@@ -43,8 +46,15 @@ export default function PromptCategoryDetail() {
   const [retryGeneration, setRetryGeneration] = useState(0);
   const [entryFilter, setEntryFilter] = useState<"active" | "archived">("active");
   const [editor, setEditor] = useState<OpenEditor | null>(null);
+  const [categories, setCategories] = useState<PromptCategorySummary[]>([]);
   const requestGeneration = useRef(0);
   const operationGeneration = useRef(0);
+
+  useEffect(() => {
+    let active = true;
+    void getPromptCatalog().then((data) => { if (active) setCategories(data.categories ?? []); }).catch(() => {});
+    return () => { active = false; };
+  }, [retryGeneration]);
 
   useEffect(() => {
     operationGeneration.current += 1;
@@ -146,6 +156,7 @@ export default function PromptCategoryDetail() {
       aliases: commaSeparated(categoryDraft!.aliases),
       keywords: commaSeparated(categoryDraft!.keywords),
       order,
+      parent_id: categoryDraft!.parentId ? categoryDraft!.parentId : null,
       ...token,
     }));
   }
@@ -178,11 +189,45 @@ export default function PromptCategoryDetail() {
       {notice && <div role="status" className="mt-4 rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3 text-emerald-200">{notice}</div>}
       <header className="mt-4 rounded-xl border border-slate-700 bg-slate-900/60 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm text-emerald-400">{details.polarity === "positive" ? "正向分類" : "負向分類"}</p><h1 className="mt-1 text-2xl font-bold text-white">{details.name_zh}</h1></div><div className="flex gap-2 text-xs"><span className="rounded bg-slate-700 px-2 py-1 text-slate-200">Revision {details.revision}</span><span className={`rounded px-2 py-1 ${details.archived ? "bg-amber-700 text-amber-100" : "bg-emerald-700 text-emerald-100"}`}>{details.archived ? "已封存" : "使用中"}</span></div></div>
+        {categories.length > 0 && (
+          <nav aria-label="分類路徑" className="mt-2 text-xs text-slate-400">
+            {ancestorChain(categories.filter((c) => c.polarity === details.polarity), details.id)
+              .map((node) => node.name_zh)
+              .join(" › ")}
+          </nav>
+        )}
       </header>
 
       <section aria-label="分類資料編輯" className="mt-5 rounded-xl border border-slate-700 bg-slate-900/60 p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="分類 ID"><input aria-label="分類 ID" readOnly value={details.id} className={fieldClass} /></Field>
+          <Field label="父分類">
+            <select
+              aria-label="父分類"
+              disabled={busy}
+              value={categoryDraft.parentId}
+              onChange={(event) => setCategoryDraft({ ...categoryDraft, parentId: event.target.value })}
+              className={fieldClass}
+            >
+              <option value="">（無，作為頂層）</option>
+              {orderedCategoryRows(
+                categories.filter(
+                  (item) =>
+                    item.polarity === currentPolarity &&
+                    !item.archived &&
+                    item.id !== currentCategoryId &&
+                    !descendantIds(
+                      categories.filter((c) => c.polarity === currentPolarity),
+                      currentCategoryId,
+                    ).has(item.id),
+                ),
+              ).map(({ category: option, depth }) => (
+                <option key={option.id} value={option.id}>
+                  {`${"　".repeat(depth)}${option.name_zh}`}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="中文名稱"><input aria-label="分類中文名稱" disabled={busy} value={categoryDraft.name_zh} onChange={(event) => setCategoryDraft({ ...categoryDraft, name_zh: event.target.value })} className={fieldClass} /></Field>
           <Field label="說明"><input aria-label="分類說明" disabled={busy} value={categoryDraft.description_zh} onChange={(event) => setCategoryDraft({ ...categoryDraft, description_zh: event.target.value })} className={fieldClass} /></Field>
           <Field label="別名（逗號分隔）"><input aria-label="分類別名" disabled={busy} value={categoryDraft.aliases} onChange={(event) => setCategoryDraft({ ...categoryDraft, aliases: event.target.value })} className={fieldClass} /></Field>
