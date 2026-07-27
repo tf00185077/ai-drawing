@@ -47,7 +47,7 @@ describe("CombinationToolbar", () => {
     render(<CombinationToolbar {...callbacks} />);
 
     fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "other" } });
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "新組合" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
@@ -65,7 +65,7 @@ describe("CombinationToolbar", () => {
     render(<CombinationToolbar {...props({ document: { id: null, revision: null, repaired: false, dirty: true }, busy: true })} />);
 
     expect(screen.getByText("尚未儲存")).toBeVisible();
-    for (const name of ["載入組合", "建立空白組合", "更新目前組合", "另存新組合"]) {
+    for (const name of ["加入組合", "建立空白組合", "更新目前組合", "另存新組合"]) {
       expect(screen.getByRole("button", { name })).toBeDisabled();
     }
   });
@@ -73,7 +73,7 @@ describe("CombinationToolbar", () => {
   it("requires a selected combination for load and a target ID for unsaved saves", () => {
     render(<CombinationToolbar {...props({ selectedId: "", targetId: "", document: { id: null, revision: null, repaired: false, dirty: false } })} />);
 
-    expect(screen.getByRole("button", { name: "載入組合" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "加入組合" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "更新目前組合" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "另存新組合" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "建立空白組合" })).toBeEnabled();
