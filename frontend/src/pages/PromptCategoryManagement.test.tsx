@@ -51,6 +51,12 @@ function fillRequiredFields(id = "street-scenes") {
   fireEvent.change(screen.getByLabelText(/分類說明/), { target: { value: "都市道路場景" } });
 }
 
+// 「現有分類」清單以外，新增表單的父分類 <select> 也會渲染分類名稱作為選項文字；
+// 用 within 侷限查詢範圍，避免與 select 的 option 文字撞名。
+function categoryList() {
+  return within(screen.getByRole("region", { name: "現有分類" }));
+}
+
 afterEach(() => vi.clearAllMocks());
 
 describe("PromptCategoryManagement", () => {
@@ -74,7 +80,7 @@ describe("PromptCategoryManagement", () => {
   it("rejects an invalid slug without a PUT", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     renderPage();
-    await screen.findByText("品質");
+    await categoryList().findByText("品質");
     fillRequiredFields("Street Scene");
     fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("分類 ID 只能使用小寫英文字母");
@@ -84,7 +90,7 @@ describe("PromptCategoryManagement", () => {
   it("rejects blank category order without a PUT", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     renderPage();
-    await screen.findByText("品質");
+    await categoryList().findByText("品質");
     fillRequiredFields();
     fireEvent.change(screen.getByLabelText(/排序/), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
@@ -109,11 +115,11 @@ describe("PromptCategoryManagement", () => {
     await act(async () => {
       followUp.resolve({ ...catalog, categories: [created] });
     });
-    expect(screen.getByText("街景")).toBeVisible();
+    expect(categoryList().getByText("街景")).toBeVisible();
     await act(async () => {
       initial.resolve({ ...catalog, categories: [] });
     });
-    expect(screen.getByText("街景")).toBeVisible();
+    expect(categoryList().getByText("街景")).toBeVisible();
   });
 
   it("keeps newest refresh loading and error ownership against an older rejection", async () => {
@@ -132,7 +138,7 @@ describe("PromptCategoryManagement", () => {
     await act(async () => {
       newest.resolve(catalog);
     });
-    expect(screen.getByText("品質")).toBeVisible();
+    expect(categoryList().getByText("品質")).toBeVisible();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -140,7 +146,7 @@ describe("PromptCategoryManagement", () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     vi.mocked(putPromptCategory).mockRejectedValue(new Error("分類已存在（重新載入後使用最新revision）"));
     renderPage();
-    await screen.findByText("品質");
+    await categoryList().findByText("品質");
     fillRequiredFields();
     fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("分類已存在（重新載入後使用最新revision）");
@@ -149,21 +155,21 @@ describe("PromptCategoryManagement", () => {
   it("filters cards by positive and negative polarity", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     renderPage();
-    expect(await screen.findByText("品質")).toBeVisible();
-    expect(screen.queryByText("不良結構")).not.toBeInTheDocument();
-    fireEvent.click(within(screen.getByRole("region", { name: "現有分類" })).getByRole("button", { name: "負向" }));
-    expect(screen.getByText("不良結構")).toBeVisible();
-    expect(screen.queryByText("品質")).not.toBeInTheDocument();
+    expect(await categoryList().findByText("品質")).toBeVisible();
+    expect(categoryList().queryByText("不良結構")).not.toBeInTheDocument();
+    fireEvent.click(categoryList().getByRole("button", { name: "負向" }));
+    expect(categoryList().getByText("不良結構")).toBeVisible();
+    expect(categoryList().queryByText("品質")).not.toBeInTheDocument();
   });
 
   it("filters cards by active and archived state and labels archived cards", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValue(catalog);
     renderPage();
-    await screen.findByText("品質");
+    await categoryList().findByText("品質");
     fireEvent.click(screen.getByRole("button", { name: "已封存" }));
-    expect(screen.getByText("舊品質")).toBeVisible();
-    expect(screen.queryByText("品質")).not.toBeInTheDocument();
-    expect(screen.getByText("已封存", { selector: "span" })).toBeVisible();
+    expect(categoryList().getByText("舊品質")).toBeVisible();
+    expect(categoryList().queryByText("品質")).not.toBeInTheDocument();
+    expect(categoryList().getByText("已封存", { selector: "span" })).toBeVisible();
   });
 
   it("links quality-ratings to its exact category detail href", async () => {
@@ -190,10 +196,33 @@ describe("PromptCategoryManagement", () => {
   it("preserves rendered cards and offers retry when refresh fails", async () => {
     vi.mocked(getPromptCatalog).mockResolvedValueOnce(catalog).mockRejectedValueOnce(new Error("目錄暫時無法使用"));
     renderPage();
-    await screen.findByText("品質");
+    await categoryList().findByText("品質");
     fireEvent.click(screen.getByRole("button", { name: "重新整理分類" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("目錄暫時無法使用");
-    expect(screen.getByText("品質")).toBeVisible();
+    expect(categoryList().getByText("品質")).toBeVisible();
     expect(screen.getByRole("button", { name: "重新載入" })).toBeVisible();
+  });
+
+  it("creates a child category under the selected parent", async () => {
+    const root: PromptCatalogCategorySummary = {
+      id: "clothing", polarity: "positive", name_zh: "服裝", description_zh: "服裝提示詞",
+      aliases: [], keywords: [], order: 70, parent_id: null, revision: 1, archived: false, entry_count: 0, etag: "e",
+    };
+    vi.mocked(getPromptCatalog).mockResolvedValueOnce({ ...catalog, categories: [root] }).mockResolvedValueOnce({
+      ...catalog,
+      categories: [root],
+    });
+    vi.mocked(putPromptCategory).mockResolvedValue({
+      category: { category: { schema_version: 1, ...positive, id: "street-scenes", name_zh: "街景", parent_id: "clothing", entries: [] }, etag: "created-etag" },
+      combination: null, entry: null, entry_revision: null, affected_combinations: [],
+    });
+    renderPage();
+    await categoryList().findByText("服裝");
+    fillRequiredFields();
+    fireEvent.change(screen.getByLabelText("父分類"), { target: { value: "clothing" } });
+    fireEvent.click(screen.getByRole("button", { name: "建立分類" }));
+    await waitFor(() => expect(putPromptCategory).toHaveBeenCalled());
+    const [, , body] = vi.mocked(putPromptCategory).mock.calls[0];
+    expect(body.parent_id).toBe("clothing");
   });
 });
