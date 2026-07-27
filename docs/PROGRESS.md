@@ -1,5 +1,12 @@
 # 進度追蹤
 
+## 2026-07-26 Prompt Workbench UI 優化：詞條 chips · 已選 filter+分頁 · 加入組合
+
+- 左側「加入 Prompt」詞條由全寬列表改為內容寬度 chips（prompt 移到 tooltip、保留 ⚠️ 可疑中文標記），每頁最多 30 個、超過分頁；搜尋或切換分類回第 1 頁。
+- 已選片段檢視由常駐分類區塊改為「分類 filter + 每頁 3×3（9 張）分頁」：預設「全部」、可只看某分類，每卡加分類標籤；卡片保留內容/權重/上移下移/刪除，最終文字 textarea 與輸出不變。移除前版 `groupFragmentsByCategory`，改用 `distinctCategoriesOf` 建 filter。
+- 「載入組合」改名「加入組合」，行為由取代改為 append：把選中組合片段接進目前工作區、自動去重同來源 entry ref（literal 不去重）、清掉目前組合身分變未儲存草稿、並套既有自動排序狀態機（auto 重排／manual 接尾）。
+- 純前端；後端/API/schema 零改動，送 ComfyUI 的最終字串邏輯不變。驗證：前端 vitest 全綠、`tsc --noEmit` 與 Vite build 通過。
+
 ## 2026-07-26 Prompt Workbench 系列標註 · 推薦排序 · 分類分區
 
 - 品質與分級的品質詞 `name_zh` 補上家族後綴（Pony / Illustrious / NoobAI / Anima / SD1.5），台上可分辨同名品質詞屬哪個系列；分級詞本就有系列故不動。純資料變更，`name_zh` 非 snapshot，不影響任何已存組合的生圖。

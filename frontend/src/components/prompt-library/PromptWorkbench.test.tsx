@@ -92,8 +92,8 @@ async function ready() {
 }
 async function loadSaved(id = "my-quality") {
   fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: id } });
-  fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-  await screen.findByLabelText("目前組合版本");
+  fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
+  await screen.findByRole("status");
 }
 function renderedPrompt(fragments: ReturnType<typeof fragment>[]) {
   return [...fragments]
@@ -116,6 +116,45 @@ function composeResponse(
         schema_version: 1, id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision, archived: false, legacy_template: false,
         positive, negative, positive_prompt_snapshot: positivePrompt, negative_prompt_snapshot: negativePrompt,
       }, etag: `saved-${revision}`, repaired: false, warnings: [],
+    },
+  };
+}
+
+// A save response that echoes the submitted fragments back but flags them with a
+// blocking legacy-reference diagnostic, mirroring what the Backend returns when a
+// prior document carried an unresolved legacy source. Since appending no longer
+// installs a document (see appendCombination), this is now the only way the
+// blocked-provenance UI gets exercised in tests.
+function blockedSaveResponse(
+  id: string,
+  revision: number,
+  positive: ReturnType<typeof fragment>[],
+  negative: ReturnType<typeof fragment>[] = [],
+) {
+  const positivePrompt = renderedPrompt(positive);
+  const negativePrompt = renderedPrompt(negative);
+  return {
+    positive_prompt: positivePrompt, negative_prompt: negativePrompt, positive, negative, warnings: [], snapshot_repaired: false,
+    saved_combination: {
+      combination: {
+        schema_version: 1, id, name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision, archived: false, legacy_template: false,
+        positive, negative, positive_prompt_snapshot: positivePrompt, negative_prompt_snapshot: negativePrompt,
+      },
+      etag: `detail-${revision}`, repaired: false, warnings: [],
+      blocking_diagnostics: [{
+        id: "diagnostic-1",
+        code: "legacy_reference_unresolved",
+        original_ref: { polarity: "positive", category_id: "legacy", entry_id: "removed" },
+        combination_id: id,
+        revision,
+        etag: `detail-${revision}`,
+        polarity: "positive",
+        fallback_start_position: 1,
+        fallback_count: 1,
+        fallback_atom_hashes: ["atom-hash"],
+        blocking: true,
+      }],
+      document_context_token: "document-token",
     },
   };
 }
@@ -145,16 +184,18 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.queryByLabelText("Positive Prompt 最終文字")).not.toBeInTheDocument();
   });
 
-  it("loads detail tokens, both polarities, order/weights/snapshots, names, repairs and warnings", async () => {
+  it("appends detail's both polarities, order/weights/snapshots, and resolves entry names with warnings", async () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
     await ready();
     await loadSaved();
 
-    expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("revision 3");
-    expect(screen.getByLabelText("目前組合版本")).toHaveTextContent("已修復");
+    expect(screen.getByText("尚未儲存")).toBeVisible();
     expect(screen.getByRole("alert")).toHaveTextContent("Backend 警告");
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt,(saved zh:1.2),saved id");
+    // Auto arrangement re-sorts appended fragments by each entry's catalog order
+    // ("zh" is order 10, "prompt-only" order 20, "id-only" order 30) rather than
+    // preserving the saved combination's own internal fragment order.
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("(saved zh:1.2),saved prompt,saved id");
     expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("(saved blurry:0.8)");
     expect(screen.getByLabelText("current prompt 內容")).toHaveValue("saved prompt");
     expect(screen.getByLabelText("中文名稱 內容")).toHaveValue("saved zh");
@@ -186,9 +227,14 @@ describe("PromptWorkbench saved combinations", () => {
     await ready();
     await loadSaved();
 
+    // Appending clears document identity, so the target ID must be filled in by
+    // hand before "更新目前組合" is enabled for this first save.
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     expect(await screen.findByRole("status")).toHaveTextContent("組合已儲存");
-    expect(bodies[0].positive[1]).toMatchObject({
+    // Auto arrangement sorted the appended fragments to [zh, prompt, id] by their
+    // catalog entry order, so "zh" (weighted 1.2, with its ref) is now index 0.
+    expect(bodies[0].positive[0]).toMatchObject({
       kind: "entry",
       snapshot: "saved zh",
       weight: 1.2,
@@ -202,48 +248,25 @@ describe("PromptWorkbench saved combinations", () => {
 
     await loadSaved();
     expect(screen.getByLabelText("Positive Prompt 最終文字"))
-      .toHaveValue("saved prompt,(saved zh:1.2),saved id");
+      .toHaveValue("(saved zh:1.2),saved prompt,saved id");
     fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), {
-      target: { value: "saved prompt,(saved zh:1.3),saved id" },
+      target: { value: "(saved zh:1.3),saved prompt,saved id" },
     });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await waitFor(() => expect(bodies).toHaveLength(2));
-    expect(bodies[1].positive[1]).toMatchObject({
+    expect(bodies[1].positive[0]).toMatchObject({
       kind: "literal",
       snapshot: "(saved zh:1.3)",
       weight: 1,
     });
-    expect(bodies[1].positive[1]).not.toHaveProperty("ref");
+    expect(bodies[1].positive[0]).not.toHaveProperty("ref");
   });
 
   it("requires explicit Backend acknowledgment before persisting blocked provenance", async () => {
-    const blocked: any = combinationDetail();
-    blocked.combination.positive = [fragment("literal", "legacy fallback", 10)];
-    blocked.combination.negative = [];
-    blocked.blocking_diagnostics = [{
-      id: "diagnostic-1",
-      code: "legacy_reference_unresolved",
-      original_ref: {
-        polarity: "positive",
-        category_id: "legacy",
-        entry_id: "removed",
-      },
-      combination_id: "my-quality",
-      revision: 3,
-      etag: "detail-3",
-      polarity: "positive",
-      fallback_start_position: 1,
-      fallback_count: 1,
-      fallback_atom_hashes: ["atom-hash"],
-      blocking: true,
-    }];
-    blocked.document_context_token = "document-token";
     let acknowledgeBody: any;
     let successfulSaveBody: any;
+    let composeCount = 0;
     installFetch((url, init) => {
-      if (url === "/api/prompt-library/combinations/my-quality") {
-        return response(blocked);
-      }
       if (
         url === "/api/prompt-library/combinations/my-quality/acknowledge-literal-conversion"
         && init?.method === "POST"
@@ -255,7 +278,13 @@ describe("PromptWorkbench saved combinations", () => {
         });
       }
       if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeCount += 1;
         const body = JSON.parse(String(init.body));
+        if (composeCount === 1) {
+          // The very first save installs a document whose positive content the
+          // Backend flags with a blocking legacy-reference diagnostic.
+          return response(blockedSaveResponse("my-quality", 3, body.positive, body.negative));
+        }
         if (body.save_as.literal_conversion_token !== "literal-token") {
           return response({
             detail: {
@@ -275,9 +304,12 @@ describe("PromptWorkbench saved combinations", () => {
     });
     render(<PromptWorkbench />);
     await ready();
-    await loadSaved();
 
-    expect(screen.getByText("舊來源尚未解決")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "legacy fallback" } });
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await screen.findByText("舊來源尚未解決");
+
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await waitFor(() => expect(
       screen.getAllByRole("alert").some((node) =>
@@ -300,37 +332,21 @@ describe("PromptWorkbench saved combinations", () => {
   });
 
   it("replaces only the diagnostic fallback with newly selected source entries", async () => {
-    const blocked: any = combinationDetail();
-    blocked.combination.positive = [fragment("literal", "legacy fallback", 10)];
-    blocked.combination.negative = [];
-    blocked.blocking_diagnostics = [{
-      id: "diagnostic-1",
-      code: "legacy_reference_unresolved",
-      original_ref: {
-        polarity: "positive",
-        category_id: "legacy",
-        entry_id: "removed",
-      },
-      combination_id: "my-quality",
-      revision: 3,
-      etag: "detail-3",
-      polarity: "positive",
-      fallback_start_position: 1,
-      fallback_count: 1,
-      fallback_atom_hashes: ["atom-hash"],
-      blocking: true,
-    }];
-    blocked.document_context_token = "document-token";
+    let composeCount = 0;
     let composeBody: any;
     installFetch((url, init) => {
-      if (url === "/api/prompt-library/combinations/my-quality") {
-        return response(blocked);
-      }
       if (url === "/api/prompt-library/compose" && init?.method === "POST") {
-        composeBody = JSON.parse(String(init.body));
+        composeCount += 1;
+        const body = JSON.parse(String(init.body));
+        if (composeCount === 1) {
+          // The first save installs a document whose content the Backend flags
+          // with a blocking legacy-reference diagnostic.
+          return response(blockedSaveResponse("my-quality", 3, body.positive, body.negative));
+        }
+        composeBody = body;
         return response(composeResponse(
           composeBody.save_as.id,
-          1,
+          2,
           composeBody.positive,
           composeBody.negative,
         ));
@@ -338,7 +354,11 @@ describe("PromptWorkbench saved combinations", () => {
     });
     render(<PromptWorkbench />);
     await ready();
-    await loadSaved();
+
+    fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "legacy fallback" } });
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await screen.findByText("舊來源尚未解決");
 
     fireEvent.click(screen.getByRole("button", { name: "品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
@@ -408,6 +428,7 @@ describe("PromptWorkbench saved combinations", () => {
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/categories/positive/quality")).toHaveLength(1);
     expect(screen.getByLabelText("負向品質名稱 內容")).toHaveValue("saved cross-polarity snapshot");
 
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await waitFor(() => expect(composeBody).toBeDefined());
     expect(composeBody.positive[0]).toMatchObject({
@@ -449,22 +470,30 @@ describe("PromptWorkbench saved combinations", () => {
     fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "local" } });
     fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("local");
-    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
-    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("local");
-    expect(confirm).toHaveBeenCalledTimes(2);
 
+    // Appending is non-destructive, so it never guards with a confirm() prompt,
+    // even while the document is dirty — it merges the saved combination's
+    // fragments in alongside the existing "local" literal.
+    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
+    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字"))
+      .toHaveValue("(saved zh:1.2),saved prompt,saved id,local"));
+    expect(confirm).not.toHaveBeenCalled();
+
+    // Creating a blank document is still destructive and still guards on decline...
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    expect(screen.getByLabelText("Positive Prompt 最終文字"))
+      .toHaveValue("(saved zh:1.2),saved prompt,saved id,local");
+    expect(confirm).toHaveBeenCalledTimes(1);
+
+    // ...and replaces on approval.
     confirm.mockReturnValue(true);
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-    await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("saved prompt,(saved zh:1.2),saved id"));
-    fireEvent.change(screen.getByLabelText("中文名稱 內容"), { target: { value: "dirty again" } });
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
     expect(screen.getByText("尚未儲存")).toBeVisible();
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("");
   });
 
-  it("guards a direct final edit and resets it after approved load/new replacement", async () => {
+  it("keeps a direct final-text edit intact when appending, but still guards blank replacement", async () => {
     installFetch();
     const confirm = vi.fn(() => false);
     vi.stubGlobal("confirm", confirm);
@@ -474,16 +503,18 @@ describe("PromptWorkbench saved combinations", () => {
     const finalText = screen.getByLabelText("Positive Prompt 最終文字");
     fireEvent.change(finalText, { target: { value: "  exact, (unfinished  " } });
     fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
 
-    expect(finalText).toHaveValue("  exact, (unfinished  ");
+    await waitFor(() => expect(finalText)
+      .toHaveValue("(saved zh:1.2),saved prompt,saved id,  exact, (unfinished  "));
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
+    expect(confirm).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
+    expect(finalText).toHaveValue("(saved zh:1.2),saved prompt,saved id,  exact, (unfinished  ");
     expect(confirm).toHaveBeenCalledOnce();
 
     confirm.mockReturnValue(true);
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
-    await waitFor(() => expect(finalText).toHaveValue("saved prompt,(saved zh:1.2),saved id"));
-    fireEvent.change(finalText, { target: { value: "new direct draft" } });
     fireEvent.click(screen.getByRole("button", { name: "建立空白組合" }));
     expect(finalText).toHaveValue("");
   });
@@ -509,7 +540,10 @@ describe("PromptWorkbench saved combinations", () => {
     expect(resetEvent.defaultPrevented).toBe(false);
   });
 
-  it("uses revision zero for fresh update and Save As, but detail tokens for loaded update", async () => {
+  it("uses revision zero for a fresh save, but the installed document's own revision/etag for a subsequent update", async () => {
+    // Appending clears document identity (see appendCombination), so the only way
+    // to have an "installed" document with a real revision/etag to reuse is via a
+    // prior successful save (installCombination), not via a load-then-GET round trip.
     const bodies: unknown[] = [];
     installFetch((url, init) => {
       if (url === "/api/prompt-library/compose" && init?.method === "POST") {
@@ -526,10 +560,9 @@ describe("PromptWorkbench saved combinations", () => {
     await screen.findByRole("status");
     expect((bodies[0] as { save_as: unknown }).save_as).toMatchObject({ id: "fresh組合", expected_revision: 0 });
 
-    await loadSaved();
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await waitFor(() => expect(bodies).toHaveLength(2));
-    expect((bodies[1] as { save_as: unknown }).save_as).toMatchObject({ id: "my-quality", expected_revision: 3, expected_etag: "detail-3" });
+    expect((bodies[1] as { save_as: unknown }).save_as).toMatchObject({ id: "fresh組合", expected_revision: 1, expected_etag: "saved-1" });
 
     fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "copy組合" } });
     fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
@@ -630,6 +663,7 @@ describe("PromptWorkbench saved combinations", () => {
     await loadSaved();
     const finalText = screen.getByLabelText("Positive Prompt 最終文字");
     fireEvent.change(finalText, { target: { value: "  exact raw, (unfinished  " } });
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
 
     await waitFor(() => expect(screen.getAllByRole("alert").some((node) => node.textContent?.includes("儲存衝突"))).toBe(true));
@@ -644,7 +678,7 @@ describe("PromptWorkbench saved combinations", () => {
     expect(screen.getByText("尚未儲存變更")).toBeVisible();
   });
 
-  it("does not let stale load resolution or rejection replace a newer local document", async () => {
+  it("does not let a stale append resolution or rejection clobber a newer local edit", async () => {
     const first = deferred<Response>();
     const second = deferred<Response>();
     let loadCount = 0;
@@ -657,15 +691,16 @@ describe("PromptWorkbench saved combinations", () => {
     render(<PromptWorkbench />);
     await ready();
     fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "my-quality" } });
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
     fireEvent.change(screen.getByLabelText("自由文字"), { target: { value: "newer local" } });
     fireEvent.click(screen.getByRole("button", { name: "加入目前正向" }));
     first.resolve(response(combinationDetail()));
     await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newer local"));
     expect(screen.getByText("尚未儲存")).toBeVisible();
 
-    vi.stubGlobal("confirm", vi.fn(() => true));
-    fireEvent.click(screen.getByRole("button", { name: "載入組合" }));
+    // Appending never confirms — it's non-destructive — so a second append can be
+    // fired immediately even though the document is still dirty from above.
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
     fireEvent.change(screen.getByLabelText("自訂文字 內容"), { target: { value: "newest local" } });
     second.reject(new Error("stale load error"));
     await waitFor(() => expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("newest local"));
@@ -734,22 +769,16 @@ describe("PromptWorkbench saved combinations", () => {
     expect(await screen.findByLabelText("目前組合版本")).toHaveTextContent("Café");
   });
 
-  it("preserves loaded combination metadata on Update and Save As", async () => {
-    const loaded = combinationDetail();
-    Object.assign(loaded.combination, {
-      name_zh: "精緻肖像",
-      description_zh: "保留這段說明",
-      aliases: ["portrait", "人像"],
-      keywords: ["detail", "細節"],
-      order: 77,
-      legacy_template: true,
-    });
+  it("preserves installed combination metadata across subsequent Update and Save As calls", async () => {
+    // Appending no longer installs a document (see appendCombination), so the client
+    // only learns an existing combination's real metadata via a save response. This
+    // verifies that metadata is preserved on later saves once installed, rather than
+    // reverting to the id-based defaults used before any document is installed.
     const bodies: any[] = [];
+    let composeCount = 0;
     installFetch((url, init) => {
-      if (url === "/api/prompt-library/combinations/my-quality") {
-        return response(loaded);
-      }
       if (url === "/api/prompt-library/compose" && init?.method === "POST") {
+        composeCount += 1;
         const body = JSON.parse(String(init.body));
         bodies.push(body);
         const result = composeResponse(
@@ -758,32 +787,49 @@ describe("PromptWorkbench saved combinations", () => {
           body.positive,
           body.negative,
         );
-        Object.assign(result.saved_combination.combination, {
-          name_zh: body.save_as.name_zh,
-          description_zh: body.save_as.description_zh,
-          aliases: body.save_as.aliases,
-          keywords: body.save_as.keywords,
-          order: body.save_as.order,
-          legacy_template: body.save_as.legacy_template,
-        });
+        if (composeCount === 1) {
+          // The first save's response carries this combination's real canonical
+          // metadata — distinct from the client-side defaults just submitted.
+          Object.assign(result.saved_combination.combination, {
+            name_zh: "精緻肖像",
+            description_zh: "保留這段說明",
+            aliases: ["portrait", "人像"],
+            keywords: ["detail", "細節"],
+            order: 77,
+            legacy_template: true,
+          });
+        } else {
+          Object.assign(result.saved_combination.combination, {
+            name_zh: body.save_as.name_zh,
+            description_zh: body.save_as.description_zh,
+            aliases: body.save_as.aliases,
+            keywords: body.save_as.keywords,
+            order: body.save_as.order,
+            legacy_template: body.save_as.legacy_template,
+          });
+        }
         return response(result);
       }
     });
     render(<PromptWorkbench />);
     await ready();
-    await loadSaved();
 
+    fireEvent.change(screen.getByLabelText("新組合 ID"), { target: { value: "my-quality" } });
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await waitFor(() => expect(bodies).toHaveLength(1));
 
-    await loadSaved();
+    // The second Update reuses the now-installed document (no re-typing of the ID)
+    // and must resend the canonical metadata just installed, not client defaults.
+    fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+
     fireEvent.change(screen.getByLabelText("新組合 ID"), {
       target: { value: "portrait-copy" },
     });
     fireEvent.click(screen.getByRole("button", { name: "另存新組合" }));
-    await waitFor(() => expect(bodies).toHaveLength(2));
+    await waitFor(() => expect(bodies).toHaveLength(3));
 
-    for (const body of bodies) {
+    for (const body of bodies.slice(1)) {
       expect(body.save_as).toMatchObject({
         name_zh: "精緻肖像",
         description_zh: "保留這段說明",
@@ -837,6 +883,40 @@ describe("PromptWorkbench saved combinations", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("1 到 128 個字元");
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/prompt-library/compose")).toHaveLength(0);
+  });
+
+  it("appends a saved combination into the current work area and clears the document identity", async () => {
+    installFetch();
+    render(<PromptWorkbench />);
+    await screen.findByText("Prompt Workbench");
+    await ready();
+
+    // Interactively add the "style" category's entry to positive first (catalog
+    // order 20).
+    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 id-only" }));
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("id-only");
+
+    // Append the saved "second" combination, whose positive references the
+    // "quality" category (catalog order 10) — different entries than the one just
+    // added interactively.
+    fireEvent.change(screen.getByLabelText("已儲存組合"), { target: { value: "second" } });
+    fireEvent.click(screen.getByRole("button", { name: "加入組合" }));
+
+    const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
+    // Both the interactively-added atom and the combination's atoms are present —
+    // append keeps existing content instead of replacing it — and the "quality"
+    // (order 10) entries sort ahead of the "style" (order 20) entry that was added
+    // first, proving the auto lane re-sorts by category order rather than
+    // insertion order.
+    await waitFor(() => expect((finalText as HTMLTextAreaElement).value)
+      .toBe("(saved zh:1.2),saved prompt,saved id,id-only"));
+    expect((finalText as HTMLTextAreaElement).value).toContain("id-only");
+    expect((finalText as HTMLTextAreaElement).value).toContain("saved zh");
+
+    // The append cleared the document identity (no combination was "loaded" for
+    // replace/update purposes), so Update stays disabled until a target ID is set.
+    expect(screen.getByRole("button", { name: "更新目前組合" })).toBeDisabled();
   });
 });
 

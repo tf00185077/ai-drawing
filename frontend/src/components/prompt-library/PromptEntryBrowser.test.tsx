@@ -73,7 +73,83 @@ describe("PromptEntryBrowser read-only source catalog", () => {
 
   it("flags entries whose name_zh has no meaningful Chinese", () => {
     renderBrowser();
-    expect(screen.getByLabelText("best quality 中文對照可能未填好")).toBeInTheDocument();
-    expect(screen.queryByLabelText("傑作 中文對照可能未填好")).not.toBeInTheDocument();
+    const suspectWarningTitle = "name_zh 可能沒有有意義的中文對照，建議編輯修正";
+    const suspectChip = screen.getByRole("button", { name: "加入 best quality" });
+    expect(suspectChip.querySelector(`[title="${suspectWarningTitle}"]`)).toBeInTheDocument();
+    const okChip = screen.getByRole("button", { name: "加入 傑作" });
+    expect(okChip.querySelector(`[title="${suspectWarningTitle}"]`)).not.toBeInTheDocument();
+  });
+
+  it("renders entries as content-width chips with prompt in the title and fires onAddEntry", () => {
+    const onAddEntry = vi.fn();
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={[{ id: "e1", name_zh: "傑作", prompt: "masterpiece", description_zh: "d", aliases: [], keywords: [], order: 10, revision: 1, archived: false }]}
+        onOpenCategory={() => {}}
+        onAddEntry={onAddEntry}
+        onAddLiteral={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: "加入 傑作" });
+    expect(chip).toHaveAttribute("title", "masterpiece");
+    fireEvent.click(chip);
+    expect(onAddEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it("paginates at 30 entries per page", () => {
+    const entries = Array.from({ length: 31 }, (_, index) => ({
+      id: `e${index}`, name_zh: `詞${index}`, prompt: `p${index}`, description_zh: "d",
+      aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+    }));
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={entries}
+        onOpenCategory={() => {}}
+        onAddEntry={() => {}}
+        onAddLiteral={() => {}}
+      />,
+    );
+    // 30 chips on page 1, pagination present
+    expect(screen.getAllByRole("button", { name: /^加入 / })).toHaveLength(30);
+    fireEvent.click(screen.getByLabelText("下一頁"));
+    expect(screen.getAllByRole("button", { name: /^加入 / })).toHaveLength(1);
+  });
+
+  it("resets to the first page when the search query changes", () => {
+    // 62 entries -> 3 pages initially; the first 32 carry a "keep" marker so that
+    // filtering to "keep" still yields 2 pages, keeping the pagination nav visible
+    // (a query that narrowed results to <=30 matches would hide the nav entirely).
+    const entries = Array.from({ length: 62 }, (_, index) => ({
+      id: `e${index}`,
+      name_zh: index < 32 ? `詞${index}keep` : `詞${index}`,
+      prompt: `p${index}`,
+      description_zh: "d",
+      aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+    }));
+    render(
+      <PromptEntryBrowser
+        categories={[]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={entries}
+        onOpenCategory={() => {}}
+        onAddEntry={() => {}}
+        onAddLiteral={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("下一頁"));
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "keep" } });
+    // query narrows results to 32 matches (2 pages) and page snaps back to page 1
+    expect(screen.getByText("1 / 2")).toBeInTheDocument();
   });
 });

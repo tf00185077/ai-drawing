@@ -476,37 +476,54 @@ export function sortFragmentsByRecommendation(
   return rebuild(ranked.map((item) => item.fragment));
 }
 
-export interface FragmentGroup {
-  key: string;
-  displayName: string;
-  order: number;
-  fragments: WorkbenchFragment[];
+export const LITERAL_GROUP_KEY = "__literal__";
+
+export function appendFragmentsDeduped(
+  target: CompositionState,
+  incoming: readonly WorkbenchFragment[],
+): CompositionState {
+  const seen = new Set<string>();
+  const refKey = (fragment: WorkbenchFragment) =>
+    fragment.kind === "entry" && fragment.source
+      ? `${fragment.source.polarity}/${fragment.source.categoryId}/${fragment.source.entryId}`
+      : null;
+  for (const fragment of target.fragments) {
+    const key = refKey(fragment);
+    if (key) seen.add(key);
+  }
+  const additions: WorkbenchFragment[] = [];
+  for (const fragment of incoming) {
+    const key = refKey(fragment);
+    if (key) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+    }
+    additions.push(fragment);
+  }
+  if (additions.length === 0) return target;
+  return rebuild([...target.fragments, ...additions]);
 }
 
-const LITERAL_GROUP_KEY = "__literal__";
-
-export function groupFragmentsByCategory(
+export function distinctCategoriesOf(
   fragments: readonly WorkbenchFragment[],
   categoryInfoOf: (
     fragment: WorkbenchFragment,
   ) => { key: string; displayName: string; order: number } | null,
   literalLabel = "自訂文字",
-): FragmentGroup[] {
-  const groups: FragmentGroup[] = [];
+): { key: string; displayName: string; order: number }[] {
+  const byKey = new Map<string, { key: string; displayName: string; order: number }>();
+  let hasLiteral = false;
   fragments.forEach((fragment) => {
     const info = categoryInfoOf(fragment);
-    const key = info?.key ?? LITERAL_GROUP_KEY;
-    const last = groups[groups.length - 1];
-    if (last && last.key === key) {
-      last.fragments.push(fragment);
+    if (!info) {
+      hasLiteral = true;
       return;
     }
-    groups.push({
-      key,
-      displayName: info?.displayName ?? literalLabel,
-      order: info ? info.order : Number.POSITIVE_INFINITY,
-      fragments: [fragment],
-    });
+    if (!byKey.has(info.key)) byKey.set(info.key, info);
   });
-  return groups;
+  const result = [...byKey.values()].sort((left, right) => left.order - right.order);
+  if (hasLiteral) {
+    result.push({ key: LITERAL_GROUP_KEY, displayName: literalLabel, order: Number.POSITIVE_INFINITY });
+  }
+  return result;
 }
