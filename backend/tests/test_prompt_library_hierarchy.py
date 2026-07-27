@@ -145,6 +145,12 @@ def test_validate_tree_demotes_missing_parent():
     assert len(diags) == 1 and diags[0].details["category_id"] == "top"
 
 
+def test_validate_tree_demotes_self_parent():
+    adjusted, diags = validate_category_tree([_summary("loop", parent_id="loop")])
+    assert {c.id: c.parent_id for c in adjusted} == {"loop": None}
+    assert len(diags) == 1 and diags[0].details["category_id"] == "loop"
+
+
 def test_validate_tree_demotes_cross_polarity_parent():
     adjusted, diags = validate_category_tree([
         _summary("np", polarity="negative"),
