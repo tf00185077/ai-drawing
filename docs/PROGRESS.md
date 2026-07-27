@@ -1,5 +1,13 @@
 # 進度追蹤
 
+## 2026-07-27 Prompt Library 分類樹 Phase 1（地基）
+
+- `PromptCategory` 新增選填 `parent_id`（指向同 polarity 分類）；詞的身分 `(polarity, category_id, entry_id)` 不變，組合/provenance/comma-atomic/生圖/輸出全不動、零 migration。
+- 寫入分類的 parent 嚴格驗證：父存在且同 polarity、非自我、不成環，違反回結構化 422 不寫檔。
+- 讀取 catalog 容錯：懸空/跨 polarity/成環的 parent 一律降級為 root 並附 `category_parent_demoted` diagnostic，library 照常載入（寬進嚴出）。
+- 前端組裝排序改「祖先路徑」字典序：`rankOf` 回傳從 root 到該詞每層 order 的陣列＋詞 order，`sortFragmentsByRecommendation` 逐層比較。扁平分類（皆 root）行為與先前逐字相同。
+- 畫面此階段仍為扁平（Phase 2 管理 UX、Phase 3 瀏覽器樹狀另行）。驗證：後端 pytest、前端 vitest 全綠，`tsc` 與 Vite build 通過。
+
 ## 2026-07-26 Prompt Workbench UI 優化：詞條 chips · 已選 filter+分頁 · 加入組合
 
 - 左側「加入 Prompt」詞條由全寬列表改為內容寬度 chips（prompt 移到 tooltip、保留 ⚠️ 可疑中文標記），每頁最多 30 個、超過分頁；搜尋或切換分類回第 1 頁。
