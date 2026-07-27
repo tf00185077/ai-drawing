@@ -11,6 +11,7 @@ from app.core.prompt_composer import PromptComposer
 from app.core.prompt_document_context import PromptDocumentContextCodec
 from app.core.prompt_library_models import Polarity, ResourceType
 from app.core.prompt_library_migration_control import CommaAtomicMigrationControl
+from app.core.prompt_library_tree import validate_category_tree
 from app.core.prompt_search import PromptSearchIndex
 from app.core.prompt_library_store import PromptLibraryStore, StoredDocument
 from app.core.prompt_library_writes import PromptLibraryWriter
@@ -114,17 +115,19 @@ class FilePromptLibraryProvider:
         manifest = self.store.read_manifest()
         categories, category_diagnostics = self.store.scan_categories()
         combinations, combination_diagnostics = self.store.scan_combinations()
+        category_summaries = sorted(
+            (self._category_summary(document) for document in categories),
+            key=lambda item: (item.order, item.id),
+        )
+        category_summaries, tree_diagnostics = validate_category_tree(category_summaries)
         return CatalogResponse(
             manifest=manifest,
-            categories=sorted(
-                (self._category_summary(document) for document in categories),
-                key=lambda item: (item.order, item.id),
-            ),
+            categories=category_summaries,
             combinations=sorted(
                 (self._combination_summary(document) for document in combinations),
                 key=lambda item: (item.order, item.id),
             ),
-            diagnostics=category_diagnostics + combination_diagnostics,
+            diagnostics=category_diagnostics + combination_diagnostics + tree_diagnostics,
         )
 
     def get_category(self, polarity: Polarity, category_id: str) -> VersionedCategory:
