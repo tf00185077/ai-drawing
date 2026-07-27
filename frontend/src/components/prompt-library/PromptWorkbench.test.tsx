@@ -1090,4 +1090,62 @@ describe("PromptWorkbench existing flows", () => {
     // order, not insertion order.
     expect((finalText as HTMLTextAreaElement).value).toBe("zh current,id-only");
   });
+
+  it("auto-sorts nested-category entries by ancestor-path order", async () => {
+    // A nested catalog: "quality" (root, order 10) alongside a "chars" root
+    // (order 15) that has a child "chars-2nd" (order 30, parent_id "chars").
+    // "chars-2nd" only inherits its root's order (15), which is still less than
+    // "quality" would be if compared by the child's own order (30) alone — so
+    // this proves ancestor-path aggregation, not flat per-category order.
+    const nestedCatalog = {
+      manifest: catalog.manifest,
+      categories: [
+        { id: "quality", polarity: "positive", name_zh: "quality", description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false, entry_count: 1, etag: "nq1", parent_id: null },
+        { id: "chars", polarity: "positive", name_zh: "chars", description_zh: "", aliases: [], keywords: [], order: 15, revision: 1, archived: false, entry_count: 0, etag: "nc1", parent_id: null },
+        { id: "chars-2nd", polarity: "positive", name_zh: "chars2nd", description_zh: "", aliases: [], keywords: [], order: 30, revision: 1, archived: false, entry_count: 1, etag: "nc2", parent_id: "chars" },
+      ],
+      combinations: [],
+      diagnostics: [],
+    };
+    const nestedCategoryResponse = (id: string, entries: unknown[]) => ({
+      category: {
+        schema_version: 1, id, polarity: "positive", name_zh: id, description_zh: "", aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+        entries,
+      },
+      etag: `nested-${id}-1`,
+    });
+    installFetch((url) => {
+      if (url === "/api/prompt-library/catalog") return response(nestedCatalog);
+      if (url.endsWith("/categories/positive/quality")) {
+        return response(nestedCategoryResponse("quality", [
+          { id: "masterpiece", name_zh: "masterpiece", description_zh: "", prompt: "masterpiece", aliases: [], keywords: [], order: 10, revision: 1, archived: false },
+        ]));
+      }
+      if (url.endsWith("/categories/positive/chars")) {
+        return response(nestedCategoryResponse("chars", []));
+      }
+      if (url.endsWith("/categories/positive/chars-2nd")) {
+        return response(nestedCategoryResponse("chars-2nd", [
+          { id: "honoka", name_zh: "honoka", description_zh: "", prompt: "honoka", aliases: [], keywords: [], order: 10, revision: 1, archived: false },
+        ]));
+      }
+    });
+    render(<PromptWorkbench />);
+    await screen.findByText("Prompt Workbench");
+
+    // Add the deep "chars-2nd" entry (root "chars", order 15) first...
+    fireEvent.click(screen.getByRole("button", { name: "chars2nd" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 honoka" }));
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("honoka");
+
+    // ...then add the "quality" root entry (order 10) second.
+    fireEvent.click(screen.getByRole("button", { name: "quality" }));
+    fireEvent.click(await screen.findByRole("button", { name: "加入 masterpiece" }));
+
+    const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
+    // Despite being added second, "masterpiece" (root order 10) sorts ahead of
+    // "honoka" (root order 15, via its "chars-2nd" child) — proving the auto lane
+    // ranks by each entry's full ancestor-path order, not just its own category's.
+    await waitFor(() => expect((finalText as HTMLTextAreaElement).value).toBe("masterpiece,honoka"));
+  });
 });

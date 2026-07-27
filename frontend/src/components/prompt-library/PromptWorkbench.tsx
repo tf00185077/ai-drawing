@@ -131,6 +131,7 @@ export default function PromptWorkbench() {
   });
   const [categoryMeta, setCategoryMeta] = useState<Map<string, { order: number; nameZh: string }>>(new Map());
   const entryOrderByRef = useRef<Map<string, number>>(new Map());
+  const categoryPathOrders = useRef<Map<string, number[]>>(new Map());
   const [document, setDocument] = useState<DocumentState>(blankDocument);
   const [selectedId, setSelectedId] = useState("");
   const [targetId, setTargetId] = useState("");
@@ -172,6 +173,31 @@ export default function PromptWorkbench() {
           meta.set(`${item.polarity}/${item.id}`, { order: item.order, nameZh: item.name_zh }),
         );
         setCategoryMeta(meta);
+        const orderByKey = new Map<string, { order: number; parentId: string | null }>();
+        (catalog.categories || []).forEach((item) =>
+          orderByKey.set(`${item.polarity}/${item.id}`, {
+            order: item.order,
+            parentId: item.parent_id ?? null,
+          }),
+        );
+        const pathOrders = new Map<string, number[]>();
+        const pathFor = (polarity: string, id: string, guard: Set<string>): number[] => {
+          const key = `${polarity}/${id}`;
+          const cached = pathOrders.get(key);
+          if (cached) return cached;
+          const node = orderByKey.get(key);
+          if (!node || guard.has(key)) return [];
+          guard.add(key);
+          const parentPath = node.parentId ? pathFor(polarity, node.parentId, guard) : [];
+          const path = [...parentPath, node.order];
+          pathOrders.set(key, path);
+          return path;
+        };
+        orderByKey.forEach((_value, key) => {
+          const slash = key.indexOf("/");
+          pathFor(key.slice(0, slash), key.slice(slash + 1), new Set());
+        });
+        categoryPathOrders.current = pathOrders;
         const categoryResults = await Promise.allSettled(
           (catalog.categories || []).map((item) =>
             getPromptCategory(item.polarity, item.id),
@@ -255,16 +281,15 @@ export default function PromptWorkbench() {
   }
 
   const rankOf = useCallback(
-    (fragment: WorkbenchFragment): number => {
-      if (fragment.kind !== "entry" || !fragment.source) return Number.POSITIVE_INFINITY;
+    (fragment: WorkbenchFragment): number[] => {
+      if (fragment.kind !== "entry" || !fragment.source) return [Number.POSITIVE_INFINITY];
       const catKey = `${fragment.source.polarity}/${fragment.source.categoryId}`;
-      const meta = categoryMeta.get(catKey);
-      if (!meta) return Number.POSITIVE_INFINITY;
+      const path = categoryPathOrders.current.get(catKey);
+      if (!path || path.length === 0) return [Number.POSITIVE_INFINITY];
       const entryOrder = entryOrderByRef.current.get(`${catKey}/${fragment.source.entryId}`) ?? 10;
-      // entry order is small (<100000); category order dominates the composite rank
-      return meta.order * 100000 + entryOrder;
+      return [...path, entryOrder];
     },
-    [categoryMeta],
+    [],
   );
 
   const categoryInfoOf = useCallback(

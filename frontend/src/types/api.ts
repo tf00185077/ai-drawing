@@ -233,6 +233,7 @@ export interface PromptCategory {
   revision: number;
   archived: boolean;
   entries: PromptEntry[];
+  parent_id?: string | null;
 }
 
 export interface PromptCategorySummary {
@@ -247,6 +248,7 @@ export interface PromptCategorySummary {
   archived: boolean;
   entry_count: number;
   etag: string;
+  parent_id?: string | null;
 }
 
 /** @deprecated PromptCategorySummary is the exact catalog wire DTO. */
