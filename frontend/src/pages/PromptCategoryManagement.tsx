@@ -160,9 +160,7 @@ export default function PromptCategoryManagement() {
               </p>
               <ul className="space-y-2">
                 {orderedCategoryRows(visibleCategories).map(({ category, depth }) => (
-                  <li key={`${category.polarity}-${category.id}`} style={{ marginLeft: depth * 20 }}>
-                    <CategoryCard category={category} />
-                  </li>
+                  <CategoryCard key={`${category.polarity}-${category.id}`} category={category} depth={depth} />
                 ))}
               </ul>
             </div>
@@ -324,7 +322,7 @@ function ArchiveTabs({
   );
 }
 
-function CategoryCard({ category }: { category: PromptCategorySummary }) {
+function CategoryCard({ category, depth = 0 }: { category: PromptCategorySummary; depth?: number }) {
   const inRouter = useInRouterContext();
   const path = `/prompt-library/categories/${encodeURIComponent(category.polarity)}/${encodeURIComponent(category.id)}`;
   const content = (
@@ -341,7 +339,10 @@ function CategoryCard({ category }: { category: PromptCategorySummary }) {
     </>
   );
   return (
-    <li className="rounded-lg border border-slate-700 bg-slate-800/60 transition-colors hover:border-emerald-600">
+    <li
+      style={{ marginLeft: depth * 20 }}
+      className="rounded-lg border border-slate-700 bg-slate-800/60 transition-colors hover:border-emerald-600"
+    >
       {inRouter ? <Link to={path} className="block p-3">{content}</Link> : <a href={path} className="block p-3">{content}</a>}
     </li>
   );
