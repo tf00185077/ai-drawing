@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   archivePromptResource,
+  getPromptCatalog,
   getPromptCategory,
   putPromptCategory,
   putPromptEntry,
@@ -12,6 +13,7 @@ import PromptCategoryDetail from "./PromptCategoryDetail";
 
 vi.mock("../components/prompt-library/promptLibraryApi", () => ({
   archivePromptResource: vi.fn(),
+  getPromptCatalog: vi.fn(),
   getPromptCategory: vi.fn(),
   putPromptCategory: vi.fn(),
   putPromptEntry: vi.fn(),
@@ -84,10 +86,43 @@ function categoryFor(id: string, polarity: "positive" | "negative", name: string
   return { ...versionedCategory, category: { ...versionedCategory.category, id, polarity, name_zh: name } };
 }
 
+type CatalogCategory = {
+  id: string;
+  polarity: "positive" | "negative";
+  name_zh: string;
+  description_zh: string;
+  aliases: string[];
+  keywords: string[];
+  order: number;
+  revision: number;
+  archived: boolean;
+  entry_count: number;
+  etag: string;
+  parent_id?: string | null;
+};
+function catalogOf(categories: CatalogCategory[]) {
+  return {
+    manifest: { schema_version: 1 as const, library_id: "default", name: "Prompt Library", description_zh: "提示詞庫" },
+    categories,
+    combinations: [],
+    diagnostics: [],
+  };
+}
+const emptyCatalog = catalogOf([]);
+const clothingSummary: CatalogCategory = {
+  id: "clothing", polarity: "positive", name_zh: "服裝", description_zh: "服裝分類",
+  aliases: [], keywords: [], order: 1, revision: 1, archived: false, entry_count: 0, etag: "clothing-etag", parent_id: null,
+};
+const qualityRatingsSummary: CatalogCategory = {
+  id: "quality-ratings", polarity: "positive", name_zh: "品質評分", description_zh: "品質與評分提示詞",
+  aliases: ["quality"], keywords: ["品質"], order: 10, revision: 7, archived: false, entry_count: 2, etag: "etag-7", parent_id: null,
+};
+
 const confirmSpy = vi.spyOn(window, "confirm");
 beforeEach(() => {
   vi.resetAllMocks();
   confirmSpy.mockReturnValue(true);
+  vi.mocked(getPromptCatalog).mockResolvedValue(emptyCatalog);
 });
 afterEach(() => vi.clearAllMocks());
 
@@ -106,6 +141,7 @@ describe("PromptCategoryDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
     await waitFor(() => expect(putPromptCategory).toHaveBeenCalledWith("positive", "quality-ratings", {
       name_zh: "新版品質", description_zh: "新版說明", aliases: ["quality", "rating"], keywords: ["品質", "評分"], order: 12,
+      parent_id: null,
       expected_revision: 7, expected_etag: "etag-7",
     }));
     expect(await screen.findByRole("heading", { name: "新版品質" })).toBeVisible();
@@ -121,6 +157,74 @@ describe("PromptCategoryDetail", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("分類排序必須是大於或等於 0 的整數");
     expect(screen.getByLabelText("分類排序")).toHaveValue(null);
     expect(putPromptCategory).not.toHaveBeenCalled();
+  });
+
+  it("preserves parent_id when editing an unrelated field", async () => {
+    const categoryWithParent = { ...versionedCategory, category: { ...versionedCategory.category, parent_id: "clothing" } };
+    vi.mocked(getPromptCategory).mockResolvedValue(categoryWithParent);
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalogOf([clothingSummary, qualityRatingsSummary]));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderAt();
+    await screen.findByLabelText("分類中文名稱");
+    fireEvent.change(screen.getByLabelText("分類中文名稱"), { target: { value: "新名稱" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(putPromptCategory).toHaveBeenCalled());
+    const [, , body] = vi.mocked(putPromptCategory).mock.calls[0];
+    expect(body.parent_id).toBe("clothing");
+  });
+
+  it("moves the category to a new parent selected from the dropdown", async () => {
+    const categoryWithoutParent = { ...versionedCategory, category: { ...versionedCategory.category, parent_id: null } };
+    vi.mocked(getPromptCategory).mockResolvedValue(categoryWithoutParent);
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalogOf([clothingSummary, qualityRatingsSummary]));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderAt();
+    const parentSelect = await screen.findByLabelText("父分類");
+    expect(parentSelect).toHaveValue("");
+    fireEvent.change(parentSelect, { target: { value: "clothing" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(putPromptCategory).toHaveBeenCalledTimes(1));
+    const [, , body] = vi.mocked(putPromptCategory).mock.calls[0];
+    expect(body.parent_id).toBe("clothing");
+  });
+
+  it("clears the parent when '（無，作為頂層）' is selected", async () => {
+    const categoryWithParent = { ...versionedCategory, category: { ...versionedCategory.category, parent_id: "clothing" } };
+    vi.mocked(getPromptCategory).mockResolvedValue(categoryWithParent);
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalogOf([clothingSummary, qualityRatingsSummary]));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderAt();
+    const parentSelect = await screen.findByLabelText("父分類");
+    expect(parentSelect).toHaveValue("clothing");
+    fireEvent.change(parentSelect, { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+    await waitFor(() => expect(putPromptCategory).toHaveBeenCalledTimes(1));
+    const [, , body] = vi.mocked(putPromptCategory).mock.calls[0];
+    expect(body.parent_id).toBeNull();
+  });
+
+  it("excludes self and descendants from the parent options", async () => {
+    const descendantOfSelf: CatalogCategory = {
+      ...qualityRatingsSummary, id: "quality-ratings-child", name_zh: "品質評分子類", parent_id: "quality-ratings",
+    };
+    vi.mocked(getPromptCategory).mockResolvedValue(versionedCategory);
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalogOf([clothingSummary, qualityRatingsSummary, descendantOfSelf]));
+    renderAt();
+    const parentSelect = await screen.findByLabelText("父分類");
+    const optionLabels = within(parentSelect).getAllByRole("option").map((option) => option.textContent);
+    expect(optionLabels).toContain("服裝");
+    expect(optionLabels.some((label) => label?.includes("品質評分"))).toBe(false);
+  });
+
+  it("renders the breadcrumb ancestor chain from the catalog", async () => {
+    const categoryWithParent = { ...versionedCategory, category: { ...versionedCategory.category, parent_id: "clothing" } };
+    vi.mocked(getPromptCategory).mockResolvedValue(categoryWithParent);
+    vi.mocked(getPromptCatalog).mockResolvedValue(
+      catalogOf([clothingSummary, { ...qualityRatingsSummary, parent_id: "clothing" }]),
+    );
+    renderAt();
+    await screen.findByRole("heading", { name: "品質評分" });
+    expect(screen.getByRole("navigation", { name: "分類路徑" })).toHaveTextContent("服裝 › 品質評分");
   });
 
   it("reloads category archive/restore state, preserves archived entries, and uses each new token", async () => {
