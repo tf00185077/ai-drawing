@@ -9,6 +9,7 @@ import {
   getPromptCatalog,
   putPromptCategory,
 } from "../components/prompt-library/promptLibraryApi";
+import { orderedCategoryRows } from "../components/prompt-library/categoryTree";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -27,6 +28,7 @@ export default function PromptCategoryManagement() {
   const [polarity, setPolarity] = useState<PromptPolarity>("positive");
   const [archiveFilter, setArchiveFilter] = useState<"active" | "archived">("active");
   const [categoryId, setCategoryId] = useState("");
+  const [parentId, setParentId] = useState("");
   const [nameZh, setNameZh] = useState("");
   const [descriptionZh, setDescriptionZh] = useState("");
   const [aliases, setAliases] = useState("");
@@ -100,6 +102,7 @@ export default function PromptCategoryManagement() {
           keywords: commaSeparated(keywords),
           order: orderNumber,
           expected_revision: 0,
+          parent_id: parentId || null,
         });
         const created = data.category?.category;
         if (!created) throw new Error("伺服器未回傳新分類資料");
@@ -109,6 +112,7 @@ export default function PromptCategoryManagement() {
         setDescriptionZh("");
         setAliases("");
         setKeywords("");
+        setParentId("");
         await loadCatalog();
       } catch (error) {
         setSubmitError(error instanceof Error ? error.message : "建立分類失敗");
@@ -116,7 +120,7 @@ export default function PromptCategoryManagement() {
         setSubmitting(false);
       }
     },
-    [aliases, categoryId, descriptionZh, keywords, loadCatalog, nameZh, order, polarity],
+    [aliases, categoryId, descriptionZh, keywords, loadCatalog, nameZh, order, parentId, polarity],
   );
 
   return (
@@ -154,8 +158,12 @@ export default function PromptCategoryManagement() {
               <p className="mb-3 text-sm text-slate-400">
                 {polarity === "positive" ? "正向" : "負向"}{archiveFilter === "archived" ? "已封存" : "使用中"}分類：{visibleCategories.length} 個
               </p>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {visibleCategories.map((category) => <CategoryCard key={`${category.polarity}-${category.id}`} category={category} />)}
+              <ul className="space-y-2">
+                {orderedCategoryRows(visibleCategories).map(({ category, depth }) => (
+                  <li key={`${category.polarity}-${category.id}`} style={{ marginLeft: depth * 20 }}>
+                    <CategoryCard category={category} />
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -168,7 +176,26 @@ export default function PromptCategoryManagement() {
           <form className="mt-5 space-y-4" onSubmit={createCategory} noValidate>
             <div>
               <span className="mb-2 block text-sm text-slate-400">分類類型</span>
-              <PolarityTabs value={polarity} onChange={setPolarity} />
+              <PolarityTabs value={polarity} onChange={(next) => { setPolarity(next); setParentId(""); }} />
+            </div>
+            <div>
+              <label htmlFor="category-parent" className="mb-1 block text-sm text-slate-400">父分類</label>
+              <select
+                id="category-parent"
+                value={parentId}
+                onChange={(event) => setParentId(event.target.value)}
+                className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="">（無，作為頂層）</option>
+                {orderedCategoryRows(
+                  catalog.filter((category) => category.polarity === polarity && !category.archived),
+                ).map(({ category, depth }) => (
+                  <option key={category.id} value={category.id}>
+                    {`${"　".repeat(depth)}${category.name_zh}`}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-500">留空表示頂層分類；巢狀深度不限。</p>
             </div>
             <TextField
               id="category-id"
