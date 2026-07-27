@@ -227,6 +227,28 @@ describe("PromptCategoryDetail", () => {
     expect(screen.getByRole("navigation", { name: "分類路徑" })).toHaveTextContent("服裝 › 品質評分");
   });
 
+  it("refreshes the catalog after a successful save so the breadcrumb reflects the new hierarchy", async () => {
+    const categoryWithParent = { ...versionedCategory, category: { ...versionedCategory.category, parent_id: "clothing" } };
+    const reloadedWithParent = { ...reloadedCategory, category: { ...reloadedCategory.category, parent_id: "clothing" } };
+    vi.mocked(getPromptCategory).mockResolvedValueOnce(categoryWithParent).mockResolvedValueOnce(reloadedWithParent);
+    vi.mocked(getPromptCatalog)
+      .mockResolvedValueOnce(catalogOf([clothingSummary, { ...qualityRatingsSummary, parent_id: "clothing" }]))
+      .mockResolvedValueOnce(catalogOf([clothingSummary, { ...qualityRatingsSummary, parent_id: "clothing", name_zh: "新版品質" }]));
+    vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
+    renderAt();
+    await screen.findByRole("heading", { name: "品質評分" });
+    expect(screen.getByRole("navigation", { name: "分類路徑" })).toHaveTextContent("服裝 › 品質評分");
+
+    fireEvent.change(screen.getByLabelText("分類中文名稱"), { target: { value: "新版品質" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存分類" }));
+
+    expect(await screen.findByRole("heading", { name: "新版品質" })).toBeVisible();
+    await waitFor(() => expect(getPromptCatalog).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByRole("navigation", { name: "分類路徑" })).toHaveTextContent("服裝 › 新版品質"),
+    );
+  });
+
   it("reloads category archive/restore state, preserves archived entries, and uses each new token", async () => {
     const afterArchive = versionAt(8, { archived: true });
     const afterRestore = versionAt(9, { archived: false });

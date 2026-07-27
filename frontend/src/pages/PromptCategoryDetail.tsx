@@ -114,6 +114,13 @@ export default function PromptCategoryDetail() {
         setNotice(options?.showAffectedCombinations && response.affected_combinations.length > 0
           ? `已同步更新 ${response.affected_combinations.length} 個組合：${response.affected_combinations.join("、")}`
           : null);
+        void getPromptCatalog()
+          .then((data) => {
+            if (operationGeneration.current === operationId && requestGeneration.current === reloadId) {
+              setCategories(data.categories ?? []);
+            }
+          })
+          .catch(() => {});
       }
     } catch (mutationError: unknown) {
       if (operationGeneration.current === operationId) {
@@ -139,6 +146,8 @@ export default function PromptCategoryDetail() {
   const { category: details, etag } = category;
   const token = { expected_revision: details.revision, expected_etag: etag };
   const entries = details.entries.filter((entry) => entry.archived === (entryFilter === "archived"));
+  const samePolarityCategories = categories.filter((c) => c.polarity === currentPolarity);
+  const excludedParentIds = descendantIds(samePolarityCategories, currentCategoryId);
 
   function saveCategory() {
     const order = Number(categoryDraft!.order);
@@ -216,10 +225,7 @@ export default function PromptCategoryDetail() {
                     item.polarity === currentPolarity &&
                     !item.archived &&
                     item.id !== currentCategoryId &&
-                    !descendantIds(
-                      categories.filter((c) => c.polarity === currentPolarity),
-                      currentCategoryId,
-                    ).has(item.id),
+                    !excludedParentIds.has(item.id),
                 ),
               ).map(({ category: option, depth }) => (
                 <option key={option.id} value={option.id}>
