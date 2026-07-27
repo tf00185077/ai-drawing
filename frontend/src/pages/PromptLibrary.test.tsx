@@ -84,9 +84,10 @@ describe("PromptLibrary", () => {
       aliases: ["urban scene", "street scene"],
       keywords: ["街道", "城市"],
       order: 10,
+      parent_id: null,
       expected_revision: 0,
     });
-    expect(screen.getByText("街景")).toBeTruthy();
+    expect(screen.queryAllByText("街景").length).toBeGreaterThan(0);
   });
 
   it("rejects an invalid category id before calling the write API", async () => {
