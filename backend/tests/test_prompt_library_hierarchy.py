@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from app.core.prompt_library import FilePromptLibraryProvider
+from app.core.prompt_library_errors import PromptLibraryError
 from app.core.prompt_library_models import PromptCategory
 from app.schemas.prompt_library import CategorySummary, CategoryWriteRequest
 
@@ -77,3 +78,45 @@ def test_category_write_request_accepts_parent_id():
     req = CategoryWriteRequest(name_zh="上衣", description_zh="d", order=10,
                                expected_revision=0, parent_id="clothing")
     assert req.parent_id == "clothing"
+
+
+def _save(provider, cid, parent_id=None, expected_revision=0):
+    return provider.save_category("positive", cid, CategoryWriteRequest(
+        name_zh=cid, description_zh="d", order=10,
+        expected_revision=expected_revision, parent_id=parent_id))
+
+
+def test_save_category_persists_valid_parent(provider):
+    _save(provider, "clothing")
+    _save(provider, "clothing-top", parent_id="clothing")
+    stored = provider.get_category("positive", "clothing-top")
+    assert stored.category.parent_id == "clothing"
+
+
+def test_save_category_rejects_missing_parent(provider):
+    with pytest.raises(PromptLibraryError) as exc:
+        _save(provider, "clothing-top", parent_id="nope")
+    assert exc.value.status_code == 422
+
+
+def test_save_category_rejects_self_parent(provider):
+    with pytest.raises(PromptLibraryError):
+        _save(provider, "clothing", parent_id="clothing")
+
+
+def test_save_category_rejects_cross_polarity_parent(provider):
+    # negative category as parent of a positive one → rejected
+    provider.save_category("negative", "neg-root", CategoryWriteRequest(
+        name_zh="n", description_zh="d", order=10, expected_revision=0))
+    with pytest.raises(PromptLibraryError):
+        _save(provider, "clothing-top", parent_id="neg-root")
+
+
+def test_save_category_rejects_cycle(provider):
+    _save(provider, "a")
+    _save(provider, "b", parent_id="a")
+    # now try to make a's parent = b → cycle a->b->a
+    with pytest.raises(PromptLibraryError):
+        provider.save_category("positive", "a", CategoryWriteRequest(
+            name_zh="a", description_zh="d", order=10,
+            expected_revision=1, parent_id="b"))

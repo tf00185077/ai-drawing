@@ -68,6 +68,46 @@ class PromptLibraryWriter:
         self.composer = PromptComposer(store)
         self.document_context = document_context or PromptDocumentContextCodec()
 
+    def _validate_parent(self, polarity: Polarity, category_id: str, parent_id: str) -> None:
+        if parent_id == category_id:
+            raise PromptLibraryError(
+                code="invalid_parent_self",
+                message="A category cannot be its own parent.",
+                hint="Choose a different parent category or leave it empty for a root.",
+                status_code=422,
+                details={"category_id": category_id},
+            )
+        categories, _ = self.store.scan_categories()
+        by_id = {
+            doc.model.id: doc.model
+            for doc in categories
+            if doc.model.polarity == polarity
+        }
+        if parent_id not in by_id:
+            raise PromptLibraryError(
+                code="parent_not_found",
+                message="The parent category does not exist in this polarity.",
+                hint="Create the parent first, or pick an existing same-polarity category.",
+                status_code=422,
+                details={"category_id": category_id, "parent_id": parent_id},
+            )
+        # walk up from parent; reaching category_id means a cycle
+        seen: set[str] = set()
+        cursor: str | None = parent_id
+        while cursor is not None:
+            if cursor == category_id:
+                raise PromptLibraryError(
+                    code="parent_cycle",
+                    message="Setting this parent would create a category cycle.",
+                    hint="Pick a parent that is not a descendant of this category.",
+                    status_code=422,
+                    details={"category_id": category_id, "parent_id": parent_id},
+                )
+            if cursor in seen:
+                break
+            seen.add(cursor)
+            cursor = by_id[cursor].parent_id if cursor in by_id else None
+
     def save_category(
         self, polarity: Polarity, category_id: str, request: CategoryWriteRequest
     ) -> WriteResponse:
@@ -81,6 +121,8 @@ class PromptLibraryWriter:
                 expected_revision=request.expected_revision,
                 expected_etag=request.expected_etag,
             )
+            if request.parent_id is not None:
+                self._validate_parent(polarity, category_id, request.parent_id)
             category = PromptCategory(
                 id=category_id,
                 polarity=polarity,
@@ -92,6 +134,7 @@ class PromptLibraryWriter:
                 revision=1 if current is None else current.model.revision + 1,
                 archived=False if current is None else current.model.archived,
                 entries=[] if current is None else current.model.entries,
+                parent_id=request.parent_id,
             )
             etag = self.store.replace_json(path, category)
         return WriteResponse(category=VersionedCategory(category=category, etag=etag))
