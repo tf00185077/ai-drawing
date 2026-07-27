@@ -1,5 +1,12 @@
 # 進度追蹤
 
+## 2026-07-27 Prompt Library 分類樹 Phase 2（管理 UX）
+
+- 前端分類寫入路徑接上 `parent_id`（先前 `categoryWriteBody` 會丟棄）；`putPromptCategory` 現會送出 `parent_id`（可為 null 以設為頂層）。新增純函式 `categoryTree`（樹列前序、祖先鏈、子孫集）。
+- 分類管理頁：「新增分類」表單加「父分類」選擇器（同 polarity 縮排選項，留空＝頂層）；「現有分類」清單改縮排樹呈現。
+- 分類詳情頁：顯示分類路徑麵包屑；可搬移父分類（選項排除自己與所有子孫，避免明顯成環，最終防環由後端把關）；**編輯任何欄位都會保留既有 parent**，不會誤清。
+- 純前端；後端沿用 Phase 1 的 parent_id 寫入與驗證。畫面工作台瀏覽器樹狀（Phase 3）另行。驗證：前端 vitest 全綠、`tsc` 與 Vite build 通過。
+
 ## 2026-07-27 Prompt Library 分類樹 Phase 1（地基）
 
 - `PromptCategory` 新增選填 `parent_id`（指向同 polarity 分類）；詞的身分 `(polarity, category_id, entry_id)` 不變，組合/provenance/comma-atomic/生圖/輸出全不動、零 migration。
