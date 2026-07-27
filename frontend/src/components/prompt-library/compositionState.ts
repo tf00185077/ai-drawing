@@ -476,40 +476,7 @@ export function sortFragmentsByRecommendation(
   return rebuild(ranked.map((item) => item.fragment));
 }
 
-export interface FragmentGroup {
-  key: string;
-  displayName: string;
-  order: number;
-  fragments: WorkbenchFragment[];
-}
-
 export const LITERAL_GROUP_KEY = "__literal__";
-
-export function groupFragmentsByCategory(
-  fragments: readonly WorkbenchFragment[],
-  categoryInfoOf: (
-    fragment: WorkbenchFragment,
-  ) => { key: string; displayName: string; order: number } | null,
-  literalLabel = "自訂文字",
-): FragmentGroup[] {
-  const groups: FragmentGroup[] = [];
-  fragments.forEach((fragment) => {
-    const info = categoryInfoOf(fragment);
-    const key = info?.key ?? LITERAL_GROUP_KEY;
-    const last = groups[groups.length - 1];
-    if (last && last.key === key) {
-      last.fragments.push(fragment);
-      return;
-    }
-    groups.push({
-      key,
-      displayName: info?.displayName ?? literalLabel,
-      order: info ? info.order : Number.POSITIVE_INFINITY,
-      fragments: [fragment],
-    });
-  });
-  return groups;
-}
 
 export function appendFragmentsDeduped(
   target: CompositionState,

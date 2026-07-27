@@ -15,7 +15,6 @@ import {
   resolveLiteralDisplayLabel,
   serializeFragments,
   sortFragmentsByRecommendation,
-  groupFragmentsByCategory,
   setFragmentText,
   setFragmentWeight,
   LITERAL_GROUP_KEY,
@@ -416,59 +415,6 @@ describe("sortFragmentsByRecommendation", () => {
     state = appendFragment(state, entryFrag("actions", "second"));
     const sorted = sortFragmentsByRecommendation(state, rankOf);
     expect(sorted.fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["first", "second"]);
-  });
-});
-
-describe("groupFragmentsByCategory", () => {
-  const ids = sequentialIds("g");
-  const entryFrag = (categoryId: string, entryId: string) => ({
-    id: ids(),
-    kind: "entry" as const,
-    displayName: entryId,
-    source: { polarity: "positive" as const, categoryId, entryId, revision: 1 },
-    sourceSnapshotRaw: entryId,
-    snapshotRaw: entryId,
-    weight: "",
-  });
-  const info = (fragment: { kind: string; source?: { categoryId: string } }) => {
-    if (fragment.kind !== "entry" || !fragment.source) return null;
-    const meta: Record<string, { displayName: string; order: number }> = {
-      "quality-ratings": { displayName: "品質與分級", order: 10 },
-      environment: { displayName: "場景與氛圍", order: 20 },
-    };
-    const found = meta[fragment.source.categoryId];
-    return found ? { key: fragment.source.categoryId, ...found } : null;
-  };
-
-  it("groups fragments into contiguous runs preserving global order", () => {
-    let state = emptyComposition();
-    state = appendFragment(state, entryFrag("environment", "rooftop"));
-    state = appendLiteralText(state, "custom", ids);
-    state = appendFragment(state, entryFrag("quality-ratings", "masterpiece"));
-    state = appendFragment(state, entryFrag("environment", "sunset"));
-
-    const groups = groupFragmentsByCategory(state.fragments, info);
-
-    // contiguous runs in global order — environment appears twice, not merged or re-sorted
-    expect(groups.map((group) => group.displayName)).toEqual([
-      "場景與氛圍",
-      "自訂文字",
-      "品質與分級",
-      "場景與氛圍",
-    ]);
-    expect(groups[0].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["rooftop"]);
-    expect(groups[1].key).toBe("__literal__");
-    expect(groups[3].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["sunset"]);
-  });
-
-  it("merges adjacent same-category fragments into one run", () => {
-    let state = emptyComposition();
-    state = appendFragment(state, entryFrag("quality-ratings", "a"));
-    state = appendFragment(state, entryFrag("quality-ratings", "b"));
-    state = appendFragment(state, entryFrag("environment", "c"));
-    const groups = groupFragmentsByCategory(state.fragments, info);
-    expect(groups.map((group) => group.key)).toEqual(["quality-ratings", "environment"]);
-    expect(groups[0].fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["a", "b"]);
   });
 });
 
