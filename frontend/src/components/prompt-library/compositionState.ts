@@ -463,16 +463,27 @@ export function blankSegmentMessage(
   return `${summary}：每個 ASCII 逗號都會建立一個 prompt；請填入內容或移除該空白段。`;
 }
 
+function compareRankKey(a: number[], b: number[]): number {
+  const length = Math.min(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    if (a[index] < b[index]) return -1;
+    if (a[index] > b[index]) return 1;
+  }
+  return a.length - b.length;
+}
+
 export function sortFragmentsByRecommendation(
   state: CompositionState,
-  rankOf: (fragment: WorkbenchFragment) => number,
+  rankOf: (fragment: WorkbenchFragment) => number[],
 ): CompositionState {
   const ranked = state.fragments.map((fragment, index) => ({
     fragment,
     index,
     rank: rankOf(fragment),
   }));
-  ranked.sort((left, right) => left.rank - right.rank || left.index - right.index);
+  ranked.sort(
+    (left, right) => compareRankKey(left.rank, right.rank) || left.index - right.index,
+  );
   return rebuild(ranked.map((item) => item.fragment));
 }
 

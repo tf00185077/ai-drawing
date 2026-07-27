@@ -384,37 +384,44 @@ describe("sortFragmentsByRecommendation", () => {
     weight: "",
   });
 
-  // 分類 rank：environment=20, quality=10；entry order 忽略時同 rank
-  const rankOf = (fragment: { kind: string; source?: { categoryId: string } }): number => {
-    if (fragment.kind !== "entry" || !fragment.source) return Number.POSITIVE_INFINITY;
-    return { "quality-ratings": 10, environment: 20, actions: 60 }[fragment.source.categoryId] ?? Infinity;
+  // path-order rank keys: character root(15) deep vs clothing root(70)
+  const paths: Record<string, number[]> = {
+    "chars-2nd": [15, 10, 20, 30], // 角色→女→LoveLive→二代
+    "chars-1st": [15, 10, 20, 10], // 角色→女→LoveLive→一代
+    clothing: [70],
+    quality: [10],
+  };
+  const rankOf = (fragment: { kind: string; source?: { categoryId: string } }): number[] => {
+    if (fragment.kind !== "entry" || !fragment.source) return [Number.POSITIVE_INFINITY];
+    const entryOrder = 10;
+    return [...(paths[fragment.source.categoryId] ?? [Number.POSITIVE_INFINITY]), entryOrder];
   };
 
-  it("sorts entries by category rank and pushes literals last, stably", () => {
+  it("aggregates by root ancestor and orders sub-branches by path, literals last", () => {
     let state = emptyComposition();
-    state = appendFragment(state, entryFrag("actions", "hug"));
-    state = appendLiteralText(state, "custom tag", ids);
-    state = appendFragment(state, entryFrag("quality-ratings", "masterpiece"));
-    state = appendFragment(state, entryFrag("environment", "rooftop"));
+    state = appendFragment(state, entryFrag("clothing", "dress"));
+    state = appendLiteralText(state, "solo", ids);
+    state = appendFragment(state, entryFrag("chars-2nd", "honoka"));
+    state = appendFragment(state, entryFrag("quality", "masterpiece"));
+    state = appendFragment(state, entryFrag("chars-1st", "eli"));
 
     const sorted = sortFragmentsByRecommendation(state, rankOf);
-
-    expect(sorted.fragments.map((fragment) => fragment.snapshotRaw)).toEqual([
-      "masterpiece",
-      "rooftop",
-      "hug",
-      "custom tag",
+    expect(sorted.fragments.map((f) => f.snapshotRaw)).toEqual([
+      "masterpiece", // quality [10,10]
+      "eli",         // [15,10,20,10,10]
+      "honoka",      // [15,10,20,30,10]
+      "dress",       // [70,10]
+      "solo",        // literal [Infinity]
     ]);
-    // 輸出字串仍是逗號串接、與片段順序一致
-    expect(sorted.text).toBe("masterpiece,rooftop,hug,custom tag");
+    expect(sorted.text).toBe("masterpiece,eli,honoka,dress,solo");
   });
 
-  it("keeps original order among same-rank fragments (stable)", () => {
+  it("keeps original order among equal-rank fragments (stable)", () => {
     let state = emptyComposition();
-    state = appendFragment(state, entryFrag("actions", "first"));
-    state = appendFragment(state, entryFrag("actions", "second"));
+    state = appendFragment(state, entryFrag("clothing", "first"));
+    state = appendFragment(state, entryFrag("clothing", "second"));
     const sorted = sortFragmentsByRecommendation(state, rankOf);
-    expect(sorted.fragments.map((fragment) => fragment.snapshotRaw)).toEqual(["first", "second"]);
+    expect(sorted.fragments.map((f) => f.snapshotRaw)).toEqual(["first", "second"]);
   });
 });
 
