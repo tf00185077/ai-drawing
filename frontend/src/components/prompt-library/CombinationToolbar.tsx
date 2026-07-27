@@ -54,7 +54,7 @@ export default function CombinationToolbar({
             ))}
           </select>
         </label>
-        <button type="button" disabled={busy || !selectedId} onClick={onLoad} className="rounded-lg bg-sky-700 px-4 py-2.5 font-medium text-white disabled:bg-slate-700">載入組合</button>
+        <button type="button" disabled={busy || !selectedId} onClick={onLoad} className="rounded-lg bg-sky-700 px-4 py-2.5 font-medium text-white disabled:bg-slate-700">加入組合</button>
         <button type="button" disabled={busy} onClick={onBlank} className="rounded-lg bg-slate-700 px-4 py-2.5 font-medium text-white disabled:opacity-50">建立空白組合</button>
       </div>
 

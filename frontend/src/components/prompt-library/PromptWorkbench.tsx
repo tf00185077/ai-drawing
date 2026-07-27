@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PromptBlockingDocumentDiagnostic, PromptCombinationSummary, PromptEntryRef, PromptFragment, PromptPolarity, PromptProvenanceResolution, PromptVersionedCombination, PromptWarning } from "../../types/api";
-import { appendFragment, appendLiteralText, blankSegmentMessage, blankSegmentPreflight, buildLiteralLabelIndex, deserializeFragments, emptyComposition, materializeRawText, moveFragment, removeFragment, replaceDiagnosticFallback, resolveLiteralDisplayLabel, serializeFragments, setFragmentText, setFragmentWeight, sortFragmentsByRecommendation, tagDiagnosticFallback, type CompositionState, type LiteralLabelIndex, type WorkbenchFragment } from "./compositionState";
+import { appendFragment, appendFragmentsDeduped, appendLiteralText, blankSegmentMessage, blankSegmentPreflight, buildLiteralLabelIndex, deserializeFragments, emptyComposition, materializeRawText, moveFragment, removeFragment, replaceDiagnosticFallback, resolveLiteralDisplayLabel, serializeFragments, setFragmentText, setFragmentWeight, sortFragmentsByRecommendation, tagDiagnosticFallback, type CompositionState, type LiteralLabelIndex, type WorkbenchFragment } from "./compositionState";
 import CombinationToolbar from "./CombinationToolbar";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { promptEntryContent, promptEntryLabel, type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
@@ -439,8 +439,8 @@ export default function PromptWorkbench() {
     });
   }
 
-  async function loadCombination() {
-    if (!selectedId || !canReplace()) return;
+  async function appendCombination() {
+    if (!selectedId) return;
     const id = beginOperation();
     setSuccess("");
     try {
@@ -451,7 +451,20 @@ export default function PromptWorkbench() {
         labelMap.current,
       );
       if (operationId.current !== id) return;
-      installCombination(detail, names.labels, names.warnings);
+      const literalLabel = (snapshot: string) => resolveLiteralDisplayLabel(snapshot, literalLabelIndex.current);
+      const loadedPositive = deserializeWithReferenceLabels(detail.combination.positive, "positive", () => nextId("loaded"), names.labels, literalLabel);
+      const loadedNegative = deserializeWithReferenceLabels(detail.combination.negative, "negative", () => nextId("loaded"), names.labels, literalLabel);
+      labelMap.current = names.labels;
+      setPositive((current) => {
+        const merged = appendFragmentsDeduped(current, loadedPositive.fragments);
+        return arrangement.positive === "auto" ? sortFragmentsByRecommendation(merged, rankOf) : merged;
+      });
+      setNegative((current) => {
+        const merged = appendFragmentsDeduped(current, loadedNegative.fragments);
+        return arrangement.negative === "auto" ? sortFragmentsByRecommendation(merged, rankOf) : merged;
+      });
+      setDocument({ ...blankDocument(), dirty: true, warnings: [...warningMessages(detail.warnings), ...names.warnings] });
+      setSuccess("已加入組合到目前工作區（未儲存草稿）");
     } catch (reason) {
       if (operationId.current === id) setError(reason instanceof Error ? reason.message : String(reason));
     } finally { finishOperation(id); }
@@ -663,7 +676,7 @@ export default function PromptWorkbench() {
         combinations={combinations}
         selectedId={selectedId}
         onSelectedIdChange={setSelectedId}
-        onLoad={loadCombination}
+        onLoad={appendCombination}
         onBlank={createBlank}
         document={document}
         targetId={targetId}
