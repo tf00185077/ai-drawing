@@ -355,6 +355,7 @@ export interface PromptCategoryWriteRequest extends PromptConcurrencyToken {
   aliases: string[];
   keywords: string[];
   order: number;
+  parent_id?: string | null;
 }
 
 export interface PromptEntryWriteRequest extends PromptCategoryWriteRequest {
