@@ -187,8 +187,20 @@ export default function PromptComposerPanel({
                 </label>
                 <div className="flex w-full justify-between">
                   <div className="flex gap-2">
-                    <button type="button" disabled={index === 0} onClick={() => onMove(fragment.id, -1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">上移</button>
-                    <button type="button" disabled={index === state.fragments.length - 1} onClick={() => onMove(fragment.id, 1)} className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40">下移</button>
+                    <button
+                      type="button"
+                      disabled={filterKey !== ALL_KEY || index === 0}
+                      title={filterKey !== ALL_KEY ? "切換到「全部」才能調整順序" : undefined}
+                      onClick={() => onMove(fragment.id, -1)}
+                      className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40"
+                    >上移</button>
+                    <button
+                      type="button"
+                      disabled={filterKey !== ALL_KEY || index === state.fragments.length - 1}
+                      title={filterKey !== ALL_KEY ? "切換到「全部」才能調整順序" : undefined}
+                      onClick={() => onMove(fragment.id, 1)}
+                      className="rounded-md bg-slate-700 px-2 py-1.5 text-xs disabled:opacity-40"
+                    >下移</button>
                   </div>
                   <button type="button" onClick={() => onRemove(fragment.id)} className="rounded-md bg-red-950 px-2 py-1.5 text-xs text-red-300">刪除</button>
                 </div>
