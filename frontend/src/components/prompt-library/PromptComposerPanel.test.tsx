@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appendFragment, emptyComposition, materializeRawText, type CompositionState } from "./compositionState";
 import PromptComposerPanel from "./PromptComposerPanel";
@@ -38,7 +38,7 @@ function panelProps(state: CompositionState = fragments(1)) {
 }
 
 describe("PromptComposerPanel", () => {
-  it("renders all fragments in a responsive two-column grid without pagination", () => {
+  it("renders fragment cards in a three-column grid", () => {
     const state = fragments(7);
     render(<PromptComposerPanel {...panelProps(state)} />);
 
@@ -353,6 +353,61 @@ describe("PromptComposerPanel", () => {
 
     expect(document.querySelector('textarea[data-segment-position="10"]')).not.toBeNull();
     expect(screen.getByRole("button", { name: "全部" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("disables move buttons only while a non-全部 filter is active", () => {
+    let state = emptyComposition();
+    state = appendFragment(state, {
+      id: "entry-quality",
+      kind: "entry",
+      displayName: "傑作",
+      source: { polarity: "positive", categoryId: "quality-ratings", entryId: "masterpiece" },
+      sourceSnapshotRaw: "masterpiece",
+      snapshotRaw: "masterpiece",
+      weight: "",
+    });
+    state = appendFragment(state, {
+      id: "entry-environment",
+      kind: "entry",
+      displayName: "rooftop",
+      source: { polarity: "positive", categoryId: "environment", entryId: "rooftop" },
+      sourceSnapshotRaw: "rooftop",
+      snapshotRaw: "rooftop",
+      weight: "",
+    });
+    const info = (fragment: { source?: { categoryId: string } }) => {
+      const meta: Record<string, { displayName: string; order: number }> = {
+        "quality-ratings": { displayName: "品質與分級", order: 10 },
+        environment: { displayName: "場景與氛圍", order: 20 },
+      };
+      const found = fragment.source ? meta[fragment.source.categoryId] : undefined;
+      return found ? { key: fragment.source!.categoryId, ...found } : null;
+    };
+    render(
+      <PromptComposerPanel
+        title="Positive Prompt"
+        state={state}
+        arrangement="auto"
+        categoryInfoOf={info as never}
+        onReapplySort={() => {}}
+        onFinalTextChange={() => {}}
+        onTextChange={() => {}}
+        onWeightChange={() => {}}
+        onMove={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+
+    // In the default 全部 view, the second card's 上移 is not an edge case, so it's enabled.
+    const rooftopCard = screen.getByLabelText("rooftop 內容").closest("div.rounded-lg") as HTMLElement;
+    const rooftopUp = within(rooftopCard).getByRole("button", { name: "上移" });
+    expect(rooftopUp).not.toBeDisabled();
+
+    // Switching to a category filter disables move buttons even though this is the only visible card.
+    fireEvent.click(screen.getByRole("button", { name: "場景與氛圍" }));
+    const filteredCard = screen.getByLabelText("rooftop 內容").closest("div.rounded-lg") as HTMLElement;
+    expect(within(filteredCard).getByRole("button", { name: "上移" })).toBeDisabled();
+    expect(within(filteredCard).getByRole("button", { name: "下移" })).toBeDisabled();
   });
 
   it("fires onReapplySort when the button is clicked", () => {
