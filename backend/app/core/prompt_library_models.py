@@ -91,6 +91,7 @@ class PromptCategory(StrictModel):
     order: int = Field(default=10, ge=0)
     revision: int = Field(default=1, ge=1)
     archived: bool = False
+    parent_id: Slug | None = None
     entries: list[PromptEntry] = Field(default_factory=list)
 
     @model_validator(mode="after")
