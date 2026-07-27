@@ -120,3 +120,54 @@ def test_save_category_rejects_cycle(provider):
         provider.save_category("positive", "a", CategoryWriteRequest(
             name_zh="a", description_zh="d", order=10,
             expected_revision=1, parent_id="b"))
+
+
+from app.core.prompt_library_tree import validate_category_tree
+
+
+def _summary(cid, order=10, parent_id=None, polarity="positive"):
+    return CategorySummary(id=cid, polarity=polarity, name_zh=cid, description_zh="d",
+                           order=order, revision=1, archived=False, entry_count=0,
+                           etag="x", parent_id=parent_id)
+
+
+def test_validate_tree_keeps_valid_parents():
+    adjusted, diags = validate_category_tree([
+        _summary("clothing"), _summary("clothing-top", parent_id="clothing"),
+    ])
+    assert diags == []
+    assert {c.id: c.parent_id for c in adjusted} == {"clothing": None, "clothing-top": "clothing"}
+
+
+def test_validate_tree_demotes_missing_parent():
+    adjusted, diags = validate_category_tree([_summary("top", parent_id="ghost")])
+    assert {c.id: c.parent_id for c in adjusted} == {"top": None}
+    assert len(diags) == 1 and diags[0].details["category_id"] == "top"
+
+
+def test_validate_tree_demotes_cross_polarity_parent():
+    adjusted, diags = validate_category_tree([
+        _summary("np", polarity="negative"),
+        _summary("pos", parent_id="np", polarity="positive"),
+    ])
+    assert {c.id: c.parent_id for c in adjusted}["pos"] is None
+    assert len(diags) == 1
+
+
+def test_validate_tree_breaks_cycle():
+    adjusted, diags = validate_category_tree([
+        _summary("a", parent_id="b"), _summary("b", parent_id="a"),
+    ])
+    # at least one edge demoted so the result is acyclic; a diagnostic emitted
+    parents = {c.id: c.parent_id for c in adjusted}
+    assert parents["a"] is None or parents["b"] is None
+    assert len(diags) >= 1
+
+
+def test_catalog_demotes_dangling_parent_and_still_loads(provider):
+    root = provider.store.root
+    _write_json(root / "positive" / "top.json", _category("top", 10, parent_id="ghost"))
+    catalog = provider.catalog()
+    by_id = {c.id: c for c in catalog.categories}
+    assert by_id["top"].parent_id is None
+    assert any(d.details.get("category_id") == "top" for d in catalog.diagnostics)
