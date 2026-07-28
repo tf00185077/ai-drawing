@@ -47,6 +47,7 @@ def mcp_ping() -> str:
 from mcp_server.tools import (  # noqa: E402, F401
     civitai,
     comfyui,
+    comfyui_nodes,
     gallery,
     generate,
     lora_train,

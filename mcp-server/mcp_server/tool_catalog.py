@@ -52,6 +52,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("gallery_rerun", "mcp_server.tools.gallery", "gallery_rerun", "plain_text", ("POST /api/gallery/{image_id}/rerun",)),
     # ComfyUI ops
     ToolCatalogEntry("free_comfyui_memory", "mcp_server.tools.comfyui", "free_comfyui_memory", "json_string", ("POST <ComfyUI>/free",)),
+    ToolCatalogEntry("comfyui_node_provision", "mcp_server.tools.comfyui_nodes", "comfyui_node_provision", "json_string", ("GET <ComfyUI>/customnode/getmappings", "POST <ComfyUI>/manager/queue/install", "POST <ComfyUI>/manager/queue/start", "GET <ComfyUI>/manager/queue/status"), notes="resolves a missing node class name to its ComfyUI-Manager package and installs it; does not restart"),
+    ToolCatalogEntry("comfyui_restart", "mcp_server.tools.comfyui_nodes", "comfyui_restart", "json_string", ("POST <ComfyUI>/manager/reboot",), notes="explicit-approval-only; restarts ComfyUI so an installed node takes effect"),
     # Style presets (daily path incl. create; reindex/validate stays on backend HTTP)
     ToolCatalogEntry("create_style_preset", "mcp_server.tools.style_presets", "create_style_preset", "json_string", ("POST /api/style-presets/",), notes="users save styles in conversation; backend auto-reindexes"),
     ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
