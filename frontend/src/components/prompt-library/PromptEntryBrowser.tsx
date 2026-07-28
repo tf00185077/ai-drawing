@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PromptPolarity } from "../../types/api";
+import { ancestorChain, childCategories } from "./categoryTree";
 import { suspectReason } from "./suspectChinese";
 
-export interface BrowserCategory { id: string; polarity: PromptPolarity; name_zh: string; revision: number; etag: string; archived: boolean }
+export interface BrowserCategory { id: string; polarity: PromptPolarity; name_zh: string; revision: number; etag: string; archived: boolean; parent_id?: string | null; order: number }
 export interface BrowserEntry { id: string; name_zh: string; prompt: string; description_zh: string; aliases: string[]; keywords: string[]; order: number; revision: number; archived: boolean }
 
 export function promptEntryLabel(entry: Pick<BrowserEntry, "id" | "name_zh" | "prompt">): string {
   return entry.name_zh?.trim() || entry.prompt?.trim() || entry.id;
 }
-
 export function promptEntryContent(entry: Pick<BrowserEntry, "id" | "prompt">): string {
   return entry.prompt?.trim() ? entry.prompt : entry.id;
 }
@@ -21,52 +21,130 @@ interface Props {
   onPolarityChange: (polarity: PromptPolarity) => void;
   selectedCategory: BrowserCategory | null;
   entries: BrowserEntry[];
+  allEntries: { category: BrowserCategory; entry: BrowserEntry }[];
   onOpenCategory: (category: BrowserCategory) => void;
-  onAddEntry: (entry: BrowserEntry) => void;
+  onAddEntry: (category: BrowserCategory, entry: BrowserEntry) => void;
   onAddLiteral: (text: string) => void;
 }
 
-export default function PromptEntryBrowser({ categories, activePolarity, onPolarityChange, selectedCategory, entries, onOpenCategory, onAddEntry, onAddLiteral }: Props) {
+function EntryChip({ category, entry, pathLabel, onAdd }: { category: BrowserCategory; entry: BrowserEntry; pathLabel?: string; onAdd: (category: BrowserCategory, entry: BrowserEntry) => void }) {
+  const reason = suspectReason(entry.name_zh, entry.prompt);
+  const displayName = promptEntryLabel(entry);
+  return (
+    <button
+      type="button"
+      title={entry.prompt}
+      aria-label={`加入 ${displayName}`}
+      onClick={() => onAdd(category, entry)}
+      className="inline-flex max-w-[16rem] items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-emerald-500 hover:bg-slate-700"
+    >
+      {reason && <span title="name_zh 可能沒有有意義的中文對照，建議編輯修正" aria-label={`${displayName} 中文對照可能未填好`} className="text-amber-400">⚠️</span>}
+      {pathLabel && <span className="text-xs text-slate-500">{pathLabel}·</span>}
+      <span className="truncate">{displayName}</span>
+    </button>
+  );
+}
+
+export default function PromptEntryBrowser({ categories, activePolarity, onPolarityChange, selectedCategory, entries, allEntries, onOpenCategory, onAddEntry, onAddLiteral }: Props) {
   const [query, setQuery] = useState("");
   const [literal, setLiteral] = useState("");
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const visibleEntries = useMemo(() => entries.filter((entry) => !entry.archived && `${entry.name_zh} ${entry.prompt}`.toLowerCase().includes(query.toLowerCase())), [entries, query]);
 
-  // Reset to first page whenever the search or the opened category changes.
-  useEffect(() => { setPage(0); }, [query, selectedCategory?.id]);
+  const polarityCategories = useMemo(
+    () => categories.filter((category) => !category.archived && category.polarity === activePolarity),
+    [categories, activePolarity],
+  );
 
-  const pageCount = Math.max(1, Math.ceil(visibleEntries.length / PAGE_SIZE));
+  const trimmedQuery = query.trim().toLowerCase();
+  const searching = trimmedQuery !== "";
+
+  // Cross-tree search results (whole polarity), else the current category's entries.
+  const searchResults = useMemo(() => {
+    if (!searching) return [];
+    return allEntries.filter(
+      ({ category, entry }) =>
+        category.polarity === activePolarity &&
+        !entry.archived &&
+        `${entry.name_zh} ${entry.prompt}`.toLowerCase().includes(trimmedQuery),
+    );
+  }, [allEntries, activePolarity, searching, trimmedQuery]);
+
+  const currentCategory = useMemo(
+    () => polarityCategories.find((category) => category.id === currentId) ?? null,
+    [polarityCategories, currentId],
+  );
+  const folders = useMemo(() => childCategories(polarityCategories, currentId), [polarityCategories, currentId]);
+  const breadcrumb = useMemo(
+    () => (currentId ? ancestorChain(polarityCategories, currentId) : []),
+    [polarityCategories, currentId],
+  );
+  const currentEntries = useMemo(
+    () => (currentCategory ? entries.filter((entry) => !entry.archived) : []),
+    [entries, currentCategory],
+  );
+
+  const listForPaging = searching ? searchResults : currentEntries;
+  useEffect(() => { setPage(0); }, [trimmedQuery, currentId, activePolarity]);
+  const pageCount = Math.max(1, Math.ceil(listForPaging.length / PAGE_SIZE));
   useEffect(() => { if (page >= pageCount) setPage(pageCount - 1); }, [page, pageCount]);
-  const pageEntries = visibleEntries.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const pageStart = page * PAGE_SIZE;
+
+  const enterCategory = (category: BrowserCategory) => {
+    setCurrentId(category.id);
+    onOpenCategory(category);
+  };
+  const pathLabelOf = (category: BrowserCategory) =>
+    ancestorChain(polarityCategories, category.id).map((node) => node.name_zh).join(" › ");
+
+  const changePolarity = (polarity: PromptPolarity) => {
+    setCurrentId(null);
+    onPolarityChange(polarity);
+  };
 
   return (
     <section className="h-fit rounded-xl border border-slate-700 bg-slate-900/70 p-5">
       <h2 className="text-lg font-semibold text-white">加入 Prompt</h2>
       <div className="mt-4 grid grid-cols-2 rounded-lg bg-slate-800 p-1" aria-label="Prompt 類型">
-        {(["positive", "negative"] as const).map((polarity) => <button key={polarity} type="button" aria-pressed={activePolarity === polarity} onClick={() => onPolarityChange(polarity)} className={`rounded-md px-3 py-2 text-sm ${activePolarity === polarity ? "bg-emerald-600 text-white" : "text-slate-400"}`}>{polarity === "positive" ? "正向" : "負向"}</button>)}
+        {(["positive", "negative"] as const).map((polarity) => <button key={polarity} type="button" aria-pressed={activePolarity === polarity} onClick={() => changePolarity(polarity)} className={`rounded-md px-3 py-2 text-sm ${activePolarity === polarity ? "bg-emerald-600 text-white" : "text-slate-400"}`}>{polarity === "positive" ? "正向" : "負向"}</button>)}
       </div>
-      <input aria-label="搜尋提示詞" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋中文或英文" className="mt-4 w-full rounded-lg border border-slate-600 bg-slate-800 p-2 text-white" />
-      <div className="mt-3 flex flex-wrap gap-2">{categories.filter((category) => !category.archived && category.polarity === activePolarity).map((category) => <button key={category.id} type="button" onClick={() => onOpenCategory(category)} className={`rounded-lg px-3 py-2 text-sm ${selectedCategory?.id === category.id ? "bg-emerald-700 text-white" : "bg-slate-800 text-slate-300"}`}>{category.name_zh}</button>)}</div>
+      <input aria-label="搜尋提示詞" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋整棵樹（中文或英文）" className="mt-4 w-full rounded-lg border border-slate-600 bg-slate-800 p-2 text-white" />
+
+      {!searching && (
+        <nav aria-label="分類路徑" className="mt-3 flex flex-wrap items-center gap-1 text-sm">
+          <button type="button" onClick={() => setCurrentId(null)} className={`rounded px-2 py-1 ${currentId === null ? "text-white" : "text-emerald-400 hover:underline"}`}>頂層</button>
+          {breadcrumb.map((node) => (
+            <span key={node.id} className="flex items-center gap-1">
+              <span className="text-slate-600">›</span>
+              <button type="button" onClick={() => setCurrentId(node.id)} className={`rounded px-2 py-1 ${node.id === currentId ? "text-white" : "text-emerald-400 hover:underline"}`}>{node.name_zh}</button>
+            </span>
+          ))}
+        </nav>
+      )}
+
+      {!searching && folders.length > 0 && (
+        <div data-testid="prompt-folder-chips" className="mt-3 flex flex-wrap gap-2">
+          {folders.map((folder) => (
+            <button key={folder.id} type="button" onClick={() => enterCategory(folder)} className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700">
+              📁 {folder.name_zh}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div data-testid="prompt-entry-chips" className="mt-4 flex flex-wrap gap-2">
-        {visibleEntries.length === 0 && <p className="text-sm text-slate-500">沒有符合的詞條</p>}
-        {pageEntries.map((entry) => {
-          const reason = suspectReason(entry.name_zh, entry.prompt);
-          const displayName = promptEntryLabel(entry);
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              title={entry.prompt}
-              aria-label={`加入 ${displayName}`}
-              onClick={() => onAddEntry(entry)}
-              className="inline-flex max-w-[16rem] items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-emerald-500 hover:bg-slate-700"
-            >
-              {reason && <span title="name_zh 可能沒有有意義的中文對照，建議編輯修正" aria-label={`${displayName} 中文對照可能未填好`} className="text-amber-400">⚠️</span>}
-              <span className="truncate">{displayName}</span>
-            </button>
-          );
-        })}
+        {searching && searchResults.length === 0 && <p className="text-sm text-slate-500">沒有符合的詞條</p>}
+        {!searching && currentCategory === null && folders.length === 0 && <p className="text-sm text-slate-500">尚無分類</p>}
+        {!searching && currentCategory !== null && currentEntries.length === 0 && <p className="text-sm text-slate-500">此分類尚無詞條</p>}
+        {searching
+          ? searchResults.slice(pageStart, pageStart + PAGE_SIZE).map(({ category, entry }) => (
+              <EntryChip key={`${category.id}/${entry.id}`} category={category} entry={entry} pathLabel={pathLabelOf(category)} onAdd={onAddEntry} />
+            ))
+          : currentCategory !== null
+            ? currentEntries.slice(pageStart, pageStart + PAGE_SIZE).map((entry) => (
+                <EntryChip key={entry.id} category={currentCategory} entry={entry} onAdd={onAddEntry} />
+              ))
+            : null}
       </div>
       {pageCount > 1 && (
         <nav aria-label="詞條分頁" className="mt-3 flex items-center justify-center gap-3">
