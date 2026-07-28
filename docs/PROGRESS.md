@@ -1,5 +1,11 @@
 # 進度追蹤
 
+## 2026-07-27 Prompt Library 分類樹 Phase 3（工作台瀏覽器樹狀）
+
+- 工作台左側「加入 Prompt」由扁平分類 chip 列改為**鑽入式＋麵包屑**：頂層列出 root 分類資料夾，點入後顯示其子分類資料夾與該分類詞條 chip（30/頁沿用）；麵包屑可跳回任一層或頂層。
+- **跨整棵樹搜尋**：輸入關鍵字即攤平該 polarity 全樹，列出命中詞條並標示其分類路徑，點擊即以「該詞所屬分類」加入（`onAddEntry(category, entry)`）；某分類若載入失敗其詞條不入搜尋，但不影響其他分類。
+- 純前端；後端沿用 Phase 1 的 `parent_id`。分類樹三階段（資料/排序、管理 UX、瀏覽器）至此完成。驗證：前端 vitest 全綠、`tsc` 與 Vite build 通過。
+
 ## 2026-07-27 Prompt Library 分類樹 Phase 2（管理 UX）
 
 - 前端分類寫入路徑接上 `parent_id`（先前 `categoryWriteBody` 會丟棄）；`putPromptCategory` 現會送出 `parent_id`（可為 null 以設為頂層）。新增純函式 `categoryTree`（樹列前序、祖先鏈、子孫集）。
