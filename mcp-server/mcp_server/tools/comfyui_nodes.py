@@ -117,3 +117,26 @@ def comfyui_node_provision(node_class_names: list[str]) -> str:
         },
         ensure_ascii=False,
     )
+
+
+@mcp.tool()
+def comfyui_restart() -> str:
+    """Restart ComfyUI so a newly-installed custom node package takes effect. Drawing Shasha
+    must NEVER call this tool without CTY's explicit approval in the current turn — restarting
+    interrupts any other job currently running on this ComfyUI instance. This is the only MCP
+    path to an action CTY otherwise performs by hand. Returns agent-friendly JSON."""
+    client = _get_comfyui_client()
+    try:
+        client.post("/manager/reboot", json={})
+    except Exception as e:
+        return exception_error_json(
+            "comfyui_restart", e, where="comfyui_manager_reboot"
+        )
+    return json.dumps(
+        {
+            "ok": True,
+            "tool": "comfyui_restart",
+            "next": "ComfyUI is restarting. Poll mcp_ping until it responds before resubmitting any job.",
+        },
+        ensure_ascii=False,
+    )
