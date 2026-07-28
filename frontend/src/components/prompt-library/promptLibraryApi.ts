@@ -90,9 +90,13 @@ export function putPromptCategory(
   categoryId: string,
   input: PromptCategoryWriteRequest,
 ): Promise<PromptLibraryWriteResponse> {
+  const body: PromptCategoryWriteRequest = {
+    ...categoryWriteBody(input),
+    ...(input.parent_id !== undefined ? { parent_id: input.parent_id } : {}),
+  };
   return requestJson<PromptLibraryWriteResponse>(
     `${API_ROOT}/categories/${segment(polarity)}/${segment(categoryId)}`,
-    jsonWrite("PUT", categoryWriteBody(input)),
+    jsonWrite("PUT", body),
   );
 }
 
