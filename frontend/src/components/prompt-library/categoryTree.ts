@@ -75,3 +75,11 @@ export function ancestorChain<T extends CategoryNodeLike>(
   }
   return chain.reverse();
 }
+
+export function childCategories<T extends CategoryNodeLike>(
+  categories: readonly T[],
+  parentId: string | null,
+): T[] {
+  const { roots, children } = childrenByParent(categories);
+  return parentId === null ? roots : children.get(parentId) ?? [];
+}
