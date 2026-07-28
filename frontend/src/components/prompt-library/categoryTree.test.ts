@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ancestorChain, descendantIds, orderedCategoryRows } from "./categoryTree";
+import { ancestorChain, childCategories, descendantIds, orderedCategoryRows } from "./categoryTree";
 
 const cats = [
   { id: "clothing", parent_id: null, order: 70 },
@@ -43,5 +43,25 @@ describe("ancestorChain", () => {
     const chain = ancestorChain(cyclic, "a").map((c) => c.id);
     expect(chain[chain.length - 1]).toBe("a");
     expect(chain.length).toBeLessThanOrEqual(2);
+  });
+});
+
+describe("childCategories", () => {
+  const cats = [
+    { id: "clothing", parent_id: null, order: 70 },
+    { id: "clothing-top", parent_id: "clothing", order: 10 },
+    { id: "clothing-bottom", parent_id: "clothing", order: 20 },
+    { id: "quality", parent_id: null, order: 10 },
+    { id: "dangling", parent_id: "ghost", order: 5 },
+  ];
+  it("returns roots for null parent sorted by order then id, incl dangling-as-root", () => {
+    // roots by order: dangling(5), quality(10), clothing(70)
+    expect(childCategories(cats, null).map((c) => c.id)).toEqual(["dangling", "quality", "clothing"]);
+  });
+  it("returns direct children of a parent ordered by order then id", () => {
+    expect(childCategories(cats, "clothing").map((c) => c.id)).toEqual(["clothing-top", "clothing-bottom"]);
+  });
+  it("returns [] for a leaf", () => {
+    expect(childCategories(cats, "quality")).toEqual([]);
   });
 });
