@@ -77,6 +77,27 @@ describe("Prompt Library writes", () => {
     });
   });
 
+  it("putPromptCategory sends parent_id when provided (including null to clear)", async () => {
+    const calls: RequestInit[] = [];
+    const mockFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      calls.push(init as RequestInit);
+      return jsonResponse();
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await putPromptCategory("positive", "clothing-top", {
+      name_zh: "上衣", description_zh: "d", aliases: [], keywords: [], order: 10,
+      expected_revision: 0, parent_id: "clothing",
+    });
+    expect(JSON.parse(calls[0].body as string).parent_id).toBe("clothing");
+
+    await putPromptCategory("positive", "clothing", {
+      name_zh: "服裝", description_zh: "d", aliases: [], keywords: [], order: 70,
+      expected_revision: 1, parent_id: null,
+    });
+    expect(JSON.parse(calls[1].body as string).parent_id).toBeNull();
+  });
+
   it("PUTs an entry with its parent category concurrency token", async () => {
     const fetch = fetchMock();
     await putPromptEntry("negative", "bad anatomy", "extra/limbs", {
