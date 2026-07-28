@@ -209,6 +209,7 @@ export default function PromptWorkbench() {
         categoryResults.forEach((result) => {
           if (result.status !== "fulfilled") return;
           const cat = result.value.category;
+          if (cat.archived) return;
           const browserCategory: BrowserCategory = {
             id: cat.id, polarity: cat.polarity, name_zh: cat.name_zh,
             revision: cat.revision, etag: result.value.etag, archived: cat.archived,

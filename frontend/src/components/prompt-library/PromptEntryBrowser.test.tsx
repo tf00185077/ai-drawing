@@ -196,6 +196,37 @@ describe("PromptEntryBrowser read-only source catalog", () => {
     expect(within(breadcrumb).getByRole("button", { name: "品質" })).toBeInTheDocument();
   });
 
+  it("reloads the ancestor category's entries when its breadcrumb button is clicked", () => {
+    const childCategory: BrowserCategory = { id: "quality-sub", polarity: "positive", name_zh: "細節", revision: 1, etag: "p2", archived: false, parent_id: "quality", order: 10 };
+    const onOpenCategory = vi.fn();
+    render(
+      <PromptEntryBrowser
+        categories={[category, childCategory]}
+        activePolarity="positive"
+        onPolarityChange={() => {}}
+        selectedCategory={null}
+        entries={[]}
+        allEntries={[]}
+        onOpenCategory={onOpenCategory}
+        onAddEntry={() => {}}
+        onAddLiteral={() => {}}
+      />,
+    );
+
+    // Drill root -> child.
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 細節" }));
+    expect(onOpenCategory).toHaveBeenLastCalledWith(childCategory);
+
+    // Jump back to the root via its breadcrumb button; this must re-fire
+    // onOpenCategory for the root so the workbench reloads its entries
+    // (currentId alone would leave the entries prop pointing at the child).
+    const breadcrumb = screen.getByRole("navigation", { name: "分類路徑" });
+    fireEvent.click(within(breadcrumb).getByRole("button", { name: "品質" }));
+
+    expect(onOpenCategory).toHaveBeenLastCalledWith(category);
+  });
+
   it("searches across the whole tree and labels each hit with its category path", () => {
     const otherCategory: BrowserCategory = { id: "style", polarity: "positive", name_zh: "風格", revision: 1, etag: "p3", archived: false, parent_id: null, order: 20 };
     const hit: BrowserEntry = { id: "soft", name_zh: "柔焦光", prompt: "soft masterpiece light", description_zh: "d", aliases: [], keywords: [], order: 10, revision: 1, archived: false };

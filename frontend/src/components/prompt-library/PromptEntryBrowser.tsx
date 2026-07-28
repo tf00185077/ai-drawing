@@ -65,6 +65,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
     return allEntries.filter(
       ({ category, entry }) =>
         category.polarity === activePolarity &&
+        !category.archived &&
         !entry.archived &&
         `${entry.name_zh} ${entry.prompt}`.toLowerCase().includes(trimmedQuery),
     );
@@ -90,7 +91,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
   useEffect(() => { if (page >= pageCount) setPage(pageCount - 1); }, [page, pageCount]);
   const pageStart = page * PAGE_SIZE;
 
-  const enterCategory = (category: BrowserCategory) => {
+  const jumpTo = (category: BrowserCategory) => {
     setCurrentId(category.id);
     onOpenCategory(category);
   };
@@ -116,7 +117,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
           {breadcrumb.map((node) => (
             <span key={node.id} className="flex items-center gap-1">
               <span className="text-slate-600">›</span>
-              <button type="button" onClick={() => setCurrentId(node.id)} className={`rounded px-2 py-1 ${node.id === currentId ? "text-white" : "text-emerald-400 hover:underline"}`}>{node.name_zh}</button>
+              <button type="button" onClick={() => jumpTo(node)} className={`rounded px-2 py-1 ${node.id === currentId ? "text-white" : "text-emerald-400 hover:underline"}`}>{node.name_zh}</button>
             </span>
           ))}
         </nav>
@@ -125,7 +126,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
       {!searching && folders.length > 0 && (
         <div data-testid="prompt-folder-chips" className="mt-3 flex flex-wrap gap-2">
           {folders.map((folder) => (
-            <button key={folder.id} type="button" onClick={() => enterCategory(folder)} className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700">
+            <button key={folder.id} type="button" onClick={() => jumpTo(folder)} className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700">
               📁 {folder.name_zh}
             </button>
           ))}
@@ -135,7 +136,7 @@ export default function PromptEntryBrowser({ categories, activePolarity, onPolar
       <div data-testid="prompt-entry-chips" className="mt-4 flex flex-wrap gap-2">
         {searching && searchResults.length === 0 && <p className="text-sm text-slate-500">沒有符合的詞條</p>}
         {!searching && currentCategory === null && folders.length === 0 && <p className="text-sm text-slate-500">尚無分類</p>}
-        {!searching && currentCategory !== null && currentEntries.length === 0 && <p className="text-sm text-slate-500">此分類尚無詞條</p>}
+        {!searching && currentCategory !== null && currentEntries.length === 0 && folders.length === 0 && <p className="text-sm text-slate-500">此分類尚無詞條</p>}
         {searching
           ? searchResults.slice(pageStart, pageStart + PAGE_SIZE).map(({ category, entry }) => (
               <EntryChip key={`${category.id}/${entry.id}`} category={category} entry={entry} pathLabel={pathLabelOf(category)} onAdd={onAddEntry} />
