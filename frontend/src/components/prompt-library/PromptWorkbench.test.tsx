@@ -29,6 +29,20 @@ const categoryResponse = (polarity: "positive" | "negative", id: string) => ({
     ],
   }, etag: `${polarity}-${id}-4`,
 });
+// Like categoryResponse, but with the first entry's name_zh replaced by a
+// distinguishing label, so tests can tell whether the category actually
+// displayed came from a "quality" or "style" fetch (categoryResponse's stock
+// entries are otherwise identical across category ids of the same polarity).
+const labeledCategoryResponse = (polarity: "positive" | "negative", id: string, label: string) => {
+  const base = categoryResponse(polarity, id);
+  return {
+    ...base,
+    category: {
+      ...base.category,
+      entries: base.category.entries.map((entry, index) => index === 0 ? { ...entry, name_zh: label } : entry),
+    },
+  };
+};
 const fragment = (kind: "entry" | "literal", snapshot: string, order: number, weight = 1, ref: null | { polarity: "positive" | "negative"; category_id: string; entry_id: string } = null) => ({ kind, ref, snapshot, source_revision: ref ? 2 : null, weight, order });
 const combinationDetail = (id = "my-quality", revision = 3) => ({
   combination: {
@@ -360,7 +374,7 @@ describe("PromptWorkbench saved combinations", () => {
     fireEvent.click(screen.getByRole("button", { name: "更新目前組合" }));
     await screen.findByText("舊來源尚未解決");
 
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
     fireEvent.click(screen.getByRole("button", {
       name: "使用目前加入的詞庫來源解決此診斷",
@@ -893,7 +907,7 @@ describe("PromptWorkbench saved combinations", () => {
 
     // Interactively add the "style" category's entry to positive first (catalog
     // order 20).
-    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 風格" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 id-only" }));
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("id-only");
 
@@ -930,53 +944,64 @@ describe("PromptWorkbench existing flows", () => {
       if (url.endsWith("/categories/positive/quality")) {
         qualityReads += 1;
         return qualityReads === 1
-          ? response(categoryResponse("positive", "quality"))
+          ? response(labeledCategoryResponse("positive", "quality", "quality-zh"))
           : older.promise;
       }
       if (url.endsWith("/categories/positive/style")) {
         styleReads += 1;
         return styleReads === 1
-          ? response(categoryResponse("positive", "style"))
+          ? response(labeledCategoryResponse("positive", "style", "style-zh"))
           : newest.promise;
       }
     });
     render(<PromptWorkbench />);
     await ready();
 
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
-    fireEvent.click(screen.getByRole("button", { name: "風格" }));
-    newest.resolve(response(categoryResponse("positive", "style")));
-    expect(await screen.findByRole("button", { name: "加入 中文名稱" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+    // Drill into "quality" (starts its fetch), back out to the root via the
+    // breadcrumb (no fetch), then drill into its sibling "style" (starts a
+    // second, overlapping fetch) — both categories' requests are now in flight.
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "頂層" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 風格" }));
+    newest.resolve(response(labeledCategoryResponse("positive", "style", "style-zh")));
+    expect(await screen.findByRole("button", { name: "加入 style-zh" })).toBeVisible();
 
     await act(async () => {
-      older.resolve(response(categoryResponse("positive", "quality")));
+      older.resolve(response(labeledCategoryResponse("positive", "quality", "quality-zh")));
     });
-    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+    // The stale ("quality") resolution arriving after the newer ("style") one
+    // must not clobber the entries currently on display.
+    expect(screen.getByRole("button", { name: "加入 style-zh" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "加入 quality-zh" })).not.toBeInTheDocument();
   });
 
   it("keeps a newer category and error state when an older category read rejects last", async () => {
     const older = deferred<Response>();
     let qualityReads = 0;
     installFetch((url) => {
+      if (url.endsWith("/categories/positive/style")) {
+        return response(labeledCategoryResponse("positive", "style", "style-zh"));
+      }
       if (!url.endsWith("/categories/positive/quality")) return undefined;
       qualityReads += 1;
       return qualityReads === 1
-        ? response(categoryResponse("positive", "quality"))
+        ? response(labeledCategoryResponse("positive", "quality", "quality-zh"))
         : older.promise;
     });
     render(<PromptWorkbench />);
     await ready();
 
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
-    fireEvent.click(screen.getByRole("button", { name: "風格" }));
-    expect(await screen.findByRole("button", { name: "加入 中文名稱" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "頂層" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 風格" }));
+    expect(await screen.findByRole("button", { name: "加入 style-zh" })).toBeVisible();
     await act(async () => {
       older.reject(new Error("obsolete category error"));
     });
 
     expect(screen.queryByText("obsolete category error")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "風格" })).toHaveClass("bg-emerald-700");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "加入 style-zh" })).toBeVisible();
   });
 
   it("invalidates an in-flight category read when polarity changes", async () => {
@@ -992,7 +1017,7 @@ describe("PromptWorkbench existing flows", () => {
     render(<PromptWorkbench />);
     await ready();
 
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
     await act(async () => {
       pending.resolve(response(categoryResponse("positive", "quality")));
@@ -1006,13 +1031,13 @@ describe("PromptWorkbench existing flows", () => {
     const fetchMock = installFetch();
     render(<PromptWorkbench />);
     await ready();
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     const loadedEntry = await screen.findByRole("button", { name: "加入 中文名稱" });
     expect(screen.queryByRole("button", { name: /新增|編輯|封存|恢復/ })).not.toBeInTheDocument();
     fireEvent.click(loadedEntry);
     fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "zh current,  (unfinished " } });
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
-    fireEvent.click(screen.getByRole("button", { name: "瑕疵" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 瑕疵" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 模糊" }));
     fireEvent.change(screen.getByLabelText("Negative Prompt 最終文字"), { target: { value: "blurry current" } });
     fireEvent.change(screen.getByLabelText("Workflow"), { target: { value: "basic-txt2img" } });
@@ -1028,7 +1053,7 @@ describe("PromptWorkbench existing flows", () => {
     installFetch();
     render(<PromptWorkbench />);
     await ready();
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
 
     const finalText = screen.getByLabelText("Positive Prompt 最終文字");
@@ -1059,7 +1084,7 @@ describe("PromptWorkbench existing flows", () => {
     await ready();
     const finalText = screen.getByLabelText("Positive Prompt 最終文字");
     fireEvent.change(finalText, { target: { value: "  raw, (unfinished  " } });
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
 
     // The positive lane is still "auto" (no manual move/load happened yet), so the
@@ -1077,11 +1102,14 @@ describe("PromptWorkbench existing flows", () => {
     await ready();
 
     // Add the "style" category's entry first (catalog order 20 — sorts later)...
-    fireEvent.click(screen.getByRole("button", { name: "風格" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 風格" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 id-only" }));
 
     // ...then add the "quality" category's entry second (catalog order 10 — sorts earlier).
-    fireEvent.click(screen.getByRole("button", { name: "品質" }));
+    // Back out to the root via the breadcrumb first, since drilling into a
+    // sibling folder hides the others.
+    fireEvent.click(screen.getByRole("button", { name: "頂層" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 中文名稱" }));
 
     const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
@@ -1136,13 +1164,18 @@ describe("PromptWorkbench existing flows", () => {
     render(<PromptWorkbench />);
     await screen.findByText("Prompt Workbench");
 
-    // Add the deep "chars-2nd" entry (own order 5, root "chars" order 20) first...
-    fireEvent.click(screen.getByRole("button", { name: "chars2nd" }));
+    // Add the deep "chars-2nd" entry (own order 5, root "chars" order 20) first —
+    // drilling into the "chars" root folder first, since "chars-2nd" is its child
+    // and only appears once its parent is opened.
+    fireEvent.click(screen.getByRole("button", { name: "📁 chars" }));
+    fireEvent.click(await screen.findByRole("button", { name: "📁 chars2nd" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 honoka" }));
     expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("honoka");
 
-    // ...then add the "quality" root entry (order 10) second.
-    fireEvent.click(screen.getByRole("button", { name: "quality" }));
+    // ...then add the "quality" root entry (order 10) second, backing out to the
+    // root via the breadcrumb first.
+    fireEvent.click(screen.getByRole("button", { name: "頂層" }));
+    fireEvent.click(screen.getByRole("button", { name: "📁 quality" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 masterpiece" }));
 
     const finalText = await screen.findByLabelText("Positive Prompt 最終文字");
