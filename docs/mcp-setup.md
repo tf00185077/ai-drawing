@@ -190,6 +190,8 @@ pip install -e .
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
 | `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
+| `comfyui_node_provision` | `json_string` | GET/POST <ComfyUI>/customnode/getmappings, /manager/queue/install, /manager/queue/start, /manager/queue/status |
+| `comfyui_restart` | `json_string` | POST <ComfyUI>/manager/reboot |
 | `create_style_preset` | `json_string` | POST /api/style-presets/ |
 | `list_style_presets` | `json_string` | GET /api/style-presets/ |
 | `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |

@@ -46,6 +46,8 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |
 | `gallery_rerun` | `plain_text` | POST /api/gallery/{image_id}/rerun |
 | `free_comfyui_memory` | `json_string` | POST <ComfyUI>/free |
+| `comfyui_node_provision` | `json_string` | GET/POST <ComfyUI>/customnode/getmappings, /manager/queue/install, /manager/queue/start, /manager/queue/status |
+| `comfyui_restart` | `json_string` | POST <ComfyUI>/manager/reboot |
 | `create_style_preset` | `json_string` | POST /api/style-presets/ |
 | `list_style_presets` | `json_string` | GET /api/style-presets/ |
 | `get_style_preset` | `json_string` | GET /api/style-presets/{preset_id} |
@@ -188,6 +190,8 @@ prompt / 參數）供檢視，不會送出生圖；確認後再交給 `generate_
 | Tool | 說明 |
 |------|------|
 | `free_comfyui_memory` | 釋放 ComfyUI 顯存（直連 ComfyUI `/free`，生圖完成後應呼叫） |
+| `comfyui_node_provision` | 解析缺少的 node class name 對應到哪個 ComfyUI-Manager 套件並安裝（不重啟）；查無對應套件時回報 unresolved，不自組 graph |
+| `comfyui_restart` | 重啟 ComfyUI 讓剛安裝的 node 生效；**只能在 CTY 明確核准後呼叫**，絕不自主呼叫 |
 
 ## 安裝
 
