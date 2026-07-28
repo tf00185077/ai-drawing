@@ -130,6 +130,7 @@ export default function PromptWorkbench() {
     negative: "auto",
   });
   const [categoryMeta, setCategoryMeta] = useState<Map<string, { order: number; nameZh: string }>>(new Map());
+  const [allEntries, setAllEntries] = useState<{ category: BrowserCategory; entry: BrowserEntry }[]>([]);
   const entryOrderByRef = useRef<Map<string, number>>(new Map());
   const categoryPathOrders = useRef<Map<string, number[]>>(new Map());
   const [document, setDocument] = useState<DocumentState>(blankDocument);
@@ -204,11 +205,26 @@ export default function PromptWorkbench() {
           ),
         );
         if (!active) return;
+        const collectedEntries: { category: BrowserCategory; entry: BrowserEntry }[] = [];
+        categoryResults.forEach((result) => {
+          if (result.status !== "fulfilled") return;
+          const cat = result.value.category;
+          if (cat.archived) return;
+          const browserCategory: BrowserCategory = {
+            id: cat.id, polarity: cat.polarity, name_zh: cat.name_zh,
+            revision: cat.revision, etag: result.value.etag, archived: cat.archived,
+            parent_id: cat.parent_id ?? null, order: cat.order,
+          };
+          cat.entries.forEach((entry) => {
+            if (!entry.archived) collectedEntries.push({ category: browserCategory, entry });
+          });
+        });
+        setAllEntries(collectedEntries);
         if (categoryResults.every((result) => result.status === "fulfilled")) {
-          const allEntries = categoryResults.flatMap((result) =>
+          const flattenedEntries = categoryResults.flatMap((result) =>
             result.status === "fulfilled" ? result.value.category.entries : [],
           );
-          literalLabelIndex.current = buildLiteralLabelIndex(allEntries);
+          literalLabelIndex.current = buildLiteralLabelIndex(flattenedEntries);
           const labels = new Map<string, string>();
           categoryResults.forEach((result) => {
             if (result.status !== "fulfilled") return;
@@ -338,17 +354,16 @@ export default function PromptWorkbench() {
     setEntries([]);
   }
 
-  function addEntry(entry: BrowserEntry) {
-    if (!category) return;
+  function addEntry(sourceCategory: BrowserCategory, entry: BrowserEntry) {
     const promptText = promptEntryContent(entry);
     const displayName = promptEntryLabel(entry);
     const item = {
-      id: nextId(`${category.polarity}-${category.id}-${entry.id}`),
+      id: nextId(`${sourceCategory.polarity}-${sourceCategory.id}-${entry.id}`),
       kind: "entry" as const,
       displayName,
       source: {
-        polarity: category.polarity,
-        categoryId: category.id,
+        polarity: sourceCategory.polarity,
+        categoryId: sourceCategory.id,
         entryId: entry.id,
         revision: entry.revision,
       },
@@ -357,10 +372,10 @@ export default function PromptWorkbench() {
       weight: "",
       userAddedSource: true,
     };
-    const setter = activePolarity === "positive" ? setPositive : setNegative;
+    const setter = sourceCategory.polarity === "positive" ? setPositive : setNegative;
     mutate(setter, (state) => {
       const appended = appendFragment(state, item);
-      return arrangement[activePolarity] === "auto"
+      return arrangement[sourceCategory.polarity] === "auto"
         ? sortFragmentsByRecommendation(appended, rankOf)
         : appended;
     });
@@ -733,7 +748,7 @@ export default function PromptWorkbench() {
         </section>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
-        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
+        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} allEntries={allEntries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
         <PromptOverview
           positive={positive}
           negative={negative}

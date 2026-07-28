@@ -135,7 +135,7 @@ describe("PromptComposerPanel", () => {
     }));
     render(<PromptWorkbench />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "光影" }));
+    fireEvent.click(await screen.findByRole("button", { name: "📁 光影" }));
     fireEvent.click(await screen.findByRole("button", { name: "加入 細緻光影" }));
     fireEvent.click(screen.getByRole("button", { name: "加入 cinematic glow" }));
     fireEvent.click(screen.getByRole("button", { name: "加入 arbitrary-id-only" }));
