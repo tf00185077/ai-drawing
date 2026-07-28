@@ -2,7 +2,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from mcp_server.tools.comfyui_nodes import comfyui_node_provision
+from mcp_server.tools.comfyui_nodes import comfyui_node_provision, comfyui_restart
 
 
 def test_provision_resolves_and_installs_curated_package() -> None:
@@ -91,3 +91,29 @@ def test_provision_install_failure_returns_structured_error_with_cnr_id() -> Non
     assert data["error"]["code"] == "RuntimeError"
     assert data["error"]["details"]["where"] == "comfyui_manager_install"
     assert data["error"]["details"]["cnr_id"] == "my-nodes-pack"
+
+
+def test_restart_calls_manager_reboot_and_returns_ok() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {}
+
+    with patch("mcp_server.tools.comfyui_nodes._get_comfyui_client", return_value=mock_client):
+        result = comfyui_restart()
+
+    data = json.loads(result)
+    assert data["ok"] is True
+    assert data["tool"] == "comfyui_restart"
+    mock_client.post.assert_called_once_with("/manager/reboot", json={})
+
+
+def test_restart_failure_returns_structured_error() -> None:
+    mock_client = MagicMock()
+    mock_client.post.side_effect = RuntimeError("security level too low")
+
+    with patch("mcp_server.tools.comfyui_nodes._get_comfyui_client", return_value=mock_client):
+        result = comfyui_restart()
+
+    data = json.loads(result)
+    assert data["ok"] is False
+    assert data["tool"] == "comfyui_restart"
+    assert data["error"]["details"]["where"] == "comfyui_manager_reboot"
