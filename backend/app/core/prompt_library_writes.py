@@ -27,6 +27,7 @@ from app.schemas.prompt_library import (
     EntryWriteRequest,
     LiteralConversionAcknowledgeRequest,
     LiteralConversionAcknowledgeResponse,
+    MoveEntryRequest,
     PromptWarning,
     RestoreRequest,
     VersionedCategory,
@@ -188,6 +189,91 @@ class PromptLibraryWriter:
             category=VersionedCategory(category=category, etag=etag),
             entry=entry,
             entry_revision=entry.revision,
+            affected_combinations=affected,
+        )
+
+    def move_entry(
+        self,
+        polarity: Polarity,
+        from_category_id: str,
+        entry_id: str,
+        request: MoveEntryRequest,
+    ) -> WriteResponse:
+        if request.to_category_id == from_category_id:
+            return self.save_entry(polarity, from_category_id, entry_id, request)
+        if not request.prompt.strip():
+            raise PromptLibraryError.blank_fragment(polarity=polarity, positions=[1])
+        if "," in request.prompt:
+            raise PromptLibraryError.comma_not_atomic(field="prompt")
+        with self.store.locked():
+            source = self.store.read_category(polarity, from_category_id)
+            assert_precondition(
+                exists=True,
+                actual_revision=source.model.revision,
+                actual_etag=source.etag,
+                expected_revision=request.expected_revision,
+                expected_etag=request.expected_etag,
+            )
+            source_entry = next(
+                (item for item in source.model.entries if item.id == entry_id), None
+            )
+            if source_entry is None:
+                raise PromptLibraryError(
+                    code="entry_not_found",
+                    message="The entry to move does not exist in the source category.",
+                    hint="Reload the category and try again.",
+                    status_code=404,
+                    details={"category_id": from_category_id, "entry_id": entry_id},
+                )
+            dest_path = self.store.category_path(polarity, request.to_category_id)
+            if not dest_path.exists():
+                raise PromptLibraryError(
+                    code="target_category_not_found",
+                    message="The target category does not exist.",
+                    hint="Pick an existing same-polarity category.",
+                    status_code=404,
+                    details={"to_category_id": request.to_category_id},
+                )
+            dest = self.store.read_category(polarity, request.to_category_id)
+            if any(item.id == entry_id for item in dest.model.entries):
+                raise PromptLibraryError(
+                    code="entry_id_conflict",
+                    message="The target category already has an entry with this id.",
+                    hint="Rename the entry id or pick another category.",
+                    status_code=422,
+                    details={"entry_id": entry_id, "to_category_id": request.to_category_id},
+                )
+            moved = PromptEntry(
+                id=entry_id,
+                name_zh=request.name_zh,
+                description_zh=request.description_zh,
+                prompt=request.prompt,
+                aliases=request.aliases,
+                keywords=request.keywords,
+                order=request.order,
+                revision=1,
+                archived=source_entry.archived,
+            )
+            source_entries = [item for item in source.model.entries if item.id != entry_id]
+            source_category = source.model.model_copy(
+                deep=True,
+                update={"entries": source_entries, "revision": source.model.revision + 1},
+            )
+            self.store.replace_json(source.path, source_category)
+            dest_entries = [*dest.model.entries, moved]
+            dest_entries.sort(key=lambda item: (item.order, item.id))
+            dest_category = dest.model.model_copy(
+                deep=True,
+                update={"entries": dest_entries, "revision": dest.model.revision + 1},
+            )
+            dest_etag = self.store.replace_json(dest.path, dest_category)
+            # Source-side removal is not repointed on combinations: all combinations
+            # are literal-only today, and any stale entry ref falls back to snapshot.
+            affected = self._propagate_entry(polarity, request.to_category_id, moved)
+        return WriteResponse(
+            category=VersionedCategory(category=dest_category, etag=dest_etag),
+            entry=moved,
+            entry_revision=moved.revision,
             affected_combinations=affected,
         )
 

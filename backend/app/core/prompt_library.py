@@ -25,6 +25,7 @@ from app.schemas.prompt_library import (
     ComposeRequest,
     ComposeResponse,
     EntryWriteRequest,
+    MoveEntryRequest,
     RestoreRequest,
     SearchResponse,
     VersionedCategory,
@@ -69,6 +70,11 @@ class PromptLibraryProvider(Protocol):
         category_id: str,
         entry_id: str,
         request: EntryWriteRequest,
+    ) -> WriteResponse: ...
+
+    def move_entry(
+        self, polarity: Polarity, from_category_id: str, entry_id: str,
+        request: MoveEntryRequest,
     ) -> WriteResponse: ...
 
     def save_combination(
@@ -195,6 +201,13 @@ class FilePromptLibraryProvider:
     ) -> WriteResponse:
         self._guard()
         return self._writer.save_entry(polarity, category_id, entry_id, request)
+
+    def move_entry(
+        self, polarity: Polarity, from_category_id: str, entry_id: str,
+        request: MoveEntryRequest,
+    ) -> WriteResponse:
+        self._guard()
+        return self._writer.move_entry(polarity, from_category_id, entry_id, request)
 
     def save_combination(
         self, combination_id: str, request: CombinationWriteRequest

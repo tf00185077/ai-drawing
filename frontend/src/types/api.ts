@@ -362,6 +362,10 @@ export interface PromptEntryWriteRequest extends PromptCategoryWriteRequest {
   prompt: string;
 }
 
+export interface PromptMoveEntryRequest extends PromptEntryWriteRequest {
+  to_category_id: string;
+}
+
 export interface PromptCombinationWriteRequest extends PromptCategoryWriteRequest {
   legacy_template: boolean;
   positive: PromptFragmentInput[];

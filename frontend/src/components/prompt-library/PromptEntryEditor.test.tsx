@@ -17,6 +17,7 @@ describe("PromptEntryEditor", () => {
 
     expect(onSubmit).toHaveBeenCalledWith({
       id: "detailed-eyes",
+      categoryId: "",
       fields: { name_zh: "細緻眼睛", description_zh: "眼睛細節", prompt: "detailed eyes", aliases: ["眼睛", "eyes"], keywords: [], order: 20 },
     });
   });
@@ -45,8 +46,32 @@ describe("PromptEntryEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "儲存" }));
     expect(onSubmit).toHaveBeenCalledWith({
       id: "masterpiece",
+      categoryId: "",
       fields: { name_zh: "大師傑作", description_zh: "品質", prompt: "masterpiece", aliases: ["a", "b"], keywords: ["k", "quality"], order: 10 },
     });
+  });
+
+  it("shows a category selector in edit mode and moves the entry when changed", () => {
+    const onSubmit = vi.fn();
+    const categories = [
+      { id: "src", name_zh: "來源", parent_id: null, order: 10 },
+      { id: "dst", name_zh: "目標", parent_id: null, order: 20 },
+    ];
+    render(
+      <PromptEntryEditor
+        mode="edit"
+        initial={{ id: "e1", name_zh: "詞", description_zh: "d", prompt: "p", aliases: [], keywords: [], order: 10 }}
+        categories={categories}
+        currentCategoryId="src"
+        onSubmit={onSubmit}
+        onCancel={() => {}}
+      />,
+    );
+    const select = screen.getByLabelText("詞條所屬分類") as HTMLSelectElement;
+    expect(select.value).toBe("src");
+    fireEvent.change(select, { target: { value: "dst" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ id: "e1", categoryId: "dst" }));
   });
 
   it("rejects a duplicate id in create mode", () => {
