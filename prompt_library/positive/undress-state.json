@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "id": "undress-state",
+  "polarity": "positive",
+  "name_zh": "著裝狀態/暴露程度",
+  "description_zh": "收錄「著裝狀態/暴露程度」分類的提示詞。",
+  "aliases": [],
+  "keywords": [],
+  "order": 20,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "clothing",
+  "entries": [
+    {
+      "id": "flirt-clothing-opts-fully-clothed",
+      "name_zh": "穿好",
+      "description_zh": "加入「穿好」提示詞。",
+      "prompt": "fully clothed",
+      "aliases": [
+        "穿好 (Fully Clothed)",
+        "fully clothed"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flirt-clothing-opts-half-undressed",
+      "name_zh": "半脫/掀起",
+      "description_zh": "加入「半脫/掀起」提示詞。",
+      "prompt": "half-undressed",
+      "aliases": [
+        "半脫/掀起 (Half-undressed)",
+        "half-undressed"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flirt-clothing-opts-bra-and-panties",
+      "name_zh": "內衣+內褲",
+      "description_zh": "加入「內衣+內褲」提示詞。",
+      "prompt": "bra and panties",
+      "aliases": [
+        "內衣+內褲 (Bra & Panties)",
+        "bra and panties"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flirt-clothing-opts-bra-only",
+      "name_zh": "只有內衣",
+      "description_zh": "加入「只有內衣」提示詞。",
+      "prompt": "bra only",
+      "aliases": [
+        "只有內衣 (Bra only)",
+        "bra only"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flirt-clothing-opts-panties-only",
+      "name_zh": "只有內褲",
+      "description_zh": "加入「只有內褲」提示詞。",
+      "prompt": "panties only",
+      "aliases": [
+        "只有內褲 (Panties only)",
+        "panties only"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "flirt-clothing-opts-nude",
+      "name_zh": "全裸",
+      "description_zh": "加入「全裸」提示詞。",
+      "prompt": "nude",
+      "aliases": [
+        "全裸 (Nude)",
+        "nude"
+      ],
+      "keywords": [
+        "flirt_clothing_opts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
