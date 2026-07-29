@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { orderedCategoryRows } from "./categoryTree";
 
 export interface EntryEditorValue {
   id: string;
+  categoryId: string;
   fields: {
     name_zh: string;
     description_zh: string;
@@ -25,6 +27,8 @@ interface Props {
   };
   submitting?: boolean;
   existingIds?: string[];
+  categories?: { id: string; name_zh: string; parent_id?: string | null; order: number }[];
+  currentCategoryId?: string;
   onSubmit: (value: EntryEditorValue) => void;
   onCancel: () => void;
 }
@@ -37,8 +41,9 @@ function commaSeparated(value: string): string[] {
 
 const inputClass = "mt-1 w-full rounded border border-slate-600 bg-slate-900 p-2 text-sm text-white";
 
-export default function PromptEntryEditor({ mode, initial, submitting, existingIds, onSubmit, onCancel }: Props) {
+export default function PromptEntryEditor({ mode, initial, submitting, existingIds, categories, currentCategoryId, onSubmit, onCancel }: Props) {
   const [id, setId] = useState(initial?.id ?? "");
+  const [categoryId, setCategoryId] = useState(currentCategoryId ?? "");
   const [nameZh, setNameZh] = useState(initial?.name_zh ?? "");
   const [descriptionZh, setDescriptionZh] = useState(initial?.description_zh ?? "");
   const [prompt, setPrompt] = useState(initial?.prompt ?? "");
@@ -69,6 +74,7 @@ export default function PromptEntryEditor({ mode, initial, submitting, existingI
     setError(null);
     onSubmit({
       id: trimmedId,
+      categoryId: mode === "create" ? (currentCategoryId ?? "") : (categoryId || currentCategoryId || ""),
       fields: {
         name_zh: nameZh.trim(),
         description_zh: descriptionZh.trim(),
@@ -94,6 +100,16 @@ export default function PromptEntryEditor({ mode, initial, submitting, existingI
       <label className="block text-xs text-slate-400">英文 prompt
         <input aria-label="詞條英文 prompt" disabled={submitting} value={prompt} onChange={(e) => setPrompt(e.target.value)} className={inputClass} />
       </label>
+      {mode === "edit" && categories && categories.length > 0 && (
+        <label className="block text-xs text-slate-400">所屬分類
+          <select aria-label="詞條所屬分類" disabled={submitting} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={inputClass}>
+            {orderedCategoryRows(categories).map(({ category, depth }) => (
+              <option key={category.id} value={category.id}>{`${"　".repeat(depth)}${category.name_zh}`}</option>
+            ))}
+          </select>
+          <span className="mt-1 block text-slate-500">改選其他分類後儲存＝把此詞條搬過去。</span>
+        </label>
+      )}
       <label className="block text-xs text-slate-400">別名（逗號分隔）
         <input aria-label="詞條別名" disabled={submitting} value={aliases} onChange={(e) => setAliases(e.target.value)} className={inputClass} />
       </label>
