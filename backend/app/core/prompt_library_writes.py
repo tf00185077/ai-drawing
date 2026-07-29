@@ -214,7 +214,10 @@ class PromptLibraryWriter:
                 expected_revision=request.expected_revision,
                 expected_etag=request.expected_etag,
             )
-            if not any(item.id == entry_id for item in source.model.entries):
+            source_entry = next(
+                (item for item in source.model.entries if item.id == entry_id), None
+            )
+            if source_entry is None:
                 raise PromptLibraryError(
                     code="entry_not_found",
                     message="The entry to move does not exist in the source category.",
@@ -249,7 +252,7 @@ class PromptLibraryWriter:
                 keywords=request.keywords,
                 order=request.order,
                 revision=1,
-                archived=False,
+                archived=source_entry.archived,
             )
             source_entries = [item for item in source.model.entries if item.id != entry_id]
             source_category = source.model.model_copy(
@@ -264,6 +267,8 @@ class PromptLibraryWriter:
                 update={"entries": dest_entries, "revision": dest.model.revision + 1},
             )
             dest_etag = self.store.replace_json(dest.path, dest_category)
+            # Source-side removal is not repointed on combinations: all combinations
+            # are literal-only today, and any stale entry ref falls back to snapshot.
             affected = self._propagate_entry(polarity, request.to_category_id, moved)
         return WriteResponse(
             category=VersionedCategory(category=dest_category, etag=dest_etag),
