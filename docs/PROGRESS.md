@@ -1,3 +1,9 @@
+## 2026-07-29 分類管理：編輯時把詞條移到其他分類
+
+- 後端新增原子 `move_entry` 端點（`POST .../entries/{id}/move`）：單一 store 鎖內把詞條從來源分類移除、寫入目標分類，兩邊 bump revision；以來源分類 revision/etag 樂觀鎖；目標撞相同 entry id → 422 不寫檔；同 polarity 限定；`to==from` 時等同原地編輯。
+- 前端詞條編輯器加「所屬分類」下拉（同 polarity 分類縮排樹）；分類詳情頁存檔時若選了不同分類即呼叫 move（連同這次的中/英文修改一起搬過去），相同分類則照舊 `putPromptEntry`。
+- 組合皆 literal、不受影響。驗證：後端 move 6/6 + 回歸 41/41、前端 vitest 192/192，`tsc` 與 Vite build 通過。
+
 ## 2026-07-29 Prompt Library 資料校正（中文校正＋重新分類）
 
 - 修正大量「中文不夠準確」：atomic 遷移遺留的名稱如「狗爬式・第 1 詞（on all fours）」全部改成正確的單一 tag 中文（on all fours→四肢著地、ahegao→阿黑顏、creampie→中出…），共 150 筆。
@@ -7,6 +13,18 @@
 - 純資料變更（prompt_library/ JSON），後端/前端程式不動。
 
 # 進度追蹤
+
+## 2026-07-29 LoRA Start 契約加固（OpenSpec 第一批）
+
+- 完成 `harden-lora-training-start-contract`：Backend 與 MCP 的 public Start 現在都要求 `expected_dataset_hash`、`expected_profile_hash`，保留呼叫者選定的 `batch_size`，Backend 以 `extra="forbid"` 拒絕未知欄位。MCP 的 Backend 422 與 FastMCP protocol-level 缺欄位錯誤都正規化為穩定的 `request_validation_failed`，只保留安全 constraint context，不回顯 submitted input／URL／任意例外文字。
+- Preflight 的 `decision="train"` suggestion 現在是可直接提交的完整 Start payload，包含雙 hash、`batch_size` 與 family/runtime 欄位；profile/config family 衝突回 `needs_review`＋`model_family_mismatch`。Bundled frontend 逐資料夾 preflight，只有 `train` 才 Start，保留使用者欄位並帶入 UI 無法表示的 preflight runtime；stale hash、field 422 與其他 Start 錯誤皆顯示結構化修復資訊。
+- `lora_training_jobs` 新增 nullable `profile_hash` 與 `error_details_json`，含 idempotent SQLite additive migration、歷史 row 相容、durable params/status 與 Start response。queued 後的 hash/profile race 會保存 expected/current hash；舊 caller 必須先 preflight，再原樣提交兩個 approval hashes。
+- Dataset approval identity 現在涵蓋圖片 bytes、圖片/字幕 membership、caption 內容與 profile。Trainer 統一使用 absolute／rooted／traversal／symlink-escape-safe resolver，並在 resolve 後立即正規化成 root-relative POSIX locator，讓驗證、durable identity、duplicate detection 與輸出命名一致。
+- Worker 取得 dataset lock 後才做最終 profile/hash/full validation 與 family check，並持鎖通過 subprocess、輸出註冊、callback 與 terminal status。Upload、caption edit、batch prefix、LLM caption 與 watcher WD Tagger 共用同一把鎖；watcher 的 check-then-act race 已關閉，鎖衝突會做最多三次 1／2／4 秒退避重試。`trigger_check()` 僅 discovery，production 中只有 explicit `/api/lora-train/start` 可 enqueue。
+- Runbook、MCP setup/README 與 machine-readable handoff contract 已同步雙 hash，以及 missing/stale/422/family/path recovery 的「停止並重新審批」規則。新增 root `pytest.ini` 的 importlib mode＋兩個 package path，使 Backend/MCP 可在同一次 pytest 執行而不發生兩個 `tests` package 撞名。
+- 最終驗證：target OpenSpec strict valid；focused Backend LoRA＋watcher `171 passed, 1 skipped`；MCP 全套 `114 passed`；Frontend 全套 `189 passed`，TypeScript typecheck、Vite build、Python compileall、`git diff --check` 均通過；排除共享工作樹正在校正的 Prompt Library／comma-atomic 測試後，Backend＋MCP `1194 passed, 4 skipped`。原始不排除命令亦已執行，於 `477 passed, 3 skipped` 後只停在本批範圍外的固定庫存斷言：測試仍要求 683 entries、目前資料為 538。
+- 獨立 code review 最終確認無剩餘 Critical／Important blocker；其指出的 protocol redaction、image-byte identity、durable mismatch details、writer locks、Windows locator 與 watcher defer 邊界均已補測並修正。
+- 下一個執行批次依既定順序為 `make-lora-training-recipe-explicit`；其後才是 runtime lifecycle 與 clients/verification 兩批。後三批目前只保留 confirmed gaps，未提前寫實作方法或完成目標。
 
 ## 2026-07-29 Prompt Workbench 快速新增自訂詞條
 
