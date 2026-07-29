@@ -14,7 +14,7 @@
     "accessories"
   ],
   "order": 50,
-  "revision": 10,
+  "revision": 12,
   "archived": false,
   "entries": [
     {
@@ -47,91 +47,6 @@
         "raw_segment_sha256": "c3daaee2faf5c7792098621e3696fab5707c0dbdce0aea222658b55d520237e2",
         "identity_sha256": "232590b2fb38adb9d6bfbb0ff392620901b5d8bbd6c7784c44245068e78b3412"
       }
-    },
-    {
-      "id": "special-acc-garter-straps-thighhighs-thighhighs-9ffc2797",
-      "name_zh": "大腿襪",
-      "description_zh": "經人工拆分審閱的原子提示詞「thighhighs」，來源為「吊帶襪」。",
-      "prompt": " thighhighs",
-      "aliases": [
-        "吊帶襪 (garter straps, thighhighs)",
-        "garter straps, thighhighs",
-        "thighhighs"
-      ],
-      "keywords": [
-        "special_acc",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "accessories"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "accessories",
-        "source_entry_id": "special-acc-garter-straps-thighhighs",
-        "source_prompt_sha256": "ad0a9d8fa2f593861d3ee5346aa05d5eca74b7d5424fb4d50fffd67d741867a2",
-        "segment_index": 1,
-        "raw_segment_sha256": "99025ac9f56545ac9c195503e1454d56d4ae6a089c71210a8d1630858895cbac",
-        "identity_sha256": "9ffc2797c3bdd1bedd3e5fbfcefbe13f83ebd7c2d746c690a6f5a56c2a1db2c5"
-      }
-    },
-    {
-      "id": "special-acc-pantyhose",
-      "name_zh": "連褲襪",
-      "description_zh": "加入「連褲襪」提示詞。",
-      "prompt": "pantyhose",
-      "aliases": [
-        "連褲襪 (pantyhose)",
-        "pantyhose"
-      ],
-      "keywords": [
-        "special_acc",
-        "ltj",
-        "prompt"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "special-acc-thighhighs",
-      "name_zh": "過膝襪",
-      "description_zh": "加入「過膝襪」提示詞。",
-      "prompt": "thighhighs",
-      "aliases": [
-        "過膝襪 (thighhighs)",
-        "thighhighs"
-      ],
-      "keywords": [
-        "special_acc",
-        "ltj",
-        "prompt"
-      ],
-      "order": 12,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "special-acc-fishnets",
-      "name_zh": "網襪",
-      "description_zh": "加入「網襪」提示詞。",
-      "prompt": "fishnets",
-      "aliases": [
-        "網襪 (fishnets)",
-        "fishnets"
-      ],
-      "keywords": [
-        "special_acc",
-        "ltj",
-        "prompt"
-      ],
-      "order": 13,
-      "revision": 1,
-      "archived": false
     },
     {
       "id": "special-acc-choker",

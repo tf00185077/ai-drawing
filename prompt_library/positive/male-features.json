@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "id": "male-features",
+  "polarity": "positive",
+  "name_zh": "男性特徵",
+  "description_zh": "收錄「男性特徵」分類的提示詞。",
+  "aliases": [],
+  "keywords": [],
+  "order": 25,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "body-appearance",
+  "entries": [
+    {
+      "id": "faceless-male",
+      "name_zh": "無臉男性",
+      "description_zh": "無臉男性",
+      "prompt": "faceless male",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "muscular-male",
+      "name_zh": "肌肉男性",
+      "description_zh": "肌肉男性",
+      "prompt": "muscular male",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dark-skinned-male",
+      "name_zh": "黝黑膚色男性",
+      "description_zh": "黝黑膚色男性",
+      "prompt": "dark-skinned male",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "blonde-hair",
+      "name_zh": "金髮",
+      "description_zh": "金髮",
+      "prompt": "blonde hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dark-skin",
+      "name_zh": "黝黑膚色",
+      "description_zh": "黝黑膚色",
+      "prompt": "dark skin",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dyed-hair",
+      "name_zh": "染髮",
+      "description_zh": "染髮",
+      "prompt": "dyed hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "piercings",
+      "name_zh": "穿孔／穿環",
+      "description_zh": "穿孔／穿環",
+      "prompt": "piercings",
+      "aliases": [],
+      "keywords": [],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "shota",
+      "name_zh": "正太",
+      "description_zh": "正太",
+      "prompt": "shota",
+      "aliases": [],
+      "keywords": [],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "cute-male",
+      "name_zh": "可愛男性",
+      "description_zh": "可愛男性",
+      "prompt": "cute male",
+      "aliases": [],
+      "keywords": [],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "delinquent-male",
+      "name_zh": "不良少年",
+      "description_zh": "不良少年",
+      "prompt": "delinquent male",
+      "aliases": [],
+      "keywords": [],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "ugly-bastard",
+      "name_zh": "醜男",
+      "description_zh": "醜男",
+      "prompt": "ugly bastard",
+      "aliases": [],
+      "keywords": [],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "overweight-male",
+      "name_zh": "肥胖男性",
+      "description_zh": "肥胖男性",
+      "prompt": "overweight male",
+      "aliases": [],
+      "keywords": [],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "old-man",
+      "name_zh": "老年男性",
+      "description_zh": "老年男性",
+      "prompt": "old man",
+      "aliases": [],
+      "keywords": [],
+      "order": 130,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "wrinkled-skin",
+      "name_zh": "皺紋肌膚",
+      "description_zh": "皺紋肌膚",
+      "prompt": "wrinkled skin",
+      "aliases": [],
+      "keywords": [],
+      "order": 140,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "full-face",
+      "name_zh": "露出全臉",
+      "description_zh": "露出全臉",
+      "prompt": "full face",
+      "aliases": [],
+      "keywords": [],
+      "order": 150,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "male-focus",
+      "name_zh": "男性主體",
+      "description_zh": "男性主體",
+      "prompt": "male focus",
+      "aliases": [],
+      "keywords": [],
+      "order": 160,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

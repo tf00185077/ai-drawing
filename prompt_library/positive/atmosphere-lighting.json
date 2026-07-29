@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "id": "atmosphere-lighting",
+  "polarity": "positive",
+  "name_zh": "氛圍與光線",
+  "description_zh": "收錄「氛圍與光線」分類的提示詞。",
+  "aliases": [],
+  "keywords": [],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "environment",
+  "entries": [
+    {
+      "id": "loc-atmos-intimate-atmosphere",
+      "name_zh": "親密氛圍",
+      "description_zh": "加入「親密氛圍」提示詞。",
+      "prompt": "intimate atmosphere",
+      "aliases": [
+        "親密氛圍 (intimate atmosphere)",
+        "intimate atmosphere"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-romantic-atmosphere",
+      "name_zh": "浪漫氛圍",
+      "description_zh": "加入「浪漫氛圍」提示詞。",
+      "prompt": "romantic atmosphere",
+      "aliases": [
+        "浪漫氛圍 (romantic atmosphere)",
+        "romantic atmosphere"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-dark-and-moody",
+      "name_zh": "陰暗色調",
+      "description_zh": "加入「陰暗色調」提示詞。",
+      "prompt": "dark and moody",
+      "aliases": [
+        "陰暗色調 (dark and moody)",
+        "dark and moody"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-morning-light",
+      "name_zh": "晨光",
+      "description_zh": "加入「晨光」提示詞。",
+      "prompt": "morning light",
+      "aliases": [
+        "晨光 (morning light)",
+        "morning light"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-moonlight",
+      "name_zh": "月光",
+      "description_zh": "加入「月光」提示詞。",
+      "prompt": "moonlight",
+      "aliases": [
+        "月光 (moonlight)",
+        "moonlight"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-neon-lights",
+      "name_zh": "霓虹燈",
+      "description_zh": "加入「霓虹燈」提示詞。",
+      "prompt": "neon lights",
+      "aliases": [
+        "霓虹燈 (neon lights)",
+        "neon lights"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-tense-atmosphere",
+      "name_zh": "緊張氣氛",
+      "description_zh": "加入「緊張氣氛」提示詞。",
+      "prompt": "tense atmosphere",
+      "aliases": [
+        "緊張氣氛 (tense atmosphere)",
+        "tense atmosphere"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-raining-outside",
+      "name_zh": "窗外下雨",
+      "description_zh": "加入「窗外下雨」提示詞。",
+      "prompt": "raining outside",
+      "aliases": [
+        "窗外下雨 (raining outside)",
+        "raining outside"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "loc-atmos-golden-hour",
+      "name_zh": "黃金時刻/夕陽",
+      "description_zh": "加入「黃金時刻/夕陽」提示詞。",
+      "prompt": "golden hour",
+      "aliases": [
+        "黃金時刻/夕陽 (golden hour)",
+        "golden hour"
+      ],
+      "keywords": [
+        "loc_atmos",
+        "ltj",
+        "prompt"
+      ],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}

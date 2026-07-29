@@ -14,7 +14,7 @@
     "camera-composition"
   ],
   "order": 100,
-  "revision": 37,
+  "revision": 39,
   "archived": false,
   "entries": [
     {
@@ -196,7 +196,7 @@
       "id": "angles-profile-side-view-full-body-side-view-5819d747",
       "name_zh": "側面視角",
       "description_zh": "經人工拆分審閱的原子提示詞「side view」，來源為「側面全身」。",
-      "prompt": " side view",
+      "prompt": "side view",
       "aliases": [
         "側面全身 (side view full body)",
         "profile, side view, full body",
@@ -227,7 +227,7 @@
       "id": "angles-profile-side-view-full-body-full-body-59821560",
       "name_zh": "全身",
       "description_zh": "經人工拆分審閱的原子提示詞「full body」，來源為「側面全身」。",
-      "prompt": " full body",
+      "prompt": "full body",
       "aliases": [
         "側面全身 (side view full body)",
         "profile, side view, full body",
@@ -255,132 +255,6 @@
       }
     },
     {
-      "id": "pg-angles-from-front",
-      "name_zh": "正面",
-      "description_zh": "加入「正面」提示詞。",
-      "prompt": "from front",
-      "aliases": [
-        "正面 (from front)",
-        "from front"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-from-above",
-      "name_zh": "由上往下",
-      "description_zh": "加入「由上往下」提示詞。",
-      "prompt": "from above",
-      "aliases": [
-        "由上往下 (from above)",
-        "from above"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-from-below",
-      "name_zh": "由下往上",
-      "description_zh": "加入「由下往上」提示詞。",
-      "prompt": "from below",
-      "aliases": [
-        "由下往上 (from below)",
-        "from below"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 21,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-from-behind",
-      "name_zh": "從背後",
-      "description_zh": "加入「從背後」提示詞。",
-      "prompt": "from behind",
-      "aliases": [
-        "從背後 (from behind)",
-        "from behind"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 22,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-from-side",
-      "name_zh": "從側面",
-      "description_zh": "加入「從側面」提示詞。",
-      "prompt": "from side",
-      "aliases": [
-        "從側面 (from side)",
-        "from side"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-cowboy-shot",
-      "name_zh": "牛仔視角/半身",
-      "description_zh": "加入「牛仔視角/半身」提示詞。",
-      "prompt": "cowboy shot",
-      "aliases": [
-        "牛仔視角/半身 (cowboy shot)",
-        "cowboy shot"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 24,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-angles-wide-shot",
-      "name_zh": "廣角全景",
-      "description_zh": "加入「廣角全景」提示詞。",
-      "prompt": "wide shot",
-      "aliases": [
-        "廣角全景 (wide shot)",
-        "wide shot"
-      ],
-      "keywords": [
-        "pg_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 25,
-      "revision": 1,
-      "archived": false
-    },
-    {
       "id": "pg-angles-dutch-angle-shot",
       "name_zh": "斜角",
       "description_zh": "加入「斜角」提示詞。",
@@ -395,42 +269,6 @@
         "prompt"
       ],
       "order": 26,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-shot-sizes-close-up",
-      "name_zh": "特寫",
-      "description_zh": "加入「特寫」提示詞。",
-      "prompt": "close-up",
-      "aliases": [
-        "特寫 (close-up)",
-        "close-up"
-      ],
-      "keywords": [
-        "pg_shot_sizes",
-        "ltj",
-        "prompt"
-      ],
-      "order": 27,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "pg-shot-sizes-full-body",
-      "name_zh": "全身像",
-      "description_zh": "加入「全身像」提示詞。",
-      "prompt": "full body",
-      "aliases": [
-        "全身像 (full body)",
-        "full body"
-      ],
-      "keywords": [
-        "pg_shot_sizes",
-        "ltj",
-        "prompt"
-      ],
-      "order": 28,
       "revision": 1,
       "archived": false
     },
@@ -472,8 +310,8 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-crotch-close-up-c2b792e8",
-      "name_zh": "下體/陰部特寫・第 1 詞（crotch close-up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「crotch close-up」，來源為「下體/陰部特寫」。",
+      "name_zh": "下體特寫",
+      "description_zh": "下體特寫",
       "prompt": "crotch close-up",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
@@ -503,9 +341,9 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-faceless-92fc4655",
-      "name_zh": "下體/陰部特寫・第 2 詞（faceless）",
-      "description_zh": "經人工拆分審閱的原子提示詞「faceless」，來源為「下體/陰部特寫」。",
-      "prompt": " faceless",
+      "name_zh": "不露臉",
+      "description_zh": "不露臉",
+      "prompt": "faceless",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
         "crotch close-up, faceless, groin",
@@ -534,9 +372,9 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-groin-0ad72728",
-      "name_zh": "下體/陰部特寫・第 3 詞（groin）",
-      "description_zh": "經人工拆分審閱的原子提示詞「groin」，來源為「下體/陰部特寫」。",
-      "prompt": " groin",
+      "name_zh": "胯下",
+      "description_zh": "胯下",
+      "prompt": "groin",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
         "crotch close-up, faceless, groin",
@@ -598,7 +436,7 @@
       "id": "after-angles-upper-body-close-up-breasts-visible-breasts-visible-5b429460",
       "name_zh": "可見胸部",
       "description_zh": "經人工拆分審閱的原子提示詞「breasts visible」，來源為「上半身特寫」。",
-      "prompt": " breasts visible",
+      "prompt": "breasts visible",
       "aliases": [
         "上半身特寫 (upper body close-up, breasts visible)",
         "upper body close-up, breasts visible",
@@ -626,41 +464,10 @@
       }
     },
     {
-      "id": "after-angles-close-up-face-focus-close-up-40f968e5",
-      "name_zh": "特寫",
-      "description_zh": "經人工拆分審閱的原子提示詞「close-up」，來源為「臉部特寫」。",
-      "prompt": "close-up",
-      "aliases": [
-        "臉部特寫 (face close-up)",
-        "close-up, face focus",
-        "close-up"
-      ],
-      "keywords": [
-        "after_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 33,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "after-angles-close-up-face-focus",
-        "source_prompt_sha256": "08bb1b52b38fd703091f68eec8da939a99174958cea2362bfb738a37f3e54121",
-        "segment_index": 0,
-        "raw_segment_sha256": "b5c4425b015d27e79182ed49614e609a758b6eec06db406852fa97e502abbb75",
-        "identity_sha256": "40f968e561e2f409f9ff339660a715fc7379b8822bb676417c555267594f19f6"
-      }
-    },
-    {
       "id": "after-angles-close-up-face-focus-face-focus-c8b2f2d6",
       "name_zh": "臉部焦點",
       "description_zh": "經人工拆分審閱的原子提示詞「face focus」，來源為「臉部特寫」。",
-      "prompt": " face focus",
+      "prompt": "face focus",
       "aliases": [
         "臉部特寫 (face close-up)",
         "close-up, face focus",
@@ -688,103 +495,10 @@
       }
     },
     {
-      "id": "after-angles-from-above-full-body-from-above-7f434f6c",
-      "name_zh": "俯視",
-      "description_zh": "經人工拆分審閱的原子提示詞「from above」，來源為「從上俯視全身」。",
-      "prompt": "from above",
-      "aliases": [
-        "從上俯視全身 (from above, full body)",
-        "from above, full body",
-        "from above"
-      ],
-      "keywords": [
-        "after_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 34,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "after-angles-from-above-full-body",
-        "source_prompt_sha256": "4c4ffa661e50864ee01a22e950823f638b40edd9945d53add2ffe970560da5df",
-        "segment_index": 0,
-        "raw_segment_sha256": "f33aa9d94f6472a6d650d3f10144b789bf06f74925ee138af61b1adb68f85c35",
-        "identity_sha256": "7f434f6ce14a84c495ff94aab2d0c1893f2136b02536e7ff67ef74366d82fe6a"
-      }
-    },
-    {
-      "id": "after-angles-from-above-full-body-full-body-ea9349d1",
-      "name_zh": "全身",
-      "description_zh": "經人工拆分審閱的原子提示詞「full body」，來源為「從上俯視全身」。",
-      "prompt": " full body",
-      "aliases": [
-        "從上俯視全身 (from above, full body)",
-        "from above, full body",
-        "full body"
-      ],
-      "keywords": [
-        "after_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 34,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "after-angles-from-above-full-body",
-        "source_prompt_sha256": "4c4ffa661e50864ee01a22e950823f638b40edd9945d53add2ffe970560da5df",
-        "segment_index": 1,
-        "raw_segment_sha256": "f849bb3a39e2db94dc5634550e7fcf63768f9df8a1fa8e260f56bf2dcb601ec8",
-        "identity_sha256": "ea9349d1c4470e060ef246dbd7817c5a69d801ac9433d1c68e4d90abd75c143d"
-      }
-    },
-    {
-      "id": "after-angles-from-below-thighs-focus-from-below-6abef040",
-      "name_zh": "仰視",
-      "description_zh": "經人工拆分審閱的原子提示詞「from below」，來源為「仰角大腿特寫」。",
-      "prompt": "from below",
-      "aliases": [
-        "仰角大腿特寫 (from below, thighs focus)",
-        "from below, thighs focus",
-        "from below"
-      ],
-      "keywords": [
-        "after_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "after-angles-from-below-thighs-focus",
-        "source_prompt_sha256": "8a85e6ec04b289acf6a1081a1fe8e07c9e6d79ea025256923d78a140b7954d42",
-        "segment_index": 0,
-        "raw_segment_sha256": "b84cb36f6285f7eb85162a44a1e8e4c2306c308c9a4940b6c98454444b4df2ab",
-        "identity_sha256": "6abef04053be9d85269bf472c3c8f370787515cf3b44a6f1a2c66397ec47e672"
-      }
-    },
-    {
       "id": "after-angles-from-below-thighs-focus-thighs-focus-75b75d4e",
-      "name_zh": "仰角大腿特寫・第 2 詞（thighs focus）",
-      "description_zh": "經人工拆分審閱的原子提示詞「thighs focus」，來源為「仰角大腿特寫」。",
-      "prompt": " thighs focus",
+      "name_zh": "大腿特寫",
+      "description_zh": "大腿特寫",
+      "prompt": "thighs focus",
       "aliases": [
         "仰角大腿特寫 (from below, thighs focus)",
         "from below, thighs focus",
@@ -812,41 +526,10 @@
       }
     },
     {
-      "id": "cum-shower-angles-upper-body-close-up-breasts-fo-upper-body-close-up-838ca784",
-      "name_zh": "上半身特寫",
-      "description_zh": "經人工拆分審閱的原子提示詞「upper body close-up」，來源為「特寫：強調頭部與胸部」。",
-      "prompt": "upper body close-up",
-      "aliases": [
-        "特寫：強調頭部與胸部 (upper body close-up, breasts focus, face focus)",
-        "upper body close-up, breasts focus, face focus",
-        "upper body close-up"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "cum-shower-angles-upper-body-close-up-breasts-focus-face-focus",
-        "source_prompt_sha256": "750b6448311f705a6d533fc3c33eba548bf3ccff0a3a0643bda59e87ee959772",
-        "segment_index": 0,
-        "raw_segment_sha256": "7b8d1fcbd290c9cf5a62370f378ab6b48a0a25ad3c08aae9d0d46d38372e8650",
-        "identity_sha256": "838ca78458c6c6580361dcbf705b48493157990d1047ec7fb81c54c50b9f7ab9"
-      }
-    },
-    {
       "id": "cum-shower-angles-upper-body-close-up-breasts-fo-breasts-focus-f51add8b",
       "name_zh": "胸部焦點",
       "description_zh": "經人工拆分審閱的原子提示詞「breasts focus」，來源為「特寫：強調頭部與胸部」。",
-      "prompt": " breasts focus",
+      "prompt": "breasts focus",
       "aliases": [
         "特寫：強調頭部與胸部 (upper body close-up, breasts focus, face focus)",
         "upper body close-up, breasts focus, face focus",
@@ -874,126 +557,10 @@
       }
     },
     {
-      "id": "cum-shower-angles-upper-body-close-up-breasts-fo-face-focus-3182a835",
-      "name_zh": "臉部焦點",
-      "description_zh": "經人工拆分審閱的原子提示詞「face focus」，來源為「特寫：強調頭部與胸部」。",
-      "prompt": " face focus",
-      "aliases": [
-        "特寫：強調頭部與胸部 (upper body close-up, breasts focus, face focus)",
-        "upper body close-up, breasts focus, face focus",
-        "face focus"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "cum-shower-angles-upper-body-close-up-breasts-focus-face-focus",
-        "source_prompt_sha256": "750b6448311f705a6d533fc3c33eba548bf3ccff0a3a0643bda59e87ee959772",
-        "segment_index": 2,
-        "raw_segment_sha256": "a7b4156b558bb3b31dba127043a35ec832977bc3d3bc0e6a61a7361c505cb8e6",
-        "identity_sha256": "3182a835d8165c945908cc16d053f09b3b9c68b90654a83347c13df516e2a51c"
-      }
-    },
-    {
-      "id": "cum-shower-angles-from-above",
-      "name_zh": "由上往下俯視",
-      "description_zh": "加入「由上往下俯視」提示詞。",
-      "prompt": "from above",
-      "aliases": [
-        "由上往下俯視 (from above)",
-        "from above"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 37,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "cum-shower-angles-from-below",
-      "name_zh": "由下往上仰角",
-      "description_zh": "加入「由下往上仰角」提示詞。",
-      "prompt": "from below",
-      "aliases": [
-        "由下往上仰角 (from below)",
-        "from below"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 38,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "cum-shower-angles-from-side",
-      "name_zh": "從側面",
-      "description_zh": "加入「從側面」提示詞。",
-      "prompt": "from side",
-      "aliases": [
-        "從側面 (from side)",
-        "from side"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt"
-      ],
-      "order": 39,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "cum-shower-angles-cowboy-shot-thighs-visible-cowboy-shot-a1f6d3b6",
-      "name_zh": "牛仔構圖",
-      "description_zh": "經人工拆分審閱的原子提示詞「cowboy shot」，來源為「半身/能看見腿」。",
-      "prompt": "cowboy shot",
-      "aliases": [
-        "半身/能看見腿 (cowboy shot, thighs visible)",
-        "cowboy shot, thighs visible",
-        "cowboy shot"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 40,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "cum-shower-angles-cowboy-shot-thighs-visible",
-        "source_prompt_sha256": "31d6d39802299134fc48ec453989938c619537f34b0f69795ff3632d83d8a5ba",
-        "segment_index": 0,
-        "raw_segment_sha256": "06a646b0fbb0021e9d3d35cb433d6b2ffc246e64b7c45444ec6a8e3f6f6cc049",
-        "identity_sha256": "a1f6d3b6c54e8b5b72dd30953d97dbed478c41772eb5af44540f15ee4288e56f"
-      }
-    },
-    {
       "id": "cum-shower-angles-cowboy-shot-thighs-visible-thighs-visible-3ef1a243",
       "name_zh": "可見大腿",
       "description_zh": "經人工拆分審閱的原子提示詞「thighs visible」，來源為「半身/能看見腿」。",
-      "prompt": " thighs visible",
+      "prompt": "thighs visible",
       "aliases": [
         "半身/能看見腿 (cowboy shot, thighs visible)",
         "cowboy shot, thighs visible",
@@ -1018,68 +585,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "b2c8584f8c287c9995893690f01667ccab764cfc51903e4b7461e380f67a296e",
         "identity_sha256": "3ef1a243e19f3ebb6818a9540589d80d83098af3f8f6b10da7e6d53476db37c5"
-      }
-    },
-    {
-      "id": "cum-shower-angles-wide-shot-full-body-wide-shot-fbb08514",
-      "name_zh": "廣角全景",
-      "description_zh": "經人工拆分審閱的原子提示詞「wide shot」，來源為「全身廣角」。",
-      "prompt": "wide shot",
-      "aliases": [
-        "全身廣角 (wide shot, full body)",
-        "wide shot, full body",
-        "wide shot"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 41,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "cum-shower-angles-wide-shot-full-body",
-        "source_prompt_sha256": "d42e51ddafa5a762534ea6747d37c83180480c93a82753a2ba491abeb2aabea2",
-        "segment_index": 0,
-        "raw_segment_sha256": "822882e787717957bb38f4f7ff70ee304d5821f4b8385d04b012d6c62b14e4af",
-        "identity_sha256": "fbb08514c5a145ad2ef8c5ada378323924d8301355ab2388f999d8999a8152c5"
-      }
-    },
-    {
-      "id": "cum-shower-angles-wide-shot-full-body-full-body-235d17b7",
-      "name_zh": "全身",
-      "description_zh": "經人工拆分審閱的原子提示詞「full body」，來源為「全身廣角」。",
-      "prompt": " full body",
-      "aliases": [
-        "全身廣角 (wide shot, full body)",
-        "wide shot, full body",
-        "full body"
-      ],
-      "keywords": [
-        "cum_shower_angles",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "camera-composition"
-      ],
-      "order": 41,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "camera-composition",
-        "source_entry_id": "cum-shower-angles-wide-shot-full-body",
-        "source_prompt_sha256": "d42e51ddafa5a762534ea6747d37c83180480c93a82753a2ba491abeb2aabea2",
-        "segment_index": 1,
-        "raw_segment_sha256": "f849bb3a39e2db94dc5634550e7fcf63768f9df8a1fa8e260f56bf2dcb601ec8",
-        "identity_sha256": "235d17b758b3e08f1730fca83515060aab5f4a90d8b80491e63ce3ef90815ee5"
       }
     },
     {
