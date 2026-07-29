@@ -24,6 +24,7 @@ from app.schemas.prompt_library import (
     EntryWriteRequest,
     LiteralConversionAcknowledgeRequest,
     LiteralConversionAcknowledgeResponse,
+    MoveEntryRequest,
     RestoreRequest,
     SearchResponse,
     VersionedCategory,
@@ -120,6 +121,20 @@ def save_entry(
     provider: PromptLibraryProvider = Depends(_provider),
 ) -> WriteResponse:
     return _call(provider.save_entry, polarity, category_id, entry_id, body)
+
+
+@router.post(
+    "/categories/{polarity}/{category_id}/entries/{entry_id}/move",
+    response_model=WriteResponse,
+)
+def move_entry(
+    polarity: Polarity,
+    category_id: str,
+    entry_id: str,
+    body: MoveEntryRequest,
+    provider: PromptLibraryProvider = Depends(_provider),
+) -> WriteResponse:
+    return _call(provider.move_entry, polarity, category_id, entry_id, body)
 
 
 @router.post("/archive", response_model=WriteResponse)
