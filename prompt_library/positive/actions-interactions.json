@@ -14,7 +14,7 @@
     "actions-interactions"
   ],
   "order": 80,
-  "revision": 63,
+  "revision": 64,
   "archived": false,
   "entries": [
     {
@@ -52,7 +52,7 @@
       "id": "p-extra-acts-touching-breasts-squeezing-breasts-squeezing-breasts-23b9ac32",
       "name_zh": "揉捏胸部・第 2 詞（squeezing breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「squeezing breasts」，來源為「揉捏胸部」。",
-      "prompt": " squeezing breasts",
+      "prompt": "squeezing breasts",
       "aliases": [
         "揉捏胸部 (touching breasts)",
         "touching breasts, squeezing breasts",
@@ -114,7 +114,7 @@
       "id": "p-extra-acts-sucking-nipples-kissing-breasts-suc-kissing-breasts-7848b9cf",
       "name_zh": "吸吮乳頭・第 2 詞（kissing breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「kissing breasts」，來源為「吸吮乳頭」。",
-      "prompt": " kissing breasts",
+      "prompt": "kissing breasts",
       "aliases": [
         "吸吮乳頭 (sucking breasts)",
         "sucking nipples, kissing breasts, sucking breasts",
@@ -145,7 +145,7 @@
       "id": "p-extra-acts-sucking-nipples-kissing-breasts-suc-sucking-breasts-2ec1566e",
       "name_zh": "吸吮乳頭・第 3 詞（sucking breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「sucking breasts」，來源為「吸吮乳頭」。",
-      "prompt": " sucking breasts",
+      "prompt": "sucking breasts",
       "aliases": [
         "吸吮乳頭 (sucking breasts)",
         "sucking nipples, kissing breasts, sucking breasts",
@@ -207,7 +207,7 @@
       "id": "p-extra-acts-kissing-french-kiss-saliva-french-kiss-63a98b0c",
       "name_zh": "法式熱吻・第 2 詞（french kiss）",
       "description_zh": "經人工拆分審閱的原子提示詞「french kiss」，來源為「法式熱吻」。",
-      "prompt": " french kiss",
+      "prompt": "french kiss",
       "aliases": [
         "法式熱吻 (kissing)",
         "kissing, french kiss, saliva",
@@ -238,7 +238,7 @@
       "id": "p-extra-acts-kissing-french-kiss-saliva-saliva-111886c0",
       "name_zh": "法式熱吻・第 3 詞（saliva）",
       "description_zh": "經人工拆分審閱的原子提示詞「saliva」，來源為「法式熱吻」。",
-      "prompt": " saliva",
+      "prompt": "saliva",
       "aliases": [
         "法式熱吻 (kissing)",
         "kissing, french kiss, saliva",
@@ -318,7 +318,7 @@
       "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-cum-4fe0efb6",
       "name_zh": "射精瞬間/高潮・第 2 詞（cum）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum」，來源為「射精瞬間/高潮」。",
-      "prompt": " cum",
+      "prompt": "cum",
       "aliases": [
         "射精瞬間/高潮 (orgasm, cum, ejaculation)",
         "orgasm, cum, ejaculation, heavy breathing",
@@ -349,7 +349,7 @@
       "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-ejaculation-219b67a6",
       "name_zh": "射精瞬間/高潮・第 3 詞（ejaculation）",
       "description_zh": "經人工拆分審閱的原子提示詞「ejaculation」，來源為「射精瞬間/高潮」。",
-      "prompt": " ejaculation",
+      "prompt": "ejaculation",
       "aliases": [
         "射精瞬間/高潮 (orgasm, cum, ejaculation)",
         "orgasm, cum, ejaculation, heavy breathing",
@@ -380,7 +380,7 @@
       "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-heavy-breathing-fb482df9",
       "name_zh": "射精瞬間/高潮・第 4 詞（heavy breathing）",
       "description_zh": "經人工拆分審閱的原子提示詞「heavy breathing」，來源為「射精瞬間/高潮」。",
-      "prompt": " heavy breathing",
+      "prompt": "heavy breathing",
       "aliases": [
         "射精瞬間/高潮 (orgasm, cum, ejaculation)",
         "orgasm, cum, ejaculation, heavy breathing",
@@ -439,41 +439,10 @@
       }
     },
     {
-      "id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-orgasm-222a58b3",
-      "name_zh": "體內射精/中出・第 2 詞（orgasm）",
-      "description_zh": "經人工拆分審閱的原子提示詞「orgasm」，來源為「體內射精/中出」。",
-      "prompt": " orgasm",
-      "aliases": [
-        "體內射精/中出 (creampie, orgasm)",
-        "creampie, orgasm, cum in pussy, ejaculation",
-        "orgasm"
-      ],
-      "keywords": [
-        "climaxes",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 15,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculation",
-        "source_prompt_sha256": "e3dd36de74abaa3c46cf1f68edc54ec40f6ece009b60f94c23d7c630854ddd30",
-        "segment_index": 1,
-        "raw_segment_sha256": "864bab973ad9c530d1abf3fb4a23386b61b7db6adeba73fcf1ae8d9fe63c396c",
-        "identity_sha256": "222a58b39f9e425c8a2d6653ccaccfa792f674e44d7af34fab6b80d47e384b0e"
-      }
-    },
-    {
       "id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-cum-in-pussy-fdca1321",
       "name_zh": "體內射精/中出・第 3 詞（cum in pussy）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum in pussy」，來源為「體內射精/中出」。",
-      "prompt": " cum in pussy",
+      "prompt": "cum in pussy",
       "aliases": [
         "體內射精/中出 (creampie, orgasm)",
         "creampie, orgasm, cum in pussy, ejaculation",
@@ -498,37 +467,6 @@
         "segment_index": 2,
         "raw_segment_sha256": "b77edf2cfb1ef038486f57dbe375df03b61e33751a6d74842a75bdd2069b7bcd",
         "identity_sha256": "fdca132183e426e63460c65d6374ea8c6ba2267f7fe349de77feaf992e38dc77"
-      }
-    },
-    {
-      "id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculatio-ejaculation-c2241e80",
-      "name_zh": "體內射精/中出・第 4 詞（ejaculation）",
-      "description_zh": "經人工拆分審閱的原子提示詞「ejaculation」，來源為「體內射精/中出」。",
-      "prompt": " ejaculation",
-      "aliases": [
-        "體內射精/中出 (creampie, orgasm)",
-        "creampie, orgasm, cum in pussy, ejaculation",
-        "ejaculation"
-      ],
-      "keywords": [
-        "climaxes",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 15,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "climaxes-creampie-orgasm-cum-in-pussy-ejaculation",
-        "source_prompt_sha256": "e3dd36de74abaa3c46cf1f68edc54ec40f6ece009b60f94c23d7c630854ddd30",
-        "segment_index": 3,
-        "raw_segment_sha256": "b31c84242d7333cf6cc2d9c7f83905ec2b2b2b8b82039ceca999493eb227af06",
-        "identity_sha256": "c2241e807d4be5e9c8498037e4ee9f9450ce42e93fb3ae2f477c14c9517bfabe"
       }
     },
     {
@@ -566,7 +504,7 @@
       "id": "climaxes-facial-cum-on-face-ejaculation-on-face-cum-on-face-a226e56e",
       "name_zh": "顏射瞬間・第 2 詞（cum on face）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum on face」，來源為「顏射瞬間」。",
-      "prompt": " cum on face",
+      "prompt": "cum on face",
       "aliases": [
         "顏射瞬間 (facial, ejaculation on face)",
         "facial, cum on face, ejaculation on face",
@@ -597,7 +535,7 @@
       "id": "climaxes-facial-cum-on-face-ejaculation-on-face-ejaculation-on-face-c78ca05c",
       "name_zh": "顏射瞬間・第 3 詞（ejaculation on face）",
       "description_zh": "經人工拆分審閱的原子提示詞「ejaculation on face」，來源為「顏射瞬間」。",
-      "prompt": " ejaculation on face",
+      "prompt": "ejaculation on face",
       "aliases": [
         "顏射瞬間 (facial, ejaculation on face)",
         "facial, cum on face, ejaculation on face",
@@ -659,7 +597,7 @@
       "id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-ejaculation-in-mouth-dc5882d4",
       "name_zh": "射入口中・第 2 詞（ejaculation in mouth）",
       "description_zh": "經人工拆分審閱的原子提示詞「ejaculation in mouth」，來源為「射入口中」。",
-      "prompt": " ejaculation in mouth",
+      "prompt": "ejaculation in mouth",
       "aliases": [
         "射入口中 (cum in mouth, ejaculation in mouth)",
         "cum in mouth, ejaculation in mouth, swallowing",
@@ -690,7 +628,7 @@
       "id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-swallowing-3857880c",
       "name_zh": "射入口中・第 3 詞（swallowing）",
       "description_zh": "經人工拆分審閱的原子提示詞「swallowing」，來源為「射入口中」。",
-      "prompt": " swallowing",
+      "prompt": "swallowing",
       "aliases": [
         "射入口中 (cum in mouth, ejaculation in mouth)",
         "cum in mouth, ejaculation in mouth, swallowing",
@@ -752,7 +690,7 @@
       "id": "climaxes-cum-on-breasts-ejaculation-on-breasts-ejaculation-on-breasts-52421eee",
       "name_zh": "射在胸上・第 2 詞（ejaculation on breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「ejaculation on breasts」，來源為「射在胸上」。",
-      "prompt": " ejaculation on breasts",
+      "prompt": "ejaculation on breasts",
       "aliases": [
         "射在胸上 (cum on breasts, ejaculation on breasts)",
         "cum on breasts, ejaculation on breasts",
@@ -780,103 +718,10 @@
       }
     },
     {
-      "id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-kissing-3a6ca067",
-      "name_zh": "法式熱吻・第 1 詞（kissing）",
-      "description_zh": "經人工拆分審閱的原子提示詞「kissing」，來源為「法式熱吻」。",
-      "prompt": "kissing",
-      "aliases": [
-        "法式熱吻 (kissing, french kiss...)",
-        "kissing, french kiss, saliva, closed eyes",
-        "kissing"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eyes",
-        "source_prompt_sha256": "0adce3a97afd5522adde8d06df0aef0d2c95c6ea35ae0e6238b4c1529bef2dc8",
-        "segment_index": 0,
-        "raw_segment_sha256": "3612420d8c3b21092784353eb724c26649a4144fc989cce3181712985d376cf9",
-        "identity_sha256": "3a6ca0673970c8b94a1c0689afbe45a29e018ee1cd5ea9c7df2b3e17ca34983d"
-      }
-    },
-    {
-      "id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-french-kiss-ab059986",
-      "name_zh": "法式熱吻・第 2 詞（french kiss）",
-      "description_zh": "經人工拆分審閱的原子提示詞「french kiss」，來源為「法式熱吻」。",
-      "prompt": " french kiss",
-      "aliases": [
-        "法式熱吻 (kissing, french kiss...)",
-        "kissing, french kiss, saliva, closed eyes",
-        "french kiss"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eyes",
-        "source_prompt_sha256": "0adce3a97afd5522adde8d06df0aef0d2c95c6ea35ae0e6238b4c1529bef2dc8",
-        "segment_index": 1,
-        "raw_segment_sha256": "6f733310b6aba59d0e51c4fe00c74b1a40df9d73f6afc5640500894d9e514513",
-        "identity_sha256": "ab0599861399c4a2949472942a31c1a1000f117d450dec6ca6498de4fb52896c"
-      }
-    },
-    {
-      "id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-saliva-630b9242",
-      "name_zh": "法式熱吻・第 3 詞（saliva）",
-      "description_zh": "經人工拆分審閱的原子提示詞「saliva」，來源為「法式熱吻」。",
-      "prompt": " saliva",
-      "aliases": [
-        "法式熱吻 (kissing, french kiss...)",
-        "kissing, french kiss, saliva, closed eyes",
-        "saliva"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-kissing-french-kiss-saliva-closed-eyes",
-        "source_prompt_sha256": "0adce3a97afd5522adde8d06df0aef0d2c95c6ea35ae0e6238b4c1529bef2dc8",
-        "segment_index": 2,
-        "raw_segment_sha256": "82acd8bde3db93c21e5e08b2ca7d08568a6a362270c098700644e3883ae42075",
-        "identity_sha256": "630b92428ecf25a6ea093a0afd49927521ac8f0820090184a192a38523e65840"
-      }
-    },
-    {
       "id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-closed-eyes-47d17798",
       "name_zh": "閉眼",
       "description_zh": "經人工拆分審閱的原子提示詞「closed eyes」，來源為「法式熱吻」。",
-      "prompt": " closed eyes",
+      "prompt": "closed eyes",
       "aliases": [
         "法式熱吻 (kissing, french kiss...)",
         "kissing, french kiss, saliva, closed eyes",
@@ -938,7 +783,7 @@
       "id": "flirt-acts-licking-ear-teasing-whispering-teasing-9da2ee70",
       "name_zh": "舔耳呢喃・第 2 詞（teasing）",
       "description_zh": "經人工拆分審閱的原子提示詞「teasing」，來源為「舔耳呢喃」。",
-      "prompt": " teasing",
+      "prompt": "teasing",
       "aliases": [
         "舔耳呢喃 (licking ear, teasing...)",
         "licking ear, teasing, whispering",
@@ -969,7 +814,7 @@
       "id": "flirt-acts-licking-ear-teasing-whispering-whispering-343ecbd3",
       "name_zh": "舔耳呢喃・第 3 詞（whispering）",
       "description_zh": "經人工拆分審閱的原子提示詞「whispering」，來源為「舔耳呢喃」。",
-      "prompt": " whispering",
+      "prompt": "whispering",
       "aliases": [
         "舔耳呢喃 (licking ear, teasing...)",
         "licking ear, teasing, whispering",
@@ -994,285 +839,6 @@
         "segment_index": 2,
         "raw_segment_sha256": "1be648baf6fadc795fe4a5c17778f157006e1fd676e0e5581b33af9816cb93a0",
         "identity_sha256": "343ecbd35a9cd916fdb2d14cccd6037c3c28f1ba9520481884bb03cebd0755ef"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-squeezing-breasts-touching-breasts-53dd64e8",
-      "name_zh": "揉捏胸部・第 1 詞（touching breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「touching breasts」，來源為「揉捏胸部」。",
-      "prompt": "touching breasts",
-      "aliases": [
-        "揉捏胸部 (touching breasts, squeezing breasts)",
-        "touching breasts, squeezing breasts",
-        "touching breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 21,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-squeezing-breasts",
-        "source_prompt_sha256": "f1d8e0050fd7e93ddb274c26d48545d3d59c2ffc29b8471c14e6ef5f8e49afdc",
-        "segment_index": 0,
-        "raw_segment_sha256": "340b872da0ed5bdef753d2a364c2318dd44a8f19f13368da76e79bc1aea2e7e2",
-        "identity_sha256": "53dd64e8f75f30b640dbf5a29d4a608f18acb3ae9389194c4c40eee201fc2657"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-squeezing-breasts-squeezing-breasts-378764dd",
-      "name_zh": "揉捏胸部・第 2 詞（squeezing breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「squeezing breasts」，來源為「揉捏胸部」。",
-      "prompt": " squeezing breasts",
-      "aliases": [
-        "揉捏胸部 (touching breasts, squeezing breasts)",
-        "touching breasts, squeezing breasts",
-        "squeezing breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 21,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-squeezing-breasts",
-        "source_prompt_sha256": "f1d8e0050fd7e93ddb274c26d48545d3d59c2ffc29b8471c14e6ef5f8e49afdc",
-        "segment_index": 1,
-        "raw_segment_sha256": "9ed829759e7b20069d8bee5628c4dbd126b143c61c866a720de05e7192cf9115",
-        "identity_sha256": "378764dd5b2d7112a71fcd69509ad11638d88a9eaaba0eca4f35dcff44273519"
-      }
-    },
-    {
-      "id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-sucking-nipples-5ba60137",
-      "name_zh": "吸吮乳頭/胸部・第 1 詞（sucking nipples）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sucking nipples」，來源為「吸吮乳頭/胸部」。",
-      "prompt": "sucking nipples",
-      "aliases": [
-        "吸吮乳頭/胸部 (sucking breasts)",
-        "sucking nipples, kissing breasts, sucking breasts",
-        "sucking nipples"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 22,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "f26eeec65c9ce36e7ff3984e2ddd566e59f3213b2e0c457c7b773d3b4d4ec4f0",
-        "segment_index": 0,
-        "raw_segment_sha256": "25f1d93f2711732d71103a27526ce0a799b86976a3cce6252689bbeb5e6470d3",
-        "identity_sha256": "5ba601377cba7dd4baa569aa645106bbb854ddb8a5d69517e852266a0cb6714c"
-      }
-    },
-    {
-      "id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-kissing-breasts-7ad1f4ac",
-      "name_zh": "吸吮乳頭/胸部・第 2 詞（kissing breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「kissing breasts」，來源為「吸吮乳頭/胸部」。",
-      "prompt": " kissing breasts",
-      "aliases": [
-        "吸吮乳頭/胸部 (sucking breasts)",
-        "sucking nipples, kissing breasts, sucking breasts",
-        "kissing breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 22,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "f26eeec65c9ce36e7ff3984e2ddd566e59f3213b2e0c457c7b773d3b4d4ec4f0",
-        "segment_index": 1,
-        "raw_segment_sha256": "a7f324a8d6f4c3fca5139e80dec03b528eaa72bc39d88552d49cf11419967dc3",
-        "identity_sha256": "7ad1f4ac6e42ab19e50e15ce0dd393699bb8dac5767adc51771b4862f6d69cb2"
-      }
-    },
-    {
-      "id": "flirt-acts-sucking-nipples-kissing-breasts-sucki-sucking-breasts-5d3ed6c3",
-      "name_zh": "吸吮乳頭/胸部・第 3 詞（sucking breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sucking breasts」，來源為「吸吮乳頭/胸部」。",
-      "prompt": " sucking breasts",
-      "aliases": [
-        "吸吮乳頭/胸部 (sucking breasts)",
-        "sucking nipples, kissing breasts, sucking breasts",
-        "sucking breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 22,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "f26eeec65c9ce36e7ff3984e2ddd566e59f3213b2e0c457c7b773d3b4d4ec4f0",
-        "segment_index": 2,
-        "raw_segment_sha256": "777fc150a2b7501e2db07e06c1e9f47f0f72f1a533bf7a85cf05b2638706a54c",
-        "identity_sha256": "5d3ed6c3376faf3e4a4c7ceea2fc4e7e8c188ae37251e72b7a9c239bb2bfc266"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-sucking-nipples-kiss-touching-breasts-56ce3118",
-      "name_zh": "揉胸 + 吸奶・第 1 詞（touching breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「touching breasts」，來源為「揉胸 + 吸奶」。",
-      "prompt": "touching breasts",
-      "aliases": [
-        "揉胸 + 吸奶 (touching & sucking breasts)",
-        "touching breasts, sucking nipples, kissing breasts, sucking breasts",
-        "touching breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "b80f57f3f0e82443efe91a1a5ff18858262cd1e0ea134772656ed050a7197c08",
-        "segment_index": 0,
-        "raw_segment_sha256": "340b872da0ed5bdef753d2a364c2318dd44a8f19f13368da76e79bc1aea2e7e2",
-        "identity_sha256": "56ce311828a5949816636dcef9f153f910093be94063106859c63e976f7410de"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-sucking-nipples-kiss-sucking-nipples-5db8f357",
-      "name_zh": "揉胸 + 吸奶・第 2 詞（sucking nipples）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sucking nipples」，來源為「揉胸 + 吸奶」。",
-      "prompt": " sucking nipples",
-      "aliases": [
-        "揉胸 + 吸奶 (touching & sucking breasts)",
-        "touching breasts, sucking nipples, kissing breasts, sucking breasts",
-        "sucking nipples"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "b80f57f3f0e82443efe91a1a5ff18858262cd1e0ea134772656ed050a7197c08",
-        "segment_index": 1,
-        "raw_segment_sha256": "4d8dbadcf6ef86d4668509be27c13ce76fb832f9b6fece09a753945b5068c4e9",
-        "identity_sha256": "5db8f3577f02335be57764d3a9e43424f0c0a2e3edb6f1ac55eae4a4f8d9c1dd"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-sucking-nipples-kiss-kissing-breasts-8c4f351f",
-      "name_zh": "揉胸 + 吸奶・第 3 詞（kissing breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「kissing breasts」，來源為「揉胸 + 吸奶」。",
-      "prompt": " kissing breasts",
-      "aliases": [
-        "揉胸 + 吸奶 (touching & sucking breasts)",
-        "touching breasts, sucking nipples, kissing breasts, sucking breasts",
-        "kissing breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "b80f57f3f0e82443efe91a1a5ff18858262cd1e0ea134772656ed050a7197c08",
-        "segment_index": 2,
-        "raw_segment_sha256": "a7f324a8d6f4c3fca5139e80dec03b528eaa72bc39d88552d49cf11419967dc3",
-        "identity_sha256": "8c4f351f4e700102868579b29d4280debb6b608d7f9a85927c0926edf88a3c0f"
-      }
-    },
-    {
-      "id": "flirt-acts-touching-breasts-sucking-nipples-kiss-sucking-breasts-5332a788",
-      "name_zh": "揉胸 + 吸奶・第 4 詞（sucking breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sucking breasts」，來源為「揉胸 + 吸奶」。",
-      "prompt": " sucking breasts",
-      "aliases": [
-        "揉胸 + 吸奶 (touching & sucking breasts)",
-        "touching breasts, sucking nipples, kissing breasts, sucking breasts",
-        "sucking breasts"
-      ],
-      "keywords": [
-        "flirt_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "flirt-acts-touching-breasts-sucking-nipples-kissing-breasts-sucking-breasts",
-        "source_prompt_sha256": "b80f57f3f0e82443efe91a1a5ff18858262cd1e0ea134772656ed050a7197c08",
-        "segment_index": 3,
-        "raw_segment_sha256": "777fc150a2b7501e2db07e06c1e9f47f0f72f1a533bf7a85cf05b2638706a54c",
-        "identity_sha256": "5332a788dc2eafb7e9fc9c9c2ee4cc04a860945142900dbd385979dc8aa47030"
       }
     },
     {
@@ -1310,7 +876,7 @@
       "id": "flirt-acts-fingering-rubbing-crotch-rubbing-crotch-9fc6670c",
       "name_zh": "指交/撫摸下體・第 2 詞（rubbing crotch）",
       "description_zh": "經人工拆分審閱的原子提示詞「rubbing crotch」，來源為「指交/撫摸下體」。",
-      "prompt": " rubbing crotch",
+      "prompt": "rubbing crotch",
       "aliases": [
         "指交/撫摸下體 (fingering, rubbing crotch)",
         "fingering, rubbing crotch",
@@ -1372,7 +938,7 @@
       "id": "flirt-acts-straddling-grinding-dry-humping-grinding-4556cb2c",
       "name_zh": "跨坐/隔衣摩擦・第 2 詞（grinding）",
       "description_zh": "經人工拆分審閱的原子提示詞「grinding」，來源為「跨坐/隔衣摩擦」。",
-      "prompt": " grinding",
+      "prompt": "grinding",
       "aliases": [
         "跨坐/隔衣摩擦 (straddling, grinding...)",
         "straddling, grinding, dry humping",
@@ -1403,7 +969,7 @@
       "id": "flirt-acts-straddling-grinding-dry-humping-dry-humping-e8cb0942",
       "name_zh": "跨坐/隔衣摩擦・第 3 詞（dry humping）",
       "description_zh": "經人工拆分審閱的原子提示詞「dry humping」，來源為「跨坐/隔衣摩擦」。",
-      "prompt": " dry humping",
+      "prompt": "dry humping",
       "aliases": [
         "跨坐/隔衣摩擦 (straddling, grinding...)",
         "straddling, grinding, dry humping",
@@ -1465,7 +1031,7 @@
       "id": "flirt-acts-hugging-romantic-embrace-romantic-embrace-59b6519e",
       "name_zh": "擁抱・第 2 詞（romantic embrace）",
       "description_zh": "經人工拆分審閱的原子提示詞「romantic embrace」，來源為「擁抱」。",
-      "prompt": " romantic embrace",
+      "prompt": "romantic embrace",
       "aliases": [
         "擁抱 (hugging, romantic embrace)",
         "hugging, romantic embrace",
@@ -1527,7 +1093,7 @@
       "id": "flirt-acts-pinned-against-wall-blush-looking-up-blush-2682aef6",
       "name_zh": "臉紅",
       "description_zh": "經人工拆分審閱的原子提示詞「blush」，來源為「壁咚」。",
-      "prompt": " blush",
+      "prompt": "blush",
       "aliases": [
         "壁咚 (pinned against wall, blush...)",
         "pinned against wall, blush, looking up",
@@ -1558,7 +1124,7 @@
       "id": "flirt-acts-pinned-against-wall-blush-looking-up-looking-up-d5a07bc2",
       "name_zh": "壁咚・第 3 詞（looking up）",
       "description_zh": "經人工拆分審閱的原子提示詞「looking up」，來源為「壁咚」。",
-      "prompt": " looking up",
+      "prompt": "looking up",
       "aliases": [
         "壁咚 (pinned against wall, blush...)",
         "pinned against wall, blush, looking up",
@@ -1638,7 +1204,7 @@
       "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-fellatio-dedb18df",
       "name_zh": "口交・第 2 詞（fellatio）",
       "description_zh": "經人工拆分審閱的原子提示詞「fellatio」，來源為「口交」。",
-      "prompt": " fellatio",
+      "prompt": "fellatio",
       "aliases": [
         "口交 (blowjob)",
         "blowjob, fellatio, penis in mouth, suck",
@@ -1669,7 +1235,7 @@
       "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-penis-in-mouth-e7476bd3",
       "name_zh": "口交・第 3 詞（penis in mouth）",
       "description_zh": "經人工拆分審閱的原子提示詞「penis in mouth」，來源為「口交」。",
-      "prompt": " penis in mouth",
+      "prompt": "penis in mouth",
       "aliases": [
         "口交 (blowjob)",
         "blowjob, fellatio, penis in mouth, suck",
@@ -1700,7 +1266,7 @@
       "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-suck-5303ac25",
       "name_zh": "口交・第 4 詞（suck）",
       "description_zh": "經人工拆分審閱的原子提示詞「suck」，來源為「口交」。",
-      "prompt": " suck",
+      "prompt": "suck",
       "aliases": [
         "口交 (blowjob)",
         "blowjob, fellatio, penis in mouth, suck",
@@ -1762,7 +1328,7 @@
       "id": "oral-acts-handjob-grasping-penis-rubbing-penis-grasping-penis-53b98e8f",
       "name_zh": "手交・第 2 詞（grasping penis）",
       "description_zh": "經人工拆分審閱的原子提示詞「grasping penis」，來源為「手交」。",
-      "prompt": " grasping penis",
+      "prompt": "grasping penis",
       "aliases": [
         "手交 (handjob)",
         "handjob, grasping penis, rubbing penis",
@@ -1793,7 +1359,7 @@
       "id": "oral-acts-handjob-grasping-penis-rubbing-penis-rubbing-penis-f59ff1f5",
       "name_zh": "手交・第 3 詞（rubbing penis）",
       "description_zh": "經人工拆分審閱的原子提示詞「rubbing penis」，來源為「手交」。",
-      "prompt": " rubbing penis",
+      "prompt": "rubbing penis",
       "aliases": [
         "手交 (handjob)",
         "handjob, grasping penis, rubbing penis",
@@ -1855,7 +1421,7 @@
       "id": "oral-acts-paizuri-penis-between-breasts-titjob-penis-between-breasts-53c9ee16",
       "name_zh": "乳交・第 2 詞（penis between breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「penis between breasts」，來源為「乳交」。",
-      "prompt": " penis between breasts",
+      "prompt": "penis between breasts",
       "aliases": [
         "乳交 (paizuri)",
         "paizuri, penis between breasts, titjob",
@@ -1886,7 +1452,7 @@
       "id": "oral-acts-paizuri-penis-between-breasts-titjob-titjob-e249a05a",
       "name_zh": "乳交・第 3 詞（titjob）",
       "description_zh": "經人工拆分審閱的原子提示詞「titjob」，來源為「乳交」。",
-      "prompt": " titjob",
+      "prompt": "titjob",
       "aliases": [
         "乳交 (paizuri)",
         "paizuri, penis between breasts, titjob",
@@ -1948,7 +1514,7 @@
       "id": "oral-acts-footjob-foot-on-penis-feet-foot-on-penis-c7519652",
       "name_zh": "足交・第 2 詞（foot on penis）",
       "description_zh": "經人工拆分審閱的原子提示詞「foot on penis」，來源為「足交」。",
-      "prompt": " foot on penis",
+      "prompt": "foot on penis",
       "aliases": [
         "足交 (footjob)",
         "footjob, foot on penis, feet",
@@ -1979,7 +1545,7 @@
       "id": "oral-acts-footjob-foot-on-penis-feet-feet-ad846fc7",
       "name_zh": "足交・第 3 詞（feet）",
       "description_zh": "經人工拆分審閱的原子提示詞「feet」，來源為「足交」。",
-      "prompt": " feet",
+      "prompt": "feet",
       "aliases": [
         "足交 (footjob)",
         "footjob, foot on penis, feet",
@@ -2041,7 +1607,7 @@
       "id": "oral-acts-thighjob-penis-between-thighs-penis-between-thighs-5d3df9f5",
       "name_zh": "大腿交・第 2 詞（penis between thighs）",
       "description_zh": "經人工拆分審閱的原子提示詞「penis between thighs」，來源為「大腿交」。",
-      "prompt": " penis between thighs",
+      "prompt": "penis between thighs",
       "aliases": [
         "大腿交 (thighjob)",
         "thighjob, penis between thighs",
@@ -2103,7 +1669,7 @@
       "id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-penis-in-armpit-b1923fc9",
       "name_zh": "腋下交・第 2 詞（penis in armpit）",
       "description_zh": "經人工拆分審閱的原子提示詞「penis in armpit」，來源為「腋下交」。",
-      "prompt": " penis in armpit",
+      "prompt": "penis in armpit",
       "aliases": [
         "腋下交 (armpit sex)",
         "armpit sex, penis in armpit, holding own arm",
@@ -2134,7 +1700,7 @@
       "id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-holding-own-arm-d23c55e0",
       "name_zh": "腋下交・第 3 詞（holding own arm）",
       "description_zh": "經人工拆分審閱的原子提示詞「holding own arm」，來源為「腋下交」。",
-      "prompt": " holding own arm",
+      "prompt": "holding own arm",
       "aliases": [
         "腋下交 (armpit sex)",
         "armpit sex, penis in armpit, holding own arm",
@@ -2162,537 +1728,10 @@
       }
     },
     {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-blowjob-ef6a0be5",
-      "name_zh": "口交 + 手交・第 1 詞（blowjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「blowjob」，來源為「口交 + 手交」。",
-      "prompt": "blowjob",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "blowjob"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 0,
-        "raw_segment_sha256": "665cb762e3bc03d078dea6bd624f49ac355ed3389d977f6e320792111961421d",
-        "identity_sha256": "ef6a0be5dd0c9271dab1ffba76f804adbe4ffdc6b39561b44f631768b22570d9"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-fellatio-fdc6d375",
-      "name_zh": "口交 + 手交・第 2 詞（fellatio）",
-      "description_zh": "經人工拆分審閱的原子提示詞「fellatio」，來源為「口交 + 手交」。",
-      "prompt": " fellatio",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "fellatio"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 1,
-        "raw_segment_sha256": "9d6acb5b08af2810d618baab8afd0eb659de5e210b27666ae02f67427e046675",
-        "identity_sha256": "fdc6d375ac117b2e60385d596092515f07ca506d4565bf656f741db2f0a968b5"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-penis-in-mouth-4893ce12",
-      "name_zh": "口交 + 手交・第 3 詞（penis in mouth）",
-      "description_zh": "經人工拆分審閱的原子提示詞「penis in mouth」，來源為「口交 + 手交」。",
-      "prompt": " penis in mouth",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "penis in mouth"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 2,
-        "raw_segment_sha256": "6380e492788095e986227a1de0a182f03640cf7db80e9b016af721f0c0be2bc7",
-        "identity_sha256": "4893ce129704134001fbafe1129c0c91cbe16e81b2271b81f083467ac59488a9"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-suck-fc004a7e",
-      "name_zh": "口交 + 手交・第 4 詞（suck）",
-      "description_zh": "經人工拆分審閱的原子提示詞「suck」，來源為「口交 + 手交」。",
-      "prompt": " suck",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "suck"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 3,
-        "raw_segment_sha256": "a77c1ba1e016f77eae597234bf68edd49fc53f7394f3c9a7a0a2279c96c649fe",
-        "identity_sha256": "fc004a7e5f1a44abd2de3cc8446b207625608bc7d2994ef347db34f68824d965"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-handjob-9c4a5b19",
-      "name_zh": "口交 + 手交・第 5 詞（handjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「handjob」，來源為「口交 + 手交」。",
-      "prompt": " handjob",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "handjob"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 4,
-        "raw_segment_sha256": "a20526effa7f7b1849ce3eb79a8c6172498f0606313bbe7a25dfc29a3db9077a",
-        "identity_sha256": "9c4a5b19aa1ca687bbd54e5e8f03868f9978d4d9a6a755c162a4b07975bc3b2a"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-h-grasping-penis-9439f760",
-      "name_zh": "口交 + 手交・第 6 詞（grasping penis）",
-      "description_zh": "經人工拆分審閱的原子提示詞「grasping penis」，來源為「口交 + 手交」。",
-      "prompt": " grasping penis",
-      "aliases": [
-        "口交 + 手交 (blowjob + handjob)",
-        "blowjob, fellatio, penis in mouth, suck, handjob, grasping penis",
-        "grasping penis"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-handjob-grasping-penis",
-        "source_prompt_sha256": "06646b76cf0e4baa415d360ca4bd40300c0ef992eeb9c9d045c23d4ed3353c95",
-        "segment_index": 5,
-        "raw_segment_sha256": "2df0fa86bd2aa97abefc31fabd96359c55d50fd698ad418e5c173c34cb02ad11",
-        "identity_sha256": "9439f76054f6e527759cc8d1ba87741284fe3fa2a16272d3a062dbdb347c34f3"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-blowjob-7e9bf03d",
-      "name_zh": "口交 + 乳交・第 1 詞（blowjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「blowjob」，來源為「口交 + 乳交」。",
-      "prompt": "blowjob",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "blowjob"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 0,
-        "raw_segment_sha256": "665cb762e3bc03d078dea6bd624f49ac355ed3389d977f6e320792111961421d",
-        "identity_sha256": "7e9bf03dfa52f6dca8e3776cd1eeb04b63de27049ed76fe2dbe20d564fa18402"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-fellatio-b6db4844",
-      "name_zh": "口交 + 乳交・第 2 詞（fellatio）",
-      "description_zh": "經人工拆分審閱的原子提示詞「fellatio」，來源為「口交 + 乳交」。",
-      "prompt": " fellatio",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "fellatio"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 1,
-        "raw_segment_sha256": "9d6acb5b08af2810d618baab8afd0eb659de5e210b27666ae02f67427e046675",
-        "identity_sha256": "b6db48449f8d9d7ee39c3020ca94008d8e5b432ec246c0d85a424b01f6f37b46"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-penis-in-mouth-1415bd93",
-      "name_zh": "口交 + 乳交・第 3 詞（penis in mouth）",
-      "description_zh": "經人工拆分審閱的原子提示詞「penis in mouth」，來源為「口交 + 乳交」。",
-      "prompt": " penis in mouth",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "penis in mouth"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 2,
-        "raw_segment_sha256": "6380e492788095e986227a1de0a182f03640cf7db80e9b016af721f0c0be2bc7",
-        "identity_sha256": "1415bd93a6df60ae1066a7fda55c77a8b11cf194d36cf19b90bdd88f6074c9bd"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-suck-8304f038",
-      "name_zh": "口交 + 乳交・第 4 詞（suck）",
-      "description_zh": "經人工拆分審閱的原子提示詞「suck」，來源為「口交 + 乳交」。",
-      "prompt": " suck",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "suck"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 3,
-        "raw_segment_sha256": "a77c1ba1e016f77eae597234bf68edd49fc53f7394f3c9a7a0a2279c96c649fe",
-        "identity_sha256": "8304f038191a0f1394422c15e2235c98930b5477b8c4922de0694dd915f54596"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-paizuri-6a0172c0",
-      "name_zh": "口交 + 乳交・第 5 詞（paizuri）",
-      "description_zh": "經人工拆分審閱的原子提示詞「paizuri」，來源為「口交 + 乳交」。",
-      "prompt": " paizuri",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "paizuri"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 4,
-        "raw_segment_sha256": "ac2ed420d8d2f5ae927568de3888a9cf7184077e0066efd2236d2ae7047be093",
-        "identity_sha256": "6a0172c0a1db9fac2bcb091c362b0b7bba7206f5ce52ad57ff2c84363fae7c24"
-      }
-    },
-    {
-      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-p-penis-between-breasts-9ed37d2d",
-      "name_zh": "口交 + 乳交・第 6 詞（penis between breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「penis between breasts」，來源為「口交 + 乳交」。",
-      "prompt": " penis between breasts",
-      "aliases": [
-        "口交 + 乳交 (blowjob + paizuri)",
-        "blowjob, fellatio, penis in mouth, suck, paizuri, penis between breasts",
-        "penis between breasts"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "08d8b8ad2a5cd72e5b11532662b99a705c98eafc605c90dde5cc3ae4de685b41",
-        "segment_index": 5,
-        "raw_segment_sha256": "db187c4ea4ae8ed70073ff021ae7fac90d5e58d0b629a05b0df7f6822b91488e",
-        "identity_sha256": "9ed37d2d965bbd01f4797435d44aac375b30cf7591bbab9d24aaf6dba6a1aee8"
-      }
-    },
-    {
-      "id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-handjob-9980536b",
-      "name_zh": "手交 + 乳交・第 1 詞（handjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「handjob」，來源為「手交 + 乳交」。",
-      "prompt": "handjob",
-      "aliases": [
-        "手交 + 乳交 (handjob + paizuri)",
-        "handjob, grasping penis, paizuri, penis between breasts",
-        "handjob"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 37,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "d398b76b5cac9afaaf646905c26f6d48a10ecc50b9894a4d21ff54516f1846ba",
-        "segment_index": 0,
-        "raw_segment_sha256": "dcb50ee3659fb74208645f29da8bf4c11f799cec04d259eeaace642d960e83db",
-        "identity_sha256": "9980536bfb911a292bd447a926b4598f554626af8ed1b5b7fb19a50ec9a7bc30"
-      }
-    },
-    {
-      "id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-grasping-penis-e0213519",
-      "name_zh": "手交 + 乳交・第 2 詞（grasping penis）",
-      "description_zh": "經人工拆分審閱的原子提示詞「grasping penis」，來源為「手交 + 乳交」。",
-      "prompt": " grasping penis",
-      "aliases": [
-        "手交 + 乳交 (handjob + paizuri)",
-        "handjob, grasping penis, paizuri, penis between breasts",
-        "grasping penis"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 37,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "d398b76b5cac9afaaf646905c26f6d48a10ecc50b9894a4d21ff54516f1846ba",
-        "segment_index": 1,
-        "raw_segment_sha256": "2df0fa86bd2aa97abefc31fabd96359c55d50fd698ad418e5c173c34cb02ad11",
-        "identity_sha256": "e0213519000b941287197e44569f11c8f1ceb4c6dfc8d6d219de458d83dbece3"
-      }
-    },
-    {
-      "id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-paizuri-34c881b7",
-      "name_zh": "手交 + 乳交・第 3 詞（paizuri）",
-      "description_zh": "經人工拆分審閱的原子提示詞「paizuri」，來源為「手交 + 乳交」。",
-      "prompt": " paizuri",
-      "aliases": [
-        "手交 + 乳交 (handjob + paizuri)",
-        "handjob, grasping penis, paizuri, penis between breasts",
-        "paizuri"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 37,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "d398b76b5cac9afaaf646905c26f6d48a10ecc50b9894a4d21ff54516f1846ba",
-        "segment_index": 2,
-        "raw_segment_sha256": "ac2ed420d8d2f5ae927568de3888a9cf7184077e0066efd2236d2ae7047be093",
-        "identity_sha256": "34c881b79a37d8bf1da862b9902ab041644672700e3fab6021d5f3de1ef94a3d"
-      }
-    },
-    {
-      "id": "oral-acts-handjob-grasping-penis-paizuri-penis-b-penis-between-breasts-6ab7dc90",
-      "name_zh": "手交 + 乳交・第 4 詞（penis between breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「penis between breasts」，來源為「手交 + 乳交」。",
-      "prompt": " penis between breasts",
-      "aliases": [
-        "手交 + 乳交 (handjob + paizuri)",
-        "handjob, grasping penis, paizuri, penis between breasts",
-        "penis between breasts"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 37,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-handjob-grasping-penis-paizuri-penis-between-breasts",
-        "source_prompt_sha256": "d398b76b5cac9afaaf646905c26f6d48a10ecc50b9894a4d21ff54516f1846ba",
-        "segment_index": 3,
-        "raw_segment_sha256": "db187c4ea4ae8ed70073ff021ae7fac90d5e58d0b629a05b0df7f6822b91488e",
-        "identity_sha256": "6ab7dc9028374ca90052f23d21f84ca45abb9494d43ed9a633acd842d4ff511e"
-      }
-    },
-    {
-      "id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-cunnilingus-88867829",
-      "name_zh": "被舔陰・第 1 詞（cunnilingus）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cunnilingus」，來源為「被舔陰」。",
-      "prompt": "cunnilingus",
-      "aliases": [
-        "被舔陰 (cunnilingus)",
-        "cunnilingus, receiving oral, oral on vagina",
-        "cunnilingus"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 38,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-cunnilingus-receiving-oral-oral-on-vagina",
-        "source_prompt_sha256": "9d8931ff6d17a73fa40a101de6a3d1d0583d91d1fceb2fdd6f894664de610f66",
-        "segment_index": 0,
-        "raw_segment_sha256": "b66e4e54b4982f59022ecf051b1cdf115f823dc415d146302d55745a78ba5064",
-        "identity_sha256": "888678295877f5bfc73a7d48edc509ef8e9d7ea3be84b7b2d25f704fba86ac44"
-      }
-    },
-    {
       "id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-receiving-oral-a615da69",
       "name_zh": "被舔陰・第 2 詞（receiving oral）",
       "description_zh": "經人工拆分審閱的原子提示詞「receiving oral」，來源為「被舔陰」。",
-      "prompt": " receiving oral",
+      "prompt": "receiving oral",
       "aliases": [
         "被舔陰 (cunnilingus)",
         "cunnilingus, receiving oral, oral on vagina",
@@ -2723,7 +1762,7 @@
       "id": "oral-acts-cunnilingus-receiving-oral-oral-on-vag-oral-on-vagina-10c09f02",
       "name_zh": "被舔陰・第 3 詞（oral on vagina）",
       "description_zh": "經人工拆分審閱的原子提示詞「oral on vagina」，來源為「被舔陰」。",
-      "prompt": " oral on vagina",
+      "prompt": "oral on vagina",
       "aliases": [
         "被舔陰 (cunnilingus)",
         "cunnilingus, receiving oral, oral on vagina",
@@ -2785,7 +1824,7 @@
       "id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-mutual-oral-1f69639c",
       "name_zh": "69式互相口交 (69 position, mutual)・第 2 詞（mutual oral）",
       "description_zh": "經人工拆分審閱的原子提示詞「mutual oral」，來源為「69式互相口交 (69 position, mutual)」。",
-      "prompt": " mutual oral",
+      "prompt": "mutual oral",
       "aliases": [
         "69式互相口交 (69 position, mutual)",
         "69 position, mutual oral, blowjob, cunnilingus, fellatio",
@@ -2810,99 +1849,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "ee05166f55d731e6c44608c6d3e2b54900ccd28542fab4060f6c0decd2f7d77d",
         "identity_sha256": "1f69639c12637a200c7e7b5b981eabdd248ba866f6cadca744e3e8f09f0ef378"
-      }
-    },
-    {
-      "id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-blowjob-cb55de06",
-      "name_zh": "69式互相口交 (69 position, mutual)・第 3 詞（blowjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「blowjob」，來源為「69式互相口交 (69 position, mutual)」。",
-      "prompt": " blowjob",
-      "aliases": [
-        "69式互相口交 (69 position, mutual)",
-        "69 position, mutual oral, blowjob, cunnilingus, fellatio",
-        "blowjob"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 39,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnilingus-fellatio",
-        "source_prompt_sha256": "f8019083a81d57a7890767f4899e5ce7ee365979fd6e7628ea9f5f2654d07f6c",
-        "segment_index": 2,
-        "raw_segment_sha256": "0064520650b006c6fad273d7c662a8efee55532f72171dd83f0d21b020e3d1e0",
-        "identity_sha256": "cb55de064aa7ff6f21ab95dd15d75d18b9a8c2b8b8be5716af834cecb7365ac2"
-      }
-    },
-    {
-      "id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-cunnilingus-41945bcc",
-      "name_zh": "69式互相口交 (69 position, mutual)・第 4 詞（cunnilingus）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cunnilingus」，來源為「69式互相口交 (69 position, mutual)」。",
-      "prompt": " cunnilingus",
-      "aliases": [
-        "69式互相口交 (69 position, mutual)",
-        "69 position, mutual oral, blowjob, cunnilingus, fellatio",
-        "cunnilingus"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 39,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnilingus-fellatio",
-        "source_prompt_sha256": "f8019083a81d57a7890767f4899e5ce7ee365979fd6e7628ea9f5f2654d07f6c",
-        "segment_index": 3,
-        "raw_segment_sha256": "bd6bc8b8facb696f11a85f49a462038ae29620b6d89805929516dc1d5951fec3",
-        "identity_sha256": "41945bccc9645ce1aecc89041d499b470df8fa306471228ec8184c4ff0b2ba71"
-      }
-    },
-    {
-      "id": "oral-acts-69-position-mutual-oral-blowjob-cunnil-fellatio-8351b22d",
-      "name_zh": "69式互相口交 (69 position, mutual)・第 5 詞（fellatio）",
-      "description_zh": "經人工拆分審閱的原子提示詞「fellatio」，來源為「69式互相口交 (69 position, mutual)」。",
-      "prompt": " fellatio",
-      "aliases": [
-        "69式互相口交 (69 position, mutual)",
-        "69 position, mutual oral, blowjob, cunnilingus, fellatio",
-        "fellatio"
-      ],
-      "keywords": [
-        "oral_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 39,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "oral-acts-69-position-mutual-oral-blowjob-cunnilingus-fellatio",
-        "source_prompt_sha256": "f8019083a81d57a7890767f4899e5ce7ee365979fd6e7628ea9f5f2654d07f6c",
-        "segment_index": 4,
-        "raw_segment_sha256": "9d6acb5b08af2810d618baab8afd0eb659de5e210b27666ae02f67427e046675",
-        "identity_sha256": "8351b22d7dfb954d000fb6213c2ed71edd22ed8e9307e86d9154430c26796953"
       }
     },
     {
@@ -2940,7 +1886,7 @@
       "id": "oral-acts-anilingus-rimming-rimming-e6c72b61",
       "name_zh": "被舔肛・第 2 詞（rimming）",
       "description_zh": "經人工拆分審閱的原子提示詞「rimming」，來源為「被舔肛」。",
-      "prompt": " rimming",
+      "prompt": "rimming",
       "aliases": [
         "被舔肛 (anilingus)",
         "anilingus, rimming",
@@ -3002,7 +1948,7 @@
       "id": "undress-acts-lifting-shirt-exposing-midriff-unde-exposing-midriff-c06c8ef0",
       "name_zh": "分鏡：雙手掀起上衣露出下乳・第 2 詞（exposing midriff）",
       "description_zh": "經人工拆分審閱的原子提示詞「exposing midriff」，來源為「分鏡：雙手掀起上衣露出下乳」。",
-      "prompt": " exposing midriff",
+      "prompt": "exposing midriff",
       "aliases": [
         "分鏡：雙手掀起上衣露出下乳 (lifting shirt, exposing midriff, underbust)",
         "lifting shirt, exposing midriff, underbust",
@@ -3033,7 +1979,7 @@
       "id": "undress-acts-lifting-shirt-exposing-midriff-unde-underbust-0c619247",
       "name_zh": "分鏡：雙手掀起上衣露出下乳・第 3 詞（underbust）",
       "description_zh": "經人工拆分審閱的原子提示詞「underbust」，來源為「分鏡：雙手掀起上衣露出下乳」。",
-      "prompt": " underbust",
+      "prompt": "underbust",
       "aliases": [
         "分鏡：雙手掀起上衣露出下乳 (lifting shirt, exposing midriff, underbust)",
         "lifting shirt, exposing midriff, underbust",
@@ -3095,7 +2041,7 @@
       "id": "undress-acts-shirt-over-head-face-visible-arms-u-face-visible-bba6152d",
       "name_zh": "分鏡：上衣卡在頭上但露出臉・第 2 詞（face visible）",
       "description_zh": "經人工拆分審閱的原子提示詞「face visible」，來源為「分鏡：上衣卡在頭上但露出臉」。",
-      "prompt": " face visible",
+      "prompt": "face visible",
       "aliases": [
         "分鏡：上衣卡在頭上但露出臉 (shirt over head, face visible, arms up)",
         "shirt over head, face visible, arms up",
@@ -3126,7 +2072,7 @@
       "id": "undress-acts-shirt-over-head-face-visible-arms-u-arms-up-e9a7d7b6",
       "name_zh": "分鏡：上衣卡在頭上但露出臉・第 3 詞（arms up）",
       "description_zh": "經人工拆分審閱的原子提示詞「arms up」，來源為「分鏡：上衣卡在頭上但露出臉」。",
-      "prompt": " arms up",
+      "prompt": "arms up",
       "aliases": [
         "分鏡：上衣卡在頭上但露出臉 (shirt over head, face visible, arms up)",
         "shirt over head, face visible, arms up",
@@ -3188,7 +2134,7 @@
       "id": "undress-acts-shirt-removed-holding-clothes-holding-clothes-887eb963",
       "name_zh": "手持脫下衣物",
       "description_zh": "經人工拆分審閱的原子提示詞「holding clothes」，來源為「分鏡：單手拿著脫下的上衣」。",
-      "prompt": " holding clothes",
+      "prompt": "holding clothes",
       "aliases": [
         "分鏡：單手拿著脫下的上衣 (shirt removed, holding clothes)",
         "shirt removed, holding clothes",
@@ -3250,7 +2196,7 @@
       "id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-unbuttoned-shirt-e39377b6",
       "name_zh": "解開鈕扣的襯衫",
       "description_zh": "經人工拆分審閱的原子提示詞「unbuttoned shirt」，來源為「解開鈕扣露出內衣」。",
-      "prompt": " unbuttoned shirt",
+      "prompt": "unbuttoned shirt",
       "aliases": [
         "解開鈕扣露出內衣 (shirt open, unbuttoned shirt...)",
         "shirt open, unbuttoned shirt, revealing bra",
@@ -3281,7 +2227,7 @@
       "id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-revealing-bra-f5422a59",
       "name_zh": "露出胸罩",
       "description_zh": "經人工拆分審閱的原子提示詞「revealing bra」，來源為「解開鈕扣露出內衣」。",
-      "prompt": " revealing bra",
+      "prompt": "revealing bra",
       "aliases": [
         "解開鈕扣露出內衣 (shirt open, unbuttoned shirt...)",
         "shirt open, unbuttoned shirt, revealing bra",
@@ -3309,41 +2255,10 @@
       }
     },
     {
-      "id": "undress-acts-lifting-shirt-biting-shirt-revealin-lifting-shirt-b5a37116",
-      "name_zh": "掀起上衣",
-      "description_zh": "經人工拆分審閱的原子提示詞「lifting shirt」，來源為「咬著衣服下擺往上拉」。",
-      "prompt": "lifting shirt",
-      "aliases": [
-        "咬著衣服下擺往上拉 (lifting shirt, biting shirt...)",
-        "lifting shirt, biting shirt, revealing bra",
-        "lifting shirt"
-      ],
-      "keywords": [
-        "undress_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 45,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "undress-acts-lifting-shirt-biting-shirt-revealing-bra",
-        "source_prompt_sha256": "86f47db3088ddba5919731d6e26a0a22427e3414ae8d24705196aa04576c617c",
-        "segment_index": 0,
-        "raw_segment_sha256": "5138046fc427b291effffbcc2c04518a3d3646a2a72fa6213a603107cf2853c9",
-        "identity_sha256": "b5a37116109a85e125ba46a71c720abe78aabb25f8547cead2ed6f53ebcc450e"
-      }
-    },
-    {
       "id": "undress-acts-lifting-shirt-biting-shirt-revealin-biting-shirt-ed22bd27",
       "name_zh": "咬住上衣",
       "description_zh": "經人工拆分審閱的原子提示詞「biting shirt」，來源為「咬著衣服下擺往上拉」。",
-      "prompt": " biting shirt",
+      "prompt": "biting shirt",
       "aliases": [
         "咬著衣服下擺往上拉 (lifting shirt, biting shirt...)",
         "lifting shirt, biting shirt, revealing bra",
@@ -3368,37 +2283,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "07fda066a547c4bfbf5f271ceb38b02098ef269a8df03758212b49494062425c",
         "identity_sha256": "ed22bd27f3de7f0d52b588234acc5841915ae89243ed7afe28d65d173083f79c"
-      }
-    },
-    {
-      "id": "undress-acts-lifting-shirt-biting-shirt-revealin-revealing-bra-b28d0f2f",
-      "name_zh": "露出胸罩",
-      "description_zh": "經人工拆分審閱的原子提示詞「revealing bra」，來源為「咬著衣服下擺往上拉」。",
-      "prompt": " revealing bra",
-      "aliases": [
-        "咬著衣服下擺往上拉 (lifting shirt, biting shirt...)",
-        "lifting shirt, biting shirt, revealing bra",
-        "revealing bra"
-      ],
-      "keywords": [
-        "undress_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 45,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "undress-acts-lifting-shirt-biting-shirt-revealing-bra",
-        "source_prompt_sha256": "86f47db3088ddba5919731d6e26a0a22427e3414ae8d24705196aa04576c617c",
-        "segment_index": 2,
-        "raw_segment_sha256": "7752351ce03a7f79d453f00e1c45ed75c211783dda62ff6af715297174c79fe6",
-        "identity_sha256": "b28d0f2f1ced41a061380ed35aa9dcfe82a877e40fa8ca4a66406bf8d320c6bb"
       }
     },
     {
@@ -3436,7 +2320,7 @@
       "id": "undress-acts-shirt-off-shoulder-bra-strap-slippi-bra-strap-slipping-96a35feb",
       "name_zh": "胸罩肩帶滑落",
       "description_zh": "經人工拆分審閱的原子提示詞「bra strap slipping」，來源為「衣服滑落露肩」。",
-      "prompt": " bra strap slipping",
+      "prompt": "bra strap slipping",
       "aliases": [
         "衣服滑落露肩 (shirt off shoulder, bra strap slipping)",
         "shirt off shoulder, bra strap slipping",
@@ -3498,7 +2382,7 @@
       "id": "undress-acts-taking-off-skirt-revealing-panties-revealing-panties-abb694f3",
       "name_zh": "露出內褲",
       "description_zh": "經人工拆分審閱的原子提示詞「revealing panties」，來源為「脫下裙子露出內褲」。",
-      "prompt": " revealing panties",
+      "prompt": "revealing panties",
       "aliases": [
         "脫下裙子露出內褲 (taking off skirt, revealing panties)",
         "taking off skirt, revealing panties",
@@ -3557,37 +2441,6 @@
       }
     },
     {
-      "id": "undress-acts-pulling-down-pants-revealing-pantie-revealing-panties-e8ac6538",
-      "name_zh": "露出內褲",
-      "description_zh": "經人工拆分審閱的原子提示詞「revealing panties」，來源為「拉下褲子露出內褲」。",
-      "prompt": " revealing panties",
-      "aliases": [
-        "拉下褲子露出內褲 (pulling down pants, revealing panties)",
-        "pulling down pants, revealing panties",
-        "revealing panties"
-      ],
-      "keywords": [
-        "undress_acts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 48,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "undress-acts-pulling-down-pants-revealing-panties",
-        "source_prompt_sha256": "fb6e3f1bd55330fa27a93d6939211190f49fd2f38816415fde8927d774730088",
-        "segment_index": 1,
-        "raw_segment_sha256": "27bde0a1064850a903cf311c1a489d4ec5015108d62c20fd2cf0f46770d64cdc",
-        "identity_sha256": "e8ac653839c8b6b1411005f7db3dfbed85d25bd6d09b7127c123f8f60b3c7243"
-      }
-    },
-    {
       "id": "undress-acts-hands-behind-back-unhooking-bra-hands-behind-back-fbf1581e",
       "name_zh": "雙手置於背後",
       "description_zh": "經人工拆分審閱的原子提示詞「hands behind back」，來源為「雙手放在背後解內衣」。",
@@ -3622,7 +2475,7 @@
       "id": "undress-acts-hands-behind-back-unhooking-bra-unhooking-bra-9f8605d4",
       "name_zh": "解開胸罩扣",
       "description_zh": "經人工拆分審閱的原子提示詞「unhooking bra」，來源為「雙手放在背後解內衣」。",
-      "prompt": " unhooking bra",
+      "prompt": "unhooking bra",
       "aliases": [
         "雙手放在背後解內衣 (hands behind back, unhooking bra)",
         "hands behind back, unhooking bra",
@@ -3684,7 +2537,7 @@
       "id": "undress-acts-pulling-down-panties-panties-around-panties-around-thighs-b8993a9b",
       "name_zh": "內褲停在大腿",
       "description_zh": "經人工拆分審閱的原子提示詞「panties around thighs」，來源為「褪下內褲卡在大腿」。",
-      "prompt": " panties around thighs",
+      "prompt": "panties around thighs",
       "aliases": [
         "褪下內褲卡在大腿 (pulling down panties, panties around thighs)",
         "pulling down panties, panties around thighs",
@@ -3764,7 +2617,7 @@
       "id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-saliva-trail-94660725",
       "name_zh": "唾液牽絲",
       "description_zh": "經人工拆分審閱的原子提示詞「saliva trail」，來源為「微濕牽絲」。",
-      "prompt": " saliva trail",
+      "prompt": "saliva trail",
       "aliases": [
         "微濕牽絲 (wet, pussy juice trail)",
         "wet, saliva trail, pussy juice trail",
@@ -3795,7 +2648,7 @@
       "id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-pussy-juice-trail-d67bbc53",
       "name_zh": "微濕牽絲・第 3 詞（pussy juice trail）",
       "description_zh": "經人工拆分審閱的原子提示詞「pussy juice trail」，來源為「微濕牽絲」。",
-      "prompt": " pussy juice trail",
+      "prompt": "pussy juice trail",
       "aliases": [
         "微濕牽絲 (wet, pussy juice trail)",
         "wet, saliva trail, pussy juice trail",
@@ -3857,7 +2710,7 @@
       "id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-puddle-on-floor-3a36b0f1",
       "name_zh": "淫水滴落/水灘・第 2 詞（puddle on floor）",
       "description_zh": "經人工拆分審閱的原子提示詞「puddle on floor」，來源為「淫水滴落/水灘」。",
-      "prompt": " puddle on floor",
+      "prompt": "puddle on floor",
       "aliases": [
         "淫水滴落/水灘 (dripping, puddle)",
         "dripping, puddle on floor, heavy pussy juice",
@@ -3888,7 +2741,7 @@
       "id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-heavy-pussy-juice-89c028e0",
       "name_zh": "淫水滴落/水灘・第 3 詞（heavy pussy juice）",
       "description_zh": "經人工拆分審閱的原子提示詞「heavy pussy juice」，來源為「淫水滴落/水灘」。",
-      "prompt": " heavy pussy juice",
+      "prompt": "heavy pussy juice",
       "aliases": [
         "淫水滴落/水灘 (dripping, puddle)",
         "dripping, puddle on floor, heavy pussy juice",
@@ -3950,7 +2803,7 @@
       "id": "teasing-milk-opts-leaking-milk-breast-milk-breast-milk-2387f5b5",
       "name_zh": "流出乳汁/滴乳・第 2 詞（breast milk）",
       "description_zh": "經人工拆分審閱的原子提示詞「breast milk」，來源為「流出乳汁/滴乳」。",
-      "prompt": " breast milk",
+      "prompt": "breast milk",
       "aliases": [
         "流出乳汁/滴乳 (leaking milk)",
         "leaking milk, breast milk",
@@ -4009,41 +2862,10 @@
       }
     },
     {
-      "id": "teasing-milk-opts-squirting-milk-breast-milk-mes-breast-milk-6ca48d72",
-      "name_zh": "噴射乳汁・第 2 詞（breast milk）",
-      "description_zh": "經人工拆分審閱的原子提示詞「breast milk」，來源為「噴射乳汁」。",
-      "prompt": " breast milk",
-      "aliases": [
-        "噴射乳汁 (squirting milk)",
-        "squirting milk, breast milk, messy",
-        "breast milk"
-      ],
-      "keywords": [
-        "teasing_milk_opts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 55,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "teasing-milk-opts-squirting-milk-breast-milk-messy",
-        "source_prompt_sha256": "4d33ddcaf22e14fe64c4bb174c15b9e0183f9aa5cb227bc98cc9f41d08a16633",
-        "segment_index": 1,
-        "raw_segment_sha256": "4c9c50d8186671f443994360e8b5e65397a7d8728da2a66bb7003dc767575f42",
-        "identity_sha256": "6ca48d722c1aefb916c5583b76d3fc0a1050c97780cac11bf5c58ce5c6cb8d04"
-      }
-    },
-    {
       "id": "teasing-milk-opts-squirting-milk-breast-milk-mes-messy-c1311fdc",
       "name_zh": "噴射乳汁・第 3 詞（messy）",
       "description_zh": "經人工拆分審閱的原子提示詞「messy」，來源為「噴射乳汁」。",
-      "prompt": " messy",
+      "prompt": "messy",
       "aliases": [
         "噴射乳汁 (squirting milk)",
         "squirting milk, breast milk, messy",
@@ -4074,7 +2896,7 @@
       "id": "cum-shower-tongues-tongue-out-1-4",
       "name_zh": "微微吐舌",
       "description_zh": "加入「微微吐舌」提示詞。",
-      "prompt": "(tongue out:1.4)",
+      "prompt": "tongue out",
       "aliases": [
         "微微吐舌 (tongue out)",
         "(tongue out:1.4)"
@@ -4123,7 +2945,7 @@
       "id": "cum-shower-tongues-open-mouth-catching-cum-tongu-catching-cum-a85bd9df",
       "name_zh": "張嘴接/想喝・第 2 詞（catching cum）",
       "description_zh": "經人工拆分審閱的原子提示詞「catching cum」，來源為「張嘴接/想喝」。",
-      "prompt": " catching cum",
+      "prompt": "catching cum",
       "aliases": [
         "張嘴接/想喝 (open mouth)",
         "open mouth, catching cum, (tongue out:1.4)",
@@ -4148,37 +2970,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "86636f7dbc401c2447b8109907e49e7f91722d1bc5133f300a003a439a542df4",
         "identity_sha256": "a85bd9df4861430b88bfb32028554faf924f74233a192bc730701a0bd6f2729e"
-      }
-    },
-    {
-      "id": "cum-shower-tongues-open-mouth-catching-cum-tongu-tongue-out-1-4-624b8721",
-      "name_zh": "加權吐舌",
-      "description_zh": "經人工拆分審閱的原子提示詞「(tongue out:1.4)」，來源為「張嘴接/想喝」。",
-      "prompt": " (tongue out:1.4)",
-      "aliases": [
-        "張嘴接/想喝 (open mouth)",
-        "open mouth, catching cum, (tongue out:1.4)",
-        "(tongue out:1.4)"
-      ],
-      "keywords": [
-        "cum_shower_tongues",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 57,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "cum-shower-tongues-open-mouth-catching-cum-tongue-out-1-4",
-        "source_prompt_sha256": "693281818018eaf11b1ee5f25e35b04b66f47dcce6fe7ee149bdea28ae401f76",
-        "segment_index": 2,
-        "raw_segment_sha256": "e6905e8d77ab7d5e592814f09a307c1a0eab171da9845cd09c15d056e276b0f2",
-        "identity_sha256": "624b8721a91e7730925a974ec3327818aceaf5f213dabc38b058633f2c73fd99"
       }
     },
     {
@@ -4216,7 +3007,7 @@
       "id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-bukkake-6598a903",
       "name_zh": "大量精液飛濺・第 2 詞（bukkake）",
       "description_zh": "經人工拆分審閱的原子提示詞「bukkake」，來源為「大量精液飛濺」。",
-      "prompt": " bukkake",
+      "prompt": "bukkake",
       "aliases": [
         "大量精液飛濺 (heavy flying semen, bukkake)",
         "flying semen, bukkake, cum in midair, heavy semen, thick semen",
@@ -4247,7 +3038,7 @@
       "id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-cum-in-midair-6a1f5abf",
       "name_zh": "大量精液飛濺・第 3 詞（cum in midair）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum in midair」，來源為「大量精液飛濺」。",
-      "prompt": " cum in midair",
+      "prompt": "cum in midair",
       "aliases": [
         "大量精液飛濺 (heavy flying semen, bukkake)",
         "flying semen, bukkake, cum in midair, heavy semen, thick semen",
@@ -4278,7 +3069,7 @@
       "id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-heavy-semen-0eb9dbd0",
       "name_zh": "大量精液飛濺・第 4 詞（heavy semen）",
       "description_zh": "經人工拆分審閱的原子提示詞「heavy semen」，來源為「大量精液飛濺」。",
-      "prompt": " heavy semen",
+      "prompt": "heavy semen",
       "aliases": [
         "大量精液飛濺 (heavy flying semen, bukkake)",
         "flying semen, bukkake, cum in midair, heavy semen, thick semen",
@@ -4309,7 +3100,7 @@
       "id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-thick-semen-c7102463",
       "name_zh": "大量精液飛濺・第 5 詞（thick semen）",
       "description_zh": "經人工拆分審閱的原子提示詞「thick semen」，來源為「大量精液飛濺」。",
-      "prompt": " thick semen",
+      "prompt": "thick semen",
       "aliases": [
         "大量精液飛濺 (heavy flying semen, bukkake)",
         "flying semen, bukkake, cum in midair, heavy semen, thick semen",
@@ -4337,41 +3128,10 @@
       }
     },
     {
-      "id": "cum-shower-dynamics-flying-semen-cum-towards-fac-flying-semen-7b02c3ea",
-      "name_zh": "精液飛濺向臉部・第 1 詞（flying semen）",
-      "description_zh": "經人工拆分審閱的原子提示詞「flying semen」，來源為「精液飛濺向臉部」。",
-      "prompt": "flying semen",
-      "aliases": [
-        "精液飛濺向臉部 (semen flying to face)",
-        "flying semen, cum towards face, cum in midair",
-        "flying semen"
-      ],
-      "keywords": [
-        "cum_shower_dynamics",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 59,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "cum-shower-dynamics-flying-semen-cum-towards-face-cum-in-midair",
-        "source_prompt_sha256": "de59efb4851ed9c5112c5f44c0047e8fd5190716ed5799fa7831420a21a7d379",
-        "segment_index": 0,
-        "raw_segment_sha256": "44268a6c4d18c7f857c167617c2a3c5f5c876d191820bbb449ae551668b8fa88",
-        "identity_sha256": "7b02c3eae9b4ce16594806db06c9bed8ef0c6b0b4839537c43ae4534f853c5dd"
-      }
-    },
-    {
       "id": "cum-shower-dynamics-flying-semen-cum-towards-fac-cum-towards-face-36143bfc",
       "name_zh": "精液飛濺向臉部・第 2 詞（cum towards face）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum towards face」，來源為「精液飛濺向臉部」。",
-      "prompt": " cum towards face",
+      "prompt": "cum towards face",
       "aliases": [
         "精液飛濺向臉部 (semen flying to face)",
         "flying semen, cum towards face, cum in midair",
@@ -4399,72 +3159,10 @@
       }
     },
     {
-      "id": "cum-shower-dynamics-flying-semen-cum-towards-fac-cum-in-midair-67752b6c",
-      "name_zh": "精液飛濺向臉部・第 3 詞（cum in midair）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cum in midair」，來源為「精液飛濺向臉部」。",
-      "prompt": " cum in midair",
-      "aliases": [
-        "精液飛濺向臉部 (semen flying to face)",
-        "flying semen, cum towards face, cum in midair",
-        "cum in midair"
-      ],
-      "keywords": [
-        "cum_shower_dynamics",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 59,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "cum-shower-dynamics-flying-semen-cum-towards-face-cum-in-midair",
-        "source_prompt_sha256": "de59efb4851ed9c5112c5f44c0047e8fd5190716ed5799fa7831420a21a7d379",
-        "segment_index": 2,
-        "raw_segment_sha256": "c436fe5012dd08364fb23f353116356bc2129aee5eb3e2d224f31775f63946bf",
-        "identity_sha256": "67752b6c466fe30333f0360094cfe37969e5f43dfe209861ed64fa3115e0539a"
-      }
-    },
-    {
-      "id": "cum-shower-dynamics-flying-semen-cum-towards-bre-flying-semen-d86ba28c",
-      "name_zh": "精液飛濺向胸部・第 1 詞（flying semen）",
-      "description_zh": "經人工拆分審閱的原子提示詞「flying semen」，來源為「精液飛濺向胸部」。",
-      "prompt": "flying semen",
-      "aliases": [
-        "精液飛濺向胸部 (semen flying to breasts)",
-        "flying semen, cum towards breasts, cum in midair",
-        "flying semen"
-      ],
-      "keywords": [
-        "cum_shower_dynamics",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 60,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "cum-shower-dynamics-flying-semen-cum-towards-breasts-cum-in-midair",
-        "source_prompt_sha256": "8c31ba845e4d459b72291e685bb9a77815f5705442578f8a32b0f8cb9fe2b6ea",
-        "segment_index": 0,
-        "raw_segment_sha256": "44268a6c4d18c7f857c167617c2a3c5f5c876d191820bbb449ae551668b8fa88",
-        "identity_sha256": "d86ba28c54ea6c99f60182e47901589a851fa618b8e5bf72252c23f710a4ad57"
-      }
-    },
-    {
       "id": "cum-shower-dynamics-flying-semen-cum-towards-bre-cum-towards-breasts-c4d3784d",
       "name_zh": "精液飛濺向胸部・第 2 詞（cum towards breasts）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum towards breasts」，來源為「精液飛濺向胸部」。",
-      "prompt": " cum towards breasts",
+      "prompt": "cum towards breasts",
       "aliases": [
         "精液飛濺向胸部 (semen flying to breasts)",
         "flying semen, cum towards breasts, cum in midair",
@@ -4489,37 +3187,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "70db353e373ad520217417d6348d7a7e2054c7128ee9eb8ad5fdde7ed5e8e98a",
         "identity_sha256": "c4d3784d7f197327b1affa0c1b777fd4160aa170e0fd5f3f5b3449f8d5ce779f"
-      }
-    },
-    {
-      "id": "cum-shower-dynamics-flying-semen-cum-towards-bre-cum-in-midair-45e8c37e",
-      "name_zh": "精液飛濺向胸部・第 3 詞（cum in midair）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cum in midair」，來源為「精液飛濺向胸部」。",
-      "prompt": " cum in midair",
-      "aliases": [
-        "精液飛濺向胸部 (semen flying to breasts)",
-        "flying semen, cum towards breasts, cum in midair",
-        "cum in midair"
-      ],
-      "keywords": [
-        "cum_shower_dynamics",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 60,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "cum-shower-dynamics-flying-semen-cum-towards-breasts-cum-in-midair",
-        "source_prompt_sha256": "8c31ba845e4d459b72291e685bb9a77815f5705442578f8a32b0f8cb9fe2b6ea",
-        "segment_index": 2,
-        "raw_segment_sha256": "c436fe5012dd08364fb23f353116356bc2129aee5eb3e2d224f31775f63946bf",
-        "identity_sha256": "45e8c37e55be1485bd5f6cd7b74937273b7b4a9479cf0d69488002a2b8ea7c22"
       }
     },
     {
@@ -4557,7 +3224,7 @@
       "id": "wetness-opts-wet-panties-crotch-stained-crotch-stained-ada4e04e",
       "name_zh": "內褲微濕・第 2 詞（crotch stained）",
       "description_zh": "經人工拆分審閱的原子提示詞「crotch stained」，來源為「內褲微濕」。",
-      "prompt": " crotch stained",
+      "prompt": "crotch stained",
       "aliases": [
         "內褲微濕 (wet panties)",
         "wet panties, crotch stained",
@@ -4585,103 +3252,10 @@
       }
     },
     {
-      "id": "wetness-opts-wet-panties-crotch-stained-dripping-wet-panties-8741f5b9",
-      "name_zh": "愛液滿地/淫汁・第 1 詞（wet panties）",
-      "description_zh": "經人工拆分審閱的原子提示詞「wet panties」，來源為「愛液滿地/淫汁」。",
-      "prompt": "wet panties",
-      "aliases": [
-        "愛液滿地/淫汁 (dripping on floor)",
-        "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
-        "wet panties"
-      ],
-      "keywords": [
-        "wetness_opts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 62,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-bodily-fluids-on-floor",
-        "source_prompt_sha256": "469a819e523c86e8a6f64a7550c33852660d8e2b25b0a68296a2580211610637",
-        "segment_index": 0,
-        "raw_segment_sha256": "011ada06af74d41c3010ac419d1c0a5579c6f0f26260bad4681e1cce2a2bcb91",
-        "identity_sha256": "8741f5b94892e1e60800dca241b56a225489ebdfdf1ee75a178e0fd49fb5f7b4"
-      }
-    },
-    {
-      "id": "wetness-opts-wet-panties-crotch-stained-dripping-crotch-stained-5810e7ad",
-      "name_zh": "愛液滿地/淫汁・第 2 詞（crotch stained）",
-      "description_zh": "經人工拆分審閱的原子提示詞「crotch stained」，來源為「愛液滿地/淫汁」。",
-      "prompt": " crotch stained",
-      "aliases": [
-        "愛液滿地/淫汁 (dripping on floor)",
-        "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
-        "crotch stained"
-      ],
-      "keywords": [
-        "wetness_opts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 62,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-bodily-fluids-on-floor",
-        "source_prompt_sha256": "469a819e523c86e8a6f64a7550c33852660d8e2b25b0a68296a2580211610637",
-        "segment_index": 1,
-        "raw_segment_sha256": "a996d14710b568dedcebfff8932185f1cc9e4e36cb6603f044ec8a4a1b6a5b87",
-        "identity_sha256": "5810e7ad0f230a2d8fdb93190b8bd480c9e61264b3c922cc80e1b1c90f51753f"
-      }
-    },
-    {
-      "id": "wetness-opts-wet-panties-crotch-stained-dripping-dripping-c240cb12",
-      "name_zh": "愛液滿地/淫汁・第 3 詞（dripping）",
-      "description_zh": "經人工拆分審閱的原子提示詞「dripping」，來源為「愛液滿地/淫汁」。",
-      "prompt": " dripping",
-      "aliases": [
-        "愛液滿地/淫汁 (dripping on floor)",
-        "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
-        "dripping"
-      ],
-      "keywords": [
-        "wetness_opts",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 62,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-bodily-fluids-on-floor",
-        "source_prompt_sha256": "469a819e523c86e8a6f64a7550c33852660d8e2b25b0a68296a2580211610637",
-        "segment_index": 2,
-        "raw_segment_sha256": "93d9da3cc00af63bfd8ea12420705827f02c7903fad4aea8402f03da7e2a9e9f",
-        "identity_sha256": "c240cb1234bbd414cb907e69a6ae5c0bf737ac0673e6af4d65282a8e137aa7db"
-      }
-    },
-    {
       "id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-8293dc2d",
       "name_zh": "愛液滿地/淫汁・第 4 詞（puddle）",
       "description_zh": "經人工拆分審閱的原子提示詞「puddle」，來源為「愛液滿地/淫汁」。",
-      "prompt": " puddle",
+      "prompt": "puddle",
       "aliases": [
         "愛液滿地/淫汁 (dripping on floor)",
         "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
@@ -4712,7 +3286,7 @@
       "id": "wetness-opts-wet-panties-crotch-stained-dripping-bodily-fluids-on-floor-28be2c64",
       "name_zh": "愛液滿地/淫汁・第 5 詞（bodily fluids on floor）",
       "description_zh": "經人工拆分審閱的原子提示詞「bodily fluids on floor」，來源為「愛液滿地/淫汁」。",
-      "prompt": " bodily fluids on floor",
+      "prompt": "bodily fluids on floor",
       "aliases": [
         "愛液滿地/淫汁 (dripping on floor)",
         "wet panties, crotch stained, dripping, puddle, bodily fluids on floor",
@@ -4794,41 +3368,10 @@
       "archived": false
     },
     {
-      "id": "after-cums-heavy-semen-covered-in-cum-messy-body-heavy-semen-5ba34c68",
-      "name_zh": "渾身精液・第 1 詞（heavy semen）",
-      "description_zh": "經人工拆分審閱的原子提示詞「heavy semen」，來源為「渾身精液」。",
-      "prompt": "heavy semen",
-      "aliases": [
-        "渾身精液 (heavy semen)",
-        "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
-        "heavy semen"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 66,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "9a18624897410987f62cacce42995803016a0ce71e7cb2153be6884b26ffc416",
-        "segment_index": 0,
-        "raw_segment_sha256": "f61e03bd6513a76ca7d55ed38b693fb2926a4ba69e5bb0fdc5fdbeed9a3ed64d",
-        "identity_sha256": "5ba34c6835babac0869dd07cf4ea7c33dd6c0986a5a0de4a8a951d47abc0d7c1"
-      }
-    },
-    {
       "id": "after-cums-heavy-semen-covered-in-cum-messy-body-covered-in-cum-46c5e9e1",
       "name_zh": "渾身精液・第 2 詞（covered in cum）",
       "description_zh": "經人工拆分審閱的原子提示詞「covered in cum」，來源為「渾身精液」。",
-      "prompt": " covered in cum",
+      "prompt": "covered in cum",
       "aliases": [
         "渾身精液 (heavy semen)",
         "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
@@ -4859,7 +3402,7 @@
       "id": "after-cums-heavy-semen-covered-in-cum-messy-body-messy-body-2fa9a38f",
       "name_zh": "渾身精液・第 3 詞（messy body）",
       "description_zh": "經人工拆分審閱的原子提示詞「messy body」，來源為「渾身精液」。",
-      "prompt": " messy body",
+      "prompt": "messy body",
       "aliases": [
         "渾身精液 (heavy semen)",
         "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
@@ -4890,7 +3433,7 @@
       "id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-pool-f5c4618e",
       "name_zh": "渾身精液・第 4 詞（cum pool）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum pool」，來源為「渾身精液」。",
-      "prompt": " cum pool",
+      "prompt": "cum pool",
       "aliases": [
         "渾身精液 (heavy semen)",
         "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
@@ -4921,7 +3464,7 @@
       "id": "after-cums-heavy-semen-covered-in-cum-messy-body-cum-everywhere-f21b1667",
       "name_zh": "渾身精液・第 5 詞（cum everywhere）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum everywhere」，來源為「渾身精液」。",
-      "prompt": " cum everywhere",
+      "prompt": "cum everywhere",
       "aliases": [
         "渾身精液 (heavy semen)",
         "heavy semen, covered in cum, messy body, cum pool, cum everywhere",
@@ -4946,161 +3489,6 @@
         "segment_index": 4,
         "raw_segment_sha256": "a685e4395004c60650993bc72d1b15872b9cfc4e04f391412089d3c00c8c8b2b",
         "identity_sha256": "f21b1667df6d216150f9b2f3903bdcf6a29d860d83090cb3e9fc20094eccb698"
-      }
-    },
-    {
-      "id": "after-cums-bukkake-covered-in-cum-messy-body-cum-bukkake-74d20a52",
-      "name_zh": "多人顏射・第 1 詞（bukkake）",
-      "description_zh": "經人工拆分審閱的原子提示詞「bukkake」，來源為「多人顏射」。",
-      "prompt": "bukkake",
-      "aliases": [
-        "多人顏射 (bukkake)",
-        "bukkake, covered in cum, messy body, cum pool, cum everywhere",
-        "bukkake"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 67,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "a6bb15b8d6aa02734922a67f1900dc8208f6d9048c65a060f237d93dce1ded5a",
-        "segment_index": 0,
-        "raw_segment_sha256": "d0a32ecf89f3c0ce7965aa5cc7d9790b34789bd87da255d4cbef49e0bc58c1b5",
-        "identity_sha256": "74d20a52049934e0ed0ff8fc2a436b95b53878033acf1d4dd477442df5b838b0"
-      }
-    },
-    {
-      "id": "after-cums-bukkake-covered-in-cum-messy-body-cum-covered-in-cum-b836b32d",
-      "name_zh": "多人顏射・第 2 詞（covered in cum）",
-      "description_zh": "經人工拆分審閱的原子提示詞「covered in cum」，來源為「多人顏射」。",
-      "prompt": " covered in cum",
-      "aliases": [
-        "多人顏射 (bukkake)",
-        "bukkake, covered in cum, messy body, cum pool, cum everywhere",
-        "covered in cum"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 67,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "a6bb15b8d6aa02734922a67f1900dc8208f6d9048c65a060f237d93dce1ded5a",
-        "segment_index": 1,
-        "raw_segment_sha256": "e783e3d15c47ad3296d176e824dc6e7f2cef63b1664a51f7eea15df2bea4dd40",
-        "identity_sha256": "b836b32d6c11e5b8030b24eb3f1675b99c53070b51a3784bf72916b26613624e"
-      }
-    },
-    {
-      "id": "after-cums-bukkake-covered-in-cum-messy-body-cum-messy-body-600c477e",
-      "name_zh": "多人顏射・第 3 詞（messy body）",
-      "description_zh": "經人工拆分審閱的原子提示詞「messy body」，來源為「多人顏射」。",
-      "prompt": " messy body",
-      "aliases": [
-        "多人顏射 (bukkake)",
-        "bukkake, covered in cum, messy body, cum pool, cum everywhere",
-        "messy body"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 67,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "a6bb15b8d6aa02734922a67f1900dc8208f6d9048c65a060f237d93dce1ded5a",
-        "segment_index": 2,
-        "raw_segment_sha256": "462def93432e5c63fe2c56260350177297beb8b6f60264233076723cc539118c",
-        "identity_sha256": "600c477e0ccdc464ca75f265f3a89dae67d40c30f5d60bfd242b83396c65f9de"
-      }
-    },
-    {
-      "id": "after-cums-bukkake-covered-in-cum-messy-body-cum-cum-pool-b65c5725",
-      "name_zh": "多人顏射・第 4 詞（cum pool）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cum pool」，來源為「多人顏射」。",
-      "prompt": " cum pool",
-      "aliases": [
-        "多人顏射 (bukkake)",
-        "bukkake, covered in cum, messy body, cum pool, cum everywhere",
-        "cum pool"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 67,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "a6bb15b8d6aa02734922a67f1900dc8208f6d9048c65a060f237d93dce1ded5a",
-        "segment_index": 3,
-        "raw_segment_sha256": "12716aebfa6950702c4fa92dc9c80dfba31553b1357ba36db7840503dba93410",
-        "identity_sha256": "b65c572519e0cf3cf9e4b7bf197ccf5786569cdffb074fbcd9cddea366801cf8"
-      }
-    },
-    {
-      "id": "after-cums-bukkake-covered-in-cum-messy-body-cum-cum-everywhere-f51130fa",
-      "name_zh": "多人顏射・第 5 詞（cum everywhere）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cum everywhere」，來源為「多人顏射」。",
-      "prompt": " cum everywhere",
-      "aliases": [
-        "多人顏射 (bukkake)",
-        "bukkake, covered in cum, messy body, cum pool, cum everywhere",
-        "cum everywhere"
-      ],
-      "keywords": [
-        "after_cums",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "actions-interactions"
-      ],
-      "order": 67,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "actions-interactions",
-        "source_entry_id": "after-cums-bukkake-covered-in-cum-messy-body-cum-pool-cum-everywhere",
-        "source_prompt_sha256": "a6bb15b8d6aa02734922a67f1900dc8208f6d9048c65a060f237d93dce1ded5a",
-        "segment_index": 4,
-        "raw_segment_sha256": "a685e4395004c60650993bc72d1b15872b9cfc4e04f391412089d3c00c8c8b2b",
-        "identity_sha256": "f51130facf08ae9595b55dbfa69a9e7a0435b009c5f8cacfdbe3e047ecdbe099"
       }
     },
     {
@@ -5138,7 +3526,7 @@
       "id": "after-cums-creampie-leaking-cum-pooling-cum-pooling-44cfff57",
       "name_zh": "中出溢流・第 2 詞（cum pooling）",
       "description_zh": "經人工拆分審閱的原子提示詞「cum pooling」，來源為「中出溢流」。",
-      "prompt": " cum pooling",
+      "prompt": "cum pooling",
       "aliases": [
         "中出溢流 (creampie leaking, cum pooling)",
         "creampie leaking, cum pooling",

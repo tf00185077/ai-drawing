@@ -14,7 +14,7 @@
     "clothing"
   ],
   "order": 30,
-  "revision": 28,
+  "revision": 29,
   "archived": false,
   "entries": [
     {
@@ -52,7 +52,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-dress-0345e4f1",
       "name_zh": "連身裙",
       "description_zh": "經人工拆分審閱的原子提示詞「dress」，來源為「夏季水手服(整套)」。",
-      "prompt": " dress",
+      "prompt": "dress",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -83,7 +83,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-ribbon-5c030b14",
       "name_zh": "緞帶",
       "description_zh": "經人工拆分審閱的原子提示詞「ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": " ribbon",
+      "prompt": "ribbon",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -114,7 +114,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-school-uniform-d0c6cbfe",
       "name_zh": "學校制服",
       "description_zh": "經人工拆分審閱的原子提示詞「school uniform」，來源為「夏季水手服(整套)」。",
-      "prompt": " school uniform",
+      "prompt": "school uniform",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -145,7 +145,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-white-shirt-7a7c8520",
       "name_zh": "白襯衫",
       "description_zh": "經人工拆分審閱的原子提示詞「white shirt」，來源為「夏季水手服(整套)」。",
-      "prompt": " white shirt",
+      "prompt": "white shirt",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -176,7 +176,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-short-sleeves-48cd3e1e",
       "name_zh": "短袖",
       "description_zh": "經人工拆分審閱的原子提示詞「short sleeves」，來源為「夏季水手服(整套)」。",
-      "prompt": " short sleeves",
+      "prompt": "short sleeves",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -207,7 +207,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-collared-shirt-8e03be18",
       "name_zh": "有領襯衫",
       "description_zh": "經人工拆分審閱的原子提示詞「collared shirt」，來源為「夏季水手服(整套)」。",
-      "prompt": " collared shirt",
+      "prompt": "collared shirt",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -238,7 +238,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-red-ribbon-fe798d17",
       "name_zh": "紅色緞帶",
       "description_zh": "經人工拆分審閱的原子提示詞「red ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": " red ribbon",
+      "prompt": "red ribbon",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -269,7 +269,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-neck-ribbon-405f215a",
       "name_zh": "頸部緞帶",
       "description_zh": "經人工拆分審閱的原子提示詞「neck ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": " neck ribbon",
+      "prompt": "neck ribbon",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -300,7 +300,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-pinafore-dress-783a8656",
       "name_zh": "背心連身裙",
       "description_zh": "經人工拆分審閱的原子提示詞「pinafore dress」，來源為「夏季水手服(整套)」。",
-      "prompt": " pinafore dress",
+      "prompt": "pinafore dress",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -331,7 +331,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-grey-dress-7c22695b",
       "name_zh": "灰色連身裙",
       "description_zh": "經人工拆分審閱的原子提示詞「grey dress」，來源為「夏季水手服(整套)」。",
-      "prompt": " grey dress",
+      "prompt": "grey dress",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -362,7 +362,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-summer-uniform-2e774487",
       "name_zh": "夏季制服",
       "description_zh": "經人工拆分審閱的原子提示詞「summer uniform」，來源為「夏季水手服(整套)」。",
-      "prompt": " summer uniform",
+      "prompt": "summer uniform",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -393,7 +393,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-yuigaoka-school-uniform-20e4d782",
       "name_zh": "結丘女子高中制服",
       "description_zh": "經人工拆分審閱的原子提示詞「yuigaoka school uniform」，來源為「夏季水手服(整套)」。",
-      "prompt": " yuigaoka school uniform",
+      "prompt": "yuigaoka school uniform",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -424,7 +424,7 @@
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-opaque-clothes-b54502c7",
       "name_zh": "不透膚衣物",
       "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「夏季水手服(整套)」。",
-      "prompt": " opaque clothes",
+      "prompt": "opaque clothes",
       "aliases": [
         "夏季水手服(整套) (summer uniform)",
         "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
@@ -449,192 +449,6 @@
         "segment_index": 13,
         "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
         "identity_sha256": "b54502c76620663ca539694993d223d6a4c76960dd10b58edc67071a1f7efe50"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-pinafore-dress-b164dbc0",
-      "name_zh": "背心連身裙",
-      "description_zh": "經人工拆分審閱的原子提示詞「pinafore dress」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": "pinafore dress",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "pinafore dress"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 0,
-        "raw_segment_sha256": "1b33ce549ac6d5ab86f4799762ccaf795eff48b1b2ed1c1467c415c2316fb8f2",
-        "identity_sha256": "b164dbc0e5d618dd5bf13d12a458a21fb994c995907109be0cf860f9120fad07"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-grey-dress-5283f371",
-      "name_zh": "灰色連身裙",
-      "description_zh": "經人工拆分審閱的原子提示詞「grey dress」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": " grey dress",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "grey dress"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 1,
-        "raw_segment_sha256": "141135ada5c9b3d8ecbd25a75de800f54e40650185480134f1d28e8485e20e46",
-        "identity_sha256": "5283f37174866f67f6b59b3749e8a74451e7f65920af576a7d0a4707f7d23ec2"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-summer-uniform-98a0b155",
-      "name_zh": "夏季制服",
-      "description_zh": "經人工拆分審閱的原子提示詞「summer uniform」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": " summer uniform",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "summer uniform"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 2,
-        "raw_segment_sha256": "b21ea97159b70638999deaae8fd2442094f06a17f14f82e991611cddf0b87234",
-        "identity_sha256": "98a0b1558ace59608da0ccdb48954f6da01c48932fdd66a3158e75ad0916ba32"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-yuigaoka-school-uniform-560da909",
-      "name_zh": "結丘女子高中制服",
-      "description_zh": "經人工拆分審閱的原子提示詞「yuigaoka school uniform」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": " yuigaoka school uniform",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "yuigaoka school uniform"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 3,
-        "raw_segment_sha256": "6ca2ce163a25cda064f43d177822bee9703c0283baf77663074beedbbe18b9ef",
-        "identity_sha256": "560da9097bfafd406b7cc68286e40bae85f56413a226d5b3d1b336b1ea0e48cb"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-school-uniform-6658b3c2",
-      "name_zh": "學校制服",
-      "description_zh": "經人工拆分審閱的原子提示詞「school uniform」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": " school uniform",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "school uniform"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 4,
-        "raw_segment_sha256": "109c421b131e118577ebbaed4204143f8777825c972e5f01bb3f02958b0ddd06",
-        "identity_sha256": "6658b3c278df8fb75b13a5b6487a01eacc34d66806d1f43fd760271814461774"
-      }
-    },
-    {
-      "id": "outerwears-pinafore-dress-grey-dress-summer-unif-opaque-clothes-ebe11c91",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「夏季水手服-外搭連衣裙」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "夏季水手服-外搭連衣裙 (grey pinafore dress)",
-        "pinafore dress, grey dress, summer uniform, yuigaoka school uniform, school uniform, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 11,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "fcd08604f0e39b293a304ec9334bb73b58e3b822fdf3a24630d56145d835f04d",
-        "segment_index": 5,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "ebe11c91f6f1d7b7d922024daaf6f612915ecfab87e31598277409f75b2b26f0"
       }
     },
     {
@@ -672,7 +486,7 @@
       "id": "outerwears-white-buttoned-shirt-pleated-skirt-op-pleated-skirt-97e40d4d",
       "name_zh": "百褶裙",
       "description_zh": "經人工拆分審閱的原子提示詞「pleated skirt」，來源為「白襯衫+百褶裙」。",
-      "prompt": " pleated skirt",
+      "prompt": "pleated skirt",
       "aliases": [
         "白襯衫+百褶裙 (white buttoned shirt, pleated skirt)",
         "white buttoned shirt, pleated skirt, opaque clothes",
@@ -697,37 +511,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "474a0965f022b9bbcf6f89e1a2ea792e5f9ae658ca874b8d0f727e3e8ea53d70",
         "identity_sha256": "97e40d4df8cdc0d4eecf23447b420b8cf8c3c4166aeb58feb31ff330f5a2d1fc"
-      }
-    },
-    {
-      "id": "outerwears-white-buttoned-shirt-pleated-skirt-op-opaque-clothes-aeba6e5a",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「白襯衫+百褶裙」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "白襯衫+百褶裙 (white buttoned shirt, pleated skirt)",
-        "white buttoned shirt, pleated skirt, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 12,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-white-buttoned-shirt-pleated-skirt-opaque-clothes",
-        "source_prompt_sha256": "841d1f5df6386e8eedadc1a3fbf360b7aa4213b83cc9ca0781dee2a705173717",
-        "segment_index": 2,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "aeba6e5a5d0dd48ba12d077c723842a7185e5c3e62342847b30e84589a6628f9"
       }
     },
     {
@@ -765,7 +548,7 @@
       "id": "outerwears-gym-uniform-buruma-opaque-clothes-buruma-98aaa60f",
       "name_zh": "燈籠運動短褲",
       "description_zh": "經人工拆分審閱的原子提示詞「buruma」，來源為「體育服+布魯馬」。",
-      "prompt": " buruma",
+      "prompt": "buruma",
       "aliases": [
         "體育服+布魯馬 (gym uniform, buruma)",
         "gym uniform, buruma, opaque clothes",
@@ -790,37 +573,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "0e913ddde432025d6a32da8cdcafbda68d7b9971cfbb2768c74a3f690edf8638",
         "identity_sha256": "98aaa60fd1552b3feb38ccb393d2d8682e6034e975ace065fcfcf27ebfc52f12"
-      }
-    },
-    {
-      "id": "outerwears-gym-uniform-buruma-opaque-clothes-opaque-clothes-3fbec068",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「體育服+布魯馬」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "體育服+布魯馬 (gym uniform, buruma)",
-        "gym uniform, buruma, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 13,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-gym-uniform-buruma-opaque-clothes",
-        "source_prompt_sha256": "1720e34a1984eb2d6848126552ef9a8d9a70cedd96b585c49c5aaeda3cf19c79",
-        "segment_index": 2,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "3fbec0688f3dfd3289d07f393f6581bcc1fbed1ec70c815ce1acbfc6a30bc0db"
       }
     },
     {
@@ -852,37 +604,6 @@
         "segment_index": 0,
         "raw_segment_sha256": "3d8ff09209d75122b0f71bf05ee6f46ef08c3b729baa0a5c434a518ae9689e1c",
         "identity_sha256": "83fd77c543e9ca2baf47121922b06498d7819ee13c451640d77605562f015bb3"
-      }
-    },
-    {
-      "id": "outerwears-casual-oversized-sweater-opaque-cloth-opaque-clothes-bfe1d877",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「寬鬆大毛衣」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "寬鬆大毛衣 (casual oversized sweater)",
-        "casual oversized sweater, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 14,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-casual-oversized-sweater-opaque-clothes",
-        "source_prompt_sha256": "e53e0dc67242d982117de5ed3b342d4795e1c7c35c5e3669c89b1c8d86ba035a",
-        "segment_index": 1,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "bfe1d8773831688e8acfacb558a07071735b827fdb4e60a0519fd1859419e8c8"
       }
     },
     {
@@ -920,7 +641,7 @@
       "id": "outerwears-office-lady-suit-tight-skirt-opaque-c-tight-skirt-c93b3d28",
       "name_zh": "緊身裙",
       "description_zh": "經人工拆分審閱的原子提示詞「tight skirt」，來源為「OL套裝+窄裙」。",
-      "prompt": " tight skirt",
+      "prompt": "tight skirt",
       "aliases": [
         "OL套裝+窄裙 (office lady suit, tight skirt)",
         "office lady suit, tight skirt, opaque clothes",
@@ -945,37 +666,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "a5b762fe69a1508d030ef4ed5710c8b32b4d59f256362242899fef6a0d585335",
         "identity_sha256": "c93b3d283bc661e419afc702b9515fdcc442ac842efc6d90b192aa5b075e6edc"
-      }
-    },
-    {
-      "id": "outerwears-office-lady-suit-tight-skirt-opaque-c-opaque-clothes-04f8c130",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「OL套裝+窄裙」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "OL套裝+窄裙 (office lady suit, tight skirt)",
-        "office lady suit, tight skirt, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 15,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-office-lady-suit-tight-skirt-opaque-clothes",
-        "source_prompt_sha256": "3d00c35abbafb683c567f0a61f922e3bf29a60ad2dd9d6bec13cb8482591eb36",
-        "segment_index": 2,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "04f8c1305ef45ed2040038a49f0ff5f0e5d621b735485a7db39adc5df83fdd8e"
       }
     },
     {
@@ -1010,258 +700,10 @@
       }
     },
     {
-      "id": "outerwears-maid-outfit-opaque-clothes-opaque-clothes-4c978b06",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「女僕裝」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "女僕裝 (maid outfit)",
-        "maid outfit, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 16,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-maid-outfit-opaque-clothes",
-        "source_prompt_sha256": "bc19569bef5363ae78c2fc136203ef8974c715bb04518eb31411df998662783d",
-        "segment_index": 1,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "4c978b06875f9508626720dd773f3950d39f7dd18f97875f7e0646ec022ec468"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-white-shirt-710a38ff",
-      "name_zh": "白襯衫",
-      "description_zh": "經人工拆分審閱的原子提示詞「white shirt」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": "white shirt",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "white shirt"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 0,
-        "raw_segment_sha256": "3a95556df5cafdfa175166dc325dfd306c37f177f52b02040f52dc610772a8f0",
-        "identity_sha256": "710a38fffd1c9e67ce16d85359fd11546148b5c0de29afccf2b46fd04ed56529"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-short-sleeves-413449e7",
-      "name_zh": "短袖",
-      "description_zh": "經人工拆分審閱的原子提示詞「short sleeves」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": " short sleeves",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "short sleeves"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 1,
-        "raw_segment_sha256": "61275ef0f59a68005280306cdb07901a9bd5ccf8432659ef2e9444355d0a481e",
-        "identity_sha256": "413449e74d92dfcb20839f2713f50f4e6ef7bac096fde4fc86d46f38e1bbbc4e"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-collared-shirt-056cb97c",
-      "name_zh": "有領襯衫",
-      "description_zh": "經人工拆分審閱的原子提示詞「collared shirt」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": " collared shirt",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "collared shirt"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 2,
-        "raw_segment_sha256": "f863d14b246e9c9ff5f593bd45199f4a7126bbd2b32c273d95acf699e87770e8",
-        "identity_sha256": "056cb97c57d0acf2a27d2eae19a46d1336e0aff956fd2144756cec09b995af22"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-red-ribbon-7d928b8f",
-      "name_zh": "紅色緞帶",
-      "description_zh": "經人工拆分審閱的原子提示詞「red ribbon」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": " red ribbon",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "red ribbon"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 3,
-        "raw_segment_sha256": "c782dec0d2a8bfb73fbaed22c8ebbc140baa36f2abeb7895e30328de17fdb8a0",
-        "identity_sha256": "7d928b8fa2d04d52803c4632a880b6e3ae56264ee4ac3590a436b2127af47ad8"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-neck-ribbon-f272eaa8",
-      "name_zh": "頸部緞帶",
-      "description_zh": "經人工拆分審閱的原子提示詞「neck ribbon」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": " neck ribbon",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "neck ribbon"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 4,
-        "raw_segment_sha256": "2a12710cbfe28145997ec58811660e242420cfb0218ce1902639e705cb6fe6cf",
-        "identity_sha256": "f272eaa8feea82a26f985fa97a6f9a60085a2fb8b0edcd70d1c8311c4ce64f5c"
-      }
-    },
-    {
-      "id": "innerwears-white-shirt-short-sleeves-collared-sh-opaque-clothes-62cbb3ce",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「夏季水手服-內搭短袖襯衫」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "夏季水手服-內搭短袖襯衫 (white short sleeves, red ribbon)",
-        "white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-opaque-clothes",
-        "source_prompt_sha256": "4455726d764867061cf61da8559c1f317b35f785f656b47d2cd0769e5e0c6de6",
-        "segment_index": 5,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "62cbb3ceea369ee05ef2a4bc928a120376a9af96257e4e508d8927ef283f2145"
-      }
-    },
-    {
-      "id": "innerwears-collared-shirt-long-sleeves-opaque-cl-collared-shirt-ec63d902",
-      "name_zh": "有領襯衫",
-      "description_zh": "經人工拆分審閱的原子提示詞「collared shirt」，來源為「長袖襯衫」。",
-      "prompt": "collared shirt",
-      "aliases": [
-        "長袖襯衫 (collared shirt, long sleeves)",
-        "collared shirt, long sleeves, opaque clothes",
-        "collared shirt"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 18,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-collared-shirt-long-sleeves-opaque-clothes",
-        "source_prompt_sha256": "3773d2d97210aab05692044aeb67bc63cc7f65839a6e8780de3bec01570d39a9",
-        "segment_index": 0,
-        "raw_segment_sha256": "a8a1ecd14beacae6dbdfd51e0640d33da4cd0f0cbb7c341c0ad988858734057a",
-        "identity_sha256": "ec63d9029df7051a507c7f48bbdd5075f1dea64f21a8d77b85854852bf93fb84"
-      }
-    },
-    {
       "id": "innerwears-collared-shirt-long-sleeves-opaque-cl-long-sleeves-8af5d8d2",
       "name_zh": "長袖",
       "description_zh": "經人工拆分審閱的原子提示詞「long sleeves」，來源為「長袖襯衫」。",
-      "prompt": " long sleeves",
+      "prompt": "long sleeves",
       "aliases": [
         "長袖襯衫 (collared shirt, long sleeves)",
         "collared shirt, long sleeves, opaque clothes",
@@ -1286,130 +728,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "2d805e2070a4d8d3751a8b96c10616d3d168c4f6796b50cf487ce41c71e0b24b",
         "identity_sha256": "8af5d8d2a689a6ea053dcef85c13cff625932d196c93d3d1984c79cecb08d8fb"
-      }
-    },
-    {
-      "id": "innerwears-collared-shirt-long-sleeves-opaque-cl-opaque-clothes-4d6328b6",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「長袖襯衫」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "長袖襯衫 (collared shirt, long sleeves)",
-        "collared shirt, long sleeves, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 18,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-collared-shirt-long-sleeves-opaque-clothes",
-        "source_prompt_sha256": "3773d2d97210aab05692044aeb67bc63cc7f65839a6e8780de3bec01570d39a9",
-        "segment_index": 2,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "4d6328b681bed21e5dd7f73a27f9d5bbc9e249983fac49f46de34113bfe8a36b"
-      }
-    },
-    {
-      "id": "innerwears-collared-shirt-short-sleeves-opaque-c-collared-shirt-427ddade",
-      "name_zh": "有領襯衫",
-      "description_zh": "經人工拆分審閱的原子提示詞「collared shirt」，來源為「短袖襯衫」。",
-      "prompt": "collared shirt",
-      "aliases": [
-        "短袖襯衫 (collared shirt, short sleeves)",
-        "collared shirt, short sleeves, opaque clothes",
-        "collared shirt"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-collared-shirt-short-sleeves-opaque-clothes",
-        "source_prompt_sha256": "b3c5619540f831cb91a9e90162f3ccbf726daa4725150d49a6613ae9a78c2289",
-        "segment_index": 0,
-        "raw_segment_sha256": "a8a1ecd14beacae6dbdfd51e0640d33da4cd0f0cbb7c341c0ad988858734057a",
-        "identity_sha256": "427ddade9d9309d6963a9a45c09d92709169c967dfa7f627fd21a1230d7336c6"
-      }
-    },
-    {
-      "id": "innerwears-collared-shirt-short-sleeves-opaque-c-short-sleeves-ea9d881b",
-      "name_zh": "短袖",
-      "description_zh": "經人工拆分審閱的原子提示詞「short sleeves」，來源為「短袖襯衫」。",
-      "prompt": " short sleeves",
-      "aliases": [
-        "短袖襯衫 (collared shirt, short sleeves)",
-        "collared shirt, short sleeves, opaque clothes",
-        "short sleeves"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-collared-shirt-short-sleeves-opaque-clothes",
-        "source_prompt_sha256": "b3c5619540f831cb91a9e90162f3ccbf726daa4725150d49a6613ae9a78c2289",
-        "segment_index": 1,
-        "raw_segment_sha256": "61275ef0f59a68005280306cdb07901a9bd5ccf8432659ef2e9444355d0a481e",
-        "identity_sha256": "ea9d881bc5c6739e6e4ca86fbba68ded15a2c7097ef28ede091129ce62229c16"
-      }
-    },
-    {
-      "id": "innerwears-collared-shirt-short-sleeves-opaque-c-opaque-clothes-9abfeb4f",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「短袖襯衫」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "短袖襯衫 (collared shirt, short sleeves)",
-        "collared shirt, short sleeves, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-collared-shirt-short-sleeves-opaque-clothes",
-        "source_prompt_sha256": "b3c5619540f831cb91a9e90162f3ccbf726daa4725150d49a6613ae9a78c2289",
-        "segment_index": 2,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "9abfeb4fdb64f53cdc9f86791de9b7c51dbc508b8592bc7173e8e38164e5804a"
       }
     },
     {
@@ -1444,37 +762,6 @@
       }
     },
     {
-      "id": "innerwears-camisole-opaque-clothes-opaque-clothes-20a11ab5",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「細肩帶背心」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "細肩帶背心 (camisole)",
-        "camisole, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-camisole-opaque-clothes",
-        "source_prompt_sha256": "94990c7f0b8443856a0d4561627a41e29564e6b261e31bab231f94444ca668a5",
-        "segment_index": 1,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "20a11ab531fa99a4a146d374e2ec5d9145399c8212700518c1d6b3f4f1c23d03"
-      }
-    },
-    {
       "id": "innerwears-tank-top-opaque-clothes-tank-top-ec01dad5",
       "name_zh": "無袖背心",
       "description_zh": "經人工拆分審閱的原子提示詞「tank top」，來源為「無袖背心」。",
@@ -1506,37 +793,6 @@
       }
     },
     {
-      "id": "innerwears-tank-top-opaque-clothes-opaque-clothes-fbf5d070",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「無袖背心」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "無袖背心 (tank top)",
-        "tank top, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 21,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-tank-top-opaque-clothes",
-        "source_prompt_sha256": "b181cbf35f4267227bf4fb6a880e96c300c65924b134419d928a783086def38c",
-        "segment_index": 1,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "fbf5d07065cc9f9ea5f6b6e63721d32f29428d7317210f2e3713341982077082"
-      }
-    },
-    {
       "id": "innerwears-turtleneck-sweater-opaque-clothes-turtleneck-sweater-dfd00c5e",
       "name_zh": "高領毛衣",
       "description_zh": "經人工拆分審閱的原子提示詞「turtleneck sweater」，來源為「高領毛衣」。",
@@ -1565,37 +821,6 @@
         "segment_index": 0,
         "raw_segment_sha256": "0b9c6a8aea913f887c801576b243d9a886f177a8d4bbc02052ddd97eda2634f9",
         "identity_sha256": "dfd00c5e86402004f0b685ffb5d160c915369452041261c1c0ba1e06d795c71d"
-      }
-    },
-    {
-      "id": "innerwears-turtleneck-sweater-opaque-clothes-opaque-clothes-52613bb8",
-      "name_zh": "不透膚衣物",
-      "description_zh": "經人工拆分審閱的原子提示詞「opaque clothes」，來源為「高領毛衣」。",
-      "prompt": " opaque clothes",
-      "aliases": [
-        "高領毛衣 (turtleneck sweater)",
-        "turtleneck sweater, opaque clothes",
-        "opaque clothes"
-      ],
-      "keywords": [
-        "innerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 22,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "innerwears-turtleneck-sweater-opaque-clothes",
-        "source_prompt_sha256": "378084d5bc54dc7e597c840adbfefc6a33abd54667adda1ab6c1e94f6e71667b",
-        "segment_index": 1,
-        "raw_segment_sha256": "61aa12b331fdd063d4285c7bfb58db3e4e56c97cb24a40d24fcd17dcbb385f8e",
-        "identity_sha256": "52613bb8e597a2e0350bceabf2364fc5c1e9892e697414fe99231c84bdbd14fd"
       }
     },
     {
@@ -1703,114 +928,6 @@
         "prompt"
       ],
       "order": 28,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-fully-clothed",
-      "name_zh": "穿好",
-      "description_zh": "加入「穿好」提示詞。",
-      "prompt": "fully clothed",
-      "aliases": [
-        "穿好 (Fully Clothed)",
-        "fully clothed"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 29,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-half-undressed",
-      "name_zh": "半脫/掀起",
-      "description_zh": "加入「半脫/掀起」提示詞。",
-      "prompt": "half-undressed",
-      "aliases": [
-        "半脫/掀起 (Half-undressed)",
-        "half-undressed"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 30,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-bra-and-panties",
-      "name_zh": "內衣+內褲",
-      "description_zh": "加入「內衣+內褲」提示詞。",
-      "prompt": "bra and panties",
-      "aliases": [
-        "內衣+內褲 (Bra & Panties)",
-        "bra and panties"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 31,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-bra-only",
-      "name_zh": "只有內衣",
-      "description_zh": "加入「只有內衣」提示詞。",
-      "prompt": "bra only",
-      "aliases": [
-        "只有內衣 (Bra only)",
-        "bra only"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 32,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-panties-only",
-      "name_zh": "只有內褲",
-      "description_zh": "加入「只有內褲」提示詞。",
-      "prompt": "panties only",
-      "aliases": [
-        "只有內褲 (Panties only)",
-        "panties only"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 33,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "teasing-clothing-opts-nude",
-      "name_zh": "全裸",
-      "description_zh": "加入「全裸」提示詞。",
-      "prompt": "nude",
-      "aliases": [
-        "全裸 (Nude)",
-        "nude"
-      ],
-      "keywords": [
-        "teasing_clothing_opts",
-        "ltj",
-        "prompt"
-      ],
-      "order": 34,
       "revision": 1,
       "archived": false
     }

@@ -14,7 +14,7 @@
     "accessories"
   ],
   "order": 50,
-  "revision": 10,
+  "revision": 11,
   "archived": false,
   "entries": [
     {
@@ -52,7 +52,7 @@
       "id": "special-acc-garter-straps-thighhighs-thighhighs-9ffc2797",
       "name_zh": "大腿襪",
       "description_zh": "經人工拆分審閱的原子提示詞「thighhighs」，來源為「吊帶襪」。",
-      "prompt": " thighhighs",
+      "prompt": "thighhighs",
       "aliases": [
         "吊帶襪 (garter straps, thighhighs)",
         "garter straps, thighhighs",
@@ -94,24 +94,6 @@
         "prompt"
       ],
       "order": 11,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "special-acc-thighhighs",
-      "name_zh": "過膝襪",
-      "description_zh": "加入「過膝襪」提示詞。",
-      "prompt": "thighhighs",
-      "aliases": [
-        "過膝襪 (thighhighs)",
-        "thighhighs"
-      ],
-      "keywords": [
-        "special_acc",
-        "ltj",
-        "prompt"
-      ],
-      "order": 12,
       "revision": 1,
       "archived": false
     },
