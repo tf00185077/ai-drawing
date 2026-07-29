@@ -5,6 +5,7 @@ import {
   getPromptCatalog,
   getPromptCategory,
   getPromptCombination,
+  moveEntry,
   promptLibraryErrorMessage,
   putPromptCategory,
   putPromptEntry,
@@ -224,5 +225,26 @@ describe("promptLibraryErrorMessage", () => {
 
     await expect(getPromptCatalog()).rejects.toThrow("Prompt Library 請求失敗（HTTP 503），請稍後重試");
     expect(promptLibraryErrorMessage({}, 500)).toBe("Prompt Library 請求失敗（HTTP 500），請稍後重試");
+  });
+});
+
+describe("moveEntry", () => {
+  it("POSTs to the move route with to_category_id + entry fields", async () => {
+    const fetch = fetchMock(jsonResponse({}));
+    await moveEntry("positive", "src", "dress", {
+      to_category_id: "dst",
+      name_zh: "洋裝",
+      description_zh: "d",
+      prompt: "dress",
+      aliases: [],
+      keywords: [],
+      order: 10,
+      expected_revision: 1,
+    });
+    expect(fetch.mock.calls[0][0]).toBe("/api/prompt-library/categories/positive/src/entries/dress/move");
+    expect((fetch.mock.calls[0][1] as RequestInit).method).toBe("POST");
+    const body = bodyOf(fetch) as { to_category_id: string; prompt: string };
+    expect(body.to_category_id).toBe("dst");
+    expect(body.prompt).toBe("dress");
   });
 });

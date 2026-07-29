@@ -115,6 +115,10 @@ class EntryWriteRequest(CategoryWriteRequest):
     prompt: str = Field(min_length=1)
 
 
+class MoveEntryRequest(EntryWriteRequest):
+    to_category_id: Slug
+
+
 class CombinationWriteRequest(CategoryWriteRequest):
     legacy_template: bool = False
     positive: list[PromptFragment] = Field(default_factory=list)

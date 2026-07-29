@@ -6,6 +6,7 @@ import type {
   PromptComposeRequest,
   PromptComposeResponse,
   PromptEntryWriteRequest,
+  PromptMoveEntryRequest,
   PromptLibraryCatalogResponse,
   PromptLibraryWriteResponse,
   PromptLiteralConversionAcknowledgeResponse,
@@ -113,6 +114,23 @@ export function putPromptEntry(
   return requestJson<PromptLibraryWriteResponse>(
     `${API_ROOT}/categories/${segment(polarity)}/${segment(categoryId)}/entries/${segment(entryId)}`,
     jsonWrite("PUT", body),
+  );
+}
+
+export function moveEntry(
+  polarity: PromptPolarity,
+  fromCategoryId: string,
+  entryId: string,
+  input: PromptMoveEntryRequest,
+): Promise<PromptLibraryWriteResponse> {
+  const body = {
+    ...categoryWriteBody(input),
+    prompt: input.prompt,
+    to_category_id: input.to_category_id,
+  };
+  return requestJson<PromptLibraryWriteResponse>(
+    `${API_ROOT}/categories/${segment(polarity)}/${segment(fromCategoryId)}/entries/${segment(entryId)}/move`,
+    jsonWrite("POST", body),
   );
 }
 
