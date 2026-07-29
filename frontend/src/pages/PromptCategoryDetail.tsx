@@ -5,6 +5,7 @@ import {
   archivePromptResource,
   getPromptCatalog,
   getPromptCategory,
+  moveEntry,
   putPromptCategory,
   putPromptEntry,
   restorePromptResource,
@@ -170,7 +171,11 @@ export default function PromptCategoryDetail() {
     }));
   }
   function saveEntry(value: EntryEditorValue) {
-    void mutate(() => putPromptEntry(currentPolarity, currentCategoryId, value.id, { ...value.fields, ...token }), {
+    const operation =
+      value.categoryId && value.categoryId !== currentCategoryId
+        ? () => moveEntry(currentPolarity, currentCategoryId, value.id, { to_category_id: value.categoryId, ...value.fields, ...token })
+        : () => putPromptEntry(currentPolarity, currentCategoryId, value.id, { ...value.fields, ...token });
+    void mutate(operation, {
       closeEditor: true,
       showAffectedCombinations: true,
     });
@@ -247,9 +252,9 @@ export default function PromptCategoryDetail() {
       <section aria-label="詞條管理" className="mt-5 rounded-xl border border-slate-700 bg-slate-900/60 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold text-white">詞條管理</h2><button type="button" disabled={busy || editor !== null} onClick={() => setEditor({ mode: "create" })} className={`${actionClass} bg-emerald-600`}>新增詞條</button></div>
         <div className="mt-4 flex gap-2"><FilterButton active={entryFilter === "active"} disabled={busy} onClick={() => setEntryFilter("active")}>使用中詞條</FilterButton><FilterButton active={entryFilter === "archived"} disabled={busy} onClick={() => setEntryFilter("archived")}>已封存詞條</FilterButton></div>
-        {editor?.mode === "create" && <PromptEntryEditor key="create" mode="create" submitting={busy} existingIds={details.entries.map((entry) => entry.id)} onSubmit={saveEntry} onCancel={() => setEditor(null)} />}
+        {editor?.mode === "create" && <PromptEntryEditor key="create" mode="create" submitting={busy} existingIds={details.entries.map((entry) => entry.id)} categories={samePolarityCategories} currentCategoryId={currentCategoryId} onSubmit={saveEntry} onCancel={() => setEditor(null)} />}
         <div className="mt-4 space-y-3">
-          {entries.map((entry) => <article key={entry.id} className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold text-white">{entry.name_zh}</h3><p className="text-xs text-slate-500">{entry.id} · Revision {entry.revision}</p><p className="mt-2 text-sm text-slate-300">{entry.prompt}</p></div><div className="flex items-start gap-2">{!entry.archived && <button type="button" aria-label={`編輯 ${entry.id}`} disabled={busy || editor !== null} onClick={() => setEditor({ mode: "edit", entry })} className={`${actionClass} bg-sky-700`}>編輯</button>}{entry.archived ? <button type="button" disabled={busy || details.archived} onClick={() => restoreEntry(entry)} className={`${actionClass} bg-emerald-700`}>恢復</button> : <button type="button" disabled={busy} onClick={() => archiveEntry(entry)} className={`${actionClass} bg-amber-700`}>封存</button>}</div></div>{entry.archived && details.archived && <p className="mt-2 text-sm text-amber-300">請先恢復分類</p>}{editor?.mode === "edit" && editor.entry.id === entry.id && <PromptEntryEditor key={entry.id} mode="edit" initial={entry} submitting={busy} onSubmit={saveEntry} onCancel={() => setEditor(null)} />}</article>)}
+          {entries.map((entry) => <article key={entry.id} className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold text-white">{entry.name_zh}</h3><p className="text-xs text-slate-500">{entry.id} · Revision {entry.revision}</p><p className="mt-2 text-sm text-slate-300">{entry.prompt}</p></div><div className="flex items-start gap-2">{!entry.archived && <button type="button" aria-label={`編輯 ${entry.id}`} disabled={busy || editor !== null} onClick={() => setEditor({ mode: "edit", entry })} className={`${actionClass} bg-sky-700`}>編輯</button>}{entry.archived ? <button type="button" disabled={busy || details.archived} onClick={() => restoreEntry(entry)} className={`${actionClass} bg-emerald-700`}>恢復</button> : <button type="button" disabled={busy} onClick={() => archiveEntry(entry)} className={`${actionClass} bg-amber-700`}>封存</button>}</div></div>{entry.archived && details.archived && <p className="mt-2 text-sm text-amber-300">請先恢復分類</p>}{editor?.mode === "edit" && editor.entry.id === entry.id && <PromptEntryEditor key={entry.id} mode="edit" initial={entry} submitting={busy} categories={samePolarityCategories} currentCategoryId={currentCategoryId} onSubmit={saveEntry} onCancel={() => setEditor(null)} />}</article>)}
           {entries.length === 0 && <p className="text-sm text-slate-400">此篩選條件下沒有詞條。</p>}
         </div>
       </section>

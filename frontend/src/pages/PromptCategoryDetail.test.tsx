@@ -5,6 +5,7 @@ import {
   archivePromptResource,
   getPromptCatalog,
   getPromptCategory,
+  moveEntry,
   putPromptCategory,
   putPromptEntry,
   restorePromptResource,
@@ -15,6 +16,7 @@ vi.mock("../components/prompt-library/promptLibraryApi", () => ({
   archivePromptResource: vi.fn(),
   getPromptCatalog: vi.fn(),
   getPromptCategory: vi.fn(),
+  moveEntry: vi.fn(),
   putPromptCategory: vi.fn(),
   putPromptEntry: vi.fn(),
   restorePromptResource: vi.fn(),
@@ -127,6 +129,22 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe("PromptCategoryDetail", () => {
+  it("moves an entry when its category is changed in the editor", async () => {
+    vi.mocked(getPromptCategory).mockResolvedValue(versionedCategory);
+    vi.mocked(getPromptCatalog).mockResolvedValue(catalogOf([qualityRatingsSummary, clothingSummary]));
+    vi.mocked(moveEntry).mockResolvedValue(writeResponse);
+    renderAt();
+    await screen.findByRole("heading", { name: "品質評分" });
+    fireEvent.click(screen.getByRole("button", { name: "編輯 masterpiece" }));
+    fireEvent.change(await screen.findByLabelText("詞條所屬分類"), { target: { value: "clothing" } });
+    fireEvent.click(screen.getByRole("button", { name: "儲存" }));
+    await waitFor(() => expect(moveEntry).toHaveBeenCalled());
+    const [pol, from, id, body] = vi.mocked(moveEntry).mock.calls[0];
+    expect([pol, from, id]).toEqual(["positive", "quality-ratings", "masterpiece"]);
+    expect(body).toMatchObject({ to_category_id: "clothing", prompt: "masterpiece", expected_revision: 7, expected_etag: "etag-7" });
+    expect(putPromptEntry).not.toHaveBeenCalled();
+  });
+
   it("edits category metadata with the current token and reloads the latest category", async () => {
     vi.mocked(getPromptCategory).mockResolvedValueOnce(versionedCategory).mockResolvedValueOnce(reloadedCategory);
     vi.mocked(putPromptCategory).mockResolvedValue(writeResponse);
