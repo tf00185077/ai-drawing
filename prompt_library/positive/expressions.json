@@ -14,7 +14,7 @@
     "expressions"
   ],
   "order": 60,
-  "revision": 20,
+  "revision": 21,
   "archived": false,
   "entries": [
     {
@@ -143,8 +143,8 @@
     },
     {
       "id": "expressions-list-frustrated-blush-crying-with-ey-frustrated-8fea8bba",
-      "name_zh": "不甘心/眼泛淚光 (くっ殺せ/frustrated...)・第 1 詞（frustrated）",
-      "description_zh": "經人工拆分審閱的原子提示詞「frustrated」，來源為「不甘心/眼泛淚光 (くっ殺せ/frustrated...)」。",
+      "name_zh": "不甘懊惱",
+      "description_zh": "不甘懊惱",
       "prompt": "frustrated",
       "aliases": [
         "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
@@ -174,8 +174,8 @@
     },
     {
       "id": "expressions-list-frustrated-blush-crying-with-ey-crying-with-eyes-open-f7d76855",
-      "name_zh": "不甘心/眼泛淚光 (くっ殺せ/frustrated...)・第 3 詞（crying with eyes open）",
-      "description_zh": "經人工拆分審閱的原子提示詞「crying with eyes open」，來源為「不甘心/眼泛淚光 (くっ殺せ/frustrated...)」。",
+      "name_zh": "睜眼流淚",
+      "description_zh": "睜眼流淚",
       "prompt": "crying with eyes open",
       "aliases": [
         "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
@@ -205,8 +205,8 @@
     },
     {
       "id": "expressions-list-frustrated-blush-crying-with-ey-gritting-teeth-bf31333a",
-      "name_zh": "不甘心/眼泛淚光 (くっ殺せ/frustrated...)・第 4 詞（gritting teeth）",
-      "description_zh": "經人工拆分審閱的原子提示詞「gritting teeth」，來源為「不甘心/眼泛淚光 (くっ殺せ/frustrated...)」。",
+      "name_zh": "咬牙",
+      "description_zh": "咬牙",
       "prompt": "gritting teeth",
       "aliases": [
         "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
@@ -453,8 +453,8 @@
     },
     {
       "id": "expressions-list-heart-eyes-ahegao-ahegao-17993ba6",
-      "name_zh": "愛心眼阿黑顏・第 2 詞（ahegao）",
-      "description_zh": "經人工拆分審閱的原子提示詞「ahegao」，來源為「愛心眼阿黑顏」。",
+      "name_zh": "阿黑顏",
+      "description_zh": "阿黑顏",
       "prompt": "ahegao",
       "aliases": [
         "愛心眼阿黑顏 (heart eyes, ahegao)",
@@ -546,8 +546,8 @@
     },
     {
       "id": "expressions-list-mind-break-blank-stare-drooling-mind-break-c9ea695d",
-      "name_zh": "壞掉流口水・第 1 詞（mind break）",
-      "description_zh": "經人工拆分審閱的原子提示詞「mind break」，來源為「壞掉流口水」。",
+      "name_zh": "精神崩壞",
+      "description_zh": "精神崩壞",
       "prompt": "mind break",
       "aliases": [
         "壞掉流口水 (mind break, blank stare, drooling)",
@@ -732,8 +732,8 @@
     },
     {
       "id": "expressions-list-furrowed-brow-torogao-torogao-7054df02",
-      "name_zh": "皺眉享受・第 2 詞（torogao）",
-      "description_zh": "經人工拆分審閱的原子提示詞「torogao」，來源為「皺眉享受」。",
+      "name_zh": "恍惚表情",
+      "description_zh": "恍惚表情",
       "prompt": "torogao",
       "aliases": [
         "皺眉享受 (furrowed brow, torogao)",
@@ -856,8 +856,8 @@
     },
     {
       "id": "teasing-exps-smug-teasing-smile-seductively-smil-smug-96f1ccfe",
-      "name_zh": "得意/誘惑・第 1 詞（smug）",
-      "description_zh": "經人工拆分審閱的原子提示詞「smug」，來源為「得意/誘惑」。",
+      "name_zh": "得意",
+      "description_zh": "得意",
       "prompt": "smug",
       "aliases": [
         "得意/誘惑 (smug, teasing smile)",
