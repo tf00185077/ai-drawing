@@ -17,7 +17,7 @@ from mcp_server.tools.lora_train import (
 )
 
 
-def _http_error(status_code: int, detail: dict) -> httpx.HTTPStatusError:
+def _http_error(status_code: int, detail: dict | list[dict]) -> httpx.HTTPStatusError:
     request = httpx.Request("POST", "http://backend.test/api")
     response = httpx.Response(status_code, json={"detail": detail}, request=request)
     return httpx.HTTPStatusError(str(status_code), request=request, response=response)
@@ -46,6 +46,7 @@ def test_lora_training_decision_preflight_returns_train_payload_without_starting
             },
             "rationale": ["metadata is complete"],
         },
+        "unexpected_backend_field": "must-not-escape",
     }
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client), patch(
@@ -56,13 +57,15 @@ def test_lora_training_decision_preflight_returns_train_payload_without_starting
             trigger_token="miku_token",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
+            recipe={"batchSize": "1"},
         )
 
     assert result["ok"] is True
     assert result["tool"] == "lora_training_decision_preflight"
     assert result["decision"] == "train"
-    assert result["suggested_params"]["params"]["expected_dataset_hash"] == "hash-a"
-    assert result["submitted"]["expected_profile_hash"] == "profile-hash-a"
+    assert "suggested_params" not in result
+    assert "unexpected_backend_field" not in result
+    assert "submitted" not in result
     start.assert_not_called()
     mock_client.post.assert_called_once_with(
         "lora-train/datasets/training-decision-preflight",
@@ -71,6 +74,7 @@ def test_lora_training_decision_preflight_returns_train_payload_without_starting
             "trigger_token": "miku_token",
             "expected_dataset_hash": "hash-a",
             "expected_profile_hash": "profile-hash-a",
+            "recipe": {"batchSize": "1"},
         },
     )
 
@@ -123,38 +127,253 @@ def test_lora_training_decision_preflight_surfaces_backend_error() -> None:
     assert result["error"]["code"] == "dataset_not_found"
 
 
-def test_lora_train_start_returns_structured_success() -> None:
-    """Training start no longer requires text parsing."""
+def test_lora_train_start_forwards_broad_recipe_and_returns_canonical_identity() -> None:
     mock_client = MagicMock()
     mock_client.post.return_value = {
         "job_id": "job-1",
         "status": "queued",
         "stage": "queued",
         "dataset_hash": "hash-a",
+        "profile_hash": "profile-hash-a",
         "normalized_trigger_token": "miku_token",
+        "recipe_schema_version": "lora-training-recipe/v1",
+        "recipe_hash": "a" * 64,
+        "requested_recipe": {
+            "schema_version": "lora-training-recipe/v1",
+            "dataset": {"batch_size": 1},
+        },
+        "effective_scope": {
+            "denoiser_kind": "dit",
+            "train_denoiser": True,
+            "train_text_encoder": False,
+            "native_scope_flag": "--network_train_unet_only",
+            "verification_status": "source_contract",
+        },
+        "debug_internal": "must-not-cross-strict-output",
+    }
+    recipe = {
+        "schemaVersion": "v1",
+        "batchSize": "1",
+        "modelFamily": "anima",
     }
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         started = lora_train_start(
             "character/miku",
-            checkpoint="model.safetensors",
-            epochs=2,
-            trigger_token="miku_token",
             expected_dataset_hash="hash-a",
-            model_family="anima",
-            network_module="networks.custom_anima_lora",
-            anima_qwen3="/models/text_encoders/qwen_3_06b_base.safetensors",
-            anima_vae="/models/vae/qwen_image_vae.safetensors",
+            expected_profile_hash="profile-hash-a",
+            recipe=recipe,
         )
 
     assert started["ok"] is True
     assert started["tool"] == "lora_train_start"
     assert started["job_id"] == "job-1"
-    assert started["submitted"]["expected_dataset_hash"] == "hash-a"
-    assert started["submitted"]["model_family"] == "anima"
-    assert started["submitted"]["network_module"] == "networks.custom_anima_lora"
-    assert started["submitted"]["anima_qwen3"] == "/models/text_encoders/qwen_3_06b_base.safetensors"
-    assert started["submitted"]["anima_vae"] == "/models/vae/qwen_image_vae.safetensors"
+    assert started["recipe_schema_version"] == "lora-training-recipe/v1"
+    assert started["recipe_hash"] == "a" * 64
+    assert started["requested_recipe"]["dataset"]["batch_size"] == 1
+    assert started["effective_scope"]["denoiser_kind"] == "dit"
+    assert "debug_internal" not in started
+    assert "submitted" not in started
+    mock_client.post.assert_called_once_with(
+        "lora-train/start",
+        json={
+            "folder": "character/miku",
+            "expected_dataset_hash": "hash-a",
+            "expected_profile_hash": "profile-hash-a",
+            "recipe": recipe,
+        },
+    )
+
+
+def test_lora_train_start_forwards_json_object_string_without_normalizing_it() -> None:
+    mock_client = MagicMock()
+    mock_client.post.return_value = {
+        "job_id": "job-string",
+        "status": "queued",
+        "recipe_schema_version": "lora-training-recipe/v1",
+        "recipe_hash": "b" * 64,
+    }
+    recipe = '{"batchSize":"2","seed":"random"}'
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe=recipe,
+        )
+
+    assert result["ok"] is True
+    assert "submitted" not in result
+    assert mock_client.post.call_args.kwargs["json"]["recipe"] == recipe
+
+
+def test_lora_train_start_sanitizes_list_shaped_request_validation_errors() -> None:
+    """FastAPI validation entries stay structured without echoing submitted inputs."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        422,
+        [
+            {
+                "loc": ["body", "batch_size"],
+                "msg": "Input should be greater than or equal to 1",
+                "type": "greater_than_equal",
+                "ctx": {"ge": 1, "submitted_secret": "secret-context-value"},
+                "input": "super-secret-value",
+                "url": "https://errors.pydantic.dev/example",
+            },
+            {
+                "loc": ["body", "expected_profile_hash"],
+                "msg": "Field required",
+                "type": "missing",
+                "input": {"private": "payload"},
+            },
+        ],
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={"batchSize": 0},
+        )
+
+    assert result == {
+        "ok": False,
+        "tool": "lora_train_start",
+        "status_code": 422,
+        "error": {
+            "code": "request_validation_failed",
+            "message": "backend request validation failed",
+            "hint": "correct the listed fields and retry",
+            "details": {
+                "validation_errors": [
+                        {
+                            "loc": ["body", "batch_size"],
+                            "type": "greater_than_equal",
+                            "ctx": {"ge": 1},
+                        },
+                        {
+                            "loc": ["body", "expected_profile_hash"],
+                            "type": "missing",
+                        },
+                ]
+            },
+        },
+    }
+    assert "secret-context-value" not in str(result)
+
+
+def test_lora_train_start_preserves_dictionary_shaped_backend_error() -> None:
+    """Application errors retain safe identity without echoing hash values."""
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        409,
+        {
+            "code": "profile_hash_mismatch",
+            "message": "dataset profile changed after approval",
+            "details": {
+                "expected_profile_hash": "profile-hash-a",
+                "current_profile_hash": "profile-hash-b",
+            },
+        },
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={},
+        )
+
+    assert result == {
+        "ok": False,
+        "tool": "lora_train_start",
+        "status_code": 409,
+        "error": {
+            "code": "profile_hash_mismatch",
+            "message": "Backend rejected the LoRA request",
+            "hint": "rerun decision preflight with current state before retrying",
+            "details": {},
+        },
+    }
+    assert "profile-hash-a" not in str(result)
+    assert "profile-hash-b" not in str(result)
+
+
+def test_lora_train_start_preserves_backend_recipe_repair_hint() -> None:
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        400,
+        {
+            "code": "unsupported_runtime_precision",
+            "message": "requested precision is not supported",
+            "hint": "use precision=no or rerun preflight on a verified runtime",
+            "details": {
+                "issues": [
+                    {
+                        "location": "optimization.mixed_precision",
+                        "type": "unsupported_value",
+                    }
+                ]
+            },
+        },
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={"precision": "bf16"},
+        )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "unsupported_runtime_precision"
+    assert result["error"]["hint"] == (
+        "correct the referenced fields and rerun decision preflight"
+    )
+
+
+def test_lora_train_start_preserves_redacted_alias_conflict_code() -> None:
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        400,
+        {
+            "code": "recipe_field_conflict",
+            "message": "training recipe contains conflicting aliases",
+            "hint": "remove one conflicting alias and retry",
+            "details": {
+                "issues": [
+                    {
+                        "location": "dataset.batch_size",
+                        "type": "alias_conflict",
+                        "accepted_forms": ["batch", "batchSize", "batch_size"],
+                    }
+                ]
+            },
+        },
+    )
+    recipe = {
+        "batch": "1",
+        "batchSize": "private-conflicting-value",
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe=recipe,
+        )
+
+    assert result["error"]["code"] == "recipe_field_conflict"
+    assert result["error"]["details"]["issues"][0]["location"] == (
+        "dataset.batch_size"
+    )
+    assert "private-conflicting-value" not in str(result)
 
 
 def test_lora_train_job_status_not_found_is_structured() -> None:
@@ -174,8 +393,38 @@ def test_lora_train_job_status_not_found_is_structured() -> None:
     assert result["error"]["code"] == "job_not_found"
 
 
+def test_lora_train_job_status_preserves_historical_null_v1_fields() -> None:
+    mock_client = MagicMock()
+    mock_client.get.return_value = {
+        "ok": True,
+        "job_id": "legacy-job",
+        "status": "completed",
+        "recipe_schema_version": None,
+        "recipe_hash": None,
+        "requested_recipe": None,
+        "effective_recipe": None,
+        "requested_scope": None,
+        "effective_scope": None,
+        "field_sources": None,
+        "step_plan": None,
+        "component_identities": None,
+        "capability": None,
+        "execution_evidence": None,
+        "params": {"epochs": 5},
+    }
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_job_status("legacy-job")
+
+    assert result["ok"] is True
+    assert result["recipe_schema_version"] is None
+    assert result["recipe_hash"] is None
+    assert result["execution_evidence"] is None
+    assert result["params"] == {"epochs": 5}
+
+
 def test_lora_train_logs_maps_backend_log_error_payload() -> None:
-    """Log retrieval ok=false payloads become structured MCP errors."""
+    """Log retrieval failures do not echo arbitrary Backend payload fields."""
     mock_client = MagicMock()
     mock_client.get.return_value = {
         "ok": False,
@@ -193,8 +442,102 @@ def test_lora_train_logs_maps_backend_log_error_payload() -> None:
     assert result["ok"] is False
     assert result["tool"] == "lora_train_logs"
     assert result["error"]["code"] == "log_not_found"
-    assert result["error"]["details"]["response"]["log_path"] == "/tmp/missing.log"
+    assert result["error"]["details"] == {}
+    assert "/tmp/missing.log" not in str(result)
     mock_client.get.assert_called_once_with("lora-train/jobs/job-1/logs", params={"lines": 20})
+
+
+def test_lora_train_start_redacts_untrusted_backend_error_context() -> None:
+    mock_client = MagicMock()
+    mock_client.post.side_effect = _http_error(
+        400,
+        {
+            "code": "recipe_validation_failed",
+            "message": "bad value super-secret-value at https://private.example/token",
+            "hint": "retry with TOKEN=super-secret-value",
+            "details": {
+                "input": "super-secret-value",
+                "url": "https://private.example/token",
+                "environment": {"TOKEN": "super-secret-value"},
+                "issues": [
+                    {
+                        "location": "dataset.batch_size",
+                        "type": "greater_than_equal",
+                        "accepted_forms": ["batch", "batchSize", "batch_size"],
+                        "input": "super-secret-value",
+                    }
+                ],
+            },
+        },
+    )
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={"batchSize": "super-secret-value"},
+        )
+
+    assert result["error"] == {
+        "code": "recipe_validation_failed",
+        "message": "Backend rejected the LoRA request",
+        "hint": "correct the referenced fields and rerun decision preflight",
+        "details": {
+            "issues": [
+                {
+                    "location": "dataset.batch_size",
+                    "type": "greater_than_equal",
+                    "accepted_forms": ["batch", "batchSize", "batch_size"],
+                }
+            ]
+        },
+    }
+    serialized = str(result)
+    assert "super-secret-value" not in serialized
+    assert "private.example" not in serialized
+
+
+def test_lora_train_start_redacts_non_json_http_body_and_transport_exception() -> None:
+    request = httpx.Request("POST", "http://backend.test/api")
+    response = httpx.Response(
+        500,
+        text="TOKEN=super-secret-value https://private.example/token",
+        request=request,
+    )
+    http_failure = httpx.HTTPStatusError(
+        "super-secret-value",
+        request=request,
+        response=response,
+    )
+    mock_client = MagicMock()
+    mock_client.post.side_effect = http_failure
+
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        http_result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={},
+        )
+
+    mock_client.post.side_effect = RuntimeError(
+        "TOKEN=super-secret-value https://private.example/token"
+    )
+    with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
+        transport_result = lora_train_start(
+            "character/miku",
+            expected_dataset_hash="hash-a",
+            expected_profile_hash="profile-hash-a",
+            recipe={},
+        )
+
+    assert http_result["error"]["code"] == "http_500"
+    assert transport_result["error"]["code"] == "backend_unavailable"
+    for result in (http_result, transport_result):
+        serialized = str(result)
+        assert "super-secret-value" not in serialized
+        assert "private.example" not in serialized
 
 
 def test_lora_train_cancel_returns_structured_status() -> None:

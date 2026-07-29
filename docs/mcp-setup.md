@@ -221,6 +221,189 @@ style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->
 
+### LoRA recipe：寬進、嚴出
+
+`lora_training_decision_preflight` 的 `recipe` 是選填；`lora_train_start` 的
+`recipe` 是必填。兩者都接受 JSON object 或 JSON-object string，也接受只描述使用者意圖的
+partial recipe。`decision="train"` 時，Backend 會回傳保留 caller omissions 的
+canonical partial `requested_recipe`、完整 `effective_recipe`、`field_sources`、
+`step_plan`、`component_identities`、`capability`、`execution_evidence` 與
+`recipe_hash`；review/blocking 結果的 recipe 或 evidence 欄位可能是 `null`。
+
+Start 的 public top-level 固定只有四個必要欄位：
+
+```json
+{
+  "folder": "my_char",
+  "expected_dataset_hash": "<preflight dataset_hash>",
+  "expected_profile_hash": "<preflight profile_hash>",
+  "recipe": {
+    "schema_version": "lora-training-recipe/v1",
+    "expected_recipe_hash": "<preflight recipe_hash>",
+    "optimization": {
+      "seed": {
+        "mode": "random",
+        "value": 123456789,
+        "source": "preflight_policy"
+      }
+    }
+  }
+}
+```
+
+`recipe` 的 canonical container 是 `schema_version`、`expected_recipe_hash` 與
+`model` / `scope` / `dataset` / `optimization` / `caching` / `execution`。
+呼叫者不必補齊空白 section；上例只是顯示完整容器。`expected_recipe_hash` 是 preflight
+產生的 optimistic-concurrency 證據，不應由 agent 自行計算或改寫。
+
+輸入端允許常見別名與無損 coercion：
+
+| 類別 | 可接受形式（節錄） | Canonical 位置 |
+|------|--------------------|----------------|
+| 版本 | `schemaVersion`、`version=1/"1"/"v1"` | `schema_version` |
+| Model | `family`、`model_family`、`modelFamily`、`networkDim`、`animaQwen3`、`animaVae` | `model.*` |
+| Scope | `trainTextEncoder`、`trainable_scope=denoiser_only/denoiser_and_text_encoder` | `scope.train_text_encoder` |
+| Dataset | `triggerToken`、`class_tokens`、`instance_token`、`batch`、`batchSize`、bucket camelCase 欄位 | `dataset.*` |
+| Optimization | `learningRate`、`unet_lr`、`dit_lr`、`text_encoder_lr`、`gradientAccumulation`、`optimizer`、`scheduler`、warmup aliases、`precision` | `optimization.*` |
+| Caching | `cacheLatents`、`cacheTextEncoderOutputs`、`cacheToDisk` | `caching.*` |
+| Execution | `workers`、`persistentWorkers`、`save_cadence`、`saveCadence` | `execution.*` |
+
+整數與 boolean 可用型別正確的值或無損字串（例如 `"4"`、`"true"`、`"0"`）；
+learning rate 接受正數或可正規化的數字字串；Text Encoder learning rate 接受 scalar
+或 list；optimizer/scheduler args 接受 mapping、`key=value` list 或空白分隔的
+`key=value` 字串，raw `--flags`、重複 key 與非 `key=value` token 會被拒絕。
+Warmup 接受整數 steps shorthand、`{mode: "steps" | "ratio", value: N}`，或
+`lr_warmup_steps` / `warmup_ratio` aliases；不接受 bare `"steps"` / `"ratio"`。
+Seed 可用固定整數、`"random"` / `null` 或 `{mode, value}`；`fp32` 會正規化為
+`mixed_precision="no"`。
+
+同一 canonical 欄位若由多個 alias 給出衝突值，回
+`recipe_field_conflict`；未知欄位、拼字錯誤或有損 coercion 回
+`recipe_validation_failed`。Agent 應依 `error.details.issues[]` 的安全 location、
+accepted forms 與 suggestion 修正，不得猜測或覆寫衝突意圖。
+
+MCP 回傳採穩定 envelope。成功只保留該工具白名單中的欄位：
+
+```json
+{
+  "ok": true,
+  "tool": "lora_training_decision_preflight",
+  "decision": "train",
+  "recipe_hash": "<sha256>",
+  "start_payload": {
+    "folder": "my_char",
+    "expected_dataset_hash": "<sha256>",
+    "expected_profile_hash": "<sha256>",
+    "recipe": {
+      "schema_version": "lora-training-recipe/v1",
+      "expected_recipe_hash": "<same recipe_hash>",
+      "optimization": {
+        "seed": {
+          "mode": "random",
+          "value": 123456789,
+          "source": "preflight_policy"
+        }
+      }
+    }
+  }
+}
+```
+
+失敗固定為修復指南；HTTP/protocol 失敗可能另有 `status_code`：
+
+```json
+{
+  "ok": false,
+  "tool": "lora_train_start",
+  "error": {
+    "code": "recipe_validation_failed",
+    "message": "Backend rejected the LoRA request",
+    "hint": "correct the referenced fields and rerun decision preflight",
+    "details": {
+      "issues": []
+    }
+  }
+}
+```
+
+錯誤清理會移除 submitted values、URL、環境內容與任意 exception context。若舊 client
+仍把 `checkpoint`、`model_family`、`epochs`、`batch_size`、`learning_rate`、
+`network_*`、`anima_*`、`sdxl` 等 flat training fields 傳給 Start，protocol wrapper
+回 `legacy_training_fields_removed`：只列出欄位名稱、不列值，也不會呼叫 Start。
+正確修復是重跑 preflight，不能把舊 payload 暗中翻譯成 recipe。
+
+可執行的 preflight → Start handoff：
+
+```python
+preflight = lora_training_decision_preflight(
+    folder="my_char",
+    recipe={"modelFamily": "anima", "batchSize": "1"},  # optional broad hints
+)
+
+if (
+    preflight["ok"]
+    and preflight["decision"] == "train"
+    and preflight["start_payload"]
+):
+    payload = preflight["start_payload"]
+    result = lora_train_start(
+        folder=payload["folder"],
+        expected_dataset_hash=payload["expected_dataset_hash"],
+        expected_profile_hash=payload["expected_profile_hash"],
+        recipe=payload["recipe"],
+    )
+```
+
+Start 只能提交 preflight 回傳的完整 `start_payload`。不要重建、merge、補 default、
+重抽 seed 或覆寫其中欄位；若使用者改了任何 hint，重跑 preflight 並改用新的
+`start_payload`。
+
+```json lora-recipe-contract
+{
+  "schema_version": "lora-training-recipe/v1",
+  "start_required_top_level": [
+    "folder",
+    "expected_dataset_hash",
+    "expected_profile_hash",
+    "recipe"
+  ],
+  "recipe_input_forms": [
+    "object",
+    "JSON-object string"
+  ],
+  "canonical_recipe_fields": [
+    "schema_version",
+    "expected_recipe_hash",
+    "model",
+    "scope",
+    "dataset",
+    "optimization",
+    "caching",
+    "execution"
+  ],
+  "strict_error_envelope": {
+    "ok": false,
+    "tool": "lora_train_start",
+    "error_fields": [
+      "code",
+      "message",
+      "hint",
+      "details"
+    ]
+  },
+  "migration_error": {
+    "code": "legacy_training_fields_removed",
+    "invokes_start": false,
+    "returns_field_names_only": true
+  },
+  "handoff": {
+    "source": "preflight.start_payload",
+    "submit_exact": true,
+    "allow_rebuild_or_override": false
+  }
+}
+```
+
 ### 影片 MCP MVP 邊界
 
 影片生成目前是 MCP-first 的 artifact lifecycle：agent 從 CTY 提供的 known-good 本機 ComfyUI video workflow 開始，用 `search_nodes` / `get_node_schema` 檢查本機節點，修改 schema-valid 欄位後呼叫 `generate_video_custom_workflow`，再用 `get_generation_status` 的 `artifacts[]` 和 `get_gallery_artifact` 取回影片檔。
@@ -235,8 +418,8 @@ style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除
 
 - **「產生初音、動漫風格的圖」** → 呼叫 `generate_image(character="初音", style="動漫")`
 - **「用 default 模板產生穿和服的初音」** → 呼叫 `list_workflow_templates` → `get_workflow_template("default")` → `generate_image_custom_workflow(workflow=..., character="初音", prompt="1girl, kimono")`
-- **「開始訓練 my_char 資料夾的 LoRA」** → 呼叫 `lora_train_start(folder="my_char")`
-- **「用 Anima 訓練 my_char」** → 呼叫 `lora_train_start(folder="my_char", model_family="anima", anima_qwen3="...", anima_vae="...")`，或先在 backend `.env` 設定 `LORA_ANIMA_QWEN3` / `LORA_ANIMA_VAE`；未指定 `network_module` 時會使用 `networks.lora_anima`
+- **「開始訓練 my_char 資料夾的 LoRA」** → 先呼叫 `lora_training_decision_preflight(folder="my_char")`；只有 `decision="train"` 且 `start_payload` 存在時，才把該 payload 的四個欄位原樣交給 `lora_train_start`
+- **「用 Anima 訓練 my_char」** → 把 `recipe={"modelFamily": "anima", "animaQwen3": "...", "animaVae": "..."}` 作為 preflight hint；取得 `decision="train"` 後只提交其完整 `start_payload`
 - **「列出最近 5 張圖」** → 呼叫 `gallery_list(limit=5)`
 - **「用第 3 張的參數再產一張」** → 呼叫 `gallery_rerun(image_id=3)`
 

@@ -6,9 +6,11 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   FolderItem,
+  TrainingRecipeHints,
   TrainFoldersResponse,
-  TrainStartRequest,
-  TrainStartResponse,
+  TrainingDecisionPreflightRequest,
+  TrainingDecisionPreflightResponse,
+  TrainingStartPayload,
   TrainStatusResponse,
   TriggerCheckResponse,
 } from "../types/api";
@@ -16,6 +18,153 @@ import type {
 const API = "/api";
 
 const DEFAULT_EPOCHS = 10;
+
+type RecipeOverrideKey =
+  | "checkpoint"
+  | "model_family"
+  | "epochs"
+  | "resolution"
+  | "batch_size"
+  | "learning_rate"
+  | "trigger_token"
+  | "num_repeats"
+  | "network_dim"
+  | "network_alpha";
+
+function formatBackendErrorDetails(details: unknown): string {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return "";
+  }
+
+  return Object.entries(details)
+    .flatMap(([key, value]) =>
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      value === null
+        ? [`${key}=${String(value)}`]
+        : [],
+    )
+    .join(", ");
+}
+
+function backendErrorCode(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+  const detail = (data as { detail?: unknown }).detail;
+  if (!detail || typeof detail !== "object" || Array.isArray(detail)) return "";
+  const code = (detail as { code?: unknown }).code;
+  return typeof code === "string" ? code : "";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isCanonicalStartPayload(
+  value: unknown,
+  folder: string,
+  datasetHash: string | null,
+  profileHash: string | null,
+  recipeHash: string | null,
+): value is TrainingStartPayload {
+  if (!isRecord(value) || !isRecord(value.recipe)) return false;
+  if (
+    !isRecord(value.recipe.optimization) ||
+    !isRecord(value.recipe.optimization.seed)
+  ) {
+    return false;
+  }
+
+  const allowedKeys = new Set([
+    "folder",
+    "expected_dataset_hash",
+    "expected_profile_hash",
+    "recipe",
+  ]);
+  if (Object.keys(value).some((key) => !allowedKeys.has(key))) return false;
+
+  const seed = value.recipe.optimization.seed;
+  const hasMaterializedSeed =
+    (seed.mode === "fixed" || seed.mode === "random") &&
+    typeof seed.value === "number" &&
+    Number.isInteger(seed.value) &&
+    seed.value >= 0 &&
+    seed.value <= 2 ** 32 - 1 &&
+    (seed.source === "caller" ||
+      seed.source === "preflight_policy" ||
+      seed.source === "server_policy");
+  const hasExpectedHash =
+    typeof recipeHash === "string" && /^[0-9a-f]{64}$/.test(recipeHash);
+  return (
+    value.folder === folder &&
+    typeof datasetHash === "string" &&
+    datasetHash.length > 0 &&
+    value.expected_dataset_hash === datasetHash &&
+    typeof profileHash === "string" &&
+    profileHash.length > 0 &&
+    value.expected_profile_hash === profileHash &&
+    value.recipe.schema_version === "lora-training-recipe/v1" &&
+    hasExpectedHash &&
+    value.recipe.expected_recipe_hash === recipeHash &&
+    hasMaterializedSeed
+  );
+}
+
+function formatBackendError(data: unknown, status: number): string {
+  if (!data || typeof data !== "object") return `HTTP ${status}`;
+
+  const detail = (data as { detail?: unknown }).detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.flatMap((entry) => {
+      if (!entry || typeof entry !== "object") return [];
+      const item = entry as { loc?: unknown; msg?: unknown };
+      const location = Array.isArray(item.loc) ? item.loc.join(".") : "";
+      const message = typeof item.msg === "string" ? item.msg : "";
+      return location || message
+        ? [`${location}${location && message ? ": " : ""}${message}`]
+        : [];
+    });
+    if (messages.length > 0) return messages.join("; ");
+  }
+  if (detail && typeof detail === "object") {
+    const item = detail as {
+      code?: unknown;
+      message?: unknown;
+      details?: unknown;
+    };
+    const code = typeof item.code === "string" ? item.code : "";
+    const message = typeof item.message === "string" ? item.message : "";
+    const details = formatBackendErrorDetails(item.details);
+    if (code || message) {
+      return [
+        `${code}${code && message ? ": " : ""}${message}`,
+        details ? `(${details})` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+  }
+
+  return `HTTP ${status}`;
+}
+
+function formatPreflightDecision(
+  preflight: TrainingDecisionPreflightResponse,
+): string {
+  const issueCodes = [
+    ...preflight.blocking_issues,
+    ...preflight.warnings,
+  ].map((issue) => issue.code);
+  return [
+    preflight.decision,
+    ...issueCodes,
+    ...preflight.reasons,
+    ...preflight.next_actions,
+  ]
+    .filter(Boolean)
+    .join(" — ");
+}
 
 function Field({
   label,
@@ -66,6 +215,9 @@ export default function LoraTrain() {
   const [numRepeats, setNumRepeats] = useState("");
   const [networkDim, setNetworkDim] = useState("");
   const [networkAlpha, setNetworkAlpha] = useState("");
+  const [touchedOverrides, setTouchedOverrides] = useState<
+    Set<RecipeOverrideKey>
+  >(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [lastStart, setLastStart] = useState<{
@@ -145,6 +297,15 @@ export default function LoraTrain() {
     setSelectedFolders(new Set());
   }, []);
 
+  const touchOverride = useCallback((key: RecipeOverrideKey) => {
+    setTouchedOverrides((previous) => {
+      if (previous.has(key)) return previous;
+      const next = new Set(previous);
+      next.add(key);
+      return next;
+    });
+  }, []);
+
   const handleStart = useCallback(async () => {
     const toProcess = Array.from(selectedFolders);
     if (toProcess.length === 0) {
@@ -156,30 +317,89 @@ export default function LoraTrain() {
     setStartError(null);
     setLastStart(null);
 
-    const buildBody = (folder: string): TrainStartRequest => {
-      const body: TrainStartRequest = { folder };
-      if (checkpoint.trim()) body.checkpoint = checkpoint.trim();
-      body.sdxl = sdxl;
+    const buildRecipeHints = (): TrainingRecipeHints => {
+      const recipe: TrainingRecipeHints = {};
+      const model: NonNullable<TrainingRecipeHints["model"]> = {};
+      const dataset: NonNullable<TrainingRecipeHints["dataset"]> = {};
+      const optimization: NonNullable<
+        TrainingRecipeHints["optimization"]
+      > = {};
+
+      if (touchedOverrides.has("checkpoint") && checkpoint.trim()) {
+        model.checkpoint = checkpoint.trim();
+      }
+      if (touchedOverrides.has("model_family")) {
+        model.family = sdxl ? "sdxl" : "sd15";
+      }
       const epochsNum = parseInt(epochs, 10);
-      if (!Number.isNaN(epochsNum) && epochsNum >= 1) body.epochs = epochsNum;
+      if (
+        touchedOverrides.has("epochs") &&
+        !Number.isNaN(epochsNum) &&
+        epochsNum >= 1
+      ) {
+        optimization.epochs = epochsNum;
+      }
       const resNum = parseInt(resolution, 10);
-      if (!Number.isNaN(resNum) && resNum >= 256 && resNum <= 2048)
-        body.resolution = resNum;
+      if (
+        touchedOverrides.has("resolution") &&
+        !Number.isNaN(resNum) &&
+        resNum >= 256 &&
+        resNum <= 2048
+      ) {
+        dataset.resolution = resNum;
+      }
       const bsNum = parseInt(batchSize, 10);
-      if (!Number.isNaN(bsNum) && bsNum >= 1 && bsNum <= 32)
-        body.batch_size = bsNum;
-      if (learningRate.trim()) body.learning_rate = learningRate.trim();
-      if (classTokens.trim()) body.class_tokens = classTokens.trim();
+      if (
+        touchedOverrides.has("batch_size") &&
+        !Number.isNaN(bsNum) &&
+        bsNum >= 1 &&
+        bsNum <= 32
+      ) {
+        dataset.batch_size = bsNum;
+      }
+      if (
+        touchedOverrides.has("learning_rate") &&
+        learningRate.trim()
+      ) {
+        optimization.learning_rate = learningRate.trim();
+      }
+      if (touchedOverrides.has("trigger_token") && classTokens.trim()) {
+        dataset.trigger_token = classTokens.trim();
+      }
       const nrNum = parseInt(numRepeats, 10);
-      if (!Number.isNaN(nrNum) && nrNum >= 1 && nrNum <= 100)
-        body.num_repeats = nrNum;
+      if (
+        touchedOverrides.has("num_repeats") &&
+        !Number.isNaN(nrNum) &&
+        nrNum >= 1 &&
+        nrNum <= 100
+      ) {
+        dataset.num_repeats = nrNum;
+      }
       const dimNum = parseInt(networkDim, 10);
-      if (!Number.isNaN(dimNum) && dimNum >= 1 && dimNum <= 128)
-        body.network_dim = dimNum;
+      if (
+        touchedOverrides.has("network_dim") &&
+        !Number.isNaN(dimNum) &&
+        dimNum >= 1 &&
+        dimNum <= 128
+      ) {
+        model.network_dim = dimNum;
+      }
       const alphaNum = parseInt(networkAlpha, 10);
-      if (!Number.isNaN(alphaNum) && alphaNum >= 1 && alphaNum <= 128)
-        body.network_alpha = alphaNum;
-      return body;
+      if (
+        touchedOverrides.has("network_alpha") &&
+        !Number.isNaN(alphaNum) &&
+        alphaNum >= 1 &&
+        alphaNum <= 128
+      ) {
+        model.network_alpha = alphaNum;
+      }
+
+      if (Object.keys(model).length > 0) recipe.model = model;
+      if (Object.keys(dataset).length > 0) recipe.dataset = dataset;
+      if (Object.keys(optimization).length > 0) {
+        recipe.optimization = optimization;
+      }
+      return recipe;
     };
 
     const queued: number[] = [];
@@ -188,21 +408,84 @@ export default function LoraTrain() {
 
     for (const folder of toProcess) {
       try {
+        const recipe = buildRecipeHints();
+        const preflightBody: TrainingDecisionPreflightRequest = { folder };
+        if (Object.keys(recipe).length > 0) {
+          preflightBody.recipe = recipe;
+        }
+
+        const preflightRes = await fetch(
+          `${API}/lora-train/datasets/training-decision-preflight`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(preflightBody),
+          },
+        );
+        const preflightData = await preflightRes.json().catch(() => ({}));
+
+        if (!preflightRes.ok) {
+          failed.push(
+            `${folder}: preflight failed — ${formatBackendError(preflightData, preflightRes.status)}`,
+          );
+          continue;
+        }
+
+        const preflight =
+          preflightData as TrainingDecisionPreflightResponse;
+        if (preflight.decision !== "train") {
+          skipped.push(`${folder}: ${formatPreflightDecision(preflight)}`);
+          continue;
+        }
+        if (!preflight.start_payload) {
+          failed.push(
+            `${folder}: preflight failed — missing canonical start_payload; rerun preflight`,
+          );
+          continue;
+        }
+        if (
+          !isCanonicalStartPayload(
+            preflight.start_payload,
+            folder,
+            preflight.dataset_hash,
+            preflight.profile_hash,
+            preflight.recipe_hash,
+          )
+        ) {
+          failed.push(
+            `${folder}: preflight failed — invalid canonical start_payload; rerun preflight`,
+          );
+          continue;
+        }
+
+        const body: TrainingStartPayload = preflight.start_payload;
+
         const res = await fetch(`${API}/lora-train/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildBody(folder)),
+          body: JSON.stringify(body),
         });
         const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
           queued.push(1);
-        } else if (res.status === 409) {
-          skipped.push(folder);
         } else {
-          failed.push(
-            `${folder}: ${typeof data.detail === "string" ? data.detail : res.status}`
-          );
+          const code = backendErrorCode(data);
+          const formattedError = formatBackendError(data, res.status);
+          const approvalInvalidated =
+            code === "dataset_hash_mismatch" ||
+            code === "profile_hash_mismatch";
+          if (res.status === 409 && !approvalInvalidated) {
+            skipped.push(`${folder}: ${formattedError}`);
+          } else {
+            failed.push(
+              `${folder}: ${formattedError}${
+                approvalInvalidated
+                  ? " — approval invalidated; rerun preflight"
+                  : ""
+              }`,
+            );
+          }
         }
       } catch {
         failed.push(`${folder}: 網路錯誤`);
@@ -231,6 +514,7 @@ export default function LoraTrain() {
     numRepeats,
     networkDim,
     networkAlpha,
+    touchedOverrides,
     fetchStatus,
   ]);
 
@@ -449,7 +733,10 @@ export default function LoraTrain() {
             <Field
               label="Checkpoint（選填）"
               value={checkpoint}
-              onChange={setCheckpoint}
+              onChange={(value) => {
+                setCheckpoint(value);
+                touchOverride("checkpoint");
+              }}
               placeholder="incursiosMemeDiffusion_v16PDXL.safetensors"
               help="基礎模型檔名，會自動加上 .env 的 LORA_CHECKPOINT_DIRS 路徑。留空則使用 LORA_DEFAULT_CHECKPOINT。"
             />
@@ -458,7 +745,10 @@ export default function LoraTrain() {
                 <input
                   type="checkbox"
                   checked={sdxl}
-                  onChange={(e) => setSdxl(e.target.checked)}
+                  onChange={(e) => {
+                    setSdxl(e.target.checked);
+                    touchOverride("model_family");
+                  }}
                   className="rounded bg-slate-800 border-slate-600 text-cyan-500 focus:ring-cyan-500"
                 />
                 <span className="text-sm font-medium text-slate-300">SDXL / PDXL 模型</span>
@@ -470,7 +760,10 @@ export default function LoraTrain() {
             <Field
               label="Epochs"
               value={epochs}
-              onChange={setEpochs}
+              onChange={(value) => {
+                setEpochs(value);
+                touchOverride("epochs");
+              }}
               placeholder="10"
               type="number"
               help="總訓練輪數。越多越容易過擬合，通常 10～20。"
@@ -478,7 +771,10 @@ export default function LoraTrain() {
             <Field
               label="Resolution（解析度）"
               value={resolution}
-              onChange={setResolution}
+              onChange={(value) => {
+                setResolution(value);
+                touchOverride("resolution");
+              }}
               placeholder="512"
               type="number"
               help="P2 · 訓練圖片裁切解析度。512 為常見值，768 需較多 VRAM。留空使用預設 512。"
@@ -486,7 +782,10 @@ export default function LoraTrain() {
             <Field
               label="Batch size（批次大小）"
               value={batchSize}
-              onChange={setBatchSize}
+              onChange={(value) => {
+                setBatchSize(value);
+                touchOverride("batch_size");
+              }}
               placeholder="4"
               type="number"
               help="P2 · 每次迭代的圖片數量。越大越穩定但吃 VRAM。留空使用預設 4。"
@@ -494,21 +793,30 @@ export default function LoraTrain() {
             <Field
               label="Learning rate（學習率）"
               value={learningRate}
-              onChange={setLearningRate}
+              onChange={(value) => {
+                setLearningRate(value);
+                touchOverride("learning_rate");
+              }}
               placeholder="1e-4"
               help="P1 · LoRA 建議 1e-4～1e-3。過大會發散，過小收斂慢。留空使用預設 1e-4。"
             />
             <Field
               label="Class tokens（Trigger word）"
               value={classTokens}
-              onChange={setClassTokens}
+              onChange={(value) => {
+                setClassTokens(value);
+                touchOverride("trigger_token");
+              }}
               placeholder="sks"
               help="P1 · 觸發 LoRA 效果的關鍵詞，生圖時需在 prompt 中加上。例如 sks girl、ohwx。"
             />
             <Field
               label="Num repeats（重複次數）"
               value={numRepeats}
-              onChange={setNumRepeats}
+              onChange={(value) => {
+                setNumRepeats(value);
+                touchOverride("num_repeats");
+              }}
               placeholder="10"
               type="number"
               help="P1 · 每個 epoch 中每張圖重複訓練的次數。影響訓練強度，通常 5～15。"
@@ -516,7 +824,10 @@ export default function LoraTrain() {
             <Field
               label="Network dim（LoRA rank）"
               value={networkDim}
-              onChange={setNetworkDim}
+              onChange={(value) => {
+                setNetworkDim(value);
+                touchOverride("network_dim");
+              }}
               placeholder="16"
               type="number"
               help="P0 · LoRA 矩陣的秩。8 較輕量，16/32 表達力較強，64+ 易過擬合。留空使用預設 16。"
@@ -524,7 +835,10 @@ export default function LoraTrain() {
             <Field
               label="Network alpha"
               value={networkAlpha}
-              onChange={setNetworkAlpha}
+              onChange={(value) => {
+                setNetworkAlpha(value);
+                touchOverride("network_alpha");
+              }}
               placeholder="16"
               type="number"
               help="P0 · 與 dim 比決定 LoRA 強度，通常與 dim 同值。alpha/dim 越大生圖時效果越強。"
@@ -541,7 +855,7 @@ export default function LoraTrain() {
                 )}
                 {lastStart.skipped.length > 0 && (
                   <p className="text-amber-400">
-                    跳過（已在佇列或訓練中）：{lastStart.skipped.join(", ")}
+                    未送出 Start：{lastStart.skipped.join(", ")}
                   </p>
                 )}
                 {lastStart.failed.length > 0 && (
@@ -577,7 +891,7 @@ export default function LoraTrain() {
             自動觸發檢查（圖片數 ≥ 門檻）
           </h2>
           <p className="text-slate-400 text-sm mb-3">
-            檢查各資料夾是否符合訓練門檻，符合者自動加入佇列
+            檢查各資料夾是否符合訓練門檻；此操作只回報候選，不會開始訓練
           </p>
           {triggerError && (
             <p className="text-red-400 text-sm mb-2">{triggerError}</p>

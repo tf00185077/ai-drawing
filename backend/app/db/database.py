@@ -37,6 +37,14 @@ _ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "recipe_variant_lineage_json": "TEXT",
         "recipe_variant_lineage_sha256": "VARCHAR(64)",
     },
+    "lora_training_jobs": {
+        "profile_hash": "VARCHAR(64)",
+        "error_details_json": "TEXT",
+        "recipe_schema_version": "VARCHAR(64)",
+        "recipe_hash": "VARCHAR(64)",
+        "recipe_json": "TEXT",
+        "execution_evidence_json": "TEXT",
+    },
 }
 
 

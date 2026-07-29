@@ -108,12 +108,16 @@ def test_lora_workflow_schemas_serialize_expected_fields() -> None:
 
     start_request = TrainStartRequest(
         folder="character/miku",
-        checkpoint="model.safetensors",
-        trigger_token="miku_token",
         expected_dataset_hash="hash-a",
+        expected_profile_hash="profile-hash-a",
+        recipe={
+            "model": {"checkpoint": "model.safetensors"},
+            "dataset": {"trigger_token": "miku_token"},
+        },
     )
-    assert start_request.trigger_token == "miku_token"
+    assert start_request.recipe["dataset"]["trigger_token"] == "miku_token"
     assert start_request.expected_dataset_hash == "hash-a"
+    assert start_request.expected_profile_hash == "profile-hash-a"
 
     job = LoraTrainJobStatusResponse(
         ok=True,
@@ -125,12 +129,14 @@ def test_lora_workflow_schemas_serialize_expected_fields() -> None:
         current_epoch=3,
         total_epochs=3,
         dataset_hash="hash-a",
+        profile_hash="profile-hash-a",
         normalized_trigger_token="miku_token",
         log_path="/tmp/job.log",
         output_path="/tmp/out.safetensors",
         registered_lora_name="out.safetensors",
     ).model_dump()
     assert job["registered_lora_name"] == "out.safetensors"
+    assert job["profile_hash"] == "profile-hash-a"
 
     logs = LoraTrainLogsResponse(ok=True, job_id="job-1", lines=["epoch 1/3"], truncated=False)
     cancel = LoraTrainCancelResponse(ok=True, job_id="job-1", status="cancelled")
