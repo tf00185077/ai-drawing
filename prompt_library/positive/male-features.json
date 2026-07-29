@@ -7,7 +7,7 @@
   "aliases": [],
   "keywords": [],
   "order": 25,
-  "revision": 1,
+  "revision": 2,
   "archived": false,
   "parent_id": "body-appearance",
   "entries": [
@@ -184,6 +184,28 @@
       "aliases": [],
       "keywords": [],
       "order": 160,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "young-boy",
+      "name_zh": "少年男孩",
+      "description_zh": "少年男孩",
+      "prompt": "young boy",
+      "aliases": [],
+      "keywords": [],
+      "order": 170,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fat-man",
+      "name_zh": "胖男",
+      "description_zh": "胖男",
+      "prompt": "fat man",
+      "aliases": [],
+      "keywords": [],
+      "order": 180,
       "revision": 1,
       "archived": false
     }
