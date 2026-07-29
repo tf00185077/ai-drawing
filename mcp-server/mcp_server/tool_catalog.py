@@ -68,8 +68,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("prompt_library_restore", "mcp_server.tools.prompt_library", "prompt_library_restore", "dict", ("POST /api/prompt-library/restore",)),
     # LoRA training
     ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
-    ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",)),
-    ToolCatalogEntry("lora_train_start", "mcp_server.tools.lora_train", "lora_train_start", "dict", ("POST /api/lora-train/start",)),
+    ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",), notes="accepts optional recipe object or JSON object string; Backend owns alias normalization and returns canonical preview"),
+    ToolCatalogEntry("lora_train_start", "mcp_server.tools.lora_train", "lora_train_start", "dict", ("POST /api/lora-train/start",), notes="requires folder, both approval hashes, and broad recipe object/string; returns canonical recipe identity"),
     ToolCatalogEntry("lora_train_job_status", "mcp_server.tools.lora_train", "lora_train_job_status", "dict", ("GET /api/lora-train/jobs/{job_id}",)),
     ToolCatalogEntry("lora_train_logs", "mcp_server.tools.lora_train", "lora_train_logs", "dict", ("GET /api/lora-train/jobs/{job_id}/logs",)),
     ToolCatalogEntry("lora_train_cancel", "mcp_server.tools.lora_train", "lora_train_cancel", "dict", ("POST /api/lora-train/jobs/{job_id}/cancel",)),

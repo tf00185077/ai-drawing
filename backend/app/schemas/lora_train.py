@@ -2,48 +2,338 @@
 LoRA 訓練 API 的 Request/Response 結構
 對應 docs/api-contract.md 模組 4
 """
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+
+RecipeSchemaVersion = Literal["lora-training-recipe/v1"]
+RecipeFieldSource = Literal["caller", "preflight_policy", "server_policy", "derived"]
+ModelFamily = Literal["sd15", "sdxl", "anima"]
+MixedPrecision = Literal["no", "fp16", "bf16"]
+EvidenceStatus = Literal["verified", "unverified", "unavailable"]
+RuntimePlatform = Literal["cuda", "mps", "cpu", "unknown"]
+
+
+class FrozenRecipeModel(BaseModel):
+    """Base for immutable canonical recipe values."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class _FrozenDict(dict):
+    """Small JSON-serializable mapping that rejects mutation after validation."""
+
+    @staticmethod
+    def _immutable(*_args: object, **_kwargs: object) -> None:
+        raise TypeError("canonical recipe mappings are immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+    __ior__ = _immutable
+
+    def __copy__(self) -> "_FrozenDict":
+        return self
+
+    def __deepcopy__(self, _memo: dict[int, object]) -> "_FrozenDict":
+        return self
+
+
+def _freeze_dict(value: dict) -> _FrozenDict:
+    return _FrozenDict(value)
+
+
+class RecipeSeed(FrozenRecipeModel):
+    mode: Literal["fixed", "random"]
+    value: int = Field(ge=0, le=2**32 - 1)
+    source: Literal["caller", "preflight_policy", "server_policy"]
+
+
+class RequestedAnimaRecipe(FrozenRecipeModel):
+    qwen3: str | None = None
+    vae: str | None = None
+    t5_tokenizer_path: str | None = None
+
+
+class RequestedModelRecipe(FrozenRecipeModel):
+    family: ModelFamily | None = None
+    checkpoint: str | None = None
+    allow_unverified_checkpoint: bool | None = None
+    network_module: str | None = None
+    network_dim: int | None = Field(default=None, ge=1, le=512)
+    network_alpha: int | None = Field(default=None, ge=1, le=512)
+    anima: RequestedAnimaRecipe | None = None
+
+
+class RequestedScopeRecipe(FrozenRecipeModel):
+    train_text_encoder: bool | None = None
+
+
+class RequestedDatasetRecipe(FrozenRecipeModel):
+    trigger_token: str | None = None
+    resolution: int | None = Field(default=None, ge=256, le=4096)
+    batch_size: int | None = Field(default=None, ge=1, le=32)
+    keep_tokens: int | None = Field(default=None, ge=0, le=64)
+    num_repeats: int | None = Field(default=None, ge=1, le=1000)
+    enable_bucket: bool | None = None
+    bucket_no_upscale: bool | None = None
+    min_bucket_reso: int | None = Field(default=None, ge=64, le=4096)
+    max_bucket_reso: int | None = Field(default=None, ge=64, le=8192)
+    bucket_reso_steps: int | None = Field(default=None, ge=1, le=1024)
+
+
+class RequestedWarmup(FrozenRecipeModel):
+    mode: Literal["steps", "ratio"]
+    value: int | float = Field(ge=0)
+
+
+class RequestedOptimizationRecipe(FrozenRecipeModel):
+    epochs: int | None = Field(default=None, ge=1, le=500)
+    learning_rate: str | None = None
+    denoiser_learning_rate: str | None = None
+    text_encoder_learning_rates: tuple[str, ...] | None = None
+    gradient_accumulation_steps: int | None = Field(default=None, ge=1, le=1024)
+    optimizer_type: str | None = None
+    optimizer_args: tuple[str, ...] | None = None
+    lr_scheduler: str | None = None
+    lr_scheduler_args: tuple[str, ...] | None = None
+    warmup: RequestedWarmup | None = None
+    seed: RecipeSeed | None = None
+    mixed_precision: MixedPrecision | None = None
+
+
+class RequestedCachingRecipe(FrozenRecipeModel):
+    cache_latents: bool | None = None
+    cache_text_encoder_outputs: bool | None = None
+    cache_to_disk: bool | None = None
+
+
+class RequestedExecutionRecipe(FrozenRecipeModel):
+    max_data_loader_n_workers: int | None = Field(default=None, ge=0, le=128)
+    persistent_data_loader_workers: bool | None = None
+    save_every_n_epochs: int | None = Field(default=None, ge=0, le=500)
+
+
+class RequestedTrainingRecipeV1(FrozenRecipeModel):
+    schema_version: RecipeSchemaVersion = "lora-training-recipe/v1"
+    expected_recipe_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    model: RequestedModelRecipe | None = None
+    scope: RequestedScopeRecipe | None = None
+    dataset: RequestedDatasetRecipe | None = None
+    optimization: RequestedOptimizationRecipe | None = None
+    caching: RequestedCachingRecipe | None = None
+    execution: RequestedExecutionRecipe | None = None
+
+
+class EffectiveAnimaRecipe(FrozenRecipeModel):
+    qwen3: str
+    vae: str | None
+    t5_tokenizer_path: str | None
+
+
+class EffectiveModelRecipe(FrozenRecipeModel):
+    family: ModelFamily
+    checkpoint: str
+    allow_unverified_checkpoint: bool
+    network_module: str
+    network_dim: int = Field(ge=1, le=512)
+    network_alpha: int = Field(ge=1, le=512)
+    anima: EffectiveAnimaRecipe | None
+
+
+class EffectiveScopeRecipe(FrozenRecipeModel):
+    denoiser_kind: Literal["unet", "dit"]
+    train_denoiser: Literal[True] = True
+    train_text_encoder: bool
+    native_scope_flag: Literal["--network_train_unet_only"] | None
+    verification_status: Literal["source_contract", "runtime_verified", "unverified"]
+
+
+class EffectiveDatasetRecipe(FrozenRecipeModel):
+    trigger_token: str
+    class_tokens: str
+    resolution: int = Field(ge=256, le=4096)
+    batch_size: int = Field(ge=1, le=32)
+    keep_tokens: int = Field(ge=0, le=64)
+    num_repeats: int = Field(ge=1, le=1000)
+    enable_bucket: bool
+    bucket_no_upscale: bool
+    min_bucket_reso: int = Field(ge=64, le=4096)
+    max_bucket_reso: int = Field(ge=64, le=8192)
+    bucket_reso_steps: int = Field(ge=1, le=1024)
+
+
+class EffectiveWarmup(FrozenRecipeModel):
+    mode: Literal["steps", "ratio"]
+    value: int | float = Field(ge=0)
+    resolved_steps: int = Field(ge=0)
+
+
+class EffectiveOptimizationRecipe(FrozenRecipeModel):
+    epochs: int = Field(ge=1, le=500)
+    learning_rate: str
+    denoiser_learning_rate: str
+    text_encoder_learning_rates: tuple[str, ...]
+    gradient_accumulation_steps: int = Field(ge=1, le=1024)
+    optimizer_type: str
+    optimizer_args: tuple[str, ...]
+    lr_scheduler: str
+    lr_scheduler_args: tuple[str, ...]
+    warmup: EffectiveWarmup
+    seed: RecipeSeed
+    mixed_precision: MixedPrecision
+
+
+class EffectiveCachingRecipe(FrozenRecipeModel):
+    cache_latents: bool
+    cache_text_encoder_outputs: bool
+    cache_to_disk: bool
+    latent_cache_to_disk: bool
+    text_encoder_cache_to_disk: bool
+
+
+class EffectiveExecutionRecipe(FrozenRecipeModel):
+    max_data_loader_n_workers: int = Field(ge=0, le=128)
+    persistent_data_loader_workers: bool
+    save_every_n_epochs: int = Field(ge=0, le=500)
+    final_only: bool
+
+
+class EffectiveServerRecipe(FrozenRecipeModel):
+    gradient_checkpointing: bool
+    caption_extension: str
+    shuffle_caption: bool
+    save_model_as: Literal["safetensors"]
+    launcher_num_cpu_threads_per_process: int = Field(ge=1, le=128)
+
+
+class EffectiveTrainingRecipeV1(FrozenRecipeModel):
+    schema_version: RecipeSchemaVersion = "lora-training-recipe/v1"
+    model: EffectiveModelRecipe
+    scope: EffectiveScopeRecipe
+    dataset: EffectiveDatasetRecipe
+    optimization: EffectiveOptimizationRecipe
+    caching: EffectiveCachingRecipe
+    execution: EffectiveExecutionRecipe
+    server: EffectiveServerRecipe
+
+
+class ComponentIdentity(FrozenRecipeModel):
+    kind: Literal["checkpoint", "text_encoder", "vae", "tokenizer"]
+    requested_locator: str | None = None
+    resolved_locator: str | None = None
+    size_bytes: int | None = Field(default=None, ge=0)
+    modified_time_ns: int | None = Field(default=None, ge=0)
+    sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    verification_status: EvidenceStatus
+    reason: str | None = None
+    bypass_used: bool = False
+
+
+class TrainerCapabilitySnapshot(FrozenRecipeModel):
+    platform: RuntimePlatform
+    status: EvidenceStatus
+    reason: str | None = None
+    torch_version: str | None = None
+    accelerate_version: str | None = None
+    python_version: str | None = None
+    supported_mixed_precision: tuple[MixedPrecision, ...] = ()
+
+
+class RecipePolicySnapshot(FrozenRecipeModel):
+    default_checkpoint: str
+    default_anima_qwen3: str | None = None
+    default_anima_vae: str | None = None
+    default_anima_t5_tokenizer_path: str | None = None
+    resolution: int = Field(default=1024, ge=256, le=4096)
+    batch_size: int = Field(default=4, ge=1, le=32)
+    learning_rate: str = "1e-4"
+    keep_tokens: int = Field(default=1, ge=0, le=64)
+    num_repeats: int = Field(default=10, ge=1, le=1000)
+    mixed_precision: MixedPrecision = "no"
+    network_dim: int = Field(default=32, ge=1, le=512)
+    network_alpha: int = Field(default=16, ge=1, le=512)
+
+
+class RecipeCompilationContext(FrozenRecipeModel):
+    dataset_hash: str = Field(min_length=1)
+    profile_hash: str = Field(min_length=1)
+    profile_model_family: ModelFamily
+    approved_trigger_token: str = Field(min_length=1)
+    image_count: int = Field(ge=1)
+    policy: RecipePolicySnapshot
+    capability: TrainerCapabilitySnapshot
+    component_identities: Annotated[
+        dict[str, ComponentIdentity],
+        AfterValidator(_freeze_dict),
+    ]
+
+
+class TrainingStepPlan(FrozenRecipeModel):
+    image_count: int = Field(ge=1)
+    num_repeats: int = Field(ge=1)
+    train_examples: int = Field(ge=1)
+    batch_size: int = Field(ge=1)
+    batches_per_epoch: int = Field(ge=1)
+    gradient_accumulation_steps: int = Field(ge=1)
+    optimizer_steps_per_epoch: int = Field(ge=1)
+    epochs: int = Field(ge=1)
+    total_optimizer_steps: int = Field(ge=1)
+    warmup_steps: int = Field(ge=0)
+    process_count: Literal[1] = 1
+
+
+class EvidenceValue(FrozenRecipeModel):
+    status: EvidenceStatus
+    value: str | None = None
+    reason: str | None = None
+
+
+class ExecutionEvidence(FrozenRecipeModel):
+    status: EvidenceStatus
+    reason: str | None = None
+    argv: tuple[str, ...] | None = None
+    dataset_config_content: str | None = None
+    dataset_config_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    launcher: EvidenceValue | None = None
+    capability: TrainerCapabilitySnapshot
+    sd_scripts_revision: EvidenceValue | None = None
+
+
+class RecipeCompilationResult(FrozenRecipeModel):
+    requested: RequestedTrainingRecipeV1
+    effective: EffectiveTrainingRecipeV1
+    field_sources: Annotated[
+        dict[str, RecipeFieldSource],
+        AfterValidator(_freeze_dict),
+    ]
+    component_identities: Annotated[
+        dict[str, ComponentIdentity],
+        AfterValidator(_freeze_dict),
+    ]
+    capability: TrainerCapabilitySnapshot
+    step_plan: TrainingStepPlan
+    recipe_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    execution_evidence: ExecutionEvidence | None = None
 
 
 class TrainStartRequest(BaseModel):
-    """POST /api/lora-train/start 的 Request Body"""
+    """Canonical public Start transport."""
+
+    model_config = ConfigDict(extra="forbid")
 
     folder: str = Field(..., min_length=1)
-    checkpoint: str | None = None
-    trigger_token: str | None = None
-    expected_dataset_hash: str | None = None
-    model_family: str | None = None  # sd15 | sdxl | anima；指定時優先於 sdxl
-    anima_qwen3: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("anima_qwen3", "qwen3"),
-        description="Anima/Qwen3 text encoder path；也接受 qwen3 alias",
-    )
-    anima_vae: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("anima_vae", "vae"),
-        description="Anima/Qwen-Image VAE path；也接受 vae alias",
-    )
-    anima_t5_tokenizer_path: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("anima_t5_tokenizer_path", "t5_tokenizer_path"),
-        description="Anima T5 tokenizer path；也接受 t5_tokenizer_path alias",
-    )
-    sdxl: bool | None = None  # True: SDXL 腳本；False: SD1.x；None: 用 config
-    allow_unverified_checkpoint: bool = False  # True 時跳過 checkpoint 存在性檢查
-    epochs: int = Field(default=10, ge=1, le=500)
-    # 以下未帶入時使用 config 預設值
-    resolution: int | None = Field(default=None, ge=256, le=2048)
-    batch_size: int | None = Field(default=None, ge=1, le=32)
-    learning_rate: str | None = None
-    class_tokens: str | None = None
-    keep_tokens: int | None = Field(default=None, ge=0, le=10)
-    num_repeats: int | None = Field(default=None, ge=1, le=100)
-    mixed_precision: str | None = None  # fp16 | bf16 | fp32 | no; fp32 maps to Kohya CLI no
-    network_module: str | None = None
-    network_dim: int | None = Field(default=None, ge=1, le=128)
-    network_alpha: int | None = Field(default=None, ge=1, le=128)
+    expected_dataset_hash: str = Field(..., min_length=1)
+    expected_profile_hash: str = Field(..., min_length=1)
+    recipe: dict[str, Any] | str
 
 
 class TrainStartResponse(BaseModel):
@@ -53,7 +343,19 @@ class TrainStartResponse(BaseModel):
     status: str = "queued"
     stage: str | None = None
     dataset_hash: str | None = None
+    profile_hash: str | None = None
     normalized_trigger_token: str | None = None
+    recipe_schema_version: RecipeSchemaVersion | None = None
+    recipe_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    requested_recipe: RequestedTrainingRecipeV1 | None = None
+    effective_recipe: EffectiveTrainingRecipeV1 | None = None
+    requested_scope: RequestedScopeRecipe | None = None
+    effective_scope: EffectiveScopeRecipe | None = None
+    field_sources: dict[str, RecipeFieldSource] | None = None
+    step_plan: TrainingStepPlan | None = None
+    component_identities: dict[str, ComponentIdentity] | None = None
+    capability: TrainerCapabilitySnapshot | None = None
+    execution_evidence: ExecutionEvidence | None = None
     message: str | None = None
 
 
@@ -410,6 +712,14 @@ class TrainingDecisionPreflightRequest(BaseModel):
     trigger_token: str | None = None
     expected_dataset_hash: str | None = None
     expected_profile_hash: str | None = None
+    recipe: dict[str, Any] | str | None = None
+
+
+class TrainingStartPayload(FrozenRecipeModel):
+    folder: str = Field(min_length=1)
+    expected_dataset_hash: str = Field(min_length=1)
+    expected_profile_hash: str = Field(min_length=1)
+    recipe: RequestedTrainingRecipeV1
 
 
 class TrainingDecisionPreflightResponse(BaseModel):
@@ -425,6 +735,18 @@ class TrainingDecisionPreflightResponse(BaseModel):
     dataset_hash: str | None = None
     profile_hash: str | None = None
     normalized_trigger_token: str | None = None
+    requested_recipe: RequestedTrainingRecipeV1 | None = None
+    effective_recipe: EffectiveTrainingRecipeV1 | None = None
+    requested_scope: RequestedScopeRecipe | None = None
+    effective_scope: EffectiveScopeRecipe | None = None
+    field_sources: dict[str, RecipeFieldSource] | None = None
+    step_plan: TrainingStepPlan | None = None
+    component_identities: dict[str, ComponentIdentity] | None = None
+    capability: TrainerCapabilitySnapshot | None = None
+    execution_evidence: ExecutionEvidence | None = None
+    recipe_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    policy_rationale: list[str] = Field(default_factory=list)
+    start_payload: TrainingStartPayload | None = None
     suggested_params: TrainingParameterSuggestion | None = None
 
 
@@ -475,6 +797,7 @@ class LoraTrainJobStatusResponse(BaseModel):
     current_epoch: int | None = None
     total_epochs: int | None = None
     dataset_hash: str | None = None
+    profile_hash: str | None = None
     normalized_trigger_token: str | None = None
     log_path: str | None = None
     log_tail_lines: int | None = None
@@ -484,6 +807,18 @@ class LoraTrainJobStatusResponse(BaseModel):
     registration_error: str | None = None
     error_code: str | None = None
     error_message: str | None = None
+    error_details: dict[str, Any] | None = None
+    recipe_schema_version: RecipeSchemaVersion | None = None
+    recipe_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    requested_recipe: RequestedTrainingRecipeV1 | None = None
+    effective_recipe: EffectiveTrainingRecipeV1 | None = None
+    requested_scope: RequestedScopeRecipe | None = None
+    effective_scope: EffectiveScopeRecipe | None = None
+    field_sources: dict[str, RecipeFieldSource] | None = None
+    step_plan: TrainingStepPlan | None = None
+    component_identities: dict[str, ComponentIdentity] | None = None
+    capability: TrainerCapabilitySnapshot | None = None
+    execution_evidence: ExecutionEvidence | None = None
     params: dict | None = None
     smoke_test_status: str | None = None
     smoke_test_job_id: str | None = None

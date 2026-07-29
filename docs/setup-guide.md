@@ -322,3 +322,57 @@ cd ../frontend && npm test && npm run build
 ```
 
 LoRA 訓練開發仍需自行準備 Kohya sd-scripts、checkpoint、accelerate 與相應 runtime；一鍵啟動不會自動安裝這些項目。WD Tagger 第一次實際執行也可能依其既有行為下載模型，與 launcher 的 ComfyUI 安裝流程無關。
+
+### LoRA trainer capability 與 execution evidence
+
+LoRA preflight、Start 與 job status 會回傳 runtime `capability` 和
+`execution_evidence`。這些欄位描述「目前收集到哪一層證據」，不是單一的可用／不可用
+布林值：
+
+| 狀態 | 意義 | 操作方式 |
+|------|------|----------|
+| `verified` | 該 collector 已驗證它所聲明的特定事實，例如已解析且存在的相鄰 accelerate launcher 檔案、可解析的 capability snapshot 或有效 sd-scripts Git revision | 只在該證據的明示範圍內宣稱已驗證；launcher 檔案存在不代表已成功執行 |
+| `unverified` | 有候選值、source-contract 描述或 exact artifact，但證明仍不完整 | 保留 value 與 reason；不得升格成 runtime 初始化成功 |
+| `unavailable` | 無法取得可信證據 | 顯示固定 reason，不得從其他欄位推測；capability 採保守政策，其他 unavailable 子證據則降低 composite status |
+
+Runtime capability snapshot 包含 `platform`（`cuda` / `mps` / `cpu` /
+`unknown`）、status/reason、Python/Torch/Accelerate 版本與
+`supported_mixed_precision`。目前 collector 只以設定的 trainer Python 執行最長
+10 秒、輸出上限 16 KiB 的 metadata probe；它不會啟動 Kohya trainer。若 probe
+失敗，platform 為 `unknown`、status 為 `unavailable`，僅把
+`mixed_precision=no` 視為可用。呼叫者未明確指定 batch 時也採保守 batch 1；
+明確要求但 capability 未驗證支援的 `fp16` / `bf16` 會被拒絕，不會暗中降級。
+
+Launcher evidence 只在 configured Python 的相鄰目錄存在 `accelerate` /
+`accelerate.exe` 檔案時為 `verified`。沒有相鄰檔案時使用
+`<python> -m accelerate launch`，但 module availability 未驗證，所以是
+`unverified`；未設定 Python 時使用 PATH `accelerate launch`，路徑解析延至
+execution，同樣是 `unverified`。sd-scripts revision 只有取得合法的 40–64 位 Git
+HEAD SHA 時為 `verified`；其他情況一律是 `unavailable`，只回固定 reason，不帶
+subprocess output。
+
+Execution evidence 的生命週期如下：
+
+1. Preflight／剛建立的 job 只有 source-contract preview，通常是
+   `status=unverified`，reason 為 bounded trainer probe deferred。此時沒有
+   trainer 初始化證明。
+2. Worker 取得 dataset lock 後，在 `Popen` 前產生並持久化即將使用的 exact argv、
+   exact dataset TOML、TOML SHA-256、launcher evidence、sd-scripts revision，並
+   帶入 Start compilation 已取得的 capability snapshot；之後才用同一 argv 啟動，
+   不會在鎖內重新執行 capability probe。
+3. Composite execution evidence 只有在 launcher、capability 與 sd-scripts
+   revision 三者都為 `verified` 時才是 `verified`。即使 exact argv/TOML 已存在，
+   任一子證據為 `unverified` 或 `unavailable`，composite 仍是 `unverified`，
+   並保留 reason。即使 composite 為 `verified`，也只代表三項 pre-launch 證據已
+   驗證，不代表 `Popen` 成功、trainer 初始化成功或訓練成功。
+4. 舊 job 的 v1 recipe/evidence 欄位可能是 `null`。報告時應標成
+   `unavailable`；legacy `params` 只能作歷史背景，不能用來補造 canonical recipe
+   或 runtime evidence。
+
+`effective_scope.verification_status=source_contract` 只代表編譯器已依
+sd-scripts 參數契約映射 scope，不代表 trainer 已成功初始化該 scope。
+
+目前的三 family（SD1.5 / SDXL / Anima）離線 fixtures 與 mocked `Popen` 測試只驗證
+source contract、argv/TOML 組裝及持久化順序；它們不是實際 trainer 初始化證明。
+真實環境的 bounded trainer initialization probe 明確延後到第 4 批，這一批不可把它
+記為已執行或已驗證。

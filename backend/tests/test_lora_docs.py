@@ -2,21 +2,26 @@
 import zipfile
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.services import lora_dataset
 
 client = TestClient(app)
 
 
 @pytest.fixture
-def lora_train_tmp(tmp_path: Path):
+def lora_train_tmp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """暫存 lora_train_dir"""
     (tmp_path / "lora_train").mkdir()
-    return tmp_path / "lora_train"
+    train_dir = tmp_path / "lora_train"
+    settings = SimpleNamespace(lora_train_dir=str(train_dir))
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
+    return train_dir
 
 
 @patch("app.api.lora_docs.run_wd_tagger")
@@ -188,3 +193,54 @@ def test_files_list_returns_items(mock_settings, lora_train_tmp: Path) -> None:
     assert len(items) == 1
     assert items[0]["path"] == "my_lora/x.png"
     assert items[0]["caption_path"] == "my_lora/x.txt"
+
+
+def test_dataset_write_routes_reject_an_active_training_lock(
+    lora_train_tmp: Path,
+) -> None:
+    dataset_dir = lora_train_tmp / "my_lora"
+    dataset_dir.mkdir()
+    (dataset_dir / "a.png").write_bytes(b"approved-image")
+    (dataset_dir / "a.txt").write_text("approved caption", encoding="utf-8")
+    settings = SimpleNamespace(
+        lora_train_dir=str(lora_train_tmp),
+        llm_caption_url="https://caption.invalid/api",
+    )
+
+    with (
+        patch("app.api.lora_docs.get_settings", return_value=settings),
+        patch("app.api.lora_docs.run_wd_tagger") as tagger,
+        patch("httpx.AsyncClient.post") as caption_request,
+        lora_dataset.dataset_lock("my_lora", owner="training:test-job"),
+    ):
+        responses = [
+            client.post(
+                "/api/lora-docs/upload",
+                files=[
+                    (
+                        "files",
+                        ("new.png", BytesIO(b"unapproved-image"), "image/png"),
+                    )
+                ],
+                data={"folder": "my_lora"},
+            ),
+            client.put(
+                "/api/lora-docs/caption/my_lora/a.png",
+                json={"content": "unapproved caption"},
+            ),
+            client.post(
+                "/api/lora-docs/batch-prefix",
+                json={"images": ["my_lora/a.png"], "prefix": "unapproved "},
+            ),
+            client.post("/api/lora-docs/caption-llm/my_lora/a.png"),
+        ]
+
+    assert [response.status_code for response in responses] == [409, 409, 409, 409]
+    assert all(
+        response.json()["detail"]["code"] == "dataset_locked"
+        for response in responses
+    )
+    assert not (dataset_dir / "new.png").exists()
+    assert (dataset_dir / "a.txt").read_text(encoding="utf-8") == "approved caption"
+    tagger.assert_not_called()
+    caption_request.assert_not_called()

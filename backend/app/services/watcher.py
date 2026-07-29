@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import time
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock, Timer
@@ -14,7 +15,8 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from app.config import get_settings
-from app.services.lora_dataset import is_path_locked
+from app.services import lora_dataset
+from app.services.lora_dataset import DatasetServiceError, is_path_locked
 from app.services.wd_tagger import run_wd_tagger
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,8 @@ logger = logging.getLogger(__name__)
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
 # 防抖：同一目錄 N 秒內只觸發一次，避免大量上傳時重複執行
 DEBOUNCE_SECONDS = 2.0
+LOCK_RETRY_SECONDS = 1.0
+LOCK_RETRY_ATTEMPTS = 3
 FILE_STABLE_SECONDS = 0.5
 STABLE_POLL_INTERVAL = 0.1
 FILE_STABLE_TIMEOUT = 10.0
@@ -260,15 +264,28 @@ def _restore_current_captions(snapshots: dict[Path, tuple[str, int, int]]) -> No
             logger.warning("還原 current caption 失敗 %s: %s", caption_path, exc)
 
 
-def _process_caption_folder(parent_dir: Path) -> None:
+def _caption_dataset_lock(parent_dir: Path):
+    """Use the training lock for folders below lora_train_dir."""
+    try:
+        base_dir = Path(get_settings().lora_train_dir).resolve()
+        folder = parent_dir.resolve().relative_to(base_dir).as_posix()
+    except (AttributeError, TypeError, ValueError):
+        return nullcontext()
+    if not folder or folder == ".":
+        return nullcontext()
+    return lora_dataset.dataset_lock(folder, owner="watcher:wd-tagger")
+
+
+def _process_caption_folder(parent_dir: Path) -> bool:
+    """Caption one folder; return True when a lock conflict should be retried."""
     if is_path_locked(parent_dir):
         logger.info("略過 WD Tagger：dataset 鎖定中 %s", parent_dir)
-        return
+        return True
 
     needing_caption = _images_needing_captioning(parent_dir)
     if not needing_caption:
         logger.debug("略過 WD Tagger：caption 已是最新 %s", parent_dir)
-        return
+        return False
 
     ready_images: list[Path] = []
     for image in needing_caption:
@@ -280,16 +297,24 @@ def _process_caption_folder(parent_dir: Path) -> None:
 
     if not ready_images:
         logger.info("略過 WD Tagger：沒有可 caption 的穩定圖片 %s", parent_dir)
-        return
+        return False
 
-    protected_captions = _snapshot_current_captions(parent_dir)
     try:
-        run_wd_tagger(parent_dir)
-    finally:
-        _restore_current_captions(protected_captions)
+        with _caption_dataset_lock(parent_dir):
+            protected_captions = _snapshot_current_captions(parent_dir)
+            try:
+                run_wd_tagger(parent_dir)
+            finally:
+                _restore_current_captions(protected_captions)
+        return False
+    except DatasetServiceError as exc:
+        if exc.code == "dataset_locked":
+            logger.info("略過 WD Tagger：dataset 鎖定中 %s", parent_dir)
+            return True
+        raise
 
 
-def on_new_image(image_path: Path) -> None:
+def on_new_image(image_path: Path, *, _lock_retry_attempt: int = 0) -> None:
     """
     新圖寫入時被呼叫。
     實作：呼叫 WD Tagger 產生同名 .txt。
@@ -305,18 +330,26 @@ def on_new_image(image_path: Path) -> None:
     parent_dir = path.parent
 
     def _do_tag() -> None:
+        retry_locked = False
         try:
-            _process_caption_folder(parent_dir)
+            retry_locked = _process_caption_folder(parent_dir)
         except Exception:
             logger.exception("watchdog caption generation failed for %s", parent_dir)
         finally:
             with _debounce_lock:
                 _debounce_timers.pop(parent_dir, None)
+        if retry_locked and _lock_retry_attempt < LOCK_RETRY_ATTEMPTS:
+            on_new_image(path, _lock_retry_attempt=_lock_retry_attempt + 1)
 
     with _debounce_lock:
         if old := _debounce_timers.get(parent_dir):
             old.cancel()
-        t = Timer(DEBOUNCE_SECONDS, _do_tag)
+        delay = (
+            DEBOUNCE_SECONDS
+            if _lock_retry_attempt == 0
+            else LOCK_RETRY_SECONDS * (2 ** (_lock_retry_attempt - 1))
+        )
+        t = Timer(delay, _do_tag)
         t.daemon = True
         _debounce_timers[parent_dir] = t
         t.start()

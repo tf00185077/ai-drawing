@@ -1,11 +1,13 @@
 """LoRA 訓練執行器單元測試"""
+import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.services import lora_trainer
+from app.services import lora_dataset, lora_trainer
 
 
 def test_resolve_checkpoint_path_windows_absolute() -> None:
@@ -77,7 +79,7 @@ def _train_script_arg(cmd: list[str]) -> str:
         ({"sdxl": True}, "sdxl_train_network.py", "networks.lora"),
     ],
 )
-def test_run_training_subprocess_routes_model_families_to_expected_train_script(
+def legacy_run_training_subprocess_routes_model_families_to_expected_train_script(
     tmp_path: Path, monkeypatch, kwargs: dict, expected_script: str, expected_network_module: str
 ) -> None:
     """SD1.x, SDXL, and Anima families use their dedicated Kohya entrypoints and LoRA modules."""
@@ -110,7 +112,7 @@ def test_run_training_subprocess_routes_model_families_to_expected_train_script(
     assert _network_module_arg(cmd) == expected_network_module
 
 
-def test_run_training_subprocess_appends_anima_runtime_args(
+def legacy_run_training_subprocess_appends_anima_runtime_args(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Anima command includes the required Qwen3/VAE flags and Kohya full-precision value."""
@@ -153,7 +155,7 @@ def test_run_training_subprocess_appends_anima_runtime_args(
     assert _mixed_precision_arg(cmd) == "no"
 
 
-def test_run_training_subprocess_respects_explicit_network_module_override(
+def legacy_run_training_subprocess_respects_explicit_network_module_override(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Callers can override the family default network module when needed."""
@@ -186,7 +188,7 @@ def test_run_training_subprocess_respects_explicit_network_module_override(
     assert _network_module_arg(cmd) == "networks.custom_anima_lora"
 
 
-def test_run_training_subprocess_maps_requested_fp32_to_kohya_no(
+def legacy_run_training_subprocess_maps_requested_fp32_to_kohya_no(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Kohya full precision uses CLI value `no`, never the API-compatible `fp32`."""
@@ -216,7 +218,7 @@ def test_run_training_subprocess_maps_requested_fp32_to_kohya_no(
     assert "fp32" not in cmd
 
 
-def test_run_training_subprocess_accepts_kohya_no_for_full_precision(
+def legacy_run_training_subprocess_accepts_kohya_no_for_full_precision(
     tmp_path: Path, monkeypatch
 ) -> None:
     """Callers may pass Kohya's native `no` full-precision value directly."""
@@ -244,6 +246,31 @@ def test_run_training_subprocess_accepts_kohya_no_for_full_precision(
     assert _mixed_precision_arg(cmd) == "no"
 
 
+def test_run_training_subprocess_launches_exact_persisted_argv(
+    tmp_path: Path,
+) -> None:
+    sd_scripts = tmp_path / "sd-scripts"
+    sd_scripts.mkdir()
+    argv = (
+        "trainer-python",
+        "-m",
+        "accelerate",
+        "launch",
+        str(sd_scripts / "train_network.py"),
+        "--seed",
+        "42",
+    )
+
+    with patch("app.services.lora_trainer.subprocess.Popen") as mock_popen:
+        lora_trainer._run_training_subprocess(
+            argv=argv,
+            sd_scripts_path=sd_scripts,
+        )
+
+    assert mock_popen.call_args.args[0] is argv
+    assert mock_popen.call_args.kwargs["cwd"] == str(sd_scripts)
+
+
 def test_get_pending_generate_nonexistent_returns_none() -> None:
     """不存在的 folder 呼叫 get_and_clear_pending_generate 回傳 None"""
     assert lora_trainer.get_and_clear_pending_generate("nonexistent") is None
@@ -254,6 +281,12 @@ def reset_trainer():
     """每個測試前清空佇列"""
     lora_trainer._reset_for_test()
     yield
+
+
+@pytest.fixture(autouse=True)
+def align_dataset_settings(monkeypatch) -> None:
+    """Shared dataset resolution must observe the trainer test settings."""
+    monkeypatch.setattr(lora_dataset, "get_settings", lambda: lora_trainer.get_settings())
 
 
 @pytest.fixture(autouse=True)
@@ -269,13 +302,77 @@ def valid_train_dir(tmp_path: Path):
     folder = tmp_path / "lora_train" / "my_lora"
     folder.mkdir(parents=True)
     (folder / "a.png").write_bytes(b"fake")
-    (folder / "a.txt").write_text("1girl", encoding="utf-8")
+    (folder / "a.txt").write_text("sks, 1girl", encoding="utf-8")
     (folder / "b.jpg").write_bytes(b"fake")
-    (folder / "b.txt").write_text("solo", encoding="utf-8")
+    (folder / "b.txt").write_text("sks, solo", encoding="utf-8")
+    (folder / ".lora-dataset.json").write_text(
+        json.dumps(
+            {
+                "dataset_type": "character",
+                "trigger_token": "sks",
+                "caption_profile": "wd_tags",
+                "model_family": "sd15",
+            }
+        ),
+        encoding="utf-8",
+    )
     (tmp_path / "train_network.py").write_text("# kohya train script\n", encoding="utf-8")
     (tmp_path / "sdxl_train_network.py").write_text("# kohya sdxl train script\n", encoding="utf-8")
     (tmp_path / "anima_train_network.py").write_text("# kohya anima train script\n", encoding="utf-8")
     return tmp_path
+
+
+def _approval_hashes(folder: Path) -> tuple[str, str]:
+    dataset_hash = lora_dataset.compute_dataset_hash(folder.name)
+    profile_hash = hashlib.sha256((folder / ".lora-dataset.json").read_bytes()).hexdigest()
+    return dataset_hash, profile_hash
+
+
+def _canonical_recipe(
+    *,
+    family: str = "sd15",
+    checkpoint: str = "model.ckpt",
+    epochs: int = 5,
+    allow_unverified_checkpoint: bool = True,
+    anima_qwen3: str | None = None,
+) -> dict:
+    model: dict[str, object] = {
+        "family": family,
+        "checkpoint": checkpoint,
+        "allow_unverified_checkpoint": allow_unverified_checkpoint,
+    }
+    if family == "anima":
+        model["anima"] = {"qwen3": anima_qwen3}
+    return {
+        "model": model,
+        "dataset": {"trigger_token": "sks"},
+        "optimization": {"epochs": epochs, "seed": 42},
+    }
+
+
+def _enqueue_approved(
+    train_root: Path,
+    folder: str = "my_lora",
+    *,
+    recipe: dict | None = None,
+) -> str:
+    dataset_hash, profile_hash = _approval_hashes(train_root / folder)
+    return lora_trainer.enqueue(
+        folder,
+        expected_dataset_hash=dataset_hash,
+        expected_profile_hash=profile_hash,
+        recipe=recipe or _canonical_recipe(),
+    )
+
+
+def _set_dataset_family(folder: Path, family: str) -> None:
+    profile_path = folder / ".lora-dataset.json"
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    profile["model_family"] = family
+    profile_path.write_text(
+        json.dumps(profile, sort_keys=True),
+        encoding="utf-8",
+    )
 
 
 @patch("app.services.lora_trainer.get_settings")
@@ -283,21 +380,9 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     mock_settings: MagicMock, valid_train_dir: Path
 ) -> None:
     """enqueue 有效資料夾時回傳 job_id，get_status 顯示 queued"""
-    mock_settings.return_value.lora_train_dir = str(valid_train_dir / "lora_train")
-    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
-    mock_settings.return_value.lora_train_threshold = 10
-    mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
-    mock_settings.return_value.lora_resolution = 512
-    mock_settings.return_value.lora_batch_size = 4
-    mock_settings.return_value.lora_learning_rate = "1e-4"
-    mock_settings.return_value.lora_class_tokens = "sks"
-    mock_settings.return_value.lora_keep_tokens = 1
-    mock_settings.return_value.lora_num_repeats = 10
-    mock_settings.return_value.lora_mixed_precision = "fp16"
-    mock_settings.return_value.lora_network_dim = 16
-    mock_settings.return_value.lora_network_alpha = 16
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
 
-    job_id = lora_trainer.enqueue("my_lora", checkpoint="model.ckpt", epochs=5)
+    job_id = _enqueue_approved(valid_train_dir / "lora_train")
 
     assert job_id
     assert len(job_id) == 36  # uuid format
@@ -309,27 +394,61 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
 
 
 @patch("app.services.lora_trainer.get_settings")
+def test_enqueue_recipe_conflict_has_zero_durable_or_queue_side_effects(
+    mock_settings: MagicMock,
+    valid_train_dir: Path,
+) -> None:
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    dataset_hash, profile_hash = _approval_hashes(
+        valid_train_dir / "lora_train" / "my_lora"
+    )
+
+    with patch(
+        "app.services.lora_trainer._create_persistent_job"
+    ) as create_job:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
+            lora_trainer.enqueue(
+                "my_lora",
+                expected_dataset_hash=dataset_hash,
+                expected_profile_hash=profile_hash,
+                recipe={"batch": 1, "batch_size": 2},
+            )
+
+    assert exc_info.value.code == "recipe_field_conflict"
+    create_job.assert_not_called()
+    assert lora_trainer._queue == []
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_duplicate_folder_is_rejected_before_a_second_durable_row(
+    mock_settings: MagicMock,
+    valid_train_dir: Path,
+) -> None:
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+
+    with patch(
+        "app.services.lora_trainer._create_persistent_job"
+    ) as create_job:
+        _enqueue_approved(valid_train_dir / "lora_train")
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
+            _enqueue_approved(valid_train_dir / "lora_train")
+
+    assert exc_info.value.code == "duplicate_folder"
+    assert create_job.call_count == 1
+    assert len(lora_trainer._queue) == 1
+
+
+@patch("app.services.lora_trainer.get_settings")
 def test_enqueue_missing_sd_scripts_path_raises_trainer_error_without_queueing(
     mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
 ) -> None:
     """enqueue 在缺少 sd-scripts 目錄時應入列前失敗。"""
-    mock_settings.return_value.lora_train_dir = str(valid_train_dir / "lora_train")
-    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
-    mock_settings.return_value.lora_train_threshold = 10
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
     mock_settings.return_value.sd_scripts_path = str(tmp_path / "missing-sd-scripts")
-    mock_settings.return_value.lora_resolution = 512
-    mock_settings.return_value.lora_batch_size = 4
-    mock_settings.return_value.lora_learning_rate = "1e-4"
-    mock_settings.return_value.lora_class_tokens = "sks"
-    mock_settings.return_value.lora_keep_tokens = 1
-    mock_settings.return_value.lora_num_repeats = 10
-    mock_settings.return_value.lora_mixed_precision = "fp16"
-    mock_settings.return_value.lora_network_dim = 16
-    mock_settings.return_value.lora_network_alpha = 16
 
     with patch("app.services.lora_trainer._create_persistent_job") as mock_create:
         with pytest.raises(lora_trainer.TrainerServiceError) as exc:
-            lora_trainer.enqueue("my_lora", checkpoint="model.ckpt", epochs=5)
+            _enqueue_approved(valid_train_dir / "lora_train")
 
     assert exc.value.code == "sd_scripts_path_missing"
     assert exc.value.details["sd_scripts_path"].endswith("missing-sd-scripts")
@@ -340,7 +459,7 @@ def test_enqueue_missing_sd_scripts_path_raises_trainer_error_without_queueing(
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_nonexistent_folder_raises_value_error(
+def legacy_enqueue_nonexistent_folder_raises_value_error(
     mock_settings: MagicMock, tmp_path: Path
 ) -> None:
     """enqueue 不存在的資料夾時拋出 ValueError"""
@@ -361,7 +480,7 @@ def test_enqueue_nonexistent_folder_raises_value_error(
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_folder_without_caption_txt_raises(
+def legacy_enqueue_folder_without_caption_txt_raises(
     mock_settings: MagicMock, tmp_path: Path
 ) -> None:
     """enqueue 資料夾無 .txt caption 時拋出 ValueError"""
@@ -387,6 +506,66 @@ def test_enqueue_folder_without_caption_txt_raises(
 
 
 @patch("app.services.lora_trainer.get_settings")
+def test_enqueue_nonexistent_folder_fails_before_persistence(
+    mock_settings: MagicMock,
+    tmp_path: Path,
+) -> None:
+    mock_settings.return_value.lora_train_dir = str(tmp_path / "lora_train")
+
+    with patch(
+        "app.services.lora_trainer._create_persistent_job"
+    ) as create_job:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
+            lora_trainer.enqueue(
+                "not_exists",
+                expected_dataset_hash="dataset-hash",
+                expected_profile_hash="profile-hash",
+                recipe={},
+            )
+
+    assert exc_info.value.code == "dataset_not_found"
+    create_job.assert_not_called()
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_enqueue_missing_caption_fails_before_persistence(
+    mock_settings: MagicMock,
+    tmp_path: Path,
+) -> None:
+    train_root = tmp_path / "lora_train"
+    folder = train_root / "no_txt"
+    folder.mkdir(parents=True)
+    (folder / "a.png").write_bytes(b"fake")
+    (folder / ".lora-dataset.json").write_text(
+        json.dumps(
+            {
+                "dataset_type": "character",
+                "trigger_token": "sks",
+                "caption_profile": "wd_tags",
+                "model_family": "sd15",
+            }
+        ),
+        encoding="utf-8",
+    )
+    _set_common_enqueue_settings(mock_settings, tmp_path)
+    dataset_hash, profile_hash = _approval_hashes(folder)
+
+    with patch(
+        "app.services.lora_trainer._create_persistent_job"
+    ) as create_job:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
+            lora_trainer.enqueue(
+                "no_txt",
+                expected_dataset_hash=dataset_hash,
+                expected_profile_hash=profile_hash,
+                recipe=_canonical_recipe(),
+            )
+
+    assert exc_info.value.code in {"missing_caption", "no_images"}
+    create_job.assert_not_called()
+
+
+@patch("app.services.lora_trainer.get_settings")
 def test_get_status_idle_when_empty(mock_settings: MagicMock) -> None:
     """佇列空時 get_status 回傳 idle"""
     mock_settings.return_value.lora_train_dir = "/tmp"
@@ -404,23 +583,18 @@ def test_api_start_returns_202_and_job_id(
     from fastapi.testclient import TestClient
     from app.main import app
 
-    mock_settings.return_value.lora_train_dir = str(valid_train_dir / "lora_train")
-    mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
-    mock_settings.return_value.sd_scripts_path = str(valid_train_dir)
-    mock_settings.return_value.lora_resolution = 512
-    mock_settings.return_value.lora_batch_size = 4
-    mock_settings.return_value.lora_learning_rate = "1e-4"
-    mock_settings.return_value.lora_class_tokens = "sks"
-    mock_settings.return_value.lora_keep_tokens = 1
-    mock_settings.return_value.lora_num_repeats = 10
-    mock_settings.return_value.lora_mixed_precision = "fp16"
-    mock_settings.return_value.lora_network_dim = 16
-    mock_settings.return_value.lora_network_alpha = 16
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
 
     client = TestClient(app)
+    dataset_hash, profile_hash = _approval_hashes(valid_train_dir / "lora_train" / "my_lora")
     res = client.post(
         "/api/lora-train/start",
-        json={"folder": "my_lora", "checkpoint": "model.ckpt", "epochs": 5},
+        json={
+            "folder": "my_lora",
+            "expected_dataset_hash": dataset_hash,
+            "expected_profile_hash": profile_hash,
+            "recipe": _canonical_recipe(),
+        },
     )
 
     assert res.status_code == 202
@@ -438,7 +612,12 @@ def test_api_start_does_not_reference_removed_generate_after() -> None:
     with patch("app.api.lora_train.lora_trainer.enqueue", return_value="job-123") as mock_enqueue:
         res = client.post(
             "/api/lora-train/start",
-            json={"folder": "my_lora", "checkpoint": "model.ckpt", "epochs": 5},
+            json={
+                "folder": "my_lora",
+                "expected_dataset_hash": "dataset-sha256",
+                "expected_profile_hash": "profile-sha256",
+                "recipe": {},
+            },
         )
 
     assert res.status_code == 202
@@ -450,7 +629,7 @@ def test_api_start_does_not_reference_removed_generate_after() -> None:
 def test_trigger_check_returns_candidates_when_folder_meets_threshold(
     mock_settings: MagicMock, valid_train_dir: Path
 ) -> None:
-    """trigger_check 達門檻時回傳 candidates 並 enqueue"""
+    """trigger_check 達門檻時只回傳 candidates，不會 enqueue。"""
     base = valid_train_dir / "lora_train"
     mock_settings.return_value.lora_train_dir = str(base)
     mock_settings.return_value.lora_default_checkpoint = "model.ckpt"
@@ -473,7 +652,8 @@ def test_trigger_check_returns_candidates_when_folder_meets_threshold(
     assert any(c["folder"] == "my_lora" for c in result["candidates"])
     assert any(c["image_count"] >= 2 for c in result["candidates"])
     st = lora_trainer.get_status()
-    assert st["status"] == "queued"
+    assert st["status"] == "idle"
+    assert st["queue"] == []
 
 
 @patch("app.services.lora_trainer.get_settings")
@@ -686,7 +866,7 @@ def _set_common_enqueue_settings(mock_settings: MagicMock, train_dir: Path) -> N
     s = mock_settings.return_value
     s.lora_train_dir = str(train_dir / "lora_train")
     s.lora_default_checkpoint = ""
-    s.lora_train_threshold = 10
+    s.lora_train_threshold = 1
     s.sd_scripts_path = str(train_dir)
     s.lora_resolution = 512
     s.lora_batch_size = 4
@@ -697,11 +877,22 @@ def _set_common_enqueue_settings(mock_settings: MagicMock, train_dir: Path) -> N
     s.lora_mixed_precision = "fp16"
     s.lora_network_dim = 16
     s.lora_network_alpha = 16
+    s.lora_save_every_n_epochs = 1
     s.lora_checkpoint_dirs = ""
+    s.lora_model_family = "sd15"
+    s.lora_sdxl = False
+    s.sd_scripts_python = ""
+    s.comfyui_checkpoints_dir = ""
+    s.comfyui_diffusion_models_dir = ""
+    s.comfyui_text_encoders_dir = ""
+    s.comfyui_vae_dir = ""
+    s.lora_anima_qwen3 = ""
+    s.lora_anima_vae = ""
+    s.lora_anima_t5_tokenizer_path = ""
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_missing_anima_checkpoint_raises_checkpoint_not_found(
+def legacy_enqueue_missing_anima_checkpoint_raises_checkpoint_not_found(
     mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
 ) -> None:
     diffusion = tmp_path / "diffusion"
@@ -721,7 +912,7 @@ def test_enqueue_missing_anima_checkpoint_raises_checkpoint_not_found(
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_missing_checkpoint_bypassed_by_allow_unverified(
+def legacy_enqueue_missing_checkpoint_bypassed_by_allow_unverified(
     mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
 ) -> None:
     diffusion = tmp_path / "diffusion"
@@ -749,7 +940,7 @@ def test_enqueue_missing_checkpoint_bypassed_by_allow_unverified(
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_remote_checkpoint_skips_existence_check(
+def legacy_enqueue_remote_checkpoint_skips_existence_check(
     mock_settings: MagicMock, valid_train_dir: Path
 ) -> None:
     _set_common_enqueue_settings(mock_settings, valid_train_dir)
@@ -765,7 +956,7 @@ def test_enqueue_remote_checkpoint_skips_existence_check(
 
 
 @patch("app.services.lora_trainer.get_settings")
-def test_enqueue_anima_bare_checkpoint_resolves_from_diffusion_dir(
+def legacy_enqueue_anima_bare_checkpoint_resolves_from_diffusion_dir(
     mock_settings: MagicMock, valid_train_dir: Path, tmp_path: Path
 ) -> None:
     diffusion = tmp_path / "diffusion"
@@ -791,3 +982,116 @@ def test_enqueue_anima_bare_checkpoint_resolves_from_diffusion_dir(
     )
     assert job_id
     assert len(job_id) == 36
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_recipe_enqueue_rejects_missing_anima_checkpoint_before_persistence(
+    mock_settings: MagicMock,
+    valid_train_dir: Path,
+    tmp_path: Path,
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    qwen3 = tmp_path / "qwen3.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+    _set_dataset_family(
+        valid_train_dir / "lora_train" / "my_lora",
+        "anima",
+    )
+
+    with patch(
+        "app.services.lora_trainer._create_persistent_job"
+    ) as create_job:
+        with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
+            _enqueue_approved(
+                valid_train_dir / "lora_train",
+                recipe=_canonical_recipe(
+                    family="anima",
+                    checkpoint="anima.safetensors",
+                    epochs=1,
+                    allow_unverified_checkpoint=False,
+                    anima_qwen3=str(qwen3),
+                ),
+            )
+
+    assert exc_info.value.code == "checkpoint_not_found"
+    create_job.assert_not_called()
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_recipe_enqueue_records_anima_checkpoint_bypass(
+    mock_settings: MagicMock,
+    valid_train_dir: Path,
+    tmp_path: Path,
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    qwen3 = tmp_path / "qwen3.safetensors"
+    qwen3.write_bytes(b"qwen3")
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+    _set_dataset_family(
+        valid_train_dir / "lora_train" / "my_lora",
+        "anima",
+    )
+
+    job_id = _enqueue_approved(
+        valid_train_dir / "lora_train",
+        recipe=_canonical_recipe(
+            family="anima",
+            checkpoint="anima.safetensors",
+            epochs=1,
+            anima_qwen3=str(qwen3),
+        ),
+    )
+
+    assert len(job_id) == 36
+    checkpoint_identity = lora_trainer._queue[0].recipe.component_identities[
+        "checkpoint"
+    ]
+    assert checkpoint_identity.verification_status == "unverified"
+    assert checkpoint_identity.bypass_used is True
+
+
+@patch("app.services.lora_trainer.get_settings")
+def test_recipe_enqueue_resolves_anima_bare_checkpoint_for_worker_projection(
+    mock_settings: MagicMock,
+    valid_train_dir: Path,
+    tmp_path: Path,
+) -> None:
+    diffusion = tmp_path / "diffusion"
+    diffusion.mkdir()
+    checkpoint = diffusion / "anima.safetensors"
+    checkpoint.write_bytes(b"checkpoint")
+    text_encoders = tmp_path / "text_encoders"
+    text_encoders.mkdir()
+    (text_encoders / "qwen3.safetensors").write_bytes(b"qwen3")
+    _set_common_enqueue_settings(mock_settings, valid_train_dir)
+    mock_settings.return_value.comfyui_diffusion_models_dir = str(diffusion)
+    mock_settings.return_value.comfyui_text_encoders_dir = str(text_encoders)
+    _set_dataset_family(
+        valid_train_dir / "lora_train" / "my_lora",
+        "anima",
+    )
+
+    job_id = _enqueue_approved(
+        valid_train_dir / "lora_train",
+        recipe=_canonical_recipe(
+            family="anima",
+            checkpoint="anima.safetensors",
+            epochs=1,
+            allow_unverified_checkpoint=False,
+            anima_qwen3="qwen3.safetensors",
+        ),
+    )
+
+    assert len(job_id) == 36
+    assert lora_trainer._queue[0].checkpoint == str(checkpoint.resolve())
+    effective = lora_trainer._queue[0].recipe.effective
+    assert effective.model.checkpoint == str(checkpoint.resolve())
+    assert effective.model.anima is not None
+    assert effective.model.anima.qwen3 == str(
+        (text_encoders / "qwen3.safetensors").resolve()
+    )

@@ -8,6 +8,7 @@ the backend HTTP API; the MCP surface keeps only the decision-and-train loop.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import quote
 
@@ -16,13 +17,276 @@ import httpx
 from mcp_server.server import _get_client, mcp
 
 
-def _error(tool: str, code: str, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
+_SAFE_VALIDATION_CONTEXT_KEYS = frozenset(
+    {
+        "expected",
+        "ge",
+        "gt",
+        "le",
+        "lt",
+        "max_length",
+        "min_length",
+        "multiple_of",
+    }
+)
+
+_PREFLIGHT_SUCCESS_FIELDS = frozenset(
+    {
+        "folder",
+        "decision",
+        "reasons",
+        "blocking_issues",
+        "warnings",
+        "next_actions",
+        "dataset_hash",
+        "profile_hash",
+        "normalized_trigger_token",
+        "requested_recipe",
+        "effective_recipe",
+        "requested_scope",
+        "effective_scope",
+        "field_sources",
+        "step_plan",
+        "component_identities",
+        "capability",
+        "execution_evidence",
+        "recipe_hash",
+        "policy_rationale",
+        "start_payload",
+    }
+)
+
+_START_SUCCESS_FIELDS = frozenset(
+    {
+        "job_id",
+        "status",
+        "stage",
+        "dataset_hash",
+        "profile_hash",
+        "normalized_trigger_token",
+        "recipe_schema_version",
+        "recipe_hash",
+        "requested_recipe",
+        "effective_recipe",
+        "requested_scope",
+        "effective_scope",
+        "field_sources",
+        "step_plan",
+        "component_identities",
+        "capability",
+        "execution_evidence",
+        "message",
+    }
+)
+
+_STATUS_SUCCESS_FIELDS = frozenset(
+    {
+        "job_id",
+        "folder",
+        "status",
+        "stage",
+        "progress",
+        "current_epoch",
+        "total_epochs",
+        "dataset_hash",
+        "profile_hash",
+        "normalized_trigger_token",
+        "log_path",
+        "log_tail_lines",
+        "log_truncated",
+        "output_path",
+        "registered_lora_name",
+        "registration_error",
+        "error_code",
+        "error_message",
+        "error_details",
+        "recipe_schema_version",
+        "recipe_hash",
+        "requested_recipe",
+        "effective_recipe",
+        "requested_scope",
+        "effective_scope",
+        "field_sources",
+        "step_plan",
+        "component_identities",
+        "capability",
+        "execution_evidence",
+        "params",
+        "smoke_test_status",
+        "smoke_test_job_id",
+        "smoke_test_artifact",
+        "smoke_test_error",
+        "created_at",
+        "updated_at",
+        "started_at",
+        "completed_at",
+        "cancel_requested_at",
+    }
+)
+
+
+def _safe_validation_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    sanitized: dict[str, Any] = {}
+    location = _safe_location(entry.get("loc"))
+    if location is not None:
+        sanitized["loc"] = location
+    error_type = _safe_identifier(entry.get("type"))
+    if error_type is not None:
+        sanitized["type"] = error_type
+    context = entry.get("ctx")
+    if isinstance(context, dict):
+        safe_context = {
+            key: safe_value
+            for key, value in context.items()
+            if key in _SAFE_VALIDATION_CONTEXT_KEYS
+            and (safe_value := _safe_constraint_value(value)) is not None
+        }
+        if safe_context:
+            sanitized["ctx"] = safe_context
+    return sanitized
+
+
+_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z0-9_.\[\]-]{1,128}$")
+
+
+def _safe_identifier(value: Any) -> str | None:
+    if not isinstance(value, str) or not _SAFE_IDENTIFIER.fullmatch(value):
+        return None
+    return value
+
+
+def _safe_location(value: Any) -> str | list[str | int] | None:
+    if isinstance(value, str):
+        return _safe_identifier(value)
+    if not isinstance(value, (list, tuple)):
+        return None
+    result: list[str | int] = []
+    for item in value:
+        if isinstance(item, int):
+            result.append(item)
+        else:
+            safe_item = _safe_identifier(item)
+            if safe_item is None:
+                return None
+            result.append(safe_item)
+    return result
+
+
+def _safe_constraint_value(value: Any) -> bool | int | float | str | None:
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    return _safe_identifier(value)
+
+
+def _safe_identifier_list(value: Any) -> list[str] | None:
+    if not isinstance(value, (list, tuple)):
+        return None
+    result = [_safe_identifier(item) for item in value]
+    if any(item is None for item in result):
+        return None
+    return [item for item in result if item is not None]
+
+
+def _safe_issue_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    sanitized: dict[str, Any] = {}
+    for key in ("location", "path", "field"):
+        safe_value = _safe_location(entry.get(key))
+        if safe_value is not None:
+            sanitized[key] = safe_value
+    for key in ("type", "code", "suggestion"):
+        safe_value = _safe_identifier(entry.get(key))
+        if safe_value is not None:
+            sanitized[key] = safe_value
+    for key in ("accepted_forms", "accepted_values", "fields"):
+        safe_value = _safe_identifier_list(entry.get(key))
+        if safe_value is not None:
+            sanitized[key] = safe_value
+    constraints = entry.get("constraints")
+    if isinstance(constraints, dict):
+        safe_constraints = {
+            key: safe_value
+            for key, value in constraints.items()
+            if (safe_key := _safe_identifier(key)) is not None
+            and (safe_value := _safe_constraint_value(value)) is not None
+        }
+        if safe_constraints:
+            sanitized["constraints"] = safe_constraints
+    return sanitized
+
+
+def _safe_error_details(details: Any) -> dict[str, Any]:
+    if not isinstance(details, dict):
+        return {}
+    sanitized: dict[str, Any] = {}
+    validation_errors = details.get("validation_errors")
+    if isinstance(validation_errors, list):
+        sanitized["validation_errors"] = [
+            safe
+            for entry in validation_errors
+            if isinstance(entry, dict)
+            and (safe := _safe_validation_entry(entry))
+        ]
+    issues = details.get("issues")
+    if isinstance(issues, list):
+        sanitized["issues"] = [
+            safe
+            for entry in issues
+            if isinstance(entry, dict)
+            and (safe := _safe_issue_entry(entry))
+        ]
+    for key in ("fields", "accepted_forms", "accepted_values"):
+        safe_value = _safe_identifier_list(details.get(key))
+        if safe_value is not None:
+            sanitized[key] = safe_value
+    return sanitized
+
+
+def _safe_error_code(value: Any, fallback: str) -> str:
+    return _safe_identifier(value) or fallback
+
+
+def _http_error_copy(status_code: int) -> tuple[str, str]:
+    if status_code == 404:
+        return (
+            "Backend could not find the requested LoRA resource",
+            "check the identifier or folder and rerun decision preflight",
+        )
+    if status_code == 409:
+        return (
+            "Backend rejected the LoRA request",
+            "rerun decision preflight with current state before retrying",
+        )
+    if status_code == 422:
+        return (
+            "backend request validation failed",
+            "correct the listed fields and retry",
+        )
+    if status_code >= 500:
+        return (
+            "Backend could not complete the LoRA request",
+            "check Backend health and logs before retrying",
+        )
+    return (
+        "Backend rejected the LoRA request",
+        "correct the referenced fields and rerun decision preflight",
+    )
+
+
+def _error(
+    tool: str,
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    *,
+    hint: str | None = None,
+) -> dict[str, Any]:
     return {
         "ok": False,
         "tool": tool,
         "error": {
             "code": code,
             "message": message,
+            "hint": hint,
             "details": details or {},
         },
     }
@@ -34,37 +298,56 @@ def _backend_error(tool: str, exc: Exception) -> dict[str, Any]:
         try:
             payload = exc.response.json()
         except ValueError:
-            payload = {"detail": exc.response.text}
+            payload = {}
         detail = payload.get("detail", payload) if isinstance(payload, dict) else payload
-        if isinstance(detail, dict):
-            code = str(detail.get("code") or f"http_{status_code}")
-            message = str(detail.get("message") or detail.get("error") or exc)
-            details = detail.get("details")
-            if not isinstance(details, dict):
-                details = {k: v for k, v in detail.items() if k not in {"code", "message", "error"}}
+        if status_code == 422 and isinstance(detail, list):
+            validation_errors = [
+                _safe_validation_entry(entry)
+                for entry in detail
+                if isinstance(entry, dict)
+            ]
+            code = "request_validation_failed"
+            message, hint = _http_error_copy(status_code)
+            details = {"validation_errors": validation_errors}
+        elif isinstance(detail, dict):
+            code = _safe_error_code(detail.get("code"), f"http_{status_code}")
+            message, hint = _http_error_copy(status_code)
+            details = _safe_error_details(detail.get("details"))
         else:
             code = f"http_{status_code}"
-            message = str(detail or exc)
+            message, hint = _http_error_copy(status_code)
             details = {}
-        result = _error(tool, code, message, details)
+        result = _error(tool, code, message, details, hint=hint)
         result["status_code"] = status_code
         return result
-    return _error(tool, exc.__class__.__name__, str(exc), {"where": "backend"})
+    return _error(
+        tool,
+        "backend_unavailable",
+        "Backend is unavailable",
+        {"where": "backend"},
+        hint="check Backend availability and retry when it is reachable",
+    )
 
 
 def _failure_from_backend_payload(tool: str, payload: dict[str, Any]) -> dict[str, Any]:
     errors = payload.get("errors")
     first_error = errors[0] if isinstance(errors, list) and errors and isinstance(errors[0], dict) else {}
-    code = str(payload.get("error_code") or first_error.get("code") or "backend_failed")
-    message = str(
-        payload.get("error_message")
-        or first_error.get("message")
-        or payload.get("message")
-        or "backend returned ok=false"
+    code = _safe_error_code(
+        payload.get("error_code") or first_error.get("code"),
+        "backend_failed",
     )
-    result = {k: v for k, v in payload.items() if k not in {"ok", "error_code", "error_message"}}
-    result.update(_error(tool, code, message, {"response": payload}))
-    return result
+    details = _safe_error_details(payload.get("details"))
+    if not details and first_error:
+        safe_issue = _safe_issue_entry(first_error)
+        if safe_issue:
+            details = {"issues": [safe_issue]}
+    return _error(
+        tool,
+        code,
+        "Backend reported a LoRA operation failure",
+        details,
+        hint="repair the cause identified by the error code before retrying",
+    )
 
 
 def _backend_result(tool: str, payload: dict[str, Any], submitted: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -78,6 +361,24 @@ def _backend_result(tool: str, payload: dict[str, Any], submitted: dict[str, Any
     if submitted is not None:
         result["submitted"] = submitted
     return result
+
+
+def _strict_backend_result(
+    tool: str,
+    payload: dict[str, Any],
+    allowed_fields: frozenset[str],
+) -> dict[str, Any]:
+    if payload.get("ok") is False:
+        return _failure_from_backend_payload(tool, payload)
+    return {
+        "ok": True,
+        "tool": tool,
+        **{
+            key: payload[key]
+            for key in sorted(allowed_fields)
+            if key in payload
+        },
+    }
 
 
 def _compact(body: dict[str, Any]) -> dict[str, Any]:
@@ -105,8 +406,9 @@ def lora_training_decision_preflight(
     trigger_token: str | None = None,
     expected_dataset_hash: str | None = None,
     expected_profile_hash: str | None = None,
+    recipe: dict[str, Any] | str | None = None,
 ) -> dict[str, Any]:
-    """Run backend LoRA training decision preflight without starting training."""
+    """Run non-starting preflight with optional recipe object or JSON object string aliases."""
     tool = "lora_training_decision_preflight"
     body = _compact(
         {
@@ -114,13 +416,14 @@ def lora_training_decision_preflight(
             "trigger_token": trigger_token,
             "expected_dataset_hash": expected_dataset_hash,
             "expected_profile_hash": expected_profile_hash,
+            "recipe": recipe,
         }
     )
     try:
-        return _backend_result(
+        return _strict_backend_result(
             tool,
             _get_client().post("lora-train/datasets/training-decision-preflight", json=body),
-            submitted=body,
+            _PREFLIGHT_SUCCESS_FIELDS,
         )
     except Exception as exc:
         return _backend_error(tool, exc)
@@ -129,54 +432,30 @@ def lora_training_decision_preflight(
 @mcp.tool()
 def lora_train_start(
     folder: str,
-    checkpoint: str | None = None,
-    epochs: int | None = None,
-    class_tokens: str | None = None,
-    resolution: int | None = None,
-    keep_tokens: int | None = None,
-    mixed_precision: str | None = None,
-    network_module: str | None = None,
-    network_dim: int | None = None,
-    network_alpha: int | None = None,
-    num_repeats: int | None = None,
-    learning_rate: str | None = None,
-    trigger_token: str | None = None,
-    expected_dataset_hash: str | None = None,
-    model_family: str | None = None,
-    anima_qwen3: str | None = None,
-    anima_vae: str | None = None,
-    anima_t5_tokenizer_path: str | None = None,
-    sdxl: bool | None = None,
-    allow_unverified_checkpoint: bool | None = None,
+    *,
+    expected_dataset_hash: str,
+    expected_profile_hash: str,
+    recipe: dict[str, Any] | str,
 ) -> dict[str, Any]:
-    """Start a backend-managed LoRA training job."""
+    """Start from folder, both approval hashes, and a recipe object or JSON object string.
+
+    The Backend is the sole normalization authority. Documented snake/camel
+    aliases and lossless scalar coercions are forwarded unchanged; success
+    returns the canonical requested/effective recipe identity.
+    """
     tool = "lora_train_start"
-    body = _compact(
-        {
-            "folder": folder,
-            "checkpoint": checkpoint,
-            "epochs": epochs,
-            "class_tokens": class_tokens.strip() if class_tokens else None,
-            "resolution": resolution,
-            "keep_tokens": keep_tokens,
-            "mixed_precision": mixed_precision,
-            "network_module": network_module,
-            "network_dim": network_dim,
-            "network_alpha": network_alpha,
-            "num_repeats": num_repeats,
-            "learning_rate": learning_rate,
-            "trigger_token": trigger_token,
-            "expected_dataset_hash": expected_dataset_hash,
-            "model_family": model_family,
-            "anima_qwen3": anima_qwen3,
-            "anima_vae": anima_vae,
-            "anima_t5_tokenizer_path": anima_t5_tokenizer_path,
-            "sdxl": sdxl,
-            "allow_unverified_checkpoint": allow_unverified_checkpoint,
-        }
-    )
+    body = {
+        "folder": folder,
+        "expected_dataset_hash": expected_dataset_hash,
+        "expected_profile_hash": expected_profile_hash,
+        "recipe": recipe,
+    }
     try:
-        return _backend_result(tool, _get_client().post("lora-train/start", json=body), submitted=body)
+        return _strict_backend_result(
+            tool,
+            _get_client().post("lora-train/start", json=body),
+            _START_SUCCESS_FIELDS,
+        )
     except Exception as exc:
         return _backend_error(tool, exc)
 
@@ -186,7 +465,11 @@ def lora_train_job_status(job_id: str) -> dict[str, Any]:
     """Query one durable LoRA training job by job_id."""
     tool = "lora_train_job_status"
     try:
-        return _backend_result(tool, _get_client().get(f"lora-train/jobs/{quote(job_id)}"))
+        return _strict_backend_result(
+            tool,
+            _get_client().get(f"lora-train/jobs/{quote(job_id)}"),
+            _STATUS_SUCCESS_FIELDS,
+        )
     except Exception as exc:
         return _backend_error(tool, exc)
 
