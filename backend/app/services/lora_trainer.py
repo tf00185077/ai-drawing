@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import json
+import hashlib
 import shutil
 import subprocess
 import threading
@@ -24,9 +25,24 @@ from app.config import get_settings
 from app.core.queue import QueueFullError, submit as submit_generation
 from app.db import database as db_database
 from app.db.models import LoraTrainingJob
-from app.schemas.lora_train import LoraSmokeTestRequest
+from app.schemas.lora_train import (
+    ComponentIdentity,
+    EffectiveTrainingRecipeV1,
+    EvidenceValue,
+    ExecutionEvidence,
+    LoraSmokeTestRequest,
+    RecipeCompilationResult,
+    RequestedTrainingRecipeV1,
+    TrainerCapabilitySnapshot,
+    TrainingStepPlan,
+)
 from app.services import lora_dataset
 from app.services.lora_dataset import DatasetServiceError
+from app.services.lora_training_recipe import (
+    RecipeError,
+    compile_training_recipe,
+    normalize_recipe_input,
+)
 from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
@@ -46,11 +62,6 @@ _TRAIN_SCRIPT_BY_MODEL_FAMILY = {
     "sdxl": "sdxl_train_network.py",
     "anima": "anima_train_network.py",
 }
-_NETWORK_MODULE_BY_MODEL_FAMILY = {
-    "sd15": "networks.lora",
-    "sdxl": "networks.lora",
-    "anima": "networks.lora_anima",
-}
 _MODEL_FAMILY_ALIASES = {
     "sd1": "sd15",
     "sd1.5": "sd15",
@@ -65,11 +76,19 @@ TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
 class TrainerServiceError(ValueError):
     """Structured LoRA trainer workflow error."""
 
-    def __init__(self, code: str, message: str, details: dict | None = None) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        details: dict | None = None,
+        *,
+        hint: str | None = None,
+    ) -> None:
         super().__init__(f"{code}: {message}")
         self.code = code
         self.message = message
         self.details = details or {}
+        self.hint = hint
 
 
 @dataclass
@@ -97,8 +116,10 @@ class _TrainJob:
     anima_vae: str | None = None
     anima_t5_tokenizer_path: str | None = None
     dataset_hash: str | None = None
+    profile_hash: str | None = None
     normalized_trigger_token: str | None = None
     log_path: str | None = None
+    recipe: RecipeCompilationResult | None = None
 
 
 @dataclass
@@ -147,8 +168,26 @@ def _with_db(operation: Callable[[Any], Any]) -> Any:
         return result
     except OperationalError as exc:
         db.rollback()
-        if "no such table" in str(exc).lower():
+        error_text = str(exc).lower()
+        if "no such table" in error_text:
             _ensure_lora_job_table()
+            result = operation(db)
+            db.commit()
+            return result
+        if any(
+            column in error_text
+            for column in (
+                "profile_hash",
+                "error_details_json",
+                "recipe_schema_version",
+                "recipe_hash",
+                "recipe_json",
+                "execution_evidence_json",
+            )
+        ) and (
+            "no such column" in error_text or "has no column named" in error_text
+        ):
+            db_database.init_db()
             result = operation(db)
             db.commit()
             return result
@@ -192,8 +231,108 @@ def _params_json(job: _TrainJob) -> str:
         "anima_qwen3": job.anima_qwen3,
         "anima_vae": job.anima_vae,
         "anima_t5_tokenizer_path": job.anima_t5_tokenizer_path,
+        "dataset_hash": job.dataset_hash,
+        "profile_hash": job.profile_hash,
     }
     return json.dumps(params, ensure_ascii=False, sort_keys=True)
+
+
+def _recipe_envelope_json(compiled: RecipeCompilationResult) -> str:
+    envelope = {
+        "requested": compiled.requested.model_dump(
+            mode="json",
+            exclude_none=True,
+        ),
+        "effective": compiled.effective.model_dump(mode="json"),
+        "field_sources": dict(compiled.field_sources),
+        "step_plan": compiled.step_plan.model_dump(mode="json"),
+        "component_identities": {
+            name: identity.model_dump(mode="json")
+            for name, identity in compiled.component_identities.items()
+        },
+        "capability": compiled.capability.model_dump(mode="json"),
+    }
+    return json.dumps(
+        envelope,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _execution_evidence_json(
+    compiled: RecipeCompilationResult,
+) -> str | None:
+    evidence = compiled.execution_evidence
+    if evidence is None:
+        return None
+    return json.dumps(
+        evidence.model_dump(mode="json", exclude_none=True),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _deserialize_recipe_envelope(recipe_json: str | None) -> dict[str, Any] | None:
+    if not recipe_json:
+        return None
+    try:
+        value = json.loads(recipe_json)
+        if not isinstance(value, dict):
+            return None
+        requested = RequestedTrainingRecipeV1.model_validate(value["requested"])
+        effective = EffectiveTrainingRecipeV1.model_validate(value["effective"])
+        step_plan = TrainingStepPlan.model_validate(value["step_plan"])
+        capability = TrainerCapabilitySnapshot.model_validate(value["capability"])
+        raw_sources = value["field_sources"]
+        if not isinstance(raw_sources, dict) or any(
+            source not in {"caller", "preflight_policy", "server_policy", "derived"}
+            for source in raw_sources.values()
+        ):
+            return None
+        raw_components = value["component_identities"]
+        if not isinstance(raw_components, dict):
+            return None
+        components = {
+            str(name): ComponentIdentity.model_validate(identity)
+            for name, identity in raw_components.items()
+        }
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    return {
+        "requested_recipe": requested.model_dump(
+            mode="json",
+            exclude_none=True,
+        ),
+        "effective_recipe": effective.model_dump(mode="json"),
+        "requested_scope": (
+            requested.scope.model_dump(mode="json", exclude_none=True)
+            if requested.scope is not None
+            else None
+        ),
+        "effective_scope": effective.scope.model_dump(mode="json"),
+        "field_sources": dict(raw_sources),
+        "step_plan": step_plan.model_dump(mode="json"),
+        "component_identities": {
+            name: identity.model_dump(mode="json")
+            for name, identity in components.items()
+        },
+        "capability": capability.model_dump(mode="json"),
+    }
+
+
+def _deserialize_execution_evidence(
+    execution_evidence_json: str | None,
+) -> dict[str, Any] | None:
+    if not execution_evidence_json:
+        return None
+    try:
+        value = json.loads(execution_evidence_json)
+        evidence = ExecutionEvidence.model_validate(value)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    return evidence.model_dump(mode="json", exclude_none=True)
 
 
 def _deserialize_params(params_json: str | None) -> dict | None:
@@ -205,7 +344,38 @@ def _deserialize_params(params_json: str | None) -> dict | None:
         return {"raw": params_json}
 
 
+def _deserialize_error_details(error_details_json: str | None) -> dict | None:
+    if not error_details_json:
+        return None
+    try:
+        value = json.loads(error_details_json)
+    except json.JSONDecodeError:
+        return {"raw": error_details_json}
+    return value if isinstance(value, dict) else {"raw": value}
+
+
 def _serialize_job(row: LoraTrainingJob, *, log_tail_lines: int | None = None, log_truncated: bool | None = None) -> dict:
+    recipe_envelope = _deserialize_recipe_envelope(
+        getattr(row, "recipe_json", None)
+    ) or {
+        "requested_recipe": None,
+        "effective_recipe": None,
+        "requested_scope": None,
+        "effective_scope": None,
+        "field_sources": None,
+        "step_plan": None,
+        "component_identities": None,
+        "capability": None,
+    }
+    recipe_schema_version = getattr(row, "recipe_schema_version", None)
+    if recipe_schema_version != "lora-training-recipe/v1":
+        recipe_schema_version = None
+    recipe_hash = getattr(row, "recipe_hash", None)
+    if not isinstance(recipe_hash, str) or not re.fullmatch(
+        r"[0-9a-f]{64}",
+        recipe_hash,
+    ):
+        recipe_hash = None
     return {
         "ok": True,
         "job_id": row.job_id,
@@ -216,6 +386,7 @@ def _serialize_job(row: LoraTrainingJob, *, log_tail_lines: int | None = None, l
         "current_epoch": row.current_epoch,
         "total_epochs": row.total_epochs,
         "dataset_hash": row.dataset_hash,
+        "profile_hash": row.profile_hash,
         "normalized_trigger_token": row.normalized_trigger_token,
         "log_path": row.log_path,
         "log_tail_lines": log_tail_lines,
@@ -225,6 +396,13 @@ def _serialize_job(row: LoraTrainingJob, *, log_tail_lines: int | None = None, l
         "registration_error": row.registration_error,
         "error_code": row.error_code,
         "error_message": row.error_message,
+        "error_details": _deserialize_error_details(row.error_details_json),
+        "recipe_schema_version": recipe_schema_version,
+        "recipe_hash": recipe_hash,
+        **recipe_envelope,
+        "execution_evidence": _deserialize_execution_evidence(
+            getattr(row, "execution_evidence_json", None)
+        ),
         "params": _deserialize_params(row.params_json),
         "smoke_test_status": row.smoke_test_status,
         "smoke_test_job_id": row.smoke_test_job_id,
@@ -244,6 +422,7 @@ def _get_job_row(db: Any, job_id: str) -> LoraTrainingJob | None:
 
 def _create_persistent_job(job: _TrainJob) -> None:
     def op(db: Any) -> None:
+        compiled = job.recipe
         db.add(
             LoraTrainingJob(
                 job_id=job.job_id,
@@ -254,8 +433,25 @@ def _create_persistent_job(job: _TrainJob) -> None:
                 total_epochs=job.epochs,
                 log_path=job.log_path,
                 dataset_hash=job.dataset_hash,
+                profile_hash=job.profile_hash,
                 normalized_trigger_token=job.normalized_trigger_token,
                 params_json=_params_json(job),
+                recipe_schema_version=(
+                    compiled.effective.schema_version
+                    if compiled is not None
+                    else None
+                ),
+                recipe_hash=compiled.recipe_hash if compiled is not None else None,
+                recipe_json=(
+                    _recipe_envelope_json(compiled)
+                    if compiled is not None
+                    else None
+                ),
+                execution_evidence_json=(
+                    _execution_evidence_json(compiled)
+                    if compiled is not None
+                    else None
+                ),
                 created_at=_utcnow(),
                 updated_at=_utcnow(),
             )
@@ -270,7 +466,14 @@ def _update_persistent_job(job_id: str, **fields: Any) -> None:
         if row is None:
             return
         for key, value in fields.items():
-            setattr(row, key, value)
+            if key == "error_details":
+                row.error_details_json = (
+                    json.dumps(value, ensure_ascii=False, sort_keys=True)
+                    if value is not None
+                    else None
+                )
+            else:
+                setattr(row, key, value)
         row.updated_at = _utcnow()
 
     _with_db(op)
@@ -363,9 +566,84 @@ def clear_queue() -> int:
 
 def _resolve_image_dir(folder: str) -> Path:
     """folder 相對 lora_train_dir，回傳絕對路徑的 image_dir"""
-    settings = get_settings()
-    base = Path(settings.lora_train_dir).resolve()
-    return (base / folder).resolve()
+    try:
+        return lora_dataset.resolve_dataset_dir(folder)
+    except DatasetServiceError as exc:
+        raise TrainerServiceError(exc.code, exc.message, exc.details) from exc
+
+
+def _verify_profile_hash(inspected: Any, expected_profile_hash: str | None) -> str | None:
+    current_profile_hash = getattr(inspected, "profile_hash", None)
+    if expected_profile_hash is not None and current_profile_hash != expected_profile_hash:
+        raise TrainerServiceError(
+            "profile_hash_mismatch",
+            "dataset profile changed after approval",
+            {
+                "expected_profile_hash": expected_profile_hash,
+                "current_profile_hash": current_profile_hash,
+            },
+        )
+    return current_profile_hash
+
+
+def _verify_profile_family(
+    inspected: Any,
+    *,
+    expected_profile_hash: str | None,
+    model_family: str,
+) -> None:
+    # Historical/internal jobs without a profile approval remain readable. Every
+    # public Start supplies a non-null expected_profile_hash and takes this path.
+    if expected_profile_hash is None:
+        return
+
+    profile = inspected.profile
+    if not getattr(profile, "valid", True):
+        errors = list(getattr(profile, "errors", []) or [])
+        first = errors[0] if errors else None
+        raise TrainerServiceError(
+            getattr(first, "code", "dataset_profile_invalid"),
+            "dataset profile validation failed",
+            {
+                "errors": [
+                    issue.model_dump() if hasattr(issue, "model_dump") else str(issue)
+                    for issue in errors
+                ]
+            },
+        )
+
+    declared_family = str(getattr(profile, "model_family", "unknown") or "unknown").strip().lower()
+    if declared_family != _normalize_model_family(model_family):
+        raise TrainerServiceError(
+            "model_family_mismatch",
+            "dataset profile model family does not match the training job",
+            {
+                "requested_model_family": _normalize_model_family(model_family),
+                "dataset_profile_model_family": declared_family,
+            },
+        )
+
+
+def _require_validated_dataset(validation: Any) -> None:
+    if validation.ok:
+        return
+    errors = list(validation.errors or [])
+    first = errors[0] if errors else None
+    details = {
+        "errors": [
+            issue.model_dump() if hasattr(issue, "model_dump") else str(issue)
+            for issue in errors
+        ],
+        "dataset_hash": validation.dataset_hash,
+    }
+    first_details = getattr(first, "details", None)
+    if isinstance(first_details, dict):
+        details.update(first_details)
+    raise TrainerServiceError(
+        getattr(first, "code", "dataset_validation_failed"),
+        getattr(first, "message", "dataset validation failed"),
+        details,
+    )
 
 
 def _dir_candidates(value: Any) -> list[str]:
@@ -502,32 +780,8 @@ def _normalize_model_family(model_family: str | None) -> str:
     )
 
 
-def _resolve_model_family(
-    *,
-    model_family: str | None,
-    sdxl: bool | None,
-    configured_model_family: str | None,
-    configured_sdxl: bool | None,
-) -> str:
-    if model_family is not None and model_family.strip():
-        return _normalize_model_family(model_family)
-    if sdxl is not None:
-        return "sdxl" if sdxl else "sd15"
-    if configured_model_family is not None and configured_model_family.strip():
-        return _normalize_model_family(configured_model_family)
-    return "sdxl" if configured_sdxl is True else "sd15"
-
-
 def _train_script_name(model_family: str) -> str:
     return _TRAIN_SCRIPT_BY_MODEL_FAMILY[_normalize_model_family(model_family)]
-
-
-def _resolve_network_module(model_family: str, network_module: str | None) -> str:
-    """Resolve the Kohya network module, defaulting Anima to its architecture-specific LoRA."""
-    cleaned = _clean_optional_str(network_module)
-    if cleaned:
-        return cleaned
-    return _NETWORK_MODULE_BY_MODEL_FAMILY[_normalize_model_family(model_family)]
 
 
 def _normalize_kohya_mixed_precision(mixed_precision: str | None) -> str:
@@ -687,35 +941,389 @@ def _count_trainable_images(image_dir: Path) -> int:
     return count
 
 
-def _write_dataset_config(
-    image_dir: Path,
-    output_name: str,
+def _toml_bool(value: bool) -> str:
+    return "true" if value else "false"
+
+
+def _toml_string(value: str) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def build_dataset_toml(
+    effective: EffectiveTrainingRecipeV1,
     *,
-    resolution: int = 512,
-    batch_size: int = 4,
-    class_tokens: str = "sks",
-    keep_tokens: int = 1,
-    num_repeats: int = 10,
-) -> Path:
-    """產生 dataset_config TOML，image_dir 需為絕對路徑"""
-    toml_dir = image_dir.parent
-    toml_path = toml_dir / f"{output_name}_dataset.toml"
-    content = f"""[general]
-shuffle_caption = true
-caption_extension = ".txt"
-keep_tokens = {keep_tokens}
+    image_dir: Path,
+) -> str:
+    """Build deterministic dataset TOML exclusively from an effective recipe."""
+    dataset = effective.dataset
+    server = effective.server
+    return (
+        "[general]\n"
+        f"shuffle_caption = {_toml_bool(server.shuffle_caption)}\n"
+        f"caption_extension = {_toml_string(server.caption_extension)}\n"
+        f"keep_tokens = {dataset.keep_tokens}\n"
+        "\n"
+        "[[datasets]]\n"
+        f"resolution = {dataset.resolution}\n"
+        f"batch_size = {dataset.batch_size}\n"
+        f"enable_bucket = {_toml_bool(dataset.enable_bucket)}\n"
+        f"bucket_no_upscale = {_toml_bool(dataset.bucket_no_upscale)}\n"
+        f"min_bucket_reso = {dataset.min_bucket_reso}\n"
+        f"max_bucket_reso = {dataset.max_bucket_reso}\n"
+        f"bucket_reso_steps = {dataset.bucket_reso_steps}\n"
+        "\n"
+        "  [[datasets.subsets]]\n"
+        f"  image_dir = {_toml_string(image_dir.as_posix())}\n"
+        f"  class_tokens = {_toml_string(dataset.class_tokens)}\n"
+        f"  num_repeats = {dataset.num_repeats}\n"
+    )
 
-[[datasets]]
-resolution = {resolution}
-batch_size = {batch_size}
 
-  [[datasets.subsets]]
-  image_dir = "{image_dir.as_posix()}"
-  class_tokens = "{class_tokens}"
-  num_repeats = {num_repeats}
-"""
-    toml_path.write_text(content, encoding="utf-8")
-    return toml_path
+def build_training_argv(
+    effective: EffectiveTrainingRecipeV1,
+    *,
+    launcher_argv: tuple[str, ...],
+    sd_scripts_path: Path,
+    dataset_config_path: Path,
+    output_dir: Path,
+    output_name: str,
+) -> list[str]:
+    """Build exact sd-scripts argv without consulting mutable server settings."""
+    model = effective.model
+    optimization = effective.optimization
+    execution = effective.execution
+    caching = effective.caching
+    argv = [
+        *launcher_argv,
+        "--num_cpu_threads_per_process",
+        str(effective.server.launcher_num_cpu_threads_per_process),
+        str(sd_scripts_path / _TRAIN_SCRIPT_BY_MODEL_FAMILY[model.family]),
+        "--pretrained_model_name_or_path",
+        model.checkpoint,
+        "--dataset_config",
+        str(dataset_config_path),
+        "--output_dir",
+        str(output_dir),
+        "--output_name",
+        output_name,
+        "--network_module",
+        model.network_module,
+        "--network_dim",
+        str(model.network_dim),
+        "--network_alpha",
+        str(model.network_alpha),
+        "--max_train_epochs",
+        str(optimization.epochs),
+        "--learning_rate",
+        optimization.learning_rate,
+        # sd-scripts retains the inherited native name for UNet and DiT.
+        "--unet_lr",
+        optimization.denoiser_learning_rate,
+    ]
+    if model.family == "anima":
+        if model.anima is None:
+            raise ValueError("effective Anima recipe is missing native components")
+        argv.extend(["--qwen3", model.anima.qwen3])
+        if model.anima.vae:
+            argv.extend(["--vae", model.anima.vae])
+        if model.anima.t5_tokenizer_path:
+            argv.extend(
+                ["--t5_tokenizer_path", model.anima.t5_tokenizer_path]
+            )
+    if effective.scope.native_scope_flag:
+        argv.append(effective.scope.native_scope_flag)
+    if effective.scope.train_text_encoder:
+        rates = optimization.text_encoder_learning_rates
+        if model.family == "sdxl":
+            argv.extend(
+                [
+                    "--text_encoder_lr1",
+                    rates[0],
+                    "--text_encoder_lr2",
+                    rates[1],
+                ]
+            )
+        else:
+            argv.extend(["--text_encoder_lr", rates[0]])
+    if execution.save_every_n_epochs > 0:
+        argv.extend(
+            ["--save_every_n_epochs", str(execution.save_every_n_epochs)]
+        )
+    argv.extend(
+        [
+            "--gradient_accumulation_steps",
+            str(optimization.gradient_accumulation_steps),
+            "--max_data_loader_n_workers",
+            str(execution.max_data_loader_n_workers),
+        ]
+    )
+    if execution.persistent_data_loader_workers:
+        argv.append("--persistent_data_loader_workers")
+    argv.extend(["--optimizer_type", optimization.optimizer_type])
+    if optimization.optimizer_args:
+        argv.append("--optimizer_args")
+        argv.extend(optimization.optimizer_args)
+    argv.extend(["--lr_scheduler", optimization.lr_scheduler])
+    if optimization.lr_scheduler_args:
+        argv.append("--lr_scheduler_args")
+        argv.extend(optimization.lr_scheduler_args)
+    argv.extend(
+        [
+            "--lr_warmup_steps",
+            str(optimization.warmup.resolved_steps),
+            "--seed",
+            str(optimization.seed.value),
+            "--save_model_as",
+            effective.server.save_model_as,
+            "--mixed_precision",
+            optimization.mixed_precision,
+        ]
+    )
+    if caching.cache_latents:
+        argv.append("--cache_latents")
+    if caching.latent_cache_to_disk:
+        argv.append("--cache_latents_to_disk")
+    if caching.cache_text_encoder_outputs:
+        argv.append("--cache_text_encoder_outputs")
+    if caching.text_encoder_cache_to_disk:
+        argv.append("--cache_text_encoder_outputs_to_disk")
+    if effective.server.gradient_checkpointing:
+        argv.append("--gradient_checkpointing")
+    return argv
+
+
+def select_accelerate_launcher(
+    python_executable: str | None,
+) -> tuple[tuple[str, ...], EvidenceValue]:
+    """Select a deterministic launcher and report how strongly it was resolved."""
+    configured = str(python_executable or "").strip()
+    if configured:
+        python_path = Path(configured).expanduser().resolve()
+        accelerate_name = "accelerate.exe" if os.name == "nt" else "accelerate"
+        accelerate_path = python_path.parent / accelerate_name
+        if accelerate_path.is_file():
+            resolved = str(accelerate_path.resolve())
+            return (
+                (resolved, "launch"),
+                EvidenceValue(status="verified", value=resolved),
+            )
+        return (
+            (str(python_path), "-m", "accelerate", "launch"),
+            EvidenceValue(
+                status="unverified",
+                value=f"{python_path.name} -m accelerate",
+                reason="accelerate module availability is not verified",
+            ),
+        )
+    return (
+        ("accelerate", "launch"),
+        EvidenceValue(
+            status="unverified",
+            value="accelerate",
+            reason="PATH launcher resolution is deferred until execution",
+        ),
+    )
+
+
+def collect_component_identity(
+    *,
+    kind: str,
+    requested_locator: str | None,
+    resolved_path: Path | None,
+    allow_unverified: bool,
+    digest_resolver: Callable[[Path], str],
+) -> ComponentIdentity:
+    """Collect bounded file identity without leaking filesystem exceptions."""
+    if resolved_path is None:
+        return ComponentIdentity(
+            kind=kind,
+            requested_locator=requested_locator,
+            resolved_locator=None,
+            verification_status="unverified" if allow_unverified else "unavailable",
+            reason="component could not be resolved",
+            bypass_used=allow_unverified,
+        )
+    try:
+        resolved = resolved_path.resolve()
+        stat = resolved.stat()
+    except OSError:
+        return ComponentIdentity(
+            kind=kind,
+            requested_locator=requested_locator,
+            resolved_locator=str(resolved_path),
+            verification_status="unverified" if allow_unverified else "unavailable",
+            reason="component identity is unavailable",
+            bypass_used=allow_unverified,
+        )
+    try:
+        digest = str(digest_resolver(resolved)).strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError
+    except (OSError, ValueError, TypeError):
+        return ComponentIdentity(
+            kind=kind,
+            requested_locator=requested_locator,
+            resolved_locator=str(resolved),
+            size_bytes=stat.st_size,
+            modified_time_ns=stat.st_mtime_ns,
+            verification_status="unverified" if allow_unverified else "unavailable",
+            reason="component digest is unavailable",
+            bypass_used=allow_unverified,
+        )
+    return ComponentIdentity(
+        kind=kind,
+        requested_locator=requested_locator,
+        resolved_locator=str(resolved),
+        size_bytes=stat.st_size,
+        modified_time_ns=stat.st_mtime_ns,
+        sha256=digest,
+        verification_status="verified",
+        bypass_used=False,
+    )
+
+
+_CAPABILITY_PROBE = (
+    "import json,platform\n"
+    "result={'platform':'unknown','python_version':platform.python_version(),"
+    "'torch_version':None,'accelerate_version':None,"
+    "'supported_mixed_precision':['no']}\n"
+    "try:\n"
+    " import torch\n"
+    " result['torch_version']=str(torch.__version__)\n"
+    " if torch.cuda.is_available():\n"
+    "  result['platform']='cuda'; result['supported_mixed_precision'].append('fp16')\n"
+    "  if getattr(torch.cuda,'is_bf16_supported',lambda:False)():"
+    " result['supported_mixed_precision'].append('bf16')\n"
+    " elif getattr(getattr(torch.backends,'mps',None),'is_available',lambda:False)():"
+    " result['platform']='mps'\n"
+    " else: result['platform']='cpu'\n"
+    "except Exception: pass\n"
+    "try:\n"
+    " import accelerate\n"
+    " result['accelerate_version']=str(accelerate.__version__)\n"
+    "except Exception: pass\n"
+    "print(json.dumps(result,separators=(',',':')))\n"
+)
+
+
+def _safe_version(value: object) -> str | None:
+    if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9.+_-]{1,64}", value):
+        return value
+    return None
+
+
+def inspect_trainer_capability(
+    python_executable: str,
+    *,
+    runner: Callable[..., Any] = subprocess.run,
+) -> TrainerCapabilitySnapshot:
+    """Inspect the configured trainer Python with bounded, redacted output."""
+    try:
+        completed = runner(
+            [python_executable, "-c", _CAPABILITY_PROBE],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if completed.returncode != 0 or len(completed.stdout or "") > 16_384:
+            raise ValueError
+        payload = json.loads(completed.stdout)
+        if not isinstance(payload, dict):
+            raise ValueError
+        platform_name = payload.get("platform")
+        if platform_name not in {"cuda", "mps", "cpu"}:
+            raise ValueError
+        supplied_modes = payload.get("supported_mixed_precision")
+        if not isinstance(supplied_modes, list):
+            supplied_modes = []
+        modes = tuple(
+            mode
+            for mode in ("no", "fp16", "bf16")
+            if mode in supplied_modes
+        )
+        if "no" not in modes:
+            modes = ("no", *modes)
+        return TrainerCapabilitySnapshot(
+            platform=platform_name,
+            status="verified",
+            reason=None,
+            torch_version=_safe_version(payload.get("torch_version")),
+            accelerate_version=_safe_version(payload.get("accelerate_version")),
+            python_version=_safe_version(payload.get("python_version")),
+            supported_mixed_precision=modes,
+        )
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return TrainerCapabilitySnapshot(
+            platform="unknown",
+            status="unavailable",
+            reason="trainer runtime inspection failed",
+            supported_mixed_precision=("no",),
+        )
+    except Exception:
+        return TrainerCapabilitySnapshot(
+            platform="unknown",
+            status="unavailable",
+            reason="trainer runtime inspection failed",
+            supported_mixed_precision=("no",),
+        )
+
+
+def collect_sd_scripts_revision(
+    sd_scripts_path: Path,
+    *,
+    runner: Callable[..., Any] = subprocess.run,
+) -> EvidenceValue:
+    """Collect a bounded git revision or report explicit unavailability."""
+    try:
+        completed = runner(
+            ["git", "-C", str(sd_scripts_path), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        revision = str(completed.stdout or "").strip().lower()
+        if completed.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40,64}", revision):
+            raise ValueError
+        return EvidenceValue(status="verified", value=revision)
+    except Exception:
+        return EvidenceValue(
+            status="unavailable",
+            reason="sd-scripts revision is unavailable",
+        )
+
+
+def build_execution_evidence(
+    *,
+    argv: tuple[str, ...],
+    dataset_config_content: str,
+    launcher: EvidenceValue,
+    capability: TrainerCapabilitySnapshot,
+    sd_scripts_revision: EvidenceValue,
+) -> ExecutionEvidence:
+    """Build strict evidence from the exact artifacts that will be launched."""
+    verified = (
+        launcher.status == "verified"
+        and capability.status == "verified"
+        and sd_scripts_revision.status == "verified"
+    )
+    return ExecutionEvidence(
+        status="verified" if verified else "unverified",
+        reason=(
+            None
+            if verified
+            else "one or more runtime evidence items are unavailable or unverified"
+        ),
+        argv=argv,
+        dataset_config_content=dataset_config_content,
+        dataset_config_sha256=hashlib.sha256(
+            dataset_config_content.encode("utf-8")
+        ).hexdigest(),
+        launcher=launcher,
+        capability=capability,
+        sd_scripts_revision=sd_scripts_revision,
+    )
 
 
 def _parse_progress(line: str) -> tuple[float, int | None, int | None] | None:
@@ -740,109 +1348,19 @@ def _parse_progress(line: str) -> tuple[float, int | None, int | None] | None:
 
 def _run_training_subprocess(
     *,
-    image_dir: Path,
-    output_dir: Path,
-    output_name: str,
-    checkpoint: str,
-    epochs: int,
+    argv: tuple[str, ...],
     sd_scripts_path: Path,
-    model_family: str | None = None,
-    sdxl: bool = False,
-    resolution: int = 512,
-    batch_size: int = 4,
-    learning_rate: str = "1e-4",
-    class_tokens: str = "sks",
-    keep_tokens: int = 1,
-    num_repeats: int = 10,
-    mixed_precision: str = "fp16",
-    network_module: str | None = None,
-    network_dim: int = 16,
-    network_alpha: int = 16,
-    anima_qwen3: str | None = None,
-    anima_vae: str | None = None,
-    anima_t5_tokenizer_path: str | None = None,
 ) -> subprocess.Popen[str]:
-    """啟動 Kohya train_network.py subprocess"""
-    family = _resolve_model_family(
-        model_family=model_family,
-        sdxl=sdxl,
-        configured_model_family=None,
-        configured_sdxl=False,
-    )
-    toml_path = _write_dataset_config(
-        image_dir,
-        output_name,
-        resolution=resolution,
-        batch_size=batch_size,
-        class_tokens=class_tokens,
-        keep_tokens=keep_tokens,
-        num_repeats=num_repeats,
-    )
-    settings = get_settings()
-    kohya_mixed_precision = _normalize_kohya_mixed_precision(mixed_precision)
-    resolved_network_module = _resolve_network_module(family, network_module)
-    anima_args = _resolve_anima_runtime_args(
-        model_family=family,
-        anima_qwen3=anima_qwen3,
-        anima_vae=anima_vae,
-        anima_t5_tokenizer_path=anima_t5_tokenizer_path,
-        settings=settings,
-    )
-    python_exe = (settings.sd_scripts_python or "").strip()
+    """Launch exactly the persisted argv without resolving training defaults."""
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(sd_scripts_path) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        str(sd_scripts_path)
+        + os.pathsep
+        + env.get("PYTHONPATH", "")
+    )
     env["PYTHONUNBUFFERED"] = "1"
-    venv_dir = Path(python_exe).resolve().parent if python_exe else None
-    acc_path = venv_dir / ("accelerate.exe" if os.name == "nt" else "accelerate") if venv_dir else None
-    if acc_path and acc_path.exists():
-        cmd_head = [str(acc_path), "launch"]
-    elif python_exe:
-        cmd_head = [python_exe, "-m", "accelerate", "launch"]
-    else:
-        cmd_head = ["accelerate", "launch"]
-    train_script = _train_script_name(family)
-    cmd = [
-        *cmd_head,
-        "--num_cpu_threads_per_process",
-        "1",
-        str(sd_scripts_path / train_script),
-        "--pretrained_model_name_or_path",
-        checkpoint,
-        "--dataset_config",
-        str(toml_path),
-        "--output_dir",
-        str(output_dir),
-        "--output_name",
-        output_name,
-        "--network_module",
-        resolved_network_module,
-        "--network_dim",
-        str(network_dim),
-        "--network_alpha",
-        str(network_alpha),
-        "--max_train_epochs",
-        str(epochs),
-        "--learning_rate",
-        learning_rate,
-    ]
-    if family == "anima":
-        cmd.extend(["--qwen3", str(anima_args["anima_qwen3"])])
-        if anima_args["anima_vae"]:
-            cmd.extend(["--vae", str(anima_args["anima_vae"])])
-        if anima_args["anima_t5_tokenizer_path"]:
-            cmd.extend(["--t5_tokenizer_path", str(anima_args["anima_t5_tokenizer_path"])])
-    if settings.lora_save_every_n_epochs and settings.lora_save_every_n_epochs >= 1:
-        cmd.extend(["--save_every_n_epochs", str(settings.lora_save_every_n_epochs)])
-    cmd += [
-        "--save_model_as",
-        "safetensors",
-        "--mixed_precision",
-        kohya_mixed_precision,
-        "--cache_latents",
-        "--gradient_checkpointing",
-    ]
     return subprocess.Popen(
-        cmd,
+        argv,
         cwd=str(sd_scripts_path),
         env=env,
         stdout=subprocess.PIPE,
@@ -906,59 +1424,103 @@ def _worker_loop() -> None:
             continue
         _wait_count = 0
         log_path = job.log_path or _log_path(job.job_id)
+        dataset_lock_context: Any | None = None
+        dataset_lock_entered = False
 
         try:
             _append_log(log_path, f"Job {job.job_id} dequeued")
             _update_persistent_job(job.job_id, stage="preflight")
-            image_dir = _resolve_image_dir(job.folder)
             output_dir = output_base
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            if not image_dir.exists():
-                raise TrainerServiceError("dataset_not_found", f"image_dir not found: {image_dir}")
+            dataset_lock_context = lora_dataset.dataset_lock(
+                job.folder,
+                owner=f"training:{job.job_id}",
+            )
+            dataset_lock_context.__enter__()
+            dataset_lock_entered = True
+            if dataset_lock_entered:
+                # Resolve and revalidate after taking the same lock held through
+                # the subprocess, closing the approval-to-launch mutation race.
+                image_dir = _resolve_image_dir(job.folder)
+                if not image_dir.exists() or not image_dir.is_dir():
+                    raise TrainerServiceError("dataset_not_found", f"image_dir not found: {image_dir}")
 
-            output_lora = _get_output_lora_path(output_dir, job.folder.replace("/", "_"))
-            if job.dataset_hash:
-                current_hash = lora_dataset.compute_dataset_hash(job.folder)
-                if current_hash != job.dataset_hash:
+                inspected = lora_dataset.inspect_dataset(job.folder)
+                _verify_profile_hash(inspected, job.profile_hash)
+                validation = lora_dataset.validate_dataset(
+                    job.folder,
+                    trigger_token=job.normalized_trigger_token or job.class_tokens,
+                    expected_dataset_hash=job.dataset_hash,
+                    ignore_lock=True,
+                )
+                _require_validated_dataset(validation)
+                _verify_profile_family(
+                    inspected,
+                    expected_profile_hash=job.profile_hash,
+                    model_family=job.model_family,
+                )
+
+                if job.recipe is None:
                     raise TrainerServiceError(
-                        "dataset_hash_mismatch",
-                        "dataset hash changed before training start",
-                        {"expected_dataset_hash": job.dataset_hash, "current_dataset_hash": current_hash},
+                        "recipe_missing",
+                        "queued training job has no immutable v1 recipe",
+                        {"job_id": job.job_id},
                     )
-
-            with lora_dataset.dataset_lock(job.folder, owner=f"training:{job.job_id}"):
+                compiled = job.recipe
+                effective = compiled.effective
+                output_name = job.folder.replace("/", "_")
+                output_lora = _get_output_lora_path(output_dir, output_name)
+                dataset_config_content = build_dataset_toml(
+                    effective,
+                    image_dir=image_dir,
+                )
+                dataset_config_path = image_dir.parent / (
+                    f"{output_name}_dataset.toml"
+                )
+                launcher_argv, launcher_evidence = select_accelerate_launcher(
+                    getattr(settings, "sd_scripts_python", "")
+                )
+                launch_argv = tuple(
+                    build_training_argv(
+                        effective,
+                        launcher_argv=launcher_argv,
+                        sd_scripts_path=sd_scripts,
+                        dataset_config_path=dataset_config_path,
+                        output_dir=output_dir,
+                        output_name=output_name,
+                    )
+                )
+                execution_evidence = build_execution_evidence(
+                    argv=launch_argv,
+                    dataset_config_content=dataset_config_content,
+                    launcher=launcher_evidence,
+                    capability=compiled.capability,
+                    sd_scripts_revision=collect_sd_scripts_revision(sd_scripts),
+                )
+                job.recipe = compiled.model_copy(
+                    update={"execution_evidence": execution_evidence}
+                )
+                _update_persistent_job(
+                    job.job_id,
+                    execution_evidence_json=_execution_evidence_json(job.recipe),
+                )
+                dataset_config_path.write_text(
+                    dataset_config_content,
+                    encoding="utf-8",
+                )
                 _update_persistent_job(
                     job.job_id,
                     status="running",
                     stage="training",
                     progress=0.0,
-                    total_epochs=job.epochs,
+                    total_epochs=effective.optimization.epochs,
                     started_at=_utcnow(),
                     log_path=log_path,
                 )
                 proc = _run_training_subprocess(
-                    image_dir=image_dir,
-                    output_dir=output_dir,
-                    output_name=job.folder.replace("/", "_"),
-                    checkpoint=job.checkpoint,
-                    epochs=job.epochs,
+                    argv=launch_argv,
                     sd_scripts_path=sd_scripts,
-                    model_family=job.model_family,
-                    sdxl=job.sdxl,
-                    resolution=job.resolution,
-                    batch_size=job.batch_size,
-                    learning_rate=job.learning_rate,
-                    class_tokens=job.class_tokens,
-                    keep_tokens=job.keep_tokens,
-                    num_repeats=job.num_repeats,
-                    mixed_precision=job.mixed_precision,
-                    network_module=job.network_module,
-                    network_dim=job.network_dim,
-                    network_alpha=job.network_alpha,
-                    anima_qwen3=job.anima_qwen3,
-                    anima_vae=job.anima_vae,
-                    anima_t5_tokenizer_path=job.anima_t5_tokenizer_path,
                 )
 
                 running_job = _RunningJob(
@@ -966,7 +1528,7 @@ def _worker_loop() -> None:
                     proc=proc,
                     progress=0.0,
                     epoch=None,
-                    total_epochs=job.epochs,
+                    total_epochs=effective.optimization.epochs,
                 )
                 with _lock:
                     _running = running_job
@@ -1117,12 +1679,19 @@ def _worker_loop() -> None:
             err_msg = exc.message
             get_and_clear_pending_generate(job.folder)
             _append_log(log_path, f"Job failed: {exc.code}: {err_msg}")
+            if exc.details:
+                _append_log(
+                    log_path,
+                    "Error details: "
+                    + json.dumps(exc.details, ensure_ascii=False, sort_keys=True),
+                )
             _update_persistent_job(
                 job.job_id,
                 status="failed",
                 stage="failed",
                 error_code=exc.code,
                 error_message=err_msg,
+                error_details=exc.details,
                 completed_at=_utcnow(),
             )
             with _lock:
@@ -1134,12 +1703,19 @@ def _worker_loop() -> None:
             err_msg = exc.message
             get_and_clear_pending_generate(job.folder)
             _append_log(log_path, f"Job failed: {exc.code}: {err_msg}")
+            if exc.details:
+                _append_log(
+                    log_path,
+                    "Error details: "
+                    + json.dumps(exc.details, ensure_ascii=False, sort_keys=True),
+                )
             _update_persistent_job(
                 job.job_id,
                 status="failed",
                 stage="failed",
                 error_code=exc.code,
                 error_message=err_msg,
+                error_details=exc.details,
                 completed_at=_utcnow(),
             )
             with _lock:
@@ -1166,6 +1742,11 @@ def _worker_loop() -> None:
             logger.exception("Job %s 前置或訓練流程失敗: %s", job.job_id, exc)
 
 
+        finally:
+            if dataset_lock_entered and dataset_lock_context is not None:
+                dataset_lock_context.__exit__(None, None, None)
+
+
 def _ensure_worker() -> None:
     """確保 worker 線程已啟動"""
     global _worker_thread
@@ -1182,159 +1763,222 @@ def ensure_worker() -> None:
     _ensure_worker()
 
 
+def _trainer_recipe_error(exc: RecipeError) -> TrainerServiceError:
+    return TrainerServiceError(
+        exc.code,
+        exc.message,
+        exc.details,
+        hint=exc.hint,
+    )
+
+
 def enqueue(
     folder: str,
     *,
-    checkpoint: str | None = None,
-    model_family: str | None = None,
-    anima_qwen3: str | None = None,
-    anima_vae: str | None = None,
-    anima_t5_tokenizer_path: str | None = None,
-    sdxl: bool | None = None,
-    epochs: int = 10,
-    resolution: int | None = None,
-    batch_size: int | None = None,
-    learning_rate: str | None = None,
-    class_tokens: str | None = None,
-    keep_tokens: int | None = None,
-    num_repeats: int | None = None,
-    mixed_precision: str | None = None,
-    network_module: str | None = None,
-    network_dim: int | None = None,
-    network_alpha: int | None = None,
-    trigger_token: str | None = None,
-    expected_dataset_hash: str | None = None,
-    allow_unverified_checkpoint: bool = False,
+    expected_dataset_hash: str,
+    expected_profile_hash: str,
+    recipe: object,
 ) -> str:
-    """
-    加入訓練佇列。
-    folder: 相對 lora_train_dir 的路徑。
-    訓練參數未指定時使用 config 預設值。
-    allow_unverified_checkpoint: True 時跳過 checkpoint 存在性檢查（如遠端掛載邊界情境）。
-    Returns: job_id
-    Raises: ValueError 若資料夾不存在或圖片數不足
-    """
+    """Validate and compile one immutable recipe before creating a queued job."""
     settings = get_settings()
     image_dir = _resolve_image_dir(folder)
+    train_root = Path(settings.lora_train_dir).resolve()
+    canonical_folder = image_dir.relative_to(train_root).as_posix()
+    if not image_dir.is_dir():
+        raise TrainerServiceError(
+            "dataset_not_found",
+            "training dataset folder was not found",
+            {"folder": canonical_folder},
+        )
 
-    if not image_dir.exists() or not image_dir.is_dir():
-        raise ValueError(f"資料夾不存在: {folder}")
+    try:
+        normalized = normalize_recipe_input(
+            recipe,
+            policy_source="server_policy",
+            accept_materialized_policy_seed=True,
+        )
+        requested_optimization = normalized.requested.optimization
+        requested_seed = (
+            requested_optimization.seed
+            if requested_optimization is not None
+            else None
+        )
+        if (
+            "optimization.seed" in normalized.provided_fields
+            and requested_seed is not None
+            and requested_seed.source != "caller"
+            and normalized.requested.expected_recipe_hash is None
+        ):
+            raise RecipeError(
+                "recipe_validation_failed",
+                "training recipe is invalid",
+                "rerun decision preflight or mark a direct Start seed as caller-owned",
+                {
+                    "issues": [
+                        {
+                            "location": "optimization.seed.source",
+                            "type": "untrusted_policy_source",
+                        }
+                    ]
+                },
+            )
 
-    count = _count_trainable_images(image_dir)
-    if count < _MIN_IMAGES:
-        raise ValueError(f"圖片數不足（需至少 {_MIN_IMAGES} 張含 .txt）: {folder} 僅 {count} 張")
-
-    checkpoint_input = checkpoint or settings.lora_default_checkpoint
-    if not checkpoint_input:
-        raise ValueError("未指定 checkpoint 且 config 無 lora_default_checkpoint")
-
-    configured_model_family = getattr(settings, "lora_model_family", "")
-    if not isinstance(configured_model_family, str):
-        configured_model_family = ""
-    configured_sdxl = getattr(settings, "lora_sdxl", False)
-    use_model_family = _resolve_model_family(
-        model_family=model_family,
-        sdxl=sdxl,
-        configured_model_family=configured_model_family,
-        configured_sdxl=configured_sdxl if isinstance(configured_sdxl, bool) else False,
-    )
-    use_sdxl = use_model_family == "sdxl"
-
-    checkpoint_search_dirs = _checkpoint_search_dirs(settings, use_model_family)
-    ckpt = _resolve_model_file(checkpoint_input, checkpoint_search_dirs)
-    _validate_checkpoint_exists(
-        ckpt,
-        checkpoint_input,
-        checkpoint_search_dirs,
-        allow_unverified=allow_unverified_checkpoint,
-    )
-    resolved_network_module = _resolve_network_module(use_model_family, network_module)
-    anima_args = _resolve_anima_runtime_args(
-        model_family=use_model_family,
-        anima_qwen3=anima_qwen3,
-        anima_vae=anima_vae,
-        anima_t5_tokenizer_path=anima_t5_tokenizer_path,
-        settings=settings,
-    )
-    class_token_value = class_tokens or settings.lora_class_tokens
-    normalized_token = lora_dataset.normalize_trigger_token(trigger_token or class_token_value)
-    dataset_hash: str | None = None
-    if trigger_token or expected_dataset_hash:
+        try:
+            inspected = lora_dataset.inspect_dataset(canonical_folder)
+        except DatasetServiceError as exc:
+            raise TrainerServiceError(
+                exc.code,
+                exc.message,
+                exc.details,
+            ) from exc
+        profile_hash = _verify_profile_hash(
+            inspected,
+            expected_profile_hash,
+        )
+        requested_dataset = normalized.requested.dataset
+        approved_token = (
+            requested_dataset.trigger_token
+            if requested_dataset is not None
+            and requested_dataset.trigger_token
+            else inspected.profile.trigger_token
+        )
+        if not approved_token and inspected.trigger_token_candidates:
+            approved_token = inspected.trigger_token_candidates[0]
+        if not approved_token:
+            raise RecipeError(
+                "recipe_context_unavailable",
+                "approved dataset metadata is incomplete",
+                "choose a trigger token and rerun decision preflight",
+                {
+                    "issues": [
+                        {
+                            "location": "dataset.trigger_token",
+                            "type": "required_value",
+                        }
+                    ]
+                },
+            )
+        normalized_token = lora_dataset.normalize_trigger_token(approved_token)
         try:
             validation = lora_dataset.validate_dataset(
-                folder,
+                canonical_folder,
                 trigger_token=normalized_token,
                 expected_dataset_hash=expected_dataset_hash,
             )
         except DatasetServiceError as exc:
-            raise TrainerServiceError(exc.code, exc.message, exc.details) from exc
-        dataset_hash = validation.dataset_hash
-        if not validation.ok:
-            code = validation.errors[0].code if validation.errors else "dataset_validation_failed"
             raise TrainerServiceError(
-                code,
-                "dataset validation failed",
-                {"errors": [issue.model_dump() for issue in validation.errors], "dataset_hash": validation.dataset_hash},
-            )
-    _validate_trainer_runtime(settings.sd_scripts_path, model_family=use_model_family)
+                exc.code,
+                exc.message,
+                exc.details,
+            ) from exc
+        _require_validated_dataset(validation)
+
+        # Local import avoids the decision module's dependency on this service.
+        from app.services.lora_training_decision import (
+            build_recipe_compilation_context,
+        )
+
+        context = build_recipe_compilation_context(
+            inspected,
+            normalized,
+            approved_trigger_token=validation.normalized_trigger_token,
+            settings=settings,
+        )
+        compiled = compile_training_recipe(
+            normalized,
+            context=context,
+            policy_source="server_policy",
+        )
+    except RecipeError as exc:
+        raise _trainer_recipe_error(exc) from exc
+
+    effective = compiled.effective
+    _verify_profile_family(
+        inspected,
+        expected_profile_hash=expected_profile_hash,
+        model_family=effective.model.family,
+    )
+    checkpoint_dirs = _checkpoint_search_dirs(
+        settings,
+        effective.model.family,
+    )
+    resolved_checkpoint = _resolve_model_file(
+        effective.model.checkpoint,
+        checkpoint_dirs,
+    )
+    _validate_checkpoint_exists(
+        resolved_checkpoint,
+        effective.model.checkpoint,
+        checkpoint_dirs,
+        allow_unverified=effective.model.allow_unverified_checkpoint,
+    )
+    effective_anima = effective.model.anima
+    anima_args = _resolve_anima_runtime_args(
+        model_family=effective.model.family,
+        anima_qwen3=effective_anima.qwen3 if effective_anima else None,
+        anima_vae=effective_anima.vae if effective_anima else None,
+        anima_t5_tokenizer_path=(
+            effective_anima.t5_tokenizer_path if effective_anima else None
+        ),
+        settings=settings,
+    )
+    _validate_trainer_runtime(
+        settings.sd_scripts_path,
+        model_family=effective.model.family,
+    )
 
     job_id = str(uuid.uuid4())
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     log_path = _log_path(job_id)
     job = _TrainJob(
         job_id=job_id,
-        folder=folder,
-        checkpoint=ckpt,
-        model_family=use_model_family,
-        sdxl=use_sdxl,
-        epochs=epochs,
+        folder=canonical_folder,
+        checkpoint=resolved_checkpoint,
+        model_family=effective.model.family,
+        sdxl=effective.model.family == "sdxl",
+        epochs=effective.optimization.epochs,
         submitted_at=submitted_at,
-        resolution=resolution if resolution is not None else settings.lora_resolution,
-        batch_size=batch_size if batch_size is not None else settings.lora_batch_size,
-        learning_rate=learning_rate or settings.lora_learning_rate,
-        class_tokens=class_token_value,
-        keep_tokens=keep_tokens if keep_tokens is not None else settings.lora_keep_tokens,
-        num_repeats=num_repeats if num_repeats is not None else settings.lora_num_repeats,
-        mixed_precision=mixed_precision or settings.lora_mixed_precision,
-        network_module=resolved_network_module,
-        network_dim=network_dim if network_dim is not None else settings.lora_network_dim,
-        network_alpha=network_alpha if network_alpha is not None else settings.lora_network_alpha,
+        resolution=effective.dataset.resolution,
+        batch_size=effective.dataset.batch_size,
+        learning_rate=effective.optimization.learning_rate,
+        class_tokens=effective.dataset.class_tokens,
+        keep_tokens=effective.dataset.keep_tokens,
+        num_repeats=effective.dataset.num_repeats,
+        mixed_precision=effective.optimization.mixed_precision,
+        network_module=effective.model.network_module,
+        network_dim=effective.model.network_dim,
+        network_alpha=effective.model.network_alpha,
         anima_qwen3=anima_args["anima_qwen3"],
         anima_vae=anima_args["anima_vae"],
         anima_t5_tokenizer_path=anima_args["anima_t5_tokenizer_path"],
-        dataset_hash=dataset_hash,
-        normalized_trigger_token=normalized_token,
+        dataset_hash=validation.dataset_hash,
+        profile_hash=profile_hash,
+        normalized_trigger_token=validation.normalized_trigger_token,
         log_path=log_path,
+        recipe=compiled,
     )
 
-    _create_persistent_job(job)
     with _lock:
-        # 同一 folder 已在 queue 或 running 則不重複加入
-        if any(j.folder == folder for j in _queue):
-            _update_persistent_job(
-                job.job_id,
-                status="cancelled",
-                stage="cancelled",
-                error_code="duplicate_folder",
-                error_message=f"資料夾已在佇列中: {folder}",
-                completed_at=_utcnow(),
+        if any(queued.folder == canonical_folder for queued in _queue):
+            raise TrainerServiceError(
+                "duplicate_folder",
+                "training is already queued for this dataset folder",
+                {"folder": canonical_folder},
+                hint="monitor the existing job instead of starting a duplicate",
             )
-            raise ValueError(f"資料夾已在佇列中: {folder}")
-        if _running and _running.job.folder == folder:
-            _update_persistent_job(
-                job.job_id,
-                status="cancelled",
-                stage="cancelled",
-                error_code="duplicate_folder",
-                error_message=f"資料夾訓練中: {folder}",
-                completed_at=_utcnow(),
+        if _running and _running.job.folder == canonical_folder:
+            raise TrainerServiceError(
+                "duplicate_folder",
+                "training is already running for this dataset folder",
+                {"folder": canonical_folder},
+                hint="monitor the existing job instead of starting a duplicate",
             )
-            raise ValueError(f"資料夾訓練中: {folder}")
+        _create_persistent_job(job)
         _queue.append(job)
 
-    _append_log(log_path, f"Job {job_id} queued for folder={folder}")
+    _append_log(log_path, f"Job {job_id} queued for folder={canonical_folder}")
     _ensure_worker()
-    logger.info("Job %s 已加入佇列: folder=%s", job_id, folder)
+    logger.info("Job %s queued: folder=%s", job_id, canonical_folder)
     return job_id
 
 
@@ -1626,8 +2270,7 @@ def list_folders() -> list[dict]:
 
 def trigger_check() -> dict:
     """
-    檢查是否符合自動觸發條件（圖片數 ≥ 門檻）。
-    遍歷 lora_train_dir 下各子資料夾，達門檻且未在佇列／執行中者自動 enqueue。
+    探索符合訓練門檻的資料夾，不建立或排入訓練工作。
     Returns: {"should_trigger": bool, "candidates": [{"folder": str, "image_count": int}]}
     """
     settings = get_settings()
@@ -1638,29 +2281,12 @@ def trigger_check() -> dict:
         return {"should_trigger": False, "candidates": []}
 
     candidates: list[dict] = []
-    enqueued: list[str] = []
 
     for image_dir, folder in _iter_training_folders(base):
         count = _count_trainable_images(image_dir)
         if count < threshold:
             continue
         candidates.append({"folder": folder, "image_count": count})
-
-        with _lock:
-            if any(j.folder == folder for j in _queue):
-                continue
-            if _running and _running.job.folder == folder:
-                continue
-
-        try:
-            enqueue(folder)
-            enqueued.append(folder)
-        except (TrainerServiceError, ValueError):
-            # checkpoint 未設定等，略過
-            pass
-
-    if enqueued:
-        logger.info("trigger_check 已 enqueue: %s", enqueued)
 
     return {
         "should_trigger": len(candidates) > 0,

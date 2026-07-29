@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.services import watcher
+from app.services import lora_dataset, watcher
 from app.services.watcher import on_new_image, start_watching, stop_watching
 
 
@@ -111,11 +111,61 @@ def test_on_new_image_skips_wd_tagger_when_dataset_locked(tmp_path: Path) -> Non
 
     with patch("app.services.watcher.run_wd_tagger") as mock_run, patch(
         "app.services.watcher.is_path_locked", return_value=True
-    ), patch("app.services.watcher.DEBOUNCE_SECONDS", 0.01):
+    ), patch("app.services.watcher.DEBOUNCE_SECONDS", 0.01), patch(
+        "app.services.watcher.LOCK_RETRY_ATTEMPTS", 0
+    ):
         on_new_image(img.resolve())
         _wait_for_debounce(tmp_path)
 
         mock_run.assert_not_called()
+
+
+def test_on_new_image_retries_after_dataset_lock_releases(tmp_path: Path) -> None:
+    """A transient dataset lock defers captioning instead of dropping the event."""
+    img = tmp_path / "deferred.png"
+    _write_tiny_png(img)
+
+    with (
+        patch("app.services.watcher.run_wd_tagger") as mock_run,
+        patch("app.services.watcher.is_path_locked", side_effect=[True, False]),
+        patch("app.services.watcher._wait_for_file_stable", return_value=True),
+        patch("app.services.watcher._validate_image_for_captioning", return_value=True),
+        patch("app.services.watcher.DEBOUNCE_SECONDS", 0.01),
+        patch("app.services.watcher.LOCK_RETRY_SECONDS", 0.01, create=True),
+        patch("app.services.watcher.LOCK_RETRY_ATTEMPTS", 1, create=True),
+    ):
+        on_new_image(img.resolve())
+        deadline = time.monotonic() + 1.0
+        while time.monotonic() < deadline and not mock_run.called:
+            time.sleep(0.01)
+
+    mock_run.assert_called_once_with(tmp_path.resolve())
+
+
+def test_watcher_acquires_dataset_lock_after_its_fast_lock_check(
+    tmp_path: Path,
+) -> None:
+    """A training lock won after check-time still prevents the caption write."""
+    train_root = tmp_path / "lora_train"
+    dataset_dir = train_root / "my_lora"
+    dataset_dir.mkdir(parents=True)
+    image = dataset_dir / "test.png"
+    _write_tiny_png(image)
+    settings = SimpleNamespace(lora_train_dir=str(train_root))
+
+    with (
+        patch("app.services.watcher.get_settings", return_value=settings),
+        patch("app.services.lora_dataset.get_settings", return_value=settings),
+        patch("app.services.watcher.is_path_locked", return_value=False),
+        patch("app.services.watcher._wait_for_file_stable", return_value=True),
+        patch("app.services.watcher._validate_image_for_captioning", return_value=True),
+        patch("app.services.watcher.run_wd_tagger") as tagger,
+        lora_dataset.dataset_lock("my_lora", owner="training:test-job"),
+    ):
+        retry_locked = watcher._process_caption_folder(dataset_dir)
+
+    tagger.assert_not_called()
+    assert retry_locked is True
 
 
 def test_on_new_image_waits_until_image_file_is_stable(tmp_path: Path) -> None:

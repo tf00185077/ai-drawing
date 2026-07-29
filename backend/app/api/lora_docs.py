@@ -5,8 +5,10 @@
 """
 import re
 import zipfile
+from contextlib import ExitStack, contextmanager
 from io import BytesIO
 from pathlib import Path
+from typing import Iterator
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
@@ -20,12 +22,73 @@ from app.schemas.lora_docs import (
     UploadItem,
     UploadResponse,
 )
+from app.services import lora_dataset
+from app.services.lora_dataset import DatasetServiceError
 from app.services.wd_tagger import run_wd_tagger
 
 router = APIRouter(prefix="/api/lora-docs", tags=["LoRA 文件"])
 
 # 支援的圖片副檔名
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif"}
+
+
+def _dataset_folder_for_file(relative_path: str) -> str:
+    parent = Path(relative_path).parent.as_posix()
+    return "" if parent == "." else parent
+
+
+@contextmanager
+def _dataset_write_lock(folder: str, operation: str) -> Iterator[None]:
+    """Coordinate all in-process dataset writers with training."""
+    if not folder:
+        # Root-level uploads are retained for backward compatibility; public
+        # training only accepts a strict child folder.
+        yield
+        return
+
+    lock_context = lora_dataset.dataset_lock(
+        folder,
+        owner=f"lora_docs:{operation}",
+    )
+    try:
+        lock_context.__enter__()
+    except DatasetServiceError as exc:
+        status_code = 409 if exc.code == "dataset_locked" else 400
+        raise HTTPException(
+            status_code,
+            detail={
+                "code": exc.code,
+                "message": exc.message,
+                "details": exc.details,
+            },
+        ) from exc
+    try:
+        yield
+    finally:
+        lock_context.__exit__(None, None, None)
+
+
+async def _request_llm_caption(llm_url: str, image_path: Path) -> str:
+    import httpx
+
+    try:
+        response = await httpx.AsyncClient().post(
+            llm_url,
+            json={"image_path": str(image_path)},
+            timeout=60.0,
+        )
+        response.raise_for_status()
+        caption_text = response.json().get("caption", "")
+        if not caption_text:
+            raise HTTPException(500, "LLM returned an empty caption")
+        return caption_text
+    except httpx.RequestError as exc:
+        raise HTTPException(500, f"LLM API request failed: {exc}") from exc
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            500,
+            f"LLM API error {exc.response.status_code}: {exc.response.text}",
+        ) from exc
 
 
 def _sanitize_folder(folder: str | None) -> str:
@@ -102,32 +165,32 @@ async def upload_training_images(
     settings = get_settings()
     base_dir = Path(settings.lora_train_dir).resolve()
     target_dir = (base_dir / rel_folder) if rel_folder else base_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
-
     items: list[UploadItem] = []
-    for uf in files:
-        if not uf.filename:
-            continue
-        ext = Path(uf.filename).suffix.lower()
-        if ext not in IMAGE_EXTENSIONS:
-            continue
-        safe_name = Path(uf.filename).name
-        dest_path = target_dir / safe_name
-        content = await uf.read()
-        dest_path.write_bytes(content)
-        rel_path = f"{rel_folder}/{safe_name}" if rel_folder else safe_name
-        caption_name = f"{Path(safe_name).stem}.txt"
-        caption_path = f"{rel_folder}/{caption_name}" if rel_folder else caption_name
-        items.append(
-            UploadItem(
-                filename=safe_name,
-                path=rel_path,
-                caption_path=caption_path,
+    with _dataset_write_lock(rel_folder, "upload"):
+        target_dir.mkdir(parents=True, exist_ok=True)
+        for uf in files:
+            if not uf.filename:
+                continue
+            ext = Path(uf.filename).suffix.lower()
+            if ext not in IMAGE_EXTENSIONS:
+                continue
+            safe_name = Path(uf.filename).name
+            dest_path = target_dir / safe_name
+            content = await uf.read()
+            dest_path.write_bytes(content)
+            rel_path = f"{rel_folder}/{safe_name}" if rel_folder else safe_name
+            caption_name = f"{Path(safe_name).stem}.txt"
+            caption_path = f"{rel_folder}/{caption_name}" if rel_folder else caption_name
+            items.append(
+                UploadItem(
+                    filename=safe_name,
+                    path=rel_path,
+                    caption_path=caption_path,
+                )
             )
-        )
 
-    if items:
-        run_wd_tagger(target_dir)
+        if items:
+            run_wd_tagger(target_dir)
 
     return UploadResponse(uploaded=len(items), items=items)
 
@@ -163,8 +226,12 @@ async def edit_caption(image_path: str, body: CaptionEditRequest):
         raise
     if not img_full.exists():
         raise HTTPException(404, "找不到該圖片或 .txt")
-    caption_full.parent.mkdir(parents=True, exist_ok=True)
-    caption_full.write_text(body.content, encoding="utf-8")
+    with _dataset_write_lock(
+        _dataset_folder_for_file(caption_rel),
+        "edit-caption",
+    ):
+        caption_full.parent.mkdir(parents=True, exist_ok=True)
+        caption_full.write_text(body.content, encoding="utf-8")
     return CaptionEditResponse(path=caption_rel, updated=True)
 
 
@@ -175,22 +242,40 @@ async def batch_add_trigger_prefix(body: BatchPrefixRequest):
     base_dir = Path(settings.lora_train_dir).resolve()
     updated = 0
     failed: list[str] = []
+    resolved_captions: list[tuple[Path, str]] = []
     for path_str in body.images:
         try:
-            _, caption_full, _ = _resolve_image_and_caption(path_str.strip(), base_dir)
+            _, caption_full, caption_rel = _resolve_image_and_caption(
+                path_str.strip(),
+                base_dir,
+            )
         except HTTPException:
             failed.append(path_str)
             continue
         if not caption_full.exists():
             failed.append(path_str)
             continue
-        content = caption_full.read_text(encoding="utf-8")
-        if content.startswith(body.prefix):
-            updated += 1  # 已含前綴，仍算成功
-            continue
-        new_content = body.prefix + content
-        caption_full.write_text(new_content, encoding="utf-8")
-        updated += 1
+        resolved_captions.append((caption_full, caption_rel))
+
+    dataset_folders = sorted(
+        {
+            folder
+            for _, caption_rel in resolved_captions
+            if (folder := _dataset_folder_for_file(caption_rel))
+        }
+    )
+    with ExitStack() as lock_stack:
+        for folder in dataset_folders:
+            lock_stack.enter_context(
+                _dataset_write_lock(folder, "batch-prefix"),
+            )
+        for caption_full, _ in resolved_captions:
+            content = caption_full.read_text(encoding="utf-8")
+            if content.startswith(body.prefix):
+                updated += 1
+                continue
+            caption_full.write_text(body.prefix + content, encoding="utf-8")
+            updated += 1
     return BatchPrefixResponse(updated=updated, failed=failed)
 
 
@@ -241,30 +326,14 @@ async def generate_caption_llm(image_path: str):
     except HTTPException:
         raise
     
-    if not img_full.exists():
-        raise HTTPException(404, "找不到該圖片")
-    
-    # 呼叫 LLM API 產生 caption
-    import httpx
-    try:
-        # 假設 LLM API 接收 {"image_path": "absolute/path/to/image.png"}
-        # 實際格式依 llm_caption_url 的 specification 調整
-        response = await httpx.AsyncClient().post(
-            llm_url,
-            json={"image_path": str(img_full)},
-            timeout=60.0,
-        )
-        response.raise_for_status()
-        caption_text = response.json().get("caption", "")
-        if not caption_text:
-            raise HTTPException(500, "LLM 回傳空 caption")
-    except httpx.RequestError as e:
-        raise HTTPException(500, f"LLM API 請求失敗: {e}")
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(500, f"LLM API 錯誤 {e.response.status_code}: {e.response.text}")
-    
-    # 寫入 .txt
-    caption_full.parent.mkdir(parents=True, exist_ok=True)
-    caption_full.write_text(caption_text, encoding="utf-8")
+    with _dataset_write_lock(
+        _dataset_folder_for_file(caption_rel),
+        "caption-llm",
+    ):
+        if not img_full.exists():
+            raise HTTPException(404, "找不到該圖片")
+        caption_text = await _request_llm_caption(llm_url, img_full)
+        caption_full.parent.mkdir(parents=True, exist_ok=True)
+        caption_full.write_text(caption_text, encoding="utf-8")
     
     return {"path": caption_rel, "content": caption_text}
