@@ -73,8 +73,10 @@ def test_move_rejects_id_conflict_without_writing(provider):
     with pytest.raises(PromptLibraryError) as exc:
         provider.move_entry("positive", "src", "dress", _req("dst", etag=src_etag))  # src expected_revision=1
     assert exc.value.status_code == 422
-    # src still has dress (not written away)
-    assert any(e.id == "dress" for e in provider.get_category("positive", "src").category.entries)
+    # src still has dress AND was not written (revision unchanged)
+    src = provider.get_category("positive", "src")
+    assert any(e.id == "dress" for e in src.category.entries)
+    assert src.category.revision == 1
 
 
 def test_move_entry_not_found(provider):
@@ -82,6 +84,7 @@ def test_move_entry_not_found(provider):
     with pytest.raises(PromptLibraryError) as exc:
         provider.move_entry("positive", "src", "ghost", _req("dst", prompt="ghost", name="無", etag=src_etag))
     assert exc.value.status_code == 404
+    assert provider.get_category("positive", "src").category.revision == 1
 
 
 def test_move_target_not_found(provider):
@@ -89,9 +92,26 @@ def test_move_target_not_found(provider):
     with pytest.raises(PromptLibraryError) as exc:
         provider.move_entry("positive", "src", "dress", _req("nope", etag=src_etag))
     assert exc.value.status_code == 404
+    assert provider.get_category("positive", "src").category.revision == 1
 
 
 def test_move_stale_source_revision_409(provider):
     with pytest.raises(PromptLibraryError) as exc:
         provider.move_entry("positive", "src", "dress", _req("dst", rev=99))
     assert exc.value.status_code == 409
+
+
+def test_move_preserves_archived_state(provider):
+    from app.schemas.prompt_library import ArchiveRequest
+
+    src = provider.get_category("positive", "src")
+    provider.archive(ArchiveRequest(resource_type="entry", resource_id="skirt",
+                                    polarity="positive", category_id="src",
+                                    expected_revision=src.category.revision,
+                                    expected_etag=src.etag))
+    src2 = provider.get_category("positive", "src")
+    provider.move_entry("positive", "src", "skirt",
+                        _req("dst", prompt="skirt", name="裙",
+                             rev=src2.category.revision, etag=src2.etag))
+    moved = next(e for e in provider.get_category("positive", "dst").category.entries if e.id == "skirt")
+    assert moved.archived is True
