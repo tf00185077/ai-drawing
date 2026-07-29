@@ -19,6 +19,7 @@ function renderBrowser(overrides: Partial<React.ComponentProps<typeof PromptEntr
     onOpenCategory: vi.fn(),
     onAddEntry: vi.fn(),
     onAddLiteral: vi.fn(),
+    onCreateEntry: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
   render(<PromptEntryBrowser {...props} />);
@@ -98,6 +99,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={() => {}}
         onAddEntry={onAddEntry}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
@@ -124,6 +126,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={() => {}}
         onAddEntry={() => {}}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
@@ -156,6 +159,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={() => {}}
         onAddEntry={() => {}}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
@@ -180,6 +184,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={onOpenCategory}
         onAddEntry={() => {}}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
 
@@ -210,6 +215,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={onOpenCategory}
         onAddEntry={() => {}}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
 
@@ -241,6 +247,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={() => {}}
         onAddEntry={() => {}}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
 
@@ -267,6 +274,7 @@ describe("PromptEntryBrowser read-only source catalog", () => {
         onOpenCategory={() => {}}
         onAddEntry={onAddEntry}
         onAddLiteral={() => {}}
+        onCreateEntry={() => Promise.resolve()}
       />,
     );
 
@@ -276,5 +284,82 @@ describe("PromptEntryBrowser read-only source catalog", () => {
     fireEvent.click(screen.getByRole("button", { name: "加入 柔焦光" }));
 
     expect(onAddEntry).toHaveBeenCalledWith(otherCategory, hit);
+  });
+});
+
+describe("PromptEntryBrowser quick-add entry form", () => {
+  it("blocks submission with no category selected", () => {
+    const props = renderBrowser();
+
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("請選擇分類");
+    expect(props.onCreateEntry).not.toHaveBeenCalled();
+  });
+
+  it("blocks submission when the Chinese name or English prompt is empty", () => {
+    const props = renderBrowser();
+
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: category.id } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("請填寫中文名稱與英文 prompt");
+    expect(props.onCreateEntry).not.toHaveBeenCalled();
+  });
+
+  it("blocks submission when the English prompt contains a comma", () => {
+    const props = renderBrowser();
+
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: category.id } });
+    fireEvent.change(screen.getByLabelText("新增詞條中文名稱"), { target: { value: "測試" } });
+    fireEvent.change(screen.getByLabelText("新增詞條英文 prompt"), { target: { value: "a, b" } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("英文 prompt 不能含逗號");
+    expect(props.onCreateEntry).not.toHaveBeenCalled();
+  });
+
+  it("submits the selected category and trimmed fields, then clears the form and shows success", async () => {
+    const onCreateEntry = vi.fn().mockResolvedValue(undefined);
+    const props = renderBrowser({ onCreateEntry });
+
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: category.id } });
+    fireEvent.change(screen.getByLabelText("新增詞條中文名稱"), { target: { value: "測試詞條" } });
+    fireEvent.change(screen.getByLabelText("新增詞條英文 prompt"), { target: { value: "test entry" } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(props.onCreateEntry).toHaveBeenCalledWith(category, { name_zh: "測試詞條", prompt: "test entry" });
+
+    await screen.findByRole("status");
+    expect(screen.getByRole("status")).toHaveTextContent(`已新增到「${category.name_zh}」`);
+    expect(screen.getByLabelText("新增詞條中文名稱")).toHaveValue("");
+    expect(screen.getByLabelText("新增詞條英文 prompt")).toHaveValue("");
+  });
+
+  it("shows the rejection message when creation fails", async () => {
+    const onCreateEntry = vi.fn().mockRejectedValue(new Error("後端拒絕"));
+    renderBrowser({ onCreateEntry });
+
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: category.id } });
+    fireEvent.change(screen.getByLabelText("新增詞條中文名稱"), { target: { value: "測試詞條" } });
+    fireEvent.change(screen.getByLabelText("新增詞條英文 prompt"), { target: { value: "test entry" } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("後端拒絕");
+    // Fields are preserved on failure so the user can retry without retyping.
+    expect(screen.getByLabelText("新增詞條中文名稱")).toHaveValue("測試詞條");
+  });
+
+  it("clears the picked category and messages when switching polarity", () => {
+    const negativeCategory: BrowserCategory = { id: "artifacts", polarity: "negative", name_zh: "瑕疵", revision: 1, etag: "n1", archived: false, parent_id: null, order: 10 };
+    const props = renderBrowser({ categories: [category, negativeCategory] });
+
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("請選擇分類");
+
+    fireEvent.click(screen.getByRole("button", { name: "負向" }));
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("新增詞條分類")).toHaveValue("");
   });
 });

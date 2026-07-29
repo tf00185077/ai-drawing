@@ -5,7 +5,8 @@ import CombinationToolbar from "./CombinationToolbar";
 import GenerationPanel, { type GenerationForm } from "./GenerationPanel";
 import PromptEntryBrowser, { promptEntryContent, promptEntryLabel, type BrowserCategory, type BrowserEntry } from "./PromptEntryBrowser";
 import PromptOverview from "./PromptOverview";
-import { acknowledgeLiteralConversion, composeAndSaveCombination, getPromptCatalog, getPromptCategory, getPromptCombination, getPromptLibraryMigrationStatus } from "./promptLibraryApi";
+import { acknowledgeLiteralConversion, composeAndSaveCombination, getPromptCatalog, getPromptCategory, getPromptCombination, getPromptLibraryMigrationStatus, putPromptEntry } from "./promptLibraryApi";
+import { slugifyEntryId } from "./entrySlug";
 
 interface DocumentState {
   id: string | null;
@@ -381,6 +382,36 @@ export default function PromptWorkbench() {
     });
   }
 
+  async function createEntry(
+    targetCategory: BrowserCategory,
+    input: { name_zh: string; prompt: string },
+  ): Promise<void> {
+    if (input.prompt.includes(",")) {
+      throw new Error("英文 prompt 不能含逗號（一個詞條是一個 tag）");
+    }
+    const detail = await getPromptCategory(targetCategory.polarity, targetCategory.id);
+    const existingIds = detail.category.entries.map((item) => item.id);
+    const id = slugifyEntryId(input.prompt, existingIds);
+    const response = await putPromptEntry(targetCategory.polarity, targetCategory.id, id, {
+      name_zh: input.name_zh,
+      description_zh: input.name_zh,
+      prompt: input.prompt,
+      aliases: [],
+      keywords: [],
+      order: 10,
+      expected_revision: detail.category.revision,
+      expected_etag: detail.etag,
+    });
+    const savedEntry = response.entry;
+    if (savedEntry) {
+      setAllEntries((current) => [...current, { category: targetCategory, entry: savedEntry }]);
+    }
+    // 若目前正停在該分類，重載其詞條清單讓新詞條立即出現
+    if (category && category.id === targetCategory.id && category.polarity === targetCategory.polarity) {
+      openCategory(category);
+    }
+  }
+
   function addLiteral(text: string) {
     const append = (state: CompositionState) =>
       appendLiteralText(
@@ -748,7 +779,7 @@ export default function PromptWorkbench() {
         </section>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.9fr)]">
-        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} allEntries={allEntries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} />
+        <PromptEntryBrowser categories={categories} activePolarity={activePolarity} onPolarityChange={changePolarity} selectedCategory={category} entries={entries} allEntries={allEntries} onOpenCategory={openCategory} onAddEntry={addEntry} onAddLiteral={addLiteral} onCreateEntry={createEntry} />
         <PromptOverview
           positive={positive}
           negative={negative}
