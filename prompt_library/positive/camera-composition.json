@@ -14,7 +14,7 @@
     "camera-composition"
   ],
   "order": 100,
-  "revision": 38,
+  "revision": 39,
   "archived": false,
   "entries": [
     {
@@ -310,8 +310,8 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-crotch-close-up-c2b792e8",
-      "name_zh": "下體/陰部特寫・第 1 詞（crotch close-up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「crotch close-up」，來源為「下體/陰部特寫」。",
+      "name_zh": "下體特寫",
+      "description_zh": "下體特寫",
       "prompt": "crotch close-up",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
@@ -341,8 +341,8 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-faceless-92fc4655",
-      "name_zh": "下體/陰部特寫・第 2 詞（faceless）",
-      "description_zh": "經人工拆分審閱的原子提示詞「faceless」，來源為「下體/陰部特寫」。",
+      "name_zh": "不露臉",
+      "description_zh": "不露臉",
       "prompt": "faceless",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
@@ -372,8 +372,8 @@
     },
     {
       "id": "after-angles-crotch-close-up-faceless-groin-groin-0ad72728",
-      "name_zh": "下體/陰部特寫・第 3 詞（groin）",
-      "description_zh": "經人工拆分審閱的原子提示詞「groin」，來源為「下體/陰部特寫」。",
+      "name_zh": "胯下",
+      "description_zh": "胯下",
       "prompt": "groin",
       "aliases": [
         "下體/陰部特寫 (crotch close-up, faceless, groin)",
@@ -496,8 +496,8 @@
     },
     {
       "id": "after-angles-from-below-thighs-focus-thighs-focus-75b75d4e",
-      "name_zh": "仰角大腿特寫・第 2 詞（thighs focus）",
-      "description_zh": "經人工拆分審閱的原子提示詞「thighs focus」，來源為「仰角大腿特寫」。",
+      "name_zh": "大腿特寫",
+      "description_zh": "大腿特寫",
       "prompt": "thighs focus",
       "aliases": [
         "仰角大腿特寫 (from below, thighs focus)",
