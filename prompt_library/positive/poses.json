@@ -14,7 +14,7 @@
     "poses"
   ],
   "order": 70,
-  "revision": 30,
+  "revision": 32,
   "archived": false,
   "entries": [
     {
@@ -73,8 +73,8 @@
     },
     {
       "id": "positions-on-all-fours-kneeling-doggystyle-on-all-fours-374f1553",
-      "name_zh": "狗爬式・第 1 詞（on all fours）",
-      "description_zh": "經人工拆分審閱的原子提示詞「on all fours」，來源為「狗爬式」。",
+      "name_zh": "四肢著地",
+      "description_zh": "四肢著地",
       "prompt": "on all fours",
       "aliases": [
         "狗爬式 (on all fours, kneeling, doggystyle)",
@@ -104,9 +104,9 @@
     },
     {
       "id": "positions-on-all-fours-kneeling-doggystyle-kneeling-4bdbc096",
-      "name_zh": "狗爬式・第 2 詞（kneeling）",
-      "description_zh": "經人工拆分審閱的原子提示詞「kneeling」，來源為「狗爬式」。",
-      "prompt": " kneeling",
+      "name_zh": "跪姿",
+      "description_zh": "跪姿",
+      "prompt": "kneeling",
       "aliases": [
         "狗爬式 (on all fours, kneeling, doggystyle)",
         "on all fours, kneeling, doggystyle",
@@ -135,9 +135,9 @@
     },
     {
       "id": "positions-on-all-fours-kneeling-doggystyle-doggystyle-fba08b56",
-      "name_zh": "狗爬式・第 3 詞（doggystyle）",
-      "description_zh": "經人工拆分審閱的原子提示詞「doggystyle」，來源為「狗爬式」。",
-      "prompt": " doggystyle",
+      "name_zh": "後入式",
+      "description_zh": "後入式",
+      "prompt": "doggystyle",
       "aliases": [
         "狗爬式 (on all fours, kneeling, doggystyle)",
         "on all fours, kneeling, doggystyle",
@@ -166,8 +166,8 @@
     },
     {
       "id": "positions-doggy-style-from-behind-grabbing-hands-doggy-style-88b1771e",
-      "name_zh": "背後位/抓手壓制・第 1 詞（doggy style）",
-      "description_zh": "經人工拆分審閱的原子提示詞「doggy style」，來源為「背後位/抓手壓制」。",
+      "name_zh": "後入式",
+      "description_zh": "後入式",
       "prompt": "doggy style",
       "aliases": [
         "背後位/抓手壓制 (doggystyle, grabbing hands)",
@@ -197,9 +197,9 @@
     },
     {
       "id": "positions-doggy-style-from-behind-grabbing-hands-from-behind-243bf757",
-      "name_zh": "背後位/抓手壓制・第 2 詞（from behind）",
-      "description_zh": "經人工拆分審閱的原子提示詞「from behind」，來源為「背後位/抓手壓制」。",
-      "prompt": " from behind",
+      "name_zh": "從背後",
+      "description_zh": "從背後",
+      "prompt": "from behind",
       "aliases": [
         "背後位/抓手壓制 (doggystyle, grabbing hands)",
         "doggy style, from behind, grabbing hands, holding wrists",
@@ -228,9 +228,9 @@
     },
     {
       "id": "positions-doggy-style-from-behind-grabbing-hands-grabbing-hands-c204e1f2",
-      "name_zh": "背後位/抓手壓制・第 3 詞（grabbing hands）",
-      "description_zh": "經人工拆分審閱的原子提示詞「grabbing hands」，來源為「背後位/抓手壓制」。",
-      "prompt": " grabbing hands",
+      "name_zh": "抓住雙手",
+      "description_zh": "抓住雙手",
+      "prompt": "grabbing hands",
       "aliases": [
         "背後位/抓手壓制 (doggystyle, grabbing hands)",
         "doggy style, from behind, grabbing hands, holding wrists",
@@ -259,9 +259,9 @@
     },
     {
       "id": "positions-doggy-style-from-behind-grabbing-hands-holding-wrists-01563a06",
-      "name_zh": "背後位/抓手壓制・第 4 詞（holding wrists）",
-      "description_zh": "經人工拆分審閱的原子提示詞「holding wrists」，來源為「背後位/抓手壓制」。",
-      "prompt": " holding wrists",
+      "name_zh": "抓住手腕",
+      "description_zh": "抓住手腕",
+      "prompt": "holding wrists",
       "aliases": [
         "背後位/抓手壓制 (doggystyle, grabbing hands)",
         "doggy style, from behind, grabbing hands, holding wrists",
@@ -290,8 +290,8 @@
     },
     {
       "id": "positions-lateral-position-spooning-sex-lateral-position-15fe9200",
-      "name_zh": "側臥位・第 1 詞（lateral position）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lateral position」，來源為「側臥位」。",
+      "name_zh": "側臥位",
+      "description_zh": "側臥位",
       "prompt": "lateral position",
       "aliases": [
         "側臥位 (lateral position, spooning sex)",
@@ -321,9 +321,9 @@
     },
     {
       "id": "positions-lateral-position-spooning-sex-spooning-sex-bca52c70",
-      "name_zh": "側臥位・第 2 詞（spooning sex）",
-      "description_zh": "經人工拆分審閱的原子提示詞「spooning sex」，來源為「側臥位」。",
-      "prompt": " spooning sex",
+      "name_zh": "側臥後入",
+      "description_zh": "側臥後入",
+      "prompt": "spooning sex",
       "aliases": [
         "側臥位 (lateral position, spooning sex)",
         "lateral position, spooning sex",
@@ -352,8 +352,8 @@
     },
     {
       "id": "positions-standing-sex-doggy-style-from-behind-l-standing-sex-e5c55e49",
-      "name_zh": "站立後入位・第 1 詞（standing sex）",
-      "description_zh": "經人工拆分審閱的原子提示詞「standing sex」，來源為「站立後入位」。",
+      "name_zh": "站立性交",
+      "description_zh": "站立性交",
       "prompt": "standing sex",
       "aliases": [
         "站立後入位 (standing doggystyle)",
@@ -382,72 +382,10 @@
       }
     },
     {
-      "id": "positions-standing-sex-doggy-style-from-behind-l-doggy-style-dc94ea91",
-      "name_zh": "站立後入位・第 2 詞（doggy style）",
-      "description_zh": "經人工拆分審閱的原子提示詞「doggy style」，來源為「站立後入位」。",
-      "prompt": " doggy style",
-      "aliases": [
-        "站立後入位 (standing doggystyle)",
-        "standing sex, doggy style, from behind, leaning forward",
-        "doggy style"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 16,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-standing-sex-doggy-style-from-behind-leaning-forward",
-        "source_prompt_sha256": "1ab2567ce22ede8f9c5b1b2143d3eb627d915709e27d19f02c136adae11cdeff",
-        "segment_index": 1,
-        "raw_segment_sha256": "db420cce945d64e8423c5f315347703ed4caa274cd644f11b027355605201191",
-        "identity_sha256": "dc94ea91a688f312439fb7b729f2bcfb7ed30925d2b246535939ee2b5e4d4be3"
-      }
-    },
-    {
-      "id": "positions-standing-sex-doggy-style-from-behind-l-from-behind-8fda8dd6",
-      "name_zh": "站立後入位・第 3 詞（from behind）",
-      "description_zh": "經人工拆分審閱的原子提示詞「from behind」，來源為「站立後入位」。",
-      "prompt": " from behind",
-      "aliases": [
-        "站立後入位 (standing doggystyle)",
-        "standing sex, doggy style, from behind, leaning forward",
-        "from behind"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 16,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-standing-sex-doggy-style-from-behind-leaning-forward",
-        "source_prompt_sha256": "1ab2567ce22ede8f9c5b1b2143d3eb627d915709e27d19f02c136adae11cdeff",
-        "segment_index": 2,
-        "raw_segment_sha256": "63a417c67ea3303572177aae22acb645ab54fb30e358e05eba87dba01b46cff9",
-        "identity_sha256": "8fda8dd6841d6def5f8c04e5a5363da16527f6c87d572754e66bf9ab743f2a8a"
-      }
-    },
-    {
       "id": "positions-standing-sex-doggy-style-from-behind-l-leaning-forward-f37f108e",
-      "name_zh": "站立後入位・第 4 詞（leaning forward）",
-      "description_zh": "經人工拆分審閱的原子提示詞「leaning forward」，來源為「站立後入位」。",
-      "prompt": " leaning forward",
+      "name_zh": "前傾",
+      "description_zh": "前傾",
+      "prompt": "leaning forward",
       "aliases": [
         "站立後入位 (standing doggystyle)",
         "standing sex, doggy style, from behind, leaning forward",
@@ -475,41 +413,10 @@
       }
     },
     {
-      "id": "positions-standing-sex-sex-from-front-facing-eac-standing-sex-75f8a167",
-      "name_zh": "站立正面位・第 1 詞（standing sex）",
-      "description_zh": "經人工拆分審閱的原子提示詞「standing sex」，來源為「站立正面位」。",
-      "prompt": "standing sex",
-      "aliases": [
-        "站立正面位 (standing missionary)",
-        "standing sex, sex from front, facing each other",
-        "standing sex"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 17,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-standing-sex-sex-from-front-facing-each-other",
-        "source_prompt_sha256": "b4bd28b67d11d4bed51d39591d84eea327d63a2d50bf8859f313e1a91ca6b1a9",
-        "segment_index": 0,
-        "raw_segment_sha256": "784a6b6e1f69f79433ff70675a7ed0f9b0c282f17109dc4356c28868c78da463",
-        "identity_sha256": "75f8a167b140d5df96beaeee19f4f9d22f75bf5b686c0e82155f0d1883da2c4f"
-      }
-    },
-    {
       "id": "positions-standing-sex-sex-from-front-facing-eac-sex-from-front-2a482fe4",
-      "name_zh": "站立正面位・第 2 詞（sex from front）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sex from front」，來源為「站立正面位」。",
-      "prompt": " sex from front",
+      "name_zh": "正面性交",
+      "description_zh": "正面性交",
+      "prompt": "sex from front",
       "aliases": [
         "站立正面位 (standing missionary)",
         "standing sex, sex from front, facing each other",
@@ -538,9 +445,9 @@
     },
     {
       "id": "positions-standing-sex-sex-from-front-facing-eac-facing-each-other-99ce8944",
-      "name_zh": "站立正面位・第 3 詞（facing each other）",
-      "description_zh": "經人工拆分審閱的原子提示詞「facing each other」，來源為「站立正面位」。",
-      "prompt": " facing each other",
+      "name_zh": "面對面",
+      "description_zh": "面對面",
+      "prompt": "facing each other",
       "aliases": [
         "站立正面位 (standing missionary)",
         "standing sex, sex from front, facing each other",
@@ -605,8 +512,8 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-lifting-person-4996e5cf",
-      "name_zh": "抱起火車便當・第 1 詞（lifting person）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lifting person」，來源為「抱起火車便當」。",
+      "name_zh": "抱起",
+      "description_zh": "抱起",
       "prompt": "lifting person",
       "aliases": [
         "抱起火車便當 (held up)",
@@ -636,9 +543,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-carrying-28e795da",
-      "name_zh": "抱起火車便當・第 2 詞（carrying）",
-      "description_zh": "經人工拆分審閱的原子提示詞「carrying」，來源為「抱起火車便當」。",
-      "prompt": " carrying",
+      "name_zh": "抱著",
+      "description_zh": "抱著",
+      "prompt": "carrying",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -667,9 +574,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-holding-up-4ba9b097",
-      "name_zh": "抱起火車便當・第 3 詞（holding up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「holding up」，來源為「抱起火車便當」。",
-      "prompt": " holding up",
+      "name_zh": "托起",
+      "description_zh": "托起",
+      "prompt": "holding up",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -698,9 +605,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-midair-61dd0725",
-      "name_zh": "抱起火車便當・第 4 詞（midair）",
-      "description_zh": "經人工拆分審閱的原子提示詞「midair」，來源為「抱起火車便當」。",
-      "prompt": " midair",
+      "name_zh": "半空中",
+      "description_zh": "半空中",
+      "prompt": "midair",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -729,9 +636,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-suspended-a373a334",
-      "name_zh": "抱起火車便當・第 5 詞（suspended）",
-      "description_zh": "經人工拆分審閱的原子提示詞「suspended」，來源為「抱起火車便當」。",
-      "prompt": " suspended",
+      "name_zh": "懸空",
+      "description_zh": "懸空",
+      "prompt": "suspended",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -759,41 +666,10 @@
       }
     },
     {
-      "id": "positions-lifting-person-carrying-holding-up-mid-facing-each-other-807b62cc",
-      "name_zh": "抱起火車便當・第 6 詞（facing each other）",
-      "description_zh": "經人工拆分審閱的原子提示詞「facing each other」，來源為「抱起火車便當」。",
-      "prompt": " facing each other",
-      "aliases": [
-        "抱起火車便當 (held up)",
-        "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
-        "facing each other"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 20,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-lifting-person-carrying-holding-up-midair-suspended-facing-each-other-hugging-legs-around-waist-sex",
-        "source_prompt_sha256": "26f6a455da80f158d332a983fc3de58b13785ff3be3c2bf1783778f432a6bcd4",
-        "segment_index": 5,
-        "raw_segment_sha256": "cb96a508dbc1eef4c1fbf188bb7465569fe975b37f159006195770e1301cbca8",
-        "identity_sha256": "807b62cc5f0b0c6739353a698e511ad68319ed7f1a32ac7b41644ba04f12a64d"
-      }
-    },
-    {
       "id": "positions-lifting-person-carrying-holding-up-mid-hugging-5b99824f",
-      "name_zh": "抱起火車便當・第 7 詞（hugging）",
-      "description_zh": "經人工拆分審閱的原子提示詞「hugging」，來源為「抱起火車便當」。",
-      "prompt": " hugging",
+      "name_zh": "擁抱",
+      "description_zh": "擁抱",
+      "prompt": "hugging",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -822,9 +698,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-legs-around-waist-4d516670",
-      "name_zh": "抱起火車便當・第 8 詞（legs around waist）",
-      "description_zh": "經人工拆分審閱的原子提示詞「legs around waist」，來源為「抱起火車便當」。",
-      "prompt": " legs around waist",
+      "name_zh": "雙腿環腰",
+      "description_zh": "雙腿環腰",
+      "prompt": "legs around waist",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -853,9 +729,9 @@
     },
     {
       "id": "positions-lifting-person-carrying-holding-up-mid-sex-9a852da0",
-      "name_zh": "抱起火車便當・第 9 詞（sex）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sex」，來源為「抱起火車便當」。",
-      "prompt": " sex",
+      "name_zh": "性交",
+      "description_zh": "性交",
+      "prompt": "sex",
       "aliases": [
         "抱起火車便當 (held up)",
         "lifting person, carrying, holding up, midair, suspended, facing each other, hugging, legs around waist, sex",
@@ -884,8 +760,8 @@
     },
     {
       "id": "positions-prone-bone-from-behind-lying-on-stomac-prone-bone-0de81179",
-      "name_zh": "俯臥位/趴躺後入・第 1 詞（prone bone）",
-      "description_zh": "經人工拆分審閱的原子提示詞「prone bone」，來源為「俯臥位/趴躺後入」。",
+      "name_zh": "趴姿後入",
+      "description_zh": "趴姿後入",
       "prompt": "prone bone",
       "aliases": [
         "俯臥位/趴躺後入 (prone bone)",
@@ -914,41 +790,10 @@
       }
     },
     {
-      "id": "positions-prone-bone-from-behind-lying-on-stomac-from-behind-7d090b90",
-      "name_zh": "俯臥位/趴躺後入・第 2 詞（from behind）",
-      "description_zh": "經人工拆分審閱的原子提示詞「from behind」，來源為「俯臥位/趴躺後入」。",
-      "prompt": " from behind",
-      "aliases": [
-        "俯臥位/趴躺後入 (prone bone)",
-        "prone bone, from behind, lying on stomach",
-        "from behind"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 21,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-prone-bone-from-behind-lying-on-stomach",
-        "source_prompt_sha256": "c2b2da57285c41cd2b547d0850755758290cf5fd62b8d18e30adc3a291b4bdc0",
-        "segment_index": 1,
-        "raw_segment_sha256": "63a417c67ea3303572177aae22acb645ab54fb30e358e05eba87dba01b46cff9",
-        "identity_sha256": "7d090b90e5d3bee9cdf44833056f454d67a488d32be2070c5d8af315013be566"
-      }
-    },
-    {
       "id": "positions-prone-bone-from-behind-lying-on-stomac-lying-on-stomach-7dcaf5bc",
-      "name_zh": "俯臥位/趴躺後入・第 3 詞（lying on stomach）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lying on stomach」，來源為「俯臥位/趴躺後入」。",
-      "prompt": " lying on stomach",
+      "name_zh": "趴臥",
+      "description_zh": "趴臥",
+      "prompt": "lying on stomach",
       "aliases": [
         "俯臥位/趴躺後入 (prone bone)",
         "prone bone, from behind, lying on stomach",
@@ -977,8 +822,8 @@
     },
     {
       "id": "positions-spread-eagle-lying-on-back-spread-legs-spread-eagle-14735b41",
-      "name_zh": "仰躺大開腿/M字腿・第 1 詞（spread eagle）",
-      "description_zh": "經人工拆分審閱的原子提示詞「spread eagle」，來源為「仰躺大開腿/M字腿」。",
+      "name_zh": "大字仰躺",
+      "description_zh": "大字仰躺",
       "prompt": "spread eagle",
       "aliases": [
         "仰躺大開腿/M字腿 (spread eagle)",
@@ -1008,9 +853,9 @@
     },
     {
       "id": "positions-spread-eagle-lying-on-back-spread-legs-lying-on-back-94819cef",
-      "name_zh": "仰躺大開腿/M字腿・第 2 詞（lying on back）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lying on back」，來源為「仰躺大開腿/M字腿」。",
-      "prompt": " lying on back",
+      "name_zh": "仰躺",
+      "description_zh": "仰躺",
+      "prompt": "lying on back",
       "aliases": [
         "仰躺大開腿/M字腿 (spread eagle)",
         "spread eagle, lying on back, spread legs",
@@ -1039,9 +884,9 @@
     },
     {
       "id": "positions-spread-eagle-lying-on-back-spread-legs-spread-legs-ba6c30a1",
-      "name_zh": "仰躺大開腿/M字腿・第 3 詞（spread legs）",
-      "description_zh": "經人工拆分審閱的原子提示詞「spread legs」，來源為「仰躺大開腿/M字腿」。",
-      "prompt": " spread legs",
+      "name_zh": "張開雙腿",
+      "description_zh": "張開雙腿",
+      "prompt": "spread legs",
       "aliases": [
         "仰躺大開腿/M字腿 (spread eagle)",
         "spread eagle, lying on back, spread legs",
@@ -1070,8 +915,8 @@
     },
     {
       "id": "positions-lotus-position-facing-each-other-sitti-lotus-position-a6b7ea1a",
-      "name_zh": "面對面跨坐/蓮花坐・第 1 詞（lotus position）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lotus position」，來源為「面對面跨坐/蓮花坐」。",
+      "name_zh": "蓮花座",
+      "description_zh": "蓮花座",
       "prompt": "lotus position",
       "aliases": [
         "面對面跨坐/蓮花坐 (lotus position)",
@@ -1100,41 +945,10 @@
       }
     },
     {
-      "id": "positions-lotus-position-facing-each-other-sitti-facing-each-other-99f14ba8",
-      "name_zh": "面對面跨坐/蓮花坐・第 2 詞（facing each other）",
-      "description_zh": "經人工拆分審閱的原子提示詞「facing each other」，來源為「面對面跨坐/蓮花坐」。",
-      "prompt": " facing each other",
-      "aliases": [
-        "面對面跨坐/蓮花坐 (lotus position)",
-        "lotus position, facing each other, sitting, hugging",
-        "facing each other"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-lotus-position-facing-each-other-sitting-hugging",
-        "source_prompt_sha256": "eda2cde593d23520abbe558d3c4423b983ee52fb23ee7a1aed5463a8772fc791",
-        "segment_index": 1,
-        "raw_segment_sha256": "cb96a508dbc1eef4c1fbf188bb7465569fe975b37f159006195770e1301cbca8",
-        "identity_sha256": "99f14ba8a953fdd7562d7f5223701d1e2c85731b25865f3bcdcf8c00f02c396c"
-      }
-    },
-    {
       "id": "positions-lotus-position-facing-each-other-sitti-sitting-559e3423",
-      "name_zh": "面對面跨坐/蓮花坐・第 3 詞（sitting）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sitting」，來源為「面對面跨坐/蓮花坐」。",
-      "prompt": " sitting",
+      "name_zh": "坐姿",
+      "description_zh": "坐姿",
+      "prompt": "sitting",
       "aliases": [
         "面對面跨坐/蓮花坐 (lotus position)",
         "lotus position, facing each other, sitting, hugging",
@@ -1162,72 +976,10 @@
       }
     },
     {
-      "id": "positions-lotus-position-facing-each-other-sitti-hugging-a256b371",
-      "name_zh": "面對面跨坐/蓮花坐・第 4 詞（hugging）",
-      "description_zh": "經人工拆分審閱的原子提示詞「hugging」，來源為「面對面跨坐/蓮花坐」。",
-      "prompt": " hugging",
-      "aliases": [
-        "面對面跨坐/蓮花坐 (lotus position)",
-        "lotus position, facing each other, sitting, hugging",
-        "hugging"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-lotus-position-facing-each-other-sitting-hugging",
-        "source_prompt_sha256": "eda2cde593d23520abbe558d3c4423b983ee52fb23ee7a1aed5463a8772fc791",
-        "segment_index": 3,
-        "raw_segment_sha256": "ec05ad43a9dccc8e76c8cfb4d3954f4a9515013fb36d75bdcbddf7e766f5edaf",
-        "identity_sha256": "a256b371456aa69384ab383c9caab25c8f482e5140db9527eda9cf1e13d03d58"
-      }
-    },
-    {
-      "id": "positions-cowgirl-position-leaning-back-arching-cowgirl-position-366e821c",
-      "name_zh": "後仰騎乘位・第 1 詞（cowgirl position）",
-      "description_zh": "經人工拆分審閱的原子提示詞「cowgirl position」，來源為「後仰騎乘位」。",
-      "prompt": "cowgirl position",
-      "aliases": [
-        "後仰騎乘位 (cowgirl position, leaning back)",
-        "cowgirl position, leaning back, arching back",
-        "cowgirl position"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 24,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-cowgirl-position-leaning-back-arching-back",
-        "source_prompt_sha256": "7c3cf5a402558f50f23142e147bc7f2e555d26d832652e318803140840dc14cf",
-        "segment_index": 0,
-        "raw_segment_sha256": "33325dac96b3758c0e324bccaf4a02a759265aa8ba6a4c3d65c40d4d22f50635",
-        "identity_sha256": "366e821c83715df60b1979ac46f61a0234dcafe13f946cc1308552d0edb2636d"
-      }
-    },
-    {
       "id": "positions-cowgirl-position-leaning-back-arching-leaning-back-9553d636",
-      "name_zh": "後仰騎乘位・第 2 詞（leaning back）",
-      "description_zh": "經人工拆分審閱的原子提示詞「leaning back」，來源為「後仰騎乘位」。",
-      "prompt": " leaning back",
+      "name_zh": "後仰",
+      "description_zh": "後仰",
+      "prompt": "leaning back",
       "aliases": [
         "後仰騎乘位 (cowgirl position, leaning back)",
         "cowgirl position, leaning back, arching back",
@@ -1256,9 +1008,9 @@
     },
     {
       "id": "positions-cowgirl-position-leaning-back-arching-arching-back-f870a945",
-      "name_zh": "後仰騎乘位・第 3 詞（arching back）",
-      "description_zh": "經人工拆分審閱的原子提示詞「arching back」，來源為「後仰騎乘位」。",
-      "prompt": " arching back",
+      "name_zh": "弓背",
+      "description_zh": "弓背",
+      "prompt": "arching back",
       "aliases": [
         "後仰騎乘位 (cowgirl position, leaning back)",
         "cowgirl position, leaning back, arching back",
@@ -1287,8 +1039,8 @@
     },
     {
       "id": "positions-sex-on-desk-sitting-on-desk-spread-leg-sex-on-desk-5e5b022d",
-      "name_zh": "桌上交合/坐在桌邊・第 1 詞（sex on desk）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sex on desk」，來源為「桌上交合/坐在桌邊」。",
+      "name_zh": "桌上性交",
+      "description_zh": "桌上性交",
       "prompt": "sex on desk",
       "aliases": [
         "桌上交合/坐在桌邊 (sex on desk)",
@@ -1318,9 +1070,9 @@
     },
     {
       "id": "positions-sex-on-desk-sitting-on-desk-spread-leg-sitting-on-desk-1b9ef699",
-      "name_zh": "桌上交合/坐在桌邊・第 2 詞（sitting on desk）",
-      "description_zh": "經人工拆分審閱的原子提示詞「sitting on desk」，來源為「桌上交合/坐在桌邊」。",
-      "prompt": " sitting on desk",
+      "name_zh": "坐在桌上",
+      "description_zh": "坐在桌上",
+      "prompt": "sitting on desk",
       "aliases": [
         "桌上交合/坐在桌邊 (sex on desk)",
         "sex on desk, sitting on desk, spread legs",
@@ -1348,72 +1100,10 @@
       }
     },
     {
-      "id": "positions-sex-on-desk-sitting-on-desk-spread-leg-spread-legs-65945e2e",
-      "name_zh": "桌上交合/坐在桌邊・第 3 詞（spread legs）",
-      "description_zh": "經人工拆分審閱的原子提示詞「spread legs」，來源為「桌上交合/坐在桌邊」。",
-      "prompt": " spread legs",
-      "aliases": [
-        "桌上交合/坐在桌邊 (sex on desk)",
-        "sex on desk, sitting on desk, spread legs",
-        "spread legs"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 25,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-sex-on-desk-sitting-on-desk-spread-legs",
-        "source_prompt_sha256": "9f9323ac53548b153a419baa5426a7f0c6de469d73adfb5bfc4b96d9772fd657",
-        "segment_index": 2,
-        "raw_segment_sha256": "72279b7e3f9213835ee524d4b6619a42bd3782aaa5a017fc0bdf94f6d61c6da3",
-        "identity_sha256": "65945e2e8c13d9d3147c11d53b57b16ac9d4ff9a834a3023e00ddf79186edcbf"
-      }
-    },
-    {
-      "id": "positions-standing-sex-one-leg-up-leaning-forwar-standing-sex-cf4dd01d",
-      "name_zh": "站立單腿抬高・第 1 詞（standing sex）",
-      "description_zh": "經人工拆分審閱的原子提示詞「standing sex」，來源為「站立單腿抬高」。",
-      "prompt": "standing sex",
-      "aliases": [
-        "站立單腿抬高 (standing sex, one leg up)",
-        "standing sex, one leg up, leaning forward",
-        "standing sex"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 26,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-standing-sex-one-leg-up-leaning-forward",
-        "source_prompt_sha256": "a467a069b23bda6c0a6d6a098e221dbc08742a2b663cb67b6f9c3aeeafdb9a9a",
-        "segment_index": 0,
-        "raw_segment_sha256": "784a6b6e1f69f79433ff70675a7ed0f9b0c282f17109dc4356c28868c78da463",
-        "identity_sha256": "cf4dd01da815d926a5ced036e30ef5176c229517a79ab2856ab3575143ed7ea6"
-      }
-    },
-    {
       "id": "positions-standing-sex-one-leg-up-leaning-forwar-one-leg-up-d5a50ba8",
-      "name_zh": "站立單腿抬高・第 2 詞（one leg up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「one leg up」，來源為「站立單腿抬高」。",
-      "prompt": " one leg up",
+      "name_zh": "單腿抬高",
+      "description_zh": "單腿抬高",
+      "prompt": "one leg up",
       "aliases": [
         "站立單腿抬高 (standing sex, one leg up)",
         "standing sex, one leg up, leaning forward",
@@ -1441,40 +1131,9 @@
       }
     },
     {
-      "id": "positions-standing-sex-one-leg-up-leaning-forwar-leaning-forward-7021e8b8",
-      "name_zh": "站立單腿抬高・第 3 詞（leaning forward）",
-      "description_zh": "經人工拆分審閱的原子提示詞「leaning forward」，來源為「站立單腿抬高」。",
-      "prompt": " leaning forward",
-      "aliases": [
-        "站立單腿抬高 (standing sex, one leg up)",
-        "standing sex, one leg up, leaning forward",
-        "leaning forward"
-      ],
-      "keywords": [
-        "positions",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 26,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "positions-standing-sex-one-leg-up-leaning-forward",
-        "source_prompt_sha256": "a467a069b23bda6c0a6d6a098e221dbc08742a2b663cb67b6f9c3aeeafdb9a9a",
-        "segment_index": 2,
-        "raw_segment_sha256": "a1c23508de3f790e4723b2e5fac3d085006ad89a95b1ca59375f7dd05b260a46",
-        "identity_sha256": "7021e8b8b7090f150364a9a5de4c7d43513d5b699312a3e6afdb0faaeec1ef89"
-      }
-    },
-    {
       "id": "positions-69-position-mutual-oral-blowjob-69-position-48329523",
-      "name_zh": "69式互舔 (69 position)・第 1 詞（69 position）",
-      "description_zh": "經人工拆分審閱的原子提示詞「69 position」，來源為「69式互舔 (69 position)」。",
+      "name_zh": "69式",
+      "description_zh": "69式",
       "prompt": "69 position",
       "aliases": [
         "69式互舔 (69 position)",
@@ -1504,9 +1163,9 @@
     },
     {
       "id": "positions-69-position-mutual-oral-blowjob-mutual-oral-8e6f7348",
-      "name_zh": "69式互舔 (69 position)・第 2 詞（mutual oral）",
-      "description_zh": "經人工拆分審閱的原子提示詞「mutual oral」，來源為「69式互舔 (69 position)」。",
-      "prompt": " mutual oral",
+      "name_zh": "互相口交",
+      "description_zh": "互相口交",
+      "prompt": "mutual oral",
       "aliases": [
         "69式互舔 (69 position)",
         "69 position, mutual oral, blowjob",
@@ -1535,9 +1194,9 @@
     },
     {
       "id": "positions-69-position-mutual-oral-blowjob-blowjob-7cd107f1",
-      "name_zh": "69式互舔 (69 position)・第 3 詞（blowjob）",
-      "description_zh": "經人工拆分審閱的原子提示詞「blowjob」，來源為「69式互舔 (69 position)」。",
-      "prompt": " blowjob",
+      "name_zh": "口交",
+      "description_zh": "口交",
+      "prompt": "blowjob",
       "aliases": [
         "69式互舔 (69 position)",
         "69 position, mutual oral, blowjob",
@@ -1566,8 +1225,8 @@
     },
     {
       "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-hands-on-own-breasts-40d2232f",
-      "name_zh": "雙手捧托雙乳・第 1 詞（hands on own breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「hands on own breasts」，來源為「雙手捧托雙乳」。",
+      "name_zh": "雙手托胸",
+      "description_zh": "雙手托胸",
       "prompt": "hands on own breasts",
       "aliases": [
         "雙手捧托雙乳 (hands on own breasts)",
@@ -1597,9 +1256,9 @@
     },
     {
       "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-pushing-breasts-together-499940f2",
-      "name_zh": "雙手捧托雙乳・第 2 詞（pushing breasts together）",
-      "description_zh": "經人工拆分審閱的原子提示詞「pushing breasts together」，來源為「雙手捧托雙乳」。",
-      "prompt": " pushing breasts together",
+      "name_zh": "擠壓雙乳",
+      "description_zh": "擠壓雙乳",
+      "prompt": "pushing breasts together",
       "aliases": [
         "雙手捧托雙乳 (hands on own breasts)",
         "hands on own breasts, pushing breasts together, presenting breasts",
@@ -1628,9 +1287,9 @@
     },
     {
       "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-presenting-breasts-972a9d17",
-      "name_zh": "雙手捧托雙乳・第 3 詞（presenting breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「presenting breasts」，來源為「雙手捧托雙乳」。",
-      "prompt": " presenting breasts",
+      "name_zh": "挺胸展示",
+      "description_zh": "挺胸展示",
+      "prompt": "presenting breasts",
       "aliases": [
         "雙手捧托雙乳 (hands on own breasts)",
         "hands on own breasts, pushing breasts together, presenting breasts",
@@ -1659,8 +1318,8 @@
     },
     {
       "id": "cum-shower-poses-hands-resting-on-breasts-palms-hands-resting-on-breasts-cdb44f48",
-      "name_zh": "雙手手掌朝下放在胸的上方・第 1 詞（hands resting on breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「hands resting on breasts」，來源為「雙手手掌朝下放在胸的上方」。",
+      "name_zh": "雙手放胸上",
+      "description_zh": "雙手放胸上",
       "prompt": "hands resting on breasts",
       "aliases": [
         "雙手手掌朝下放在胸的上方 (palms down on breasts)",
@@ -1690,9 +1349,9 @@
     },
     {
       "id": "cum-shower-poses-hands-resting-on-breasts-palms-palms-down-f30d1809",
-      "name_zh": "雙手手掌朝下放在胸的上方・第 2 詞（palms down）",
-      "description_zh": "經人工拆分審閱的原子提示詞「palms down」，來源為「雙手手掌朝下放在胸的上方」。",
-      "prompt": " palms down",
+      "name_zh": "手掌朝下",
+      "description_zh": "手掌朝下",
+      "prompt": "palms down",
       "aliases": [
         "雙手手掌朝下放在胸的上方 (palms down on breasts)",
         "hands resting on breasts, palms down, presenting breasts",
@@ -1720,40 +1379,9 @@
       }
     },
     {
-      "id": "cum-shower-poses-hands-resting-on-breasts-palms-presenting-breasts-d4ea51b2",
-      "name_zh": "雙手手掌朝下放在胸的上方・第 3 詞（presenting breasts）",
-      "description_zh": "經人工拆分審閱的原子提示詞「presenting breasts」，來源為「雙手手掌朝下放在胸的上方」。",
-      "prompt": " presenting breasts",
-      "aliases": [
-        "雙手手掌朝下放在胸的上方 (palms down on breasts)",
-        "hands resting on breasts, palms down, presenting breasts",
-        "presenting breasts"
-      ],
-      "keywords": [
-        "cum_shower_poses",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 29,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "cum-shower-poses-hands-resting-on-breasts-palms-down-presenting-breasts",
-        "source_prompt_sha256": "ac7c7fcc210f68bf991ce51bab8fe1248a75c170b05361bdd26f31a4beca5651",
-        "segment_index": 2,
-        "raw_segment_sha256": "4e518525335f79d9b012959df01e0b13b01fefb4efeb5ec49f44222c639c451e",
-        "identity_sha256": "d4ea51b295aab2fb5c5c9531aa26922d3cf35feeba48e262eeb67279230e4081"
-      }
-    },
-    {
       "id": "cum-shower-poses-hands-behind-head-exposing-ches-hands-behind-head-d011b7fd",
-      "name_zh": "雙手放腦後・第 1 詞（hands behind head）",
-      "description_zh": "經人工拆分審閱的原子提示詞「hands behind head」，來源為「雙手放腦後」。",
+      "name_zh": "雙手枕頭後",
+      "description_zh": "雙手枕頭後",
       "prompt": "hands behind head",
       "aliases": [
         "雙手放腦後 (hands behind head)",
@@ -1783,9 +1411,9 @@
     },
     {
       "id": "cum-shower-poses-hands-behind-head-exposing-ches-exposing-chest-89f79fc6",
-      "name_zh": "雙手放腦後・第 2 詞（exposing chest）",
-      "description_zh": "經人工拆分審閱的原子提示詞「exposing chest」，來源為「雙手放腦後」。",
-      "prompt": " exposing chest",
+      "name_zh": "挺露胸部",
+      "description_zh": "挺露胸部",
+      "prompt": "exposing chest",
       "aliases": [
         "雙手放腦後 (hands behind head)",
         "hands behind head, exposing chest",
@@ -1814,8 +1442,8 @@
     },
     {
       "id": "cum-shower-poses-reaching-out-palms-up-waiting-f-reaching-out-41f39c31",
-      "name_zh": "雙手掌心向上往前伸・第 1 詞（reaching out）",
-      "description_zh": "經人工拆分審閱的原子提示詞「reaching out」，來源為「雙手掌心向上往前伸」。",
+      "name_zh": "伸出手",
+      "description_zh": "伸出手",
       "prompt": "reaching out",
       "aliases": [
         "雙手掌心向上往前伸 (reaching out, palms up)",
@@ -1845,9 +1473,9 @@
     },
     {
       "id": "cum-shower-poses-reaching-out-palms-up-waiting-f-palms-up-bcaccf45",
-      "name_zh": "雙手掌心向上往前伸・第 2 詞（palms up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「palms up」，來源為「雙手掌心向上往前伸」。",
-      "prompt": " palms up",
+      "name_zh": "手掌朝上",
+      "description_zh": "手掌朝上",
+      "prompt": "palms up",
       "aliases": [
         "雙手掌心向上往前伸 (reaching out, palms up)",
         "reaching out, palms up, waiting for cum",
@@ -1876,9 +1504,9 @@
     },
     {
       "id": "cum-shower-poses-reaching-out-palms-up-waiting-f-waiting-for-cum-e0ab8aa0",
-      "name_zh": "雙手掌心向上往前伸・第 3 詞（waiting for cum）",
-      "description_zh": "經人工拆分審閱的原子提示詞「waiting for cum」，來源為「雙手掌心向上往前伸」。",
-      "prompt": " waiting for cum",
+      "name_zh": "等待射精",
+      "description_zh": "等待射精",
+      "prompt": "waiting for cum",
       "aliases": [
         "雙手掌心向上往前伸 (reaching out, palms up)",
         "reaching out, palms up, waiting for cum",
@@ -1924,41 +1552,10 @@
       "archived": false
     },
     {
-      "id": "cum-shower-body-kneeling-legs-visible-thighs-vis-kneeling-d92ba44c",
-      "name_zh": "跪姿・第 1 詞（kneeling）",
-      "description_zh": "經人工拆分審閱的原子提示詞「kneeling」，來源為「跪姿」。",
-      "prompt": "kneeling",
-      "aliases": [
-        "跪姿 (kneeling, legs visible)",
-        "kneeling, legs visible, thighs visible",
-        "kneeling"
-      ],
-      "keywords": [
-        "cum_shower_body",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 33,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "cum-shower-body-kneeling-legs-visible-thighs-visible",
-        "source_prompt_sha256": "3e2f209bdd53356b38d7ab6b1af9f37134e454eaaecbbe7b3979c26a6460a73c",
-        "segment_index": 0,
-        "raw_segment_sha256": "a063c2db0af5ce75e3688928b441916dcf0560086f65851d8758d0d3f7a61a54",
-        "identity_sha256": "d92ba44cf443e70933ce530161e1069a3bc21f2dd8aad24b1ca0c5a0e0bcc4b8"
-      }
-    },
-    {
       "id": "cum-shower-body-kneeling-legs-visible-thighs-vis-legs-visible-8223335b",
-      "name_zh": "跪姿・第 2 詞（legs visible）",
-      "description_zh": "經人工拆分審閱的原子提示詞「legs visible」，來源為「跪姿」。",
-      "prompt": " legs visible",
+      "name_zh": "露出雙腿",
+      "description_zh": "露出雙腿",
+      "prompt": "legs visible",
       "aliases": [
         "跪姿 (kneeling, legs visible)",
         "kneeling, legs visible, thighs visible",
@@ -1989,7 +1586,7 @@
       "id": "cum-shower-body-kneeling-legs-visible-thighs-vis-thighs-visible-303a75cf",
       "name_zh": "可見大腿",
       "description_zh": "經人工拆分審閱的原子提示詞「thighs visible」，來源為「跪姿」。",
-      "prompt": " thighs visible",
+      "prompt": "thighs visible",
       "aliases": [
         "跪姿 (kneeling, legs visible)",
         "kneeling, legs visible, thighs visible",
@@ -2035,27 +1632,9 @@
       "archived": false
     },
     {
-      "id": "cum-shower-body-sitting",
-      "name_zh": "坐姿",
-      "description_zh": "加入「坐姿」提示詞。",
-      "prompt": "sitting",
-      "aliases": [
-        "坐姿 (sitting)",
-        "sitting"
-      ],
-      "keywords": [
-        "cum_shower_body",
-        "ltj",
-        "prompt"
-      ],
-      "order": 35,
-      "revision": 1,
-      "archived": false
-    },
-    {
       "id": "cum-shower-body-lying-down-spread-legs-legs-up-lying-down-8c938a3c",
-      "name_zh": "躺姿/M字腿・第 1 詞（lying down）",
-      "description_zh": "經人工拆分審閱的原子提示詞「lying down」，來源為「躺姿/M字腿」。",
+      "name_zh": "躺著",
+      "description_zh": "躺著",
       "prompt": "lying down",
       "aliases": [
         "躺姿/M字腿 (lying down, spread legs)",
@@ -2084,41 +1663,10 @@
       }
     },
     {
-      "id": "cum-shower-body-lying-down-spread-legs-legs-up-spread-legs-a1d579b3",
-      "name_zh": "躺姿/M字腿・第 2 詞（spread legs）",
-      "description_zh": "經人工拆分審閱的原子提示詞「spread legs」，來源為「躺姿/M字腿」。",
-      "prompt": " spread legs",
-      "aliases": [
-        "躺姿/M字腿 (lying down, spread legs)",
-        "lying down, spread legs, legs up",
-        "spread legs"
-      ],
-      "keywords": [
-        "cum_shower_body",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "poses"
-      ],
-      "order": 36,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "poses",
-        "source_entry_id": "cum-shower-body-lying-down-spread-legs-legs-up",
-        "source_prompt_sha256": "3b7bcf468d75fe50c5d89496800b4a2e08db989a303e6a57fb8f15e90bcd8850",
-        "segment_index": 1,
-        "raw_segment_sha256": "72279b7e3f9213835ee524d4b6619a42bd3782aaa5a017fc0bdf94f6d61c6da3",
-        "identity_sha256": "a1d579b309574ed928b8deb37ac7cf0f45a7d995892ac249596bb359bbf34249"
-      }
-    },
-    {
       "id": "cum-shower-body-lying-down-spread-legs-legs-up-legs-up-53869463",
-      "name_zh": "躺姿/M字腿・第 3 詞（legs up）",
-      "description_zh": "經人工拆分審閱的原子提示詞「legs up」，來源為「躺姿/M字腿」。",
-      "prompt": " legs up",
+      "name_zh": "抬起雙腿",
+      "description_zh": "抬起雙腿",
+      "prompt": "legs up",
       "aliases": [
         "躺姿/M字腿 (lying down, spread legs)",
         "lying down, spread legs, legs up",

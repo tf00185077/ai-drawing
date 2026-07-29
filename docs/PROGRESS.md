@@ -1,3 +1,11 @@
+## 2026-07-29 Prompt Library 資料校正（中文校正＋重新分類）
+
+- 修正大量「中文不夠準確」：atomic 遷移遺留的名稱如「狗爬式・第 1 詞（on all fours）」全部改成正確的單一 tag 中文（on all fours→四肢著地、ahegao→阿黑顏、creampie→中出…），共 150 筆。
+- 去除重複：同分類內 prompt 完全相同的重複詞條移除 155 筆（clothing 曾有「opaque clothes」×10），並解開內嵌權重（如「(tongue out:1.4)」→ tongue out）。quality-ratings 刻意保留同英文多家族變體。
+- 重新分類（用 parent_id 樹）：body-appearance 拆成 人物與身形／男性特徵／性器官（並原子化其含逗號詞條，修好長期無效的分類）；accessories 的過膝襪/連褲襪/網襪移到新的 襪類/腿部服飾（掛在 服裝 下）；environment 拆出 氛圍與光線（掛在 場景/地點 下）；clothing 拆出 著裝狀態/暴露程度。
+- 結果：全庫 534 個詞條、16 個分類（含子分類），全部通過嚴格 schema，無任何含逗號詞條，分類樹 0 個壞連結，5 個組合（皆 literal）不受影響。
+- 純資料變更（prompt_library/ JSON），後端/前端程式不動。
+
 # 進度追蹤
 
 ## 2026-07-29 Prompt Workbench 快速新增自訂詞條
