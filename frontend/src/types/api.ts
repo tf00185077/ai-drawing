@@ -88,31 +88,343 @@ export interface TrainFoldersResponse {
   folders: FolderItem[];
 }
 
+export type RecipeSchemaVersion = "lora-training-recipe/v1";
+export type RecipeFieldSource =
+  | "caller"
+  | "preflight_policy"
+  | "server_policy"
+  | "derived";
+export type ModelFamily = "sd15" | "sdxl" | "anima";
+export type MixedPrecision = "no" | "fp16" | "bf16";
+export type EvidenceStatus = "verified" | "unverified" | "unavailable";
+export type RuntimePlatform = "cuda" | "mps" | "cpu" | "unknown";
+
+export interface RecipeSeed {
+  mode: "fixed" | "random";
+  value: number;
+  source: "caller" | "preflight_policy" | "server_policy";
+}
+
+export interface RequestedAnimaRecipe {
+  qwen3?: string | null;
+  vae?: string | null;
+  t5_tokenizer_path?: string | null;
+}
+
+export interface RequestedModelRecipe {
+  family?: ModelFamily | null;
+  checkpoint?: string | null;
+  allow_unverified_checkpoint?: boolean | null;
+  network_module?: string | null;
+  network_dim?: number | null;
+  network_alpha?: number | null;
+  anima?: RequestedAnimaRecipe | null;
+}
+
+export interface RequestedScopeRecipe {
+  train_text_encoder?: boolean | null;
+}
+
+export interface RequestedDatasetRecipe {
+  trigger_token?: string | null;
+  resolution?: number | null;
+  batch_size?: number | null;
+  keep_tokens?: number | null;
+  num_repeats?: number | null;
+  enable_bucket?: boolean | null;
+  bucket_no_upscale?: boolean | null;
+  min_bucket_reso?: number | null;
+  max_bucket_reso?: number | null;
+  bucket_reso_steps?: number | null;
+}
+
+export interface RequestedWarmup {
+  mode: "steps" | "ratio";
+  value: number;
+}
+
+export interface RequestedOptimizationRecipe {
+  epochs?: number | null;
+  learning_rate?: string | null;
+  denoiser_learning_rate?: string | null;
+  text_encoder_learning_rates?: string[] | null;
+  gradient_accumulation_steps?: number | null;
+  optimizer_type?: string | null;
+  optimizer_args?: string[] | null;
+  lr_scheduler?: string | null;
+  lr_scheduler_args?: string[] | null;
+  warmup?: RequestedWarmup | null;
+  seed?: RecipeSeed | null;
+  mixed_precision?: MixedPrecision | null;
+}
+
+export interface RequestedCachingRecipe {
+  cache_latents?: boolean | null;
+  cache_text_encoder_outputs?: boolean | null;
+  cache_to_disk?: boolean | null;
+}
+
+export interface RequestedExecutionRecipe {
+  max_data_loader_n_workers?: number | null;
+  persistent_data_loader_workers?: boolean | null;
+  save_every_n_epochs?: number | null;
+}
+
+export interface TrainingRecipeHints {
+  schema_version?: RecipeSchemaVersion;
+  expected_recipe_hash?: string | null;
+  model?: RequestedModelRecipe | null;
+  scope?: RequestedScopeRecipe | null;
+  dataset?: RequestedDatasetRecipe | null;
+  optimization?: RequestedOptimizationRecipe | null;
+  caching?: RequestedCachingRecipe | null;
+  execution?: RequestedExecutionRecipe | null;
+}
+
+export type TrainingRecipeTransport =
+  | TrainingRecipeHints
+  | Record<string, unknown>
+  | string;
+
+export interface RequestedTrainingRecipeV1 extends TrainingRecipeHints {
+  schema_version: RecipeSchemaVersion;
+}
+
+export interface TrainingStartRecipeV1 extends RequestedTrainingRecipeV1 {
+  expected_recipe_hash: string;
+  optimization: RequestedOptimizationRecipe & {
+    seed: RecipeSeed;
+  };
+}
+
+export interface EffectiveAnimaRecipe {
+  qwen3: string;
+  vae: string | null;
+  t5_tokenizer_path: string | null;
+}
+
+export interface EffectiveModelRecipe {
+  family: ModelFamily;
+  checkpoint: string;
+  allow_unverified_checkpoint: boolean;
+  network_module: string;
+  network_dim: number;
+  network_alpha: number;
+  anima: EffectiveAnimaRecipe | null;
+}
+
+export interface EffectiveScopeRecipe {
+  denoiser_kind: "unet" | "dit";
+  train_denoiser: true;
+  train_text_encoder: boolean;
+  native_scope_flag: "--network_train_unet_only" | null;
+  verification_status:
+    | "source_contract"
+    | "runtime_verified"
+    | "unverified";
+}
+
+export interface EffectiveDatasetRecipe {
+  trigger_token: string;
+  class_tokens: string;
+  resolution: number;
+  batch_size: number;
+  keep_tokens: number;
+  num_repeats: number;
+  enable_bucket: boolean;
+  bucket_no_upscale: boolean;
+  min_bucket_reso: number;
+  max_bucket_reso: number;
+  bucket_reso_steps: number;
+}
+
+export interface EffectiveWarmup {
+  mode: "steps" | "ratio";
+  value: number;
+  resolved_steps: number;
+}
+
+export interface EffectiveOptimizationRecipe {
+  epochs: number;
+  learning_rate: string;
+  denoiser_learning_rate: string;
+  text_encoder_learning_rates: string[];
+  gradient_accumulation_steps: number;
+  optimizer_type: string;
+  optimizer_args: string[];
+  lr_scheduler: string;
+  lr_scheduler_args: string[];
+  warmup: EffectiveWarmup;
+  seed: RecipeSeed;
+  mixed_precision: MixedPrecision;
+}
+
+export interface EffectiveCachingRecipe {
+  cache_latents: boolean;
+  cache_text_encoder_outputs: boolean;
+  cache_to_disk: boolean;
+  latent_cache_to_disk: boolean;
+  text_encoder_cache_to_disk: boolean;
+}
+
+export interface EffectiveExecutionRecipe {
+  max_data_loader_n_workers: number;
+  persistent_data_loader_workers: boolean;
+  save_every_n_epochs: number;
+  final_only: boolean;
+}
+
+export interface EffectiveServerRecipe {
+  gradient_checkpointing: boolean;
+  caption_extension: string;
+  shuffle_caption: boolean;
+  save_model_as: "safetensors";
+  launcher_num_cpu_threads_per_process: number;
+}
+
+export interface EffectiveTrainingRecipeV1 {
+  schema_version: RecipeSchemaVersion;
+  model: EffectiveModelRecipe;
+  scope: EffectiveScopeRecipe;
+  dataset: EffectiveDatasetRecipe;
+  optimization: EffectiveOptimizationRecipe;
+  caching: EffectiveCachingRecipe;
+  execution: EffectiveExecutionRecipe;
+  server: EffectiveServerRecipe;
+}
+
+export interface ComponentIdentity {
+  kind: "checkpoint" | "text_encoder" | "vae" | "tokenizer";
+  requested_locator: string | null;
+  resolved_locator: string | null;
+  size_bytes: number | null;
+  modified_time_ns: number | null;
+  sha256: string | null;
+  verification_status: EvidenceStatus;
+  reason: string | null;
+  bypass_used: boolean;
+}
+
+export interface TrainerCapabilitySnapshot {
+  platform: RuntimePlatform;
+  status: EvidenceStatus;
+  reason: string | null;
+  torch_version: string | null;
+  accelerate_version: string | null;
+  python_version: string | null;
+  supported_mixed_precision: MixedPrecision[];
+}
+
+export interface TrainingStepPlan {
+  image_count: number;
+  num_repeats: number;
+  train_examples: number;
+  batch_size: number;
+  batches_per_epoch: number;
+  gradient_accumulation_steps: number;
+  optimizer_steps_per_epoch: number;
+  epochs: number;
+  total_optimizer_steps: number;
+  warmup_steps: number;
+  process_count: 1;
+}
+
+export interface EvidenceValue {
+  status: EvidenceStatus;
+  value: string | null;
+  reason: string | null;
+}
+
+export interface ExecutionEvidence {
+  status: EvidenceStatus;
+  reason: string | null;
+  argv: string[] | null;
+  dataset_config_content: string | null;
+  dataset_config_sha256: string | null;
+  launcher: EvidenceValue | null;
+  capability: TrainerCapabilitySnapshot;
+  sd_scripts_revision: EvidenceValue | null;
+}
+
 export interface TrainStartRequest {
   folder: string;
-  checkpoint?: string;
-  model_family?: string;
-  anima_qwen3?: string;
-  anima_vae?: string;
-  anima_t5_tokenizer_path?: string;
-  sdxl?: boolean;
-  epochs?: number;
-  resolution?: number;
-  batch_size?: number;
-  learning_rate?: string;
-  class_tokens?: string;
-  keep_tokens?: number;
-  num_repeats?: number;
-  mixed_precision?: string;
-  network_module?: string;
-  network_dim?: number;
-  network_alpha?: number;
+  expected_dataset_hash: string;
+  expected_profile_hash: string;
+  recipe: TrainingRecipeTransport;
+}
+
+export interface TrainingStartPayload {
+  folder: string;
+  expected_dataset_hash: string;
+  expected_profile_hash: string;
+  recipe: TrainingStartRecipeV1;
 }
 
 export interface TrainStartResponse {
   job_id: string;
   status: string;
+  stage?: string;
+  dataset_hash?: string | null;
+  profile_hash?: string | null;
+  normalized_trigger_token?: string | null;
+  recipe_schema_version?: RecipeSchemaVersion | null;
+  recipe_hash?: string | null;
+  requested_recipe?: RequestedTrainingRecipeV1 | null;
+  effective_recipe?: EffectiveTrainingRecipeV1 | null;
+  requested_scope?: RequestedScopeRecipe | null;
+  effective_scope?: EffectiveScopeRecipe | null;
+  field_sources?: Record<string, RecipeFieldSource> | null;
+  step_plan?: TrainingStepPlan | null;
+  component_identities?: Record<string, ComponentIdentity> | null;
+  capability?: TrainerCapabilitySnapshot | null;
+  execution_evidence?: ExecutionEvidence | null;
   message?: string;
+}
+
+export interface TrainingDecisionIssue {
+  code: string;
+  message: string;
+  path?: string | null;
+  details?: Record<string, unknown> | null;
+}
+
+export interface TrainingDecisionPreflightRequest {
+  folder: string;
+  trigger_token?: string;
+  expected_dataset_hash?: string;
+  expected_profile_hash?: string;
+  recipe?: TrainingRecipeTransport;
+}
+
+export interface TrainingParameterSuggestion {
+  params: Record<string, unknown>;
+  rationale: string[];
+}
+
+export interface TrainingDecisionPreflightResponse {
+  ok: boolean;
+  folder: string;
+  decision: "train" | "needs_review" | "do_not_train";
+  reasons: string[];
+  blocking_issues: TrainingDecisionIssue[];
+  warnings: TrainingDecisionIssue[];
+  next_actions: string[];
+  dataset_hash: string | null;
+  profile_hash: string | null;
+  normalized_trigger_token: string | null;
+  requested_recipe: RequestedTrainingRecipeV1 | null;
+  effective_recipe: EffectiveTrainingRecipeV1 | null;
+  requested_scope: RequestedScopeRecipe | null;
+  effective_scope: EffectiveScopeRecipe | null;
+  field_sources: Record<string, RecipeFieldSource> | null;
+  step_plan: TrainingStepPlan | null;
+  component_identities: Record<string, ComponentIdentity> | null;
+  capability: TrainerCapabilitySnapshot | null;
+  execution_evidence: ExecutionEvidence | null;
+  recipe_hash: string | null;
+  policy_rationale: string[];
+  start_payload: TrainingStartPayload | null;
+  suggested_params: TrainingParameterSuggestion | null;
 }
 
 export interface TrainJobInfo {

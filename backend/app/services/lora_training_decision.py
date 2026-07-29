@@ -1,14 +1,32 @@
 """Deterministic, side-effect-free LoRA training decision preflight."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from app.schemas.lora_train import (
+    ComponentIdentity,
+    RecipeCompilationContext,
+    RecipePolicySnapshot,
+    TrainerCapabilitySnapshot,
     TrainingDecisionPreflightResponse,
     TrainingParameterSuggestion,
+    TrainingStartPayload,
     ValidationIssue,
 )
-from app.services import lora_dataset, lora_dataset_assessment, lora_dataset_curation
+from app.services import (
+    file_digest_cache,
+    lora_dataset,
+    lora_dataset_assessment,
+    lora_dataset_curation,
+    lora_trainer,
+)
+from app.services.lora_training_recipe import (
+    NormalizedRecipeInput,
+    RecipeError,
+    compile_training_recipe,
+    normalize_recipe_input,
+)
 
 _NETWORK_MODULE_BY_MODEL_FAMILY = {
     "sd15": "networks.lora",
@@ -55,59 +73,230 @@ def _configured_model_family(settings: Any) -> str:
     return "sdxl" if bool(_setting(settings, "lora_sdxl", False)) else "sd15"
 
 
-def _suggest_params(
-    *,
-    folder: str,
-    dataset_hash: str,
-    image_count: int,
-    profile: Any,
-    normalized_trigger_token: str,
-) -> TrainingParameterSuggestion | None:
-    metadata_ready = (
-        profile.present
-        and profile.valid
-        and profile.dataset_type != "unknown"
-        and profile.caption_profile != "unknown"
-        and profile.model_family != "unknown"
-    )
-    if not metadata_ready:
-        return None
+def _configured_precision(settings: Any) -> str:
+    value = str(_setting(settings, "lora_mixed_precision", "no") or "no").strip().lower()
+    if value == "fp32":
+        return "no"
+    return value if value in {"no", "fp16", "bf16"} else "no"
 
-    settings = lora_dataset.get_settings()
-    model_family = profile.model_family
-    params: dict[str, Any] = {
-        "folder": folder,
-        "trigger_token": normalized_trigger_token,
-        "expected_dataset_hash": dataset_hash,
-        "checkpoint": _setting(settings, "lora_default_checkpoint", "") or None,
-        "model_family": model_family,
-        "sdxl": model_family == "sdxl",
-        "epochs": 12 if image_count < 12 else 10 if image_count <= 40 else 8,
-        "resolution": int(_setting(settings, "lora_resolution", 1024)),
-        "batch_size": int(_setting(settings, "lora_batch_size", 4)),
-        "learning_rate": str(_setting(settings, "lora_learning_rate", "1e-4")),
-        "class_tokens": normalized_trigger_token,
-        "keep_tokens": int(_setting(settings, "lora_keep_tokens", 1)),
-        "num_repeats": int(_setting(settings, "lora_num_repeats", 10)),
-        "mixed_precision": str(_setting(settings, "lora_mixed_precision", "fp16")),
-        "network_module": _NETWORK_MODULE_BY_MODEL_FAMILY[model_family],
-        "network_dim": int(_setting(settings, "lora_network_dim", 32)),
-        "network_alpha": int(_setting(settings, "lora_network_alpha", 16)),
+
+def _component_identity(
+    *,
+    kind: str,
+    requested_locator: str | None,
+    model_family: str,
+    allow_unverified: bool,
+    settings: Any,
+) -> ComponentIdentity:
+    if not requested_locator:
+        return lora_trainer.collect_component_identity(
+            kind=kind,
+            requested_locator=None,
+            resolved_path=None,
+            allow_unverified=allow_unverified,
+            digest_resolver=file_digest_cache.sha256_for,
+        )
+    if (
+        not lora_trainer._is_local_path(requested_locator)
+        and not lora_trainer._is_bare_filename(requested_locator)
+    ):
+        return ComponentIdentity(
+            kind=kind,
+            requested_locator=requested_locator,
+            resolved_locator=requested_locator,
+            verification_status="unverified",
+            reason="remote component identity is not locally verifiable",
+            bypass_used=False,
+        )
+    if kind == "checkpoint":
+        search_dirs = lora_trainer._checkpoint_search_dirs(
+            settings,
+            model_family,
+        )
+    elif kind in {"text_encoder", "tokenizer"}:
+        search_dirs = lora_trainer._dir_candidates(
+            _setting(settings, "comfyui_text_encoders_dir", "")
+        )
+    elif kind == "vae":
+        search_dirs = lora_trainer._dir_candidates(
+            _setting(settings, "comfyui_vae_dir", "")
+        )
+    else:
+        search_dirs = []
+    resolved_locator = lora_trainer._resolve_model_file(
+        requested_locator,
+        search_dirs,
+    )
+    candidate = Path(resolved_locator).expanduser()
+    return lora_trainer.collect_component_identity(
+        kind=kind,
+        requested_locator=requested_locator,
+        resolved_path=candidate,
+        allow_unverified=allow_unverified,
+        digest_resolver=file_digest_cache.sha256_for,
+    )
+
+
+def build_recipe_compilation_context(
+    inspected: Any,
+    normalized: NormalizedRecipeInput,
+    *,
+    approved_trigger_token: str | None = None,
+    settings: Any | None = None,
+    capability: TrainerCapabilitySnapshot | None = None,
+) -> RecipeCompilationContext:
+    """Snapshot all policy and evidence inputs shared by preflight and Start."""
+    active_settings = settings or lora_dataset.get_settings()
+    profile_hash = inspected.profile_hash
+    trigger_token = approved_trigger_token or inspected.profile.trigger_token
+    if not profile_hash or not trigger_token:
+        raise RecipeError(
+            "recipe_context_unavailable",
+            "approved dataset metadata is incomplete",
+            "repair dataset metadata and rerun decision preflight",
+            {
+                "issues": [
+                    {
+                        "location": "dataset.profile",
+                        "type": "required_value",
+                    }
+                ]
+            },
+        )
+    model_family = inspected.profile.model_family
+    requested_model = normalized.requested.model
+    requested_anima = (
+        requested_model.anima
+        if requested_model is not None
+        else None
+    )
+    checkpoint = (
+        requested_model.checkpoint
+        if requested_model is not None and requested_model.checkpoint
+        else str(_setting(active_settings, "lora_default_checkpoint", "") or "")
+    )
+    allow_unverified = bool(
+        requested_model is not None
+        and requested_model.allow_unverified_checkpoint
+    )
+    qwen3 = (
+        requested_anima.qwen3
+        if requested_anima is not None and requested_anima.qwen3
+        else _setting(active_settings, "lora_anima_qwen3", "") or None
+    )
+    vae = (
+        requested_anima.vae
+        if requested_anima is not None and requested_anima.vae
+        else _setting(active_settings, "lora_anima_vae", "") or None
+    )
+    tokenizer = (
+        requested_anima.t5_tokenizer_path
+        if requested_anima is not None and requested_anima.t5_tokenizer_path
+        else _setting(active_settings, "lora_anima_t5_tokenizer_path", "") or None
+    )
+    components: dict[str, ComponentIdentity] = {
+        "checkpoint": _component_identity(
+            kind="checkpoint",
+            requested_locator=checkpoint or None,
+            model_family=model_family,
+            allow_unverified=allow_unverified,
+            settings=active_settings,
+        )
     }
     if model_family == "anima":
-        params["anima_qwen3"] = _setting(settings, "lora_anima_qwen3", "") or None
-        params["anima_vae"] = _setting(settings, "lora_anima_vae", "") or None
-        params["anima_t5_tokenizer_path"] = (
-            _setting(settings, "lora_anima_t5_tokenizer_path", "") or None
+        components["text_encoder"] = _component_identity(
+            kind="text_encoder",
+            requested_locator=qwen3,
+            model_family=model_family,
+            allow_unverified=True,
+            settings=active_settings,
         )
+        if vae:
+            components["vae"] = _component_identity(
+                kind="vae",
+                requested_locator=vae,
+                model_family=model_family,
+                allow_unverified=True,
+                settings=active_settings,
+            )
+        if tokenizer:
+            components["tokenizer"] = _component_identity(
+                kind="tokenizer",
+                requested_locator=tokenizer,
+                model_family=model_family,
+                allow_unverified=True,
+                settings=active_settings,
+            )
+    trainer_python = str(
+        _setting(active_settings, "sd_scripts_python", "") or ""
+    ).strip()
+    capability_snapshot = capability or (
+        lora_trainer.inspect_trainer_capability(trainer_python)
+        if trainer_python
+        else TrainerCapabilitySnapshot(
+            platform="unknown",
+            status="unavailable",
+            reason="trainer Python is not configured for capability inspection",
+            supported_mixed_precision=("no",),
+        )
+    )
+    try:
+        policy = RecipePolicySnapshot(
+            default_checkpoint=checkpoint,
+            default_anima_qwen3=qwen3,
+            default_anima_vae=vae,
+            default_anima_t5_tokenizer_path=tokenizer,
+            resolution=int(_setting(active_settings, "lora_resolution", 1024)),
+            batch_size=int(_setting(active_settings, "lora_batch_size", 4)),
+            learning_rate=str(
+                _setting(active_settings, "lora_learning_rate", "1e-4")
+            ),
+            keep_tokens=int(_setting(active_settings, "lora_keep_tokens", 1)),
+            num_repeats=int(_setting(active_settings, "lora_num_repeats", 10)),
+            mixed_precision=_configured_precision(active_settings),
+            network_dim=int(_setting(active_settings, "lora_network_dim", 32)),
+            network_alpha=int(
+                _setting(active_settings, "lora_network_alpha", 16)
+            ),
+        )
+        return RecipeCompilationContext(
+            dataset_hash=inspected.dataset_hash,
+            profile_hash=profile_hash,
+            profile_model_family=model_family,
+            approved_trigger_token=lora_dataset.normalize_trigger_token(
+                trigger_token
+            ),
+            image_count=inspected.image_count,
+            policy=policy,
+            capability=capability_snapshot,
+            component_identities=components,
+        )
+    except (TypeError, ValueError):
+        raise RecipeError(
+            "server_recipe_policy_invalid",
+            "server LoRA recipe policy is invalid",
+            "correct the server LoRA settings and rerun preflight",
+            {
+                "issues": [
+                    {
+                        "location": "server_policy",
+                        "type": "invalid_value",
+                    }
+                ]
+            },
+        ) from None
 
-    rationale = [
-        f"profile model_family={model_family} selects {params['network_module']}",
-        f"dataset_type={profile.dataset_type} and caption_profile={profile.caption_profile} provide enough metadata",
-        f"image_count={image_count} selects epochs={params['epochs']}",
-        "suggested parameters are advisory; lora_train_start must still validate dataset hash and params",
-    ]
-    return TrainingParameterSuggestion(params=params, rationale=rationale)
+
+def _recipe_issue(error: RecipeError) -> ValidationIssue:
+    return _issue(
+        error.code,
+        error.message,
+        path="recipe",
+        details={
+            "hint": error.hint,
+            **error.details,
+        },
+    )
 
 
 def _next_action_for_issue(issue: ValidationIssue) -> str:
@@ -180,6 +369,7 @@ def decide_training_preflight(
     trigger_token: str | None = None,
     expected_dataset_hash: str | None = None,
     expected_profile_hash: str | None = None,
+    recipe: object | None = None,
 ) -> TrainingDecisionPreflightResponse:
     """Return a deterministic train/review/do-not-train assessment without writes or queues."""
     inspected = lora_dataset.inspect_dataset(folder)
@@ -194,6 +384,23 @@ def decide_training_preflight(
         _add_unique(reasons, "metadata profile is structurally valid")
     else:
         _add_unique(reasons, "metadata profile has blocking validation errors")
+
+    family_matches_config = True
+    if inspected.profile.valid and inspected.profile.model_family in _NETWORK_MODULE_BY_MODEL_FAMILY:
+        configured_model_family = _configured_model_family(lora_dataset.get_settings())
+        if configured_model_family != inspected.profile.model_family:
+            family_matches_config = False
+            _add_issue(
+                warnings,
+                _issue(
+                    "model_family_mismatch",
+                    "configured model family does not match dataset profile",
+                    details={
+                        "configured_model_family": configured_model_family,
+                        "dataset_profile_model_family": inspected.profile.model_family,
+                    },
+                ),
+            )
 
     if expected_profile_hash is not None and expected_profile_hash != inspected.profile_hash:
         _add_issue(
@@ -297,10 +504,75 @@ def decide_training_preflight(
     review_warnings = [
         warning for warning in warnings if warning.code not in _INFO_ONLY_WARNING_CODES
     ]
+    compiled = None
+    policy_rationale: list[str] = []
+    if (
+        not blocking
+        and not review_warnings
+        and normalized_trigger
+        and inspected.profile.present
+        and inspected.profile.valid
+        and inspected.profile_hash
+        and inspected.profile.model_family in _NETWORK_MODULE_BY_MODEL_FAMILY
+        and family_matches_config
+    ):
+        try:
+            normalized_recipe = normalize_recipe_input(
+                recipe if recipe is not None else {},
+                policy_source="preflight_policy",
+            )
+            context = build_recipe_compilation_context(
+                inspected,
+                normalized_recipe,
+                approved_trigger_token=normalized_trigger,
+            )
+            compiled = compile_training_recipe(
+                normalized_recipe,
+                context=context,
+                policy_source="preflight_policy",
+            )
+            policy_rationale = [
+                (
+                    f"approved profile family={compiled.effective.model.family} "
+                    f"selects {compiled.effective.model.network_module}"
+                ),
+                (
+                    f"capability platform={compiled.capability.platform} "
+                    f"status={compiled.capability.status} selects "
+                    f"batch={compiled.effective.dataset.batch_size} and "
+                    f"mixed_precision={compiled.effective.optimization.mixed_precision}"
+                ),
+                (
+                    f"image_count={inspected.image_count} selects "
+                    f"epochs={compiled.effective.optimization.epochs} and "
+                    f"total_optimizer_steps={compiled.step_plan.total_optimizer_steps}"
+                ),
+                "caller omissions remain omitted in requested_recipe and are visible through field_sources",
+            ]
+        except RecipeError as exc:
+            _add_issue(blocking, _recipe_issue(exc))
+
+    review_warnings = [
+        warning for warning in warnings if warning.code not in _INFO_ONLY_WARNING_CODES
+    ]
     if blocking:
         decision = "do_not_train"
     elif review_warnings:
         decision = "needs_review"
+    elif compiled is None:
+        decision = "needs_review"
+        _add_issue(
+            warnings,
+            _issue(
+                "recipe_preview_unavailable",
+                "a canonical training recipe preview could not be produced",
+            ),
+        )
+        review_warnings = [
+            warning
+            for warning in warnings
+            if warning.code not in _INFO_ONLY_WARNING_CODES
+        ]
     else:
         decision = "train"
 
@@ -309,21 +581,28 @@ def decide_training_preflight(
     if decision == "train":
         _add_unique(
             next_actions,
-            "Ask the user for explicit approval, then call lora_train_start with suggested params and expected_dataset_hash.",
+            "Ask the user for explicit approval, then submit start_payload exactly to lora_train_start.",
         )
     elif decision == "needs_review":
         _add_unique(next_actions, "Resolve review items, then rerun decision preflight before starting training.")
     else:
         _add_unique(next_actions, "Do not call lora_train_start until blocking issues are resolved.")
 
+    start_payload = None
     suggested_params = None
-    if decision in {"train", "needs_review"} and normalized_trigger:
-        suggested_params = _suggest_params(
+    if decision == "train" and compiled is not None and inspected.profile_hash:
+        payload_recipe = compiled.requested.model_copy(
+            update={"expected_recipe_hash": compiled.recipe_hash}
+        )
+        start_payload = TrainingStartPayload(
             folder=inspected.folder,
-            dataset_hash=inspected.dataset_hash,
-            image_count=inspected.image_count,
-            profile=inspected.profile,
-            normalized_trigger_token=normalized_trigger,
+            expected_dataset_hash=inspected.dataset_hash,
+            expected_profile_hash=inspected.profile_hash,
+            recipe=payload_recipe,
+        )
+        suggested_params = TrainingParameterSuggestion(
+            params=start_payload.model_dump(mode="json"),
+            rationale=policy_rationale,
         )
 
     return TrainingDecisionPreflightResponse(
@@ -336,5 +615,29 @@ def decide_training_preflight(
         dataset_hash=inspected.dataset_hash,
         profile_hash=inspected.profile_hash,
         normalized_trigger_token=normalized_trigger,
+        requested_recipe=compiled.requested if compiled is not None else None,
+        effective_recipe=compiled.effective if compiled is not None else None,
+        requested_scope=(
+            compiled.requested.scope if compiled is not None else None
+        ),
+        effective_scope=(
+            compiled.effective.scope if compiled is not None else None
+        ),
+        field_sources=(
+            dict(compiled.field_sources) if compiled is not None else None
+        ),
+        step_plan=compiled.step_plan if compiled is not None else None,
+        component_identities=(
+            dict(compiled.component_identities)
+            if compiled is not None
+            else None
+        ),
+        capability=compiled.capability if compiled is not None else None,
+        execution_evidence=(
+            compiled.execution_evidence if compiled is not None else None
+        ),
+        recipe_hash=compiled.recipe_hash if compiled is not None else None,
+        policy_rationale=policy_rationale,
+        start_payload=start_payload,
         suggested_params=suggested_params,
     )

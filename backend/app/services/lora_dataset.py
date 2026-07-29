@@ -62,7 +62,10 @@ def _base_dir() -> Path:
 
 def resolve_dataset_dir(folder: str) -> Path:
     """Resolve a dataset folder under lora_train_dir and reject traversal."""
-    cleaned = (folder or "").strip().replace("\\", "/").strip("/")
+    raw = (folder or "").strip()
+    if raw.startswith(("/", "\\")):
+        raise DatasetServiceError("invalid_dataset_folder", "invalid dataset folder")
+    cleaned = raw.replace("\\", "/").strip("/")
     if not cleaned or ".." in cleaned:
         raise DatasetServiceError("invalid_dataset_folder", "invalid dataset folder")
     if not re.fullmatch(r"[\w\-/]+", cleaned):
@@ -186,11 +189,14 @@ def _collect_files(dataset_dir: Path) -> list[DatasetFileItem]:
 
 
 def compute_dataset_hash(folder: str) -> str:
-    """Hash image/caption membership and caption contents deterministically."""
+    """Hash image/caption membership and both file contents deterministically."""
     dataset_dir = resolve_dataset_dir(folder)
+    base = _base_dir()
     digest = hashlib.sha256()
     for item in _collect_files(dataset_dir):
         digest.update(item.image_path.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(_hash_file(base / item.image_path).encode("ascii"))
         digest.update(b"\0")
         digest.update((item.caption_path or "").encode("utf-8"))
         digest.update(b"\0")
@@ -905,6 +911,7 @@ def validate_dataset(
     *,
     trigger_token: str,
     expected_dataset_hash: str | None = None,
+    ignore_lock: bool = False,
 ) -> DatasetValidateResponse:
     """Validate dataset readiness before training."""
     dataset_dir = resolve_dataset_dir(folder)
@@ -915,7 +922,7 @@ def validate_dataset(
     settings = get_settings()
     min_images = max(1, int(getattr(settings, "lora_train_threshold", 1) or 1))
 
-    if inspected.locked:
+    if inspected.locked and not ignore_lock:
         errors.append(ValidationIssue(code="dataset_locked", message="dataset is locked"))
     if inspected.image_count < min_images:
         errors.append(

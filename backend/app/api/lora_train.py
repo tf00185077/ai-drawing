@@ -3,7 +3,12 @@
 訓練執行器、觸發邏輯、Pipeline 自動產圖、佇列管理
 契約：docs/api-contract.md
 """
-from fastapi import APIRouter, HTTPException, Query
+from typing import Any
+
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 
 from app.schemas.lora_train import (
     DatasetAgentInspectionResponse,
@@ -53,6 +58,91 @@ from app.services.lora_dataset import DatasetServiceError
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
 
 
+_default_route_class = router.route_class
+
+_REMOVED_START_FIELDS = frozenset(
+    {
+        "checkpoint",
+        "trigger_token",
+        "model_family",
+        "anima_qwen3",
+        "anima_vae",
+        "anima_t5_tokenizer_path",
+        "sdxl",
+        "allow_unverified_checkpoint",
+        "epochs",
+        "resolution",
+        "batch_size",
+        "learning_rate",
+        "class_tokens",
+        "keep_tokens",
+        "num_repeats",
+        "mixed_precision",
+        "network_module",
+        "network_dim",
+        "network_alpha",
+    }
+)
+
+
+def _safe_validation_errors(exc: RequestValidationError) -> list[dict[str, Any]]:
+    """Keep field diagnostics without echoing rejected request values."""
+    return [
+        {
+            key: value
+            for key, value in error.items()
+            if key not in {"input", "ctx", "url"}
+        }
+        for error in exc.errors()
+    ]
+
+
+class _LoraStartValidationRoute(APIRoute):
+    """Return a stable, redacted migration error for removed flat Start knobs."""
+
+    def get_route_handler(self):  # type: ignore[override]
+        handler = super().get_route_handler()
+
+        async def validation_handler(request: Request):
+            try:
+                return await handler(request)
+            except RequestValidationError as exc:
+                removed = sorted(
+                    {
+                        str(error["loc"][1])
+                        for error in exc.errors()
+                        if error.get("type") == "extra_forbidden"
+                        and tuple(error.get("loc", ()))[:1] == ("body",)
+                        and len(tuple(error.get("loc", ()))) == 2
+                        and str(error["loc"][1]) in _REMOVED_START_FIELDS
+                    }
+                )
+                if removed:
+                    return JSONResponse(
+                        status_code=422,
+                        content={
+                            "detail": {
+                                "code": "legacy_training_fields_removed",
+                                "message": (
+                                    "top-level training fields were removed; "
+                                    "use the versioned recipe container"
+                                ),
+                                "hint": (
+                                    "run decision preflight and submit its exact "
+                                    "start_payload"
+                                ),
+                                "details": {"fields": removed},
+                            }
+                        },
+                    )
+                return JSONResponse(
+                    status_code=422,
+                    content={"detail": _safe_validation_errors(exc)},
+                )
+
+        return validation_handler
+
+
 def _dataset_error(exc: DatasetServiceError) -> HTTPException:
     detail = {"code": exc.code, "message": exc.message, "details": exc.details}
     if exc.code in {"dataset_locked", "dataset_hash_mismatch", "profile_hash_mismatch"}:
@@ -64,7 +154,17 @@ def _dataset_error(exc: DatasetServiceError) -> HTTPException:
 
 def _trainer_error(exc: lora_trainer.TrainerServiceError) -> HTTPException:
     detail = {"code": exc.code, "message": exc.message, "details": exc.details}
-    if exc.code in {"dataset_locked", "dataset_hash_mismatch", "job_not_cancellable"}:
+    if exc.hint:
+        detail["hint"] = exc.hint
+    if exc.code in {
+        "dataset_locked",
+        "dataset_hash_mismatch",
+        "profile_hash_mismatch",
+        "recipe_hash_mismatch",
+        "trainer_capability_changed",
+        "duplicate_folder",
+        "job_not_cancellable",
+    }:
         return HTTPException(409, detail=detail)
     if exc.code in {"job_not_found", "log_not_found"}:
         return HTTPException(404, detail=detail)
@@ -216,6 +316,7 @@ async def training_decision_preflight(body: TrainingDecisionPreflightRequest):
             trigger_token=body.trigger_token,
             expected_dataset_hash=body.expected_dataset_hash,
             expected_profile_hash=body.expected_profile_hash,
+            recipe=body.recipe,
         )
     except DatasetServiceError as exc:
         raise _dataset_error(exc)
@@ -310,37 +411,29 @@ async def inspect_dataset(folder: str, trigger_token: str | None = Query(default
         raise _dataset_error(exc)
 
 
+router.route_class = _LoraStartValidationRoute
+
+
 @router.post("/start", response_model=TrainStartResponse, status_code=202)
 async def start_training(body: TrainStartRequest):
     """手動觸發 LoRA 訓練。訓練完成後如需生圖，請另行呼叫生圖 API。"""
     try:
         job_id = lora_trainer.enqueue(
             body.folder,
-            checkpoint=body.checkpoint,
-            model_family=body.model_family,
-            anima_qwen3=body.anima_qwen3,
-            anima_vae=body.anima_vae,
-            anima_t5_tokenizer_path=body.anima_t5_tokenizer_path,
-            sdxl=body.sdxl,
-            epochs=body.epochs,
-            resolution=body.resolution,
-            batch_size=body.batch_size,
-            learning_rate=body.learning_rate,
-            class_tokens=body.class_tokens,
-            keep_tokens=body.keep_tokens,
-            num_repeats=body.num_repeats,
-            mixed_precision=body.mixed_precision,
-            network_module=body.network_module,
-            network_dim=body.network_dim,
-            network_alpha=body.network_alpha,
-            trigger_token=body.trigger_token,
             expected_dataset_hash=body.expected_dataset_hash,
-            allow_unverified_checkpoint=body.allow_unverified_checkpoint,
+            expected_profile_hash=body.expected_profile_hash,
+            recipe=body.recipe,
         )
         try:
             job_status = lora_trainer.get_job_status(job_id)
         except lora_trainer.TrainerServiceError:
-            job_status = {"status": "queued", "stage": "queued", "dataset_hash": None, "normalized_trigger_token": None}
+            job_status = {
+                "status": "queued",
+                "stage": "queued",
+                "dataset_hash": body.expected_dataset_hash,
+                "profile_hash": body.expected_profile_hash,
+                "normalized_trigger_token": None,
+            }
     except lora_trainer.TrainerServiceError as e:
         raise _trainer_error(e)
     except ValueError as e:
@@ -353,9 +446,24 @@ async def start_training(body: TrainStartRequest):
         status=job_status["status"] if job_status else "queued",
         stage=job_status.get("stage") if job_status else "queued",
         dataset_hash=job_status.get("dataset_hash") if job_status else None,
+        profile_hash=job_status.get("profile_hash") if job_status else None,
         normalized_trigger_token=job_status.get("normalized_trigger_token") if job_status else None,
+        recipe_schema_version=job_status.get("recipe_schema_version") if job_status else None,
+        recipe_hash=job_status.get("recipe_hash") if job_status else None,
+        requested_recipe=job_status.get("requested_recipe") if job_status else None,
+        effective_recipe=job_status.get("effective_recipe") if job_status else None,
+        requested_scope=job_status.get("requested_scope") if job_status else None,
+        effective_scope=job_status.get("effective_scope") if job_status else None,
+        field_sources=job_status.get("field_sources") if job_status else None,
+        step_plan=job_status.get("step_plan") if job_status else None,
+        component_identities=job_status.get("component_identities") if job_status else None,
+        capability=job_status.get("capability") if job_status else None,
+        execution_evidence=job_status.get("execution_evidence") if job_status else None,
         message="已加入訓練佇列",
     )
+
+
+router.route_class = _default_route_class
 
 
 @router.post("/clear")

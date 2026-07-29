@@ -58,6 +58,11 @@ def test_dataset_list_inspect_hash_and_path_traversal(dataset_root: Path) -> Non
         assert inspected.files[0].caption_path == "character/miku/a.txt"
         assert "miku_token" in inspected.trigger_token_candidates
 
+        (dataset_root / "character" / "miku" / "a.png").write_bytes(
+            b"replaced-image-bytes",
+        )
+        assert lora_dataset.inspect_dataset("character/miku").dataset_hash != before_hash
+
         (dataset_root / "character" / "miku" / "a.txt").write_text("changed", encoding="utf-8")
         assert lora_dataset.inspect_dataset("character/miku").dataset_hash != before_hash
 
@@ -286,6 +291,14 @@ def test_validate_dataset_reports_missing_trigger_stale_hash_and_locks(dataset_r
             assert locked.ok is False
             assert locked.locked is True
             assert any(issue.code == "dataset_locked" for issue in locked.errors)
+
+            owner_validation = lora_dataset.validate_dataset(
+                "character/miku",
+                trigger_token="miku_token",
+                ignore_lock=True,
+            )
+            assert owner_validation.locked is True
+            assert not any(issue.code == "dataset_locked" for issue in owner_validation.errors)
 
 
 def test_dataset_lock_blocks_concurrent_apply(dataset_root: Path) -> None:
