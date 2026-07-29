@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "legwear",
+  "polarity": "positive",
+  "name_zh": "襪類/腿部服飾",
+  "description_zh": "收錄「襪類/腿部服飾」分類的提示詞。",
+  "aliases": [],
+  "keywords": [],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "clothing",
+  "entries": [
+    {
+      "id": "thighhighs",
+      "name_zh": "過膝襪",
+      "description_zh": "過膝襪",
+      "prompt": "thighhighs",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pantyhose",
+      "name_zh": "連褲襪",
+      "description_zh": "連褲襪",
+      "prompt": "pantyhose",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "fishnets",
+      "name_zh": "網襪",
+      "description_zh": "網襪",
+      "prompt": "fishnets",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
