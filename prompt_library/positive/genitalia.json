@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "id": "genitalia",
+  "polarity": "positive",
+  "name_zh": "性器官",
+  "description_zh": "收錄「性器官」分類的提示詞。",
+  "aliases": [],
+  "keywords": [],
+  "order": 26,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "body-appearance",
+  "entries": [
+    {
+      "id": "fleshy-penis",
+      "name_zh": "肉色陰莖",
+      "description_zh": "肉色陰莖",
+      "prompt": "fleshy penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "pale-penis",
+      "name_zh": "蒼白陰莖",
+      "description_zh": "蒼白陰莖",
+      "prompt": "pale penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "dark-skinned-penis",
+      "name_zh": "黝黑陰莖",
+      "description_zh": "黝黑陰莖",
+      "prompt": "dark-skinned penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "black-penis",
+      "name_zh": "黑色陰莖",
+      "description_zh": "黑色陰莖",
+      "prompt": "black penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "bbc",
+      "name_zh": "黑人巨根",
+      "description_zh": "黑人巨根",
+      "prompt": "bbc",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "monster-penis",
+      "name_zh": "怪物陰莖",
+      "description_zh": "怪物陰莖",
+      "prompt": "monster penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "alien-penis",
+      "name_zh": "異形陰莖",
+      "description_zh": "異形陰莖",
+      "prompt": "alien penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 70,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "huge-penis",
+      "name_zh": "巨大陰莖",
+      "description_zh": "巨大陰莖",
+      "prompt": "huge penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 80,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "hyper-penis",
+      "name_zh": "超大陰莖",
+      "description_zh": "超大陰莖",
+      "prompt": "hyper penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 90,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "veiny-penis",
+      "name_zh": "青筋陰莖",
+      "description_zh": "青筋陰莖",
+      "prompt": "veiny penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 100,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "erect-penis",
+      "name_zh": "勃起",
+      "description_zh": "勃起",
+      "prompt": "erect penis",
+      "aliases": [],
+      "keywords": [],
+      "order": 110,
+      "revision": 1,
+      "archived": false
+    },
+    {
+      "id": "uncircumcised",
+      "name_zh": "包莖",
+      "description_zh": "包莖",
+      "prompt": "uncircumcised",
+      "aliases": [],
+      "keywords": [],
+      "order": 120,
+      "revision": 1,
+      "archived": false
+    }
+  ]
+}
