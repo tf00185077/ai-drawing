@@ -1033,7 +1033,10 @@ describe("PromptWorkbench existing flows", () => {
     await ready();
     fireEvent.click(screen.getByRole("button", { name: "📁 品質" }));
     const loadedEntry = await screen.findByRole("button", { name: "加入 中文名稱" });
-    expect(screen.queryByRole("button", { name: /新增|編輯|封存|恢復/ })).not.toBeInTheDocument();
+    // No per-entry edit/archive/restore controls, and no old single-entry "新增詞條"
+    // action — only the library-wide "新增到詞庫" quick-add form is present.
+    expect(screen.queryByRole("button", { name: "新增詞條" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /編輯|封存|恢復/ })).not.toBeInTheDocument();
     fireEvent.click(loadedEntry);
     fireEvent.change(screen.getByLabelText("Positive Prompt 最終文字"), { target: { value: "zh current,  (unfinished " } });
     fireEvent.click(screen.getByRole("button", { name: "負向" }));
@@ -1185,5 +1188,80 @@ describe("PromptWorkbench existing flows", () => {
     // ranked by the leaf's own order (5) instead, "honoka" would sort BEFORE
     // "masterpiece" and this assertion would fail.
     await waitFor(() => expect((finalText as HTMLTextAreaElement).value).toBe("masterpiece,honoka"));
+  });
+});
+
+describe("PromptWorkbench quick-add custom entry", () => {
+  it("creates a new library entry with a deduped slug and auto fields, without touching the current composition", async () => {
+    let putUrl: string | undefined;
+    let putBody: any;
+    const fetchMock = installFetch((url, init) => {
+      if (url === "/api/prompt-library/categories/positive/quality/entries/zh-2" && init?.method === "PUT") {
+        putUrl = url;
+        putBody = JSON.parse(String(init.body));
+        return response({
+          category: null,
+          combination: null,
+          entry: {
+            id: "zh-2", name_zh: "新中文名", description_zh: "新中文名", prompt: "zh",
+            aliases: [], keywords: [], order: 10, revision: 1, archived: false,
+          },
+          entry_revision: 1,
+          affected_combinations: [],
+        });
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    // "zh" collides with the existing "zh" entry id in the "quality" category
+    // (see categoryResponse), so the slug must be deduped to "zh-2".
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: "quality" } });
+    fireEvent.change(screen.getByLabelText("新增詞條中文名稱"), { target: { value: "新中文名" } });
+    fireEvent.change(screen.getByLabelText("新增詞條英文 prompt"), { target: { value: "zh" } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    await screen.findByRole("status");
+    expect(putUrl).toBe("/api/prompt-library/categories/positive/quality/entries/zh-2");
+    expect(putBody).toMatchObject({
+      name_zh: "新中文名",
+      description_zh: "新中文名",
+      prompt: "zh",
+      aliases: [],
+      keywords: [],
+      order: 10,
+      expected_revision: 4,
+      expected_etag: "positive-quality-4",
+    });
+
+    // The saved entry is now searchable across the whole tree (entered allEntries)...
+    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "新中文名" } });
+    expect(screen.getByRole("button", { name: "加入 新中文名" })).toBeInTheDocument();
+
+    // ...but it was saved to the library only — not appended to the current
+    // Positive/Negative composition.
+    expect(screen.getByLabelText("Positive Prompt 最終文字")).toHaveValue("");
+    expect(screen.getByLabelText("Negative Prompt 最終文字")).toHaveValue("");
+
+    expect(fetchMock.mock.calls.filter(([url, init]) => String(url).endsWith("/categories/positive/quality") && !init?.method)).toHaveLength(2);
+  });
+
+  it("shows the Backend error and does not touch allEntries when the entry write fails", async () => {
+    installFetch((url, init) => {
+      if (String(url).includes("/entries/") && init?.method === "PUT") {
+        return response({ detail: { message: "衝突" } }, 409);
+      }
+    });
+    render(<PromptWorkbench />);
+    await ready();
+
+    fireEvent.change(screen.getByLabelText("新增詞條分類"), { target: { value: "quality" } });
+    fireEvent.change(screen.getByLabelText("新增詞條中文名稱"), { target: { value: "失敗詞條" } });
+    fireEvent.change(screen.getByLabelText("新增詞條英文 prompt"), { target: { value: "fail-entry" } });
+    fireEvent.click(screen.getByRole("button", { name: "新增到詞庫" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("衝突");
+    fireEvent.change(screen.getByLabelText("搜尋提示詞"), { target: { value: "失敗詞條" } });
+    expect(screen.queryByRole("button", { name: "加入 失敗詞條" })).not.toBeInTheDocument();
   });
 });
