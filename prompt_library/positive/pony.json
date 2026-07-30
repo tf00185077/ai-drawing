@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "id": "pony",
+  "polarity": "positive",
+  "name_zh": "pony",
+  "description_zh": "pony",
+  "aliases": [],
+  "keywords": [
+    "pony",
+    "分級",
+    "品質"
+  ],
+  "order": 10,
+  "revision": 8,
+  "archived": false,
+  "parent_id": "quality-ratings",
+  "entries": [
+    {
+      "id": "pony-quality-score-7-up-64eefb3e",
+      "name_zh": "評分七以上（Pony）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_7_up」，來源為「Pony 品質詞」。",
+      "prompt": "score_7_up",
+      "aliases": [
+        "Pony",
+        "quality",
+        "score_7_up"
+      ],
+      "keywords": [
+        "quality",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-quality-score-8-up-00f075e5",
+      "name_zh": "評分八以上（Pony）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_8_up」，來源為「Pony 品質詞」。",
+      "prompt": "score_8_up",
+      "aliases": [
+        "Pony",
+        "quality",
+        "score_8_up"
+      ],
+      "keywords": [
+        "quality",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-quality-score-9-88364ce6",
+      "name_zh": "評分九（Pony）",
+      "description_zh": "經人工拆分審閱的原子提示詞「score_9」，來源為「Pony 品質詞」。",
+      "prompt": "score_9",
+      "aliases": [
+        "Pony",
+        "quality",
+        "score_9"
+      ],
+      "keywords": [
+        "quality",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-quality-source-anime-7e53856d",
+      "name_zh": "動漫來源（Pony）",
+      "description_zh": "經人工拆分審閱的原子提示詞「source_anime」，來源為「Pony 品質詞」。",
+      "prompt": "source_anime",
+      "aliases": [
+        "Pony",
+        "quality",
+        "source_anime"
+      ],
+      "keywords": [
+        "quality",
+        "pony",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-rating-safe",
+      "name_zh": "Pony 分級：普遍",
+      "description_zh": "加入「Pony 分級：普遍」提示詞。",
+      "prompt": "rating_safe",
+      "aliases": [
+        "Pony",
+        "rating_safe",
+        "rating_safe"
+      ],
+      "keywords": [
+        "rating",
+        "pony",
+        "ltj"
+      ],
+      "order": 11,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-rating-questionable",
+      "name_zh": "Pony 分級：輔導",
+      "description_zh": "加入「Pony 分級：輔導」提示詞。",
+      "prompt": "rating_questionable",
+      "aliases": [
+        "Pony",
+        "rating_questionable",
+        "rating_questionable"
+      ],
+      "keywords": [
+        "rating",
+        "pony",
+        "ltj"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pony-rating-explicit",
+      "name_zh": "Pony 分級：限制",
+      "description_zh": "加入「Pony 分級：限制」提示詞。",
+      "prompt": "rating_explicit",
+      "aliases": [
+        "Pony",
+        "rating_explicit",
+        "rating_explicit"
+      ],
+      "keywords": [
+        "rating",
+        "pony",
+        "ltj"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "id": "hair-length",
+  "polarity": "positive",
+  "name_zh": "長度",
+  "description_zh": "長度",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "長度"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "bald",
+      "name_zh": "光頭",
+      "description_zh": "光頭",
+      "prompt": "bald",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "buzz-cut",
+      "name_zh": "平頭",
+      "description_zh": "平頭",
+      "prompt": "buzz cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "very-short-hair",
+      "name_zh": "極短髮",
+      "description_zh": "極短髮",
+      "prompt": "very short hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "short-hair",
+      "name_zh": "短髮",
+      "description_zh": "短髮",
+      "prompt": "short hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "bob-cut",
+      "name_zh": "鮑伯頭",
+      "description_zh": "鮑伯頭",
+      "prompt": "bob cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "medium-hair",
+      "name_zh": "中長髮",
+      "description_zh": "中長髮",
+      "prompt": "medium hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "shoulder-length-hair",
+      "name_zh": "肩膀長度",
+      "description_zh": "肩膀長度",
+      "prompt": "shoulder-length hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 70,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "long-hair",
+      "name_zh": "長髮",
+      "description_zh": "長髮",
+      "prompt": "long hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 80,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "very-long-hair",
+      "name_zh": "超長髮",
+      "description_zh": "超長髮",
+      "prompt": "very long hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 90,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "waist-length-hair",
+      "name_zh": "及腰長髮",
+      "description_zh": "及腰長髮",
+      "prompt": "waist-length hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 100,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "knee-length-hair",
+      "name_zh": "及膝長髮",
+      "description_zh": "及膝長髮",
+      "prompt": "knee-length hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 110,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

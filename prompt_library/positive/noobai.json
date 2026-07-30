@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "id": "noobai",
+  "polarity": "positive",
+  "name_zh": "noobAI",
+  "description_zh": "noobAI",
+  "aliases": [],
+  "keywords": [
+    "noobAI",
+    "品質",
+    "分級"
+  ],
+  "order": 10,
+  "revision": 9,
+  "archived": false,
+  "parent_id": "quality-ratings",
+  "entries": [
+    {
+      "id": "noobai-quality-absurdres-8a4ddaf1",
+      "name_zh": "超高解析度（NoobAI）",
+      "description_zh": "經人工拆分審閱的原子提示詞「absurdres」，來源為「NoobAI 品質詞」。",
+      "prompt": "absurdres",
+      "aliases": [
+        "NoobAI",
+        "quality",
+        "absurdres"
+      ],
+      "keywords": [
+        "quality",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-quality-best-quality-f5173132",
+      "name_zh": "最佳品質（NoobAI）",
+      "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「NoobAI 品質詞」。",
+      "prompt": "best quality",
+      "aliases": [
+        "NoobAI",
+        "quality",
+        "best quality"
+      ],
+      "keywords": [
+        "quality",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-quality-highres-b2fe9ee7",
+      "name_zh": "高解析度（NoobAI）",
+      "description_zh": "經人工拆分審閱的原子提示詞「highres」，來源為「NoobAI 品質詞」。",
+      "prompt": "highres",
+      "aliases": [
+        "NoobAI",
+        "quality",
+        "highres"
+      ],
+      "keywords": [
+        "quality",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-quality-masterpiece-6812d6c3",
+      "name_zh": "傑作（NoobAI）",
+      "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「NoobAI 品質詞」。",
+      "prompt": "masterpiece",
+      "aliases": [
+        "NoobAI",
+        "quality",
+        "masterpiece"
+      ],
+      "keywords": [
+        "quality",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-quality-newest-3e8f4562",
+      "name_zh": "最新風格（NoobAI）",
+      "description_zh": "經人工拆分審閱的原子提示詞「newest」，來源為「NoobAI 品質詞」。",
+      "prompt": "newest",
+      "aliases": [
+        "NoobAI",
+        "quality",
+        "newest"
+      ],
+      "keywords": [
+        "quality",
+        "noobai",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-rating-safe",
+      "name_zh": "NoobAI 分級：普遍",
+      "description_zh": "加入「NoobAI 分級：普遍」提示詞。",
+      "prompt": "general",
+      "aliases": [
+        "NoobAI",
+        "rating_safe",
+        "general"
+      ],
+      "keywords": [
+        "rating",
+        "noobai",
+        "ltj"
+      ],
+      "order": 19,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-rating-questionable",
+      "name_zh": "NoobAI 分級：輔導",
+      "description_zh": "加入「NoobAI 分級：輔導」提示詞。",
+      "prompt": "questionable",
+      "aliases": [
+        "NoobAI",
+        "rating_questionable",
+        "questionable"
+      ],
+      "keywords": [
+        "rating",
+        "noobai",
+        "ltj"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "noobai-rating-explicit",
+      "name_zh": "NoobAI 分級：限制",
+      "description_zh": "加入「NoobAI 分級：限制」提示詞。",
+      "prompt": "explicit",
+      "aliases": [
+        "NoobAI",
+        "rating_explicit",
+        "explicit"
+      ],
+      "keywords": [
+        "rating",
+        "noobai",
+        "ltj"
+      ],
+      "order": 21,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "id": "hair-texture",
+  "polarity": "positive",
+  "name_zh": "捲度",
+  "description_zh": "捲度",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "捲度"
+  ],
+  "order": 40,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "straight-hair",
+      "name_zh": "直髮",
+      "description_zh": "直髮",
+      "prompt": "straight hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wavy-hair",
+      "name_zh": "波浪髮",
+      "description_zh": "波浪髮",
+      "prompt": "wavy hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "curly-hair",
+      "name_zh": "捲髮",
+      "description_zh": "捲髮",
+      "prompt": "curly hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "ringlets",
+      "name_zh": "螺旋捲",
+      "description_zh": "螺旋捲",
+      "prompt": "ringlets",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "fluffy-hair",
+      "name_zh": "蓬鬆髮",
+      "description_zh": "蓬鬆髮",
+      "prompt": "fluffy hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "messy-hair",
+      "name_zh": "凌亂髮",
+      "description_zh": "凌亂髮",
+      "prompt": "messy hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "bed-hair",
+      "name_zh": "睡亂頭",
+      "description_zh": "睡亂頭",
+      "prompt": "bed hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 70,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "windblown-hair",
+      "name_zh": "被風吹亂",
+      "description_zh": "被風吹亂",
+      "prompt": "windblown hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 80,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wet-hair",
+      "name_zh": "濕髮",
+      "description_zh": "濕髮",
+      "prompt": "wet hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 90,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

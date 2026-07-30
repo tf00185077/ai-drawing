@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "hair-bangs",
+  "polarity": "positive",
+  "name_zh": "瀏海",
+  "description_zh": "瀏海",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "瀏海"
+  ],
+  "order": 20,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "bangs",
+      "name_zh": "瀏海",
+      "description_zh": "瀏海",
+      "prompt": "bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "blunt-bangs",
+      "name_zh": "齊瀏海",
+      "description_zh": "齊瀏海",
+      "prompt": "blunt bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "side-bangs",
+      "name_zh": "側瀏海",
+      "description_zh": "側瀏海",
+      "prompt": "side bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "parted-bangs",
+      "name_zh": "中分瀏海",
+      "description_zh": "中分瀏海",
+      "prompt": "parted bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "swept-bangs",
+      "name_zh": "撥向一側的瀏海",
+      "description_zh": "撥向一側的瀏海",
+      "prompt": "swept bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "curtain-bangs",
+      "name_zh": "八字瀏海",
+      "description_zh": "八字瀏海",
+      "prompt": "curtain bangs",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}
