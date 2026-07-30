@@ -170,6 +170,42 @@ def test_training_decision_requires_review_when_configured_family_conflicts_with
     assert result.start_payload is None
 
 
+def test_explicit_recipe_family_takes_precedence_over_conflicting_global_default(
+    tmp_path: Path,
+) -> None:
+    """An explicit recipe family is checked against the profile, not the global default."""
+    base = tmp_path / "lora_train"
+    _write_dataset(
+        base,
+        [
+            "miku_token, blue hair, twintails, school uniform, smile",
+            "miku_token, blue hair, twintails, school uniform, looking at viewer",
+            "miku_token, blue hair, twintails, school uniform, standing",
+            "miku_token, blue hair, twintails, school uniform, close-up",
+        ],
+        _ready_profile(),
+    )
+    settings = _settings(base)
+    settings.lora_model_family = "sdxl"
+    settings.lora_default_checkpoint = "sd15-explicit.safetensors"
+
+    with patch("app.services.lora_dataset.get_settings", return_value=settings):
+        result = lora_training_decision.decide_training_preflight(
+            "character/miku",
+            recipe={"model": {"family": "sd15"}},
+        )
+
+    assert result.decision == "train"
+    assert result.blocking_issues == []
+    assert "model_family_mismatch" not in {
+        warning.code for warning in result.warnings
+    }
+    assert result.effective_recipe is not None
+    assert result.effective_recipe.model.family == "sd15"
+    assert result.recipe_hash is not None
+    assert result.start_payload is not None
+
+
 def test_training_decision_returns_needs_review_for_caption_and_curation_warnings(tmp_path: Path) -> None:
     """Reviewable caption coherence and curation outliers are not transport errors."""
     base = tmp_path / "lora_train"

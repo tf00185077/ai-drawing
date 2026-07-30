@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -415,10 +416,12 @@ def test_launcher_selection_and_revision_evidence_are_bounded(
     tmp_path: Path,
 ) -> None:
     python_executable = tmp_path / "venv" / "python.exe"
-    accelerate_executable = python_executable.parent / "accelerate.exe"
+    accelerate_name = "accelerate.exe" if os.name == "nt" else "accelerate"
+    accelerate_executable = python_executable.parent / accelerate_name
     python_executable.parent.mkdir(parents=True)
     python_executable.write_bytes(b"")
     accelerate_executable.write_bytes(b"")
+    accelerate_executable.chmod(0o755)
 
     launcher_argv, launcher = lora_trainer.select_accelerate_launcher(
         str(python_executable)

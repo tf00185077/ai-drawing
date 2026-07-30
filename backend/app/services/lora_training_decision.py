@@ -385,8 +385,25 @@ def decide_training_preflight(
     else:
         _add_unique(reasons, "metadata profile has blocking validation errors")
 
+    normalized_recipe = None
+    requested_recipe_family = None
+    try:
+        normalized_recipe = normalize_recipe_input(
+            recipe if recipe is not None else {},
+            policy_source="preflight_policy",
+        )
+        requested_model = normalized_recipe.requested.model
+        if requested_model is not None:
+            requested_recipe_family = requested_model.family
+    except RecipeError as exc:
+        _add_issue(blocking, _recipe_issue(exc))
+
     family_matches_config = True
-    if inspected.profile.valid and inspected.profile.model_family in _NETWORK_MODULE_BY_MODEL_FAMILY:
+    if (
+        requested_recipe_family is None
+        and inspected.profile.valid
+        and inspected.profile.model_family in _NETWORK_MODULE_BY_MODEL_FAMILY
+    ):
         configured_model_family = _configured_model_family(lora_dataset.get_settings())
         if configured_model_family != inspected.profile.model_family:
             family_matches_config = False
@@ -515,12 +532,9 @@ def decide_training_preflight(
         and inspected.profile_hash
         and inspected.profile.model_family in _NETWORK_MODULE_BY_MODEL_FAMILY
         and family_matches_config
+        and normalized_recipe is not None
     ):
         try:
-            normalized_recipe = normalize_recipe_input(
-                recipe if recipe is not None else {},
-                policy_source="preflight_policy",
-            )
             context = build_recipe_compilation_context(
                 inspected,
                 normalized_recipe,
