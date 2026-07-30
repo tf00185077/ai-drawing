@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "id": "liquid",
+  "polarity": "positive",
+  "name_zh": "精液/母乳/愛液體相關",
+  "description_zh": "精液/母乳/愛液體相關",
+  "aliases": [],
+  "keywords": [
+    "精液",
+    "射精",
+    "母乳",
+    "唾液",
+    "口水"
+  ],
+  "order": 10,
+  "revision": 8,
+  "archived": false,
+  "parent_id": null,
+  "entries": [
+    {
+      "id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-pussy-juice-trail-d67bbc53",
+      "name_zh": "愛液牽絲",
+      "description_zh": "愛液牽絲",
+      "prompt": "pussy juice trail",
+      "aliases": [
+        "微濕牽絲 (wet",
+        "pussy juice trail)",
+        "wet",
+        "saliva trail",
+        "pussy juice trail",
+        "pussy juice trail"
+      ],
+      "keywords": [
+        "teasing_wet_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 52,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "teasing-wet-opts-wet-saliva-trail-pussy-juice-tr-saliva-trail-94660725",
+      "name_zh": "唾液牽絲",
+      "description_zh": "經人工拆分審閱的原子提示詞「saliva trail」，來源為「微濕牽絲」。",
+      "prompt": "saliva trail",
+      "aliases": [
+        "微濕牽絲 (wet",
+        "pussy juice trail)",
+        "wet",
+        "saliva trail",
+        "pussy juice trail",
+        "saliva trail"
+      ],
+      "keywords": [
+        "teasing_wet_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 52,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-heavy-pussy-juice-89c028e0",
+      "name_zh": "大量愛液",
+      "description_zh": "大量愛液",
+      "prompt": "heavy pussy juice",
+      "aliases": [
+        "淫水滴落/水灘 (dripping",
+        "puddle)",
+        "dripping",
+        "puddle on floor",
+        "heavy pussy juice",
+        "heavy pussy juice"
+      ],
+      "keywords": [
+        "teasing_wet_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 53,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "teasing-wet-opts-dripping-puddle-on-floor-heavy-puddle-on-floor-3a36b0f1",
+      "name_zh": "地上水灘",
+      "description_zh": "地上水灘",
+      "prompt": "puddle on floor",
+      "aliases": [
+        "淫水滴落/水灘 (dripping",
+        "puddle)",
+        "dripping",
+        "puddle on floor",
+        "heavy pussy juice",
+        "puddle on floor"
+      ],
+      "keywords": [
+        "teasing_wet_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 53,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-dynamics-flying-semen-bukkake-cum-in-heavy-semen-0eb9dbd0",
+      "name_zh": "大量精液",
+      "description_zh": "大量精液",
+      "prompt": "heavy semen",
+      "aliases": [
+        "大量精液飛濺 (heavy flying semen",
+        "bukkake)",
+        "flying semen",
+        "bukkake",
+        "cum in midair",
+        "heavy semen",
+        "thick semen",
+        "heavy semen"
+      ],
+      "keywords": [
+        "cum_shower_dynamics",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 58,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wetness-opts-wet-panties-crotch-stained-dripping-bodily-fluids-on-floor-28be2c64",
+      "name_zh": "地上體液",
+      "description_zh": "地上體液",
+      "prompt": "bodily fluids on floor",
+      "aliases": [
+        "愛液滿地/淫汁 (dripping on floor)",
+        "wet panties",
+        "crotch stained",
+        "dripping",
+        "puddle",
+        "bodily fluids on floor",
+        "bodily fluids on floor"
+      ],
+      "keywords": [
+        "wetness_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 62,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wetness-opts-wet-panties-crotch-stained-dripping-puddle-8293dc2d",
+      "name_zh": "水灘",
+      "description_zh": "水灘",
+      "prompt": "puddle",
+      "aliases": [
+        "愛液滿地/淫汁 (dripping on floor)",
+        "wet panties",
+        "crotch stained",
+        "dripping",
+        "puddle",
+        "bodily fluids on floor",
+        "puddle"
+      ],
+      "keywords": [
+        "wetness_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 62,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

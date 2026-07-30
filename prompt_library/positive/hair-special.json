@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "id": "hair-special",
+  "polarity": "positive",
+  "name_zh": "特殊髮型",
+  "description_zh": "特殊髮型",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "特殊髮型"
+  ],
+  "order": 70,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "ahoge",
+      "name_zh": "呆毛",
+      "description_zh": "呆毛",
+      "prompt": "ahoge",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "antenna-hair",
+      "name_zh": "呆毛（同義）",
+      "description_zh": "呆毛（同義）",
+      "prompt": "antenna hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "hime-cut",
+      "name_zh": "公主切",
+      "description_zh": "公主切",
+      "prompt": "hime cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wolf-cut",
+      "name_zh": "狼尾剪",
+      "description_zh": "狼尾剪",
+      "prompt": "wolf cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "mullet",
+      "name_zh": "狼尾頭",
+      "description_zh": "狼尾頭",
+      "prompt": "mullet",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "pixie-cut",
+      "name_zh": "精靈短髮",
+      "description_zh": "精靈短髮",
+      "prompt": "pixie cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "asymmetrical-haircut",
+      "name_zh": "不對稱髮型",
+      "description_zh": "不對稱髮型",
+      "prompt": "asymmetrical haircut",
+      "aliases": [],
+      "keywords": [],
+      "order": 70,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undercut",
+      "name_zh": "剃兩側",
+      "description_zh": "剃兩側",
+      "prompt": "undercut",
+      "aliases": [],
+      "keywords": [],
+      "order": 80,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "posture",
+  "polarity": "positive",
+  "name_zh": "單人姿勢",
+  "description_zh": "姿勢",
+  "aliases": [],
+  "keywords": [
+    "姿勢"
+  ],
+  "order": 10,
+  "revision": 3,
+  "archived": true,
+  "parent_id": "action",
+  "entries": []
+}

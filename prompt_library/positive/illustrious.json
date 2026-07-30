@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "id": "illustrious",
+  "polarity": "positive",
+  "name_zh": "illustrious",
+  "description_zh": "Illustrious",
+  "aliases": [],
+  "keywords": [
+    "Illustrious",
+    "品質",
+    "分級"
+  ],
+  "order": 12,
+  "revision": 8,
+  "archived": false,
+  "parent_id": "quality-ratings",
+  "entries": [
+    {
+      "id": "illustrious-quality-absurdres-d8cdf00b",
+      "name_zh": "超高解析度（Illustrious）",
+      "description_zh": "經人工拆分審閱的原子提示詞「absurdres」，來源為「Illustrious 品質詞」。",
+      "prompt": "absurdres",
+      "aliases": [
+        "Illustrious",
+        "quality",
+        "absurdres"
+      ],
+      "keywords": [
+        "quality",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-quality-amazing-quality-bd0b636a",
+      "name_zh": "驚艷品質（Illustrious）",
+      "description_zh": "經人工拆分審閱的原子提示詞「amazing quality」，來源為「Illustrious 品質詞」。",
+      "prompt": "amazing quality",
+      "aliases": [
+        "Illustrious",
+        "quality",
+        "amazing quality"
+      ],
+      "keywords": [
+        "quality",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-quality-best-quality-94d0f8f7",
+      "name_zh": "最佳品質（Illustrious）",
+      "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「Illustrious 品質詞」。",
+      "prompt": "best quality",
+      "aliases": [
+        "Illustrious",
+        "quality",
+        "best quality"
+      ],
+      "keywords": [
+        "quality",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-quality-masterpiece-905adc41",
+      "name_zh": "傑作（Illustrious）",
+      "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「Illustrious 品質詞」。",
+      "prompt": "masterpiece",
+      "aliases": [
+        "Illustrious",
+        "quality",
+        "masterpiece"
+      ],
+      "keywords": [
+        "quality",
+        "illustrious",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-rating-safe",
+      "name_zh": "Illustrious 分級：普遍",
+      "description_zh": "加入「Illustrious 分級：普遍」提示詞。",
+      "prompt": "general",
+      "aliases": [
+        "Illustrious",
+        "rating_safe",
+        "general"
+      ],
+      "keywords": [
+        "rating",
+        "illustrious",
+        "ltj"
+      ],
+      "order": 15,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-rating-questionable",
+      "name_zh": "Illustrious 分級：輔導",
+      "description_zh": "加入「Illustrious 分級：輔導」提示詞。",
+      "prompt": "sensitive",
+      "aliases": [
+        "Illustrious",
+        "rating_questionable",
+        "sensitive"
+      ],
+      "keywords": [
+        "rating",
+        "illustrious",
+        "ltj"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "illustrious-rating-explicit",
+      "name_zh": "Illustrious 分級：限制",
+      "description_zh": "加入「Illustrious 分級：限制」提示詞。",
+      "prompt": "explicit",
+      "aliases": [
+        "Illustrious",
+        "rating_explicit",
+        "explicit"
+      ],
+      "keywords": [
+        "rating",
+        "illustrious",
+        "ltj"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

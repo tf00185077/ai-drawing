@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "id": "person-sex",
+  "polarity": "positive",
+  "name_zh": "單人色情相關姿勢",
+  "description_zh": "單人色情相關姿勢",
+  "aliases": [],
+  "keywords": [
+    "單人",
+    "姿勢",
+    "單人性姿勢",
+    "性姿勢"
+  ],
+  "order": 10,
+  "revision": 21,
+  "archived": false,
+  "parent_id": "self-posture",
+  "entries": [
+    {
+      "id": "positions-on-all-fours-kneeling-doggystyle-on-all-fours-374f1553",
+      "name_zh": "四肢著地",
+      "description_zh": "四肢著地",
+      "prompt": "on all fours",
+      "aliases": [
+        "狗爬式 (on all fours",
+        "kneeling",
+        "doggystyle)",
+        "on all fours",
+        "kneeling",
+        "doggystyle",
+        "on all fours"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-ejaculation-219b67a6",
+      "name_zh": "射精",
+      "description_zh": "射精",
+      "prompt": "ejaculation",
+      "aliases": [
+        "射精瞬間/高潮 (orgasm",
+        "cum",
+        "ejaculation)",
+        "orgasm",
+        "cum",
+        "ejaculation",
+        "heavy breathing",
+        "ejaculation"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-orgasm-7eca5639",
+      "name_zh": "高潮",
+      "description_zh": "高潮",
+      "prompt": "orgasm",
+      "aliases": [
+        "射精瞬間/高潮 (orgasm",
+        "cum",
+        "ejaculation)",
+        "orgasm",
+        "cum",
+        "ejaculation",
+        "heavy breathing",
+        "orgasm"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-swallowing-3857880c",
+      "name_zh": "吞精",
+      "description_zh": "吞精",
+      "prompt": "swallowing",
+      "aliases": [
+        "射入口中 (cum in mouth",
+        "ejaculation in mouth)",
+        "cum in mouth",
+        "ejaculation in mouth",
+        "swallowing",
+        "swallowing"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-cum-on-breasts-ejaculation-on-breasts-cum-on-breasts-d0b44a74",
+      "name_zh": "精液在胸上",
+      "description_zh": "精液在胸上",
+      "prompt": "cum on breasts",
+      "aliases": [
+        "射在胸上 (cum on breasts",
+        "ejaculation on breasts)",
+        "cum on breasts",
+        "ejaculation on breasts",
+        "cum on breasts"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-cum-on-breasts-ejaculation-on-breasts-ejaculation-on-breasts-52421eee",
+      "name_zh": "射在胸上",
+      "description_zh": "射在胸上",
+      "prompt": "ejaculation on breasts",
+      "aliases": [
+        "射在胸上 (cum on breasts",
+        "ejaculation on breasts)",
+        "cum on breasts",
+        "ejaculation on breasts",
+        "ejaculation on breasts"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 18,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-fingering-rubbing-crotch-rubbing-crotch-9fc6670c",
+      "name_zh": "撫摸下體",
+      "description_zh": "撫摸下體",
+      "prompt": "rubbing crotch",
+      "aliases": [
+        "指交/撫摸下體 (fingering",
+        "rubbing crotch)",
+        "fingering",
+        "rubbing crotch",
+        "rubbing crotch"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 24,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-removed-holding-clothes-holding-clothes-887eb963",
+      "name_zh": "手持脫下衣物",
+      "description_zh": "經人工拆分審閱的原子提示詞「holding clothes」，來源為「分鏡：單手拿著脫下的上衣」。",
+      "prompt": "holding clothes",
+      "aliases": [
+        "分鏡：單手拿著脫下的上衣 (shirt removed",
+        "holding clothes)",
+        "shirt removed",
+        "holding clothes",
+        "holding clothes"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 43,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-revealing-bra-f5422a59",
+      "name_zh": "露出胸罩",
+      "description_zh": "經人工拆分審閱的原子提示詞「revealing bra」，來源為「解開鈕扣露出內衣」。",
+      "prompt": "revealing bra",
+      "aliases": [
+        "解開鈕扣露出內衣 (shirt open",
+        "unbuttoned shirt...)",
+        "shirt open",
+        "unbuttoned shirt",
+        "revealing bra",
+        "revealing bra"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 44,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-unbuttoned-shirt-e39377b6",
+      "name_zh": "解開鈕扣的襯衫",
+      "description_zh": "經人工拆分審閱的原子提示詞「unbuttoned shirt」，來源為「解開鈕扣露出內衣」。",
+      "prompt": "unbuttoned shirt",
+      "aliases": [
+        "解開鈕扣露出內衣 (shirt open",
+        "unbuttoned shirt...)",
+        "shirt open",
+        "unbuttoned shirt",
+        "revealing bra",
+        "unbuttoned shirt"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 44,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-lifting-shirt-biting-shirt-revealin-biting-shirt-ed22bd27",
+      "name_zh": "咬住上衣",
+      "description_zh": "經人工拆分審閱的原子提示詞「biting shirt」，來源為「咬著衣服下擺往上拉」。",
+      "prompt": "biting shirt",
+      "aliases": [
+        "咬著衣服下擺往上拉 (lifting shirt",
+        "biting shirt...)",
+        "lifting shirt",
+        "biting shirt",
+        "revealing bra",
+        "biting shirt"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 45,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-taking-off-skirt-revealing-panties-taking-off-skirt-9debbb5b",
+      "name_zh": "脫下裙子",
+      "description_zh": "經人工拆分審閱的原子提示詞「taking off skirt」，來源為「脫下裙子露出內褲」。",
+      "prompt": "taking off skirt",
+      "aliases": [
+        "脫下裙子露出內褲 (taking off skirt",
+        "revealing panties)",
+        "taking off skirt",
+        "revealing panties",
+        "taking off skirt"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 47,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-pulling-down-pants-revealing-pantie-pulling-down-pants-9b847a19",
+      "name_zh": "拉下長褲",
+      "description_zh": "經人工拆分審閱的原子提示詞「pulling down pants」，來源為「拉下褲子露出內褲」。",
+      "prompt": "pulling down pants",
+      "aliases": [
+        "拉下褲子露出內褲 (pulling down pants",
+        "revealing panties)",
+        "pulling down pants",
+        "revealing panties",
+        "pulling down pants"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 48,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-hands-behind-back-unhooking-bra-unhooking-bra-9f8605d4",
+      "name_zh": "解開胸罩扣",
+      "description_zh": "經人工拆分審閱的原子提示詞「unhooking bra」，來源為「雙手放在背後解內衣」。",
+      "prompt": "unhooking bra",
+      "aliases": [
+        "雙手放在背後解內衣 (hands behind back",
+        "unhooking bra)",
+        "hands behind back",
+        "unhooking bra",
+        "unhooking bra"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 49,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-pulling-down-panties-panties-around-pulling-down-panties-b467a8cb",
+      "name_zh": "褪下內褲",
+      "description_zh": "經人工拆分審閱的原子提示詞「pulling down panties」，來源為「褪下內褲卡在大腿」。",
+      "prompt": "pulling down panties",
+      "aliases": [
+        "褪下內褲卡在大腿 (pulling down panties",
+        "panties around thighs)",
+        "pulling down panties",
+        "panties around thighs",
+        "pulling down panties"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-taking-off-shirt",
+      "name_zh": "脫下衣服",
+      "description_zh": "加入「脫下衣服」提示詞。",
+      "prompt": "taking off shirt",
+      "aliases": [
+        "脫下衣服 (taking off shirt)",
+        "taking off shirt"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt"
+      ],
+      "order": 51,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-tongues-open-mouth-catching-cum-tongu-catching-cum-a85bd9df",
+      "name_zh": "用口接精液",
+      "description_zh": "用口接精液",
+      "prompt": "catching cum",
+      "aliases": [
+        "張嘴接/想喝 (open mouth)",
+        "open mouth",
+        "catching cum",
+        "(tongue out:1.4)",
+        "catching cum"
+      ],
+      "keywords": [
+        "cum_shower_tongues",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 57,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "after-condoms-used-condom-in-mouth",
+      "name_zh": "嘴裡叼著保險套",
+      "description_zh": "加入「嘴裡叼著保險套」提示詞。",
+      "prompt": "used condom in mouth",
+      "aliases": [
+        "嘴裡叼著保險套 (used condom in mouth)",
+        "used condom in mouth"
+      ],
+      "keywords": [
+        "after_condoms",
+        "ltj",
+        "prompt"
+      ],
+      "order": 64,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "after-condoms-holding-used-condom",
+      "name_zh": "手裡拿著保險套",
+      "description_zh": "加入「手裡拿著保險套」提示詞。",
+      "prompt": "holding used condom",
+      "aliases": [
+        "手裡拿著保險套 (holding used condom)",
+        "holding used condom"
+      ],
+      "keywords": [
+        "after_condoms",
+        "ltj",
+        "prompt"
+      ],
+      "order": 65,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "after-cums-cum-on-face-and-breasts",
+      "name_zh": "臉與胸滿是精液",
+      "description_zh": "加入「臉與胸滿是精液」提示詞。",
+      "prompt": "cum on face and breasts",
+      "aliases": [
+        "臉與胸滿是精液 (cum on face and breasts)",
+        "cum on face and breasts"
+      ],
+      "keywords": [
+        "after_cums",
+        "ltj",
+        "prompt"
+      ],
+      "order": 69,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

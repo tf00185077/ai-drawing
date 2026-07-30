@@ -7,75 +7,10 @@
   "aliases": [],
   "keywords": [],
   "order": 20,
-  "revision": 40,
+  "revision": 46,
   "archived": false,
+  "parent_id": null,
   "entries": [
-    {
-      "id": "breasts-huge",
-      "name_zh": "巨乳",
-      "description_zh": "巨乳",
-      "prompt": "huge breasts",
-      "aliases": [],
-      "keywords": [],
-      "order": 10,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "breasts-gigantic",
-      "name_zh": "超巨乳",
-      "description_zh": "超巨乳",
-      "prompt": "gigantic breasts",
-      "aliases": [],
-      "keywords": [],
-      "order": 20,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "breasts-large",
-      "name_zh": "大胸部",
-      "description_zh": "大胸部",
-      "prompt": "large breasts",
-      "aliases": [],
-      "keywords": [],
-      "order": 30,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "breasts-medium",
-      "name_zh": "中等胸部",
-      "description_zh": "中等胸部",
-      "prompt": "medium breasts",
-      "aliases": [],
-      "keywords": [],
-      "order": 40,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "breasts-small",
-      "name_zh": "小胸部",
-      "description_zh": "小胸部",
-      "prompt": "small breasts",
-      "aliases": [],
-      "keywords": [],
-      "order": 50,
-      "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "breasts-flat",
-      "name_zh": "平胸",
-      "description_zh": "平胸",
-      "prompt": "flat chest",
-      "aliases": [],
-      "keywords": [],
-      "order": 60,
-      "revision": 1,
-      "archived": false
-    },
     {
       "id": "thighs-curvy",
       "name_zh": "曲線豐腴",
@@ -85,7 +20,8 @@
       "keywords": [],
       "order": 70,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "thighs-thick",
@@ -96,7 +32,8 @@
       "keywords": [],
       "order": 80,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "thighs-slim",
@@ -107,7 +44,8 @@
       "keywords": [],
       "order": 90,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "thighs-muscular",
@@ -118,7 +56,8 @@
       "keywords": [],
       "order": 100,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "hips-wide",
@@ -129,7 +68,8 @@
       "keywords": [],
       "order": 110,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "ass-big",
@@ -140,7 +80,8 @@
       "keywords": [],
       "order": 120,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "ass-huge",
@@ -151,7 +92,8 @@
       "keywords": [],
       "order": 130,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "waist-slim",
@@ -162,7 +104,8 @@
       "keywords": [],
       "order": 140,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "frame-petite",
@@ -173,7 +116,8 @@
       "keywords": [],
       "order": 150,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "frame-tall",
@@ -184,7 +128,8 @@
       "keywords": [],
       "order": 160,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "frame-chubby",
@@ -195,7 +140,8 @@
       "keywords": [],
       "order": 170,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "frame-athletic",
@@ -206,7 +152,8 @@
       "keywords": [],
       "order": 180,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "frame-voluptuous",
@@ -217,7 +164,8 @@
       "keywords": [],
       "order": 190,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }

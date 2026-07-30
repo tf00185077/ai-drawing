@@ -14,8 +14,9 @@
     "clothing"
   ],
   "order": 30,
-  "revision": 30,
+  "revision": 33,
   "archived": false,
+  "parent_id": null,
   "entries": [
     {
       "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-shirt-0c4786ef",
@@ -77,37 +78,6 @@
         "segment_index": 1,
         "raw_segment_sha256": "403118efab5f69ba0a2fc7465a6ed76bdbcbd73f47c9634da51ef22371959b4b",
         "identity_sha256": "0345e4f107a3a19030195114c5cf362e749187ceac89e66c7c2ca95622c32788"
-      }
-    },
-    {
-      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-ribbon-5c030b14",
-      "name_zh": "緞帶",
-      "description_zh": "經人工拆分審閱的原子提示詞「ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": "ribbon",
-      "aliases": [
-        "夏季水手服(整套) (summer uniform)",
-        "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
-        "ribbon"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-shirt-dress-ribbon-school-uniform-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "bfc25f457613ef17ff8f7a67e8cc815da51a72db695d5a3f21d5e3f5374ab189",
-        "segment_index": 2,
-        "raw_segment_sha256": "879be6fc152fe253faa19c21fdc3c9e8412cc48ac091d36dabef29250b314a96",
-        "identity_sha256": "5c030b14e9c19f6697cdf6641516edd7d12d749d3fed7b8d57a7e30dc136daa7"
       }
     },
     {
@@ -232,68 +202,6 @@
         "segment_index": 6,
         "raw_segment_sha256": "f863d14b246e9c9ff5f593bd45199f4a7126bbd2b32c273d95acf699e87770e8",
         "identity_sha256": "8e03be1847227dec8e88a5ef9b8d83e93f0da74bb220afa95f85fd6484adaf1a"
-      }
-    },
-    {
-      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-red-ribbon-fe798d17",
-      "name_zh": "紅色緞帶",
-      "description_zh": "經人工拆分審閱的原子提示詞「red ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": "red ribbon",
-      "aliases": [
-        "夏季水手服(整套) (summer uniform)",
-        "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
-        "red ribbon"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-shirt-dress-ribbon-school-uniform-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "bfc25f457613ef17ff8f7a67e8cc815da51a72db695d5a3f21d5e3f5374ab189",
-        "segment_index": 7,
-        "raw_segment_sha256": "c782dec0d2a8bfb73fbaed22c8ebbc140baa36f2abeb7895e30328de17fdb8a0",
-        "identity_sha256": "fe798d173e37babf5bed77ef87590dba6a8c4fc85076b7d02b58fcdb37987def"
-      }
-    },
-    {
-      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-neck-ribbon-405f215a",
-      "name_zh": "頸部緞帶",
-      "description_zh": "經人工拆分審閱的原子提示詞「neck ribbon」，來源為「夏季水手服(整套)」。",
-      "prompt": "neck ribbon",
-      "aliases": [
-        "夏季水手服(整套) (summer uniform)",
-        "shirt, dress, ribbon, school uniform, white shirt, short sleeves, collared shirt, red ribbon, neck ribbon, pinafore dress, grey dress, summer uniform, yuigaoka school uniform, opaque clothes",
-        "neck ribbon"
-      ],
-      "keywords": [
-        "outerwears",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "clothing"
-      ],
-      "order": 10,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "clothing",
-        "source_entry_id": "outerwears-shirt-dress-ribbon-school-uniform-white-shirt-short-sleeves-collared-shirt-red-ribbon-neck-ribbon-pinafore-dress-grey-dress-summer-uniform-yuigaoka-school-uniform-opaque-clothes",
-        "source_prompt_sha256": "bfc25f457613ef17ff8f7a67e8cc815da51a72db695d5a3f21d5e3f5374ab189",
-        "segment_index": 8,
-        "raw_segment_sha256": "2a12710cbfe28145997ec58811660e242420cfb0218ce1902639e705cb6fe6cf",
-        "identity_sha256": "405f215aed173d5fa5331fb46505deaa81ddefa930ac73c18ef9e13e500ca795"
       }
     },
     {

@@ -14,9 +14,118 @@
     "accessories"
   ],
   "order": 50,
-  "revision": 12,
+  "revision": 16,
   "archived": false,
+  "parent_id": "clothing",
   "entries": [
+    {
+      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-neck-ribbon-405f215a",
+      "name_zh": "頸部緞帶",
+      "description_zh": "經人工拆分審閱的原子提示詞「neck ribbon」，來源為「夏季水手服(整套)」。",
+      "prompt": "neck ribbon",
+      "aliases": [
+        "夏季水手服(整套) (summer uniform)",
+        "shirt",
+        "dress",
+        "ribbon",
+        "school uniform",
+        "white shirt",
+        "short sleeves",
+        "collared shirt",
+        "red ribbon",
+        "neck ribbon",
+        "pinafore dress",
+        "grey dress",
+        "summer uniform",
+        "yuigaoka school uniform",
+        "opaque clothes",
+        "neck ribbon"
+      ],
+      "keywords": [
+        "outerwears",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "clothing"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-red-ribbon-fe798d17",
+      "name_zh": "紅色緞帶",
+      "description_zh": "經人工拆分審閱的原子提示詞「red ribbon」，來源為「夏季水手服(整套)」。",
+      "prompt": "red ribbon",
+      "aliases": [
+        "夏季水手服(整套) (summer uniform)",
+        "shirt",
+        "dress",
+        "ribbon",
+        "school uniform",
+        "white shirt",
+        "short sleeves",
+        "collared shirt",
+        "red ribbon",
+        "neck ribbon",
+        "pinafore dress",
+        "grey dress",
+        "summer uniform",
+        "yuigaoka school uniform",
+        "opaque clothes",
+        "red ribbon"
+      ],
+      "keywords": [
+        "outerwears",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "clothing"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "outerwears-shirt-dress-ribbon-school-uniform-whi-ribbon-5c030b14",
+      "name_zh": "緞帶",
+      "description_zh": "經人工拆分審閱的原子提示詞「ribbon」，來源為「夏季水手服(整套)」。",
+      "prompt": "ribbon",
+      "aliases": [
+        "夏季水手服(整套) (summer uniform)",
+        "shirt",
+        "dress",
+        "ribbon",
+        "school uniform",
+        "white shirt",
+        "short sleeves",
+        "collared shirt",
+        "red ribbon",
+        "neck ribbon",
+        "pinafore dress",
+        "grey dress",
+        "summer uniform",
+        "yuigaoka school uniform",
+        "opaque clothes",
+        "ribbon"
+      ],
+      "keywords": [
+        "outerwears",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "clothing"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
     {
       "id": "special-acc-garter-straps-thighhighs-garter-straps-232590b2",
       "name_zh": "吊襪帶",
@@ -64,7 +173,8 @@
       ],
       "order": 14,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "special-acc-collar",
@@ -82,7 +192,8 @@
       ],
       "order": 15,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "special-acc-harness",
@@ -100,7 +211,8 @@
       ],
       "order": 16,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }
