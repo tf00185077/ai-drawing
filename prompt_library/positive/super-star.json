@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "super-star",
+  "polarity": "positive",
+  "name_zh": "LoveLive! Superstar!!",
+  "description_zh": "LoveLive! Superstar!!",
+  "aliases": [],
+  "keywords": [
+    "lovelive",
+    "lovelive!",
+    "lovelive!!"
+  ],
+  "order": 10,
+  "revision": 3,
+  "archived": false,
+  "parent_id": "lovelive",
+  "entries": [
+    {
+      "id": "lovelive-superstar",
+      "name_zh": "LoveLive! Superstar!!",
+      "description_zh": "標題",
+      "prompt": "LoveLive! Superstar!!",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wein",
+      "name_zh": "葳恩·瑪格麗特",
+      "description_zh": "葳恩·瑪格麗特",
+      "prompt": "Wien Margarete",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

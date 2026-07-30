@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "lovelive",
+  "polarity": "positive",
+  "name_zh": "lovelive",
+  "description_zh": "lovelive腳色",
+  "aliases": [],
+  "keywords": [
+    "lovelive",
+    "lovelive!",
+    "lovelive!!"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": null,
+  "entries": []
+}
