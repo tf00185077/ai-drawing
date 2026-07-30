@@ -98,6 +98,8 @@ pip install -e .
 | `MCP_BACKEND_API_URL` | ai-drawing 後端 Base URL | `http://127.0.0.1:8001` |
 | `MCP_COMFYUI_API_URL` | ComfyUI API Base URL（釋放記憶體等） | `http://127.0.0.1:8188` |
 | `MCP_GALLERY_DIR` | Backend gallery 實體檔案根目錄 | `/Users/tf00185088/Desktop/ai-drawing/outputs/gallery` |
+| `MCP_DISCORD_OPERATOR_URL` | Discord Bot loopback operator endpoint | `http://127.0.0.1:8765` |
+| `MCP_DISCORD_OPERATOR_TOKEN` | 與 Bot 相同的 operator shared secret（只在 server-side env） | 未設定 |
 
 > 本機 OpenClaw / ai-drawing 驗證路徑使用 backend `8001`。不要把 `8000` 當成 ai-drawing backend；本機 `8000` 可能是其他 LLM / MLX 服務。
 
@@ -150,7 +152,7 @@ pip install -e .
 
 ## 六、可用 Tools
 
-> MCP tools 只包裝 backend HTTP API，不直接操作 ComfyUI workflow / DB / gallery 檔案。共 36 個 server-side registered tool。
+> MCP tools 只包裝受控服務 API，不直接操作 ComfyUI workflow / DB / gallery 檔案。實際工具集合以 `mcp_server/tool_catalog.py` 與 live MCP schema 為準，不在文件硬編總數。
 >
 > 舊版 source-alias catalog 為 53 個 server-side registered tool；新增 `civitai_source_alias_repoint` 後曾為 54 個 server-side registered tool，新增 `civitai_source_alias_resolve_explicit_version` 後為 55 個 server-side registered tool。保留 registry 在新增 `civitai_source_alias_backfill_gallery` 前已為 74 個 server-side registered tool；新增 `civitai_source_alias_backfill_gallery` 後以本頁的 75 為準。
 >
@@ -185,6 +187,7 @@ pip install -e .
 | `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
 | `cancel_job` | `json_string` | DELETE /api/generate/queue/{job_id} |
 | `list_available_resources` | `json_string` | GET /api/generate/available-resources |
+| `deliver_generation_result_to_discord` | `dict` | POST Discord Bot loopback operator endpoint |
 | `gallery_list` | `plain_text` | GET /api/gallery/ |
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |

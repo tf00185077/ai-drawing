@@ -31,11 +31,12 @@ def test_build_bot_registers_commands():
     assert api._base_url == "http://test"
 
 
-async def test_result_command_sends_successful_files_before_mixed_warning():
+async def test_result_command_sends_successful_files_before_mixed_warning(tmp_path):
     config = Config(
         discord_token="t",
         guild_id=123,
         backend_base_url="http://test",
+        delivery_ledger_path=tmp_path / "deliveries.json",
     )
     _client, tree, api = build_bot(config)
     guild = discord.Object(id=123)
@@ -79,11 +80,40 @@ async def test_result_command_sends_successful_files_before_mixed_warning():
     assert "ComfyUI execution error" in warning_call.args[0]
 
 
-async def test_result_command_reports_all_failed_batch_members() -> None:
+async def test_result_command_explicitly_resends_a_completed_result(tmp_path) -> None:
     config = Config(
         discord_token="t",
         guild_id=123,
         backend_base_url="http://test",
+        delivery_ledger_path=tmp_path / "deliveries.json",
+    )
+    _client, tree, api = build_bot(config)
+    result_command = tree.get_command("result", guild=discord.Object(id=123))
+    job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
+    api.collect_job_result = AsyncMock(
+        return_value={"status": "completed", "images": [("one.png", b"one")]}
+    )
+    interaction = SimpleNamespace(
+        guild_id=123,
+        channel_id=456,
+        response=SimpleNamespace(defer=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock()),
+    )
+
+    await result_command.callback(interaction, job_id)
+    await result_command.callback(interaction, job_id)
+
+    assert api.collect_job_result.await_count == 2
+    assert interaction.followup.send.await_count == 2
+    assert all("files" in call.kwargs for call in interaction.followup.send.await_args_list)
+
+
+async def test_result_command_reports_all_failed_batch_members(tmp_path) -> None:
+    config = Config(
+        discord_token="t",
+        guild_id=123,
+        backend_base_url="http://test",
+        delivery_ledger_path=tmp_path / "deliveries.json",
     )
     _client, tree, api = build_bot(config)
     guild = discord.Object(id=123)

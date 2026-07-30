@@ -43,3 +43,22 @@ def test_missing_token_raises():
 def test_non_integer_guild_raises():
     with pytest.raises(ConfigError):
         load_config({"DISCORD_BOT_TOKEN": "t", "DISCORD_GUILD_ID": "abc"})
+
+
+def test_operator_requires_token_and_alias_allowlist_together():
+    with pytest.raises(ConfigError):
+        load_config({
+            "DISCORD_BOT_TOKEN": "t",
+            "DISCORD_GUILD_ID": "1",
+            "DISCORD_OPERATOR_TOKEN": "secret",
+        })
+
+
+def test_operator_aliases_parse_to_immutable_allowlist():
+    cfg = load_config({
+        "DISCORD_BOT_TOKEN": "t",
+        "DISCORD_GUILD_ID": "1",
+        "DISCORD_OPERATOR_TOKEN": "secret",
+        "DISCORD_DESTINATION_ALIASES": '{"results":"123"}',
+    })
+    assert cfg.operator_destinations == (("results", 123),)
