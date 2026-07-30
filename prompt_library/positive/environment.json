@@ -14,8 +14,9 @@
     "environment"
   ],
   "order": 90,
-  "revision": 27,
+  "revision": 28,
   "archived": false,
+  "parent_id": null,
   "entries": [
     {
       "id": "loc-places-bedroom",
@@ -33,7 +34,8 @@
       ],
       "order": 10,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-classroom",
@@ -51,7 +53,8 @@
       ],
       "order": 11,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-gym-storage-room",
@@ -69,7 +72,39 @@
       ],
       "order": 12,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "loc-places-love-hotel-pink-room-black-bed-black-bed-700c1f9e",
+      "name_zh": "黑色床鋪",
+      "description_zh": "經人工拆分審閱的原子提示詞「black bed」，來源為「愛情旅館」。",
+      "prompt": "black bed",
+      "aliases": [
+        "愛情旅館 (love hotel, pink room, black bed)",
+        "love hotel, pink room, black bed",
+        "black bed"
+      ],
+      "keywords": [
+        "loc_places",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "environment"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "environment",
+        "source_entry_id": "loc-places-love-hotel-pink-room-black-bed",
+        "source_prompt_sha256": "ef764f28ae30e19241db233422e4b66f3cb3ea88ec0b9003d2e8124a4dbd8267",
+        "segment_index": 2,
+        "raw_segment_sha256": "cae649ea40994257353c9493fda3fdff0ff24a3b33ee29ecfb1c3a3e25eb63fa",
+        "identity_sha256": "700c1f9efa1190c720175f20e2198b40d2b072d18ae6cfc120c52f866a982cbf"
+      }
     },
     {
       "id": "loc-places-love-hotel-pink-room-black-bed-love-hotel-6d25ee1d",
@@ -134,37 +169,6 @@
       }
     },
     {
-      "id": "loc-places-love-hotel-pink-room-black-bed-black-bed-700c1f9e",
-      "name_zh": "黑色床鋪",
-      "description_zh": "經人工拆分審閱的原子提示詞「black bed」，來源為「愛情旅館」。",
-      "prompt": "black bed",
-      "aliases": [
-        "愛情旅館 (love hotel, pink room, black bed)",
-        "love hotel, pink room, black bed",
-        "black bed"
-      ],
-      "keywords": [
-        "loc_places",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "environment"
-      ],
-      "order": 13,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "environment",
-        "source_entry_id": "loc-places-love-hotel-pink-room-black-bed",
-        "source_prompt_sha256": "ef764f28ae30e19241db233422e4b66f3cb3ea88ec0b9003d2e8124a4dbd8267",
-        "segment_index": 2,
-        "raw_segment_sha256": "cae649ea40994257353c9493fda3fdff0ff24a3b33ee29ecfb1c3a3e25eb63fa",
-        "identity_sha256": "700c1f9efa1190c720175f20e2198b40d2b072d18ae6cfc120c52f866a982cbf"
-      }
-    },
-    {
       "id": "loc-places-living-room",
       "name_zh": "客廳",
       "description_zh": "加入「客廳」提示詞。",
@@ -180,7 +184,8 @@
       ],
       "order": 14,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-bathroom",
@@ -198,7 +203,8 @@
       ],
       "order": 15,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-shower-room",
@@ -216,7 +222,8 @@
       ],
       "order": 16,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-outdoors",
@@ -234,7 +241,8 @@
       ],
       "order": 17,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-public-restroom",
@@ -252,7 +260,8 @@
       ],
       "order": 18,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-library",
@@ -270,38 +279,8 @@
       ],
       "order": 19,
       "revision": 1,
-      "archived": false
-    },
-    {
-      "id": "loc-places-rei-no-pool-poolside-rei-no-pool-a88eedb8",
-      "name_zh": "例之泳池",
-      "description_zh": "經人工拆分審閱的原子提示詞「rei no pool」，來源為「例のプール」。",
-      "prompt": "rei no pool",
-      "aliases": [
-        "例のプール (rei no pool, poolside)",
-        "rei no pool, poolside",
-        "rei no pool"
-      ],
-      "keywords": [
-        "loc_places",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "environment"
-      ],
-      "order": 20,
-      "revision": 1,
       "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "environment",
-        "source_entry_id": "loc-places-rei-no-pool-poolside",
-        "source_prompt_sha256": "81a4e6cc0289cace7f8e992b0e685922d1294ad562d4405e30cd5b8bc151ef59",
-        "segment_index": 0,
-        "raw_segment_sha256": "96f481a365161c858021e46fb59511dc8a2d4f4e24c1d186db15c3982f776007",
-        "identity_sha256": "a88eedb83faed8c2104093eb78dcbb691a48353f36ef8df34d70866301f49afa"
-      }
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-places-rei-no-pool-poolside-poolside-02573782",
@@ -335,6 +314,37 @@
       }
     },
     {
+      "id": "loc-places-rei-no-pool-poolside-rei-no-pool-a88eedb8",
+      "name_zh": "例之泳池",
+      "description_zh": "經人工拆分審閱的原子提示詞「rei no pool」，來源為「例のプール」。",
+      "prompt": "rei no pool",
+      "aliases": [
+        "例のプール (rei no pool, poolside)",
+        "rei no pool, poolside",
+        "rei no pool"
+      ],
+      "keywords": [
+        "loc_places",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "environment"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "environment",
+        "source_entry_id": "loc-places-rei-no-pool-poolside",
+        "source_prompt_sha256": "81a4e6cc0289cace7f8e992b0e685922d1294ad562d4405e30cd5b8bc151ef59",
+        "segment_index": 0,
+        "raw_segment_sha256": "96f481a365161c858021e46fb59511dc8a2d4f4e24c1d186db15c3982f776007",
+        "identity_sha256": "a88eedb83faed8c2104093eb78dcbb691a48353f36ef8df34d70866301f49afa"
+      }
+    },
+    {
       "id": "loc-places-changing-room-with-black-lockers",
       "name_zh": "更衣室",
       "description_zh": "加入「更衣室」提示詞。",
@@ -350,7 +360,8 @@
       ],
       "order": 21,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-atmos-messy-room",
@@ -368,7 +379,8 @@
       ],
       "order": 28,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "loc-atmos-pristine-room",
@@ -386,7 +398,27 @@
       ],
       "order": 29,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "after-condoms-used-condoms-scattered-around",
+      "name_zh": "用過的保險套散落",
+      "description_zh": "加入「用過的保險套散落」提示詞。",
+      "prompt": "used condoms scattered around",
+      "aliases": [
+        "用過的保險套散落 (used condoms scattered around)",
+        "used condoms scattered around"
+      ],
+      "keywords": [
+        "after_condoms",
+        "ltj",
+        "prompt"
+      ],
+      "order": 63,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }

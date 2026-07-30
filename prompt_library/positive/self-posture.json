@@ -1,0 +1,1099 @@
+{
+  "schema_version": 1,
+  "id": "self-posture",
+  "polarity": "positive",
+  "name_zh": "單人姿勢",
+  "description_zh": "單人姿勢",
+  "aliases": [],
+  "keywords": [
+    "單人姿勢",
+    "姿勢"
+  ],
+  "order": 10,
+  "revision": 56,
+  "archived": false,
+  "parent_id": "action",
+  "entries": [
+    {
+      "id": "p-extra-acts-touching-breasts-squeezing-breasts-squeezing-breasts-23b9ac32",
+      "name_zh": "揉胸",
+      "description_zh": "揉胸",
+      "prompt": "squeezing breasts",
+      "aliases": [
+        "揉捏胸部 (touching breasts)",
+        "touching breasts",
+        "squeezing breasts",
+        "squeezing breasts"
+      ],
+      "keywords": [
+        "p_extra_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "p-extra-acts-touching-breasts-squeezing-breasts-touching-breasts-c8660976",
+      "name_zh": "摸胸",
+      "description_zh": "摸胸",
+      "prompt": "touching breasts",
+      "aliases": [
+        "揉捏胸部 (touching breasts)",
+        "touching breasts",
+        "squeezing breasts",
+        "touching breasts"
+      ],
+      "keywords": [
+        "p_extra_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "p-extra-acts-kissing-french-kiss-saliva-kissing-c70c38fd",
+      "name_zh": "接吻",
+      "description_zh": "接吻",
+      "prompt": "kissing",
+      "aliases": [
+        "法式熱吻 (kissing)",
+        "kissing",
+        "french kiss",
+        "saliva",
+        "kissing"
+      ],
+      "keywords": [
+        "p_extra_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-on-all-fours-kneeling-doggystyle-kneeling-4bdbc096",
+      "name_zh": "跪姿",
+      "description_zh": "跪姿",
+      "prompt": "kneeling",
+      "aliases": [
+        "狗爬式 (on all fours",
+        "kneeling",
+        "doggystyle)",
+        "on all fours",
+        "kneeling",
+        "doggystyle",
+        "kneeling"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 13,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-orgasm-cum-ejaculation-heavy-breathing-heavy-breathing-fb482df9",
+      "name_zh": "喘息",
+      "description_zh": "喘息",
+      "prompt": "heavy breathing",
+      "aliases": [
+        "射精瞬間/高潮 (orgasm",
+        "cum",
+        "ejaculation)",
+        "orgasm",
+        "cum",
+        "ejaculation",
+        "heavy breathing",
+        "heavy breathing"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lateral-position-spooning-sex-lateral-position-15fe9200",
+      "name_zh": "側臥位",
+      "description_zh": "側臥位",
+      "prompt": "lateral position",
+      "aliases": [
+        "側臥位 (lateral position",
+        "spooning sex)",
+        "lateral position",
+        "spooning sex",
+        "lateral position"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 15,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-standing-sex-doggy-style-from-behind-l-leaning-forward-f37f108e",
+      "name_zh": "前傾",
+      "description_zh": "前傾",
+      "prompt": "leaning forward",
+      "aliases": [
+        "站立後入位 (standing doggystyle)",
+        "standing sex",
+        "doggy style",
+        "from behind",
+        "leaning forward",
+        "leaning forward"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-kissing-french-kiss-saliva-closed-eye-closed-eyes-47d17798",
+      "name_zh": "閉眼",
+      "description_zh": "經人工拆分審閱的原子提示詞「closed eyes」，來源為「法式熱吻」。",
+      "prompt": "closed eyes",
+      "aliases": [
+        "法式熱吻 (kissing",
+        "french kiss...)",
+        "kissing",
+        "french kiss",
+        "saliva",
+        "closed eyes",
+        "closed eyes"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 19,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-prone-bone-from-behind-lying-on-stomac-lying-on-stomach-7dcaf5bc",
+      "name_zh": "趴臥",
+      "description_zh": "趴臥",
+      "prompt": "lying on stomach",
+      "aliases": [
+        "俯臥位/趴躺後入 (prone bone)",
+        "prone bone",
+        "from behind",
+        "lying on stomach",
+        "lying on stomach"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 21,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-spread-eagle-lying-on-back-spread-legs-lying-on-back-94819cef",
+      "name_zh": "仰躺",
+      "description_zh": "仰躺",
+      "prompt": "lying on back",
+      "aliases": [
+        "仰躺大開腿/M字腿 (spread eagle)",
+        "spread eagle",
+        "lying on back",
+        "spread legs",
+        "lying on back"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-spread-eagle-lying-on-back-spread-legs-spread-eagle-14735b41",
+      "name_zh": "大字仰躺",
+      "description_zh": "大字仰躺",
+      "prompt": "spread eagle",
+      "aliases": [
+        "仰躺大開腿/M字腿 (spread eagle)",
+        "spread eagle",
+        "lying on back",
+        "spread legs",
+        "spread eagle"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-spread-eagle-lying-on-back-spread-legs-spread-legs-ba6c30a1",
+      "name_zh": "張開雙腿",
+      "description_zh": "張開雙腿",
+      "prompt": "spread legs",
+      "aliases": [
+        "仰躺大開腿/M字腿 (spread eagle)",
+        "spread eagle",
+        "lying on back",
+        "spread legs",
+        "spread legs"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lotus-position-facing-each-other-sitti-sitting-559e3423",
+      "name_zh": "坐姿",
+      "description_zh": "坐姿",
+      "prompt": "sitting",
+      "aliases": [
+        "面對面跨坐/蓮花坐 (lotus position)",
+        "lotus position",
+        "facing each other",
+        "sitting",
+        "hugging",
+        "sitting"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 23,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-cowgirl-position-leaning-back-arching-arching-back-f870a945",
+      "name_zh": "弓背",
+      "description_zh": "弓背",
+      "prompt": "arching back",
+      "aliases": [
+        "後仰騎乘位 (cowgirl position",
+        "leaning back)",
+        "cowgirl position",
+        "leaning back",
+        "arching back",
+        "arching back"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 24,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-cowgirl-position-leaning-back-arching-leaning-back-9553d636",
+      "name_zh": "後仰",
+      "description_zh": "後仰",
+      "prompt": "leaning back",
+      "aliases": [
+        "後仰騎乘位 (cowgirl position",
+        "leaning back)",
+        "cowgirl position",
+        "leaning back",
+        "arching back",
+        "leaning back"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 24,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-straddling-grinding-dry-humping-grinding-4556cb2c",
+      "name_zh": "磨蹭",
+      "description_zh": "磨蹭",
+      "prompt": "grinding",
+      "aliases": [
+        "跨坐/隔衣摩擦 (straddling",
+        "grinding...)",
+        "straddling",
+        "grinding",
+        "dry humping",
+        "grinding"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 25,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-straddling-grinding-dry-humping-straddling-0a36046e",
+      "name_zh": "跨坐",
+      "description_zh": "跨坐",
+      "prompt": "straddling",
+      "aliases": [
+        "跨坐/隔衣摩擦 (straddling",
+        "grinding...)",
+        "straddling",
+        "grinding",
+        "dry humping",
+        "straddling"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 25,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-sex-on-desk-sitting-on-desk-spread-leg-sitting-on-desk-1b9ef699",
+      "name_zh": "坐在桌上",
+      "description_zh": "坐在桌上",
+      "prompt": "sitting on desk",
+      "aliases": [
+        "桌上交合/坐在桌邊 (sex on desk)",
+        "sex on desk",
+        "sitting on desk",
+        "spread legs",
+        "sitting on desk"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 25,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-standing-sex-one-leg-up-leaning-forwar-one-leg-up-d5a50ba8",
+      "name_zh": "單腿抬高",
+      "description_zh": "單腿抬高",
+      "prompt": "one leg up",
+      "aliases": [
+        "站立單腿抬高 (standing sex",
+        "one leg up)",
+        "standing sex",
+        "one leg up",
+        "leaning forward",
+        "one leg up"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 26,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-pinned-against-wall-blush-looking-up-looking-up-d5a07bc2",
+      "name_zh": "抬頭仰望",
+      "description_zh": "抬頭仰望",
+      "prompt": "looking up",
+      "aliases": [
+        "壁咚 (pinned against wall",
+        "blush...)",
+        "pinned against wall",
+        "blush",
+        "looking up",
+        "looking up"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 27,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-hands-on-own-breasts-40d2232f",
+      "name_zh": "雙手托胸",
+      "description_zh": "雙手托胸",
+      "prompt": "hands on own breasts",
+      "aliases": [
+        "雙手捧托雙乳 (hands on own breasts)",
+        "hands on own breasts",
+        "pushing breasts together",
+        "presenting breasts",
+        "hands on own breasts"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 28,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-presenting-breasts-972a9d17",
+      "name_zh": "挺胸展示",
+      "description_zh": "挺胸展示",
+      "prompt": "presenting breasts",
+      "aliases": [
+        "雙手捧托雙乳 (hands on own breasts)",
+        "hands on own breasts",
+        "pushing breasts together",
+        "presenting breasts",
+        "presenting breasts"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 28,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-on-own-breasts-pushing-br-pushing-breasts-together-499940f2",
+      "name_zh": "擠壓雙乳",
+      "description_zh": "擠壓雙乳",
+      "prompt": "pushing breasts together",
+      "aliases": [
+        "雙手捧托雙乳 (hands on own breasts)",
+        "hands on own breasts",
+        "pushing breasts together",
+        "presenting breasts",
+        "pushing breasts together"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 28,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-resting-on-breasts-palms-hands-resting-on-breasts-cdb44f48",
+      "name_zh": "雙手放胸上",
+      "description_zh": "雙手放胸上",
+      "prompt": "hands resting on breasts",
+      "aliases": [
+        "雙手手掌朝下放在胸的上方 (palms down on breasts)",
+        "hands resting on breasts",
+        "palms down",
+        "presenting breasts",
+        "hands resting on breasts"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 29,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-resting-on-breasts-palms-palms-down-f30d1809",
+      "name_zh": "手掌朝下",
+      "description_zh": "手掌朝下",
+      "prompt": "palms down",
+      "aliases": [
+        "雙手手掌朝下放在胸的上方 (palms down on breasts)",
+        "hands resting on breasts",
+        "palms down",
+        "presenting breasts",
+        "palms down"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 29,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "oral-acts-blowjob-fellatio-penis-in-mouth-suck-suck-5303ac25",
+      "name_zh": "吸吮",
+      "description_zh": "吸吮",
+      "prompt": "suck",
+      "aliases": [
+        "口交 (blowjob)",
+        "blowjob",
+        "fellatio",
+        "penis in mouth",
+        "suck",
+        "suck"
+      ],
+      "keywords": [
+        "oral_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 29,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-behind-head-exposing-ches-exposing-chest-89f79fc6",
+      "name_zh": "挺露胸部",
+      "description_zh": "挺露胸部",
+      "prompt": "exposing chest",
+      "aliases": [
+        "雙手放腦後 (hands behind head)",
+        "hands behind head",
+        "exposing chest",
+        "exposing chest"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-hands-behind-head-exposing-ches-hands-behind-head-d011b7fd",
+      "name_zh": "雙手枕頭後",
+      "description_zh": "雙手枕頭後",
+      "prompt": "hands behind head",
+      "aliases": [
+        "雙手放腦後 (hands behind head)",
+        "hands behind head",
+        "exposing chest",
+        "hands behind head"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-reaching-out-palms-up-waiting-f-palms-up-bcaccf45",
+      "name_zh": "手掌朝上",
+      "description_zh": "手掌朝上",
+      "prompt": "palms up",
+      "aliases": [
+        "雙手掌心向上往前伸 (reaching out",
+        "palms up)",
+        "reaching out",
+        "palms up",
+        "waiting for cum",
+        "palms up"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 31,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-reaching-out-palms-up-waiting-f-reaching-out-41f39c31",
+      "name_zh": "伸出手",
+      "description_zh": "伸出手",
+      "prompt": "reaching out",
+      "aliases": [
+        "雙手掌心向上往前伸 (reaching out",
+        "palms up)",
+        "reaching out",
+        "palms up",
+        "waiting for cum",
+        "reaching out"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 31,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-poses-double-peace",
+      "name_zh": "雙手比 YA",
+      "description_zh": "加入「雙手比 YA」提示詞。",
+      "prompt": "double peace",
+      "aliases": [
+        "雙手比 YA (double peace)",
+        "double peace"
+      ],
+      "keywords": [
+        "cum_shower_poses",
+        "ltj",
+        "prompt"
+      ],
+      "order": 32,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-body-kneeling-legs-visible-thighs-vis-legs-visible-8223335b",
+      "name_zh": "露出雙腿",
+      "description_zh": "露出雙腿",
+      "prompt": "legs visible",
+      "aliases": [
+        "跪姿 (kneeling",
+        "legs visible)",
+        "kneeling",
+        "legs visible",
+        "thighs visible",
+        "legs visible"
+      ],
+      "keywords": [
+        "cum_shower_body",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 33,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-body-kneeling-legs-visible-thighs-vis-thighs-visible-303a75cf",
+      "name_zh": "可見大腿",
+      "description_zh": "經人工拆分審閱的原子提示詞「thighs visible」，來源為「跪姿」。",
+      "prompt": "thighs visible",
+      "aliases": [
+        "跪姿 (kneeling",
+        "legs visible)",
+        "kneeling",
+        "legs visible",
+        "thighs visible",
+        "thighs visible"
+      ],
+      "keywords": [
+        "cum_shower_body",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 33,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-body-standing",
+      "name_zh": "站姿",
+      "description_zh": "加入「站姿」提示詞。",
+      "prompt": "standing",
+      "aliases": [
+        "站姿 (standing)",
+        "standing"
+      ],
+      "keywords": [
+        "cum_shower_body",
+        "ltj",
+        "prompt"
+      ],
+      "order": 34,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "oral-acts-armpit-sex-penis-in-armpit-holding-own-holding-own-arm-d23c55e0",
+      "name_zh": "抱著自己手臂",
+      "description_zh": "抱著自己手臂",
+      "prompt": "holding own arm",
+      "aliases": [
+        "腋下交 (armpit sex)",
+        "armpit sex",
+        "penis in armpit",
+        "holding own arm",
+        "holding own arm"
+      ],
+      "keywords": [
+        "oral_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 34,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-body-lying-down-spread-legs-legs-up-legs-up-53869463",
+      "name_zh": "抬起雙腿",
+      "description_zh": "抬起雙腿",
+      "prompt": "legs up",
+      "aliases": [
+        "躺姿/M字腿 (lying down",
+        "spread legs)",
+        "lying down",
+        "spread legs",
+        "legs up",
+        "legs up"
+      ],
+      "keywords": [
+        "cum_shower_body",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 36,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-body-lying-down-spread-legs-legs-up-lying-down-8c938a3c",
+      "name_zh": "躺著",
+      "description_zh": "躺著",
+      "prompt": "lying down",
+      "aliases": [
+        "躺姿/M字腿 (lying down",
+        "spread legs)",
+        "lying down",
+        "spread legs",
+        "legs up",
+        "lying down"
+      ],
+      "keywords": [
+        "cum_shower_body",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 36,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-lifting-shirt-exposing-midriff-unde-exposing-midriff-c06c8ef0",
+      "name_zh": "露出腹部",
+      "description_zh": "露出腹部",
+      "prompt": "exposing midriff",
+      "aliases": [
+        "分鏡：雙手掀起上衣露出下乳 (lifting shirt",
+        "exposing midriff",
+        "underbust)",
+        "lifting shirt",
+        "exposing midriff",
+        "underbust",
+        "exposing midriff"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 41,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-lifting-shirt-exposing-midriff-unde-lifting-shirt-7196fca4",
+      "name_zh": "掀起上衣",
+      "description_zh": "經人工拆分審閱的原子提示詞「lifting shirt」，來源為「分鏡：雙手掀起上衣露出下乳」。",
+      "prompt": "lifting shirt",
+      "aliases": [
+        "分鏡：雙手掀起上衣露出下乳 (lifting shirt",
+        "exposing midriff",
+        "underbust)",
+        "lifting shirt",
+        "exposing midriff",
+        "underbust",
+        "lifting shirt"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 41,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-over-head-face-visible-arms-u-arms-up-e9a7d7b6",
+      "name_zh": "舉起雙臂",
+      "description_zh": "舉起雙臂",
+      "prompt": "arms up",
+      "aliases": [
+        "分鏡：上衣卡在頭上但露出臉 (shirt over head",
+        "face visible",
+        "arms up)",
+        "shirt over head",
+        "face visible",
+        "arms up",
+        "arms up"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 42,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-hands-behind-back-unhooking-bra-hands-behind-back-fbf1581e",
+      "name_zh": "雙手置於背後",
+      "description_zh": "經人工拆分審閱的原子提示詞「hands behind back」，來源為「雙手放在背後解內衣」。",
+      "prompt": "hands behind back",
+      "aliases": [
+        "雙手放在背後解內衣 (hands behind back",
+        "unhooking bra)",
+        "hands behind back",
+        "unhooking bra",
+        "hands behind back"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 49,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-tongues-tongue-out-1-4",
+      "name_zh": "微微吐舌",
+      "description_zh": "加入「微微吐舌」提示詞。",
+      "prompt": "tongue out",
+      "aliases": [
+        "微微吐舌 (tongue out)",
+        "(tongue out:1.4)"
+      ],
+      "keywords": [
+        "cum_shower_tongues",
+        "ltj",
+        "prompt"
+      ],
+      "order": 56,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "cum-shower-tongues-open-mouth-catching-cum-tongu-open-mouth-1588c6d5",
+      "name_zh": "張嘴",
+      "description_zh": "張嘴",
+      "prompt": "open mouth",
+      "aliases": [
+        "張嘴接/想喝 (open mouth)",
+        "open mouth",
+        "catching cum",
+        "(tongue out:1.4)",
+        "open mouth"
+      ],
+      "keywords": [
+        "cum_shower_tongues",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 57,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

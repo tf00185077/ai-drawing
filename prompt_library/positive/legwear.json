@@ -7,10 +7,70 @@
   "aliases": [],
   "keywords": [],
   "order": 10,
-  "revision": 1,
+  "revision": 8,
   "archived": false,
   "parent_id": "clothing",
   "entries": [
+    {
+      "id": "fishnet-stockings",
+      "name_zh": "網狀絲襪",
+      "description_zh": "fishnet stockings 網狀絲襪",
+      "prompt": "fishnet stockings",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "fishnet-thighhighs",
+      "name_zh": "網狀長筒襪",
+      "description_zh": "fishnet thighhighs — 網狀長筒襪",
+      "prompt": "fishnet thighhighs",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "sheer-black-pantyhose",
+      "name_zh": "黑色薄透絲襪",
+      "description_zh": "sheer black pantyhose — 黑色薄透絲襪",
+      "prompt": "sheer black pantyhose",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "sheer-pantyhose",
+      "name_zh": "薄透連褲絲襪",
+      "description_zh": "sheer pantyhose — 薄透連褲絲襪",
+      "prompt": "sheer pantyhose",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "shiny-pantyhose",
+      "name_zh": "亮面絲襪",
+      "description_zh": "shiny pantyhose — 亮面絲襪",
+      "prompt": "shiny pantyhose",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
     {
       "id": "thighhighs",
       "name_zh": "過膝襪",
@@ -20,18 +80,32 @@
       "keywords": [],
       "order": 10,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "transparen-pantyhose",
+      "name_zh": "透明絲襪",
+      "description_zh": "transparent pantyhose — 透明絲襪",
+      "prompt": "transparent pantyhose",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "pantyhose",
-      "name_zh": "連褲襪",
+      "name_zh": "連褲絲襪",
       "description_zh": "連褲襪",
       "prompt": "pantyhose",
       "aliases": [],
       "keywords": [],
       "order": 20,
-      "revision": 1,
-      "archived": false
+      "revision": 2,
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "fishnets",
@@ -42,7 +116,8 @@
       "keywords": [],
       "order": 30,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }

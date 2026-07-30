@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "hair",
+  "polarity": "positive",
+  "name_zh": "髮型",
+  "description_zh": "髮型",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "頭髮"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "body-appearance",
+  "entries": []
+}

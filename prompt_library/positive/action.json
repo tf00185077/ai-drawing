@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "action",
+  "polarity": "positive",
+  "name_zh": "動作",
+  "description_zh": "動作",
+  "aliases": [],
+  "keywords": [
+    "動作"
+  ],
+  "order": 10,
+  "revision": 1,
+  "archived": false,
+  "parent_id": null,
+  "entries": []
+}
