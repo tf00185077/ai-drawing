@@ -14,8 +14,9 @@
     "expressions"
   ],
   "order": 60,
-  "revision": 21,
+  "revision": 22,
   "archived": false,
+  "parent_id": null,
   "entries": [
     {
       "id": "expressions-list-surprised-wide-eyes-surprised-ef5d24bf",
@@ -142,37 +143,6 @@
       }
     },
     {
-      "id": "expressions-list-frustrated-blush-crying-with-ey-frustrated-8fea8bba",
-      "name_zh": "不甘懊惱",
-      "description_zh": "不甘懊惱",
-      "prompt": "frustrated",
-      "aliases": [
-        "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
-        "frustrated, blush, crying with eyes open, gritting teeth, embarrassed, tears",
-        "frustrated"
-      ],
-      "keywords": [
-        "expressions_list",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "expressions"
-      ],
-      "order": 12,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-frustrated-blush-crying-with-eyes-open-gritting-teeth-embarrassed-tears",
-        "source_prompt_sha256": "ee75a0a800b9720715a8557a882a3168313cf2bdbbc024584214fcc43f596056",
-        "segment_index": 0,
-        "raw_segment_sha256": "6afb642998f6a61bd3de37c12771432976849f7baa24a8dc4e16633e65f68501",
-        "identity_sha256": "8fea8bbab7c0c254cccaf51ac8662a3cb6cdbc4232eaf27281ce02e58a1c12da"
-      }
-    },
-    {
       "id": "expressions-list-frustrated-blush-crying-with-ey-crying-with-eyes-open-f7d76855",
       "name_zh": "睜眼流淚",
       "description_zh": "睜眼流淚",
@@ -201,6 +171,37 @@
         "segment_index": 2,
         "raw_segment_sha256": "ea42f9f304fcb6b8b58dcebdb68991e7529aa203555528ce2488df0c69d234f9",
         "identity_sha256": "f7d76855710912f0d06b16012cd32f2aa2693c90716ab71f9b79ee3efaa81dad"
+      }
+    },
+    {
+      "id": "expressions-list-frustrated-blush-crying-with-ey-frustrated-8fea8bba",
+      "name_zh": "不甘懊惱",
+      "description_zh": "不甘懊惱",
+      "prompt": "frustrated",
+      "aliases": [
+        "不甘心/眼泛淚光 (くっ殺せ/frustrated...)",
+        "frustrated, blush, crying with eyes open, gritting teeth, embarrassed, tears",
+        "frustrated"
+      ],
+      "keywords": [
+        "expressions_list",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "expressions"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "expressions",
+        "source_entry_id": "expressions-list-frustrated-blush-crying-with-eyes-open-gritting-teeth-embarrassed-tears",
+        "source_prompt_sha256": "ee75a0a800b9720715a8557a882a3168313cf2bdbbc024584214fcc43f596056",
+        "segment_index": 0,
+        "raw_segment_sha256": "6afb642998f6a61bd3de37c12771432976849f7baa24a8dc4e16633e65f68501",
+        "identity_sha256": "8fea8bbab7c0c254cccaf51ac8662a3cb6cdbc4232eaf27281ce02e58a1c12da"
       }
     },
     {
@@ -297,37 +298,6 @@
       }
     },
     {
-      "id": "expressions-list-shy-looking-away-shy-528bd908",
-      "name_zh": "害羞",
-      "description_zh": "經人工拆分審閱的原子提示詞「shy」，來源為「害羞撇開視線」。",
-      "prompt": "shy",
-      "aliases": [
-        "害羞撇開視線 (shy, looking away)",
-        "shy, looking away",
-        "shy"
-      ],
-      "keywords": [
-        "expressions_list",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "expressions"
-      ],
-      "order": 14,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-shy-looking-away",
-        "source_prompt_sha256": "ebd24d90d7981f304edbfd6cee7a7eb4516131da6c0f8b062a21f6670046126b",
-        "segment_index": 0,
-        "raw_segment_sha256": "9807eb6ec753a5173bda500e52497ef0c62b0dd7d51891731b39d6dafd9315ae",
-        "identity_sha256": "528bd9089ec390ecaeb789ee2d955aaba8988ba079fd2b7ddc1deded3ef0016b"
-      }
-    },
-    {
       "id": "expressions-list-shy-looking-away-looking-away-26172a6a",
       "name_zh": "移開視線",
       "description_zh": "經人工拆分審閱的原子提示詞「looking away」，來源為「害羞撇開視線」。",
@@ -359,14 +329,14 @@
       }
     },
     {
-      "id": "expressions-list-smile-happy-smile-151be7c9",
-      "name_zh": "微笑",
-      "description_zh": "經人工拆分審閱的原子提示詞「smile」，來源為「開心微笑」。",
-      "prompt": "smile",
+      "id": "expressions-list-shy-looking-away-shy-528bd908",
+      "name_zh": "害羞",
+      "description_zh": "經人工拆分審閱的原子提示詞「shy」，來源為「害羞撇開視線」。",
+      "prompt": "shy",
       "aliases": [
-        "開心微笑 (smile, happy)",
-        "smile, happy",
-        "smile"
+        "害羞撇開視線 (shy, looking away)",
+        "shy, looking away",
+        "shy"
       ],
       "keywords": [
         "expressions_list",
@@ -376,17 +346,17 @@
         "positive",
         "expressions"
       ],
-      "order": 15,
+      "order": 14,
       "revision": 1,
       "archived": false,
       "comma_atomic_provenance": {
         "source_polarity": "positive",
         "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-smile-happy",
-        "source_prompt_sha256": "1d2caec1c8291d6a0f34ed4905df7adfc061ad7d1524ac356975f018eff4e4f7",
+        "source_entry_id": "expressions-list-shy-looking-away",
+        "source_prompt_sha256": "ebd24d90d7981f304edbfd6cee7a7eb4516131da6c0f8b062a21f6670046126b",
         "segment_index": 0,
-        "raw_segment_sha256": "fa1eadc4c6995667412681c69ce33adfc9302a2965f521c40908549e670e2e4e",
-        "identity_sha256": "151be7c9cea104a05f235fde9f50234688a6e566db43e381f5d0a1811d60c44c"
+        "raw_segment_sha256": "9807eb6ec753a5173bda500e52497ef0c62b0dd7d51891731b39d6dafd9315ae",
+        "identity_sha256": "528bd9089ec390ecaeb789ee2d955aaba8988ba079fd2b7ddc1deded3ef0016b"
       }
     },
     {
@@ -421,14 +391,14 @@
       }
     },
     {
-      "id": "expressions-list-heart-eyes-ahegao-heart-eyes-ce80d281",
-      "name_zh": "愛心眼",
-      "description_zh": "經人工拆分審閱的原子提示詞「heart eyes」，來源為「愛心眼阿黑顏」。",
-      "prompt": "heart eyes",
+      "id": "expressions-list-smile-happy-smile-151be7c9",
+      "name_zh": "微笑",
+      "description_zh": "經人工拆分審閱的原子提示詞「smile」，來源為「開心微笑」。",
+      "prompt": "smile",
       "aliases": [
-        "愛心眼阿黑顏 (heart eyes, ahegao)",
-        "heart eyes, ahegao",
-        "heart eyes"
+        "開心微笑 (smile, happy)",
+        "smile, happy",
+        "smile"
       ],
       "keywords": [
         "expressions_list",
@@ -438,17 +408,17 @@
         "positive",
         "expressions"
       ],
-      "order": 16,
+      "order": 15,
       "revision": 1,
       "archived": false,
       "comma_atomic_provenance": {
         "source_polarity": "positive",
         "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-heart-eyes-ahegao",
-        "source_prompt_sha256": "48055cac3a13fd7c33d20647506dfb0283bd5d1941d6b16f951e55a3e0033371",
+        "source_entry_id": "expressions-list-smile-happy",
+        "source_prompt_sha256": "1d2caec1c8291d6a0f34ed4905df7adfc061ad7d1524ac356975f018eff4e4f7",
         "segment_index": 0,
-        "raw_segment_sha256": "24b785674ed252113630dfec2baa935509a3207673596518aab9fe5ef5b41026",
-        "identity_sha256": "ce80d2811aef5adf7a27a0e6e26f7ef935430c99b55ef3ac61fc85fafe8b51a5"
+        "raw_segment_sha256": "fa1eadc4c6995667412681c69ce33adfc9302a2965f521c40908549e670e2e4e",
+        "identity_sha256": "151be7c9cea104a05f235fde9f50234688a6e566db43e381f5d0a1811d60c44c"
       }
     },
     {
@@ -480,6 +450,37 @@
         "segment_index": 1,
         "raw_segment_sha256": "42cc05fad376c35eb9ebbecfe77a36d81dc42038182041b41e6d3675bc2352fe",
         "identity_sha256": "17993ba6cf71f3685d5e10e91987cb180e557b8d6921ab1ab37a576032a67a30"
+      }
+    },
+    {
+      "id": "expressions-list-heart-eyes-ahegao-heart-eyes-ce80d281",
+      "name_zh": "愛心眼",
+      "description_zh": "經人工拆分審閱的原子提示詞「heart eyes」，來源為「愛心眼阿黑顏」。",
+      "prompt": "heart eyes",
+      "aliases": [
+        "愛心眼阿黑顏 (heart eyes, ahegao)",
+        "heart eyes, ahegao",
+        "heart eyes"
+      ],
+      "keywords": [
+        "expressions_list",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "expressions"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "expressions",
+        "source_entry_id": "expressions-list-heart-eyes-ahegao",
+        "source_prompt_sha256": "48055cac3a13fd7c33d20647506dfb0283bd5d1941d6b16f951e55a3e0033371",
+        "segment_index": 0,
+        "raw_segment_sha256": "24b785674ed252113630dfec2baa935509a3207673596518aab9fe5ef5b41026",
+        "identity_sha256": "ce80d2811aef5adf7a27a0e6e26f7ef935430c99b55ef3ac61fc85fafe8b51a5"
       }
     },
     {
@@ -545,37 +546,6 @@
       }
     },
     {
-      "id": "expressions-list-mind-break-blank-stare-drooling-mind-break-c9ea695d",
-      "name_zh": "精神崩壞",
-      "description_zh": "精神崩壞",
-      "prompt": "mind break",
-      "aliases": [
-        "壞掉流口水 (mind break, blank stare, drooling)",
-        "mind break, blank stare, drooling",
-        "mind break"
-      ],
-      "keywords": [
-        "expressions_list",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "expressions"
-      ],
-      "order": 19,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-mind-break-blank-stare-drooling",
-        "source_prompt_sha256": "3d63f18ac048f53664826ebcbb3f50107cbc32d9867a5f762b238e85acaf688c",
-        "segment_index": 0,
-        "raw_segment_sha256": "2f2a006379a4964e6ad2e5cbc5904a0560ee2a7b4ead85f61d5f73a7a3bdb60b",
-        "identity_sha256": "c9ea695d7e1a1548b0fb6aab8f82a0f12064bba7ef4db9dc2e1f289989e2461e"
-      }
-    },
-    {
       "id": "expressions-list-mind-break-blank-stare-drooling-blank-stare-ad0c7955",
       "name_zh": "空洞凝視",
       "description_zh": "經人工拆分審閱的原子提示詞「blank stare」，來源為「壞掉流口水」。",
@@ -638,14 +608,14 @@
       }
     },
     {
-      "id": "expressions-list-seductive-smile-naughty-face-seductive-smile-6efd8b47",
-      "name_zh": "誘惑微笑",
-      "description_zh": "經人工拆分審閱的原子提示詞「seductive smile」，來源為「誘惑(seductive smile, naughty face)」。",
-      "prompt": "seductive smile",
+      "id": "expressions-list-mind-break-blank-stare-drooling-mind-break-c9ea695d",
+      "name_zh": "精神崩壞",
+      "description_zh": "精神崩壞",
+      "prompt": "mind break",
       "aliases": [
-        "誘惑(seductive smile, naughty face)",
-        "seductive smile, naughty face",
-        "seductive smile"
+        "壞掉流口水 (mind break, blank stare, drooling)",
+        "mind break, blank stare, drooling",
+        "mind break"
       ],
       "keywords": [
         "expressions_list",
@@ -655,17 +625,17 @@
         "positive",
         "expressions"
       ],
-      "order": 20,
+      "order": 19,
       "revision": 1,
       "archived": false,
       "comma_atomic_provenance": {
         "source_polarity": "positive",
         "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-seductive-smile-naughty-face",
-        "source_prompt_sha256": "af2ccad67707868a2353a62c679569e375807c484d49c1e037cf1a9e07851c7e",
+        "source_entry_id": "expressions-list-mind-break-blank-stare-drooling",
+        "source_prompt_sha256": "3d63f18ac048f53664826ebcbb3f50107cbc32d9867a5f762b238e85acaf688c",
         "segment_index": 0,
-        "raw_segment_sha256": "217fd32c73df019eab22c563794a531c8bbe20cf193aa34c46ba9214c4d26c80",
-        "identity_sha256": "6efd8b4739177129f65f3712827e7752c4bf603e4f78483bbcdc4cb941a04aae"
+        "raw_segment_sha256": "2f2a006379a4964e6ad2e5cbc5904a0560ee2a7b4ead85f61d5f73a7a3bdb60b",
+        "identity_sha256": "c9ea695d7e1a1548b0fb6aab8f82a0f12064bba7ef4db9dc2e1f289989e2461e"
       }
     },
     {
@@ -697,6 +667,37 @@
         "segment_index": 1,
         "raw_segment_sha256": "23d8d3a1f30001eb0757420f68eaf438f2b3804c969f80f0cc57d52cfe6917dc",
         "identity_sha256": "6b91ee9b74befe0d4ca6a08009f217a79fd537ffe3c3b84c4158d396b5e6ea6c"
+      }
+    },
+    {
+      "id": "expressions-list-seductive-smile-naughty-face-seductive-smile-6efd8b47",
+      "name_zh": "誘惑微笑",
+      "description_zh": "經人工拆分審閱的原子提示詞「seductive smile」，來源為「誘惑(seductive smile, naughty face)」。",
+      "prompt": "seductive smile",
+      "aliases": [
+        "誘惑(seductive smile, naughty face)",
+        "seductive smile, naughty face",
+        "seductive smile"
+      ],
+      "keywords": [
+        "expressions_list",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "expressions"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "expressions",
+        "source_entry_id": "expressions-list-seductive-smile-naughty-face",
+        "source_prompt_sha256": "af2ccad67707868a2353a62c679569e375807c484d49c1e037cf1a9e07851c7e",
+        "segment_index": 0,
+        "raw_segment_sha256": "217fd32c73df019eab22c563794a531c8bbe20cf193aa34c46ba9214c4d26c80",
+        "identity_sha256": "6efd8b4739177129f65f3712827e7752c4bf603e4f78483bbcdc4cb941a04aae"
       }
     },
     {
@@ -762,6 +763,37 @@
       }
     },
     {
+      "id": "expressions-list-smirk-v-shaped-eyebrows-licking-licking-lips-1-4-2f243694",
+      "name_zh": "加權舔唇",
+      "description_zh": "經人工拆分審閱的原子提示詞「(licking lips:1.4)」，來源為「強勢挑逗」。",
+      "prompt": "licking lips",
+      "aliases": [
+        "強勢挑逗 (smirk, v-shaped eyebrows, licking lips)",
+        "smirk, v-shaped eyebrows, (licking lips:1.4)",
+        "(licking lips:1.4)"
+      ],
+      "keywords": [
+        "expressions_list",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "expressions"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "expressions",
+        "source_entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-lips-1-4",
+        "source_prompt_sha256": "1c92ac2163ece0516016da9bd2ce9984a309ae5c5e534641ee414acb135b0cc4",
+        "segment_index": 2,
+        "raw_segment_sha256": "e936e531d02a491875e68b0a23037f59cf94395eaa80a505b4484719352d5d5e",
+        "identity_sha256": "2f24369424ec899a2129d8b42cc69d8dd14d42a90a33001a3c716b624a8dca77"
+      }
+    },
+    {
       "id": "expressions-list-smirk-v-shaped-eyebrows-licking-smirk-f4e0636e",
       "name_zh": "壞笑",
       "description_zh": "經人工拆分審閱的原子提示詞「smirk」，來源為「強勢挑逗」。",
@@ -824,34 +856,65 @@
       }
     },
     {
-      "id": "expressions-list-smirk-v-shaped-eyebrows-licking-licking-lips-1-4-2f243694",
-      "name_zh": "加權舔唇",
-      "description_zh": "經人工拆分審閱的原子提示詞「(licking lips:1.4)」，來源為「強勢挑逗」。",
-      "prompt": "licking lips",
+      "id": "teasing-exps-smug-teasing-smile-seductively-smil-proud-7bedeb90",
+      "name_zh": "自信得意",
+      "description_zh": "經人工拆分審閱的原子提示詞「proud」，來源為「得意/誘惑」。",
+      "prompt": "proud",
       "aliases": [
-        "強勢挑逗 (smirk, v-shaped eyebrows, licking lips)",
-        "smirk, v-shaped eyebrows, (licking lips:1.4)",
-        "(licking lips:1.4)"
+        "得意/誘惑 (smug, teasing smile)",
+        "smug, teasing smile, seductively smiling, proud",
+        "proud"
       ],
       "keywords": [
-        "expressions_list",
+        "teasing_exps",
         "ltj",
         "prompt",
         "comma-atomic",
         "positive",
         "expressions"
       ],
-      "order": 22,
+      "order": 23,
       "revision": 1,
       "archived": false,
       "comma_atomic_provenance": {
         "source_polarity": "positive",
         "source_category_id": "expressions",
-        "source_entry_id": "expressions-list-smirk-v-shaped-eyebrows-licking-lips-1-4",
-        "source_prompt_sha256": "1c92ac2163ece0516016da9bd2ce9984a309ae5c5e534641ee414acb135b0cc4",
+        "source_entry_id": "teasing-exps-smug-teasing-smile-seductively-smiling-proud",
+        "source_prompt_sha256": "44c9cd63b2318503b1280e9010af86dc0ed5341b169b66bc9a1b45f53d7c811e",
+        "segment_index": 3,
+        "raw_segment_sha256": "96cebb72769daf4a305f09e285e4c26a2ed0ae6983007df20ce7a25fccf99464",
+        "identity_sha256": "7bedeb90717897aad2d6f2dde318622d451999977c58de49ece3297e50ed9dc5"
+      }
+    },
+    {
+      "id": "teasing-exps-smug-teasing-smile-seductively-smil-seductively-smiling-ab7533a1",
+      "name_zh": "誘惑地微笑",
+      "description_zh": "經人工拆分審閱的原子提示詞「seductively smiling」，來源為「得意/誘惑」。",
+      "prompt": "seductively smiling",
+      "aliases": [
+        "得意/誘惑 (smug, teasing smile)",
+        "smug, teasing smile, seductively smiling, proud",
+        "seductively smiling"
+      ],
+      "keywords": [
+        "teasing_exps",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "expressions"
+      ],
+      "order": 23,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": {
+        "source_polarity": "positive",
+        "source_category_id": "expressions",
+        "source_entry_id": "teasing-exps-smug-teasing-smile-seductively-smiling-proud",
+        "source_prompt_sha256": "44c9cd63b2318503b1280e9010af86dc0ed5341b169b66bc9a1b45f53d7c811e",
         "segment_index": 2,
-        "raw_segment_sha256": "e936e531d02a491875e68b0a23037f59cf94395eaa80a505b4484719352d5d5e",
-        "identity_sha256": "2f24369424ec899a2129d8b42cc69d8dd14d42a90a33001a3c716b624a8dca77"
+        "raw_segment_sha256": "0d2e429362d829fd68a274ea761f660ce8ea73d2e3ddc98e56775fc7e7259812",
+        "identity_sha256": "ab7533a1a646512d84130fb0e6a28aeba53774529f9706bcc64258ad3d76b06c"
       }
     },
     {
@@ -917,68 +980,6 @@
       }
     },
     {
-      "id": "teasing-exps-smug-teasing-smile-seductively-smil-seductively-smiling-ab7533a1",
-      "name_zh": "誘惑地微笑",
-      "description_zh": "經人工拆分審閱的原子提示詞「seductively smiling」，來源為「得意/誘惑」。",
-      "prompt": "seductively smiling",
-      "aliases": [
-        "得意/誘惑 (smug, teasing smile)",
-        "smug, teasing smile, seductively smiling, proud",
-        "seductively smiling"
-      ],
-      "keywords": [
-        "teasing_exps",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "expressions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "expressions",
-        "source_entry_id": "teasing-exps-smug-teasing-smile-seductively-smiling-proud",
-        "source_prompt_sha256": "44c9cd63b2318503b1280e9010af86dc0ed5341b169b66bc9a1b45f53d7c811e",
-        "segment_index": 2,
-        "raw_segment_sha256": "0d2e429362d829fd68a274ea761f660ce8ea73d2e3ddc98e56775fc7e7259812",
-        "identity_sha256": "ab7533a1a646512d84130fb0e6a28aeba53774529f9706bcc64258ad3d76b06c"
-      }
-    },
-    {
-      "id": "teasing-exps-smug-teasing-smile-seductively-smil-proud-7bedeb90",
-      "name_zh": "自信得意",
-      "description_zh": "經人工拆分審閱的原子提示詞「proud」，來源為「得意/誘惑」。",
-      "prompt": "proud",
-      "aliases": [
-        "得意/誘惑 (smug, teasing smile)",
-        "smug, teasing smile, seductively smiling, proud",
-        "proud"
-      ],
-      "keywords": [
-        "teasing_exps",
-        "ltj",
-        "prompt",
-        "comma-atomic",
-        "positive",
-        "expressions"
-      ],
-      "order": 23,
-      "revision": 1,
-      "archived": false,
-      "comma_atomic_provenance": {
-        "source_polarity": "positive",
-        "source_category_id": "expressions",
-        "source_entry_id": "teasing-exps-smug-teasing-smile-seductively-smiling-proud",
-        "source_prompt_sha256": "44c9cd63b2318503b1280e9010af86dc0ed5341b169b66bc9a1b45f53d7c811e",
-        "segment_index": 3,
-        "raw_segment_sha256": "96cebb72769daf4a305f09e285e4c26a2ed0ae6983007df20ce7a25fccf99464",
-        "identity_sha256": "7bedeb90717897aad2d6f2dde318622d451999977c58de49ece3297e50ed9dc5"
-      }
-    },
-    {
       "id": "teasing-exps-lewd-lustful-tongue-out-1-4-blush-lewd-02fa046b",
       "name_zh": "淫蕩表情",
       "description_zh": "經人工拆分審閱的原子提示詞「lewd」，來源為「發情/吐舌」。",
@@ -1039,6 +1040,32 @@
         "raw_segment_sha256": "8f029232d9e9ecdeea9136c67ef0fd13eec135f00cb744f9b13f000b52ed9a04",
         "identity_sha256": "8abc38e8c69ee09cb3ace09ebbbf6d3b044dc024e370477061fd4c9af7afe98f"
       }
+    },
+    {
+      "id": "flirt-acts-pinned-against-wall-blush-looking-up-blush-2682aef6",
+      "name_zh": "臉紅",
+      "description_zh": "經人工拆分審閱的原子提示詞「blush」，來源為「壁咚」。",
+      "prompt": "blush",
+      "aliases": [
+        "壁咚 (pinned against wall",
+        "blush...)",
+        "pinned against wall",
+        "blush",
+        "looking up",
+        "blush"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 27,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }

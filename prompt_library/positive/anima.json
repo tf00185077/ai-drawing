@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "id": "anima",
+  "polarity": "positive",
+  "name_zh": "Anima",
+  "description_zh": "Anima",
+  "aliases": [],
+  "keywords": [
+    "Anima",
+    "品質",
+    "分級"
+  ],
+  "order": 10,
+  "revision": 7,
+  "archived": false,
+  "parent_id": "quality-ratings",
+  "entries": [
+    {
+      "id": "anima-quality-best-quality-b870f8e8",
+      "name_zh": "最佳品質（Anima）",
+      "description_zh": "經人工拆分審閱的原子提示詞「best quality」，來源為「Anima 品質詞」。",
+      "prompt": "best quality",
+      "aliases": [
+        "Anima",
+        "quality",
+        "best quality"
+      ],
+      "keywords": [
+        "quality",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "anima-quality-masterpiece-5d3c18a5",
+      "name_zh": "傑作（Anima）",
+      "description_zh": "經人工拆分審閱的原子提示詞「masterpiece」，來源為「Anima 品質詞」。",
+      "prompt": "masterpiece",
+      "aliases": [
+        "Anima",
+        "quality",
+        "masterpiece"
+      ],
+      "keywords": [
+        "quality",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "anima-quality-very-aesthetic-caea0057",
+      "name_zh": "高度美感（Anima）",
+      "description_zh": "經人工拆分審閱的原子提示詞「very aesthetic」，來源為「Anima 品質詞」。",
+      "prompt": "very aesthetic",
+      "aliases": [
+        "Anima",
+        "quality",
+        "very aesthetic"
+      ],
+      "keywords": [
+        "quality",
+        "anima",
+        "ltj",
+        "comma-atomic",
+        "positive",
+        "quality-ratings"
+      ],
+      "order": 22,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "anima-rating-safe",
+      "name_zh": "Anima 分級：普遍",
+      "description_zh": "加入「Anima 分級：普遍」提示詞。",
+      "prompt": "safe",
+      "aliases": [
+        "Anima",
+        "rating_safe",
+        "safe"
+      ],
+      "keywords": [
+        "rating",
+        "anima",
+        "ltj"
+      ],
+      "order": 23,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "anima-rating-questionable",
+      "name_zh": "Anima 分級：輔導",
+      "description_zh": "加入「Anima 分級：輔導」提示詞。",
+      "prompt": "sensitive",
+      "aliases": [
+        "Anima",
+        "rating_questionable",
+        "sensitive"
+      ],
+      "keywords": [
+        "rating",
+        "anima",
+        "ltj"
+      ],
+      "order": 24,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "anima-rating-explicit",
+      "name_zh": "Anima 分級：限制",
+      "description_zh": "加入「Anima 分級：限制」提示詞。",
+      "prompt": "explicit",
+      "aliases": [
+        "Anima",
+        "rating_explicit",
+        "explicit"
+      ],
+      "keywords": [
+        "rating",
+        "anima",
+        "ltj"
+      ],
+      "order": 25,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

@@ -1,0 +1,540 @@
+{
+  "schema_version": 1,
+  "id": "multi-posture",
+  "polarity": "positive",
+  "name_zh": "多人姿勢",
+  "description_zh": "多人姿勢",
+  "aliases": [],
+  "keywords": [
+    "多人姿勢",
+    "多人",
+    "姿勢"
+  ],
+  "order": 10,
+  "revision": 115,
+  "archived": false,
+  "parent_id": "action",
+  "entries": [
+    {
+      "id": "p-extra-acts-kissing-french-kiss-saliva-french-kiss-63a98b0c",
+      "name_zh": "法式深吻",
+      "description_zh": "法式深吻",
+      "prompt": "french kiss",
+      "aliases": [
+        "法式熱吻 (kissing)",
+        "kissing",
+        "french kiss",
+        "saliva",
+        "french kiss"
+      ],
+      "keywords": [
+        "p_extra_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 12,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-doggy-style-from-behind-grabbing-hands-grabbing-hands-c204e1f2",
+      "name_zh": "抓住雙手",
+      "description_zh": "抓住雙手",
+      "prompt": "grabbing hands",
+      "aliases": [
+        "背後位/抓手壓制 (doggystyle",
+        "grabbing hands)",
+        "doggy style",
+        "from behind",
+        "grabbing hands",
+        "holding wrists",
+        "grabbing hands"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-doggy-style-from-behind-grabbing-hands-holding-wrists-01563a06",
+      "name_zh": "抓住手腕",
+      "description_zh": "抓住手腕",
+      "prompt": "holding wrists",
+      "aliases": [
+        "背後位/抓手壓制 (doggystyle",
+        "grabbing hands)",
+        "doggy style",
+        "from behind",
+        "grabbing hands",
+        "holding wrists",
+        "holding wrists"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 14,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-facial-cum-on-face-ejaculation-on-face-cum-on-face-a226e56e",
+      "name_zh": "精液在臉上",
+      "description_zh": "精液在臉上",
+      "prompt": "cum on face",
+      "aliases": [
+        "顏射瞬間 (facial",
+        "ejaculation on face)",
+        "facial",
+        "cum on face",
+        "ejaculation on face",
+        "cum on face"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-facial-cum-on-face-ejaculation-on-face-ejaculation-on-face-c78ca05c",
+      "name_zh": "射在臉上",
+      "description_zh": "射在臉上",
+      "prompt": "ejaculation on face",
+      "aliases": [
+        "顏射瞬間 (facial",
+        "ejaculation on face)",
+        "facial",
+        "cum on face",
+        "ejaculation on face",
+        "ejaculation on face"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-facial-cum-on-face-ejaculation-on-face-facial-bc454663",
+      "name_zh": "顏射",
+      "description_zh": "顏射",
+      "prompt": "facial",
+      "aliases": [
+        "顏射瞬間 (facial",
+        "ejaculation on face)",
+        "facial",
+        "cum on face",
+        "ejaculation on face",
+        "facial"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 16,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-cum-in-mouth-2ee08549",
+      "name_zh": "口中射精",
+      "description_zh": "口中射精",
+      "prompt": "cum in mouth",
+      "aliases": [
+        "射入口中 (cum in mouth",
+        "ejaculation in mouth)",
+        "cum in mouth",
+        "ejaculation in mouth",
+        "swallowing",
+        "cum in mouth"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "climaxes-cum-in-mouth-ejaculation-in-mouth-swall-ejaculation-in-mouth-dc5882d4",
+      "name_zh": "射入口中",
+      "description_zh": "射入口中",
+      "prompt": "ejaculation in mouth",
+      "aliases": [
+        "射入口中 (cum in mouth",
+        "ejaculation in mouth)",
+        "cum in mouth",
+        "ejaculation in mouth",
+        "swallowing",
+        "ejaculation in mouth"
+      ],
+      "keywords": [
+        "climaxes",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-standing-sex-sex-from-front-facing-eac-facing-each-other-99ce8944",
+      "name_zh": "面對面",
+      "description_zh": "面對面",
+      "prompt": "facing each other",
+      "aliases": [
+        "站立正面位 (standing missionary)",
+        "standing sex",
+        "sex from front",
+        "facing each other",
+        "facing each other"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 17,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-sitting-on-lap",
+      "name_zh": "坐在大腿上",
+      "description_zh": "加入「坐在大腿上」提示詞。",
+      "prompt": "sitting on lap",
+      "aliases": [
+        "坐在大腿上 (sitting on lap)",
+        "sitting on lap"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt"
+      ],
+      "order": 19,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-licking-ear-teasing-whispering-licking-ear-cbe48dec",
+      "name_zh": "舔耳",
+      "description_zh": "舔耳",
+      "prompt": "licking ear",
+      "aliases": [
+        "舔耳呢喃 (licking ear",
+        "teasing...)",
+        "licking ear",
+        "teasing",
+        "whispering",
+        "licking ear"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-licking-ear-teasing-whispering-teasing-9da2ee70",
+      "name_zh": "挑逗",
+      "description_zh": "挑逗",
+      "prompt": "teasing",
+      "aliases": [
+        "舔耳呢喃 (licking ear",
+        "teasing...)",
+        "licking ear",
+        "teasing",
+        "whispering",
+        "teasing"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-licking-ear-teasing-whispering-whispering-343ecbd3",
+      "name_zh": "耳語",
+      "description_zh": "耳語",
+      "prompt": "whispering",
+      "aliases": [
+        "舔耳呢喃 (licking ear",
+        "teasing...)",
+        "licking ear",
+        "teasing",
+        "whispering",
+        "whispering"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lifting-person-carrying-holding-up-mid-carrying-28e795da",
+      "name_zh": "抱著",
+      "description_zh": "抱著",
+      "prompt": "carrying",
+      "aliases": [
+        "抱起火車便當 (held up)",
+        "lifting person",
+        "carrying",
+        "holding up",
+        "midair",
+        "suspended",
+        "facing each other",
+        "hugging",
+        "legs around waist",
+        "sex",
+        "carrying"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lifting-person-carrying-holding-up-mid-holding-up-4ba9b097",
+      "name_zh": "托起",
+      "description_zh": "托起",
+      "prompt": "holding up",
+      "aliases": [
+        "抱起火車便當 (held up)",
+        "lifting person",
+        "carrying",
+        "holding up",
+        "midair",
+        "suspended",
+        "facing each other",
+        "hugging",
+        "legs around waist",
+        "sex",
+        "holding up"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lifting-person-carrying-holding-up-mid-hugging-5b99824f",
+      "name_zh": "擁抱",
+      "description_zh": "擁抱",
+      "prompt": "hugging",
+      "aliases": [
+        "抱起火車便當 (held up)",
+        "lifting person",
+        "carrying",
+        "holding up",
+        "midair",
+        "suspended",
+        "facing each other",
+        "hugging",
+        "legs around waist",
+        "sex",
+        "hugging"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "positions-lifting-person-carrying-holding-up-mid-lifting-person-4996e5cf",
+      "name_zh": "抱起",
+      "description_zh": "抱起",
+      "prompt": "lifting person",
+      "aliases": [
+        "抱起"
+      ],
+      "keywords": [
+        "positions",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "poses"
+      ],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-hugging-romantic-embrace-hugging-7471b352",
+      "name_zh": "擁抱",
+      "description_zh": "擁抱",
+      "prompt": "hugging",
+      "aliases": [
+        "擁抱 (hugging",
+        "romantic embrace)",
+        "hugging",
+        "romantic embrace",
+        "hugging"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 26,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-hugging-romantic-embrace-romantic-embrace-59b6519e",
+      "name_zh": "深情相擁",
+      "description_zh": "深情相擁",
+      "prompt": "romantic embrace",
+      "aliases": [
+        "擁抱 (hugging",
+        "romantic embrace)",
+        "hugging",
+        "romantic embrace",
+        "romantic embrace"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 26,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "flirt-acts-pinned-against-wall-blush-looking-up-pinned-against-wall-59928f9b",
+      "name_zh": "壁咚",
+      "description_zh": "壁咚",
+      "prompt": "pinned against wall",
+      "aliases": [
+        "壁咚 (pinned against wall",
+        "blush...)",
+        "pinned against wall",
+        "blush",
+        "looking up",
+        "pinned against wall"
+      ],
+      "keywords": [
+        "flirt_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 27,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

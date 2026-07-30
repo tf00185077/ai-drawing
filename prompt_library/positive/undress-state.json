@@ -7,7 +7,7 @@
   "aliases": [],
   "keywords": [],
   "order": 20,
-  "revision": 1,
+  "revision": 10,
   "archived": false,
   "parent_id": "clothing",
   "entries": [
@@ -27,7 +27,8 @@
       ],
       "order": 10,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "flirt-clothing-opts-half-undressed",
@@ -45,7 +46,8 @@
       ],
       "order": 20,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "flirt-clothing-opts-bra-and-panties",
@@ -63,7 +65,8 @@
       ],
       "order": 30,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "flirt-clothing-opts-bra-only",
@@ -81,7 +84,161 @@
       ],
       "order": 40,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-over-head-face-visible-arms-u-shirt-over-head-f49a4dd8",
+      "name_zh": "上衣套過頭部",
+      "description_zh": "經人工拆分審閱的原子提示詞「shirt over head」，來源為「分鏡：上衣卡在頭上但露出臉」。",
+      "prompt": "shirt over head",
+      "aliases": [
+        "分鏡：上衣卡在頭上但露出臉 (shirt over head",
+        "face visible",
+        "arms up)",
+        "shirt over head",
+        "face visible",
+        "arms up",
+        "shirt over head"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 42,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-removed-holding-clothes-shirt-removed-2765bc1b",
+      "name_zh": "已脫下上衣",
+      "description_zh": "經人工拆分審閱的原子提示詞「shirt removed」，來源為「分鏡：單手拿著脫下的上衣」。",
+      "prompt": "shirt removed",
+      "aliases": [
+        "分鏡：單手拿著脫下的上衣 (shirt removed",
+        "holding clothes)",
+        "shirt removed",
+        "holding clothes",
+        "shirt removed"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 43,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-open-unbuttoned-shirt-reveali-shirt-open-1a3f6450",
+      "name_zh": "敞開襯衫",
+      "description_zh": "經人工拆分審閱的原子提示詞「shirt open」，來源為「解開鈕扣露出內衣」。",
+      "prompt": "shirt open",
+      "aliases": [
+        "解開鈕扣露出內衣 (shirt open",
+        "unbuttoned shirt...)",
+        "shirt open",
+        "unbuttoned shirt",
+        "revealing bra",
+        "shirt open"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 44,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-off-shoulder-bra-strap-slippi-bra-strap-slipping-96a35feb",
+      "name_zh": "胸罩肩帶滑落",
+      "description_zh": "經人工拆分審閱的原子提示詞「bra strap slipping」，來源為「衣服滑落露肩」。",
+      "prompt": "bra strap slipping",
+      "aliases": [
+        "衣服滑落露肩 (shirt off shoulder",
+        "bra strap slipping)",
+        "shirt off shoulder",
+        "bra strap slipping",
+        "bra strap slipping"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 46,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-shirt-off-shoulder-bra-strap-slippi-shirt-off-shoulder-bf0d4149",
+      "name_zh": "上衣滑落肩膀",
+      "description_zh": "經人工拆分審閱的原子提示詞「shirt off shoulder」，來源為「衣服滑落露肩」。",
+      "prompt": "shirt off shoulder",
+      "aliases": [
+        "衣服滑落露肩 (shirt off shoulder",
+        "bra strap slipping)",
+        "shirt off shoulder",
+        "bra strap slipping",
+        "shirt off shoulder"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 46,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-taking-off-skirt-revealing-panties-revealing-panties-abb694f3",
+      "name_zh": "露出內褲",
+      "description_zh": "經人工拆分審閱的原子提示詞「revealing panties」，來源為「脫下裙子露出內褲」。",
+      "prompt": "revealing panties",
+      "aliases": [
+        "脫下裙子露出內褲 (taking off skirt",
+        "revealing panties)",
+        "taking off skirt",
+        "revealing panties",
+        "revealing panties"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 47,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "flirt-clothing-opts-panties-only",
@@ -99,7 +256,58 @@
       ],
       "order": 50,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "undress-acts-pulling-down-panties-panties-around-panties-around-thighs-b8993a9b",
+      "name_zh": "內褲停在大腿",
+      "description_zh": "經人工拆分審閱的原子提示詞「panties around thighs」，來源為「褪下內褲卡在大腿」。",
+      "prompt": "panties around thighs",
+      "aliases": [
+        "褪下內褲卡在大腿 (pulling down panties",
+        "panties around thighs)",
+        "pulling down panties",
+        "panties around thighs",
+        "panties around thighs"
+      ],
+      "keywords": [
+        "undress_acts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "teasing-milk-opts-squirting-milk-breast-milk-mes-messy-c1311fdc",
+      "name_zh": "凌亂狼藉",
+      "description_zh": "凌亂狼藉",
+      "prompt": "messy",
+      "aliases": [
+        "噴射乳汁 (squirting milk)",
+        "squirting milk",
+        "breast milk",
+        "messy",
+        "messy"
+      ],
+      "keywords": [
+        "teasing_milk_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 55,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     },
     {
       "id": "flirt-clothing-opts-nude",
@@ -117,7 +325,35 @@
       ],
       "order": 60,
       "revision": 1,
-      "archived": false
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "after-cums-heavy-semen-covered-in-cum-messy-body-messy-body-2fa9a38f",
+      "name_zh": "身體狼藉",
+      "description_zh": "身體狼藉",
+      "prompt": "messy body",
+      "aliases": [
+        "渾身精液 (heavy semen)",
+        "heavy semen",
+        "covered in cum",
+        "messy body",
+        "cum pool",
+        "cum everywhere",
+        "messy body"
+      ],
+      "keywords": [
+        "after_cums",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 66,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
     }
   ]
 }

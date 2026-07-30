@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "hair-ends",
+  "polarity": "positive",
+  "name_zh": "髮尾",
+  "description_zh": "髮尾",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "髮尾"
+  ],
+  "order": 60,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "layered-hair",
+      "name_zh": "層次髮",
+      "description_zh": "層次髮",
+      "prompt": "layered hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "feathered-hair",
+      "name_zh": "羽毛層次",
+      "description_zh": "羽毛層次",
+      "prompt": "feathered hair",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "curled-ends",
+      "name_zh": "髮尾內捲／外捲",
+      "description_zh": "髮尾內捲／外捲",
+      "prompt": "curled ends",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "blunt-cut",
+      "name_zh": "齊剪",
+      "description_zh": "齊剪",
+      "prompt": "blunt cut",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

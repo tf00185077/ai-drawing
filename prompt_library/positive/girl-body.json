@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "id": "girl-body",
+  "polarity": "positive",
+  "name_zh": "女性",
+  "description_zh": "女生外觀形容",
+  "aliases": [],
+  "keywords": [
+    "女生",
+    "女性",
+    "女體",
+    "外表"
+  ],
+  "order": 10,
+  "revision": 8,
+  "archived": false,
+  "parent_id": "body-appearance",
+  "entries": [
+    {
+      "id": "breasts-huge",
+      "name_zh": "巨乳",
+      "description_zh": "巨乳",
+      "prompt": "huge breasts",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "breasts-gigantic",
+      "name_zh": "超巨乳",
+      "description_zh": "超巨乳",
+      "prompt": "gigantic breasts",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "breasts-large",
+      "name_zh": "大胸部",
+      "description_zh": "大胸部",
+      "prompt": "large breasts",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "breasts-medium",
+      "name_zh": "中等胸部",
+      "description_zh": "中等胸部",
+      "prompt": "medium breasts",
+      "aliases": [],
+      "keywords": [],
+      "order": 40,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "breasts-small",
+      "name_zh": "小胸部",
+      "description_zh": "小胸部",
+      "prompt": "small breasts",
+      "aliases": [],
+      "keywords": [],
+      "order": 50,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "breasts-flat",
+      "name_zh": "平胸",
+      "description_zh": "平胸",
+      "prompt": "flat chest",
+      "aliases": [],
+      "keywords": [],
+      "order": 60,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "wetness-opts-wet-panties-crotch-stained-crotch-stained-ada4e04e",
+      "name_zh": "下體沾濕",
+      "description_zh": "下體沾濕",
+      "prompt": "crotch stained",
+      "aliases": [
+        "內褲微濕 (wet panties)",
+        "wet panties",
+        "crotch stained",
+        "crotch stained"
+      ],
+      "keywords": [
+        "wetness_opts",
+        "ltj",
+        "prompt",
+        "comma-atomic",
+        "positive",
+        "actions-interactions"
+      ],
+      "order": 61,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}

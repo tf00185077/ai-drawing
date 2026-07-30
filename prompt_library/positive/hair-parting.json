@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "hair-parting",
+  "polarity": "positive",
+  "name_zh": "分線",
+  "description_zh": "分線",
+  "aliases": [],
+  "keywords": [
+    "髮型",
+    "分線"
+  ],
+  "order": 50,
+  "revision": 1,
+  "archived": false,
+  "parent_id": "hair",
+  "entries": [
+    {
+      "id": "center-part",
+      "name_zh": "中分",
+      "description_zh": "中分",
+      "prompt": "center part",
+      "aliases": [],
+      "keywords": [],
+      "order": 10,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "side-part",
+      "name_zh": "側分",
+      "description_zh": "側分",
+      "prompt": "side part",
+      "aliases": [],
+      "keywords": [],
+      "order": 20,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    },
+    {
+      "id": "off-center-part",
+      "name_zh": "偏分",
+      "description_zh": "偏分",
+      "prompt": "off-center part",
+      "aliases": [],
+      "keywords": [],
+      "order": 30,
+      "revision": 1,
+      "archived": false,
+      "comma_atomic_provenance": null
+    }
+  ]
+}
