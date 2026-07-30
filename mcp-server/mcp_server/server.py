@@ -180,6 +180,7 @@ from mcp_server.tools import (  # noqa: E402, F401
     civitai,
     comfyui,
     comfyui_nodes,
+    discord_delivery,
     gallery,
     generate,
     lora_train,

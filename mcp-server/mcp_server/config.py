@@ -5,6 +5,7 @@ Backend API URL 從環境變數讀取，避免硬編碼。
 """
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +29,10 @@ class McpSettings(BaseSettings):
 
     # Backend gallery 實體檔案根目錄（用於 agent 交付本機圖片檔案）
     gallery_dir: str = "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery"
+
+    # Loopback Discord bot operator endpoint. Token is server-side only and redacted.
+    discord_operator_url: str = "http://127.0.0.1:8765"
+    discord_operator_token: SecretStr | None = None
 
 
 @lru_cache

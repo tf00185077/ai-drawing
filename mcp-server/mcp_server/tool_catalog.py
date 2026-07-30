@@ -45,6 +45,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("get_generation_status", "mcp_server.tools.generate", "get_generation_status", "json_string", ("GET /api/generate/job/{job_id}",)),
     ToolCatalogEntry("cancel_job", "mcp_server.tools.generate", "cancel_job", "json_string", ("DELETE /api/generate/queue/{job_id}",)),
     ToolCatalogEntry("list_available_resources", "mcp_server.tools.generate", "list_available_resources", "json_string", ("GET /api/generate/available-resources", "GET /api/workflow-catalog/generation-forms")),
+    # Constrained Discord result delivery (bot-local operator endpoint)
+    ToolCatalogEntry("deliver_generation_result_to_discord", "mcp_server.tools.discord_delivery", "deliver_generation_result_to_discord", "dict", ("POST <DiscordBot>/operator/v1/deliver-result",), notes="completed jobs only; allowlisted destination aliases; deduplicated unless force_resend"),
     # Gallery
     ToolCatalogEntry("gallery_list", "mcp_server.tools.gallery", "gallery_list", "plain_text", ("GET /api/gallery/",)),
     ToolCatalogEntry("get_gallery_image", "mcp_server.tools.gallery", "get_gallery_image", "json_string", ("GET /api/gallery/{image_id}",)),

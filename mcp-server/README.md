@@ -41,6 +41,7 @@ AI 自動化出圖系統的 MCP（Model Context Protocol）介面，讓 Cursor /
 | `get_generation_status` | `json_string` | GET /api/generate/job/{job_id} |
 | `cancel_job` | `json_string` | DELETE /api/generate/queue/{job_id} |
 | `list_available_resources` | `json_string` | GET /api/generate/available-resources |
+| `deliver_generation_result_to_discord` | `dict` | POST Discord Bot loopback operator endpoint |
 | `gallery_list` | `plain_text` | GET /api/gallery/ |
 | `get_gallery_image` | `json_string` | GET /api/gallery/{image_id} |
 | `get_gallery_artifact` | `json_string` | GET /api/gallery/artifacts/{artifact_id} |

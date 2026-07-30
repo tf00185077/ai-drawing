@@ -14,6 +14,13 @@
 
 # 進度追蹤
 
+## 2026-07-30 Discord 結果統一交付與 Operator/MCP escape-hatch
+
+- `/result` 與新的 operator endpoint 共用單一 `ResultDeliveryService`：只讀取既有 completed job，分批附加所有 Backend 回傳的持久化 SaveImage artifacts（每訊息最多 10 檔且受 upload byte limit 約束），過大檔案使用完整 gallery links；mixed batch warning 沿用 bounded/sanitized failure 摘要。
+- Discord Bot 選用的 loopback-only endpoint 只接受 `job_id`、allowlisted destination alias 與 boolean `force_resend`，以 server-side bearer secret 驗證；不接受任意訊息、檔案或 channel ID，且會確認 channel 屬於 configured guild。完成交付以 atomic ledger 按 job/destination 去重，explicit force 才重送，回傳可驗證 Discord message IDs。
+- MCP 新增意圖級 `deliver_generation_result_to_discord`，token 使用 `SecretStr` 且只從 MCP server env 取用；回應與 transport error 不回顯 token。工具不生成、不取消、不變更 job，僅呼叫 Discord Bot 的受限 operator endpoint。
+- 驗證：Discord Bot 全套 `61 passed`、MCP Server 全套 `126 passed`；Discord Bot 與 OpenClaw Gateway 已在 queue/agent idle 後重啟，Backend／Bot operator／Gateway 健康。兩筆既有 completed job 經 operator/MCP 路徑各交付 4 個 artifacts；同 job/alias 第二次呼叫回傳相同 message receipt 且 `deduplicated=true`，未重複發送。未提交 GPU 工作。
+
 ## 2026-07-29 LoRA Start 契約加固（OpenSpec 第一批）
 
 - 完成 `harden-lora-training-start-contract`：Backend 與 MCP 的 public Start 現在都要求 `expected_dataset_hash`、`expected_profile_hash`，保留呼叫者選定的 `batch_size`，Backend 以 `extra="forbid"` 拒絕未知欄位。MCP 的 Backend 422 與 FastMCP protocol-level 缺欄位錯誤都正規化為穩定的 `request_validation_failed`，只保留安全 constraint context，不回顯 submitted input／URL／任意例外文字。

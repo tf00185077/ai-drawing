@@ -21,7 +21,16 @@ python -m bot.main
 ## 指令
 
 - `/draw` — 選 preset（有 profile 再選 profile）→ 填 prompt/寬/高/張數 → 回 job id
-- `/result id:<job_id>` — 反查；完成就把圖貼回來
+- `/result id:<job_id>` — 反查；完成就把所有持久化結果貼回來
+
+## Operator / MCP result delivery（選用）
+
+設定 `DISCORD_OPERATOR_TOKEN` 與 `DISCORD_DESTINATION_ALIASES` 後，Bot 會在
+`127.0.0.1:8765` 提供受驗證、用途固定的 result-delivery endpoint。它只接受已完成的
+`job_id`、allowlisted destination alias 與 explicit `force_resend`，不能傳任意訊息、檔案或
+channel ID。MCP 端另設定相同的 `MCP_DISCORD_OPERATOR_TOKEN`（以及需要時的
+`MCP_DISCORD_OPERATOR_URL`），即可呼叫 `deliver_generation_result_to_discord`。成功回傳
+Discord message IDs；相同 job/alias 預設去重，只有 `force_resend=true` 才重送。
 
 ## 測試
 
