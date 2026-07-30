@@ -148,6 +148,8 @@ _ALIASES: dict[str, dict[str, _AliasRule]] = {
         ("batch_size", "dataset.batch_size"),
         ("keep_tokens", "dataset.keep_tokens"),
         ("keepTokens", "dataset.keep_tokens"),
+        ("shuffle_caption", "dataset.shuffle_caption"),
+        ("shuffleCaption", "dataset.shuffle_caption"),
         ("num_repeats", "dataset.num_repeats"),
         ("numRepeats", "dataset.num_repeats"),
         ("enable_bucket", "dataset.enable_bucket"),
@@ -262,6 +264,8 @@ _ALIASES: dict[str, dict[str, _AliasRule]] = {
         ("batch_size", "dataset.batch_size"),
         ("keep_tokens", "dataset.keep_tokens"),
         ("keepTokens", "dataset.keep_tokens"),
+        ("shuffle_caption", "dataset.shuffle_caption"),
+        ("shuffleCaption", "dataset.shuffle_caption"),
         ("num_repeats", "dataset.num_repeats"),
         ("numRepeats", "dataset.num_repeats"),
         ("enable_bucket", "dataset.enable_bucket"),
@@ -361,6 +365,7 @@ _INTEGER_PATHS = {
 _BOOLEAN_PATHS = {
     "model.allow_unverified_checkpoint",
     "scope.train_text_encoder",
+    "dataset.shuffle_caption",
     "dataset.enable_bucket",
     "dataset.bucket_no_upscale",
     "caching.cache_latents",
@@ -1633,6 +1638,32 @@ def compile_training_recipe(
                 "caching.cache_text_encoder_outputs",
             ),
         )
+    requested_shuffle_caption = (
+        requested_dataset.shuffle_caption if requested_dataset is not None else None
+    )
+    if (
+        "dataset.shuffle_caption" in provided
+        and requested_shuffle_caption is not None
+    ):
+        shuffle_caption = requested_shuffle_caption
+        shuffle_caption_source: RecipeFieldSource = "caller"
+    elif cache_text_encoder_outputs:
+        # sd-scripts cannot cache Text Encoder outputs when captions are mutated.
+        shuffle_caption = False
+        shuffle_caption_source = "derived"
+    else:
+        shuffle_caption = True
+        shuffle_caption_source = "server_policy"
+    if cache_text_encoder_outputs and shuffle_caption:
+        raise _cross_field_error(
+            "incompatible_training_recipe",
+            "Text Encoder output caching cannot be combined with caption shuffling",
+            "set dataset.shuffle_caption=false or disable cache_text_encoder_outputs",
+            (
+                "dataset.shuffle_caption",
+                "caching.cache_text_encoder_outputs",
+            ),
+        )
     latent_cache_to_disk = cache_to_disk and cache_latents
     text_encoder_cache_to_disk = cache_to_disk and cache_text_encoder_outputs
     sources["caching.latent_cache_to_disk"] = "derived"
@@ -1692,7 +1723,7 @@ def compile_training_recipe(
     server = EffectiveServerRecipe(
         gradient_checkpointing=True,
         caption_extension=".txt",
-        shuffle_caption=True,
+        shuffle_caption=shuffle_caption,
         save_model_as="safetensors",
         launcher_num_cpu_threads_per_process=1,
     )
@@ -1700,7 +1731,7 @@ def compile_training_recipe(
         {
             "server.gradient_checkpointing": "server_policy",
             "server.caption_extension": "server_policy",
-            "server.shuffle_caption": "server_policy",
+            "server.shuffle_caption": shuffle_caption_source,
             "server.save_model_as": "server_policy",
             "server.launcher_num_cpu_threads_per_process": "server_policy",
         }

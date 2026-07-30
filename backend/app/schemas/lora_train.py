@@ -79,6 +79,7 @@ class RequestedDatasetRecipe(FrozenRecipeModel):
     resolution: int | None = Field(default=None, ge=256, le=4096)
     batch_size: int | None = Field(default=None, ge=1, le=32)
     keep_tokens: int | None = Field(default=None, ge=0, le=64)
+    shuffle_caption: bool | None = None
     num_repeats: int | None = Field(default=None, ge=1, le=1000)
     enable_bucket: bool | None = None
     bucket_no_upscale: bool | None = None

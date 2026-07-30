@@ -147,6 +147,39 @@ def test_family_matrix_defaults_to_denoiser_only_and_complete_policy(
     assert effective.caching.cache_text_encoder_outputs is cache_text
     assert effective.optimization.epochs == epochs
     assert effective.server.gradient_checkpointing is True
+    assert effective.server.shuffle_caption is (not cache_text)
+
+
+def test_explicit_shuffle_caption_false_is_preserved_with_text_encoder_cache() -> None:
+    compiled = _compile(
+        {
+            "dataset": {"shuffle_caption": False},
+            "caching": {"cache_text_encoder_outputs": True},
+        },
+        family="anima",
+    )
+
+    assert compiled.effective.server.shuffle_caption is False
+    assert compiled.field_sources["server.shuffle_caption"] == "caller"
+
+
+def test_text_encoder_cache_rejects_explicit_caption_shuffling() -> None:
+    with pytest.raises(RecipeError) as raised:
+        _compile(
+            {
+                "dataset": {"shuffle_caption": True},
+                "caching": {"cache_text_encoder_outputs": True},
+            },
+            family="anima",
+        )
+
+    assert raised.value.code == "incompatible_training_recipe"
+    assert {
+        issue["location"] for issue in raised.value.details["issues"]
+    } == {
+        "dataset.shuffle_caption",
+        "caching.cache_text_encoder_outputs",
+    }
 
 
 @pytest.mark.parametrize(
