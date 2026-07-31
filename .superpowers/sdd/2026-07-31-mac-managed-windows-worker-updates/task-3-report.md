@@ -108,3 +108,26 @@
   passed.
 - The only test output warning remains the pre-existing Pydantic v2 deprecation
   at `backend/app/config.py:54`.
+
+## Fix round 2
+
+### RED
+
+- Added archive tests for two implicit parent collisions:
+  `Foo/a.txt` with `foo/b.txt`, and `Foo/Bar/a.txt` with `Foo/bar/b.txt`.
+  Both failed before the fix because only complete tar member paths were
+  tracked; implicit parent directories had no canonical spelling record.
+
+### GREEN
+
+- Each archive path prefix now records its casefold canonical key, the one
+  allowed original spelling, and its required type (`directory` for implicit
+  prefixes, otherwise the member type). A later spelling or type mismatch is
+  rejected before extraction. Same-spelling siblings continue to share their
+  recorded parent directory safely.
+- `py -3.11 -m pytest backend/tests/test_worker_updater_git.py -q` passed:
+  **25 passed**.
+- `py -3.11 -m pytest backend/tests/test_worker_updater_git.py
+  backend/tests/test_worker_updater_config.py backend/tests/test_worker_updater_state.py -q`
+  passed: **65 passed**. `compileall` and `git diff --check` also passed; the
+  only output warning remains the unchanged Pydantic v2 deprecation.
