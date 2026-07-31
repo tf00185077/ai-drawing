@@ -116,3 +116,33 @@ DONE_WITH_CONCERNS
 ### Commit
 
 - `fix(worker): secure staged validation resources`
+
+---
+
+## Fix Round 3
+
+### RED
+
+- Replacing lexical `WORKER_ROOT/shared/partial` with a junction to an external directory was accepted because both the release junction and expected shared target were resolved before the expected target's components were checked. The regression test also protects the external sentinel and junction target.
+- Worker startup had no `AI_DRAWING_WORKER_VERIFICATION_ROOT` contract, the staged validator did not pass one, and `_sidecar_path` derived verification storage from the release-local partial-junction parent. A complete managed upload consequently wrote sidecars below the release.
+- Explicit outside and reparse-point verification roots were ignored rather than rejected.
+
+### GREEN
+
+- The lexical `WORKER_ROOT/shared` and `WORKER_ROOT/shared/partial` directories now receive full parent-chain no-follow validation before resolution, followed by canonical containment checks. Only then may the release-local partial junction resolve to that exact safe target.
+- Added independently validated `AI_DRAWING_WORKER_VERIFICATION_ROOT`. Legacy installs retain `PARTIAL_ROOT.parent/verified`; managed staged validation passes `WORKER_ROOT/shared/cache/verified`.
+- For a missing managed verification leaf, the existing shared/cache parent chain is checked for reparse points and canonical containment before the leaf is created; the created leaf is then checked again. Outside paths and existing reparse leaves fail startup without touching their targets.
+- `_sidecar_path` now uses only `VERIFICATION_ROOT`. Real Worker integration completes an upload and proves both verification records land in shared cache while neither release/cache nor isolated update state receives sidecars.
+
+### Verification
+
+- Targeted RED: **6 expected failures / 6 existing passes** covering unsafe shared partial resolution, missing verification-root contract/default/validator env, release-local sidecars, and outside/reparse acceptance.
+- Targeted GREEN: **12 passed**.
+- Final full focused suite: `py -3.11 -m pytest backend/tests/test_worker_runtime.py backend/tests/test_worker_updater_config.py backend/tests/test_worker_updater_state.py backend/tests/test_worker_updater_git.py backend/tests/test_worker_updater_runtime.py -q` -- **161 passed**.
+- `py -3.11 -m compileall -q worker\\windows\\updater worker\\windows\\worker.py` -- passed.
+- `git diff --check` -- passed.
+- The sole warning remains the pre-existing Pydantic v2 deprecation from `backend/app/config.py:54`; this fix round adds no warnings.
+
+### Commit
+
+- `fix(worker): secure shared verification storage`
