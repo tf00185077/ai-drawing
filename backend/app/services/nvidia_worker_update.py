@@ -30,17 +30,15 @@ DEFAULT_GIT_TIMEOUT = 10.0
 DEFAULT_POLL_INTERVAL = 1.0
 _FULL_COMMIT = re.compile(r"^[0-9a-f]{40}$")
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
-_ACTIVE_UPDATE_STATES = {
-    "idle",
+_ACTIVE_UPDATE_STATES = frozenset({
     "queued",
     "fetching",
     "staging",
+    "installing",
     "validating",
     "activating",
     "restarting",
-    "post_activation_validation",
-    "rolling_back",
-}
+})
 _FAILED_UPDATE_STATES = {
     "failed_before_activation",
     "rolled_back",
@@ -78,13 +76,17 @@ class WorkerUpdateError(RuntimeError):
 
 
 class WorkerUpdateClient(Protocol):
-    def health(self) -> dict[str, Any]: ...
+    def health(self, *, timeout: float | None = None) -> dict[str, Any]: ...
 
-    def request_update(self, target_commit: str) -> dict[str, Any]: ...
+    def request_update(
+        self, target_commit: str, *, timeout: float | None = None
+    ) -> dict[str, Any]: ...
 
-    def update_status(self) -> dict[str, Any]: ...
+    def update_status(self, *, timeout: float | None = None) -> dict[str, Any]: ...
 
-    def preflight(self, node_types: list[str]) -> dict[str, Any]: ...
+    def preflight(
+        self, node_types: list[str], *, timeout: float | None = None
+    ) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True)
@@ -334,11 +336,7 @@ class NvidiaWorkerUpdateCoordinator:
         return isinstance(error, (httpx.TransportError, OSError))
 
     def _pause_until_deadline(self, deadline: float) -> None:
-        if self._cancel.is_set():
-            raise WorkerUpdateError("WORKER_UPDATE_CANCELLED")
-        remaining = deadline - self._clock()
-        if remaining <= 0:
-            raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT")
+        remaining = self._remaining_timeout(deadline)
         delay = min(self._poll_interval, remaining)
         if self._sleeper is None:
             self._cancel.wait(delay)
@@ -346,6 +344,14 @@ class NvidiaWorkerUpdateCoordinator:
             self._sleeper(delay)
         if self._cancel.is_set():
             raise WorkerUpdateError("WORKER_UPDATE_CANCELLED")
+
+    def _remaining_timeout(self, deadline: float) -> float:
+        if self._cancel.is_set():
+            raise WorkerUpdateError("WORKER_UPDATE_CANCELLED")
+        remaining = deadline - self._clock()
+        if remaining <= 0:
+            raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT")
+        return remaining
 
     def _coordinate(
         self,
@@ -386,34 +392,45 @@ class NvidiaWorkerUpdateCoordinator:
         deadline = self._clock() + timeout
         self._set_status("updating")
         while True:
-            if self._cancel.is_set():
-                raise WorkerUpdateError("WORKER_UPDATE_CANCELLED")
-            if self._clock() >= deadline:
-                raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT")
+            remaining = self._remaining_timeout(deadline)
             try:
-                status = client.update_status()
+                status = client.update_status(timeout=remaining)
             except Exception as error:
+                self._remaining_timeout(deadline)
                 if not self._is_expected_outage(error):
                     raise WorkerUpdateError("WORKER_UPDATE_FAILED") from None
                 self._pause_until_deadline(deadline)
                 continue
+            self._remaining_timeout(deadline)
             if not isinstance(status, dict) or not isinstance(status.get("state"), str):
                 raise WorkerUpdateError("WORKER_UPDATE_STATUS_INVALID")
             state = status["state"]
             if state in _FAILED_UPDATE_STATES:
                 raise WorkerUpdateError("WORKER_UPDATE_FAILED")
             if state == "ready":
+                remaining = self._remaining_timeout(deadline)
                 try:
-                    final_health = client.health()
-                    preflight = client.preflight([])
+                    final_health = client.health(timeout=remaining)
                 except Exception as error:
+                    self._remaining_timeout(deadline)
                     if self._is_expected_outage(error):
                         self._pause_until_deadline(deadline)
                         continue
                     raise WorkerUpdateError("WORKER_UPDATE_FAILED") from None
+                self._remaining_timeout(deadline)
                 if not isinstance(final_health, dict):
                     raise WorkerUpdateError("WORKER_UNAVAILABLE")
                 self._validate_identity(final_health, target_commit)
+                remaining = self._remaining_timeout(deadline)
+                try:
+                    preflight = client.preflight([], timeout=remaining)
+                except Exception as error:
+                    self._remaining_timeout(deadline)
+                    if self._is_expected_outage(error):
+                        self._pause_until_deadline(deadline)
+                        continue
+                    raise WorkerUpdateError("WORKER_UPDATE_FAILED") from None
+                self._remaining_timeout(deadline)
                 if (
                     not isinstance(preflight, dict)
                     or preflight.get("ready") is not True

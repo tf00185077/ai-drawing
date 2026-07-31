@@ -20,6 +20,7 @@
 - 單一 process-local `Condition` 讓 FastAPI startup background check 與 Worker submission 合流；多 Backend process 由 Worker 既有 same-target request reuse 收斂。收到 request ID 後才容忍 restart outage，預設最多 1800 秒，最後嚴格要求 `ready`、精確 commit、整數 protocol/capability 與成功 preflight。
 - Worker submission 採非遞迴 gate：更新完成後只送出原 prompt 一次，失敗時不退回 local。`.env` 新增預設關閉的 `NVIDIA_WORKER_AUTO_UPDATE` 與 `NVIDIA_WORKER_UPDATE_TIMEOUT`；`/api/workers/status` 只公開安全的 enabled/state/error code。FastAPI event loop 不執行同步 Git/HTTP polling。
 - Non-live 驗證：Task 6 測試 `20 passed`；Task 6 + pairing/routing `27 passed`；全部 Worker/main 相關測試 `281 passed, 1 skipped`。未連線或修改真實 Mac、Windows Worker、ComfyUI、GPU、Scheduled Task 或部署環境。
+- Fix round 1：Mac poller 現在接受 Worker canonical `installing` 狀態；accepted request 後每個 status/final-health/preflight 呼叫都取得遞減的剩餘 deadline，client 以 `min(configured timeout, remaining)` 限制 HTTP，且 call 回傳後重新檢查 clock。Task 6 + pairing/routing `36 passed`；Worker/main regression `290 passed, 1 skipped`。
 
 ## 2026-07-31 NVIDIA Worker 路由效能與錯誤呈現加固
 
