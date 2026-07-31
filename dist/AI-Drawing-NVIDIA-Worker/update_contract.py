@@ -11,12 +11,12 @@ from typing import Any, Mapping
 from pydantic import BaseModel, ConfigDict, Field
 
 try:
-    from worker.windows.updater.request_lock import exclusive_request_lock
+    from worker.windows.updater.request_lock import RequestLockError, exclusive_request_lock
 except ModuleNotFoundError:  # Supports direct execution from worker/windows.
     try:
-        from updater.request_lock import exclusive_request_lock
+        from updater.request_lock import RequestLockError, exclusive_request_lock
     except ModuleNotFoundError:  # Supports the legacy installer app directory.
-        from request_lock import exclusive_request_lock
+        from request_lock import RequestLockError, exclusive_request_lock
 
 
 class UpdateRequest(BaseModel):
@@ -64,9 +64,11 @@ def _queue_update_locked(request_path: Path, status_path: Path, target_commit: s
             if active_target == target_commit and isinstance(active_request_id, str):
                 return active_request_id
             raise UpdateAlreadyRunning
+        if active_target == target_commit and isinstance(active_request_id, str):
+            _write_update_status_unlocked(status_path, "queued")
+            return active_request_id
 
     request_id = str(uuid.uuid4())
-    _write_update_status_unlocked(status_path, "queued")
     atomic_write_json(
         request_path,
         {
@@ -75,6 +77,7 @@ def _queue_update_locked(request_path: Path, status_path: Path, target_commit: s
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
     )
+    _write_update_status_unlocked(status_path, "queued")
     return request_id
 
 

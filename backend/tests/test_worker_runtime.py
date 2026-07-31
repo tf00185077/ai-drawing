@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from worker.windows.updater.runtime import WindowsJunctionOps
+from worker.windows.updater.request_lock import RequestLockTimeout
 
 
 def _load_worker():
@@ -553,6 +554,53 @@ def test_update_rejects_non_full_hex_commit(worker_client, value):
     )
 
     assert response.status_code == 422
+
+
+def test_update_request_lock_timeout_maps_to_safe_503(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def time_out(*_args, **_kwargs):
+        raise RequestLockTimeout()
+
+    monkeypatch.setattr(worker_module, "queue_update", time_out)
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "a" * 40}
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == {"code": "update_lock_unavailable"}
+
+
+def test_update_status_lock_timeout_maps_to_safe_503(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def time_out(*_args, **_kwargs):
+        raise RequestLockTimeout()
+
+    monkeypatch.setattr(worker_module, "read_public_update_status", time_out)
+    response = worker_client.get("/v1/admin/update/status", headers=_auth())
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == {"code": "update_lock_unavailable"}
+
+
+def test_scheduler_failure_status_lock_timeout_maps_to_safe_503(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def fail_task(*args, **_kwargs):
+        raise worker_module.subprocess.CalledProcessError(1, args[0])
+
+    def time_out(*_args, **_kwargs):
+        raise RequestLockTimeout()
+
+    monkeypatch.setattr(worker_module.subprocess, "run", fail_task)
+    monkeypatch.setattr(worker_module, "write_update_status", time_out)
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "a" * 40}
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == {"code": "update_lock_unavailable"}
 
 
 @pytest.mark.parametrize("field", ["task", "command", "url", "branch", "path"])

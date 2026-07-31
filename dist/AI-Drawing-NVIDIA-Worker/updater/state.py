@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
-from .request_lock import exclusive_request_lock
+from .request_lock import RequestLockError, exclusive_request_lock
 
 
 TRANSITIONS = {
@@ -104,8 +104,11 @@ class UpdateStateStore:
         request_path = Path(request_path)
         if request_path != self.root / "update-request.json":
             raise StateStoreError("queued update request path is not canonical")
-        with exclusive_request_lock(request_path):
-            return self._claim_queued_request_locked(request_path)
+        try:
+            with exclusive_request_lock(request_path):
+                return self._claim_queued_request_locked(request_path)
+        except RequestLockError as error:
+            raise StateStoreError("queued update request lock is unavailable") from error
 
     def _claim_queued_request_locked(
         self, request_path: Path

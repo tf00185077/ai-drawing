@@ -17,6 +17,7 @@ import pytest
 from worker.windows.updater.git_source import UpdateError
 from worker.windows.updater.cli import (
     EXIT_FAILED_BEFORE_ACTIVATION,
+    EXIT_CONFIG_INVALID,
     EXIT_INVALID_INVOCATION,
     EXIT_READY,
     EXIT_RECOVERY_REQUIRED,
@@ -24,6 +25,7 @@ from worker.windows.updater.cli import (
     main,
 )
 from worker.windows.updater.runtime import ActivationResult, HealthEvidence
+from worker.windows.updater.request_lock import RequestLockTimeout
 from worker.windows.updater.state import UpdateStateStore
 from worker.windows.updater.windows_runtime import (
     HttpHealthProbe,
@@ -510,6 +512,18 @@ def test_updater_cli_treats_terminal_request_acknowledgement_as_success(tmp_path
     services.claim_request = lambda: None  # type: ignore[method-assign]
 
     assert main([], services=services) == EXIT_READY
+    assert services.calls == []
+
+
+def test_updater_cli_maps_claim_lock_timeout_to_safe_typed_failure(tmp_path: Path) -> None:
+    services = FakeUpdaterServices(tmp_path)
+
+    def time_out():
+        raise RequestLockTimeout()
+
+    services.claim_request = time_out  # type: ignore[method-assign]
+
+    assert main([], services=services) == EXIT_CONFIG_INVALID
     assert services.calls == []
 
 
