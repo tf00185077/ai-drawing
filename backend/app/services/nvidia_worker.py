@@ -25,6 +25,16 @@ class WorkerConfigurationError(RuntimeError):
     pass
 
 
+def _positive_finite_timeout(value: Any, label: str) -> float:
+    if (
+        type(value) not in (int, float)
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        raise ValueError(f"{label} must be positive and finite")
+    return float(value)
+
+
 @dataclass(frozen=True)
 class ResourceRef:
     kind: str
@@ -157,11 +167,14 @@ def workflow_resources(workflow: dict[str, Any]) -> list[ResourceRef]:
 
 class NvidiaWorkerClient(ComfyUIClient):
     def __init__(self, base_url: str, token: str, timeout: float = 60.0):
+        configured_timeout = _positive_finite_timeout(
+            timeout, "configured timeout"
+        )
         super().__init__(
             base_url=base_url,
-            timeout_submit=timeout,
-            timeout_fetch=timeout,
-            timeout_queue=timeout,
+            timeout_submit=configured_timeout,
+            timeout_fetch=configured_timeout,
+            timeout_queue=configured_timeout,
         )
         self._headers = {"Authorization": f"Bearer {token}"}
 
@@ -173,16 +186,17 @@ class NvidiaWorkerClient(ComfyUIClient):
         timeout: float | None = None,
         **kwargs: Any,
     ) -> httpx.Response:
+        configured_timeout = _positive_finite_timeout(
+            self._timeout_submit, "configured timeout"
+        )
         if timeout is None:
-            request_timeout = self._timeout_submit
+            request_timeout = configured_timeout
         else:
-            if (
-                type(timeout) not in (int, float)
-                or not math.isfinite(timeout)
-                or timeout <= 0
-            ):
-                raise ValueError("timeout override must be positive and finite")
-            request_timeout = min(self._timeout_submit, float(timeout))
+            override = _positive_finite_timeout(timeout, "timeout override")
+            request_timeout = min(configured_timeout, override)
+        request_timeout = _positive_finite_timeout(
+            request_timeout, "effective timeout"
+        )
         headers = dict(self._headers)
         headers.update(kwargs.pop("headers", {}))
         with httpx.Client(timeout=request_timeout) as client:
