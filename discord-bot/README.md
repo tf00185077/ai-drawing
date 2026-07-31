@@ -21,20 +21,22 @@ python -m bot.main
 ## 指令
 
 - `/draw` — 選 preset（有 profile 再選 profile）→ 填 prompt/寬/高/張數 → 回 job id
-- `/animegen_i2v` — 以一張起始圖產生 AnimeGen I2V，再以 FILM 補到指定的精確總幀數
-- `/wan22_animate` — 以角色參考圖加上必要的 driver 影片，把 driver 的臉部與身體動作轉移到角色，再以 FILM 補幀
+- `/animegen_i2v` — 先選一張起始圖片，再在彈窗填寫動作 Prompt、負面 Prompt、秒數、原始幀數與 FILM 目標幀數
+- `/wan22_animate` — 先選角色參考圖與必要的 driver 影片，再在彈窗填寫其餘影片設定
 - `/result id:<job_id>` — 反查圖片或影片工作；完成後貼回所有 Backend 已持久化的結果
 
-### 固定影片指令參數
+### 固定影片互動流程
 
-| 指令 | 參數 |
+| 指令第一步 | 彈窗第二步 |
 |------|------|
-| `/animegen_i2v` | `image` 起始圖片、`prompt` 動作描述、`total_seconds`（1–20）、`source_frames`（17–321）、`film_target_frames`（17–1921）、可選 `negative_prompt` |
-| `/wan22_animate` | `reference_image` 角色參考圖、**必要的 `driver_video`**、`prompt` 動作轉移描述、`total_seconds`（1–20）、`source_frames`（17–321）、`film_target_frames`（17–1921）、可選 `negative_prompt` |
+| `/animegen_i2v image:<起始圖片>` | 動作 Prompt、可選負面 Prompt、`total_seconds`、`source_frames`、`film_target_frames` |
+| `/wan22_animate reference_image:<角色圖> driver_video:<driver影片>` | 動作 Prompt、可選負面 Prompt、`total_seconds`、`source_frames`、`film_target_frames` |
 
-- `source_frames` 是模型原始生成的**總幀數**，必須符合 `4n+1`（例如 17、65、81）；`film_target_frames` 不得小於它。
+- Discord Modal 不提供可靠的附件上傳元件，因此圖片／driver 在 slash command 第一步選取；其餘可輸入選項集中在下一步彈窗。
+- 彈窗預設為 3 秒、49 原始幀、FILM 97 最終幀，使用者可自行修改。
+- `source_frames` 是模型原始生成的**總幀數**，必須介於 17–321 並符合 `4n+1`（例如 17、49、65、81）；`film_target_frames` 介於原始幀數與 1921。
 - `total_seconds` 是**首幀到末幀的時間跨度**，不是 MP4 容器 duration。原始與 FILM 輸出 FPS 分別為 `(source_frames-1)/total_seconds` 與 `(film_target_frames-1)/total_seconds`。
-- FILM 可輸出 `source_frames` 到 1921 之間的**任意精確目標總幀數**；`film_target_frames` 本身不受 `4n+1` 限制。
+- FILM 可輸出範圍內的**任意精確目標總幀數**；`film_target_frames` 本身不受 `4n+1` 限制。
 - 指令只負責排入佇列並回傳 job id；之後使用 `/result id:<job_id>` 取得已持久化的最終影片。
 
 ## Operator / MCP result delivery（選用）

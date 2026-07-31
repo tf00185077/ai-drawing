@@ -189,43 +189,42 @@ def test_mixed_batch_warning_is_bounded_deterministic_and_aggregated() -> None:
     assert "第 4 張" in first
 
 
-async def test_animegen_command_defers_before_download_and_submits_validated_attachment(tmp_path):
+async def test_animegen_command_validates_attachment_then_opens_modal_without_downloading(tmp_path):
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
                     delivery_ledger_path=tmp_path / "deliveries.json")
-    _client, tree, api = build_bot(config)
+    _client, tree, _api = build_bot(config)
     command = tree.get_command("animegen_i2v", guild=discord.Object(id=123))
-    events = []
-    response = SimpleNamespace(defer=AsyncMock(side_effect=lambda **kwargs: events.append("defer")))
-    attachment = SimpleNamespace(filename="person.png", content_type="image/png", size=12,
-        read=AsyncMock(side_effect=lambda: events.append("read") or b"png-bytes"))
-    api.submit_animegen_i2v = AsyncMock(return_value="video-job")
-    interaction = SimpleNamespace(response=response, followup=SimpleNamespace(send=AsyncMock()))
+    response = SimpleNamespace(send_modal=AsyncMock(), send_message=AsyncMock())
+    attachment = SimpleNamespace(
+        filename="person.png", content_type="image/png", size=12,
+        read=AsyncMock(return_value=b"png-bytes"),
+    )
+    interaction = SimpleNamespace(response=response)
 
-    await command.callback(interaction, attachment, "wave", 5.0, 81, 321, None)
+    await command.callback(interaction, attachment)
 
-    assert events == ["defer", "read"]
-    response.defer.assert_awaited_once_with(thinking=True, ephemeral=True)
-    api.submit_animegen_i2v.assert_awaited_once()
-    assert api.submit_animegen_i2v.await_args.kwargs["film_target_frames"] == 321
-    assert "video-job" in interaction.followup.send.await_args.args[0]
+    response.send_modal.assert_awaited_once()
+    modal = response.send_modal.await_args.args[0]
+    assert modal.image is attachment
+    attachment.read.assert_not_awaited()
+    response.send_message.assert_not_awaited()
 
 
-async def test_wan_command_rejects_oversize_driver_without_reading_it(tmp_path):
+async def test_wan_command_rejects_oversize_driver_before_opening_modal(tmp_path):
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
                     delivery_ledger_path=tmp_path / "deliveries.json")
-    _client, tree, api = build_bot(config)
+    _client, tree, _api = build_bot(config)
     command = tree.get_command("wan22_animate", guild=discord.Object(id=123))
     reference = SimpleNamespace(filename="ref.png", content_type="image/png", size=10, read=AsyncMock())
     driver = SimpleNamespace(filename="driver.mp4", content_type="video/mp4",
                              size=100 * 1024 * 1024 + 1, read=AsyncMock())
-    api.submit_wan22_animate = AsyncMock()
-    interaction = SimpleNamespace(response=SimpleNamespace(defer=AsyncMock()),
-                                  followup=SimpleNamespace(send=AsyncMock()))
+    response = SimpleNamespace(send_modal=AsyncMock(), send_message=AsyncMock())
+    interaction = SimpleNamespace(response=response)
 
-    await command.callback(interaction, reference, driver, "move", 5.0, 81, 321, None)
+    await command.callback(interaction, reference, driver)
 
-    interaction.response.defer.assert_awaited_once()
+    response.send_modal.assert_not_awaited()
+    response.send_message.assert_awaited_once()
     reference.read.assert_not_awaited()
     driver.read.assert_not_awaited()
-    api.submit_wan22_animate.assert_not_awaited()
-    assert "大小" in interaction.followup.send.await_args.args[0]
+    assert "大小" in response.send_message.await_args.args[0]
