@@ -27,7 +27,17 @@ def test_provision_resolves_and_installs_curated_package() -> None:
     assert data["needs_restart"] is True
     assert data["unresolved_node_types"] == []
     mock_client.get.assert_any_call("/customnode/getmappings", params={"mode": "local"})
-    mock_client.post.assert_any_call("/manager/queue/install", json={"id": "my-nodes-pack", "version": "latest"})
+    mock_client.post.assert_any_call(
+        "/manager/queue/install",
+        json={
+            "id": "my-nodes-pack",
+            "version": "latest",
+            "selected_version": "latest",
+            "channel": "default",
+            "mode": "cache",
+            "ui_id": "my-nodes-pack",
+        },
+    )
     mock_client.post.assert_any_call("/manager/queue/start", json={})
 
 

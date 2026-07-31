@@ -81,7 +81,14 @@ def comfyui_node_provision(node_class_names: list[str]) -> str:
     try:
         client.post(
             "/manager/queue/install",
-            json={"id": resolved_key, "version": "latest"},
+            json={
+                "id": resolved_key,
+                "version": "latest",
+                "selected_version": "latest",
+                "channel": "default",
+                "mode": "cache",
+                "ui_id": resolved_key,
+            },
         )
         client.post("/manager/queue/start", json={})
     except Exception as e:
