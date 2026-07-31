@@ -14,6 +14,13 @@
 
 # 進度追蹤
 
+## 2026-08-01 Mac 自動更新 NVIDIA Worker coordinator（Task 6，non-live）
+
+- Backend 只信任本機 `HEAD == origin/main^{commit}` 的完整 commit，Git 查詢有 10 秒 timeout，且絕不自動 fetch/pull；Worker mismatch 才透過固定 authenticated update API 請求更新。
+- 單一 process-local `Condition` 讓 FastAPI startup background check 與 Worker submission 合流；多 Backend process 由 Worker 既有 same-target request reuse 收斂。收到 request ID 後才容忍 restart outage，預設最多 1800 秒，最後嚴格要求 `ready`、精確 commit、整數 protocol/capability 與成功 preflight。
+- Worker submission 採非遞迴 gate：更新完成後只送出原 prompt 一次，失敗時不退回 local。`.env` 新增預設關閉的 `NVIDIA_WORKER_AUTO_UPDATE` 與 `NVIDIA_WORKER_UPDATE_TIMEOUT`；`/api/workers/status` 只公開安全的 enabled/state/error code。FastAPI event loop 不執行同步 Git/HTTP polling。
+- Non-live 驗證：Task 6 測試 `20 passed`；Task 6 + pairing/routing `27 passed`；全部 Worker/main 相關測試 `281 passed, 1 skipped`。未連線或修改真實 Mac、Windows Worker、ComfyUI、GPU、Scheduled Task 或部署環境。
+
 ## 2026-07-31 NVIDIA Worker 路由效能與錯誤呈現加固
 
 - **Mac 端 digest 快取**：`nvidia_worker._digest` 以 `(path, size, mtime_ns)` 快取 SHA256，長駐 queue worker 行程內每個模型檔一生只 hash 一次；不再每次送生成就把整個 checkpoint/LoRA 全量重讀重算。任何真實編輯（size 或 mtime 變動）自動失效。

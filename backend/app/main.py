@@ -19,6 +19,10 @@ from app.core.queue import (
 from app.services import lora_trainer
 from app.services.comfyui_history_watcher import start_watcher as start_comfyui_watcher
 from app.services.comfyui_history_watcher import stop_watcher as stop_comfyui_watcher
+from app.services.nvidia_worker_update import (
+    start_worker_update_background,
+    stop_worker_update_background,
+)
 from app.services.watcher import start_watching, stop_watching
 
 logger = logging.getLogger(__name__)
@@ -39,9 +43,13 @@ async def lifespan(app: FastAPI):
     start_watching()
     start_queue_worker()
     start_comfyui_watcher()
+    # The helper only starts a daemon thread; Git and Worker HTTP polling never
+    # run on or delay the FastAPI event loop.
+    start_worker_update_background()
 
     yield
 
+    stop_worker_update_background()
     stop_comfyui_watcher()
     stop_queue_worker()
     stop_watching()
