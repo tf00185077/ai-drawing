@@ -101,3 +101,28 @@ DONE
 - Focused Task 1-5 suite -- **230 passed / 1 skipped / 2 pre-existing warnings**.
 - Worker distribution directory and ZIP rebuilt; parity checks, Python compileall, Windows PowerShell AST parsing, and `git diff --check` passed.
 - No production Worker, ProgramData root, ACL, installer, or Scheduled Task was contacted or mutated.
+
+---
+
+## Fix Round 3
+
+### RED
+
+- Request transaction tests first reported **3 failures / 1 pass**: queueing published `queued` before replacing request JSON, a request replace failure left `queued` paired with the old request, and a status publish failure did not retain the new request for same-target retry.
+- Bounded-lock tests first reported **3 failures**: no typed timeout or timeout parameter existed, and thread/OS contention could wait forever.
+- Worker caller mapping tests first reported **3 failures** for unhandled timeout exceptions from queue, status read, and scheduler-failure status write. The CLI claim mapping test returned recovery-required rather than the declared typed configuration failure.
+
+### GREEN
+
+- `queue_update` now atomically replaces request JSON before publishing `queued`, under the same request lock. If request replacement fails, the prior terminal status remains paired with the prior request. If status publication fails after replacement, a same-target retry reuses that request ID and completes publication; a different, never-accepted target safely replaces it with a new ID.
+- Request locking has one fixed 15-second monotonic deadline covering both the process-local thread lock and OS byte-0 lock. Tests can inject a shorter timeout, clock, and sleeper. Windows retries only `EACCES` contention with non-blocking `msvcrt`; POSIX uses non-blocking `flock` and retries only `EACCES`/`EAGAIN`. Other lock errors fail immediately as safe typed errors.
+- `RequestLockTimeout` exposes only `update request lock timed out`; it never includes the request path, token, or OS diagnostic. A hung child-process holder times out, release before deadline proceeds, thread contention times out, and all concurrency tests terminate without deadlock.
+- Worker queue, update-status, and scheduler-failure paths map lock failures to safe HTTP 503 `update_lock_unavailable`; request transaction I/O maps to `update_request_unavailable`. Privileged CLI claim timeout maps to `EXIT_CONFIG_INVALID`, while the state store maps production lock failures to a safe typed `StateStoreError`.
+
+### Verification
+
+- Round 3 focused RED/GREEN tests -- **11 passed**.
+- Worker state/runtime/CLI suites -- **133 passed**.
+- Focused Task 1-5 suite -- **241 passed / 1 elevated-only skipped / 2 pre-existing warnings**.
+- Worker directory and ZIP rebuilt; distribution parity, Python compileall, PowerShell AST parsing, and `git diff --check` passed.
+- No production Worker, ProgramData root, ACL, installer, or Scheduled Task was contacted or mutated.

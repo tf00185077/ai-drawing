@@ -25,6 +25,7 @@ from .state import (
     StateStoreError,
     UpdateStateStore,
 )
+from .request_lock import RequestLockError
 from .windows_runtime import (
     HttpHealthProbe,
     ScheduledTaskController,
@@ -166,7 +167,7 @@ def main(argv: list[str] | None = None, *, services: UpdaterServices | None = No
         lock = lock_factory() if callable(lock_factory) else nullcontext()
         with lock:
             return _run_update(updater)
-    except (UpdaterConfigError, StateStoreError):
+    except (UpdaterConfigError, StateStoreError, RequestLockError):
         return EXIT_CONFIG_INVALID
     except UpdateError:
         return EXIT_RECOVERY_REQUIRED

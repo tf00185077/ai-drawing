@@ -8,16 +8,17 @@ import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 import pytest
 
+import worker.windows.update_contract as worker_update_contract
+import worker.windows.updater.request_lock as request_lock
 from worker.windows.update_contract import (
     UpdateAlreadyRunning as WorkerUpdateAlreadyRunning,
     atomic_write_json as worker_atomic_write_json,
     queue_update,
 )
-
 from worker.windows.updater.state import (
     ActiveUpdateRequest,
     InvalidUpdateTransition,
@@ -87,6 +88,163 @@ def _write_request(path: Path, request_id: str, target_commit: str) -> None:
             "timestamp": "2026-08-01T00:00:00+00:00",
         },
     )
+
+
+def test_os_request_lock_times_out_with_safe_typed_error(tmp_path: Path) -> None:
+    request_path = tmp_path / "update-request.json"
+    with _hold_request_file_lock(request_path):
+        with pytest.raises(request_lock.RequestLockTimeout) as raised:
+            with request_lock.exclusive_request_lock(request_path, timeout=0.1):
+                pytest.fail("contended OS lock must not be acquired")
+
+    assert str(raised.value) == "update request lock timed out"
+    assert str(tmp_path) not in str(raised.value)
+
+
+def test_os_request_lock_release_before_deadline_allows_progress(tmp_path: Path) -> None:
+    request_path = tmp_path / "update-request.json"
+    entered = threading.Event()
+    errors: list[BaseException] = []
+
+    def acquire() -> None:
+        try:
+            with request_lock.exclusive_request_lock(request_path, timeout=2):
+                entered.set()
+        except BaseException as error:
+            errors.append(error)
+
+    with _hold_request_file_lock(request_path):
+        thread = threading.Thread(target=acquire)
+        thread.start()
+        assert not entered.wait(timeout=0.2)
+    thread.join(timeout=5)
+
+    assert not thread.is_alive()
+    assert errors == []
+    assert entered.is_set()
+
+
+def test_thread_request_lock_contention_uses_same_deadline(tmp_path: Path) -> None:
+    request_path = tmp_path / "update-request.json"
+    finished = threading.Event()
+    errors: list[BaseException] = []
+
+    def acquire() -> None:
+        try:
+            with request_lock.exclusive_request_lock(request_path, timeout=0.1):
+                pytest.fail("contended thread lock must not be acquired")
+        except BaseException as error:
+            errors.append(error)
+        finally:
+            finished.set()
+
+    with request_lock.exclusive_request_lock(request_path):
+        thread = threading.Thread(target=acquire)
+        thread.start()
+        assert finished.wait(timeout=1)
+    thread.join(timeout=5)
+
+    assert not thread.is_alive()
+    assert len(errors) == 1
+    assert isinstance(errors[0], request_lock.RequestLockTimeout)
+    assert str(errors[0]) == "update request lock timed out"
+
+
+def test_queue_replaces_request_before_publishing_queued_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    _write_request(request_path, "old-request", "0" * 40)
+    worker_atomic_write_json(status_path, {"state": "ready"})
+    writes: list[str] = []
+    real_write = worker_update_contract.atomic_write_json
+
+    def record_write(path: Path, value: dict[str, Any]) -> None:
+        writes.append(path.name)
+        real_write(path, value)
+
+    monkeypatch.setattr(worker_update_contract, "atomic_write_json", record_write)
+
+    queue_update(request_path, status_path, "a" * 40)
+
+    assert writes == ["update-request.json", "update-status.json"]
+
+
+def test_failed_request_replace_never_publishes_queued_with_old_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    _write_request(request_path, "old-request", "0" * 40)
+    worker_atomic_write_json(status_path, {"state": "ready"})
+    real_write = worker_update_contract.atomic_write_json
+
+    def fail_request(path: Path, value: dict[str, Any]) -> None:
+        if path == request_path:
+            raise OSError("simulated request replace failure")
+        real_write(path, value)
+
+    monkeypatch.setattr(worker_update_contract, "atomic_write_json", fail_request)
+
+    with pytest.raises(OSError):
+        queue_update(request_path, status_path, "a" * 40)
+
+    assert json.loads(request_path.read_text(encoding="utf-8"))["request_id"] == "old-request"
+    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "ready"}
+
+
+def test_failed_status_publish_is_retryable_without_losing_or_replacing_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    _write_request(request_path, "old-request", "0" * 40)
+    worker_atomic_write_json(status_path, {"state": "ready"})
+
+    def fail_status(_path: Path, _state: str) -> None:
+        raise OSError("simulated status publish failure")
+
+    monkeypatch.setattr(worker_update_contract, "_write_update_status_unlocked", fail_status)
+    with pytest.raises(OSError):
+        queue_update(request_path, status_path, "a" * 40)
+    pending = json.loads(request_path.read_text(encoding="utf-8"))
+    assert pending["target_commit"] == "a" * 40
+    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "ready"}
+
+    monkeypatch.undo()
+    retried_id = queue_update(request_path, status_path, "a" * 40)
+    assert retried_id == pending["request_id"]
+    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
+
+
+def test_different_target_replaces_only_unaccepted_request_after_publish_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    _write_request(request_path, "old-request", "0" * 40)
+    worker_atomic_write_json(status_path, {"state": "ready"})
+    real_publish = worker_update_contract._write_update_status_unlocked
+    monkeypatch.setattr(
+        worker_update_contract,
+        "_write_update_status_unlocked",
+        lambda _path, _state: (_ for _ in ()).throw(OSError("publish failed")),
+    )
+    with pytest.raises(OSError):
+        queue_update(request_path, status_path, "a" * 40)
+    unaccepted = json.loads(request_path.read_text(encoding="utf-8"))
+
+    monkeypatch.setattr(worker_update_contract, "_write_update_status_unlocked", real_publish)
+    accepted_id = queue_update(request_path, status_path, "b" * 40)
+    accepted = json.loads(request_path.read_text(encoding="utf-8"))
+    assert accepted_id != unaccepted["request_id"]
+    assert accepted == {
+        "request_id": accepted_id,
+        "target_commit": "b" * 40,
+        "timestamp": accepted["timestamp"],
+    }
+    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
 
 
 def test_state_machine_rejects_skipped_activation(tmp_path: Path) -> None:

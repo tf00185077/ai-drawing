@@ -20,6 +20,7 @@ from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, 
 from fastapi.responses import Response
 try:
     from worker.windows.update_contract import (
+        RequestLockError,
         UpdateAlreadyRunning,
         UpdateRequest,
         queue_update,
@@ -28,6 +29,7 @@ try:
     )
 except ModuleNotFoundError:  # Supports direct execution from worker/windows.
     from update_contract import (
+        RequestLockError,
         UpdateAlreadyRunning,
         UpdateRequest,
         queue_update,
@@ -285,7 +287,12 @@ def _auth(authorization: Annotated[str | None, Header()] = None) -> None:
 
 
 def _update_state() -> str:
-    return read_public_update_status(UPDATE_STATUS_PATH)["state"]
+    try:
+        return read_public_update_status(UPDATE_STATUS_PATH)["state"]
+    except RequestLockError as error:
+        raise HTTPException(
+            503, detail={"code": "update_lock_unavailable"}
+        ) from error
 
 
 def _require_update_idle() -> None:
@@ -440,6 +447,14 @@ def request_update(body: UpdateRequest) -> dict[str, str]:
         )
     except UpdateAlreadyRunning as error:
         raise HTTPException(409, detail={"code": "update_already_running"}) from error
+    except RequestLockError as error:
+        raise HTTPException(
+            503, detail={"code": "update_lock_unavailable"}
+        ) from error
+    except OSError as error:
+        raise HTTPException(
+            503, detail={"code": "update_request_unavailable"}
+        ) from error
     try:
         subprocess.run(
             ["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"],
@@ -447,14 +462,23 @@ def request_update(body: UpdateRequest) -> dict[str, str]:
             timeout=15,
         )
     except (OSError, subprocess.SubprocessError) as error:
-        write_update_status(UPDATE_STATUS_PATH, "failed_before_activation")
+        try:
+            write_update_status(UPDATE_STATUS_PATH, "failed_before_activation")
+        except RequestLockError as lock_error:
+            raise HTTPException(
+                503, detail={"code": "update_lock_unavailable"}
+            ) from lock_error
+        except OSError as status_error:
+            raise HTTPException(
+                503, detail={"code": "update_request_unavailable"}
+            ) from status_error
         raise HTTPException(503, detail={"code": "update_activation_failed"}) from error
     return {"request_id": request_id, "status": "queued"}
 
 
 @app.get("/v1/admin/update/status", dependencies=[Depends(_auth)])
 def update_status() -> dict[str, Any]:
-    return read_public_update_status(UPDATE_STATUS_PATH)
+    return {"state": _update_state()}
 
 
 @app.post("/v1/resources/plan", dependencies=[Depends(_auth)])
