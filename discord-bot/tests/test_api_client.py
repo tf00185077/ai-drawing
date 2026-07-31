@@ -181,7 +181,19 @@ async def test_compose_and_submit_overrides_full_edited_prompts():
             body = json.loads(req.content)
             calls["content_prompt"] = body["content_prompt"]
             calls["overrides"] = body["overrides"]
-            return httpx.Response(200, json={"preset_id": "p", "profile": None, "generation": {"prompt": "x"}})
+            return httpx.Response(
+                200,
+                json={
+                    "preset_id": "p",
+                    "profile": None,
+                    "generation": {
+                        "prompt": "x",
+                        "seed": 3568278284,
+                        "seed_mode": "fixed",
+                        "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+                    },
+                },
+            )
         if req.url.path == "/api/generate/":
             calls["generation"] = json.loads(req.content)
             return httpx.Response(201, json={"job_id": "J1", "status": "queued"})
@@ -201,6 +213,10 @@ async def test_compose_and_submit_overrides_full_edited_prompts():
         "batch_size": 3,
     }
     assert calls["generation"]["batch_seed_mode"] == "independent"
+    assert calls["generation"]["seed_mode"] == "random"
+    assert calls["generation"]["use_workflow_defaults"] is False
+    assert "seed" not in calls["generation"]
+    assert calls["generation"]["template"] == "gen_txt2img_anima_lora_model_only_multi_lora"
 
 
 async def test_compose_and_submit_allows_user_to_clear_negative_prompt():
