@@ -1,12 +1,13 @@
 """
 專案配置
 """
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 # 專案根目錄（backend 的上層），.env 在此
@@ -85,7 +86,7 @@ class Settings(BaseSettings):
     nvidia_worker_timeout: float = 60.0
     nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
     nvidia_worker_auto_update: bool = False
-    nvidia_worker_update_timeout: float = Field(default=1800.0, gt=0)
+    nvidia_worker_update_timeout: float = 1800.0
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
     comfyui_timeout_queue: float = 10.0
@@ -154,6 +155,28 @@ class Settings(BaseSettings):
 
     # LLM Caption
     llm_caption_url: str | None = None  # 外部 LLM caption API URL（如 BLIP2 service）
+
+    @field_validator(
+        "nvidia_worker_timeout",
+        "nvidia_worker_update_timeout",
+        mode="before",
+    )
+    @classmethod
+    def _reject_boolean_worker_timeout(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("worker timeout must not be boolean")
+        return value
+
+    @field_validator(
+        "nvidia_worker_timeout",
+        "nvidia_worker_update_timeout",
+        mode="after",
+    )
+    @classmethod
+    def _require_positive_finite_worker_timeout(cls, value: float) -> float:
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError("worker timeout must be positive and finite")
+        return value
 
     @model_validator(mode="after")
     def _normalize_project_relative_paths(self):

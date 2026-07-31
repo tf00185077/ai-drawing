@@ -9,6 +9,7 @@ same-target update-request reuse contract.
 from __future__ import annotations
 
 import logging
+import math
 import re
 import subprocess
 import threading
@@ -206,8 +207,13 @@ class NvidiaWorkerUpdateCoordinator:
         *,
         timeout: float = DEFAULT_UPDATE_TIMEOUT,
     ) -> WorkerCompatibilityResult:
-        if timeout <= 0:
-            raise ValueError("timeout must be positive")
+        if (
+            type(timeout) not in (int, float)
+            or not math.isfinite(timeout)
+            or timeout <= 0
+        ):
+            raise ValueError("timeout must be positive and finite")
+        timeout = float(timeout)
         target_commit = trusted_local_commit(repository)
 
         while True:
@@ -348,8 +354,14 @@ class NvidiaWorkerUpdateCoordinator:
     def _remaining_timeout(self, deadline: float) -> float:
         if self._cancel.is_set():
             raise WorkerUpdateError("WORKER_UPDATE_CANCELLED")
-        remaining = deadline - self._clock()
-        if remaining <= 0:
+        now = self._clock()
+        remaining = deadline - now
+        if (
+            not math.isfinite(deadline)
+            or not math.isfinite(now)
+            or not math.isfinite(remaining)
+            or remaining <= 0
+        ):
             raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT")
         return remaining
 
@@ -390,6 +402,8 @@ class NvidiaWorkerUpdateCoordinator:
 
         # Only an accepted request ID opens the expected-outage window.
         deadline = self._clock() + timeout
+        if not math.isfinite(deadline):
+            raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT")
         self._set_status("updating")
         while True:
             remaining = self._remaining_timeout(deadline)

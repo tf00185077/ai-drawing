@@ -10,6 +10,7 @@ from typing import Any
 
 import httpx
 import pytest
+from pydantic import ValidationError
 
 from app.services import nvidia_worker
 from app.services.nvidia_worker_update import (
@@ -578,6 +579,33 @@ def test_worker_client_rejects_invalid_timeout_override(timeout) -> None:
         client.health(timeout=timeout)
 
 
+@pytest.mark.parametrize(
+    "timeout",
+    [True, False, float("nan"), float("inf"), float("-inf"), -1, 0],
+)
+def test_worker_client_rejects_invalid_configured_timeout(timeout) -> None:
+    with pytest.raises(ValueError, match="configured timeout must be positive"):
+        nvidia_worker.NvidiaWorkerClient("http://worker", "secret", timeout)
+
+
+@pytest.mark.parametrize("corrupt_timeout", [float("nan"), float("inf"), 0])
+def test_worker_request_revalidates_effective_timeout_before_http(
+    monkeypatch, corrupt_timeout
+) -> None:
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client._timeout_submit = corrupt_timeout
+    monkeypatch.setattr(
+        nvidia_worker.httpx,
+        "Client",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            AssertionError("HTTP client constructed with invalid timeout")
+        ),
+    )
+
+    with pytest.raises(ValueError, match="configured timeout must be positive"):
+        client.health(timeout=1)
+
+
 def test_worker_submission_waits_for_update_then_submits_exactly_once(
     monkeypatch,
 ) -> None:
@@ -659,6 +687,54 @@ def test_settings_default_and_environment_override(monkeypatch) -> None:
     configured = Settings(_env_file=None)
     assert configured.nvidia_worker_auto_update is True
     assert configured.nvidia_worker_update_timeout == 42.0
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["nvidia_worker_timeout", "nvidia_worker_update_timeout"],
+)
+@pytest.mark.parametrize(
+    "value",
+    [True, False, float("nan"), float("inf"), float("-inf"), -1, 0],
+)
+def test_settings_reject_invalid_worker_timeouts(field, value) -> None:
+    from app.config import Settings
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **{field: value})
+
+
+def test_settings_accept_normal_numeric_strings_from_environment(monkeypatch) -> None:
+    from app.config import Settings
+
+    monkeypatch.setenv("NVIDIA_WORKER_TIMEOUT", "2.5")
+    monkeypatch.setenv("NVIDIA_WORKER_UPDATE_TIMEOUT", "45")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.nvidia_worker_timeout == 2.5
+    assert settings.nvidia_worker_update_timeout == 45.0
+
+
+@pytest.mark.parametrize(
+    "timeout",
+    [True, False, float("nan"), float("inf"), float("-inf"), -1, 0],
+)
+def test_coordinator_rejects_non_finite_or_non_positive_deadline(
+    git_repo, timeout
+) -> None:
+    client = FakeWorkerClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)]
+    )
+
+    with pytest.raises(ValueError, match="timeout must be positive and finite"):
+        NvidiaWorkerUpdateCoordinator().ensure_worker_compatible(
+            client,
+            git_repo.path,
+            timeout=timeout,
+        )
+
+    assert client.update_requests == []
 
 
 def test_fastapi_startup_launches_update_check_without_awaiting_it(monkeypatch) -> None:
