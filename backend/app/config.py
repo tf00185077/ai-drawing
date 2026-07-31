@@ -88,6 +88,11 @@ class Settings(BaseSettings):
     # 輸出目錄
     output_dir: str = _project_root_path("backend", "outputs")
     gallery_dir: str = _project_root_path("backend", "outputs", "gallery")
+    # Fixed Discord video uploads/work data are intentionally external-volume defaults.
+    # Deployments may override these with another absolute non-system-volume path.
+    video_staging_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/discord-video"
+    film_work_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/film-work"
+    film_model_path: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/frame_interpolation/film_net_fp16.pt"
     prompt_library_dir: str = _project_root_path("prompt_library")
     prompt_library_lock_timeout: float = Field(default=5.0, gt=0)
 
@@ -145,6 +150,9 @@ class Settings(BaseSettings):
         self.database_url = _resolve_sqlite_url(self.database_url)
         self.output_dir = _resolve_project_path(self.output_dir)
         self.gallery_dir = _resolve_project_path(self.gallery_dir)
+        self.video_staging_dir = _resolve_project_path(self.video_staging_dir)
+        self.film_work_dir = _resolve_project_path(self.film_work_dir)
+        self.film_model_path = _resolve_project_path(self.film_model_path)
         self.prompt_library_dir = _resolve_project_path(self.prompt_library_dir)
         self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
         self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)

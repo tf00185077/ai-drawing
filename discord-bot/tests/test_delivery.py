@@ -74,3 +74,19 @@ async def test_non_completed_jobs_are_never_sent_or_recorded(tmp_path: Path, sta
 
     send.assert_not_awaited()
     assert not (tmp_path / "ledger.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_video_result_is_delivered_as_discord_attachment(tmp_path: Path) -> None:
+    api = SimpleNamespace(collect_job_result=AsyncMock(return_value={
+        "status": "completed", "artifacts": [("motion_film.mp4", b"video")],
+        "urls": ["http://gallery/motion_film.mp4"],
+    }))
+    send = AsyncMock(return_value=SimpleNamespace(id=7))
+    service = ResultDeliveryService(api, DeliveryLedger(tmp_path / "ledger.json"))
+
+    receipt = await service.deliver("video-job", "alias:results", send)
+
+    assert receipt.artifact_count == 1
+    assert "1 支影片" in send.await_args.args[0]
+    assert send.await_args.kwargs["files"][0].filename == "motion_film.mp4"

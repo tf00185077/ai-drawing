@@ -45,6 +45,29 @@ async def test_submit_generate_returns_job_id():
     assert await api.submit_generate({"prompt": "x"}) == "job-123"
 
 
+async def test_submit_wan_video_uses_safe_multipart_contract():
+    seen = {}
+
+    def handler(req):
+        seen["content_type"] = req.headers["content-type"]
+        body = req.content
+        assert b'name="reference_image"; filename="ref.png"' in body
+        assert b'name="driver_video"; filename="driver.mp4"' in body
+        assert b'name="source_frames"' in body and b"81" in body
+        assert b'name="film_target_frames"' in body and b"321" in body
+        assert b"copy motion" in body
+        return httpx.Response(201, json={"job_id": "wan-job", "status": "queued"})
+
+    api = make_api(handler)
+    job_id = await api.submit_wan22_animate(
+        reference_image=("ref.png", b"png", "image/png"),
+        driver_video=("driver.mp4", b"mp4", "video/mp4"), prompt="copy motion",
+        negative_prompt=None, total_seconds=5.0, source_frames=81, film_target_frames=321,
+    )
+    assert job_id == "wan-job"
+    assert seen["content_type"].startswith("multipart/form-data; boundary=")
+
+
 async def test_get_job():
     def handler(req):
         assert req.url.path == "/api/generate/job/job-123"
@@ -280,6 +303,23 @@ async def test_collect_job_result_prefers_saveimage_artifacts_over_preview_image
     assert out["status"] == "completed"
     assert out["images"] == [("final_0.png", b"FINAL")]
     assert out["urls"] == ["http://test/gallery/2026-07-24/final_0.png"]
+
+
+async def test_collect_job_result_downloads_final_savevideo_artifact():
+    def handler(req):
+        if req.url.path == "/api/generate/job/video-job":
+            return httpx.Response(200, json={"status": "completed", "artifacts": [{
+                "source_node_type": "SaveVideo", "mime_type": "video/mp4",
+                "gallery_path": "2026-07-31/motion_film.mp4", "frame_count": 321, "fps": 64.0,
+            }]})
+        if req.url.path == "/gallery/2026-07-31/motion_film.mp4":
+            return httpx.Response(200, content=b"FILM")
+        raise AssertionError(req.url.path)
+
+    out = await make_api(handler).collect_job_result("video-job")
+    assert out["artifacts"] == [("motion_film.mp4", b"FILM")]
+    assert out["images"] == out["artifacts"]
+    assert out["urls"] == ["http://test/gallery/2026-07-31/motion_film.mp4"]
 
 
 async def test_independent_preview_only_result_never_uses_legacy_gallery_fallback():
