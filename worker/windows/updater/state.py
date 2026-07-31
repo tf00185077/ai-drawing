@@ -21,7 +21,8 @@ TRANSITIONS = {
 }
 TERMINAL_STATES = {"ready", "rejected", "failed_before_activation", "rolled_back", "recovery_required"}
 _COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}\Z")
-_ERROR_CODE_PATTERN = re.compile(r"[A-Z][A-Z0-9_]{0,63}\Z")
+PUBLIC_ERROR_CODES = frozenset({"RUNTIME_INSTALL_FAILED", "UPDATE_FAILED"})
+_VALID_STATES = frozenset({"idle", *TRANSITIONS, *TERMINAL_STATES})
 
 
 class InvalidUpdateTransition(ValueError):
@@ -30,6 +31,10 @@ class InvalidUpdateTransition(ValueError):
 
 class UpdateAlreadyRunning(ValueError):
     """A different update request is already active."""
+
+
+class StateStoreError(RuntimeError):
+    """Persisted updater state cannot be safely read or validated."""
 
 
 class UpdateStateStore:
@@ -51,8 +56,9 @@ class UpdateStateStore:
             private = self._read_private()
             state = private["state"]
             if state not in {"idle", *TERMINAL_STATES}:
-                if private.get("request_id") == request_id and private.get("target_commit") == target_commit:
-                    return request_id
+                if private["target_commit"] == target_commit:
+                    self._reconcile_public(private)
+                    return private["request_id"]
                 raise UpdateAlreadyRunning("a different update request is already active")
             next_private = {"state": "queued", "request_id": request_id, "target_commit": target_commit}
             self._write_private(next_private)
@@ -64,6 +70,9 @@ class UpdateStateStore:
         with self._exclusive_lock():
             private = self._read_private()
             current_state = private["state"]
+            if next_state == current_state:
+                self._reconcile_public(private)
+                return
             if next_state not in TRANSITIONS.get(current_state, set()):
                 raise InvalidUpdateTransition(f"cannot transition from {current_state} to {next_state}")
             private["state"] = next_state
@@ -88,25 +97,28 @@ class UpdateStateStore:
     def read_public(self) -> dict[str, str]:
         """Return the public status only, never request IDs or diagnostics."""
         with self._exclusive_lock():
-            try:
-                value = json.loads(self.public_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                return {"state": "idle"}
-            if not isinstance(value, dict) or not isinstance(value.get("state"), str):
-                return {"state": "idle"}
-            status = {"state": value["state"]}
-            if isinstance(value.get("error_code"), str) and _ERROR_CODE_PATTERN.fullmatch(value["error_code"]):
-                status["error_code"] = value["error_code"]
-            return status
+            return self._reconcile_public(self._read_private())
 
     def _read_private(self) -> dict[str, Any]:
         try:
             value = json.loads(self.private_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return {"state": "idle"}
+        except OSError as error:
+            raise StateStoreError("unable to read private updater state") from error
+        except (TypeError, ValueError) as error:
+            raise StateStoreError("private updater state is malformed") from error
+        return _validated_private_state(value)
+
+    def _reconcile_public(self, private: Mapping[str, Any]) -> dict[str, str]:
+        projection = _public_projection(private)
+        try:
+            current = json.loads(self.public_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            return {"state": "idle"}
-        if not isinstance(value, dict) or not isinstance(value.get("state"), str):
-            return {"state": "idle"}
-        return value
+            current = None
+        if current != projection:
+            self._write_public(projection)
+        return projection
 
     def _write_private(self, value: Mapping[str, Any]) -> None:
         _atomic_write_json(self.private_path, value)
@@ -150,7 +162,30 @@ def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
 
 
 def _public_error_code(error_code: str) -> str:
-    return error_code if _ERROR_CODE_PATTERN.fullmatch(error_code) else "UPDATE_FAILED"
+    return error_code if error_code in PUBLIC_ERROR_CODES else "UPDATE_FAILED"
+
+
+def _validated_private_state(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict) or not isinstance(value.get("state"), str):
+        raise StateStoreError("private updater state has an invalid structure")
+    state = value["state"]
+    if state not in _VALID_STATES:
+        raise StateStoreError("private updater state has an unknown state")
+    if state != "idle":
+        if not isinstance(value.get("request_id"), str) or not value["request_id"]:
+            raise StateStoreError("private updater state is missing its request ID")
+        target_commit = value.get("target_commit")
+        if not isinstance(target_commit, str) or not _COMMIT_PATTERN.fullmatch(target_commit):
+            raise StateStoreError("private updater state has an invalid target commit")
+    return value
+
+
+def _public_projection(private: Mapping[str, Any]) -> dict[str, str]:
+    projection = {"state": str(private["state"])}
+    error_code = private.get("error_code")
+    if isinstance(error_code, str):
+        projection["error_code"] = _public_error_code(error_code)
+    return projection
 
 
 def _lock_exclusive(lock_file: Any) -> None:

@@ -1,6 +1,8 @@
 """Strict, non-evaluating configuration for the Windows worker updater."""
 from __future__ import annotations
 
+import ctypes
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +17,8 @@ ALLOWED_KEYS = {
 OWNERSHIP_MARKER = ".ai-drawing-worker-owned"
 OWNERSHIP_MARKER_CONTENTS = "AI-Drawing NVIDIA Worker"
 EXPECTED_REMOTE_URL_PATH = Path("config") / "expected-remote-url.txt"
+DRIVE_FIXED = 3
+DRIVE_REMOTE = 4
 
 
 class UpdaterConfigError(ValueError):
@@ -100,7 +104,17 @@ def _resolve_local_directory(raw_path: str, label: str) -> Path:
         raise UpdaterConfigError(f"{label} does not exist") from error
     if not resolved.is_dir():
         raise UpdaterConfigError(f"{label} must be a directory")
+    if str(resolved).startswith(("\\\\", "//")) or _get_drive_type(resolved) == DRIVE_REMOTE:
+        raise UpdaterConfigError(f"{label} must resolve to a local drive")
     return resolved
+
+
+def _get_drive_type(path: Path) -> int:
+    """Return the Windows drive type for a resolved path, without invoking a shell."""
+    if os.name != "nt":
+        return DRIVE_FIXED
+    root = path.anchor or f"{path.drive}\\"
+    return int(ctypes.windll.kernel32.GetDriveTypeW(root))
 
 
 def _ensure_distinct_roots(project_root: Path, worker_root: Path) -> None:
