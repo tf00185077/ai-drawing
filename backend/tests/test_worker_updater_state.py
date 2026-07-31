@@ -104,6 +104,33 @@ def test_public_state_redacts_secret_and_command(tmp_path: Path) -> None:
     assert json.loads(text) == {"state": "failed_before_activation", "error_code": "RUNTIME_INSTALL_FAILED"}
 
 
+@pytest.mark.parametrize(
+    "error_code",
+    [
+        "UPDATE_ALREADY_RUNNING",
+        "TARGET_COMMIT_INVALID",
+        "MAC_COMMIT_NOT_ORIGIN_MAIN",
+        "WINDOWS_REMOTE_HEAD_MISMATCH",
+        "UPDATER_CONFIG_INVALID",
+        "SOURCE_REPOSITORY_INVALID",
+        "INSUFFICIENT_DISK_SPACE",
+        "RUNTIME_INSTALL_FAILED",
+        "CUDA_VALIDATION_FAILED",
+        "COMFYUI_VALIDATION_FAILED",
+        "WORKER_CONTRACT_FAILED",
+        "ACTIVATION_FAILED_ROLLED_BACK",
+        "RECOVERY_REQUIRED",
+    ],
+)
+def test_public_state_exposes_each_canonical_error_code(tmp_path: Path, error_code: str) -> None:
+    store = UpdateStateStore(tmp_path)
+    store.queue("req", "a" * 40)
+    store.transition("fetching")
+    store.fail(error_code, "safe private diagnostic")
+
+    assert store.read_public() == {"state": "failed_before_activation", "error_code": error_code}
+
+
 def test_public_state_maps_unknown_error_codes_to_update_failed(tmp_path: Path) -> None:
     store = UpdateStateStore(tmp_path)
     store.queue("req", "a" * 40)
