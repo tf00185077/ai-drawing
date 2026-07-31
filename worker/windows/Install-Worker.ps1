@@ -48,9 +48,7 @@ if ($Drive.Free -lt $Required) {
 if (Test-Path -LiteralPath $Root) {
     Assert-ExistingWorkerRoot -Path $Root
 } else {
-    New-Item -ItemType Directory -Path $Root | Out-Null
-    Set-SecureUpdaterRootAcl -Path $Root
-    Assert-SecureUpdaterTree -Path $Root
+    New-SecureUpdaterDirectory -Path $Root
 }
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "config\update-owned\state"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs"), (Join-Path $Root "shared\models"), (Join-Path $Root "shared\cache"), (Join-Path $Root "shared\partial"), (Join-Path $Root "shared\input"), (Join-Path $Root "shared\output") | Out-Null
@@ -159,9 +157,7 @@ $ProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"
 if (Test-Path -LiteralPath $ProgramDataRoot) {
     Assert-SecureUpdaterTree -Path $ProgramDataRoot
 } else {
-    New-Item -ItemType Directory -Path $ProgramDataRoot | Out-Null
-    Set-SecureUpdaterRootAcl -Path $ProgramDataRoot
-    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    New-SecureUpdaterDirectory -Path $ProgramDataRoot
 }
 $BootstrapPath = Join-Path $ProgramDataRoot "UpdaterBootstrap.ps1"
 Copy-Item (Join-Path $Source "UpdaterBootstrap.ps1") $BootstrapPath -Force

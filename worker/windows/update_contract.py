@@ -10,6 +10,14 @@ from typing import Any, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
+try:
+    from worker.windows.updater.request_lock import exclusive_request_lock
+except ModuleNotFoundError:  # Supports direct execution from worker/windows.
+    try:
+        from updater.request_lock import exclusive_request_lock
+    except ModuleNotFoundError:  # Supports the legacy installer app directory.
+        from request_lock import exclusive_request_lock
+
 
 class UpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -32,10 +40,17 @@ def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
 
 
 def write_update_status(status_path: Path, state: str) -> None:
-    atomic_write_json(status_path, {"state": state})
+    request_path = status_path.with_name("update-request.json")
+    with exclusive_request_lock(request_path):
+        _write_update_status_unlocked(status_path, state)
 
 
 def queue_update(request_path: Path, status_path: Path, target_commit: str) -> str:
+    with exclusive_request_lock(request_path):
+        return _queue_update_locked(request_path, status_path, target_commit)
+
+
+def _queue_update_locked(request_path: Path, status_path: Path, target_commit: str) -> str:
     try:
         active_request = json.loads(request_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -44,14 +59,14 @@ def queue_update(request_path: Path, status_path: Path, target_commit: str) -> s
     if isinstance(active_request, dict):
         active_target = active_request.get("target_commit")
         active_request_id = active_request.get("request_id")
-        state = read_public_update_status(status_path)["state"]
+        state = _read_public_update_status_unlocked(status_path)["state"]
         if state not in TERMINAL_UPDATE_STATES:
             if active_target == target_commit and isinstance(active_request_id, str):
                 return active_request_id
             raise UpdateAlreadyRunning
 
     request_id = str(uuid.uuid4())
-    write_update_status(status_path, "queued")
+    _write_update_status_unlocked(status_path, "queued")
     atomic_write_json(
         request_path,
         {
@@ -64,9 +79,19 @@ def queue_update(request_path: Path, status_path: Path, target_commit: str) -> s
 
 
 def read_public_update_status(status_path: Path) -> dict[str, str]:
+    request_path = status_path.with_name("update-request.json")
+    with exclusive_request_lock(request_path):
+        return _read_public_update_status_unlocked(status_path)
+
+
+def _read_public_update_status_unlocked(status_path: Path) -> dict[str, str]:
     try:
         value = json.loads(status_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         value = {}
     state = value.get("state") if isinstance(value, dict) else None
     return {"state": state if isinstance(state, str) and state else "idle"}
+
+
+def _write_update_status_unlocked(status_path: Path, state: str) -> None:
+    atomic_write_json(status_path, {"state": state})
