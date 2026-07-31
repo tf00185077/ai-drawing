@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from worker.windows.updater import config as updater_config
 from worker.windows.updater.config import UpdaterConfigError, load_updater_config
 
 
@@ -71,6 +72,23 @@ def test_config_accepts_owned_worker_root_without_git_metadata(tmp_path: Path) -
     load_updater_config(_env_file(tmp_path, project, worker))
 
     assert not (worker / ".git").exists()
+
+
+def test_config_rejects_resolved_path_on_remote_windows_drive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = _git_repo(tmp_path / "source")
+    worker = _owned_worker_root(tmp_path / "runtime")
+    checked_paths: list[Path] = []
+
+    def remote_drive(path: Path) -> int:
+        checked_paths.append(path)
+        return updater_config.DRIVE_REMOTE
+
+    monkeypatch.setattr(updater_config, "_get_drive_type", remote_drive)
+
+    with pytest.raises(UpdaterConfigError):
+        load_updater_config(_env_file(tmp_path, project, worker))
+
+    assert checked_paths == [project.resolve()]
 
 
 @pytest.mark.parametrize(
