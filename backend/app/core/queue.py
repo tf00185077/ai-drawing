@@ -11,7 +11,6 @@ import hashlib
 import json
 import logging
 import random
-import shutil
 import threading
 import time
 import uuid
@@ -33,6 +32,7 @@ from app.core.comfyui import (
     structure_execution_error,
     structure_node_errors,
 )
+from app.services.nvidia_worker import get_generation_client
 from app.core.generation_batches import (
     cancel_queued_batch,
     create_batch,
@@ -63,6 +63,38 @@ def _canonical_workflow_sha256(workflow: dict[str, Any]) -> str:
     return hashlib.sha256(
         json.dumps(workflow, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def _upload_workflow_local_inputs(
+    workflow: dict[str, Any], comfy: ComfyUIClient, input_root: Path
+) -> None:
+    """Upload builder-staged workflow files to the selected ComfyUI client."""
+    root = input_root.resolve()
+    fields = {
+        "LoadImage": "image", "LoadImageMask": "image",
+        "LoadAudio": "audio", "LoadVideo": "file",
+    }
+    for node in workflow.values():
+        if not isinstance(node, dict):
+            continue
+        field = fields.get(str(node.get("class_type", "")))
+        if field is None:
+            continue
+        value = node.get("inputs", {}).get(field)
+        if not isinstance(value, str) or not value:
+            continue
+        source = (root / value).resolve()
+        try:
+            source.relative_to(root)
+        except ValueError:
+            continue
+        if not source.is_file():
+            continue
+        uploaded = comfy.upload_image(source, subfolder="ai-drawing-inputs")
+        server_name = uploaded["name"]
+        if uploaded.get("subfolder"):
+            server_name = f"{uploaded['subfolder']}/{server_name}"
+        node["inputs"][field] = server_name
 
 
 class QueueFullError(Exception):
@@ -105,7 +137,29 @@ class GenerateParams(TypedDict, total=False):
     server_owned_verbatim: bool  # internal saved-style-workflow submission marker
     fixed_video_template: str  # backend-owned Discord fixed graph marker
     staged_input_paths: list[str]  # opaque backend staging files; never caller paths
+    workflow_input_files: list[dict[str, str]]  # selected-client node/input/path uploads
     film_postprocess: dict[str, Any]  # exact target_frames + first-to-last total_seconds
+    execution_target: str  # local | worker; worker failures never fall back
+
+
+class _RecordingStageError(RuntimeError):
+    def __init__(self, stage: str, cause: Exception):
+        self.stage = stage
+        self.exception_type = type(cause).__name__
+        detail = str(cause).strip()
+        message = f"{stage} failed ({self.exception_type})"
+        if detail:
+            message = f"{message}: {detail}"
+        super().__init__(message)
+
+
+def _run_recording_stage(stage: str, operation):
+    try:
+        return operation()
+    except _RecordingStageError:
+        raise
+    except Exception as exc:
+        raise _RecordingStageError(stage, exc) from exc
 
 
 class _Job:
@@ -432,7 +486,7 @@ def submit_custom(params: GenerateParams) -> str:
     return submit(params)
 
 
-def submit_saved_workflow(workflow: dict[str, Any]) -> str:
+def submit_saved_workflow(workflow: dict[str, Any], *, execution_target: str = "local") -> str:
     """Queue a server-owned saved graph without applying runtime parameters."""
     if not isinstance(workflow, dict) or not workflow:
         raise ValueError("saved workflow submission requires a nonempty graph object")
@@ -440,6 +494,7 @@ def submit_saved_workflow(workflow: dict[str, Any]) -> str:
         {
             "workflow": copy.deepcopy(workflow),
             "server_owned_verbatim": True,
+            "execution_target": execution_target,
         }
     )
 
@@ -618,7 +673,7 @@ def _fail_saved_workflow_submit(job: "_Job", error: Exception) -> None:
     )
 
 
-def _process_pending(comfy: ComfyUIClient) -> None:
+def _process_pending(comfy: ComfyUIClient | None = None) -> None:
     """從 pending 取一筆提交至 ComfyUI，移入 running"""
     global _running
     with _lock:
@@ -633,6 +688,10 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 progress.current_batch_index = job.batch_index
 
     try:
+        if comfy is None:
+            comfy = get_generation_client(
+                job.params.get("execution_target", "local")
+            )
         if job.batch_index is not None:
             db = SessionLocal()
             try:
@@ -671,16 +730,11 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                     uploaded_name = f"{uploaded['subfolder']}/{uploaded_name}"
                 prompt[image_node]["inputs"]["image"] = uploaded_name
                 if fixed_template == "discord_wan22_animate_fixed":
-                    input_root = Path(settings.comfyui_input_dir).resolve()
-                    video_dir = input_root / "discord-video"
-                    video_dir.mkdir(parents=True, exist_ok=True)
-                    video_input = video_dir / f"{uuid.uuid4().hex}{staged[1].suffix.lower()}"
-                    try:
-                        video_input.hardlink_to(staged[1])
-                    except OSError:
-                        shutil.copy2(staged[1], video_input)
-                    job.params.setdefault("staged_input_paths", []).append(str(video_input))
-                    prompt["1"]["inputs"]["file"] = str(Path("discord-video") / video_input.name)
+                    uploaded_video = comfy.upload_image(staged[1], subfolder="discord-video")
+                    video_name = uploaded_video["name"]
+                    if uploaded_video.get("subfolder"):
+                        video_name = f"{uploaded_video['subfolder']}/{video_name}"
+                    prompt["1"]["inputs"]["file"] = video_name
             job.params["workflow_json"] = copy.deepcopy(prompt)
             try:
                 prompt_id = comfy.submit_prompt(prompt)
@@ -749,6 +803,42 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 or (WORKFLOW_TEMPLATE_LORA if job.params.get("lora") else WORKFLOW_TEMPLATE)
             )
             wf = load_template(template)
+
+        # Backend-owned workflows may stage arbitrary ComfyUI input files (for
+        # example Wan keyframes and silent audio). Upload them through the same
+        # selected client used for prompt submission so local and Worker paths
+        # have identical semantics and no Mac absolute path reaches Windows.
+        for binding in job.params.get("workflow_input_files", []):
+            if not isinstance(binding, dict):
+                raise ValueError("workflow input binding must be an object")
+            node_id = binding.get("node_id")
+            input_name = binding.get("input_name")
+            raw_path = binding.get("path")
+            if not all(isinstance(value, str) and value for value in (node_id, input_name, raw_path)):
+                raise ValueError("workflow input binding requires node_id, input_name, and path")
+            source = Path(raw_path).resolve()
+            allowed_roots = tuple(
+                Path(value).resolve()
+                for value in (
+                    getattr(settings, "comfyui_input_dir", ""),
+                    getattr(settings, "video_staging_dir", ""),
+                )
+                if value
+            )
+            if not allowed_roots or not any(source.is_relative_to(root) for root in allowed_roots):
+                raise FileNotFoundError("workflow input escaped backend-owned staging roots")
+            if not source.is_file():
+                raise FileNotFoundError(f"workflow input missing: {source.name}")
+            node = wf.get(node_id)
+            if not isinstance(node, dict) or not isinstance(node.get("inputs"), dict):
+                raise ValueError(f"workflow input node is missing: {node_id}")
+            if input_name not in node["inputs"]:
+                raise ValueError(f"workflow input field is missing: {node_id}.{input_name}")
+            uploaded = comfy.upload_image(source, subfolder="ai-drawing-inputs")
+            uploaded_name = uploaded["name"]
+            if uploaded.get("subfolder"):
+                uploaded_name = f"{uploaded['subfolder']}/{uploaded_name}"
+            node["inputs"][input_name] = uploaded_name
 
         # 僅傳統 checkpoint workflow（含 CheckpointLoaderSimple）才套用預設 checkpoint；
         # diffusion-model workflow（如 Anima 的 UNETLoader）模板已內嵌模型檔名，
@@ -821,7 +911,12 @@ def _process_pending(comfy: ComfyUIClient) -> None:
         if job.params.get("last_frame"):
             last_frame_for_wf = _upload_gallery_image(job.params["last_frame"])
         if job.params.get("video_ref"):
-            video_ref_for_wf = str(_resolve_gallery_file(job.params["video_ref"], strict=True))
+            video_path = _resolve_gallery_file(job.params["video_ref"], strict=True)
+            assert video_path is not None
+            uploaded = comfy.upload_image(video_path, subfolder="ai-drawing-inputs")
+            video_ref_for_wf = uploaded["name"]
+            if uploaded.get("subfolder"):
+                video_ref_for_wf = f"{uploaded['subfolder']}/{uploaded['name']}"
         if job.params.get("mask"):
             mask_for_wf = _upload_gallery_image(job.params["mask"])
         if job.params.get("image_pose"):
@@ -903,7 +998,10 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                 job.params[key] = value
         # 擷取「實際送出的完整 workflow」與來源圖/遮罩（gallery 相對路徑，非 ComfyUI 暫存檔名），
         # 供 gallery_rerun 忠實重生（見 persist-full-workflow-for-rerun）。
-        job.params["workflow_json"] = prompt
+        input_root = getattr(settings, "comfyui_input_dir", None)
+        if input_root:
+            _upload_workflow_local_inputs(prompt, comfy, Path(input_root))
+        job.params["workflow_json"] = copy.deepcopy(prompt)
         if job.params.get("image"):
             job.params["source_image"] = job.params["image"]
         if job.params.get("mask"):
@@ -1005,10 +1103,13 @@ def _save_job_outputs(
     created_paths: list[Path] = []
     try:
         for i, artifact in enumerate(artifacts_info):
-            data = comfy.fetch_image(
-                artifact["filename"],
-                subfolder=artifact.get("subfolder", ""),
-                ftype=artifact.get("type", "output"),
+            data = _run_recording_stage(
+                "artifact_fetch",
+                lambda: comfy.fetch_image(
+                    artifact["filename"],
+                    subfolder=artifact.get("subfolder", ""),
+                    ftype=artifact.get("type", "output"),
+                ),
             )
             out_name = gallery_output_filename(
                 artifact["filename"],
@@ -1017,7 +1118,9 @@ def _save_job_outputs(
                 batch_index=job.batch_index,
             )
             destination = out_dir / out_name
-            destination.write_bytes(data)
+            _run_recording_stage(
+                "gallery_write", lambda: destination.write_bytes(data)
+            )
             created_paths.append(destination)
             artifact_to_save = dict(artifact)
             film = job.params.get("film_postprocess")
@@ -1026,13 +1129,18 @@ def _save_job_outputs(
 
                 final_path = destination.with_name(f"{destination.stem}_film{destination.suffix}")
                 created_paths.append(final_path)
-                film_info = interpolate_video_exact(
-                    input_path=destination,
-                    output_path=final_path,
-                    target_frames=int(film["target_frames"]),
-                    total_seconds=float(film["total_seconds"]),
-                    model_path=Path(settings.film_model_path),
-                    work_root=Path(settings.film_work_dir),
+                target_frames = int(film["target_frames"])
+                total_seconds = float(film["total_seconds"])
+                film_info = _run_recording_stage(
+                    "film_interpolation",
+                    lambda: interpolate_video_exact(
+                        input_path=destination,
+                        output_path=final_path,
+                        target_frames=target_frames,
+                        total_seconds=total_seconds,
+                        model_path=Path(settings.film_model_path),
+                        work_root=Path(settings.film_work_dir),
+                    ),
                 )
                 destination.unlink(missing_ok=True)
                 destination = final_path
@@ -1042,7 +1150,9 @@ def _save_job_outputs(
                 (
                     str(Path(date_str) / destination.name),
                     artifact_to_save,
-                    destination.stat().st_size,
+                    _run_recording_stage(
+                        "artifact_stat", lambda: destination.stat().st_size
+                    ),
                 )
             )
     except Exception:
@@ -1156,7 +1266,7 @@ def _defer_uncertain_completion(
     )
 
 
-def _check_running_complete(comfy: ComfyUIClient) -> None:
+def _check_running_complete(comfy: ComfyUIClient | None = None) -> None:
     """檢查 running job 的終局狀態。
 
     保證每個終局 job 都落在 completed（DB）或 failed（_failed，帶原因）其一，不再靜默消失：
@@ -1170,6 +1280,8 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         job = _running
         if not job or not job.prompt_id:
             return
+    if comfy is None:
+        comfy = get_generation_client(job.params.get("execution_target", "local"))
 
     queue_failure_code = "comfyui_status_unknown"
     queue_failure_message = (
@@ -1311,23 +1423,26 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
         logger.info("Job %s completed, saved %d artifact(s)", job.job_id, n)
     except Exception as e:
         logger.exception("Failed to save job %s output: %s", job.job_id, e)
+        stage = getattr(e, "stage", "artifact_recording")
+        exception_type = getattr(e, "exception_type", type(e).__name__)
         _record_failure(
             job,
             e,
             recording_error={
                 "code": "recording_failed",
                 "message": str(e),
+                "stage": stage,
+                "exception_type": exception_type,
             },
         )
 
 
 def _worker_loop() -> None:
     """背景 worker 迴圈"""
-    comfy = get_comfy_client()
     while not _stop_event.is_set():
         try:
-            _process_pending(comfy)
-            _check_running_complete(comfy)
+            _process_pending()
+            _check_running_complete()
         except Exception as e:
             logger.exception("Queue worker error: %s", e)
         _stop_event.wait(2.0)

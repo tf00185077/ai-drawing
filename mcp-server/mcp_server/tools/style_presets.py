@@ -16,6 +16,7 @@ job: the agent then forwards the composed `generation` payload to generate_image
 (compose first, generate second).
 """
 import json
+from typing import Literal
 
 import httpx
 
@@ -264,10 +265,11 @@ def save_successful_workflow_as_style_preset(
 def test_saved_style_preset_workflow(
     preset_id: str,
     profile: str | None = None,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> str:
     """Queue the backend-owned saved workflow verbatim, without workflow JSON or prompt overrides, then poll get_generation_status with the returned job id."""
     tool = "test_saved_style_preset_workflow"
-    body: dict[str, object] = {}
+    body: dict[str, object] = {"execution_target": execution_target}
     if profile is not None:
         body["profile"] = profile
     try:

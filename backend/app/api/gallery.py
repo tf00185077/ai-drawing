@@ -179,6 +179,7 @@ async def get_image_detail(image_id: int, db: Session = Depends(get_db)):
 @router.post("/{image_id}/rerun", response_model=RerunResponse, status_code=202)
 async def rerun_image(
     image_id: int,
+    body: RerunRequest = Body(default=RerunRequest()),
     db: Session = Depends(get_db),
 ):
     """一鍵重現：載入參數再次生成。
@@ -207,6 +208,7 @@ async def rerun_image(
         params = {
             "workflow": bundle["workflow"],
             "prompt": row.prompt or "",
+            "execution_target": body.execution_target,
             **verified_inputs,
         }
         # Do not pass seed: stored workflow is the only recipe authority.
@@ -229,7 +231,7 @@ async def rerun_image(
                 if not (gallery_dir / rel).resolve().is_file():
                     raise HTTPException(409, f"無法重現：{label} 來源檔已不存在（{rel}）")
 
-            params: dict = {"workflow": wf, "prompt": row.prompt or ""}
+            params: dict = {"workflow": wf, "prompt": row.prompt or "", "execution_target": body.execution_target}
             if row.source_image:
                 _require_source(row.source_image, "image")
                 params["image"] = row.source_image
@@ -251,6 +253,7 @@ async def rerun_image(
         "seed": row.seed,
         "steps": row.steps,
         "cfg": row.cfg,
+        "execution_target": body.execution_target,
     }
     # 帶回模板與 diffusion-model 元件，確保 Anima 等非傳統 checkpoint 也能重生
     if row.template:

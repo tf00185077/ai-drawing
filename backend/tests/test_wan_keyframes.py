@@ -79,7 +79,12 @@ def test_build_wan_keyframe_workflow_rejects_path_traversal(tmp_path) -> None:
 
 
 def test_post_generate_video_wan_keyframes_queues_builder_result(client) -> None:
-    fake_workflow = {"98": {"class_type": "WanDancerVideo", "inputs": {}}}
+    fake_workflow = {
+        "98": {"class_type": "WanDancerVideo", "inputs": {}},
+        "110": {"class_type": "LoadImage", "inputs": {"image": "task/keyframe_01.png"}},
+        "111": {"class_type": "LoadImage", "inputs": {"image": "task/keyframe_02.png"}},
+        "119": {"class_type": "LoadAudio", "inputs": {"audio": "task/silent.wav"}},
+    }
     with patch("app.api.generate.build_wan_keyframe_workflow", return_value=fake_workflow) as mock_build:
         with patch("app.api.generate.submit_custom", return_value="wan-job") as mock_submit:
             r = client.post(
@@ -96,6 +101,7 @@ def test_post_generate_video_wan_keyframes_queues_builder_result(client) -> None
                     "cfg": 1.0,
                     "seed": 123,
                     "filename_prefix": "video/unit",
+                    "execution_target": "worker",
                 },
             )
 
@@ -106,3 +112,10 @@ def test_post_generate_video_wan_keyframes_queues_builder_result(client) -> None
     assert params["workflow"] == fake_workflow
     assert params["prompt"] == "smooth keyframe orbit"
     assert params["template"] == "gen_img2video_wan_5keyframe_single_workflow"
+    assert params["execution_target"] == "worker"
+    input_root = Path(mock_build.call_args.kwargs["settings"].comfyui_input_dir)
+    assert params["workflow_input_files"] == [
+        {"node_id": "110", "input_name": "image", "path": str(input_root / "task/keyframe_01.png")},
+        {"node_id": "111", "input_name": "image", "path": str(input_root / "task/keyframe_02.png")},
+        {"node_id": "119", "input_name": "audio", "path": str(input_root / "task/silent.wav")},
+    ]

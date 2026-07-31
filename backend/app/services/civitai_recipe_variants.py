@@ -405,7 +405,7 @@ def _generate_one_variant(
     variant_id = lineage["variant_id"]
     job_id = lineage["job_id"]
     try:
-        submitted_job_id = submit_audited_recipe({"workflow": queue_bundle["workflow"], "recipe_provenance": queue_bundle}, job_id=job_id)
+        submitted_job_id = submit_audited_recipe({"workflow": queue_bundle["workflow"], "recipe_provenance": queue_bundle, "execution_target": request.execution_target}, job_id=job_id)
     except QueueFullError as exc:
         raise VariantFacadeError("queue", "queue_full") from exc
     except Exception as exc:

@@ -38,11 +38,16 @@ async def test_compose_sends_overrides_and_returns_generation():
 
 async def test_submit_generate_returns_job_id():
     def handler(req):
+        import json
+
         assert req.url.path == "/api/generate/"
+        assert json.loads(req.content)["execution_target"] == "worker"
         return httpx.Response(201, json={"job_id": "job-123", "status": "queued"})
 
     api = make_api(handler)
-    assert await api.submit_generate({"prompt": "x"}) == "job-123"
+    assert await api.submit_generate(
+        {"prompt": "x", "execution_target": "worker"}
+    ) == "job-123"
 
 
 async def test_submit_wan_video_uses_safe_multipart_contract():
@@ -55,6 +60,7 @@ async def test_submit_wan_video_uses_safe_multipart_contract():
         assert b'name="driver_video"; filename="driver.mp4"' in body
         assert b'name="source_frames"' in body and b"81" in body
         assert b'name="film_target_frames"' in body and b"321" in body
+        assert b'name="execution_target"' in body and b"worker" in body
         assert b"copy motion" in body
         return httpx.Response(201, json={"job_id": "wan-job", "status": "queued"})
 
@@ -63,9 +69,27 @@ async def test_submit_wan_video_uses_safe_multipart_contract():
         reference_image=("ref.png", b"png", "image/png"),
         driver_video=("driver.mp4", b"mp4", "video/mp4"), prompt="copy motion",
         negative_prompt=None, total_seconds=5.0, source_frames=81, film_target_frames=321,
+        execution_target="worker",
     )
     assert job_id == "wan-job"
     assert seen["content_type"].startswith("multipart/form-data; boundary=")
+
+
+async def test_submit_animegen_video_includes_user_dimensions():
+    def handler(req):
+        body = req.content
+        assert b'name="width"' in body and b"1024" in body
+        assert b'name="height"' in body and b"1024" in body
+        assert b'name="execution_target"' in body and b"worker" in body
+        return httpx.Response(201, json={"job_id": "animegen-job", "status": "queued"})
+
+    api = make_api(handler)
+    job_id = await api.submit_animegen_i2v(
+        image=("source.png", b"png", "image/png"), prompt="move",
+        negative_prompt=None, width=1024, height=1024, total_seconds=3.0,
+        source_frames=49, film_target_frames=97, execution_target="worker",
+    )
+    assert job_id == "animegen-job"
 
 
 async def test_get_job():
@@ -201,7 +225,8 @@ async def test_compose_and_submit_overrides_full_edited_prompts():
 
     api = make_api(handler)
     job_id = await api.compose_and_submit(
-        "p", None, "edited positive", "edited negative", 800, 600, 3
+        "p", None, "edited positive", "edited negative", 800, 600, 3,
+        execution_target="worker",
     )
     assert job_id == "J1"
     assert calls["content_prompt"] == " "
@@ -217,6 +242,27 @@ async def test_compose_and_submit_overrides_full_edited_prompts():
     assert calls["generation"]["use_workflow_defaults"] is False
     assert "seed" not in calls["generation"]
     assert calls["generation"]["template"] == "gen_txt2img_anima_lora_model_only_multi_lora"
+    assert calls["generation"]["execution_target"] == "worker"
+
+
+async def test_compose_and_submit_defaults_execution_target_to_local():
+    calls = {}
+
+    def handler(req):
+        import json
+
+        if req.url.path.endswith("/compose"):
+            return httpx.Response(200, json={
+                "preset_id": "p", "profile": None, "generation": {"prompt": "x"},
+            })
+        if req.url.path == "/api/generate/":
+            calls["generation"] = json.loads(req.content)
+            return httpx.Response(201, json={"job_id": "local-job", "status": "queued"})
+        raise AssertionError(req.url.path)
+
+    api = make_api(handler)
+    assert await api.compose_and_submit("p", None, "x", "", 512, 512, 1) == "local-job"
+    assert calls["generation"]["execution_target"] == "local"
 
 
 async def test_compose_and_submit_allows_user_to_clear_negative_prompt():

@@ -306,6 +306,7 @@ def create_variation_set(request: Any, *, db: Any, variation_set_id_factory: Cal
             directives=child.directives, model_family=request.model_family,
             runtime_capabilities=request.runtime_capabilities, runtime_provenance=request.runtime_provenance,
             input_bindings=request.input_bindings,
+            execution_target=request.execution_target,
         )
         try:
             if alias_binding is None:

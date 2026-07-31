@@ -44,6 +44,7 @@ def generate_image(
     vae: str | None = None,
     use_workflow_defaults: bool | None = None,
     seed_mode: Literal["workflow_default", "random", "fixed"] | None = None,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> str:
     """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. Returns job_id or an error message. To generate based on a Civitai image, use civitai_generate_like instead."""
     try:
@@ -59,7 +60,10 @@ def generate_image(
             if style_lora and not resolved_lora:
                 resolved_lora = style_lora
 
-        body: dict[str, object] = {"prompt": final_prompt}
+        body: dict[str, object] = {
+            "prompt": final_prompt,
+            "execution_target": execution_target,
+        }
         if checkpoint:
             body["checkpoint"] = checkpoint
         if template:
@@ -134,6 +138,7 @@ def generate_video_wan_keyframes(
     cfg: float = 1.0,
     seed: int | None = None,
     filename_prefix: str = "video/wan_keyframes",
+    execution_target: Literal["local", "worker"] = "local",
 ) -> str:
     """Generate one Wan video from multiple gallery-relative keyframe images using a single WanDancer workflow. This is not pairwise segment concatenation: the backend batches all keyframes into WanDancerPadKeyframes and submits one workflow. Poll get_generation_status(job_id), then fetch completed video artifacts via get_gallery_artifact."""
     try:
@@ -148,6 +153,7 @@ def generate_video_wan_keyframes(
             "steps": steps,
             "cfg": cfg,
             "filename_prefix": filename_prefix,
+            "execution_target": execution_target,
         }
         optional_values = {
             "negative_prompt": negative_prompt,
@@ -201,6 +207,7 @@ def generate_image_custom_workflow(
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> str:
     """
     Trigger image generation using a custom ComfyUI workflow JSON string.
@@ -249,6 +256,7 @@ def generate_image_custom_workflow(
         body = {
             "workflow": wf_obj,
             "prompt": final_prompt,
+            "execution_target": execution_target,
         }
         if checkpoint:
             body["checkpoint"] = checkpoint
@@ -338,6 +346,7 @@ def generate_video_custom_workflow(
     diffusion_model: str | None = None,
     text_encoder: str | None = None,
     vae: str | None = None,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> str:
     """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, optionally inject gallery-relative image/first_frame/last_frame/video_ref inputs, then poll get_generation_status."""
     try:
@@ -346,6 +355,7 @@ def generate_video_custom_workflow(
         body: dict[str, object] = {
             "workflow": wf_obj,
             "prompt": prompt,
+            "execution_target": execution_target,
         }
         optional_values = {
             "checkpoint": checkpoint,

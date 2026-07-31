@@ -6,6 +6,8 @@ import bot.views as views
 from bot.views import (
     DrawModal,
     FixedVideoModal,
+    PresetView,
+    ProfileSelect,
     build_preset_options,
     build_profile_options,
     send_draw_modal,
@@ -37,6 +39,7 @@ def test_draw_modal_prefills_composed_positive_and_negative_prompts():
         profile=None,
         positive_default="preset positive",
         negative_default="preset negative",
+        execution_target="worker",
     )
     labels = [child.label for child in modal.children]
     assert len(labels) == 5
@@ -47,6 +50,20 @@ def test_draw_modal_prefills_composed_positive_and_negative_prompts():
     assert any("寬" in label for label in labels)
     assert any("高" in label for label in labels)
     assert any("張數" in label for label in labels)
+    assert modal.execution_target == "worker"
+
+
+async def test_draw_modal_preserves_worker_target_to_backend_submit():
+    api = SimpleNamespace(compose_and_submit=AsyncMock(return_value="worker-job"))
+    modal = DrawModal(api, "p", "portrait", "positive", "negative", "worker")
+    interaction = SimpleNamespace(
+        response=SimpleNamespace(defer=AsyncMock(), send_message=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock()),
+    )
+
+    await modal.on_submit(interaction)
+
+    assert api.compose_and_submit.await_args.kwargs["execution_target"] == "worker"
 
 
 async def test_send_draw_modal_fails_before_discord_hook_timeout(monkeypatch):
@@ -71,9 +88,29 @@ async def test_send_draw_modal_fails_before_discord_hook_timeout(monkeypatch):
     assert "逾時" in response.send_message.await_args.args[0]
 
 
+async def test_draw_selection_chain_preserves_worker_target_into_modal():
+    api = SimpleNamespace(get_prompt_defaults=AsyncMock(return_value=("pos", "neg")))
+    view = PresetView(
+        api, [{"id": "p", "name": "Preset", "profiles": ["portrait"]}], "worker"
+    )
+    preset_select = view.children[0]
+    assert preset_select._execution_target == "worker"
+
+    profile_select = ProfileSelect(api, "p", ["portrait"], "worker")
+    assert profile_select._execution_target == "worker"
+
+    response = SimpleNamespace(send_message=AsyncMock(), send_modal=AsyncMock())
+    await send_draw_modal(
+        SimpleNamespace(response=response), api, "p", "portrait", "worker"
+    )
+    assert response.send_modal.await_args.args[0].execution_target == "worker"
+
+
 def test_fixed_video_modal_exposes_all_editable_options_with_short_animation_defaults():
     image = SimpleNamespace(filename="person.png")
-    modal = FixedVideoModal(api=None, mode="animegen", image=image)
+    modal = FixedVideoModal(
+        api=None, mode="animegen", image=image, width=1024, height=1024
+    )
 
     labels = [child.label for child in modal.children]
     assert len(labels) == 5
@@ -95,7 +132,10 @@ async def test_fixed_video_modal_submits_animegen_after_validation():
         content_type="image/png",
         read=AsyncMock(return_value=b"png-bytes"),
     )
-    modal = FixedVideoModal(api=api, mode="animegen", image=image)
+    modal = FixedVideoModal(
+        api=api, mode="animegen", image=image, width=1024, height=1024,
+        execution_target="worker",
+    )
     modal.prompt._value = "gentle bob and smile"
     modal.negative_prompt._value = "camera shake"
     modal.total_seconds._value = "3"
@@ -115,6 +155,9 @@ async def test_fixed_video_modal_submits_animegen_after_validation():
     assert kwargs["total_seconds"] == 3.0
     assert kwargs["source_frames"] == 49
     assert kwargs["film_target_frames"] == 97
+    assert kwargs["width"] == 1024
+    assert kwargs["height"] == 1024
+    assert kwargs["execution_target"] == "worker"
     assert "video-job" in interaction.followup.send.await_args.args[0]
 
 
@@ -135,6 +178,7 @@ async def test_fixed_video_modal_submits_wan_reference_and_driver():
         mode="wan22_animate",
         image=image,
         driver_video=driver,
+        execution_target="worker",
     )
     modal.prompt._value = "follow the driver's gentle motion"
     modal.negative_prompt._value = ""
@@ -156,6 +200,7 @@ async def test_fixed_video_modal_submits_wan_reference_and_driver():
     assert kwargs["driver_video"] == ("driver.mp4", b"video-bytes", "video/mp4")
     assert kwargs["negative_prompt"] is None
     assert kwargs["film_target_frames"] == 161
+    assert kwargs["execution_target"] == "worker"
     assert "wan-job" in interaction.followup.send.await_args.args[0]
 
 
@@ -166,7 +211,9 @@ async def test_fixed_video_modal_rejects_invalid_frame_count_before_reading_atta
         content_type="image/png",
         read=AsyncMock(return_value=b"png-bytes"),
     )
-    modal = FixedVideoModal(api=api, mode="animegen", image=image)
+    modal = FixedVideoModal(
+        api=api, mode="animegen", image=image, width=1024, height=1024
+    )
     modal.prompt._value = "gentle motion"
     modal.total_seconds._value = "3"
     modal.source_frames._value = "50"

@@ -9,7 +9,7 @@ the backend HTTP API; the MCP surface keeps only the decision-and-train loop.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 import httpx
@@ -525,6 +525,7 @@ def lora_train_smoke_test(
     text_encoder: str | None = None,
     vae: str | None = None,
     checkpoint: str | None = None,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> dict[str, Any]:
     """Run a backend smoke test for a completed, registered LoRA job.
 
@@ -540,6 +541,7 @@ def lora_train_smoke_test(
             "text_encoder": text_encoder,
             "vae": vae,
             "checkpoint": checkpoint,
+            "execution_target": execution_target,
         }
     )
     try:

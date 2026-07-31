@@ -300,7 +300,7 @@ async def test_saved_style_preset_workflow(
         graph = load_saved_workflow(
             _workflow_provider(provider), preset_id, body.profile
         )
-        job_id = submit_saved_workflow(graph)
+        job_id = submit_saved_workflow(graph, execution_target=body.execution_target)
     except StylePresetWorkflowError as exc:
         raise _workflow_http_error(exc) from exc
     except QueueFullError as exc:

@@ -123,6 +123,8 @@ def test_recording_failure_marks_failed_not_dropped() -> None:
     assert st["recording_error"] == {
         "code": "recording_failed",
         "message": "disk full",
+        "stage": "artifact_recording",
+        "exception_type": "RuntimeError",
     }
 
 

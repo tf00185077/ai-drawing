@@ -2174,6 +2174,7 @@ def smoke_test_job(job_id: str, body: LoraSmokeTestRequest) -> dict:
         "lora": registered_lora,
         "steps": 12,
         "cfg": 7.0,
+        "execution_target": body.execution_target,
     }
     # Build a generation request matching the trained model family. Anima is a
     # diffusion-model family (separate diffusion model / text encoder / VAE) and

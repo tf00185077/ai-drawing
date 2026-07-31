@@ -347,7 +347,7 @@ def test_saved_workflow_retest_returns_job_and_polling_instruction() -> None:
     }
     mock_client.post.assert_called_once_with(
         "style-presets/creator-a/workflow/test",
-        json={"profile": "portrait"},
+        json={"execution_target": "local", "profile": "portrait"},
     )
 
 

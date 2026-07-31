@@ -42,6 +42,7 @@ async def test_generate_image_exposes_multi_lora_schema() -> None:
     """generate_image keeps ordered multi-LoRA fields visible to agents."""
     registered = {tool.name: tool for tool in await mcp.list_tools()}
     properties = registered["generate_image"].inputSchema["properties"]
+    assert properties["execution_target"]["enum"] == ["local", "worker"]
     for field in ("lora", "lora_strength", "loras"):
         assert field in properties
 

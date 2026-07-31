@@ -20,7 +20,7 @@ def test_animegen_multipart_stages_opaque_file_and_queues_fixed_graph(client, tm
     ) as submit:
         response = client.post(
             "/api/generate/video/animegen-i2v",
-            data={"prompt": "wave", "total_seconds": "5", "source_frames": "81", "film_target_frames": "321"},
+            data={"prompt": "wave", "width": "1024", "height": "1024", "total_seconds": "5", "source_frames": "81", "film_target_frames": "321"},
             files={"image": ("../../person.png", _png(), "image/png")},
         )
     assert response.status_code == 201
@@ -32,6 +32,20 @@ def test_animegen_multipart_stages_opaque_file_and_queues_fixed_graph(client, tm
     assert params["server_owned_verbatim"] is True
     assert params["film_postprocess"] == {"target_frames": 321, "total_seconds": 5.0}
     assert params["workflow"]["93"]["inputs"]["text"] == "wave"
+    assert params["workflow"]["98"]["inputs"]["width"] == 1024
+    assert params["workflow"]["98"]["inputs"]["height"] == 1024
+
+
+def test_animegen_multipart_rejects_dimensions_not_divisible_by_16(client, tmp_path: Path) -> None:
+    with patch("app.api.generate.get_settings", return_value=SimpleNamespace(video_staging_dir=str(tmp_path))):
+        response = client.post(
+            "/api/generate/video/animegen-i2v",
+            data={"prompt": "wave", "width": "1000", "height": "1024", "total_seconds": "5", "source_frames": "81", "film_target_frames": "321"},
+            files={"image": ("person.png", _png(), "image/png")},
+        )
+    assert response.status_code == 422
+    assert "multiple" in response.json()["detail"]
+    assert not list(tmp_path.glob("*"))
 
 
 def test_wan_multipart_stages_reference_and_driver_and_rejects_spoofed_content(client, tmp_path: Path) -> None:

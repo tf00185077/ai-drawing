@@ -1,0 +1,20 @@
+{
+  "protocol_version": 1,
+  "worker_version": "0.2.0",
+  "python": "3.12",
+  "uv": "0.11.29",
+  "comfyui_repository": "https://github.com/Comfy-Org/ComfyUI.git",
+  "comfyui_version": "v0.28.0",
+  "pytorch_index": "https://download.pytorch.org/whl/cu130",
+  "listen_port": 8791,
+  "comfyui_port": 8188,
+  "cache_gb": 100,
+  "minimum_free_gb": 20,
+  "custom_nodes": [
+    {"name": "ComfyUI-GGUF", "repository": "https://github.com/city96/ComfyUI-GGUF.git", "revision": "6ea2651e7df66d7585f6ffee804b20e92fb38b8a"},
+    {"name": "comfyui_controlnet_aux", "repository": "https://github.com/Fannovel16/comfyui_controlnet_aux.git", "revision": "e8b689a513c3e6b63edc44066560ca5919c0576e"},
+    {"name": "ComfyUI-VideoHelperSuite", "repository": "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git", "revision": "4ee72c065db22c9d96c2427954dc69e7b908444b"},
+    {"name": "ComfyUI-KJNodes", "repository": "https://github.com/kijai/ComfyUI-KJNodes.git", "revision": "4d46ac107c33ed8a3d181b8776ede66498583380"},
+    {"name": "ComfyUI-WanVideoWrapper", "repository": "https://github.com/kijai/ComfyUI-WanVideoWrapper.git", "revision": "088128b224242e110d3906c6750e9a3a348a659b"}
+  ]
+}

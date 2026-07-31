@@ -77,6 +77,7 @@ from app.api import (
     style_presets,
     system,
     workflow_catalog,
+    workers,
 )
 
 app.include_router(generate.router)
@@ -92,6 +93,7 @@ app.include_router(style_presets.router)
 app.include_router(comfyui.router)
 app.include_router(workflow_catalog.router)
 app.include_router(system.router)
+app.include_router(workers.router)
 
 # 圖庫靜態檔案
 _gallery_path = Path(get_settings().gallery_dir)

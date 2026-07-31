@@ -104,13 +104,21 @@ def test_queue_film_failure_reports_terminal_failure_and_leaves_no_artifact(tmp_
     }}}
     comfy.fetch_image.return_value = b"raw video"
 
-    with patch("app.services.film_postprocess.interpolate_video_exact", side_effect=RuntimeError("FILM crashed")):
+    with patch(
+        "app.services.film_postprocess.interpolate_video_exact",
+        side_effect=AssertionError(),
+    ):
         q._check_running_complete(comfy)
 
     status = q.get_job_status("film-failure")
     assert status["status"] == "failed"
-    assert "FILM crashed" in status["error"]
-    assert status["recording_error"]["code"] == "recording_failed"
+    assert status["error"] == "film_interpolation failed (AssertionError)"
+    assert status["recording_error"] == {
+        "code": "recording_failed",
+        "message": "film_interpolation failed (AssertionError)",
+        "stage": "film_interpolation",
+        "exception_type": "AssertionError",
+    }
     assert not staged.exists()
     with sessions() as db:
         assert db.query(GeneratedArtifact).count() == 0

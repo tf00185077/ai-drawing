@@ -4,7 +4,8 @@
  * 對應 docs/api-contract.md 模組 1
  */
 import { useCallback, useEffect, useState } from "react";
-import type { GenerateRequest, GenerateResponse, QueueStatusResponse } from "../types/api";
+import ExecutionTargetSelect from "../components/ExecutionTargetSelect";
+import type { ExecutionTarget, GenerateRequest, GenerateResponse, QueueStatusResponse } from "../types/api";
 
 const API = "/api";
 
@@ -19,6 +20,7 @@ export default function Generate() {
   const [seed, setSeed] = useState<string>("");
   const [steps, setSteps] = useState<string>(String(DEFAULT_STEPS));
   const [cfg, setCfg] = useState<string>(String(DEFAULT_CFG));
+  const [executionTarget, setExecutionTarget] = useState<ExecutionTarget>("local");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export default function Generate() {
     try {
       const body: GenerateRequest = {
         prompt: promptTrimmed,
+        execution_target: executionTarget,
       };
       if (checkpoint.trim()) body.checkpoint = checkpoint.trim();
       if (lora.trim()) body.lora = lora.trim();
@@ -92,7 +95,7 @@ export default function Generate() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [prompt, checkpoint, lora, negativePrompt, seed, steps, cfg, fetchQueue]);
+  }, [prompt, checkpoint, lora, negativePrompt, seed, steps, cfg, executionTarget, fetchQueue]);
 
   const clearLastResult = useCallback(() => {
     setLastResult(null);
@@ -155,6 +158,8 @@ export default function Generate() {
             placeholder={String(DEFAULT_CFG)}
           />
         </div>
+
+        <ExecutionTargetSelect value={executionTarget} onChange={setExecutionTarget} />
 
         {error && (
           <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm">

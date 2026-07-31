@@ -56,6 +56,7 @@ class GenerateRequest(BaseModel):
     scheduler: str | None = None  # e.g. normal, karras, exponential
     lora_strength: float | None = Field(default=None, ge=0.0, le=2.0)
     denoise: float | None = Field(default=None, ge=0.0, le=1.0)
+    execution_target: Literal["local", "worker"] = "local"
 
     @model_validator(mode="after")
     def validate_seed_controls(self) -> "GenerateRequest":
@@ -140,6 +141,7 @@ class GenerateCustomRequest(BaseModel):
     scheduler: str | None = None
     lora_strength: float | None = Field(default=None, ge=0.0, le=2.0)
     denoise: float | None = Field(default=None, ge=0.0, le=1.0)
+    execution_target: Literal["local", "worker"] = "local"
     image: str | None = Field(
         default=None,
         description="主體參考圖路徑（img2img），相對於 gallery_dir。會先上傳至 ComfyUI 再替換第一個 LoadImage。與 image_pose 搭配用於 img2img_lora_pose workflow",
@@ -207,6 +209,7 @@ class FixedVideoContract(BaseModel):
     total_seconds: float = Field(..., ge=1.0, le=20.0)
     source_frames: int = Field(..., ge=17, le=321)
     film_target_frames: int = Field(..., ge=17, le=1921)
+    execution_target: Literal["local", "worker"] = "local"
 
     @model_validator(mode="after")
     def validate_frame_contract(self) -> "FixedVideoContract":
@@ -237,6 +240,7 @@ class GenerateWanKeyframesVideoRequest(BaseModel):
     steps: int = Field(default=4, ge=1, le=150)
     cfg: float = Field(default=1.0, ge=0.0, le=30.0)
     seed: int | None = Field(default=None, ge=0)
+    execution_target: Literal["local", "worker"] = "local"
     filename_prefix: str = Field(
         default="video/wan_keyframes",
         min_length=1,

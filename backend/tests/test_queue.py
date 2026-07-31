@@ -385,9 +385,9 @@ class _FakeComfy:
         self.submitted_prompt = prompt
         return "prompt-123"
 
-    def upload_image(self, path):
+    def upload_image(self, path, **kwargs):
         self.uploaded_paths.append(path)
-        return {"name": path.name, "subfolder": ""}
+        return {"name": path.name, "subfolder": kwargs.get("subfolder", "")}
 
 
 def _settings_for_checkpoint_dir(tmp_path):
@@ -651,3 +651,43 @@ def test_process_pending_rejects_gallery_escaping_video_ref_path(tmp_path) -> No
     assert status["status"] == "failed"
     assert "Unsafe gallery path" in status["error"]
     assert fake_comfy.submitted_prompt is None
+
+
+def test_process_pending_uploads_declared_workflow_inputs_and_rewrites_nodes(tmp_path) -> None:
+    input_root = tmp_path / "input"
+    input_root.mkdir()
+    image = input_root / "task" / "frame.png"
+    audio = input_root / "task" / "silent.wav"
+    image.parent.mkdir()
+    image.write_bytes(b"image")
+    audio.write_bytes(b"audio")
+    workflow = {
+        "110": {"class_type": "LoadImage", "inputs": {"image": "old.png"}},
+        "119": {"class_type": "LoadAudio", "inputs": {"audio": "old.wav"}},
+    }
+    fake_comfy = _FakeComfy()
+    submit_custom({
+        "workflow": workflow,
+        "prompt": "x",
+        "workflow_input_files": [
+            {"node_id": "110", "input_name": "image", "path": str(image)},
+            {"node_id": "119", "input_name": "audio", "path": str(audio)},
+        ],
+        "execution_target": "worker",
+    })
+    settings = SimpleNamespace(
+        comfyui_checkpoints_dir=str(tmp_path),
+        lora_default_checkpoint="",
+        lora_sdxl=False,
+        gallery_dir=str(tmp_path / "gallery"),
+        comfyui_input_dir=str(input_root),
+        video_staging_dir=str(tmp_path / "staging"),
+        controlnet_default_pose_image="",
+    )
+
+    with patch("app.core.queue.get_settings", return_value=settings):
+        _process_pending(fake_comfy)
+
+    assert fake_comfy.uploaded_paths == [image, audio]
+    assert fake_comfy.submitted_prompt["110"]["inputs"]["image"] == "ai-drawing-inputs/frame.png"
+    assert fake_comfy.submitted_prompt["119"]["inputs"]["audio"] == "ai-drawing-inputs/silent.wav"

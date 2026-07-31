@@ -6,6 +6,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.execution import ExecutionTarget
+
 
 class GalleryItem(BaseModel):
     """單張圖片記錄，對應 GeneratedImage"""
@@ -48,7 +50,7 @@ class ImageDetail(GalleryItem):
 class RerunRequest(BaseModel):
     """POST /api/gallery/{id}/rerun 的 Request Body（可選參數）"""
 
-    pass
+    execution_target: ExecutionTarget = "local"
 
 
 class RerunResponse(BaseModel):

@@ -73,6 +73,10 @@ style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->
 
+### ComfyUI 執行目標
+
+所有會排入產品級 ComfyUI 工作的工具都公開 `execution_target: local|worker`，省略時明確轉送 `local`：`generate_image`、`generate_image_custom_workflow`、`generate_video_custom_workflow`、`generate_video_wan_keyframes`、`civitai_generate_like`、`gallery_rerun`、`test_saved_style_preset_workflow`、`lora_train_smoke_test`。`worker` 表示已配對的 Windows NVIDIA Worker；Worker 配對、能力、資源或執行失敗時不會回退本機。重跑與測試工具以本次呼叫值為準，不沿用歷史工作的目標。
+
 ### 連線檢查
 
 | Tool | 說明 |
@@ -83,7 +87,7 @@ style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除
 
 | Tool | 說明 |
 |------|------|
-| `generate_image` | 主要生圖入口；支援 character、style 語意（如「初音」「動漫」）與完整參數（checkpoint、lora、seed、steps、cfg、寬高、sampler、scheduler、lora_strength、denoise、batch_size 1–8、diffusion_model / text_encoder / vae）；可直接餵入 `compose_style_preset` 產出的 `generation` payload，或用 `match_workflow_template` 命中的模板 id |
+| `generate_image` | 主要生圖入口；支援 character、style 語意與完整參數；`execution_target=local|worker` 可逐次選擇 Mac 或已配對 NVIDIA Worker，Worker失敗不會回退 |
 | `generate_image_custom_workflow` | 使用自訂 workflow 生圖（自組為主路徑）；支援 `image`（img2img 主體）/`image_pose`（ControlNet 姿勢）/`mask`（inpaint）；成功後可 `save_workflow_template` 晉升 |
 | `generate_video_custom_workflow` | 使用呼叫端提供的完整 ComfyUI video workflow JSON 送出影片 job；可選 `image` / `first_frame` / `last_frame` / `video_ref`，完成後用 `artifacts[]` + `get_gallery_artifact` 取影片 |
 | `list_workflow_templates` | 列出可用 workflow 模板名稱（default、default_lora 等） |

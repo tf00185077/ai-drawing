@@ -5,6 +5,8 @@
 
 // ---- 生圖 ----
 
+export type ExecutionTarget = "local" | "worker";
+
 export interface GenerateRequest {
   checkpoint?: string;
   lora?: string;
@@ -13,6 +15,7 @@ export interface GenerateRequest {
   seed?: number;
   steps?: number;
   cfg?: number;
+  execution_target: ExecutionTarget;
 }
 
 export interface GenerateResponse {

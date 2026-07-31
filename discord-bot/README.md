@@ -20,19 +20,20 @@ python -m bot.main
 
 ## 指令
 
-- `/draw` — 選 preset（有 profile 再選 profile）→ 填 prompt/寬/高/張數 → 回 job id
-- `/animegen_i2v` — 先選一張起始圖片，再在彈窗填寫動作 Prompt、負面 Prompt、秒數、原始幀數與 FILM 目標幀數
-- `/wan22_animate` — 先選角色參考圖與必要的 driver 影片，再在彈窗填寫其餘影片設定
+- `/draw` — 選執行位置與 preset（有 profile 再選 profile）→ 填 prompt/寬/高/張數 → 回 job id
+- `/animegen_i2v` — 選執行位置、起始圖片與輸出寬高，再在彈窗填寫動作 Prompt、負面 Prompt、秒數、原始幀數與 FILM 目標幀數
+- `/wan22_animate` — 選執行位置、角色參考圖與必要的 driver 影片，再在彈窗填寫其餘影片設定
 - `/result id:<job_id>` — 反查圖片或影片工作；完成後貼回所有 Backend 已持久化的結果
 
 ### 固定影片互動流程
 
 | 指令第一步 | 彈窗第二步 |
 |------|------|
-| `/animegen_i2v image:<起始圖片>` | 動作 Prompt、可選負面 Prompt、`total_seconds`、`source_frames`、`film_target_frames` |
+| `/animegen_i2v image:<起始圖片> width:<輸出寬度> height:<輸出高度>` | 動作 Prompt、可選負面 Prompt、`total_seconds`、`source_frames`、`film_target_frames` |
 | `/wan22_animate reference_image:<角色圖> driver_video:<driver影片>` | 動作 Prompt、可選負面 Prompt、`total_seconds`、`source_frames`、`film_target_frames` |
 
 - Discord Modal 不提供可靠的附件上傳元件，因此圖片／driver 在 slash command 第一步選取；其餘可輸入選項集中在下一步彈窗。
+- 三個生成指令的「執行位置」皆提供 `Mac（本機）`（wire value `local`）與 `Windows（Worker）`（wire value `worker`）；省略時預設使用 Mac 本機。選擇會保留至後續 preset/profile/modal，並送往 Backend。
 - 彈窗預設為 3 秒、49 原始幀、FILM 97 最終幀，使用者可自行修改。
 - `source_frames` 是模型原始生成的**總幀數**，必須介於 17–321 並符合 `4n+1`（例如 17、49、65、81）；`film_target_frames` 介於原始幀數與 1921。
 - `total_seconds` 是**首幀到末幀的時間跨度**，不是 MP4 容器 duration。原始與 FILM 輸出 FPS 分別為 `(source_frames-1)/total_seconds` 與 `(film_target_frames-1)/total_seconds`。
@@ -58,7 +59,7 @@ cd discord-bot && python -m pytest -v
 
 1. 啟 backend：`cd ../backend && uvicorn app.main:app --reload`
 2. 啟 bot：`python -m bot.main`，確認 console 印出 commands synced
-3. Discord 打 `/draw` → 下拉出現 12 個 preset → 選一個 → （有 profile 則選）→ 填 prompt/寬高/張數 → 送出取得 job id
+3. Discord 打 `/draw` → 選 Mac 或 Windows 執行位置 → 下拉出現 preset → 選一個 → （有 profile 則選）→ 填 prompt/寬高/張數 → 送出取得 job id
 4. 等數十秒後 `/result id:<job_id>` → 應貼回張數對應的圖
 
 ## 已知限制

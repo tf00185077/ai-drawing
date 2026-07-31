@@ -5,6 +5,7 @@ Corresponds to: GET /api/gallery/, GET /api/gallery/{id}, POST /api/gallery/{id}
 """
 import json
 import os
+from typing import Literal
 
 from mcp_server.config import get_mcp_settings
 from mcp_server.server import _get_client, mcp
@@ -125,11 +126,17 @@ def get_gallery_artifact(artifact_id: int) -> str:
 
 
 @mcp.tool()
-def gallery_rerun(image_id: int) -> str:
+def gallery_rerun(
+    image_id: int,
+    execution_target: Literal["local", "worker"] = "local",
+) -> str:
     """One-click re-run: reload the image parameters and generate again, returns job_id."""
     try:
         client = _get_client()
-        resp = client.post(f"gallery/{image_id}/rerun")
+        resp = client.post(
+            f"gallery/{image_id}/rerun",
+            json={"execution_target": execution_target},
+        )
         job_id = resp.get("job_id", "unknown")
         return f"已加入生圖佇列: job_id={job_id}"
     except Exception as e:

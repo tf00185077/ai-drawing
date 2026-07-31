@@ -43,6 +43,7 @@ class CivitaiRecipeVariantGenerateRequest(_StrictModel):
     runtime_capabilities: RuntimeCapabilitiesPayload
     runtime_provenance: RuntimeProvenance
     input_bindings: dict[str, CivitaiRecipeVariantInputBinding] = Field(default_factory=dict)
+    execution_target: Literal["local", "worker"] = "local"
 
     @model_validator(mode="after")
     def validate_derivation_and_runtime_identity(self) -> "CivitaiRecipeVariantGenerateRequest":

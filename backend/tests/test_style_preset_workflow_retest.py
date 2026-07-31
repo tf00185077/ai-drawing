@@ -318,7 +318,7 @@ def test_retest_route_queues_server_owned_saved_graph_verbatim(
         "job_id": "saved-workflow-job",
         "status": "queued",
     }
-    submit.assert_called_once_with(saved_graph)
+    submit.assert_called_once_with(saved_graph, execution_target="local")
 
 
 def test_retest_route_missing_saved_graph_is_repairable(retest_client) -> None:

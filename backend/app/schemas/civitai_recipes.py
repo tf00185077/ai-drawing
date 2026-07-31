@@ -170,6 +170,7 @@ class CivitaiRecipeRunRequest(_StrictModel):
     build: dict[str, Any]
     runtime_provenance: dict[str, Any]
     queue_params: dict[str, Any] = Field(default_factory=dict)
+    execution_target: Literal["local", "worker"] = "local"
 
 
 class _StrictResourceModel(_StrictModel):
