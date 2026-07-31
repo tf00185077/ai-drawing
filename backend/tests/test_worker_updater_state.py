@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from worker.windows.updater.state import (
+    ActiveUpdateRequest,
     InvalidUpdateTransition,
     StateStoreError,
     UpdateAlreadyRunning,
@@ -138,6 +139,7 @@ def test_public_state_maps_unknown_error_codes_to_update_failed(tmp_path: Path) 
     store.fail("TOKEN_SECRET", "safe private diagnostic")
 
     assert store.read_public() == {"state": "failed_before_activation", "error_code": "UPDATE_FAILED"}
+    assert json.loads(store.private_path.read_text(encoding="utf-8"))["error_code"] == "UPDATE_FAILED"
 
 
 def test_each_state_write_is_atomic_and_leaves_no_temporary_file(tmp_path: Path) -> None:
@@ -148,3 +150,89 @@ def test_each_state_write_is_atomic_and_leaves_no_temporary_file(tmp_path: Path)
     assert json.loads(store.private_path.read_text(encoding="utf-8"))["state"] == "fetching"
     assert json.loads(store.public_path.read_text(encoding="utf-8")) == {"state": "fetching"}
     assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_read_active_request_returns_a_locked_typed_snapshot(tmp_path: Path) -> None:
+    """Returning raw private JSON or omitting the current state must make this test fail."""
+    store = UpdateStateStore(tmp_path)
+    store.queue("request-1", "a" * 40)
+    store.transition("fetching")
+
+    assert store.read_active_request() == ActiveUpdateRequest(
+        request_id="request-1",
+        target_commit="a" * 40,
+        state="fetching",
+    )
+
+
+def test_terminal_failure_records_rollback_code_and_redacts_private_message(tmp_path: Path) -> None:
+    """Losing the rolled-back code or persisting an exception token must make this test fail."""
+    store = UpdateStateStore(tmp_path)
+    store.queue("request-1", "a" * 40)
+    for state in ("fetching", "staging", "installing", "validating", "activating", "restarting"):
+        store.transition(state)
+
+    store.terminal_failure(
+        "rolled_back",
+        "ACTIVATION_FAILED_ROLLED_BACK",
+        "https://alice:password@example.test Bearer very-secret TOKEN=also-secret failed",
+    )
+
+    private = json.loads(store.private_path.read_text(encoding="utf-8"))
+    assert private["state"] == "rolled_back"
+    assert private["error_code"] == "ACTIVATION_FAILED_ROLLED_BACK"
+    assert "alice" not in private["error_message"]
+    assert "very-secret" not in private["error_message"]
+    assert "also-secret" not in private["error_message"]
+    assert store.read_public() == {
+        "state": "rolled_back",
+        "error_code": "ACTIVATION_FAILED_ROLLED_BACK",
+    }
+
+
+def test_claim_queued_request_validates_fixed_request_shape_and_queues_it(tmp_path: Path) -> None:
+    """Letting the CLI consume an untyped request dictionary must make this test fail."""
+    store = UpdateStateStore(tmp_path / "state")
+    request_path = tmp_path / "state" / "update-request.json"
+    request_path.parent.mkdir(parents=True)
+    request_path.write_text(
+        json.dumps(
+            {
+                "request_id": "request-1",
+                "target_commit": "a" * 40,
+                "timestamp": "2026-08-01T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert store.claim_queued_request(request_path) == ActiveUpdateRequest(
+        request_id="request-1", target_commit="a" * 40, state="queued"
+    )
+
+
+@pytest.mark.parametrize(
+    "request_payload",
+    [
+        {"request_id": "request-1", "target_commit": "a" * 40},
+        {
+            "request_id": "request-1",
+            "target_commit": "a" * 40,
+            "timestamp": "now",
+            "command": "whoami",
+        },
+        {"request_id": "", "target_commit": "a" * 40, "timestamp": "now"},
+        {"request_id": "request-1", "target_commit": "HEAD", "timestamp": "now"},
+    ],
+)
+def test_claim_queued_request_rejects_missing_extra_or_invalid_fields(
+    tmp_path: Path, request_payload: dict[str, str]
+) -> None:
+    """Accepting a path/command selector or malformed metadata must make this test fail."""
+    store = UpdateStateStore(tmp_path)
+    request_path = tmp_path / "update-request.json"
+    request_path.parent.mkdir(parents=True, exist_ok=True)
+    request_path.write_text(json.dumps(request_payload), encoding="utf-8")
+
+    with pytest.raises(StateStoreError):
+        store.claim_queued_request(request_path)
