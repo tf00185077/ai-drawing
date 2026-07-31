@@ -132,8 +132,11 @@ class ApiClient:
         )
         generation = {
             **generation,
+            "seed_mode": "random",
+            "use_workflow_defaults": False,
             "batch_seed_mode": "independent",
         }
+        generation.pop("seed", None)
         return await self.submit_generate(generation)
 
     async def collect_job_result(self, job_id: str) -> dict:
