@@ -1,0 +1,23 @@
+{
+  "1": {"class_type": "LoadVideo", "inputs": {"file": "placeholder.mp4"}},
+  "2": {"class_type": "GetVideoComponents", "inputs": {"video": ["1", 0]}},
+  "3": {"class_type": "DWPreprocessor", "inputs": {"image": ["2", 0], "detect_hand": "disable", "detect_body": "disable", "detect_face": "enable", "resolution": 512, "bbox_detector": "yolox_l.onnx", "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt", "scale_stick_for_xinsr_cn": "disable"}},
+  "4": {"class_type": "DWPreprocessor", "inputs": {"image": ["2", 0], "detect_hand": "enable", "detect_body": "enable", "detect_face": "disable", "resolution": 512, "bbox_detector": "yolox_l.onnx", "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt", "scale_stick_for_xinsr_cn": "disable"}},
+  "5": {"class_type": "LoadImage", "inputs": {"image": "placeholder.png"}},
+  "6": {"class_type": "CLIPVisionLoader", "inputs": {"clip_name": "clip_vision_h.safetensors"}},
+  "7": {"class_type": "CLIPVisionEncode", "inputs": {"clip_vision": ["6", 0], "image": ["5", 0], "crop": "none"}},
+  "8": {"class_type": "CLIPLoader", "inputs": {"clip_name": "umt5_xxl_fp16.safetensors", "type": "wan", "device": "default"}},
+  "9": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["8", 0], "text": "positive"}},
+  "10": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["8", 0], "text": "negative"}},
+  "11": {"class_type": "VAELoader", "inputs": {"vae_name": "wan_2.1_vae.safetensors"}},
+  "12": {"class_type": "UnetLoaderGGUF", "inputs": {"unet_name": "Wan2.2-Animate-14B-Q4_K_M.gguf"}},
+  "13": {"class_type": "LoraLoaderModelOnly", "inputs": {"model": ["12", 0], "lora_name": "lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors", "strength_model": 1.0}},
+  "14": {"class_type": "ModelSamplingSD3", "inputs": {"model": ["13", 0], "shift": 8.0}},
+  "15": {"class_type": "WanAnimateToVideo", "inputs": {"positive": ["9", 0], "negative": ["10", 0], "vae": ["11", 0], "width": 480, "height": 720, "length": 81, "batch_size": 1, "continue_motion_max_frames": 5, "video_frame_offset": 0, "clip_vision_output": ["7", 0], "reference_image": ["5", 0], "face_video": ["3", 0], "pose_video": ["4", 0]}},
+  "16": {"class_type": "KSampler", "inputs": {"model": ["14", 0], "positive": ["15", 0], "negative": ["15", 1], "latent_image": ["15", 2], "seed": 7302032, "steps": 6, "cfg": 1.0, "sampler_name": "euler", "scheduler": "simple", "denoise": 1.0}},
+  "17": {"class_type": "TrimVideoLatent", "inputs": {"samples": ["16", 0], "trim_amount": ["15", 3]}},
+  "18": {"class_type": "VAEDecode", "inputs": {"samples": ["17", 0], "vae": ["11", 0]}},
+  "19": {"class_type": "ImageFromBatch", "inputs": {"image": ["18", 0], "batch_index": 0, "length": 81}},
+  "20": {"class_type": "CreateVideo", "inputs": {"images": ["19", 0], "fps": 16.0}},
+  "21": {"class_type": "SaveVideo", "inputs": {"video": ["20", 0], "filename_prefix": "video/discord_wan22_animate", "format": "auto", "codec": "auto"}}
+}
