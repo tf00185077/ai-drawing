@@ -1,6 +1,27 @@
 {
   "presets": [
     {
+      "id": "anima-shattered-dreams-detailer-candidate",
+      "name": "[Anima] Shattered Dreams + Detailer Style (Candidate)",
+      "chinese_name": null,
+      "profiles": [],
+      "note_path": "style_presets/human/anima-shattered-dreams-detailer-candidate.md",
+      "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+      "checkpoint": null,
+      "lora": null,
+      "loras": [
+        {
+          "name": "ShatteredDreams.safetensors",
+          "strength_model": 0.5
+        },
+        {
+          "name": "Detailer-AnimeBooster.safetensors",
+          "strength_model": 0.5
+        }
+      ],
+      "diffusion_model": "minijma_1.safetensors"
+    },
+    {
       "id": "asagi-floral-pastel-anima",
       "name": "[Anima] Toosaka Asagi Floral Pastel",
       "chinese_name": "[Anima] 淺蔥花境粉彩",
@@ -107,7 +128,7 @@
     {
       "id": "niji-daylight-2d-anime-anima",
       "name": "[Anima] Niji Daylight 2D Anime",
-      "chinese_name": "[Anima] 白天日系手繪2D Niji",
+      "chinese_name": null,
       "profiles": [
         "daylight-campus-2d",
         "neutral-daylight-2d",
