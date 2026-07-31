@@ -21,7 +21,24 @@ TRANSITIONS = {
 }
 TERMINAL_STATES = {"ready", "rejected", "failed_before_activation", "rolled_back", "recovery_required"}
 _COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}\Z")
-PUBLIC_ERROR_CODES = frozenset({"RUNTIME_INSTALL_FAILED", "UPDATE_FAILED"})
+PUBLIC_ERROR_CODES = frozenset(
+    {
+        "UPDATE_ALREADY_RUNNING",
+        "TARGET_COMMIT_INVALID",
+        "MAC_COMMIT_NOT_ORIGIN_MAIN",
+        "WINDOWS_REMOTE_HEAD_MISMATCH",
+        "UPDATER_CONFIG_INVALID",
+        "SOURCE_REPOSITORY_INVALID",
+        "INSUFFICIENT_DISK_SPACE",
+        "RUNTIME_INSTALL_FAILED",
+        "CUDA_VALIDATION_FAILED",
+        "COMFYUI_VALIDATION_FAILED",
+        "WORKER_CONTRACT_FAILED",
+        "ACTIVATION_FAILED_ROLLED_BACK",
+        "RECOVERY_REQUIRED",
+        "UPDATE_FAILED",
+    }
+)
 _VALID_STATES = frozenset({"idle", *TRANSITIONS, *TERMINAL_STATES})
 
 
