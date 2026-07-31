@@ -27,7 +27,7 @@ def test_build_bot_registers_commands():
     client, tree, api = build_bot(config)
     guild = discord.Object(id=123)
     names = {c.name for c in tree.get_commands(guild=guild)}
-    assert names == {"draw", "result"}
+    assert names == {"draw", "animegen_i2v", "wan22_animate", "result"}
     assert api._base_url == "http://test"
 
 
@@ -187,3 +187,45 @@ def test_mixed_batch_warning_is_bounded_deterministic_and_aggregated() -> None:
     assert "失敗 4/4" in first
     assert "第 1 張" in first
     assert "第 4 張" in first
+
+
+async def test_animegen_command_defers_before_download_and_submits_validated_attachment(tmp_path):
+    config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
+                    delivery_ledger_path=tmp_path / "deliveries.json")
+    _client, tree, api = build_bot(config)
+    command = tree.get_command("animegen_i2v", guild=discord.Object(id=123))
+    events = []
+    response = SimpleNamespace(defer=AsyncMock(side_effect=lambda **kwargs: events.append("defer")))
+    attachment = SimpleNamespace(filename="person.png", content_type="image/png", size=12,
+        read=AsyncMock(side_effect=lambda: events.append("read") or b"png-bytes"))
+    api.submit_animegen_i2v = AsyncMock(return_value="video-job")
+    interaction = SimpleNamespace(response=response, followup=SimpleNamespace(send=AsyncMock()))
+
+    await command.callback(interaction, attachment, "wave", 5.0, 81, 321, None)
+
+    assert events == ["defer", "read"]
+    response.defer.assert_awaited_once_with(thinking=True, ephemeral=True)
+    api.submit_animegen_i2v.assert_awaited_once()
+    assert api.submit_animegen_i2v.await_args.kwargs["film_target_frames"] == 321
+    assert "video-job" in interaction.followup.send.await_args.args[0]
+
+
+async def test_wan_command_rejects_oversize_driver_without_reading_it(tmp_path):
+    config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
+                    delivery_ledger_path=tmp_path / "deliveries.json")
+    _client, tree, api = build_bot(config)
+    command = tree.get_command("wan22_animate", guild=discord.Object(id=123))
+    reference = SimpleNamespace(filename="ref.png", content_type="image/png", size=10, read=AsyncMock())
+    driver = SimpleNamespace(filename="driver.mp4", content_type="video/mp4",
+                             size=100 * 1024 * 1024 + 1, read=AsyncMock())
+    api.submit_wan22_animate = AsyncMock()
+    interaction = SimpleNamespace(response=SimpleNamespace(defer=AsyncMock()),
+                                  followup=SimpleNamespace(send=AsyncMock()))
+
+    await command.callback(interaction, reference, driver, "move", 5.0, 81, 321, None)
+
+    interaction.response.defer.assert_awaited_once()
+    reference.read.assert_not_awaited()
+    driver.read.assert_not_awaited()
+    api.submit_wan22_animate.assert_not_awaited()
+    assert "大小" in interaction.followup.send.await_args.args[0]

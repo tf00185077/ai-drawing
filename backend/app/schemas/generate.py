@@ -199,6 +199,24 @@ class GenerateVideoCustomRequest(GenerateCustomRequest):
     )
 
 
+class FixedVideoContract(BaseModel):
+    """Shared multipart contract for backend-owned Discord video templates."""
+
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    negative_prompt: str | None = Field(default=None, max_length=2000)
+    total_seconds: float = Field(..., ge=1.0, le=20.0)
+    source_frames: int = Field(..., ge=17, le=321)
+    film_target_frames: int = Field(..., ge=17, le=1921)
+
+    @model_validator(mode="after")
+    def validate_frame_contract(self) -> "FixedVideoContract":
+        if (self.source_frames - 1) % 4:
+            raise ValueError("source_frames must be representable by Wan latent: 4n+1")
+        if self.film_target_frames < self.source_frames:
+            raise ValueError("film_target_frames must be >= source_frames")
+        return self
+
+
 class GenerateWanKeyframesVideoRequest(BaseModel):
     """POST /api/generate/video/wan-keyframes 的 Request Body."""
 

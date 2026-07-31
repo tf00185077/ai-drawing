@@ -64,6 +64,42 @@ class ApiClient:
         r = self._check(await self._client.post("/api/generate/", json=generation))
         return r.json()["job_id"]
 
+    async def submit_fixed_video(
+        self, endpoint: str, *, files: dict[str, tuple[str, bytes, str]], prompt: str,
+        negative_prompt: str | None, total_seconds: float, source_frames: int,
+        film_target_frames: int,
+    ) -> str:
+        data = {
+            "prompt": prompt,
+            "total_seconds": str(total_seconds),
+            "source_frames": str(source_frames),
+            "film_target_frames": str(film_target_frames),
+        }
+        if negative_prompt is not None:
+            data["negative_prompt"] = negative_prompt
+        response = self._check(await self._client.post(endpoint, data=data, files=files, timeout=120.0))
+        return response.json()["job_id"]
+
+    async def submit_animegen_i2v(self, *, image: tuple[str, bytes, str], prompt: str,
+                                  negative_prompt: str | None, total_seconds: float,
+                                  source_frames: int, film_target_frames: int) -> str:
+        return await self.submit_fixed_video(
+            "/api/generate/video/animegen-i2v", files={"image": image}, prompt=prompt,
+            negative_prompt=negative_prompt, total_seconds=total_seconds,
+            source_frames=source_frames, film_target_frames=film_target_frames,
+        )
+
+    async def submit_wan22_animate(self, *, reference_image: tuple[str, bytes, str],
+                                   driver_video: tuple[str, bytes, str], prompt: str,
+                                   negative_prompt: str | None, total_seconds: float,
+                                   source_frames: int, film_target_frames: int) -> str:
+        return await self.submit_fixed_video(
+            "/api/generate/video/wan22-animate",
+            files={"reference_image": reference_image, "driver_video": driver_video}, prompt=prompt,
+            negative_prompt=negative_prompt, total_seconds=total_seconds,
+            source_frames=source_frames, film_target_frames=film_target_frames,
+        )
+
     async def get_job(self, job_id: str) -> dict:
         r = self._check(await self._client.get(f"/api/generate/job/{job_id}"))
         return r.json()
@@ -123,8 +159,8 @@ class ApiClient:
                 "image_url": f"/gallery/{str(artifact['gallery_path']).lstrip('/')}",
             }
             for artifact in artifacts
-            if artifact.get("source_node_type") == "SaveImage"
-            and str(artifact.get("mime_type") or "").startswith("image/")
+            if artifact.get("source_node_type") in {"SaveImage", "SaveVideo"}
+            and str(artifact.get("mime_type") or "").split("/", 1)[0] in {"image", "video"}
             and artifact.get("gallery_path")
         ]
         # Legacy completed jobs may not expose artifact metadata. Only those
@@ -144,6 +180,7 @@ class ApiClient:
         return {
             "status": "completed",
             "images": images,
+            "artifacts": images,
             "urls": urls,
             "batch_total": job.get("batch_total"),
             "batch_completed": job.get("batch_completed"),
