@@ -54,6 +54,7 @@ def exclusive_request_lock(
     try:
         lock_file = None
         os_locked = False
+        body_error: BaseException | None = None
         try:
             try:
                 _require_before_deadline(deadline, clock)
@@ -70,15 +71,35 @@ def exclusive_request_lock(
                 raise
             except OSError:
                 raise RequestLockError("update request lock is unavailable") from None
-            yield
+            try:
+                yield
+            except BaseException as error:
+                body_error = error
+                raise
         finally:
             if lock_file is not None:
+                release_error: RequestLockError | None = None
                 try:
                     if os_locked:
-                        lock_file.seek(0)
-                        _unlock(lock_file)
+                        try:
+                            lock_file.seek(0)
+                            _unlock(lock_file)
+                        except OSError:
+                            release_error = RequestLockError(
+                                "update request lock is unavailable"
+                            )
                 finally:
-                    lock_file.close()
+                    try:
+                        lock_file.close()
+                    except OSError:
+                        if release_error is None:
+                            release_error = RequestLockError(
+                                "update request lock is unavailable"
+                            )
+                if release_error is not None:
+                    if body_error is None:
+                        raise release_error from None
+                    body_error.add_note("update request lock release failed")
     finally:
         thread_lock.release()
 

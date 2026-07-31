@@ -65,8 +65,14 @@ def _queue_update_locked(request_path: Path, status_path: Path, target_commit: s
                 return active_request_id
             raise UpdateAlreadyRunning
         if active_target == target_commit and isinstance(active_request_id, str):
-            _write_update_status_unlocked(status_path, "queued")
-            return active_request_id
+            if not _terminal_status_matches_request(
+                status_path,
+                state,
+                active_request_id,
+                active_target,
+            ):
+                _write_update_status_unlocked(status_path, "queued")
+                return active_request_id
 
     request_id = str(uuid.uuid4())
     atomic_write_json(
@@ -79,6 +85,25 @@ def _queue_update_locked(request_path: Path, status_path: Path, target_commit: s
     )
     _write_update_status_unlocked(status_path, "queued")
     return request_id
+
+
+def _terminal_status_matches_request(
+    status_path: Path,
+    state: str,
+    request_id: str,
+    target_commit: str,
+) -> bool:
+    private_path = status_path.with_name("update-state.private.json")
+    try:
+        private = json.loads(private_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return False
+    return bool(
+        isinstance(private, dict)
+        and private.get("state") == state
+        and private.get("request_id") == request_id
+        and private.get("target_commit") == target_commit
+    )
 
 
 def read_public_update_status(status_path: Path) -> dict[str, str]:

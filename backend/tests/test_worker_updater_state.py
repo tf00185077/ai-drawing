@@ -90,6 +90,34 @@ def _write_request(path: Path, request_id: str, target_commit: str) -> None:
     )
 
 
+def _finish_request(store: UpdateStateStore, state: str) -> None:
+    if state == "failed_before_activation":
+        store.transition("fetching")
+        store.terminal_failure(
+            "failed_before_activation",
+            "RUNTIME_INSTALL_FAILED",
+            "candidate install failed",
+        )
+        return
+    for next_state in (
+        "fetching",
+        "staging",
+        "installing",
+        "validating",
+        "activating",
+        "restarting",
+    ):
+        store.transition(next_state)
+    if state == "rolled_back":
+        store.terminal_failure(
+            "rolled_back",
+            "ACTIVATION_FAILED_ROLLED_BACK",
+            "previous release restored",
+        )
+        return
+    store.transition("ready")
+
+
 def test_os_request_lock_times_out_with_safe_typed_error(tmp_path: Path) -> None:
     request_path = tmp_path / "update-request.json"
     with _hold_request_file_lock(request_path):
@@ -150,6 +178,81 @@ def test_thread_request_lock_contention_uses_same_deadline(tmp_path: Path) -> No
     assert str(errors[0]) == "update request lock timed out"
 
 
+def test_request_lock_unlock_failure_after_success_is_safe_and_closes_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    released_files: list[Any] = []
+
+    def fail_unlock(lock_file: Any) -> None:
+        released_files.append(lock_file)
+        raise OSError("TOKEN=unlock-secret")
+
+    monkeypatch.setattr(request_lock, "_unlock", fail_unlock)
+
+    with pytest.raises(request_lock.RequestLockError) as raised:
+        with request_lock.exclusive_request_lock(request_path):
+            pass
+
+    assert str(raised.value) == "update request lock is unavailable"
+    assert "unlock-secret" not in str(raised.value)
+    assert raised.value.__cause__ is None
+    assert raised.value.__context__ is None
+    assert len(released_files) == 1
+    assert released_files[0].closed
+
+
+def test_request_lock_unlock_failure_preserves_body_exception_and_closes_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    released_files: list[Any] = []
+    primary = ValueError("primary failure")
+
+    def fail_unlock(lock_file: Any) -> None:
+        released_files.append(lock_file)
+        raise OSError("TOKEN=unlock-secret")
+
+    monkeypatch.setattr(request_lock, "_unlock", fail_unlock)
+
+    with pytest.raises(ValueError) as raised:
+        with request_lock.exclusive_request_lock(request_path):
+            raise primary
+
+    assert raised.value is primary
+    assert "unlock-secret" not in str(raised.value)
+    assert "unlock-secret" not in " ".join(getattr(raised.value, "__notes__", []))
+    assert raised.value.__context__ is None
+    assert len(released_files) == 1
+    assert released_files[0].closed
+
+
+@pytest.mark.parametrize(
+    "terminal_state",
+    ["failed_before_activation", "rolled_back", "ready"],
+)
+def test_same_target_after_completed_terminal_request_gets_new_request_id(
+    tmp_path: Path, terminal_state: str
+) -> None:
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    target_commit = "a" * 40
+    completed_request_id = "completed-request"
+    store = UpdateStateStore(tmp_path)
+    store.queue(completed_request_id, target_commit)
+    _write_request(request_path, completed_request_id, target_commit)
+    _finish_request(store, terminal_state)
+
+    retried_request_id = queue_update(request_path, status_path, target_commit)
+
+    assert retried_request_id != completed_request_id
+    assert (
+        json.loads(request_path.read_text(encoding="utf-8"))["request_id"]
+        == retried_request_id
+    )
+    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
+
+
 def test_queue_replaces_request_before_publishing_queued_status(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -199,8 +302,10 @@ def test_failed_status_publish_is_retryable_without_losing_or_replacing_request(
 ) -> None:
     request_path = tmp_path / "update-request.json"
     status_path = tmp_path / "update-status.json"
+    store = UpdateStateStore(tmp_path)
+    store.queue("old-request", "0" * 40)
+    _finish_request(store, "ready")
     _write_request(request_path, "old-request", "0" * 40)
-    worker_atomic_write_json(status_path, {"state": "ready"})
 
     def fail_status(_path: Path, _state: str) -> None:
         raise OSError("simulated status publish failure")
@@ -223,8 +328,10 @@ def test_different_target_replaces_only_unaccepted_request_after_publish_failure
 ) -> None:
     request_path = tmp_path / "update-request.json"
     status_path = tmp_path / "update-status.json"
+    store = UpdateStateStore(tmp_path)
+    store.queue("old-request", "0" * 40)
+    _finish_request(store, "ready")
     _write_request(request_path, "old-request", "0" * 40)
-    worker_atomic_write_json(status_path, {"state": "ready"})
     real_publish = worker_update_contract._write_update_status_unlocked
     monkeypatch.setattr(
         worker_update_contract,

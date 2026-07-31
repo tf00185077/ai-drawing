@@ -14,6 +14,7 @@ from typing import Any, Mapping, Sequence
 
 import pytest
 
+import worker.windows.updater.request_lock as request_lock
 from worker.windows.updater.git_source import UpdateError
 from worker.windows.updater.cli import (
     EXIT_FAILED_BEFORE_ACTIVATION,
@@ -522,6 +523,32 @@ def test_updater_cli_maps_claim_lock_timeout_to_safe_typed_failure(tmp_path: Pat
         raise RequestLockTimeout()
 
     services.claim_request = time_out  # type: ignore[method-assign]
+
+    assert main([], services=services) == EXIT_CONFIG_INVALID
+    assert services.calls == []
+
+
+def test_updater_cli_maps_claim_unlock_failure_to_safe_typed_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    services = FakeUpdaterServices(tmp_path)
+    request_path = services.state.root / "update-request.json"
+    request_path.write_text(
+        json.dumps(
+            {
+                "request_id": "request-1",
+                "target_commit": "a" * 40,
+                "timestamp": "2026-08-01T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+    services.claim_request = lambda: services.state.claim_queued_request(request_path)  # type: ignore[method-assign]
+
+    def fail_unlock(_lock_file):
+        raise OSError("TOKEN=unlock-secret")
+
+    monkeypatch.setattr(request_lock, "_unlock", fail_unlock)
 
     assert main([], services=services) == EXIT_CONFIG_INVALID
     assert services.calls == []
