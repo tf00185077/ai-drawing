@@ -35,13 +35,107 @@ except ModuleNotFoundError:  # Supports direct execution from worker/windows.
         write_update_status,
     )
 
-ROOT = Path(os.environ.get("AI_DRAWING_WORKER_ROOT", r"C:\AI-Drawing-Worker")).resolve()
-CONFIG_PATH = ROOT / "config" / "worker.json"
-PARTIAL_ROOT = ROOT / "cache" / ".partial"
-SOURCE_COMMIT_PATH = ROOT / "source-commit.txt"
-UPDATE_REQUEST_PATH = ROOT / "state" / "update-request.json"
-UPDATE_STATUS_PATH = ROOT / "state" / "update-status.json"
-COMFYUI_ROOT = ROOT / "runtime" / "ComfyUI"
+def _runtime_path(
+    name: str,
+    default: Path,
+    *,
+    kind: str,
+    contained_by: Path | None = None,
+) -> Path:
+    raw = os.environ.get(name, str(default))
+    path = Path(raw)
+    if raw != raw.strip() or not path.is_absolute():
+        raise ValueError(f"{name} must be an absolute canonical path")
+    _reject_reparse_components(name, path)
+    try:
+        canonical = path.resolve(strict=True)
+    except OSError as error:
+        raise ValueError(f"{name} does not exist") from error
+    if kind == "directory" and not canonical.is_dir():
+        raise ValueError(f"{name} must name a directory")
+    if kind == "file" and not canonical.is_file():
+        raise ValueError(f"{name} must name a file")
+    if contained_by is not None:
+        try:
+            canonical.relative_to(contained_by)
+        except ValueError as error:
+            raise ValueError(f"{name} escapes its managed root") from error
+    return canonical
+
+
+def _reject_reparse_components(name: str, path: Path) -> None:
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current /= part
+        try:
+            attributes = getattr(current.lstat(), "st_file_attributes", 0)
+        except OSError as error:
+            raise ValueError(f"{name} does not exist") from error
+        if current.is_symlink() or attributes & 0x400:
+            raise ValueError(f"{name} must not contain a reparse point")
+
+
+def _relative_parts(name: str, path: Path, root: Path) -> tuple[str, ...]:
+    try:
+        return tuple(part.casefold() for part in path.relative_to(root).parts)
+    except ValueError as error:
+        raise ValueError(f"{name} escapes its managed root") from error
+
+
+ROOT = _runtime_path(
+    "AI_DRAWING_WORKER_ROOT",
+    Path(r"C:\AI-Drawing-Worker"),
+    kind="directory",
+)
+RELEASE_ROOT = _runtime_path(
+    "AI_DRAWING_WORKER_RELEASE_ROOT",
+    ROOT,
+    kind="directory",
+    contained_by=ROOT,
+)
+if RELEASE_ROOT != ROOT:
+    release_parts = _relative_parts("AI_DRAWING_WORKER_RELEASE_ROOT", RELEASE_ROOT, ROOT)
+    if len(release_parts) < 2 or release_parts[0] != "releases":
+        raise ValueError("AI_DRAWING_WORKER_RELEASE_ROOT must be inside WORKER_ROOT/releases")
+CONFIG_PATH = _runtime_path(
+    "AI_DRAWING_WORKER_CONFIG_PATH",
+    ROOT / "config" / "worker.json",
+    kind="file",
+    contained_by=ROOT,
+)
+if CONFIG_PATH.name.casefold() != "worker.json":
+    raise ValueError("AI_DRAWING_WORKER_CONFIG_PATH must name worker.json")
+UPDATE_STATE_ROOT = _runtime_path(
+    "AI_DRAWING_WORKER_UPDATE_STATE_ROOT",
+    ROOT,
+    kind="directory",
+    contained_by=ROOT,
+)
+if UPDATE_STATE_ROOT != ROOT:
+    state_parts = _relative_parts(
+        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT", UPDATE_STATE_ROOT, ROOT
+    )
+    in_staging = bool(state_parts) and state_parts[0] == "staging"
+    in_owned_config = state_parts[:2] == ("config", "update-owned")
+    if not in_staging and not in_owned_config:
+        raise ValueError(
+            "AI_DRAWING_WORKER_UPDATE_STATE_ROOT must be inside staging or config/update-owned"
+        )
+COMFYUI_ROOT = _runtime_path(
+    "AI_DRAWING_COMFYUI_ROOT",
+    ROOT / "runtime" / "ComfyUI",
+    kind="directory",
+    contained_by=RELEASE_ROOT,
+)
+expected_comfy_root = (
+    ROOT / "runtime" / "ComfyUI" if RELEASE_ROOT == ROOT else RELEASE_ROOT / "ComfyUI"
+).resolve(strict=False)
+if COMFYUI_ROOT != expected_comfy_root:
+    raise ValueError("AI_DRAWING_COMFYUI_ROOT must name the release ComfyUI directory")
+PARTIAL_ROOT = UPDATE_STATE_ROOT / "cache" / ".partial"
+SOURCE_COMMIT_PATH = RELEASE_ROOT / "source-commit.txt"
+UPDATE_REQUEST_PATH = UPDATE_STATE_ROOT / "state" / "update-request.json"
+UPDATE_STATUS_PATH = UPDATE_STATE_ROOT / "state" / "update-status.json"
 
 
 def _comfyui_url() -> str:

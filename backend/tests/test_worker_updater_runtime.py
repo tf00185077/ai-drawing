@@ -3,18 +3,21 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Mapping, Sequence
 
 import pytest
 
+import worker.windows.updater.runtime as runtime_module
 from worker.windows.updater.git_source import UpdateError
 from worker.windows.updater.runtime import (
     Activator,
     HealthEvidence,
     RuntimeBuilder,
     RuntimeLayout,
+    RuntimeValidationError,
     RuntimeValidator,
     WindowsJunctionOps,
 )
@@ -135,17 +138,23 @@ class FakeCommands:
 @dataclass
 class FakeProcess:
     timeout_once: bool = False
+    fail_second_wait: bool = False
+    fail_terminate: bool = False
     terminated: bool = False
     killed: bool = False
     waits: list[float] = field(default_factory=list)
 
     def terminate(self) -> None:
         self.terminated = True
+        if self.fail_terminate:
+            raise RuntimeError("terminate adapter failed")
 
     def wait(self, *, timeout: float) -> int:
         self.waits.append(timeout)
         if self.timeout_once and not self.killed:
             raise TimeoutError("still running")
+        if self.fail_second_wait and self.killed:
+            raise OSError("process survived kill")
         return 0
 
     def kill(self) -> None:
@@ -445,6 +454,9 @@ def test_stage_recovers_only_the_same_commit_interrupted_staging_directory(tmp_p
 
 def _staged_release(tmp_path: Path, commit: str = COMMIT_A) -> tuple[RuntimeLayout, Path]:
     layout = RuntimeLayout.create(tmp_path / "worker")
+    (layout.config / "worker.json").write_text(
+        json.dumps({"token": "file-only-secret"}), encoding="utf-8"
+    )
     release = RuntimeBuilder(layout, FakeCommands(), FakeJunctionOps()).stage(
         _exported_source(tmp_path / "export", commit), commit
     )
@@ -475,7 +487,14 @@ def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_
     assert worker_cwd == release / "worker" / "windows"
     assert comfy_timeout > 0 and worker_timeout > 0
     assert comfy_env is not None and comfy_env["PYTHONUTF8"] == "1"
-    assert worker_env is not None and worker_env["AI_DRAWING_WORKER_ROOT"] == str(release)
+    assert worker_env is not None and worker_env["AI_DRAWING_WORKER_ROOT"] == str(layout.root)
+    assert worker_env["AI_DRAWING_WORKER_RELEASE_ROOT"] == str(release)
+    assert worker_env["AI_DRAWING_WORKER_CONFIG_PATH"] == str(layout.config / "worker.json")
+    state_root = Path(worker_env["AI_DRAWING_WORKER_UPDATE_STATE_ROOT"])
+    assert state_root.is_dir()
+    assert state_root.is_relative_to(layout.staging)
+    assert worker_env["AI_DRAWING_COMFYUI_ROOT"] == str(release / "ComfyUI")
+    assert all("file-only-secret" not in value for value in worker_env.values())
     assert len(health.staged_calls) == 1
     worker_url, comfy_url, expected_commit = health.staged_calls[0]
     assert worker_url.startswith("http://127.0.0.1:")
@@ -484,6 +503,54 @@ def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_
     assert worker_env["AI_DRAWING_COMFYUI_URL"] == comfy_url
     assert expected_commit == COMMIT_A
     assert all(process.terminated for process in commands.processes)
+
+
+def test_validator_holds_each_reserved_port_until_its_process_launch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Releasing the Worker reservation before Comfy starts must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    reservations = []
+    for _ in range(2):
+        reservation = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+        if exclusive is not None:
+            reservation.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        reservation.bind(("127.0.0.1", 0))
+        reservation.listen(1)
+        reservations.append(reservation)
+    comfy_port = reservations[0].getsockname()[1]
+    worker_port = reservations[1].getsockname()[1]
+    monkeypatch.setattr(runtime_module, "_reserve_loopback_ports", lambda _count: tuple(reservations))
+    commands = FakeCommands()
+    original_start = commands.start
+    launches = 0
+
+    def can_bind(port: int) -> bool:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            probe.bind(("127.0.0.1", port))
+        except OSError:
+            return False
+        finally:
+            probe.close()
+        return True
+
+    def observe_start(*args, **kwargs):
+        nonlocal launches
+        if launches == 0:
+            assert can_bind(comfy_port)
+            assert not can_bind(worker_port)
+        else:
+            assert can_bind(worker_port)
+        launches += 1
+        return original_start(*args, **kwargs)
+
+    commands.start = observe_start  # type: ignore[method-assign]
+
+    RuntimeValidator(layout, commands, FakeHealth()).validate(COMMIT_A)
+
+    assert launches == 2
 
 
 def test_validator_always_terminates_staging_processes_after_cuda_failure(tmp_path: Path) -> None:
@@ -557,6 +624,75 @@ def test_validator_kills_a_staging_process_that_ignores_terminate(tmp_path: Path
     assert stubborn.killed
     assert len(stubborn.waits) == 2
     assert all(timeout > 0 for timeout in stubborn.waits)
+
+
+def test_validator_reports_cleanup_failure_after_attempting_every_process(tmp_path: Path) -> None:
+    """Swallowing kill/second-wait failure and returning success must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    commands = FakeCommands()
+    stubborn = FakeProcess(timeout_once=True, fail_second_wait=True)
+
+    def start_with_stubborn(*args, **kwargs):
+        process = stubborn if not commands.processes else FakeProcess()
+        commands.processes.append(process)
+        return process
+
+    commands.start = start_with_stubborn  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeValidationError) as raised:
+        RuntimeValidator(layout, commands, FakeHealth()).validate(COMMIT_A)
+
+    assert raised.value.code == "CLEANUP_FAILED"
+    assert all(process.terminated for process in commands.processes)
+    assert stubborn.killed
+    assert len(stubborn.waits) == 2
+
+
+def test_validator_preserves_primary_health_code_and_chains_cleanup_failure(tmp_path: Path) -> None:
+    """Replacing the health failure or hiding cleanup failure must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    commands = FakeCommands()
+    stubborn = FakeProcess(timeout_once=True, fail_second_wait=True)
+
+    def start_with_stubborn(*args, **kwargs):
+        process = stubborn if not commands.processes else FakeProcess()
+        commands.processes.append(process)
+        return process
+
+    commands.start = start_with_stubborn  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeValidationError) as raised:
+        RuntimeValidator(layout, commands, FakeHealth("CUDA_VALIDATION_FAILED")).validate(COMMIT_A)
+
+    assert raised.value.code == "CUDA_VALIDATION_FAILED"
+    assert raised.value.cleanup_code == "CLEANUP_FAILED"
+    assert isinstance(raised.value.__cause__, RuntimeValidationError)
+    assert raised.value.__cause__.code == "CLEANUP_FAILED"
+    assert all(process.terminated for process in commands.processes)
+
+
+def test_validator_continues_cleaning_other_processes_after_unexpected_adapter_error(
+    tmp_path: Path,
+) -> None:
+    """Stopping cleanup on a non-OSError adapter failure must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    commands = FakeCommands()
+    normal = FakeProcess()
+    failing = FakeProcess(fail_terminate=True)
+
+    def start_in_order(*args, **kwargs):
+        process = normal if not commands.processes else failing
+        commands.processes.append(process)
+        return process
+
+    commands.start = start_in_order  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeValidationError) as raised:
+        RuntimeValidator(layout, commands, FakeHealth()).validate(COMMIT_A)
+
+    assert raised.value.code == "CLEANUP_FAILED"
+    assert normal.terminated
+    assert failing.terminated
 
 
 def _activation_layout(
@@ -634,6 +770,27 @@ def test_activation_recovers_stale_switch_transaction_before_retry(
     result = Activator(layout, health, junctions).activate(COMMIT_B)
 
     assert result.status == "rolled_back"
+    assert junctions.read_target(layout.current) == release_a
+    assert not next_link.exists()
+    assert not switch_link.exists()
+
+
+def test_activation_recovers_stale_previous_before_rejecting_invalid_candidate(
+    tmp_path: Path,
+) -> None:
+    """Validating the requested release before stale recovery must make this test fail."""
+    layout, junctions, release_a, release_b = _activation_layout(tmp_path)
+    next_link = layout.root / "current.next"
+    switch_link = layout.root / "current.previous-switch"
+    junctions.create(next_link, release_b)
+    junctions.rename(layout.current, switch_link)
+    junctions.rename(next_link, layout.current)
+    (release_b / ".managed-release.json").unlink()
+
+    with pytest.raises(UpdateError) as raised:
+        Activator(layout, FakeHealth(), junctions).activate(COMMIT_B)
+
+    assert raised.value.code == "RUNTIME_INSTALL_FAILED"
     assert junctions.read_target(layout.current) == release_a
     assert not next_link.exists()
     assert not switch_link.exists()

@@ -78,6 +78,24 @@ class HealthEvidence:
         return cls(True, "NVIDIA GPU", True, True, True, True, True, source_commit)
 
 
+class RuntimeValidationError(UpdateError):
+    """A staged validation failed, optionally together with process cleanup."""
+
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        cleanup_code: str | None = None,
+        primary_exception: BaseException | None = None,
+        cleanup_failures: Sequence[BaseException] = (),
+    ) -> None:
+        self.cleanup_code = cleanup_code
+        self.primary_exception = primary_exception
+        self.cleanup_failures = tuple(cleanup_failures)
+        super().__init__(code, message)
+
+
 class HealthProbe(Protocol):
     """Validate the complete authenticated ComfyUI/Worker health contract."""
 
@@ -449,16 +467,39 @@ class RuntimeValidator:
         if recorded_commit != commit:
             raise UpdateError("WORKER_CONTRACT_FAILED", "staged release commit does not match target")
 
+        config_path = self.layout.config / "worker.json"
+        try:
+            canonical_config = _require_contained(
+                config_path, self.layout.root, "WORKER_CONTRACT_FAILED"
+            )
+            if not canonical_config.is_file():
+                raise OSError("worker config is not a file")
+            comfy_root = _require_contained(
+                canonical_release / "ComfyUI", canonical_release, "COMFYUI_VALIDATION_FAILED"
+            )
+            state_root = self.layout.staging / "validation-state" / commit
+            if state_root.exists():
+                if state_root.is_symlink() or _is_reparse_point(state_root):
+                    raise OSError("validation state is a reparse point")
+                shutil.rmtree(state_root)
+            state_root.mkdir(parents=True)
+            canonical_state = _require_contained(
+                state_root, self.layout.staging, "WORKER_CONTRACT_FAILED"
+            )
+        except (OSError, ValueError) as error:
+            raise UpdateError(
+                "WORKER_CONTRACT_FAILED", "staged Worker roots could not be isolated"
+            ) from error
+
         reservations = _reserve_loopback_ports(2)
         comfy_port, worker_port = (reservation.getsockname()[1] for reservation in reservations)
         comfy_url = f"http://127.0.0.1:{comfy_port}"
         worker_url = f"http://127.0.0.1:{worker_port}"
         processes: list[ProcessHandle] = []
-        for reservation in reservations:
-            reservation.close()
+        primary: UpdateError | None = None
         try:
             python = canonical_release / ".venv" / "Scripts" / "python.exe"
-            comfy_root = canonical_release / "ComfyUI"
+            reservations[0].close()
             processes.append(
                 self._start(
                     (
@@ -475,6 +516,7 @@ class RuntimeValidator:
                 )
             )
             worker_root = canonical_release / "worker" / "windows"
+            reservations[1].close()
             processes.append(
                 self._start(
                     (
@@ -491,7 +533,11 @@ class RuntimeValidator:
                     ),
                     cwd=worker_root,
                     env={
-                        "AI_DRAWING_WORKER_ROOT": str(canonical_release),
+                        "AI_DRAWING_WORKER_ROOT": str(self.layout.root),
+                        "AI_DRAWING_WORKER_RELEASE_ROOT": str(canonical_release),
+                        "AI_DRAWING_WORKER_CONFIG_PATH": str(canonical_config),
+                        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": str(canonical_state),
+                        "AI_DRAWING_COMFYUI_ROOT": str(comfy_root),
                         "AI_DRAWING_COMFYUI_URL": comfy_url,
                         "PYTHONUTF8": "1",
                     },
@@ -500,13 +546,29 @@ class RuntimeValidator:
             )
             evidence = self.health.validate_staged(worker_url, comfy_url, commit)
             _require_complete_health(evidence, commit)
-        except UpdateError:
-            raise
+        except UpdateError as error:
+            primary = error
         except Exception as error:
-            raise UpdateError("WORKER_CONTRACT_FAILED", "staged runtime health validation failed") from error
-        finally:
-            for process in reversed(processes):
-                _terminate_process(process)
+            primary = RuntimeValidationError(
+                "WORKER_CONTRACT_FAILED",
+                "staged runtime health validation failed",
+                primary_exception=error,
+            )
+            primary.__cause__ = error
+        cleanup = _cleanup_staged_runtime(reservations, processes)
+        if cleanup is not None and primary is not None:
+            combined = RuntimeValidationError(
+                primary.code,
+                primary.message,
+                cleanup_code=cleanup.code,
+                primary_exception=primary,
+                cleanup_failures=cleanup.cleanup_failures,
+            )
+            raise combined from cleanup
+        if cleanup is not None:
+            raise cleanup
+        if primary is not None:
+            raise primary
         return canonical_release
 
     def _start(
@@ -553,12 +615,12 @@ class Activator:
 
     def activate(self, commit: str) -> ActivationResult:
         with _exclusive_path_lock(self.lock):
-            target = self._known_release(commit)
             try:
                 self._recover_interrupted_switch()
                 previous_target, previous_commit = self._current_release()
             except (OSError, UpdateError, ValueError):
                 return ActivationResult("recovery_required", "", None, "RECOVERY_REQUIRED")
+            target = self._known_release(commit)
             if previous_commit == commit:
                 try:
                     evidence = self.health.validate_production(
@@ -950,16 +1012,50 @@ def _reserve_loopback_ports(count: int) -> tuple[socket.socket, ...]:
     return tuple(reservations)
 
 
-def _terminate_process(process: ProcessHandle) -> None:
+def _cleanup_staged_runtime(
+    reservations: Sequence[socket.socket], processes: Sequence[ProcessHandle]
+) -> RuntimeValidationError | None:
+    failures: list[BaseException] = []
+    for reservation in reservations:
+        try:
+            reservation.close()
+        except Exception as error:
+            failures.append(error)
+    for process in reversed(processes):
+        failures.extend(_terminate_process(process))
+    if not failures:
+        return None
+    return RuntimeValidationError(
+        "CLEANUP_FAILED",
+        f"staged runtime cleanup failed in {len(failures)} operation(s)",
+        cleanup_failures=failures,
+    )
+
+
+def _terminate_process(process: ProcessHandle) -> list[BaseException]:
+    failures: list[BaseException] = []
     try:
         process.terminate()
+    except Exception as error:
+        failures.append(error)
+    needs_kill = False
+    try:
         process.wait(timeout=STOP_TIMEOUT)
-    except (OSError, TimeoutError):
+    except TimeoutError:
+        needs_kill = True
+    except Exception as error:
+        failures.append(error)
+        needs_kill = True
+    if needs_kill:
         try:
             process.kill()
+        except Exception as error:
+            failures.append(error)
+        try:
             process.wait(timeout=STOP_TIMEOUT)
-        except (OSError, TimeoutError):
-            pass
+        except Exception as error:
+            failures.append(error)
+    return failures
 
 
 def _required_safe_version(value: Mapping[str, Any], key: str) -> str:

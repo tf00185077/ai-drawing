@@ -47,3 +47,41 @@ DONE_WITH_CONCERNS
 - `runtime.py` is intentionally large because the plan requires the public protocols plus Layout/JunctionOps/Builder/Validator/Activator in one focused file. It remains separated into cohesive classes; splitting it would expand the Task 4 file map and can be considered after Task 5 integration.
 - Task 5 must provide the concrete `CommandRunner` and authenticated `HealthProbe` transport. The Task 4 contract requires `HealthEvidence`; a probe cannot report success without providing every required signal.
 - The focused run emits one pre-existing Pydantic v2 deprecation warning from `backend/app/config.py:54`; Task 4 does not modify that configuration class.
+
+---
+
+## Fix Round 1
+
+### RED
+
+- Added real-module Worker integration coverage for staged status, resource-plan, and preflight requests. The first run exposed production state leakage and showed that the staged validator still used the candidate release as the mutable Worker root.
+- Added strict environment-path tests for missing, relative, outside-root, wrong-namespace, wrong-filename, and reparse-point inputs. Five initial failures demonstrated that the Worker accepted unsafe release, config, state, and ComfyUI roots.
+- Added activation recovery coverage with an invalid requested release and a valid stale previous-switch. The regression left `current` on the stale candidate because the requested release was validated before recovery acquired the canonical current state.
+- Added a real loopback socket test around staged process starts. It demonstrated that both reservations were released before ComfyUI started, leaving the Worker port bindable during the first launch.
+- Added cleanup failure tests for terminate, wait, kill, and second-wait failures, including a non-`OSError` adapter mutation. The initial implementation swallowed cleanup failures and stopped cleanup early instead of returning typed evidence.
+
+### GREEN
+
+- Worker startup now treats `AI_DRAWING_WORKER_ROOT` as the mutable deployed root, with explicit release, config, update-state, and ComfyUI roots. Every root is absolute, canonical, existing, correctly typed, contained in its allowed namespace, and free of symlink/reparse components. Backward-compatible defaults remain available for the non-versioned layout.
+- Versioned releases must be below `releases/<commit>`, update state is limited to the Worker root or updater-owned state namespaces, config is the exact contained `worker.json`, and ComfyUI is the exact release-local directory. The staged validator passes those coherent roots and an isolated validation-state directory without exposing tokens in environment variables or logs.
+- The real imported Worker module now reports the staged commit, staged model plan, staged ComfyUI preflight endpoint, and isolated state while production state remains untouched.
+- Activation acquires the lock and recovers stale switch junctions before resolving or validating the requested target release.
+- Each reserved loopback socket stays open until immediately before its corresponding process launch; all unreleased reservations are closed in `finally`.
+- Cleanup attempts every staged process and every required terminate/wait/kill step. Cleanup-only failures raise `RuntimeValidationError` with `CLEANUP_FAILED`; combined failures preserve the primary code/message, attach the cleanup code and primary exception, and chain the cleanup exception without leaking raw adapter output.
+
+### Verification
+
+- Focused RED/GREEN runs exercised each review finding and the additional reparse/namespace and non-`OSError` cleanup mutations.
+- Final full focused suite: `py -3.11 -m pytest backend/tests/test_worker_runtime.py backend/tests/test_worker_updater_config.py backend/tests/test_worker_updater_state.py backend/tests/test_worker_updater_git.py backend/tests/test_worker_updater_runtime.py -q` -- **146 passed**.
+- `py -3.11 -m compileall -q worker\\windows\\updater worker\\windows\\worker.py` -- passed.
+- `git diff --check` -- passed.
+- The sole warning remains the pre-existing Pydantic v2 deprecation from `backend/app/config.py:54`; this fix round adds no warnings.
+
+### Commit
+
+- `fix(worker): harden staged runtime activation`
+
+### Remaining Integration Notes
+
+- Task 5's launcher must pass the resolved release directory rather than the mutable `current` junction because Worker startup intentionally rejects reparse components.
+- The concrete Task 5 runner/probe remains responsible for carrying the bounded command and authenticated `HealthEvidence` contracts into production.

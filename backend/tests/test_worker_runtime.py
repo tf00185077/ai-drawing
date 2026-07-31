@@ -23,24 +23,33 @@ def _load_worker():
     return module
 
 
-def _configured_worker(tmp_path, monkeypatch):
-    worker = _load_worker()
-    config = tmp_path / "config.json"
+def _set_worker_root_env(tmp_path: Path, monkeypatch) -> dict[str, Path]:
+    root = tmp_path / "deployed"
+    release = root
+    config = root / "config" / "worker.json"
+    state = root
+    comfy = release / "runtime" / "ComfyUI"
+    config.parent.mkdir(parents=True)
     config.write_text(
         json.dumps({"token": "secret", "cache_gb": 70, "minimum_free_gb": 0}),
         encoding="utf-8",
     )
-    roots = {
-        kind: tmp_path / kind
-        for kind in worker.MODEL_ROOTS
-    }
-    monkeypatch.setattr(worker, "ROOT", tmp_path)
-    monkeypatch.setattr(worker, "CONFIG_PATH", config)
-    monkeypatch.setattr(worker, "PARTIAL_ROOT", tmp_path / ".partial")
-    monkeypatch.setattr(worker, "MODEL_ROOTS", roots)
-    monkeypatch.setattr(worker, "SOURCE_COMMIT_PATH", tmp_path / "source-commit.txt", raising=False)
-    monkeypatch.setattr(worker, "UPDATE_REQUEST_PATH", tmp_path / "state" / "update-request.json", raising=False)
-    monkeypatch.setattr(worker, "UPDATE_STATUS_PATH", tmp_path / "state" / "update-status.json", raising=False)
+    (comfy / "models").mkdir(parents=True)
+    for name, value in {
+        "AI_DRAWING_WORKER_ROOT": root,
+        "AI_DRAWING_WORKER_RELEASE_ROOT": release,
+        "AI_DRAWING_WORKER_CONFIG_PATH": config,
+        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": state,
+        "AI_DRAWING_COMFYUI_ROOT": comfy,
+    }.items():
+        monkeypatch.setenv(name, str(value))
+    return {"root": root, "release": release, "config": config, "state": state, "comfy": comfy}
+
+
+def _configured_worker(tmp_path, monkeypatch):
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    worker = _load_worker()
+    assert worker.ROOT == paths["root"].resolve(strict=True)
     return worker, TestClient(worker.app)
 
 
@@ -63,9 +72,10 @@ def _auth() -> dict[str, str]:
     return {"Authorization": "Bearer secret"}
 
 
-def test_comfyui_url_defaults_to_the_exact_production_loopback(monkeypatch) -> None:
+def test_comfyui_url_defaults_to_the_exact_production_loopback(tmp_path, monkeypatch) -> None:
     """Changing the no-env production endpoint must make this test fail."""
     monkeypatch.delenv("AI_DRAWING_COMFYUI_URL", raising=False)
+    _set_worker_root_env(tmp_path, monkeypatch)
 
     worker = _load_worker()
 
@@ -132,11 +142,202 @@ def test_loopback_comfyui_override_is_used_by_status_preflight_and_proxy(
         "http://127.0.0.1:65536",
     ],
 )
-def test_invalid_comfyui_override_fails_worker_startup(monkeypatch, value: str) -> None:
+def test_invalid_comfyui_override_fails_worker_startup(tmp_path, monkeypatch, value: str) -> None:
     """Falling back after an unsafe staged endpoint must make this test fail."""
     monkeypatch.setenv("AI_DRAWING_COMFYUI_URL", value)
+    _set_worker_root_env(tmp_path, monkeypatch)
 
     with pytest.raises(ValueError, match="AI_DRAWING_COMFYUI_URL"):
+        _load_worker()
+
+
+def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Collapsing staged immutable and mutable roots must make this test fail."""
+    root = tmp_path / "deployed"
+    release = root / "releases" / ("a" * 40)
+    config = root / "config" / "worker.json"
+    state = root / "staging" / "validation-state"
+    comfy = release / "ComfyUI"
+    for directory in (release, config.parent, state, comfy / "models" / "loras"):
+        directory.mkdir(parents=True, exist_ok=True)
+    config.write_text(
+        json.dumps({"token": "staged-secret", "cache_gb": 70, "minimum_free_gb": 0}),
+        encoding="utf-8",
+    )
+    (release / "source-commit.txt").write_text("a" * 40, encoding="utf-8")
+    model = comfy / "models" / "loras" / "staged.safetensors"
+    model_bytes = b"staged-model"
+    model.write_bytes(model_bytes)
+    (root / "source-commit.txt").write_text("b" * 40, encoding="utf-8")
+    (root / "state").mkdir()
+    (root / "state" / "update-status.json").write_text(
+        json.dumps({"state": "recovery_required"}), encoding="utf-8"
+    )
+    (state / "state").mkdir()
+    (state / "state" / "update-status.json").write_text(
+        json.dumps({"state": "ready"}), encoding="utf-8"
+    )
+    comfy_url = "http://127.0.0.1:49152"
+    values = {
+        "AI_DRAWING_WORKER_ROOT": root,
+        "AI_DRAWING_WORKER_RELEASE_ROOT": release,
+        "AI_DRAWING_WORKER_CONFIG_PATH": config,
+        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": state,
+        "AI_DRAWING_COMFYUI_ROOT": comfy,
+        "AI_DRAWING_COMFYUI_URL": comfy_url,
+    }
+    for name, value in values.items():
+        monkeypatch.setenv(name, str(value))
+    worker = _load_worker()
+    client = TestClient(worker.app)
+    seen: list[str] = []
+
+    class Response:
+        def __init__(self, value):
+            self.value = value
+
+        def json(self):
+            return self.value
+
+        def raise_for_status(self):
+            return None
+
+    def get(url, **_kwargs):
+        seen.append(url)
+        if url.endswith("/system_stats"):
+            return Response({"devices": [{"name": "NVIDIA Test GPU"}]})
+        return Response({"ExampleNode": {}})
+
+    monkeypatch.setattr(worker.httpx, "get", get)
+    headers = {"Authorization": "Bearer staged-secret"}
+
+    status = client.get("/v1/worker/status", headers=headers)
+    plan = client.post(
+        "/v1/resources/plan",
+        headers=headers,
+        json={
+            "resources": [
+                {
+                    "kind": "loras",
+                    "name": model.name,
+                    "sha256": hashlib.sha256(model_bytes).hexdigest(),
+                    "size": len(model_bytes),
+                }
+            ]
+        },
+    )
+    preflight = client.post(
+        "/v1/workflows/preflight", headers=headers, json={"node_types": ["ExampleNode"]}
+    )
+
+    assert status.status_code == plan.status_code == preflight.status_code == 200
+    assert status.json()["source_commit"] == "a" * 40
+    assert status.json()["update_state"] == "ready"
+    assert plan.json() == {"missing": []}
+    assert preflight.json() == {"ready": True, "missing_node_types": []}
+    assert worker.ROOT == root.resolve(strict=True)
+    assert worker.RELEASE_ROOT == release.resolve(strict=True)
+    assert worker.CONFIG_PATH == config.resolve(strict=True)
+    assert worker.UPDATE_STATE_ROOT == state.resolve(strict=True)
+    assert worker.COMFYUI_ROOT == comfy.resolve(strict=True)
+    assert worker.MODEL_ROOTS["loras"] == comfy.resolve(strict=True) / "models" / "loras"
+    assert worker.PARTIAL_ROOT == state.resolve(strict=True) / "cache" / ".partial"
+    assert (state / "cache" / "verified").is_dir()
+    assert not (root / "cache" / "verified").exists()
+    assert seen == [f"{comfy_url}/system_stats", f"{comfy_url}/object_info"]
+
+
+@pytest.mark.parametrize(
+    "invalid_name",
+    [
+        "AI_DRAWING_WORKER_ROOT",
+        "AI_DRAWING_WORKER_RELEASE_ROOT",
+        "AI_DRAWING_WORKER_CONFIG_PATH",
+        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT",
+        "AI_DRAWING_COMFYUI_ROOT",
+    ],
+)
+def test_worker_rejects_missing_or_out_of_root_explicit_paths(
+    tmp_path: Path, monkeypatch, invalid_name: str
+) -> None:
+    """Accepting missing or escaping explicit runtime roots must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    if invalid_name == "AI_DRAWING_WORKER_ROOT":
+        invalid = tmp_path / "missing-root"
+    elif invalid_name == "AI_DRAWING_WORKER_CONFIG_PATH":
+        invalid = outside / "worker.json"
+        invalid.write_text('{"token":"outside"}', encoding="utf-8")
+    elif invalid_name == "AI_DRAWING_COMFYUI_ROOT":
+        invalid = outside
+    elif invalid_name == "AI_DRAWING_WORKER_RELEASE_ROOT":
+        invalid = outside
+    else:
+        invalid = outside
+    monkeypatch.setenv(invalid_name, str(invalid))
+
+    with pytest.raises(ValueError, match=invalid_name):
+        _load_worker()
+
+
+def test_worker_rejects_versioned_release_outside_releases_namespace(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Allowing a candidate under an arbitrary mutable subdirectory must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    root = paths["root"]
+    release = root / "operator-data" / ("a" * 40)
+    comfy = release / "ComfyUI"
+    comfy.mkdir(parents=True)
+    monkeypatch.setenv("AI_DRAWING_WORKER_RELEASE_ROOT", str(release))
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_ROOT", str(comfy))
+
+    with pytest.raises(ValueError, match="AI_DRAWING_WORKER_RELEASE_ROOT"):
+        _load_worker()
+
+
+def test_worker_rejects_update_state_inside_shared_models(tmp_path: Path, monkeypatch) -> None:
+    """Using model storage for request/cache state must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    shared_models = paths["root"] / "shared" / "models"
+    shared_models.mkdir(parents=True)
+    monkeypatch.setenv("AI_DRAWING_WORKER_UPDATE_STATE_ROOT", str(shared_models))
+
+    with pytest.raises(ValueError, match="AI_DRAWING_WORKER_UPDATE_STATE_ROOT"):
+        _load_worker()
+
+
+def test_worker_rejects_nested_candidate_comfy_root(tmp_path: Path, monkeypatch) -> None:
+    """Accepting a nested substitute for release/ComfyUI must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    release = paths["root"] / "releases" / ("a" * 40)
+    comfy = release / "nested" / "ComfyUI"
+    comfy.mkdir(parents=True)
+    monkeypatch.setenv("AI_DRAWING_WORKER_RELEASE_ROOT", str(release))
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_ROOT", str(comfy))
+
+    with pytest.raises(ValueError, match="AI_DRAWING_COMFYUI_ROOT"):
+        _load_worker()
+
+
+@pytest.mark.parametrize("reparse_part", ["parent", "leaf"])
+def test_worker_rejects_config_reparse_components(
+    tmp_path: Path, monkeypatch, reparse_part: str
+) -> None:
+    """Resolving through a config reparse point must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    reported = paths["config"].parent if reparse_part == "parent" else paths["config"]
+    original_is_symlink = Path.is_symlink
+
+    def is_symlink(path: Path) -> bool:
+        return path == reported or original_is_symlink(path)
+
+    monkeypatch.setattr(Path, "is_symlink", is_symlink)
+
+    with pytest.raises(ValueError, match="AI_DRAWING_WORKER_CONFIG_PATH"):
         _load_worker()
 
 
