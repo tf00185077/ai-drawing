@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -37,7 +38,151 @@ def _configured_worker(tmp_path, monkeypatch):
     monkeypatch.setattr(worker, "CONFIG_PATH", config)
     monkeypatch.setattr(worker, "PARTIAL_ROOT", tmp_path / ".partial")
     monkeypatch.setattr(worker, "MODEL_ROOTS", roots)
+    monkeypatch.setattr(worker, "SOURCE_COMMIT_PATH", tmp_path / "source-commit.txt", raising=False)
+    monkeypatch.setattr(worker, "UPDATE_REQUEST_PATH", tmp_path / "state" / "update-request.json", raising=False)
+    monkeypatch.setattr(worker, "UPDATE_STATUS_PATH", tmp_path / "state" / "update-status.json", raising=False)
     return worker, TestClient(worker.app)
+
+
+@pytest.fixture
+def worker_runtime(tmp_path, monkeypatch):
+    return _configured_worker(tmp_path, monkeypatch)
+
+
+@pytest.fixture
+def worker_module(worker_runtime):
+    return worker_runtime[0]
+
+
+@pytest.fixture
+def worker_client(worker_runtime):
+    return worker_runtime[1]
+
+
+def _auth() -> dict[str, str]:
+    return {"Authorization": "Bearer secret"}
+
+
+def test_status_advertises_release_and_update_capability(worker_client, worker_module):
+    worker_module.SOURCE_COMMIT_PATH.write_text("a" * 40, encoding="utf-8")
+
+    body = worker_client.get("/v1/worker/status", headers=_auth()).json()
+
+    assert body["protocol_version"] == 2
+    assert body["worker_version"] == "0.3.0"
+    assert body["source_commit"] == "a" * 40
+    assert body["update_capability"] == 1
+    assert body["update_state"] == "idle"
+
+
+@pytest.mark.parametrize("value", ["main", "abc", "g" * 40, "a" * 39])
+def test_update_rejects_non_full_hex_commit(worker_client, value):
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": value}
+    )
+
+    assert response.status_code == 422
+
+
+def test_update_queues_a_commit_and_persists_only_request_metadata(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    task_runs: list[list[str]] = []
+
+    def run(command, *, check, timeout):
+        task_runs.append(command)
+
+    monkeypatch.setattr(worker_module.subprocess, "run", run)
+    target = "b" * 40
+
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": target}
+    )
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "queued"
+    request = json.loads(worker_module.UPDATE_REQUEST_PATH.read_text(encoding="utf-8"))
+    assert set(request) == {"request_id", "target_commit", "timestamp"}
+    assert request["request_id"] == response.json()["request_id"]
+    assert request["target_commit"] == target
+    assert isinstance(request["timestamp"], str) and request["timestamp"]
+    assert task_runs == [["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"]]
+
+
+def test_update_reuses_an_active_request_for_the_same_target(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    task_runs: list[list[str]] = []
+    monkeypatch.setattr(
+        worker_module.subprocess,
+        "run",
+        lambda command, *, check, timeout: task_runs.append(command),
+    )
+    target = "c" * 40
+
+    first = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": target}
+    )
+    second = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": target}
+    )
+
+    assert first.status_code == second.status_code == 202
+    assert second.json()["request_id"] == first.json()["request_id"]
+    assert task_runs == [["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"]] * 2
+
+
+def test_update_rejects_different_target_while_an_update_is_active(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    monkeypatch.setattr(worker_module.subprocess, "run", lambda *args, **kwargs: None)
+    first = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "d" * 40}
+    )
+    second = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "e" * 40}
+    )
+
+    assert first.status_code == 202
+    assert second.status_code == 409
+    assert second.json()["detail"]["code"] == "update_already_running"
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "kwargs"),
+    [
+        ("post", "/v1/resources/plan", {"json": {"resources": []}}),
+        (
+            "put",
+            "/v1/resources/content",
+            {
+                "params": {
+                    "kind": "loras",
+                    "name": "style.safetensors",
+                    "sha256": "f" * 64,
+                    "size": 1,
+                    "offset": 0,
+                },
+                "content": b"x",
+                "headers": {"Content-Type": "application/octet-stream"},
+            },
+        ),
+        ("post", "/prompt", {"json": {"prompt": {}}}),
+    ],
+)
+def test_mutations_are_blocked_while_worker_is_updating(
+    worker_client, worker_module, method, path, kwargs
+) -> None:
+    worker_module.UPDATE_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    worker_module.UPDATE_STATUS_PATH.write_text(
+        json.dumps({"state": "applying"}), encoding="utf-8"
+    )
+
+    request_kwargs = {**kwargs, "headers": {**_auth(), **kwargs.get("headers", {})}}
+    response = getattr(worker_client, method)(path, **request_kwargs)
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "worker_updating"
 
 
 def test_worker_rejects_missing_token(tmp_path, monkeypatch) -> None:
