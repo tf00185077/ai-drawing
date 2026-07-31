@@ -1,0 +1,37 @@
+{
+  "id": "anima-shattered-dreams-detailer-candidate",
+  "name": "[Anima] Shattered Dreams + Detailer Style (Candidate)",
+  "chinese_name": null,
+  "base_prompt": "score_9, score_8_up, score_7_up, masterpiece, best quality, very aesthetic, cinematic lighting, warm colors, atmospheric perspective, storytelling, film still, dreamlike",
+  "negative_prompt": "worst quality, low quality, score_1, score_2, score_3,",
+  "template": "gen_txt2img_anima_lora_model_only_multi_lora",
+  "checkpoint": null,
+  "lora": null,
+  "lora_strength": null,
+  "loras": [
+    {
+      "name": "ShatteredDreams.safetensors",
+      "strength_model": 0.5
+    },
+    {
+      "name": "Detailer-AnimeBooster.safetensors",
+      "strength_model": 0.5
+    }
+  ],
+  "diffusion_model": "minijma_1.safetensors",
+  "text_encoder": "anima_baseV10_txt.safetensors",
+  "vae": "qwen_image_vae.safetensors",
+  "default_params": {
+    "seed": 3568278284,
+    "steps": 32,
+    "cfg": 5,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "denoise": 1,
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+  },
+  "profiles": {},
+  "note_path": "style_presets/human/anima-shattered-dreams-detailer-candidate.md"
+}
