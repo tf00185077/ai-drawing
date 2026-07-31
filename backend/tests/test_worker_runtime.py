@@ -84,6 +84,20 @@ def test_update_rejects_non_full_hex_commit(worker_client, value):
     assert response.status_code == 422
 
 
+@pytest.mark.parametrize("field", ["task", "command", "url", "branch", "path"])
+def test_update_rejects_extra_control_fields(
+    worker_client, worker_module, monkeypatch, field
+) -> None:
+    monkeypatch.setattr(worker_module.subprocess, "run", lambda *args, **kwargs: None)
+    response = worker_client.post(
+        "/v1/admin/update",
+        headers=_auth(),
+        json={"target_commit": "a" * 40, field: "untrusted-value"},
+    )
+
+    assert response.status_code == 422
+
+
 def test_update_queues_a_commit_and_persists_only_request_metadata(
     worker_client, worker_module, monkeypatch
 ) -> None:
@@ -107,6 +121,47 @@ def test_update_queues_a_commit_and_persists_only_request_metadata(
     assert request["target_commit"] == target
     assert isinstance(request["timestamp"], str) and request["timestamp"]
     assert task_runs == [["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"]]
+
+
+def test_queued_update_immediately_blocks_mutations(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    monkeypatch.setattr(worker_module.subprocess, "run", lambda *args, **kwargs: None)
+
+    queued = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "b" * 40}
+    )
+    status = worker_client.get("/v1/admin/update/status", headers=_auth())
+    mutation = worker_client.post(
+        "/v1/resources/plan", headers=_auth(), json={"resources": []}
+    )
+
+    assert queued.status_code == 202
+    assert status.json() == {"state": "queued"}
+    assert mutation.status_code == 409
+    assert mutation.json()["detail"]["code"] == "worker_updating"
+
+
+def test_scheduler_failure_marks_update_failed_before_activation(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def fail_task(*args, **kwargs):
+        raise worker_module.subprocess.CalledProcessError(1, args[0])
+
+    monkeypatch.setattr(worker_module.subprocess, "run", fail_task)
+
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "b" * 40}
+    )
+    status = worker_client.get("/v1/admin/update/status", headers=_auth())
+    mutation = worker_client.post(
+        "/v1/resources/plan", headers=_auth(), json={"resources": []}
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "update_activation_failed"
+    assert status.json() == {"state": "failed_before_activation"}
+    assert mutation.status_code == 200
 
 
 def test_update_reuses_an_active_request_for_the_same_target(
