@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+import worker.windows.updater.request_lock as request_lock
 from worker.windows.updater.runtime import WindowsJunctionOps
 from worker.windows.updater.request_lock import RequestLockTimeout
 
@@ -569,6 +570,24 @@ def test_update_request_lock_timeout_maps_to_safe_503(
 
     assert response.status_code == 503
     assert response.json()["detail"] == {"code": "update_lock_unavailable"}
+
+
+def test_update_unlock_failure_maps_to_safe_503(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def fail_unlock(_lock_file):
+        raise OSError("TOKEN=unlock-secret")
+
+    monkeypatch.setattr(request_lock, "_unlock", fail_unlock)
+    monkeypatch.setattr(worker_module.subprocess, "run", lambda *args, **kwargs: None)
+
+    response = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "a" * 40}
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == {"code": "update_lock_unavailable"}
+    assert "unlock-secret" not in response.text
 
 
 def test_update_status_lock_timeout_maps_to_safe_503(
