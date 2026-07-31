@@ -477,15 +477,7 @@ class RuntimeValidator:
             comfy_root = _require_contained(
                 canonical_release / "ComfyUI", canonical_release, "COMFYUI_VALIDATION_FAILED"
             )
-            state_root = self.layout.staging / "validation-state" / commit
-            if state_root.exists():
-                if state_root.is_symlink() or _is_reparse_point(state_root):
-                    raise OSError("validation state is a reparse point")
-                shutil.rmtree(state_root)
-            state_root.mkdir(parents=True)
-            canonical_state = _require_contained(
-                state_root, self.layout.staging, "WORKER_CONTRACT_FAILED"
-            )
+            canonical_state = _prepare_validation_state(self.layout, commit)
         except (OSError, ValueError) as error:
             raise UpdateError(
                 "WORKER_CONTRACT_FAILED", "staged Worker roots could not be isolated"
@@ -496,7 +488,9 @@ class RuntimeValidator:
         comfy_url = f"http://127.0.0.1:{comfy_port}"
         worker_url = f"http://127.0.0.1:{worker_port}"
         processes: list[ProcessHandle] = []
-        primary: UpdateError | None = None
+        primary: BaseException | None = None
+        primary_traceback = None
+        cleanup: RuntimeValidationError | None = None
         try:
             python = canonical_release / ".venv" / "Scripts" / "python.exe"
             reservations[0].close()
@@ -538,6 +532,9 @@ class RuntimeValidator:
                         "AI_DRAWING_WORKER_CONFIG_PATH": str(canonical_config),
                         "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": str(canonical_state),
                         "AI_DRAWING_COMFYUI_ROOT": str(comfy_root),
+                        "AI_DRAWING_WORKER_PARTIAL_ROOT": str(
+                            canonical_release / "cache" / ".partial"
+                        ),
                         "AI_DRAWING_COMFYUI_URL": comfy_url,
                         "PYTHONUTF8": "1",
                     },
@@ -546,20 +543,21 @@ class RuntimeValidator:
             )
             evidence = self.health.validate_staged(worker_url, comfy_url, commit)
             _require_complete_health(evidence, commit)
-        except UpdateError as error:
+        except BaseException as error:
             primary = error
-        except Exception as error:
-            primary = RuntimeValidationError(
-                "WORKER_CONTRACT_FAILED",
-                "staged runtime health validation failed",
-                primary_exception=error,
-            )
-            primary.__cause__ = error
-        cleanup = _cleanup_staged_runtime(reservations, processes)
+            primary_traceback = error.__traceback__
+        finally:
+            cleanup = _cleanup_staged_runtime(reservations, processes)
         if cleanup is not None and primary is not None:
+            code = primary.code if isinstance(primary, UpdateError) else "WORKER_CONTRACT_FAILED"
+            message = (
+                primary.message
+                if isinstance(primary, UpdateError)
+                else "staged runtime validation was interrupted"
+            )
             combined = RuntimeValidationError(
-                primary.code,
-                primary.message,
+                code,
+                message,
                 cleanup_code=cleanup.code,
                 primary_exception=primary,
                 cleanup_failures=cleanup.cleanup_failures,
@@ -568,7 +566,16 @@ class RuntimeValidator:
         if cleanup is not None:
             raise cleanup
         if primary is not None:
-            raise primary
+            if isinstance(primary, UpdateError):
+                raise primary.with_traceback(primary_traceback)
+            if isinstance(primary, Exception):
+                wrapped = RuntimeValidationError(
+                    "WORKER_CONTRACT_FAILED",
+                    "staged runtime health validation failed",
+                    primary_exception=primary,
+                )
+                raise wrapped from primary
+            raise primary.with_traceback(primary_traceback)
         return canonical_release
 
     def _start(
@@ -934,6 +941,51 @@ def _require_contained(path: Path, root: Path, code: str) -> Path:
     return canonical_path
 
 
+def _require_no_reparse_directory(path: Path, root: Path, code: str) -> Path:
+    path = Path(path)
+    root = Path(root)
+    try:
+        if not path.is_absolute() or not root.is_absolute():
+            raise ValueError("runtime path is not absolute")
+        path.relative_to(root)
+        current = Path(path.anchor)
+        for part in path.parts[1:]:
+            current /= part
+            attributes = getattr(current.lstat(), "st_file_attributes", 0)
+            if current.is_symlink() or attributes & 0x400:
+                raise ValueError("runtime path contains a reparse point")
+        canonical_root = root.resolve(strict=True)
+        canonical_path = path.resolve(strict=True)
+        canonical_path.relative_to(canonical_root)
+        if not canonical_path.is_dir():
+            raise OSError("runtime path is not a directory")
+    except (OSError, ValueError) as error:
+        raise UpdateError(code, "runtime directory failed no-follow validation") from error
+    return canonical_path
+
+
+def _prepare_validation_state(layout: RuntimeLayout, commit: str) -> Path:
+    code = "WORKER_CONTRACT_FAILED"
+    staging = _require_no_reparse_directory(layout.staging, layout.root, code)
+    validation_state = staging / "validation-state"
+    if os.path.lexists(validation_state):
+        canonical_validation_state = _require_no_reparse_directory(
+            validation_state, staging, code
+        )
+    else:
+        validation_state.mkdir()
+        canonical_validation_state = _require_no_reparse_directory(
+            validation_state, staging, code
+        )
+
+    state_root = canonical_validation_state / commit
+    if os.path.lexists(state_root):
+        _require_no_reparse_directory(state_root, canonical_validation_state, code)
+        shutil.rmtree(state_root)
+    state_root.mkdir()
+    return _require_no_reparse_directory(state_root, canonical_validation_state, code)
+
+
 def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temporary = Path(temporary_name)
@@ -1019,7 +1071,7 @@ def _cleanup_staged_runtime(
     for reservation in reservations:
         try:
             reservation.close()
-        except Exception as error:
+        except BaseException as error:
             failures.append(error)
     for process in reversed(processes):
         failures.extend(_terminate_process(process))
@@ -1036,24 +1088,24 @@ def _terminate_process(process: ProcessHandle) -> list[BaseException]:
     failures: list[BaseException] = []
     try:
         process.terminate()
-    except Exception as error:
+    except BaseException as error:
         failures.append(error)
     needs_kill = False
     try:
         process.wait(timeout=STOP_TIMEOUT)
     except TimeoutError:
         needs_kill = True
-    except Exception as error:
+    except BaseException as error:
         failures.append(error)
         needs_kill = True
     if needs_kill:
         try:
             process.kill()
-        except Exception as error:
+        except BaseException as error:
             failures.append(error)
         try:
             process.wait(timeout=STOP_TIMEOUT)
-        except Exception as error:
+        except BaseException as error:
             failures.append(error)
     return failures
 

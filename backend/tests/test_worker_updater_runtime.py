@@ -463,6 +463,47 @@ def _staged_release(tmp_path: Path, commit: str = COMMIT_A) -> tuple[RuntimeLayo
     return layout, release
 
 
+@pytest.mark.parametrize("junction_parent", ["staging", "validation-state"])
+def test_validator_rejects_external_validation_state_junction_before_mutation(
+    tmp_path: Path, junction_parent: str
+) -> None:
+    """Following a validation-state junction before checking it must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    external = tmp_path / "external-validation-state"
+    child = (
+        external / "validation-state" / COMMIT_A
+        if junction_parent == "staging"
+        else external / COMMIT_A
+    )
+    child.mkdir(parents=True)
+    sentinel = external / "keep.txt"
+    child_sentinel = child / "keep-child.txt"
+    sentinel.write_text("keep-root", encoding="utf-8")
+    child_sentinel.write_text("keep-child", encoding="utf-8")
+    validation_state = (
+        layout.staging
+        if junction_parent == "staging"
+        else layout.staging / "validation-state"
+    )
+    junctions = WindowsJunctionOps()
+    if junction_parent == "staging":
+        layout.staging.rmdir()
+    junctions.create(validation_state, external)
+    commands = FakeCommands()
+
+    try:
+        with pytest.raises(UpdateError) as raised:
+            RuntimeValidator(layout, commands, FakeHealth()).validate(COMMIT_A)
+
+        assert raised.value.code == "WORKER_CONTRACT_FAILED"
+        assert junctions.read_target(validation_state) == external.resolve(strict=True)
+        assert sentinel.read_text(encoding="utf-8") == "keep-root"
+        assert child_sentinel.read_text(encoding="utf-8") == "keep-child"
+        assert commands.start_calls == []
+    finally:
+        junctions.remove(validation_state)
+
+
 def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_path: Path) -> None:
     """Binding staged services publicly or reusing a port must make this test fail."""
     layout, release = _staged_release(tmp_path)
@@ -494,6 +535,9 @@ def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_
     assert state_root.is_dir()
     assert state_root.is_relative_to(layout.staging)
     assert worker_env["AI_DRAWING_COMFYUI_ROOT"] == str(release / "ComfyUI")
+    assert worker_env["AI_DRAWING_WORKER_PARTIAL_ROOT"] == str(
+        release / "cache" / ".partial"
+    )
     assert all("file-only-secret" not in value for value in worker_env.values())
     assert len(health.staged_calls) == 1
     worker_url, comfy_url, expected_commit = health.staged_calls[0]
@@ -693,6 +737,99 @@ def test_validator_continues_cleaning_other_processes_after_unexpected_adapter_e
     assert raised.value.code == "CLEANUP_FAILED"
     assert normal.terminated
     assert failing.terminated
+
+
+@pytest.mark.parametrize(
+    ("failure_point", "signal"),
+    [
+        ("comfy", KeyboardInterrupt("stop-comfy")),
+        ("comfy", SystemExit(21)),
+        ("worker", KeyboardInterrupt("stop-worker")),
+        ("worker", SystemExit(22)),
+        ("probe", KeyboardInterrupt("stop-probe")),
+        ("probe", SystemExit(23)),
+    ],
+    ids=[
+        "comfy-keyboard-interrupt",
+        "comfy-system-exit",
+        "worker-keyboard-interrupt",
+        "worker-system-exit",
+        "probe-keyboard-interrupt",
+        "probe-system-exit",
+    ],
+)
+def test_validator_cleans_every_resource_before_reraising_base_exception(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_point: str,
+    signal: BaseException,
+) -> None:
+    """Letting a BaseException bypass staged cleanup must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    reservations = tuple(runtime_module._reserve_loopback_ports(2))
+    monkeypatch.setattr(
+        runtime_module, "_reserve_loopback_ports", lambda _count: reservations
+    )
+    commands = FakeCommands()
+    original_start = commands.start
+    launches = 0
+
+    def start_or_interrupt(*args, **kwargs):
+        nonlocal launches
+        point = "comfy" if launches == 0 else "worker"
+        launches += 1
+        if failure_point == point:
+            raise signal
+        return original_start(*args, **kwargs)
+
+    commands.start = start_or_interrupt  # type: ignore[method-assign]
+    health = FakeHealth()
+    if failure_point == "probe":
+        def interrupt_probe(*_args, **_kwargs):
+            raise signal
+
+        health.validate_staged = interrupt_probe  # type: ignore[method-assign]
+
+    with pytest.raises(type(signal)) as raised:
+        RuntimeValidator(layout, commands, health).validate(COMMIT_A)
+
+    assert raised.value is signal
+    assert all(reservation.fileno() == -1 for reservation in reservations)
+    assert all(process.terminated for process in commands.processes)
+    assert len(commands.processes) == {"comfy": 0, "worker": 1, "probe": 2}[
+        failure_point
+    ]
+
+
+def test_validator_preserves_base_exception_when_cleanup_also_fails(tmp_path: Path) -> None:
+    """Dropping either a SystemExit primary or typed cleanup metadata must make this test fail."""
+    layout, _release = _staged_release(tmp_path)
+    commands = FakeCommands()
+    stubborn = FakeProcess(timeout_once=True, fail_second_wait=True)
+    signal = SystemExit(37)
+
+    def start_with_stubborn(*args, **kwargs):
+        process = stubborn if not commands.processes else FakeProcess()
+        commands.processes.append(process)
+        return process
+
+    def interrupt_probe(*_args, **_kwargs):
+        raise signal
+
+    commands.start = start_with_stubborn  # type: ignore[method-assign]
+    health = FakeHealth()
+    health.validate_staged = interrupt_probe  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeValidationError) as raised:
+        RuntimeValidator(layout, commands, health).validate(COMMIT_A)
+
+    assert raised.value.code == "WORKER_CONTRACT_FAILED"
+    assert raised.value.cleanup_code == "CLEANUP_FAILED"
+    assert raised.value.primary_exception is signal
+    assert raised.value.cleanup_failures
+    assert isinstance(raised.value.__cause__, RuntimeValidationError)
+    assert raised.value.__cause__.code == "CLEANUP_FAILED"
+    assert all(process.terminated for process in commands.processes)
 
 
 def _activation_layout(

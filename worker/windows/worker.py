@@ -75,6 +75,20 @@ def _reject_reparse_components(name: str, path: Path) -> None:
             raise ValueError(f"{name} must not contain a reparse point")
 
 
+def _reject_existing_reparse_components(name: str, path: Path) -> None:
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current /= part
+        try:
+            attributes = getattr(current.lstat(), "st_file_attributes", 0)
+        except FileNotFoundError:
+            return
+        except OSError as error:
+            raise ValueError(f"{name} could not be validated") from error
+        if current.is_symlink() or attributes & 0x400:
+            raise ValueError(f"{name} must not contain a reparse point")
+
+
 def _relative_parts(name: str, path: Path, root: Path) -> tuple[str, ...]:
     try:
         return tuple(part.casefold() for part in path.relative_to(root).parts)
@@ -132,7 +146,40 @@ expected_comfy_root = (
 ).resolve(strict=False)
 if COMFYUI_ROOT != expected_comfy_root:
     raise ValueError("AI_DRAWING_COMFYUI_ROOT must name the release ComfyUI directory")
-PARTIAL_ROOT = UPDATE_STATE_ROOT / "cache" / ".partial"
+
+
+def _partial_root() -> Path:
+    name = "AI_DRAWING_WORKER_PARTIAL_ROOT"
+    expected = (
+        ROOT / "cache" / ".partial"
+        if RELEASE_ROOT == ROOT
+        else RELEASE_ROOT / "cache" / ".partial"
+    )
+    raw = os.environ.get(name, str(expected))
+    path = Path(raw)
+    if raw != raw.strip() or not path.is_absolute() or path != expected:
+        raise ValueError(f"{name} must name the runtime partial cache")
+    if RELEASE_ROOT == ROOT:
+        _reject_existing_reparse_components(name, path)
+        if path.exists() and not path.is_dir():
+            raise ValueError(f"{name} must name a directory")
+        return path
+
+    _reject_reparse_components(name, path.parent)
+    try:
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+        is_link = path.is_symlink() or bool(attributes & 0x400)
+        target = path.resolve(strict=True)
+        shared_partial = (ROOT / "shared" / "partial").resolve(strict=True)
+    except OSError as error:
+        raise ValueError(f"{name} does not name the managed partial junction") from error
+    _reject_reparse_components(name, shared_partial)
+    if not is_link or not target.is_dir() or target != shared_partial:
+        raise ValueError(f"{name} does not target WORKER_ROOT/shared/partial")
+    return path
+
+
+PARTIAL_ROOT = _partial_root()
 SOURCE_COMMIT_PATH = RELEASE_ROOT / "source-commit.txt"
 UPDATE_REQUEST_PATH = UPDATE_STATE_ROOT / "state" / "update-request.json"
 UPDATE_STATUS_PATH = UPDATE_STATE_ROOT / "state" / "update-status.json"
