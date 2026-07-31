@@ -286,8 +286,54 @@ def apply_params(
                 inputs["text"] = negative_prompt
 
     # 3. 多 lora 逐節點對應：loras[i] → 第 i 個 LoraLoader 節點（依 workflow JSON 順序）。
-    # zip 以較短者為準：loras 多於節點則忽略多出的；少於則其餘 loader 維持模板原值。
-    if loras:
+    # loras=None 表示未宣告完整集合，維持 legacy/template 行為；明確 list（包含空 list）
+    # 則是完整 active set，多餘模板 loader 必須移除，不可保留隱藏預設 LoRA。
+    if loras is not None:
+        if len(loras) > len(lora_loader_ids):
+            raise ValueError(
+                f"Explicit payload defines {len(loras)} LoRAs but workflow has "
+                f"{len(lora_loader_ids)} loader(s)"
+            )
+
+        def _rewrite_link(value: Any, removed_id: str, replacements: dict[int, Any]) -> Any:
+            if (
+                isinstance(value, list)
+                and len(value) == 2
+                and str(value[0]) == removed_id
+                and isinstance(value[1], int)
+            ):
+                replacement = replacements.get(value[1])
+                if replacement is None:
+                    raise ValueError(
+                        f"Cannot remove LoRA loader {removed_id}: output {value[1]} has no upstream link"
+                    )
+                return copy.deepcopy(replacement)
+            if isinstance(value, list):
+                return [_rewrite_link(item, removed_id, replacements) for item in value]
+            if isinstance(value, dict):
+                return {
+                    key: _rewrite_link(item, removed_id, replacements)
+                    for key, item in value.items()
+                }
+            return value
+
+        # Remove from the tail so chained loaders reconnect one layer at a time.
+        for nid in reversed(lora_loader_ids[len(loras):]):
+            node = wf.get(nid)
+            if not isinstance(node, dict):
+                raise ValueError(f"Cannot remove missing LoRA loader {nid}")
+            inputs = node.get("inputs", {})
+            replacements = {0: inputs.get("model")}
+            if node.get("class_type") == "LoraLoader":
+                replacements[1] = inputs.get("clip")
+            for other_id, other_node in wf.items():
+                if other_id == nid or not isinstance(other_node, dict):
+                    continue
+                other_inputs = other_node.get("inputs")
+                if isinstance(other_inputs, dict):
+                    other_node["inputs"] = _rewrite_link(other_inputs, nid, replacements)
+            del wf[nid]
+
         for spec, nid in zip(loras, lora_loader_ids):
             node = wf.get(nid)
             if not isinstance(node, dict):

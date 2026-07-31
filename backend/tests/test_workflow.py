@@ -109,6 +109,60 @@ def test_apply_params_replaces_lora_model_only_in_anima_lora_template() -> None:
     assert "strength_clip" not in result["10"]["inputs"]
 
 
+def test_apply_params_explicit_loras_remove_unused_template_loaders() -> None:
+    """Explicit ordered loras are the complete active set, not a prefix over template defaults."""
+    wf = load_template("gen_txt2img_anima_lora_model_only_multi_lora")
+
+    result = apply_params(
+        wf,
+        prompt="source reproduction",
+        loras=[
+            {"name": "ShatteredDreams.safetensors", "strength_model": 0.5},
+            {"name": "Detailer-AnimeBooster.safetensors", "strength_model": 0.5},
+        ],
+    )
+
+    loaders = [
+        node
+        for node in result.values()
+        if node.get("class_type") in ("LoraLoader", "LoraLoaderModelOnly")
+    ]
+    assert [node["inputs"]["lora_name"] for node in loaders] == [
+        "ShatteredDreams.safetensors",
+        "Detailer-AnimeBooster.safetensors",
+    ]
+    assert "12" not in result
+    assert result["7"]["inputs"]["model"] == ["11", 0]
+
+
+def test_apply_params_explicit_empty_loras_remove_all_template_loaders() -> None:
+    """An explicit empty loras list disables every template LoRA and reconnects the model graph."""
+    wf = load_template("gen_txt2img_anima_lora_model_only_multi_lora")
+
+    result = apply_params(wf, prompt="no lora", loras=[])
+
+    assert not any(
+        node.get("class_type") in ("LoraLoader", "LoraLoaderModelOnly")
+        for node in result.values()
+    )
+    assert result["7"]["inputs"]["model"] == ["1", 0]
+
+
+def test_apply_params_rejects_more_loras_than_template_loaders() -> None:
+    """Extra explicit LoRAs must fail closed instead of being silently ignored."""
+    wf = load_template("gen_txt2img_anima_lora_model_only")
+
+    with pytest.raises(ValueError, match="defines 2 LoRAs but workflow has 1 loader"):
+        apply_params(
+            wf,
+            prompt="invalid",
+            loras=[
+                {"name": "one.safetensors"},
+                {"name": "two.safetensors"},
+            ],
+        )
+
+
 def test_extract_params_reads_lora_model_only() -> None:
     """反解參數時也要能從 LoraLoaderModelOnly 讀回實際 LoRA。"""
     wf = load_template("gen_txt2img_anima_lora_model_only")
