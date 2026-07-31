@@ -28,7 +28,11 @@ def parse_count(raw: str, *, default: int = 4) -> int:
     return value
 
 
-def parse_video_contract(total_seconds: float, source_frames: int, film_target_frames: int) -> tuple[float, int, int]:
+def parse_video_contract(
+    total_seconds: float | str,
+    source_frames: int | str,
+    film_target_frames: int | str,
+) -> tuple[float, int, int]:
     try:
         seconds = float(total_seconds)
         source = int(source_frames)
