@@ -63,6 +63,83 @@ def _auth() -> dict[str, str]:
     return {"Authorization": "Bearer secret"}
 
 
+def test_comfyui_url_defaults_to_the_exact_production_loopback(monkeypatch) -> None:
+    """Changing the no-env production endpoint must make this test fail."""
+    monkeypatch.delenv("AI_DRAWING_COMFYUI_URL", raising=False)
+
+    worker = _load_worker()
+
+    assert worker.COMFYUI_URL == "http://127.0.0.1:8188"
+
+
+def test_loopback_comfyui_override_is_used_by_status_preflight_and_proxy(
+    tmp_path, monkeypatch
+) -> None:
+    """Leaving any ComfyUI call on port 8188 must make this test fail."""
+    override = "http://127.0.0.1:49152"
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_URL", override)
+    worker, _client = _configured_worker(tmp_path, monkeypatch)
+    worker.SOURCE_COMMIT_PATH.write_text("a" * 40, encoding="utf-8")
+    seen: list[str] = []
+
+    class Response:
+        content = b"{}"
+        status_code = 200
+        headers = {"content-type": "application/json"}
+
+        def json(self):
+            return {"ExampleNode": {}}
+
+        def raise_for_status(self):
+            return None
+
+    def get(url, **_kwargs):
+        seen.append(url)
+        return Response()
+
+    def request(_method, url, **_kwargs):
+        seen.append(url)
+        return Response()
+
+    monkeypatch.setattr(worker.httpx, "get", get)
+    monkeypatch.setattr(worker.httpx, "request", request)
+
+    worker.status()
+    assert worker.workflow_preflight({"node_types": ["ExampleNode"]}) == {
+        "ready": True,
+        "missing_node_types": [],
+    }
+    worker._proxy("POST", "/prompt", json={"prompt": {}})
+
+    assert seen == [
+        f"{override}/system_stats",
+        f"{override}/object_info",
+        f"{override}/prompt",
+    ]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://127.0.0.1:8188",
+        "http://0.0.0.0:8188",
+        "http://example.test:8188",
+        "http://user@127.0.0.1:8188",
+        "http://127.0.0.1:8188/path",
+        "http://127.0.0.1:8188?query=1",
+        "http://127.0.0.1:8188#fragment",
+        "http://127.0.0.1:0",
+        "http://127.0.0.1:65536",
+    ],
+)
+def test_invalid_comfyui_override_fails_worker_startup(monkeypatch, value: str) -> None:
+    """Falling back after an unsafe staged endpoint must make this test fail."""
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_URL", value)
+
+    with pytest.raises(ValueError, match="AI_DRAWING_COMFYUI_URL"):
+        _load_worker()
+
+
 def test_status_advertises_release_and_update_capability(worker_client, worker_module):
     worker_module.SOURCE_COMMIT_PATH.write_text("a" * 40, encoding="utf-8")
 

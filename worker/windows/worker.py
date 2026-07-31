@@ -13,6 +13,7 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Annotated, Any
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
@@ -41,7 +42,32 @@ SOURCE_COMMIT_PATH = ROOT / "source-commit.txt"
 UPDATE_REQUEST_PATH = ROOT / "state" / "update-request.json"
 UPDATE_STATUS_PATH = ROOT / "state" / "update-status.json"
 COMFYUI_ROOT = ROOT / "runtime" / "ComfyUI"
-COMFYUI_URL = "http://127.0.0.1:8188"
+
+
+def _comfyui_url() -> str:
+    value = os.environ.get("AI_DRAWING_COMFYUI_URL", "http://127.0.0.1:8188")
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("AI_DRAWING_COMFYUI_URL must be a loopback HTTP URL with an explicit port") from error
+    if (
+        value != value.strip()
+        or parsed.scheme != "http"
+        or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+        or port is None
+        or not 1 <= port <= 65535
+    ):
+        raise ValueError("AI_DRAWING_COMFYUI_URL must be a loopback HTTP URL with an explicit port")
+    return value
+
+
+COMFYUI_URL = _comfyui_url()
 MODEL_ROOTS = {
     "checkpoints": COMFYUI_ROOT / "models" / "checkpoints",
     "diffusion_models": COMFYUI_ROOT / "models" / "diffusion_models",
