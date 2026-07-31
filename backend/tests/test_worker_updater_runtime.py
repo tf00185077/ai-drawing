@@ -867,6 +867,46 @@ def test_failed_production_health_restores_and_verifies_previous_junction(tmp_pa
     assert not (layout.root / "current.previous-switch").exists()
 
 
+def test_activation_announces_restarting_after_start_and_before_health(tmp_path: Path) -> None:
+    """Calling the state callback before start or after health must make this test fail."""
+    layout, junctions, _release_a, _release_b = _activation_layout(tmp_path)
+    events: list[str] = []
+
+    class OrderedHealth(FakeHealth):
+        def start_production(self) -> None:
+            events.append("start")
+            super().start_production()
+
+        def validate_production(self, worker_url: str, comfy_url: str, expected_commit: str) -> HealthEvidence:
+            events.append(f"health:{expected_commit}")
+            return super().validate_production(worker_url, comfy_url, expected_commit)
+
+    result = Activator(layout, OrderedHealth(), junctions).activate(
+        COMMIT_B, on_restarting=lambda: events.append("restarting")
+    )
+
+    assert result.status == "ready"
+    assert events == ["start", "restarting", f"health:{COMMIT_B}"]
+
+
+def test_activation_callback_failure_rolls_back_and_verifies_previous(tmp_path: Path) -> None:
+    """Letting a failed durable state write leave the candidate active must make this test fail."""
+    layout, junctions, release_a, _release_b = _activation_layout(tmp_path)
+    health = FakeHealth()
+
+    def fail_transition() -> None:
+        raise OSError("durable state unavailable")
+
+    result = Activator(layout, health, junctions).activate(
+        COMMIT_B, on_restarting=fail_transition
+    )
+
+    assert result.status == "rolled_back"
+    assert result.error_code == "ACTIVATION_FAILED_ROLLED_BACK"
+    assert junctions.read_target(layout.current) == release_a
+    assert [call[2] for call in health.production_calls] == [COMMIT_A]
+
+
 @pytest.mark.parametrize(
     "failure",
     [
@@ -946,6 +986,32 @@ def test_failed_rollback_verification_requires_operator_recovery(tmp_path: Path)
     assert result.status == "recovery_required"
     assert result.error_code == "RECOVERY_REQUIRED"
     assert [call[2] for call in health.production_calls] == [COMMIT_B, COMMIT_A]
+
+
+def test_activation_without_migrated_current_preserves_legacy_runtime(tmp_path: Path) -> None:
+    """Task 5 must not guess that a legacy root is the first versioned release."""
+    layout = RuntimeLayout.create(tmp_path / "worker")
+    candidate = layout.release(COMMIT_B)
+    candidate.mkdir()
+    (candidate / "source-commit.txt").write_text(COMMIT_B + "\n", encoding="utf-8")
+    (candidate / ".managed-release.json").write_text(
+        json.dumps({"commit": COMMIT_B, "schema": 1}), encoding="utf-8"
+    )
+    legacy = layout.root / "runtime"
+    legacy.mkdir()
+    sentinel = legacy / "legacy-worker.sentinel"
+    sentinel.write_text("preserve me", encoding="utf-8")
+    health = FakeHealth()
+
+    result = Activator(layout, health, FakeJunctionOps()).activate(COMMIT_B)
+
+    assert result.status == "recovery_required"
+    assert result.error_code == "RECOVERY_REQUIRED"
+    assert not layout.current.exists()
+    assert sentinel.read_text(encoding="utf-8") == "preserve me"
+    assert health.stop_calls == 0
+    assert health.start_calls == 0
+    assert health.production_calls == []
 
 
 def test_success_validates_exact_target_then_retains_only_current_and_previous_known_releases(

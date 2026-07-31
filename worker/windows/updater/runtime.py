@@ -10,7 +10,7 @@ import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, Mapping, Protocol, Sequence
+from typing import Any, Callable, Iterator, Mapping, Protocol, Sequence
 from urllib.parse import urlsplit
 
 from .git_source import UpdateError
@@ -623,7 +623,9 @@ class Activator:
         self.journal = layout.root / "activation-journal.json"
         self.lock = layout.root / "activation.lock"
 
-    def activate(self, commit: str) -> ActivationResult:
+    def activate(
+        self, commit: str, on_restarting: Callable[[], None] | None = None
+    ) -> ActivationResult:
         with _exclusive_path_lock(self.lock):
             try:
                 self._recover_interrupted_switch()
@@ -633,6 +635,8 @@ class Activator:
             target = self._known_release(commit)
             if previous_commit == commit:
                 try:
+                    if on_restarting is not None:
+                        on_restarting()
                     evidence = self.health.validate_production(
                         PRODUCTION_WORKER_URL, PRODUCTION_COMFY_URL, commit
                     )
@@ -656,6 +660,8 @@ class Activator:
                 candidate_current = True
                 self._write_journal(commit, previous_commit, "candidate_current")
                 self.health.start_production()
+                if on_restarting is not None:
+                    on_restarting()
                 evidence = self.health.validate_production(
                     PRODUCTION_WORKER_URL, PRODUCTION_COMFY_URL, commit
                 )

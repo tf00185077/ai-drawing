@@ -3,6 +3,7 @@ $ErrorActionPreference = "Stop"
 $Root = "C:\AI-Drawing-Worker"
 $Source = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | ConvertFrom-Json
+$Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -47,8 +48,8 @@ if ((Test-Path $Root) -and -not (Test-Path (Join-Path $Root ".ai-drawing-worker-
     throw "$Root exists but is not owned by this installer."
 }
 
-New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs") | Out-Null
-Set-Content -Path (Join-Path $Root ".ai-drawing-worker-owned") -Value "AI-Drawing NVIDIA Worker"
+New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "config\update-owned\state"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs"), (Join-Path $Root "shared\models"), (Join-Path $Root "shared\cache"), (Join-Path $Root "shared\partial"), (Join-Path $Root "shared\input"), (Join-Path $Root "shared\output") | Out-Null
+[IO.File]::WriteAllText((Join-Path $Root ".ai-drawing-worker-owned"), "AI-Drawing NVIDIA Worker`n", $Utf8NoBom)
 
 $ExistingConfigPath = Join-Path $Root "config\worker.json"
 if (Test-Path $ExistingConfigPath) {
@@ -66,7 +67,7 @@ $Config = @{
     cache_gb = [int]$Manifest.cache_gb
     minimum_free_gb = [int]$Manifest.minimum_free_gb
 } | ConvertTo-Json
-Set-Content -Path (Join-Path $Root "config\worker.json") -Value $Config -Encoding UTF8
+[IO.File]::WriteAllText((Join-Path $Root "config\worker.json"), $Config + "`n", $Utf8NoBom)
 
 Copy-Item (Join-Path $Source "worker.py") (Join-Path $Root "app\worker.py") -Force
 Copy-Item (Join-Path $Source "Start-Worker.cmd") (Join-Path $Root "Start-Worker.cmd") -Force
@@ -85,7 +86,19 @@ $PythonRoot = Join-Path $Root "runtime\python"
 & $Uv python install $Manifest.python --install-dir $PythonRoot
 $Python = (Get-ChildItem $PythonRoot -Recurse -Filter python.exe | Select-Object -First 1).FullName
 if (-not $Python) { throw "Pinned Python installation failed." }
-Set-Content -Path (Join-Path $Root "config\python-path.txt") -Value $Python -Encoding UTF8
+[IO.File]::WriteAllText((Join-Path $Root "config\python-path.txt"), $Python + "`n", $Utf8NoBom)
+
+$UpdaterRuntime = Join-Path $Root "updater-runtime"
+if (-not (Test-Path (Join-Path $UpdaterRuntime "Scripts\python.exe"))) {
+    & $Python -m venv $UpdaterRuntime
+}
+$UpdaterPython = Join-Path $UpdaterRuntime "Scripts\python.exe"
+if (-not (Test-Path $UpdaterPython -PathType Leaf)) {
+    throw "Updater-owned Python installation failed."
+}
+$UpdaterPackage = Join-Path $Root "updater"
+New-Item -ItemType Directory -Force -Path $UpdaterPackage | Out-Null
+Copy-Item (Join-Path $Source "updater\*") $UpdaterPackage -Recurse -Force
 
 $ComfyRoot = Join-Path $Root "runtime\ComfyUI"
 if (-not (Test-Path (Join-Path $ComfyRoot ".git"))) {
@@ -119,6 +132,43 @@ foreach ($Node in $Manifest.custom_nodes) {
 $TaskName = "AI-Drawing NVIDIA Worker"
 schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL HIGHEST /TR "`"$Root\Start-Worker.cmd`"" /F | Out-Null
 
+$SourceRepositoryRoot = "C:\AI-Drawing-Worker-Source"
+$ExpectedRemoteUrl = [string]$Manifest.source_repository
+$ExpectedBranch = [string]$Manifest.source_branch
+if (-not $ExpectedRemoteUrl -or -not $ExpectedBranch) {
+    throw "Worker source repository configuration is missing."
+}
+if (-not (Test-Path (Join-Path $SourceRepositoryRoot ".git"))) {
+    git clone --branch $ExpectedBranch --single-branch -- $ExpectedRemoteUrl $SourceRepositoryRoot
+}
+$ActualRemoteUrl = (git -C $SourceRepositoryRoot remote get-url origin).Trim()
+if ($LASTEXITCODE -ne 0 -or -not $ActualRemoteUrl) {
+    throw "Worker source repository remote is unavailable."
+}
+[IO.File]::WriteAllText((Join-Path $Root "config\expected-remote-url.txt"), $ExpectedRemoteUrl + "`n", $Utf8NoBom)
+
+$ProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"
+New-Item -ItemType Directory -Force -Path $ProgramDataRoot | Out-Null
+$BootstrapPath = Join-Path $ProgramDataRoot "UpdaterBootstrap.ps1"
+Copy-Item (Join-Path $Source "UpdaterBootstrap.ps1") $BootstrapPath -Force
+$UpdaterEnvironment = @(
+    "AI_DRAWING_PROJECT_ROOT=$SourceRepositoryRoot"
+    "AI_DRAWING_WORKER_ROOT=$Root"
+    "AI_DRAWING_WORKER_REMOTE=origin"
+    "AI_DRAWING_WORKER_BRANCH=$ExpectedBranch"
+)
+$UpdaterEnvironmentText = ($UpdaterEnvironment -join [Environment]::NewLine) + [Environment]::NewLine
+[IO.File]::WriteAllText((Join-Path $ProgramDataRoot "updater.env"), $UpdaterEnvironmentText, $Utf8NoBom)
+& icacls.exe $ProgramDataRoot /inheritance:r /grant:r "SYSTEM:(OI)(CI)F" "BUILTIN\Administrators:(OI)(CI)F" | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Updater configuration ACL could not be restricted." }
+
+$UpdaterTaskAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$env:ProgramData\AI-Drawing-Worker\UpdaterBootstrap.ps1`""
+$UpdaterTaskPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$UpdaterTaskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2)
+Register-ScheduledTask -TaskName "AI-Drawing Worker Updater" -Action $UpdaterTaskAction `
+    -Principal $UpdaterTaskPrincipal -Settings $UpdaterTaskSettings -Force | Out-Null
+
 Get-NetFirewallRule -DisplayName $TaskName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 New-NetFirewallRule -DisplayName $TaskName -Direction Inbound -Action Allow -Protocol TCP `
     -LocalPort $Manifest.listen_port -Profile Private -RemoteAddress LocalSubnet | Out-Null
@@ -142,16 +192,16 @@ $Gateway = Get-NetRoute -InterfaceIndex $PrivateProfile.InterfaceIndex -Destinat
 
 Write-Host ""
 Write-Host "============================================================"
-Write-Host " 建議：在分享器設定 DHCP 保留，讓此 Worker 內網 IP 固定"
+Write-Host " Recommended: reserve this Worker IP in your router DHCP settings"
 Write-Host "============================================================"
-Write-Host "  網卡 MAC : $Mac"
-Write-Host "  綁定 IP  : $WorkerIp   (建議直接保留目前這個位址)"
+Write-Host "  Adapter MAC : $Mac"
+Write-Host "  Worker IP   : $WorkerIp   (reserve this address)"
 if ($Gateway) {
-    Write-Host "  管理頁面 : http://$Gateway   (已為你開啟登入頁)"
+    Write-Host "  Router page : http://$Gateway   (opening the login page)"
 } else {
-    Write-Host "  管理頁面 : 請手動開啟分享器管理介面 (通常是 http://192.168.x.1)"
+    Write-Host "  Router page : open the router admin page manually (usually http://192.168.x.1)"
 }
-Write-Host "  設定後桌面配對檔的 IP 會長期有效，Mac 端 .env 不需再改。"
+Write-Host "  After reserving the IP, the desktop pairing file remains valid."
 Write-Host "============================================================"
 if ($Gateway) {
     try { Start-Process "http://$Gateway" } catch { }

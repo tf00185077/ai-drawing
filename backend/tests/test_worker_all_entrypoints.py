@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 from types import SimpleNamespace
+import zipfile
 
 import pytest
 
@@ -91,8 +92,140 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
     assert manifest["custom_nodes"]
     assert all(item.get("repository") and item.get("revision") for item in manifest["custom_nodes"])
     dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
-    for name in ("worker.py", "worker-manifest.json", "Install-Worker.ps1", "Start-Worker.ps1", "requirements.txt", "README.md"):
+    for name in (
+        "worker.py",
+        "worker-manifest.json",
+        "Install-Worker.ps1",
+        "Start-Worker.ps1",
+        "UpdaterBootstrap.ps1",
+        "requirements.txt",
+        "README.md",
+        "updater/cli.py",
+        "updater/config.py",
+        "updater/git_source.py",
+        "updater/runtime.py",
+        "updater/state.py",
+        "updater/windows_runtime.py",
+    ):
         assert (dist / name).read_bytes() == (source / name).read_bytes()
+
+
+def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
+    """Shipping a stale or incomplete updater inside the ZIP must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
+    with zipfile.ZipFile(archive) as package:
+        names = {
+            "UpdaterBootstrap.ps1",
+            "updater/cli.py",
+            "updater/config.py",
+            "updater/git_source.py",
+            "updater/runtime.py",
+            "updater/state.py",
+            "updater/windows_runtime.py",
+        }
+        for name in names:
+            packaged = package.read(name)
+            assert packaged == (source / name).read_bytes()
+
+
+def test_updater_bootstrap_uses_fixed_programdata_config_and_updater_owned_python() -> None:
+    """Allowing Invoke-Expression, CLI selectors, or another Python must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "UpdaterBootstrap.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Invoke-Expression" not in text
+    assert '"AI_DRAWING_PROJECT_ROOT"' in text
+    assert '"AI_DRAWING_WORKER_ROOT"' in text
+    assert '"AI_DRAWING_WORKER_REMOTE"' in text
+    assert '"AI_DRAWING_WORKER_BRANCH"' in text
+    assert 'Join-Path $WorkerRoot "updater-runtime\\Scripts\\python.exe"' in text
+    assert '& $UpdaterPython -m updater.cli' in text
+    assert "$args" not in text
+    assert "Write-Host" not in text
+    assert "GetRelativePath" not in text
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap contract requires Windows")
+def test_updater_bootstrap_rejects_unknown_env_without_echoing_value(tmp_path: Path) -> None:
+    """Evaluating or printing an unknown env value must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    program_data = tmp_path / "ProgramData"
+    config_root = program_data / "AI-Drawing-Worker"
+    config_root.mkdir(parents=True)
+    secret = "Bearer-bootstrap-must-not-leak"
+    (config_root / "updater.env").write_text(
+        f"UNKNOWN={secret}\n", encoding="utf-8"
+    )
+    environment = {**os.environ, "ProgramData": str(program_data)}
+
+    result = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(repo / "worker" / "windows" / "UpdaterBootstrap.ps1"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=environment,
+        timeout=15,
+    )
+
+    assert result.returncode != 0
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+def test_installer_registers_restricted_fixed_on_demand_updater_task() -> None:
+    """Passing config/token in a task action or installing a trigger must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "Install-Worker.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"AI-Drawing Worker Updater"' in text
+    assert "New-ScheduledTaskAction" in text
+    assert "New-ScheduledTaskPrincipal" in text
+    assert "-RunLevel Highest" in text
+    assert "-UserId \"SYSTEM\"" in text
+    assert "Register-ScheduledTask" in text
+    assert "-Trigger" not in text
+    assert "-MultipleInstances IgnoreNew" in text
+    assert "icacls.exe" in text
+    assert "/inheritance:r" in text
+    assert "BUILTIN\\Administrators:(OI)(CI)F" in text
+    assert "SYSTEM:(OI)(CI)F" in text
+    action_block = text[text.index("$UpdaterTaskAction") : text.index("$UpdaterTaskPrincipal")]
+    assert "UpdaterBootstrap.ps1" in action_block
+    assert "Token" not in action_block
+    assert "updater.env" not in action_block
+    assert "AI_DRAWING_" not in action_block
+    assert "& $UpdaterPython -m updater.cli" not in text
+
+
+def test_installer_preserves_token_and_shared_data_contract() -> None:
+    """Regenerating an existing token or removing shared storage must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "Install-Worker.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert "$ExistingConfig.token" in text
+    assert "if (-not $Token)" in text
+    for directory in ("shared\\models", "shared\\cache", "shared\\partial", "shared\\input", "shared\\output"):
+        assert directory in text
+    assert "Remove-Item $Shared" not in text
+    assert "UTF8Encoding -ArgumentList $false" in text
+    assert "WriteAllText" in text
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows Worker launcher requires Windows process semantics")

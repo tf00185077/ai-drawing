@@ -6,6 +6,7 @@ import os
 import re
 import tempfile
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
@@ -21,6 +22,11 @@ TRANSITIONS = {
 }
 TERMINAL_STATES = {"ready", "rejected", "failed_before_activation", "rolled_back", "recovery_required"}
 _COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}\Z")
+_URL_CREDENTIALS = re.compile(r"://[^/\s@]+@")
+_BEARER_SECRET = re.compile(r"(?i)\bbearer\s+[^\s,;]+")
+_NAMED_SECRET = re.compile(
+    r"(?i)\b(?:token|secret|password|api[_-]?key|authorization)\b\s*(?:=|:)?\s*[^\s,;]+"
+)
 PUBLIC_ERROR_CODES = frozenset(
     {
         "UPDATE_ALREADY_RUNNING",
@@ -54,6 +60,15 @@ class StateStoreError(RuntimeError):
     """Persisted updater state cannot be safely read or validated."""
 
 
+@dataclass(frozen=True)
+class ActiveUpdateRequest:
+    """Validated private request metadata for the privileged updater only."""
+
+    request_id: str
+    target_commit: str
+    state: str
+
+
 class UpdateStateStore:
     """Persist updater progress without exposing request data to public status readers."""
 
@@ -82,6 +97,36 @@ class UpdateStateStore:
             self._write_public({"state": "queued"})
             return request_id
 
+    def claim_queued_request(self, request_path: Path) -> ActiveUpdateRequest:
+        """Validate the fixed Worker request file and merge it into private state."""
+        try:
+            value = json.loads(Path(request_path).read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, TypeError, ValueError) as error:
+            raise StateStoreError("queued update request is unreadable") from error
+        if not isinstance(value, dict) or set(value) != {
+            "request_id",
+            "target_commit",
+            "timestamp",
+        }:
+            raise StateStoreError("queued update request has an invalid structure")
+        request_id = value.get("request_id")
+        target_commit = value.get("target_commit")
+        timestamp = value.get("timestamp")
+        if (
+            not isinstance(request_id, str)
+            or not request_id
+            or not isinstance(target_commit, str)
+            or not _COMMIT_PATTERN.fullmatch(target_commit)
+            or not isinstance(timestamp, str)
+            or not timestamp
+        ):
+            raise StateStoreError("queued update request has invalid metadata")
+        self.queue(request_id, target_commit)
+        active = self.read_active_request()
+        if active is None:
+            raise StateStoreError("queued update request could not be claimed")
+        return active
+
     def transition(self, next_state: str) -> None:
         """Move the active request to an explicitly permitted next state."""
         with self._exclusive_lock():
@@ -101,15 +146,57 @@ class UpdateStateStore:
         with self._exclusive_lock():
             private = self._read_private()
             current_state = private["state"]
+            safe_error_code = _public_error_code(error_code)
             if current_state in {"fetching", "staging", "installing", "validating"}:
                 next_state = "failed_before_activation"
             elif current_state in {"activating", "restarting"}:
                 next_state = "recovery_required"
             else:
                 raise InvalidUpdateTransition(f"cannot fail update from {current_state}")
-            private.update({"state": next_state, "error_code": error_code, "error_message": message})
+            private.update(
+                {
+                    "state": next_state,
+                    "error_code": safe_error_code,
+                    "error_message": _redact_private_message(message),
+                }
+            )
             self._write_private(private)
-            self._write_public({"state": next_state, "error_code": _public_error_code(error_code)})
+            self._write_public({"state": next_state, "error_code": safe_error_code})
+
+    def terminal_failure(self, next_state: str, error_code: str, message: str) -> None:
+        """Persist a declared terminal result without exposing arbitrary diagnostics."""
+        if next_state not in {"rejected", "failed_before_activation", "rolled_back", "recovery_required"}:
+            raise InvalidUpdateTransition(f"{next_state} is not a failure terminal state")
+        with self._exclusive_lock():
+            private = self._read_private()
+            current_state = private["state"]
+            safe_error_code = _public_error_code(error_code)
+            if next_state not in TRANSITIONS.get(current_state, set()):
+                raise InvalidUpdateTransition(f"cannot transition from {current_state} to {next_state}")
+            private.update(
+                {
+                    "state": next_state,
+                    "error_code": safe_error_code,
+                    "error_message": _redact_private_message(message),
+                }
+            )
+            self._write_private(private)
+            self._write_public(
+                {"state": next_state, "error_code": safe_error_code}
+            )
+
+    def read_active_request(self) -> ActiveUpdateRequest | None:
+        """Return a typed snapshot of an active private request under the state lock."""
+        with self._exclusive_lock():
+            private = self._read_private()
+            if private["state"] in {"idle", *TERMINAL_STATES}:
+                self._reconcile_public(private)
+                return None
+            return ActiveUpdateRequest(
+                request_id=private["request_id"],
+                target_commit=private["target_commit"],
+                state=private["state"],
+            )
 
     def read_public(self) -> dict[str, str]:
         """Return the public status only, never request IDs or diagnostics."""
@@ -180,6 +267,14 @@ def _atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
 
 def _public_error_code(error_code: str) -> str:
     return error_code if error_code in PUBLIC_ERROR_CODES else "UPDATE_FAILED"
+
+
+def _redact_private_message(message: str) -> str:
+    value = str(message).replace("\r", " ").replace("\n", " ")
+    value = _URL_CREDENTIALS.sub("://[REDACTED]@", value)
+    value = _BEARER_SECRET.sub("Bearer [REDACTED]", value)
+    value = _NAMED_SECRET.sub("[REDACTED]", value)
+    return value[:1024] or "update operation failed"
 
 
 def _validated_private_state(value: Any) -> dict[str, Any]:

@@ -1,10 +1,23 @@
 $ErrorActionPreference = "Stop"
 $Root = "C:\AI-Drawing-Worker"
-$PythonPath = Get-Content (Join-Path $Root "config\python-path.txt") -Raw
-$Python = $PythonPath.Trim()
+$Current = Join-Path $Root "current"
+if (Test-Path $Current) {
+    $ReleaseRoot = (Resolve-Path -LiteralPath $Current).Path
+    $Python = Join-Path $ReleaseRoot ".venv\Scripts\python.exe"
+    $ComfyRoot = Join-Path $ReleaseRoot "ComfyUI"
+    $WorkerAppRoot = Join-Path $ReleaseRoot "worker\windows"
+    $env:AI_DRAWING_WORKER_RELEASE_ROOT = $ReleaseRoot
+    $env:AI_DRAWING_WORKER_CONFIG_PATH = Join-Path $Root "config\worker.json"
+    $env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $ReleaseRoot "cache\.partial"
+    $env:AI_DRAWING_WORKER_VERIFICATION_ROOT = Join-Path $Root "shared\cache\verified"
+} else {
+    $PythonPath = Get-Content (Join-Path $Root "config\python-path.txt") -Raw
+    $Python = $PythonPath.Trim()
+    $ComfyRoot = Join-Path $Root "runtime\ComfyUI"
+    $WorkerAppRoot = Join-Path $Root "app"
+}
 if (-not (Test-Path $Python)) { throw "Worker Python runtime is missing." }
 
-$ComfyRoot = Join-Path $Root "runtime\ComfyUI"
 $ComfyArgs = @(
     (Join-Path $ComfyRoot "main.py"),
     "--listen", "127.0.0.1",
@@ -38,5 +51,7 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
 if (-not $Ready) { throw "ComfyUI did not become ready within 60 seconds." }
 
 $env:AI_DRAWING_WORKER_ROOT = $Root
-& $Python -m uvicorn worker:app --app-dir (Join-Path $Root "app") --host 0.0.0.0 --port 8791
+$env:AI_DRAWING_WORKER_UPDATE_STATE_ROOT = Join-Path $Root "config\update-owned"
+$env:AI_DRAWING_COMFYUI_ROOT = $ComfyRoot
+& $Python -m uvicorn worker:app --app-dir $WorkerAppRoot --host 0.0.0.0 --port 8791
 exit $LASTEXITCODE
