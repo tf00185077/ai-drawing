@@ -10,10 +10,23 @@ $ComfyArgs = @(
     "--listen", "127.0.0.1",
     "--port", "8188"
 )
-Start-Process -FilePath $Python -ArgumentList $ComfyArgs -WorkingDirectory $ComfyRoot -WindowStyle Minimized
+$LogsRoot = Join-Path $Root "runtime\logs"
+New-Item -ItemType Directory -Force -Path $LogsRoot | Out-Null
+$ComfyStdoutLog = Join-Path $LogsRoot "comfyui.stdout.log"
+$ComfyStderrLog = Join-Path $LogsRoot "comfyui.stderr.log"
+foreach ($Log in @($ComfyStdoutLog, $ComfyStderrLog)) {
+    $PreviousLog = $Log -replace "\.log$", ".previous.log"
+    if (Test-Path $PreviousLog) { Remove-Item $PreviousLog -Force }
+    if (Test-Path $Log) { Move-Item $Log $PreviousLog }
+}
+$ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgs -WorkingDirectory $ComfyRoot `
+    -WindowStyle Hidden -RedirectStandardOutput $ComfyStdoutLog -RedirectStandardError $ComfyStderrLog -PassThru
 
 $Ready = $false
 for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
+    if ($ComfyProcess.HasExited) {
+        throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
+    }
     try {
         Invoke-RestMethod "http://127.0.0.1:8188/system_stats" -TimeoutSec 2 | Out-Null
         $Ready = $true

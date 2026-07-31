@@ -47,7 +47,7 @@ if ((Test-Path $Root) -and -not (Test-Path (Join-Path $Root ".ai-drawing-worker-
     throw "$Root exists but is not owned by this installer."
 }
 
-New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "runtime") | Out-Null
+New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs") | Out-Null
 Set-Content -Path (Join-Path $Root ".ai-drawing-worker-owned") -Value "AI-Drawing NVIDIA Worker"
 
 $ExistingConfigPath = Join-Path $Root "config\worker.json"

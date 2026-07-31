@@ -22,6 +22,40 @@
 - Modify Worker installer/start/uninstall/build scripts for versioned runtime and updater assets.
 - Add focused tests under `backend/tests/test_worker_updater_*.py` and `backend/tests/test_nvidia_worker_update.py`.
 
+## Task 0: Non-Blocking ComfyUI Process Logging
+
+**Files:**
+- Modify: `worker/windows/Start-Worker.ps1`
+- Modify: `worker/windows/Install-Worker.ps1`
+- Test: `backend/tests/test_worker_all_entrypoints.py`
+
+- [ ] **Step 1: Write a failing launch-behavior test**
+
+Add a Windows integration test that installs the launch scripts in a temporary Worker root, starts a small Python fixture that continuously writes stdout and stderr, and verifies the launcher uses redirected log files without an interactive ComfyUI console. The production change this catches is reverting to an attached console whose selected output can block Python.
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+```powershell
+py -3.11 -m pytest backend/tests/test_worker_all_entrypoints.py -q
+```
+
+Expected: FAIL because `Start-Worker.ps1` currently starts ComfyUI in a minimized interactive console without redirecting stdout or stderr.
+
+- [ ] **Step 3: Implement detached file logging**
+
+Create `runtime/logs`, rotate `comfyui.stdout.log` and `comfyui.stderr.log` at startup to one `.previous.log` generation, then start ComfyUI hidden with `-RedirectStandardOutput` and `-RedirectStandardError`. Keep the process ID available to readiness and restart tooling, and never write bearer tokens or environment contents to either log.
+
+- [ ] **Step 4: Verify source and installed launch paths**
+
+Run the focused test, rebuild the Worker distribution, deploy the changed launch script to `C:\AI-Drawing-Worker`, use the existing one-click restart, and verify ports 8188/8791 plus writable log files. Selecting text in any visible launcher window must not suspend ComfyUI because ComfyUI owns no interactive console.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add worker/windows/Start-Worker.ps1 worker/windows/Install-Worker.ps1 backend/tests/test_worker_all_entrypoints.py docs/superpowers/plans/2026-07-31-mac-managed-windows-worker-updates.md
+git commit -m "fix(worker): detach ComfyUI logging from console"
+```
+
 ## Task 1: Worker Version and Update Contract
 
 **Files:**
