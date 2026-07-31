@@ -211,6 +211,68 @@ def test_claim_queued_request_validates_fixed_request_shape_and_queues_it(tmp_pa
     )
 
 
+def test_claim_terminal_request_is_durable_noop_and_new_id_can_queue(tmp_path: Path) -> None:
+    """A scheduled retry must not replay a terminal request, while a new ID remains actionable."""
+    store = UpdateStateStore(tmp_path)
+    request_path = tmp_path / "update-request.json"
+    request_path.write_text(
+        json.dumps(
+            {
+                "request_id": "request-1",
+                "target_commit": "a" * 40,
+                "timestamp": "2026-08-01T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+    store.claim_queued_request(request_path)
+    for state in ("fetching", "staging", "installing", "validating", "activating", "restarting", "ready"):
+        store.transition(state)
+
+    assert store.claim_queued_request(request_path) is None
+    assert request_path.exists()
+    assert store.read_public() == {"state": "ready"}
+
+    request_path.write_text(
+        json.dumps(
+            {
+                "request_id": "request-2",
+                "target_commit": "b" * 40,
+                "timestamp": "2026-08-01T00:01:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert store.claim_queued_request(request_path) == ActiveUpdateRequest(
+        request_id="request-2", target_commit="b" * 40, state="queued"
+    )
+
+
+@pytest.mark.parametrize(
+    ("request_id", "target_commit"),
+    [("request-2", "a" * 40), ("request-1", "b" * 40)],
+)
+def test_claim_rejects_request_inconsistent_with_active_private_state(
+    tmp_path: Path, request_id: str, target_commit: str
+) -> None:
+    store = UpdateStateStore(tmp_path)
+    store.queue("request-1", "a" * 40)
+    request_path = tmp_path / "update-request.json"
+    request_path.write_text(
+        json.dumps(
+            {
+                "request_id": request_id,
+                "target_commit": target_commit,
+                "timestamp": "2026-08-01T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StateStoreError):
+        store.claim_queued_request(request_path)
+
+
 @pytest.mark.parametrize(
     "request_payload",
     [

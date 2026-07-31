@@ -109,7 +109,7 @@ class ProductionUpdaterServices:
     def run_lock(self) -> ContextManager[None]:
         return _RunLock(self._run_lock_path)
 
-    def claim_request(self) -> ActiveUpdateRequest:
+    def claim_request(self) -> ActiveUpdateRequest | None:
         return self.state.claim_queued_request(self.request_path)
 
     def candidate_exists(self, target_commit: str) -> bool:
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None, *, services: UpdaterServices | None = No
 def _run_update(services: UpdaterServices) -> int:
     request = services.claim_request()
     if request is None:
-        return EXIT_CONFIG_INVALID
+        return EXIT_READY
     target_commit = request.target_commit
     try:
         candidate_exists = services.candidate_exists(target_commit)

@@ -98,6 +98,7 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         "Install-Worker.ps1",
         "Start-Worker.ps1",
         "UpdaterBootstrap.ps1",
+        "WorkerSecurity.ps1",
         "requirements.txt",
         "README.md",
         "updater/cli.py",
@@ -118,6 +119,7 @@ def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
     with zipfile.ZipFile(archive) as package:
         names = {
             "UpdaterBootstrap.ps1",
+            "WorkerSecurity.ps1",
             "updater/cli.py",
             "updater/config.py",
             "updater/git_source.py",
@@ -200,16 +202,160 @@ def test_installer_registers_restricted_fixed_on_demand_updater_task() -> None:
     assert "Register-ScheduledTask" in text
     assert "-Trigger" not in text
     assert "-MultipleInstances IgnoreNew" in text
-    assert "icacls.exe" in text
-    assert "/inheritance:r" in text
-    assert "BUILTIN\\Administrators:(OI)(CI)F" in text
-    assert "SYSTEM:(OI)(CI)F" in text
+    assert '. (Join-Path $Source "WorkerSecurity.ps1")' in text
     action_block = text[text.index("$UpdaterTaskAction") : text.index("$UpdaterTaskPrincipal")]
     assert "UpdaterBootstrap.ps1" in action_block
     assert "Token" not in action_block
     assert "updater.env" not in action_block
     assert "AI_DRAWING_" not in action_block
     assert "& $UpdaterPython -m updater.cli" not in text
+
+
+def test_worker_security_helper_uses_well_known_sids_and_verifies_every_ace() -> None:
+    """Localized principals or write-only ACL changes must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "WorkerSecurity.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'SecurityIdentifier("S-1-5-18")' in text
+    assert 'SecurityIdentifier("S-1-5-32-544")' in text
+    assert "SetOwner($script:SystemSid)" in text
+    assert "SetAccessRuleProtection($true, $false)" in text
+    assert "Set-Acl" in text
+    assert "GetAccessRules($true, $true" in text
+    assert "AccessControlType" in text
+    assert "FileSystemRights" in text
+    assert "AreAccessRulesProtected" in text
+
+
+def _run_security_helper(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
+    repo = Path(__file__).resolve().parents[2]
+    harness = tmp_path / "acl-harness.ps1"
+    helper = repo / "worker" / "windows" / "WorkerSecurity.ps1"
+    harness.write_text(
+        f'$ErrorActionPreference = "Stop"\n. "{helper}"\n{body}\n', encoding="utf-8"
+    )
+    return subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(harness),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL integration requires Windows")
+def test_preexisting_worker_root_with_marker_but_insecure_acl_is_rejected(tmp_path: Path) -> None:
+    """Trusting the ownership marker without validating the tree ACL must make this test fail."""
+    root = tmp_path / "worker"
+    root.mkdir()
+    (root / ".ai-drawing-worker-owned").write_text(
+        "AI-Drawing NVIDIA Worker\n", encoding="utf-8"
+    )
+    result = _run_security_helper(
+        tmp_path,
+        f'Assert-ExistingWorkerRoot -Path "{root}"',
+    )
+
+    assert result.returncode != 0
+    assert "Task 7" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows reparse integration requires Windows")
+def test_security_tree_walk_rejects_junction_without_following_it(tmp_path: Path) -> None:
+    root = tmp_path / "worker"
+    outside = tmp_path / "outside"
+    root.mkdir()
+    outside.mkdir()
+    (outside / "must-not-be-walked.txt").write_text("sentinel", encoding="utf-8")
+    junction = root / "escape"
+    created = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            f'New-Item -ItemType Junction -Path "{junction}" -Target "{outside}" | Out-Null',
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if created.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {created.stderr}")
+
+    result = _run_security_helper(
+        tmp_path,
+        f'Get-UpdaterTreeNoFollow -Path "{root}" | Out-Null',
+    )
+
+    assert result.returncode != 0
+    assert "Task 7" in result.stderr
+    assert (outside / "must-not-be-walked.txt").read_text(encoding="utf-8") == "sentinel"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL integration requires Windows")
+def test_secure_updater_tree_removes_everyone_and_has_only_system_admin_aces(tmp_path: Path) -> None:
+    """Leaving a low-privilege ACE or the wrong owner after hardening must make this test fail."""
+    principal = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    ).stdout.strip()
+    if principal.casefold() != "true":
+        pytest.skip("setting the SYSTEM owner requires an elevated Windows test process")
+
+    root = tmp_path / "secure"
+    child = root / "updater" / "cli.py"
+    child.parent.mkdir(parents=True)
+    child.write_text("pass\n", encoding="utf-8")
+    body = f'''$Root = "{root}"
+$Acl = Get-Acl -LiteralPath $Root
+$Everyone = New-Object Security.Principal.SecurityIdentifier("S-1-1-0")
+$Rule = New-Object Security.AccessControl.FileSystemAccessRule($Everyone, "ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
+$Acl.AddAccessRule($Rule)
+Set-Acl -LiteralPath $Root -AclObject $Acl
+Protect-UpdaterTree -Path $Root
+Assert-SecureUpdaterTree -Path $Root
+$Result = foreach ($Item in @($Root, (Join-Path $Root "updater"), (Join-Path $Root "updater\\cli.py"))) {{
+  $Verified = Get-Acl -LiteralPath $Item
+  $Rules = $Verified.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])
+  [pscustomobject]@{{
+    path = $Item
+    owner = $Verified.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    protected = $Verified.AreAccessRulesProtected
+    aces = @($Rules | ForEach-Object {{ [pscustomobject]@{{ sid=$_.IdentityReference.Value; type=[string]$_.AccessControlType; rights=[string]$_.FileSystemRights }} }})
+  }}
+}}
+$Result | ConvertTo-Json -Depth 5 -Compress'''
+    result = _run_security_helper(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    records = json.loads(result.stdout)
+    allowed = {"S-1-5-18", "S-1-5-32-544"}
+    for record in records:
+        assert record["owner"] == "S-1-5-18"
+        assert record["protected"] is True
+        assert record["aces"]
+        assert {ace["sid"] for ace in record["aces"]} <= allowed
+        assert all(ace["type"] == "Allow" and "FullControl" in ace["rights"] for ace in record["aces"])
 
 
 def test_installer_preserves_token_and_shared_data_contract() -> None:

@@ -97,8 +97,8 @@ class UpdateStateStore:
             self._write_public({"state": "queued"})
             return request_id
 
-    def claim_queued_request(self, request_path: Path) -> ActiveUpdateRequest:
-        """Validate the fixed Worker request file and merge it into private state."""
+    def claim_queued_request(self, request_path: Path) -> ActiveUpdateRequest | None:
+        """Atomically claim a new request or acknowledge its durable terminal result."""
         try:
             value = json.loads(Path(request_path).read_text(encoding="utf-8"))
         except (OSError, UnicodeError, TypeError, ValueError) as error:
@@ -121,11 +121,36 @@ class UpdateStateStore:
             or not timestamp
         ):
             raise StateStoreError("queued update request has invalid metadata")
-        self.queue(request_id, target_commit)
-        active = self.read_active_request()
-        if active is None:
-            raise StateStoreError("queued update request could not be claimed")
-        return active
+        with self._exclusive_lock():
+            private = self._read_private()
+            state = private["state"]
+            if state not in {"idle", *TERMINAL_STATES}:
+                if (
+                    private["request_id"] != request_id
+                    or private["target_commit"] != target_commit
+                ):
+                    raise StateStoreError(
+                        "queued update request does not match active private state"
+                    )
+                self._reconcile_public(private)
+                return ActiveUpdateRequest(request_id, target_commit, state)
+            if state in TERMINAL_STATES and private["request_id"] == request_id:
+                if private["target_commit"] != target_commit:
+                    raise StateStoreError(
+                        "queued update request does not match terminal private state"
+                    )
+                # The terminal private record is the durable acknowledgement. Keeping the
+                # atomically-written request file makes crashes between runs replay-safe.
+                self._reconcile_public(private)
+                return None
+            next_private = {
+                "state": "queued",
+                "request_id": request_id,
+                "target_commit": target_commit,
+            }
+            self._write_private(next_private)
+            self._write_public({"state": "queued"})
+            return ActiveUpdateRequest(request_id, target_commit, "queued")
 
     def transition(self, next_state: str) -> None:
         """Move the active request to an explicitly permitted next state."""
