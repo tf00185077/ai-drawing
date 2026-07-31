@@ -17,6 +17,7 @@ import httpx
 
 from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client
+from app.services.nvidia_worker_update import ensure_worker_compatible
 
 
 class WorkerConfigurationError(RuntimeError):
@@ -176,6 +177,21 @@ class NvidiaWorkerClient(ComfyUIClient):
     def health(self) -> dict[str, Any]:
         return self._request("GET", "/v1/worker/status").json()
 
+    def request_update(self, target_commit: str) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/v1/admin/update",
+            json={"target_commit": target_commit},
+        ).json()
+
+    def update_status(self) -> dict[str, Any]:
+        return self._request("GET", "/v1/admin/update/status").json()
+
+    def preflight(self, node_types: list[str]) -> dict[str, Any]:
+        return self._request(
+            "POST", "/v1/workflows/preflight", json={"node_types": node_types}
+        ).json()
+
     def _synchronize(self, prompt: dict[str, Any]) -> None:
         resources = workflow_resources(prompt)
         plan = self._request(
@@ -230,9 +246,7 @@ class NvidiaWorkerClient(ComfyUIClient):
             for node in prompt.values()
             if isinstance(node, dict) and node.get("class_type")
         })
-        result = self._request(
-            "POST", "/v1/workflows/preflight", json={"node_types": node_types}
-        ).json()
+        result = self.preflight(node_types)
         missing = result.get("missing_node_types") or []
         if missing:
             raise WorkerConfigurationError(
@@ -240,6 +254,29 @@ class NvidiaWorkerClient(ComfyUIClient):
             )
 
     def submit_prompt(
+        self,
+        prompt: dict[str, Any],
+        *,
+        client_id: str | None = None,
+        extra_data: dict[str, Any] | None = None,
+    ) -> str:
+        settings = get_settings()
+        if settings.nvidia_worker_auto_update:
+            # This is a gate, not a recursive resubmission loop. A mismatched
+            # Worker is updated once, then the original prompt is submitted
+            # exactly once through the method below. Worker selection remains
+            # fail-closed and never switches to local ComfyUI.
+            ensure_worker_compatible(
+                self,
+                timeout=settings.nvidia_worker_update_timeout,
+            )
+        return self._submit_prompt_once(
+            prompt,
+            client_id=client_id,
+            extra_data=extra_data,
+        )
+
+    def _submit_prompt_once(
         self,
         prompt: dict[str, Any],
         *,

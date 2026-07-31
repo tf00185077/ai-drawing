@@ -432,7 +432,7 @@ git commit -m "feat(worker): install privileged update orchestrator"
 - Modify: `backend/app/api/workers.py`
 - Test: `backend/tests/test_nvidia_worker_update.py`
 
-- [ ] **Step 1: Write failing commit trust and no-op tests**
+- [x] **Step 1: Write failing commit trust and no-op tests**
 
 ```python
 def test_local_commit_requires_head_equal_origin_main(git_repo):
@@ -447,16 +447,16 @@ def test_matching_worker_commit_skips_update(fake_client, git_repo):
     assert fake_client.update_requests == []
 ```
 
-- [ ] **Step 2: Write failing coordination tests**
+- [x] **Step 2: Write failing coordination tests**
 
 Cover mismatch request, same-target reuse, expected outage after accepted request ID, injected-clock 30-minute timeout, post-update commit/preflight validation, one retry, no local fallback and one shared background task.
 
-- [ ] **Step 3: Run tests and verify RED**
+- [x] **Step 3: Run tests and verify RED**
 
 Run `py -3.11 -m pytest backend/tests/test_nvidia_worker_update.py -q`.
 Expected: import failure for coordinator.
 
-- [ ] **Step 4: Implement trusted local commit resolution**
+- [x] **Step 4: Implement trusted local commit resolution**
 
 ```python
 head = git("rev-parse", "HEAD")
@@ -467,7 +467,7 @@ if head != origin_main:
 
 Do not automatically pull Mac source.
 
-- [ ] **Step 5: Extend Worker client**
+- [x] **Step 5: Extend Worker client**
 
 ```python
 def request_update(self, target_commit: str) -> dict[str, Any]:
@@ -477,19 +477,19 @@ def update_status(self) -> dict[str, Any]:
     return self._request("GET", "/v1/admin/update/status").json()
 ```
 
-- [ ] **Step 6: Implement one managed coordinator**
+- [x] **Step 6: Implement one managed coordinator**
 
 Use one lock/condition so startup and submission join the same update. After acceptance, tolerate connection failures until deadline; then require `ready`, exact commit, compatible protocol and preflight. Never loop indefinitely.
 
-- [ ] **Step 7: Gate submission and retry once**
+- [x] **Step 7: Gate submission and retry once**
 
 Call coordinator before Worker submission. If update completes, submit once. Avoid recursive submission and never fall back local.
 
-- [ ] **Step 8: Add settings/startup/status**
+- [x] **Step 8: Add settings/startup/status**
 
 Add `nvidia_worker_auto_update: bool = False` and `nvidia_worker_update_timeout: float = 1800.0`. Launch a managed background check during FastAPI startup without delaying local Backend/Bot. Expose safe state/error code from `/api/workers/status`.
 
-- [ ] **Step 9: Verify and commit**
+- [x] **Step 9: Verify and commit**
 
 ```powershell
 py -3.11 -m pytest backend/tests/test_nvidia_worker_update.py backend/tests/test_worker_pairing.py backend/tests/test_worker_routing.py -q

@@ -84,6 +84,8 @@ class Settings(BaseSettings):
     nvidia_worker_token: str = ""
     nvidia_worker_timeout: float = 60.0
     nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
+    nvidia_worker_auto_update: bool = False
+    nvidia_worker_update_timeout: float = Field(default=1800.0, gt=0)
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
     comfyui_timeout_queue: float = 10.0
