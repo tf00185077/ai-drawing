@@ -535,6 +535,9 @@ class RuntimeValidator:
                         "AI_DRAWING_WORKER_PARTIAL_ROOT": str(
                             canonical_release / "cache" / ".partial"
                         ),
+                        "AI_DRAWING_WORKER_VERIFICATION_ROOT": str(
+                            self.layout.shared_cache / "verified"
+                        ),
                         "AI_DRAWING_COMFYUI_URL": comfy_url,
                         "PYTHONUTF8": "1",
                     },

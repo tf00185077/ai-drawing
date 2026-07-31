@@ -31,6 +31,7 @@ def _set_worker_root_env(tmp_path: Path, monkeypatch) -> dict[str, Path]:
     state = root
     comfy = release / "runtime" / "ComfyUI"
     partial = root / "cache" / ".partial"
+    verification = root / "cache" / "verified"
     config.parent.mkdir(parents=True)
     config.write_text(
         json.dumps({"token": "secret", "cache_gb": 70, "minimum_free_gb": 0}),
@@ -38,6 +39,7 @@ def _set_worker_root_env(tmp_path: Path, monkeypatch) -> dict[str, Path]:
     )
     (comfy / "models").mkdir(parents=True)
     partial.mkdir(parents=True)
+    verification.mkdir()
     for name, value in {
         "AI_DRAWING_WORKER_ROOT": root,
         "AI_DRAWING_WORKER_RELEASE_ROOT": release,
@@ -45,6 +47,7 @@ def _set_worker_root_env(tmp_path: Path, monkeypatch) -> dict[str, Path]:
         "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": state,
         "AI_DRAWING_COMFYUI_ROOT": comfy,
         "AI_DRAWING_WORKER_PARTIAL_ROOT": partial,
+        "AI_DRAWING_WORKER_VERIFICATION_ROOT": verification,
     }.items():
         monkeypatch.setenv(name, str(value))
     return {
@@ -54,6 +57,7 @@ def _set_worker_root_env(tmp_path: Path, monkeypatch) -> dict[str, Path]:
         "state": state,
         "comfy": comfy,
         "partial": partial,
+        "verification": verification,
     }
 
 
@@ -99,10 +103,12 @@ def test_partial_root_defaults_to_the_existing_worker_cache_contract(
     """Changing the non-versioned default away from ROOT/cache must make this test fail."""
     paths = _set_worker_root_env(tmp_path, monkeypatch)
     monkeypatch.delenv("AI_DRAWING_WORKER_PARTIAL_ROOT")
+    monkeypatch.delenv("AI_DRAWING_WORKER_VERIFICATION_ROOT")
 
     worker = _load_worker()
 
     assert worker.PARTIAL_ROOT == paths["root"].resolve(strict=True) / "cache" / ".partial"
+    assert worker.VERIFICATION_ROOT == paths["root"].resolve(strict=True) / "cache" / "verified"
 
 
 def test_loopback_comfyui_override_is_used_by_status_preflight_and_proxy(
@@ -184,13 +190,16 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
     state = root / "staging" / "validation-state"
     comfy = release / "ComfyUI"
     shared_partial = root / "shared" / "partial"
+    shared_cache = root / "shared" / "cache"
     partial = release / "cache" / ".partial"
+    verification = shared_cache / "verified"
     for directory in (
         release,
         config.parent,
         state,
         comfy / "models" / "loras",
         shared_partial,
+        shared_cache,
     ):
         directory.mkdir(parents=True, exist_ok=True)
     partial.parent.mkdir(parents=True)
@@ -220,6 +229,7 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
         "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": state,
         "AI_DRAWING_COMFYUI_ROOT": comfy,
         "AI_DRAWING_WORKER_PARTIAL_ROOT": partial,
+        "AI_DRAWING_WORKER_VERIFICATION_ROOT": verification,
         "AI_DRAWING_COMFYUI_URL": comfy_url,
     }
     for name, value in values.items():
@@ -294,9 +304,22 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
             ]
         },
     )
+    partial_bytes = (shared_partial / f"{upload_digest}.part").read_bytes()
+    completed = client.put(
+        "/v1/resources/content",
+        headers={**headers, "Content-Type": "application/octet-stream"},
+        params={
+            "kind": "loras",
+            "name": "uploaded.safetensors",
+            "sha256": upload_digest,
+            "size": len(upload_data),
+            "offset": len(uploaded_prefix),
+        },
+        content=upload_data[len(uploaded_prefix):],
+    )
 
     assert status.status_code == plan.status_code == preflight.status_code == 200
-    assert content.status_code == resume_plan.status_code == 200
+    assert content.status_code == resume_plan.status_code == completed.status_code == 200
     assert status.json()["source_commit"] == "a" * 40
     assert status.json()["update_state"] == "ready"
     assert plan.json() == {"missing": []}
@@ -308,11 +331,17 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
     assert worker.COMFYUI_ROOT == comfy.resolve(strict=True)
     assert worker.MODEL_ROOTS["loras"] == comfy.resolve(strict=True) / "models" / "loras"
     assert worker.PARTIAL_ROOT == partial
+    assert worker.VERIFICATION_ROOT == verification.resolve(strict=True)
     assert content.json() == {"ready": False, "offset": len(uploaded_prefix)}
     assert resume_plan.json()["missing"][0]["offset"] == len(uploaded_prefix)
-    assert (shared_partial / f"{upload_digest}.part").read_bytes() == uploaded_prefix
+    assert partial_bytes == uploaded_prefix
+    assert completed.json()["ready"] is True
+    sidecars = list(verification.glob("*.json"))
+    assert len(sidecars) == 2
+    assert any(json.loads(path.read_text(encoding="utf-8"))["sha256"] == upload_digest for path in sidecars)
     assert not (state / "cache").exists()
     assert not (root / "cache" / "verified").exists()
+    assert not (release / "cache" / "verified").exists()
     assert seen == [f"{comfy_url}/system_stats", f"{comfy_url}/object_info"]
 
 
@@ -325,6 +354,7 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
         "AI_DRAWING_WORKER_UPDATE_STATE_ROOT",
         "AI_DRAWING_COMFYUI_ROOT",
         "AI_DRAWING_WORKER_PARTIAL_ROOT",
+        "AI_DRAWING_WORKER_VERIFICATION_ROOT",
     ],
 )
 def test_worker_rejects_missing_or_out_of_root_explicit_paths(
@@ -371,6 +401,79 @@ def test_worker_rejects_managed_partial_junction_with_external_target(
 
     with pytest.raises(ValueError, match="AI_DRAWING_WORKER_PARTIAL_ROOT"):
         _load_worker()
+
+
+def test_worker_rejects_reparsed_shared_partial_before_touching_external_target(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Resolving shared/partial before no-follow validation must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    root = paths["root"]
+    release = root / "releases" / ("a" * 40)
+    comfy = release / "ComfyUI"
+    partial = release / "cache" / ".partial"
+    shared_partial = root / "shared" / "partial"
+    external = tmp_path / "external-shared-partial"
+    sentinel = external / "keep.txt"
+    comfy.mkdir(parents=True)
+    partial.parent.mkdir(parents=True)
+    shared_partial.parent.mkdir(parents=True)
+    external.mkdir()
+    sentinel.write_text("keep", encoding="utf-8")
+    junctions = WindowsJunctionOps()
+    junctions.create(shared_partial, external)
+    junctions.create(partial, shared_partial)
+    monkeypatch.setenv("AI_DRAWING_WORKER_RELEASE_ROOT", str(release))
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_ROOT", str(comfy))
+    monkeypatch.setenv("AI_DRAWING_WORKER_PARTIAL_ROOT", str(partial))
+
+    try:
+        with pytest.raises(ValueError, match="AI_DRAWING_WORKER_PARTIAL_ROOT"):
+            _load_worker()
+
+        assert junctions.read_target(shared_partial) == external.resolve(strict=True)
+        assert sentinel.read_text(encoding="utf-8") == "keep"
+    finally:
+        junctions.remove(partial)
+        junctions.remove(shared_partial)
+
+
+def test_worker_rejects_reparsed_managed_verification_root_before_external_write(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Allowing verification sidecars through a reparse point must make this test fail."""
+    paths = _set_worker_root_env(tmp_path, monkeypatch)
+    root = paths["root"]
+    release = root / "releases" / ("a" * 40)
+    comfy = release / "ComfyUI"
+    shared_partial = root / "shared" / "partial"
+    partial = release / "cache" / ".partial"
+    verification = root / "shared" / "cache" / "verified"
+    external = tmp_path / "external-verification"
+    sentinel = external / "keep.txt"
+    comfy.mkdir(parents=True)
+    shared_partial.mkdir(parents=True)
+    partial.parent.mkdir(parents=True)
+    verification.parent.mkdir(parents=True)
+    external.mkdir()
+    sentinel.write_text("keep", encoding="utf-8")
+    junctions = WindowsJunctionOps()
+    junctions.create(partial, shared_partial)
+    junctions.create(verification, external)
+    monkeypatch.setenv("AI_DRAWING_WORKER_RELEASE_ROOT", str(release))
+    monkeypatch.setenv("AI_DRAWING_COMFYUI_ROOT", str(comfy))
+    monkeypatch.setenv("AI_DRAWING_WORKER_PARTIAL_ROOT", str(partial))
+    monkeypatch.setenv("AI_DRAWING_WORKER_VERIFICATION_ROOT", str(verification))
+
+    try:
+        with pytest.raises(ValueError, match="AI_DRAWING_WORKER_VERIFICATION_ROOT"):
+            _load_worker()
+
+        assert junctions.read_target(verification) == external.resolve(strict=True)
+        assert sentinel.read_text(encoding="utf-8") == "keep"
+    finally:
+        junctions.remove(verification)
+        junctions.remove(partial)
 
 
 def test_worker_rejects_versioned_release_outside_releases_namespace(

@@ -89,6 +89,19 @@ def _reject_existing_reparse_components(name: str, path: Path) -> None:
             raise ValueError(f"{name} must not contain a reparse point")
 
 
+def _existing_runtime_directory(name: str, path: Path, contained_by: Path) -> Path:
+    _reject_reparse_components(name, path)
+    try:
+        canonical_root = contained_by.resolve(strict=True)
+        canonical = path.resolve(strict=True)
+        canonical.relative_to(canonical_root)
+    except (OSError, ValueError) as error:
+        raise ValueError(f"{name} escapes its managed root") from error
+    if not canonical.is_dir():
+        raise ValueError(f"{name} must name a directory")
+    return canonical
+
+
 def _relative_parts(name: str, path: Path, root: Path) -> tuple[str, ...]:
     try:
         return tuple(part.casefold() for part in path.relative_to(root).parts)
@@ -165,21 +178,57 @@ def _partial_root() -> Path:
             raise ValueError(f"{name} must name a directory")
         return path
 
+    shared_root = _existing_runtime_directory(name, ROOT / "shared", ROOT)
+    shared_partial = _existing_runtime_directory(
+        name, ROOT / "shared" / "partial", shared_root
+    )
     _reject_reparse_components(name, path.parent)
     try:
         attributes = getattr(path.lstat(), "st_file_attributes", 0)
         is_link = path.is_symlink() or bool(attributes & 0x400)
         target = path.resolve(strict=True)
-        shared_partial = (ROOT / "shared" / "partial").resolve(strict=True)
     except OSError as error:
         raise ValueError(f"{name} does not name the managed partial junction") from error
-    _reject_reparse_components(name, shared_partial)
     if not is_link or not target.is_dir() or target != shared_partial:
         raise ValueError(f"{name} does not target WORKER_ROOT/shared/partial")
     return path
 
 
 PARTIAL_ROOT = _partial_root()
+
+
+def _verification_root() -> Path:
+    name = "AI_DRAWING_WORKER_VERIFICATION_ROOT"
+    if RELEASE_ROOT == ROOT:
+        expected = PARTIAL_ROOT.parent / "verified"
+        parent = expected.parent
+        try:
+            parent.relative_to(ROOT)
+            _reject_existing_reparse_components(name, parent)
+            parent.mkdir(parents=True, exist_ok=True)
+        except (OSError, ValueError) as error:
+            raise ValueError(f"{name} parent could not be prepared safely") from error
+        safe_parent = _existing_runtime_directory(name, parent, ROOT)
+    else:
+        shared_root = _existing_runtime_directory(name, ROOT / "shared", ROOT)
+        safe_parent = _existing_runtime_directory(
+            name, ROOT / "shared" / "cache", shared_root
+        )
+        expected = safe_parent / "verified"
+
+    raw = os.environ.get(name, str(expected))
+    path = Path(raw)
+    if raw != raw.strip() or not path.is_absolute() or path != expected:
+        raise ValueError(f"{name} must name the runtime verification cache")
+    try:
+        _reject_existing_reparse_components(name, path)
+        path.mkdir(exist_ok=True)
+    except (OSError, ValueError) as error:
+        raise ValueError(f"{name} could not be prepared safely") from error
+    return _existing_runtime_directory(name, path, safe_parent)
+
+
+VERIFICATION_ROOT = _verification_root()
 SOURCE_COMMIT_PATH = RELEASE_ROOT / "source-commit.txt"
 UPDATE_REQUEST_PATH = UPDATE_STATE_ROOT / "state" / "update-request.json"
 UPDATE_STATUS_PATH = UPDATE_STATE_ROOT / "state" / "update-status.json"
@@ -275,9 +324,8 @@ def _sidecar_path(destination: Path) -> Path:
     nor counted by the LRU cache accounting. Keyed by the destination path so a
     same-named file that is later replaced gets a fresh record.
     """
-    verified_root = PARTIAL_ROOT.parent / "verified"
     key = hashlib.sha256(str(destination).encode("utf-8")).hexdigest()
-    return verified_root / f"{key}.json"
+    return VERIFICATION_ROOT / f"{key}.json"
 
 
 def _record_verified(destination: Path, sha: str) -> None:

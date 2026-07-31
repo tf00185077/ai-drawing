@@ -538,6 +538,9 @@ def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_
     assert worker_env["AI_DRAWING_WORKER_PARTIAL_ROOT"] == str(
         release / "cache" / ".partial"
     )
+    assert worker_env["AI_DRAWING_WORKER_VERIFICATION_ROOT"] == str(
+        layout.shared_cache / "verified"
+    )
     assert all("file-only-secret" not in value for value in worker_env.values())
     assert len(health.staged_calls) == 1
     worker_url, comfy_url, expected_commit = health.staged_calls[0]
