@@ -75,3 +75,29 @@ DONE
 - Focused Task 1-5 suite -- **225 passed / 1 skipped / 2 pre-existing warnings**.
 - Python compileall, Windows PowerShell AST parsing for all changed/entry scripts, and `git diff --check` -- passed.
 - No production Worker, ComfyUI, ProgramData root, ACL, installer, or Scheduled Task was contacted or mutated.
+
+---
+
+## Fix Round 2
+
+### RED
+
+- Atomic-directory tests first reported **2 failures**: the installer still created fixed Worker/ProgramData roots before applying ACLs, and the requested descriptor-based creation helper was absent.
+- Request-race tests first reported **2 failures**: claim completed from bytes read before the shared request lock, while concurrent writers/claimer were not serialized by the fixed lock file.
+- A strengthened child-process lock test exposed a Windows detail: reading byte 0 before acquiring an `msvcrt` byte-range lock raises `PermissionError` rather than waiting.
+
+### GREEN
+
+- `New-SecureUpdaterDirectory` constructs a protected `DirectorySecurity` descriptor before creation, with an injected owner/allowlist for non-elevated integration tests and production defaults of SYSTEM ownership plus only SYSTEM/Administrators inheritable FullControl ACEs.
+- Fixed targets are never created and then hardened. The helper atomically creates a random same-parent staging directory through `Directory.CreateDirectory(path, security)`, verifies ACL and a random identity marker, atomically moves it to the absent fixed target, and re-verifies identity/ACL. An existing or racing target makes `Directory.Move` fail; the unknown target is never passed to a hardening function.
+- Fresh Worker and ProgramData roots now use only this atomic helper. Pre-existing paths remain verification-only and fail closed into Task 7 migration.
+- Worker writer/status operations and updater claim share `update-request.lock`, which is separate from replaceable request JSON. A process-local thread lock serializes concurrent FastAPI writers; an OS byte-0 lock serializes the Worker and updater processes. Windows contention uses `LK_NBLCK` with bounded-error retry behavior and never reads the locked byte before acquisition.
+- Claim acquires request lock before reading current JSON, then acquires state lock (`request -> state`) and validates/binds the exact current ID and commit before releasing. No reverse or re-entrant lock path is used.
+
+### Verification
+
+- Atomic ACL focused integration -- **4 passed / 1 elevated-only skipped**. The non-elevated current-SID test proves the directory is born protected with no Everyone ACE; the production SYSTEM-owner exact-ACE test remains elevation-gated.
+- Cross-process replace regression plus two-writer/claimer interleave -- **2 passed**, with all contenders initially blocked, one distinct target accepted, one rejected, no lost accepted ID, and no live/deadlocked thread after completion.
+- Focused Task 1-5 suite -- **230 passed / 1 skipped / 2 pre-existing warnings**.
+- Worker distribution directory and ZIP rebuilt; parity checks, Python compileall, Windows PowerShell AST parsing, and `git diff --check` passed.
+- No production Worker, ProgramData root, ACL, installer, or Scheduled Task was contacted or mutated.

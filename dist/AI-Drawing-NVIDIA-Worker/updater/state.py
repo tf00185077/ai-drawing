@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
+from .request_lock import exclusive_request_lock
+
 
 TRANSITIONS = {
     "queued": {"fetching", "rejected"},
@@ -99,6 +101,15 @@ class UpdateStateStore:
 
     def claim_queued_request(self, request_path: Path) -> ActiveUpdateRequest | None:
         """Atomically claim a new request or acknowledge its durable terminal result."""
+        request_path = Path(request_path)
+        if request_path != self.root / "update-request.json":
+            raise StateStoreError("queued update request path is not canonical")
+        with exclusive_request_lock(request_path):
+            return self._claim_queued_request_locked(request_path)
+
+    def _claim_queued_request_locked(
+        self, request_path: Path
+    ) -> ActiveUpdateRequest | None:
         try:
             value = json.loads(Path(request_path).read_text(encoding="utf-8"))
         except (OSError, UnicodeError, TypeError, ValueError) as error:

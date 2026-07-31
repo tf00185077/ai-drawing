@@ -14,6 +14,135 @@ function Assert-NotReparsePoint {
     }
 }
 
+function New-UpdaterDirectorySecurity {
+    param(
+        [Parameter(Mandatory = $true)][Security.Principal.SecurityIdentifier]$OwnerSid,
+        [Parameter(Mandatory = $true)][Security.Principal.SecurityIdentifier[]]$AllowedSids
+    )
+
+    if ($AllowedSids.Count -lt 1) {
+        throw "Updater directory ACL requires at least one principal."
+    }
+    $Security = New-Object Security.AccessControl.DirectorySecurity
+    $Security.SetOwner($OwnerSid)
+    $Security.SetAccessRuleProtection($true, $false)
+    $Inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor `
+        [Security.AccessControl.InheritanceFlags]::ObjectInherit
+    foreach ($Sid in $AllowedSids) {
+        $Rule = New-Object Security.AccessControl.FileSystemAccessRule(
+            $Sid,
+            [Security.AccessControl.FileSystemRights]::FullControl,
+            $Inheritance,
+            [Security.AccessControl.PropagationFlags]::None,
+            [Security.AccessControl.AccessControlType]::Allow
+        )
+        [void]$Security.AddAccessRule($Rule)
+    }
+    return $Security
+}
+
+function Assert-ExpectedUpdaterAcl {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][Security.Principal.SecurityIdentifier]$OwnerSid,
+        [Parameter(Mandatory = $true)][Security.Principal.SecurityIdentifier[]]$AllowedSids,
+        [switch]$RequireProtected,
+        [switch]$RequireInheritable
+    )
+
+    Assert-NotReparsePoint -Path $Path
+    $Acl = Get-Acl -LiteralPath $Path -ErrorAction Stop
+    $Owner = $Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    if ($Owner -ne $OwnerSid.Value) {
+        throw "Task 7 migration is required: updater path owner is unexpected."
+    }
+    if ($RequireProtected -and -not $Acl.AreAccessRulesProtected) {
+        throw "Task 7 migration is required: updater root ACL inherits untrusted rules."
+    }
+    $AllowedValues = @($AllowedSids | ForEach-Object { $_.Value })
+    $Rules = @($Acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+    if ($Rules.Count -ne $AllowedValues.Count) {
+        throw "Task 7 migration is required: updater ACL has unexpected entries."
+    }
+    $ExpectedInheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor `
+        [Security.AccessControl.InheritanceFlags]::ObjectInherit
+    $Seen = @{}
+    foreach ($Rule in $Rules) {
+        $Principal = $Rule.IdentityReference.Value
+        if (
+            $AllowedValues -notcontains $Principal -or
+            $Rule.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
+            $Rule.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl -or
+            ($RequireInheritable -and $Rule.InheritanceFlags -ne $ExpectedInheritance) -or
+            ($RequireInheritable -and $Rule.PropagationFlags -ne [Security.AccessControl.PropagationFlags]::None) -or
+            $Seen.ContainsKey($Principal)
+        ) {
+            throw "Task 7 migration is required: updater ACL grants an unexpected principal or right."
+        }
+        $Seen[$Principal] = $true
+    }
+    foreach ($RequiredSid in $AllowedValues) {
+        if (-not $Seen.ContainsKey($RequiredSid)) {
+            throw "Task 7 migration is required: updater ACL is missing a required principal."
+        }
+    }
+}
+
+function New-SecureUpdaterDirectory {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Security.Principal.SecurityIdentifier]$OwnerSid = $script:SystemSid,
+        [Security.Principal.SecurityIdentifier[]]$AllowedSids = @(
+            $script:SystemSid,
+            $script:AdministratorsSid
+        )
+    )
+
+    $TargetPath = [IO.Path]::GetFullPath($Path)
+    $ParentPath = [IO.Path]::GetDirectoryName($TargetPath)
+    $Parent = Get-Item -LiteralPath $ParentPath -Force -ErrorAction Stop
+    if (-not $Parent.PSIsContainer) {
+        throw "Secure updater directory parent is invalid."
+    }
+    Assert-NotReparsePoint -Path $Parent.FullName
+    if ([IO.Directory]::Exists($TargetPath) -or [IO.File]::Exists($TargetPath)) {
+        throw "Task 7 migration is required: secure updater directory already exists."
+    }
+
+    $Leaf = [IO.Path]::GetFileName($TargetPath.TrimEnd([IO.Path]::DirectorySeparatorChar))
+    $Nonce = [Guid]::NewGuid().ToString("N")
+    $StagingPath = Join-Path $Parent.FullName ".$Leaf.secure-$Nonce"
+    $IdentityName = ".secure-directory-$Nonce"
+    $IdentityPath = Join-Path $StagingPath $IdentityName
+    $Moved = $false
+    try {
+        $Security = New-UpdaterDirectorySecurity -OwnerSid $OwnerSid -AllowedSids $AllowedSids
+        [void][IO.Directory]::CreateDirectory($StagingPath, $Security)
+        Assert-ExpectedUpdaterAcl -Path $StagingPath -OwnerSid $OwnerSid `
+            -AllowedSids $AllowedSids -RequireProtected -RequireInheritable
+        [IO.File]::WriteAllText($IdentityPath, $Nonce, (New-Object Text.UTF8Encoding -ArgumentList $false))
+        Assert-ExpectedUpdaterAcl -Path $IdentityPath -OwnerSid $OwnerSid -AllowedSids $AllowedSids
+        [IO.Directory]::Move($StagingPath, $TargetPath)
+        $Moved = $true
+        $MovedIdentity = Join-Path $TargetPath $IdentityName
+        if ([IO.File]::ReadAllText($MovedIdentity) -ne $Nonce) {
+            throw "Secure updater directory identity verification failed."
+        }
+        Assert-ExpectedUpdaterAcl -Path $TargetPath -OwnerSid $OwnerSid `
+            -AllowedSids $AllowedSids -RequireProtected -RequireInheritable
+        Assert-ExpectedUpdaterAcl -Path $MovedIdentity -OwnerSid $OwnerSid -AllowedSids $AllowedSids
+        [IO.File]::Delete($MovedIdentity)
+        Assert-ExpectedUpdaterAcl -Path $TargetPath -OwnerSid $OwnerSid `
+            -AllowedSids $AllowedSids -RequireProtected -RequireInheritable
+    } finally {
+        if (-not $Moved -and [IO.Directory]::Exists($StagingPath)) {
+            Assert-ExpectedUpdaterAcl -Path $StagingPath -OwnerSid $OwnerSid `
+                -AllowedSids $AllowedSids -RequireProtected -RequireInheritable
+            [IO.Directory]::Delete($StagingPath, $true)
+        }
+    }
+}
+
 function Set-SecureUpdaterRootAcl {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -58,37 +187,9 @@ function Assert-SecureUpdaterPath {
         [switch]$RequireProtected
     )
 
-    Assert-NotReparsePoint -Path $Path
-    $Acl = Get-Acl -LiteralPath $Path -ErrorAction Stop
-    $Owner = $Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
-    if ($Owner -ne $script:SystemSid.Value) {
-        throw "Task 7 migration is required: updater path owner is not SYSTEM."
-    }
-    if ($RequireProtected -and -not $Acl.AreAccessRulesProtected) {
-        throw "Task 7 migration is required: updater root ACL inherits untrusted rules."
-    }
-    $Rules = @($Acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
-    if ($Rules.Count -ne 2) {
-        throw "Task 7 migration is required: updater ACL has unexpected entries."
-    }
-    $Seen = @{}
-    foreach ($Rule in $Rules) {
-        $Principal = $Rule.IdentityReference.Value
-        if (
-            $script:AllowedUpdaterSids -notcontains $Principal -or
-            $Rule.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
-            $Rule.FileSystemRights -ne [Security.AccessControl.FileSystemRights]::FullControl -or
-            $Seen.ContainsKey($Principal)
-        ) {
-            throw "Task 7 migration is required: updater ACL grants an unexpected principal or right."
-        }
-        $Seen[$Principal] = $true
-    }
-    foreach ($RequiredSid in $script:AllowedUpdaterSids) {
-        if (-not $Seen.ContainsKey($RequiredSid)) {
-            throw "Task 7 migration is required: updater ACL is missing a required principal."
-        }
-    }
+    Assert-ExpectedUpdaterAcl -Path $Path -OwnerSid $script:SystemSid `
+        -AllowedSids @($script:SystemSid, $script:AdministratorsSid) `
+        -RequireProtected:$RequireProtected -RequireInheritable:$RequireProtected
 }
 
 function Get-UpdaterTreeNoFollow {

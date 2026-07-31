@@ -105,6 +105,7 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         "updater/config.py",
         "updater/git_source.py",
         "updater/runtime.py",
+        "updater/request_lock.py",
         "updater/state.py",
         "updater/windows_runtime.py",
     ):
@@ -124,6 +125,7 @@ def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
             "updater/config.py",
             "updater/git_source.py",
             "updater/runtime.py",
+            "updater/request_lock.py",
             "updater/state.py",
             "updater/windows_runtime.py",
         }
@@ -229,6 +231,19 @@ def test_worker_security_helper_uses_well_known_sids_and_verifies_every_ace() ->
     assert "AreAccessRulesProtected" in text
 
 
+def test_installer_uses_atomic_acl_directory_creation_for_fixed_roots() -> None:
+    """Creating a fixed root before applying its ACL leaves a privilege-escalation race."""
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "Install-Worker.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert "New-SecureUpdaterDirectory -Path $Root" in text
+    assert "New-SecureUpdaterDirectory -Path $ProgramDataRoot" in text
+    assert "New-Item -ItemType Directory -Path $Root" not in text
+    assert "New-Item -ItemType Directory -Path $ProgramDataRoot" not in text
+
+
 def _run_security_helper(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
     repo = Path(__file__).resolve().parents[2]
     harness = tmp_path / "acl-harness.ps1"
@@ -252,6 +267,36 @@ def _run_security_helper(tmp_path: Path, body: str) -> subprocess.CompletedProce
         errors="replace",
         timeout=30,
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL integration requires Windows")
+def test_secure_directory_is_created_with_protected_acl_atomically_as_current_user(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "atomic-secure-root"
+    body = f'''$CurrentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+New-SecureUpdaterDirectory -Path "{root}" -OwnerSid $CurrentSid -AllowedSids @($CurrentSid)
+$Acl = Get-Acl -LiteralPath "{root}"
+$Rules = @($Acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+[pscustomobject]@{{
+  owner = $Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+  expected = $CurrentSid.Value
+  protected = $Acl.AreAccessRulesProtected
+  aces = @($Rules | ForEach-Object {{ [pscustomobject]@{{ sid=$_.IdentityReference.Value; type=[string]$_.AccessControlType; rights=[string]$_.FileSystemRights }} }})
+}} | ConvertTo-Json -Depth 5 -Compress'''
+    result = _run_security_helper(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["owner"] == record["expected"]
+    assert record["protected"] is True
+    assert record["aces"] == [
+        {
+            "sid": record["expected"],
+            "type": "Allow",
+            "rights": "FullControl",
+        }
+    ]
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows ACL integration requires Windows")
@@ -323,10 +368,10 @@ def test_secure_updater_tree_removes_everyone_and_has_only_system_admin_aces(tmp
         pytest.skip("setting the SYSTEM owner requires an elevated Windows test process")
 
     root = tmp_path / "secure"
-    child = root / "updater" / "cli.py"
-    child.parent.mkdir(parents=True)
-    child.write_text("pass\n", encoding="utf-8")
     body = f'''$Root = "{root}"
+New-SecureUpdaterDirectory -Path $Root
+New-Item -ItemType Directory -Path (Join-Path $Root "updater") | Out-Null
+[IO.File]::WriteAllText((Join-Path $Root "updater\\cli.py"), "pass`n")
 $Acl = Get-Acl -LiteralPath $Root
 $Everyone = New-Object Security.Principal.SecurityIdentifier("S-1-1-0")
 $Rule = New-Object Security.AccessControl.FileSystemAccessRule($Everyone, "ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")

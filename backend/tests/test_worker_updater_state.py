@@ -2,9 +2,21 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+import threading
+import time
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 import pytest
+
+from worker.windows.update_contract import (
+    UpdateAlreadyRunning as WorkerUpdateAlreadyRunning,
+    atomic_write_json as worker_atomic_write_json,
+    queue_update,
+)
 
 from worker.windows.updater.state import (
     ActiveUpdateRequest,
@@ -13,6 +25,68 @@ from worker.windows.updater.state import (
     UpdateAlreadyRunning,
     UpdateStateStore,
 )
+
+
+@contextmanager
+def _hold_request_file_lock(request_path: Path) -> Iterator[None]:
+    lock_path = request_path.with_name("update-request.lock")
+    ready_path = request_path.with_name("child-lock-ready")
+    release_path = request_path.with_name("child-lock-release")
+    script = r'''import os, pathlib, sys, time
+lock_path, ready_path, release_path = map(pathlib.Path, sys.argv[1:])
+lock_path.parent.mkdir(parents=True, exist_ok=True)
+with lock_path.open("a+b") as lock_file:
+    lock_file.seek(0)
+    if not lock_file.read(1):
+        lock_file.seek(0); lock_file.write(b"0"); lock_file.flush()
+    lock_file.seek(0)
+    if os.name == "nt":
+        import msvcrt
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+    ready_path.write_text("ready", encoding="utf-8")
+    while not release_path.exists():
+        time.sleep(0.01)
+    lock_file.seek(0)
+    if os.name == "nt":
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+'''
+    process = subprocess.Popen(
+        [sys.executable, "-c", script, str(lock_path), str(ready_path), str(release_path)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    deadline = time.monotonic() + 5
+    while not ready_path.exists() and time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise AssertionError(process.stderr.read() if process.stderr else "lock child failed")
+        time.sleep(0.01)
+    if not ready_path.exists():
+        process.kill()
+        raise AssertionError("lock child did not acquire the request lock")
+    try:
+        yield
+    finally:
+        release_path.touch()
+        process.wait(timeout=5)
+        ready_path.unlink(missing_ok=True)
+        release_path.unlink(missing_ok=True)
+
+
+def _write_request(path: Path, request_id: str, target_commit: str) -> None:
+    worker_atomic_write_json(
+        path,
+        {
+            "request_id": request_id,
+            "target_commit": target_commit,
+            "timestamp": "2026-08-01T00:00:00+00:00",
+        },
+    )
 
 
 def test_state_machine_rejects_skipped_activation(tmp_path: Path) -> None:
@@ -271,6 +345,98 @@ def test_claim_rejects_request_inconsistent_with_active_private_state(
 
     with pytest.raises(StateStoreError):
         store.claim_queued_request(request_path)
+
+
+def test_claim_reads_request_only_after_acquiring_shared_request_lock(tmp_path: Path) -> None:
+    store = UpdateStateStore(tmp_path)
+    request_path = tmp_path / "update-request.json"
+    _write_request(request_path, "request-old", "a" * 40)
+    finished = threading.Event()
+    result: list[ActiveUpdateRequest | None] = []
+    errors: list[BaseException] = []
+
+    def claim() -> None:
+        try:
+            result.append(store.claim_queued_request(request_path))
+        except BaseException as error:
+            errors.append(error)
+        finally:
+            finished.set()
+
+    with _hold_request_file_lock(request_path):
+        thread = threading.Thread(target=claim)
+        thread.start()
+        was_blocked = not finished.wait(timeout=0.25)
+        _write_request(request_path, "request-new", "b" * 40)
+    thread.join(timeout=5)
+
+    assert errors == []
+    assert was_blocked
+    assert not thread.is_alive()
+    assert result == [
+        ActiveUpdateRequest("request-new", "b" * 40, "queued")
+    ]
+
+
+def test_two_writers_and_claimer_share_one_request_lock_without_losing_acceptance(
+    tmp_path: Path,
+) -> None:
+    store = UpdateStateStore(tmp_path)
+    request_path = tmp_path / "update-request.json"
+    status_path = tmp_path / "update-status.json"
+    store.queue("request-terminal", "0" * 40)
+    for state in ("fetching", "staging", "installing", "validating", "activating", "restarting", "ready"):
+        store.transition(state)
+    _write_request(request_path, "request-terminal", "0" * 40)
+
+    gate = threading.Barrier(4)
+    finished = [threading.Event() for _ in range(3)]
+    accepted: list[tuple[str, str]] = []
+    writer_errors: list[BaseException] = []
+    claim_errors: list[BaseException] = []
+
+    def writer(index: int, target: str) -> None:
+        gate.wait()
+        try:
+            accepted.append((queue_update(request_path, status_path, target), target))
+        except BaseException as error:
+            writer_errors.append(error)
+        finally:
+            finished[index].set()
+
+    def claim() -> None:
+        gate.wait()
+        try:
+            store.claim_queued_request(request_path)
+        except BaseException as error:
+            claim_errors.append(error)
+        finally:
+            finished[2].set()
+
+    threads = [
+        threading.Thread(target=writer, args=(0, "a" * 40)),
+        threading.Thread(target=writer, args=(1, "b" * 40)),
+        threading.Thread(target=claim),
+    ]
+    with _hold_request_file_lock(request_path):
+        for thread in threads:
+            thread.start()
+        gate.wait()
+        all_blocked = all(not event.wait(timeout=0.1) for event in finished)
+    for thread in threads:
+        thread.join(timeout=5)
+
+    assert all_blocked
+    assert all(not thread.is_alive() for thread in threads)
+    assert len(accepted) == 1
+    assert len(writer_errors) == 1
+    assert isinstance(writer_errors[0], WorkerUpdateAlreadyRunning)
+    assert claim_errors == []
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    assert (request["request_id"], request["target_commit"]) == accepted[0]
+    active = store.claim_queued_request(request_path)
+    assert active is not None
+    assert (active.request_id, active.target_commit) == accepted[0]
 
 
 @pytest.mark.parametrize(
