@@ -73,6 +73,58 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _sidecar_path(destination: Path) -> Path:
+    """Central per-file record of the last verified digest for a model file.
+
+    Kept under cache/ (outside MODEL_ROOTS) so it is neither served to ComfyUI
+    nor counted by the LRU cache accounting. Keyed by the destination path so a
+    same-named file that is later replaced gets a fresh record.
+    """
+    verified_root = PARTIAL_ROOT.parent / "verified"
+    key = hashlib.sha256(str(destination).encode("utf-8")).hexdigest()
+    return verified_root / f"{key}.json"
+
+
+def _record_verified(destination: Path, sha: str) -> None:
+    stat = destination.stat()
+    sidecar = _sidecar_path(destination)
+    sidecar.parent.mkdir(parents=True, exist_ok=True)
+    sidecar.write_text(
+        json.dumps(
+            {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "sha256": sha}
+        ),
+        encoding="utf-8",
+    )
+
+
+def _verified_sha(destination: Path) -> str:
+    """Trusted digest for an existing file without re-reading it every submit.
+
+    A sidecar recorded at ingestion (or self-healed here on first sight) lets an
+    unchanged file — matching size and mtime_ns — be trusted by a cheap string
+    compare. Any real edit advances mtime and forces a one-time rehash.
+    """
+    stat = destination.stat()
+    try:
+        record = json.loads(_sidecar_path(destination).read_text(encoding="utf-8"))
+        if (
+            record.get("size") == stat.st_size
+            and record.get("mtime_ns") == stat.st_mtime_ns
+        ):
+            return str(record.get("sha256", ""))
+    except (OSError, ValueError):
+        pass
+    sha = _sha256(destination)
+    _record_verified(destination, sha)
+    return sha
+
+
+def _touch_atime(destination: Path) -> None:
+    """Refresh atime for LRU eviction while preserving mtime (sidecar key)."""
+    stat = destination.stat()
+    os.utime(destination, ns=(time.time_ns(), stat.st_mtime_ns))
+
+
 def _model_files() -> list[Path]:
     files: list[Path] = []
     for root in MODEL_ROOTS.values():
@@ -147,8 +199,8 @@ def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
         destination = _safe_destination(kind, name)
         protected.add(destination.resolve())
         if destination.is_file() and destination.stat().st_size == size:
-            if _sha256(destination) == sha:
-                os.utime(destination, None)
+            if _verified_sha(destination) == sha:
+                _touch_atime(destination)
                 continue
         partial = PARTIAL_ROOT / f"{sha}.part"
         offset = partial.stat().st_size if partial.is_file() else 0
@@ -188,6 +240,9 @@ async def resource_content(
         raise HTTPException(422, "resource digest mismatch")
     destination.parent.mkdir(parents=True, exist_ok=True)
     os.replace(partial, destination)
+    # The bytes were just digest-verified above; record the sidecar so future
+    # plans trust this file by size+mtime without re-hashing it.
+    _record_verified(destination, sha256)
     return {"ready": True, "offset": size, "size": size, "sha256": sha256}
 
 

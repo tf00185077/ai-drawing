@@ -14,6 +14,13 @@
 
 # 進度追蹤
 
+## 2026-07-31 NVIDIA Worker 路由效能與錯誤呈現加固
+
+- **Mac 端 digest 快取**：`nvidia_worker._digest` 以 `(path, size, mtime_ns)` 快取 SHA256，長駐 queue worker 行程內每個模型檔一生只 hash 一次；不再每次送生成就把整個 checkpoint/LoRA 全量重讀重算。任何真實編輯（size 或 mtime 變動）自動失效。
+- **Worker 端 sidecar sha**：`resource_plan` 對已存在的大檔改用 `cache/verified/` 的 sidecar（`{size, mtime_ns, sha256}`）做純字串比對，不再每次 rehash 24GB；缺/過期 sidecar 時 hash 一次自我修復（相容既有安裝）。同名同 size 但內容不同仍由 sha 比對抓出並回報 missing，正確性不退。LRU 觸碰改為 `_touch_atime`（保留 mtime，避免自我失效）；ingest finalize 後寫 sidecar。
+- **Worker 路徑 node_errors**：`NvidiaWorkerClient.submit_prompt` 的 `/prompt` 不再經 `_request` 的 `raise_for_status`，改為解析非 2xx body 包成 `ComfyUIError(error, node_errors=...)`，與 local 路徑同型別同欄位，缺模型/參數錯誤能忠實呈現給前端與 Discord。
+- 驗證（non-live）：新增/回歸測試——worker_resources 4、worker_runtime 5（含 sidecar 命中不讀檔、同名不同內容回報 missing、缺 sidecar 自我修復）、worker_routing/pairing、queue，合計 `46 passed`。未跑 ComfyUI／GPU／真實 worker E2E。既有兩筆失敗（`get_comfy_client` 空 base_url、worker manifest 需 `dist/` 產物）為環境問題、pristine commit 亦紅，與本次無關。
+
 ## 2026-07-31 Prompt Library 髮型子分類建置
 
 - 在 `髮型`（hair，掛於 人物與身形 下）底下新增 7 個子分類（`parent_id: "hair"`）：長度（hair-length, 11）、瀏海（hair-bangs, 6）、綁髮（hair-tied, 16）、捲度（hair-texture, 9）、分線（hair-parting, 3）、髮尾（hair-ends, 4）、特殊髮型（hair-special, 8），共 57 個原子詞條。

@@ -8,6 +8,7 @@ returns the local client as a fallback.
 from __future__ import annotations
 
 import hashlib
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -95,12 +96,34 @@ def _resolve(kind: str, name: str) -> Path:
     raise FileNotFoundError(f"authoritative {kind} resource not found: {safe}")
 
 
-def _digest(path: Path) -> str:
+# Content-addressed model files are large (multi-GB) and effectively immutable.
+# Hashing them on every prompt submission is pure disk I/O waste, so cache the
+# digest keyed by (path, size, mtime_ns); any real edit changes size or mtime and
+# invalidates the entry. Cache lives in the long-running queue worker process.
+_digest_cache: dict[str, tuple[int, int, str]] = {}
+_digest_lock = threading.Lock()
+
+
+def _read_and_hash(path: Path) -> str:
     value = hashlib.sha256()
     with path.open("rb") as source:
         for chunk in iter(lambda: source.read(8 * 1024 * 1024), b""):
             value.update(chunk)
     return value.hexdigest()
+
+
+def _digest(path: Path) -> str:
+    stat = path.stat()
+    key = str(path)
+    signature = (stat.st_size, stat.st_mtime_ns)
+    with _digest_lock:
+        cached = _digest_cache.get(key)
+        if cached is not None and cached[:2] == signature:
+            return cached[2]
+    digest = _read_and_hash(path)
+    with _digest_lock:
+        _digest_cache[key] = (*signature, digest)
+    return digest
 
 
 def workflow_resources(workflow: dict[str, Any]) -> list[ResourceRef]:
@@ -230,7 +253,26 @@ class NvidiaWorkerClient(ComfyUIClient):
             payload["client_id"] = client_id
         if extra_data:
             payload["extra_data"] = extra_data
-        response = self._request("POST", "/prompt", json=payload)
+        # The Worker proxies ComfyUI's native /prompt response verbatim, so a
+        # validation failure arrives as a non-2xx body carrying {error,
+        # node_errors}. Parse it here instead of letting _request's
+        # raise_for_status collapse it into an opaque HTTPStatusError, so the
+        # local and Worker paths raise the identical ComfyUIError with the same
+        # node_errors the queue and UI already surface.
+        with httpx.Client(timeout=self._timeout_submit) as client:
+            response = client.post(
+                self._url("/prompt"), headers=self._headers, json=payload
+            )
+        if not response.is_success:
+            try:
+                body = response.json()
+            except Exception:
+                response.raise_for_status()
+                raise  # pragma: no cover - raise_for_status already raised
+            raise ComfyUIError(
+                str(body.get("error", response.text or response.reason_phrase)),
+                node_errors=body.get("node_errors", {}),
+            )
         data = response.json()
         if "error" in data:
             raise ComfyUIError(str(data["error"]), node_errors=data.get("node_errors", {}))
