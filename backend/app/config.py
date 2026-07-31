@@ -72,10 +72,18 @@ class Settings(BaseSettings):
     comfyui_embeddings_dir: str = "D:/AI/ComfyUI/models/embeddings"
     comfyui_controlnet_dir: str = "D:/AI/ComfyUI/models/controlnet"
     comfyui_upscale_models_dir: str = "D:/AI/ComfyUI/models/upscale_models"
+    comfyui_clip_vision_dir: str = "D:/AI/ComfyUI/models/clip_vision"
+    comfyui_audio_models_dir: str = "D:/AI/ComfyUI/models/audio_encoders"
     # ComfyUI LoadImage/LoadAudio input directory. Wan multi-keyframe video
     # workflows stage gallery images and generated silent wavs here.
     comfyui_input_dir: str = "~/comfyui/input"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
+    # Optional paired Windows NVIDIA Worker. Local generation remains the
+    # default; these values are used only when a request explicitly selects it.
+    nvidia_worker_url: str = ""
+    nvidia_worker_token: str = ""
+    nvidia_worker_timeout: float = 60.0
+    nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
     comfyui_timeout_submit: float = 60.0
     comfyui_timeout_fetch: float = 30.0
     comfyui_timeout_queue: float = 10.0
@@ -166,6 +174,8 @@ class Settings(BaseSettings):
         self.comfyui_embeddings_dir = _resolve_path_list(self.comfyui_embeddings_dir)
         self.comfyui_controlnet_dir = _resolve_path_list(self.comfyui_controlnet_dir)
         self.comfyui_upscale_models_dir = _resolve_path_list(self.comfyui_upscale_models_dir)
+        self.comfyui_clip_vision_dir = _resolve_path_list(self.comfyui_clip_vision_dir)
+        self.comfyui_audio_models_dir = _resolve_path_list(self.comfyui_audio_models_dir)
         self.comfyui_input_dir = _resolve_project_path(self.comfyui_input_dir)
         self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
         self.lora_train_logs_dir = _resolve_project_path(self.lora_train_logs_dir)

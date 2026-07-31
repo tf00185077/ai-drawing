@@ -775,6 +775,7 @@ def run_civitai_recipe(request: CivitaiRecipeRunRequest) -> dict[str, Any]:
     params = dict(request.queue_params)
     params["workflow"] = bundle["workflow"]
     params["recipe_provenance"] = bundle
+    params["execution_target"] = request.execution_target
     try:
         job_id = submit_custom(params)
     except QueueFullError as exc:

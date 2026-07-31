@@ -115,7 +115,11 @@ def test_generate_image_returns_agent_friendly_json() -> None:
     assert "get_generation_status" in data["next"]
     mock_client.post.assert_called_once_with(
         "generate/",
-        json={"prompt": "1girl, solo", "batch_size": 1},
+        json={
+            "prompt": "1girl, solo",
+            "execution_target": "local",
+            "batch_size": 1,
+        },
     )
 
 
@@ -137,6 +141,7 @@ def test_generate_image_with_optional_params_returns_submitted_payload() -> None
             batch_size=1,
             sampler_name="euler",
             scheduler="normal",
+            execution_target="worker",
         )
 
     call_json = mock_client.post.call_args[1]["json"]
@@ -151,6 +156,7 @@ def test_generate_image_with_optional_params_returns_submitted_payload() -> None
     assert call_json["batch_size"] == 1
     assert call_json["sampler_name"] == "euler"
     assert call_json["scheduler"] == "normal"
+    assert call_json["execution_target"] == "worker"
 
     data = json.loads(result)
     assert data["ok"] is True
@@ -566,6 +572,7 @@ def test_generate_video_wan_keyframes_posts_dedicated_endpoint() -> None:
             "steps": 4,
             "cfg": 1.0,
             "filename_prefix": "video/unit",
+            "execution_target": "local",
             "negative_prompt": "bad",
             "seed": 123,
         },

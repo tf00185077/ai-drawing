@@ -7,6 +7,7 @@ from bot.validation import (
     parse_count,
     parse_dimension,
     parse_video_contract,
+    parse_video_dimensions,
     validate_discord_attachment,
 )
 
@@ -20,6 +21,12 @@ def test_parse_dimension_valid():
 def test_parse_dimension_invalid(raw):
     with pytest.raises(ValidationError):
         parse_dimension(raw, field="寬")
+
+
+def test_parse_video_dimensions_require_multiples_of_16():
+    assert parse_video_dimensions(1024, 1024) == (1024, 1024)
+    with pytest.raises(ValidationError, match="16"):
+        parse_video_dimensions(1000, 1024)
 
 
 def test_parse_count_empty_returns_default():

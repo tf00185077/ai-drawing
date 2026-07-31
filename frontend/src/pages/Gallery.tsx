@@ -3,7 +3,8 @@
  * 搜尋、篩選（checkpoint / LoRA / 日期）、查看完整參數
  */
 import { useEffect, useState } from "react";
-import type { GalleryItem, GalleryListResponse } from "../types/api";
+import ExecutionTargetSelect from "../components/ExecutionTargetSelect";
+import type { ExecutionTarget, GalleryItem, GalleryListResponse } from "../types/api";
 
 const API = "/api";
 
@@ -190,12 +191,17 @@ function DetailModal({
 }) {
   const [rerunStatus, setRerunStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [rerunMsg, setRerunMsg] = useState("");
+  const [executionTarget, setExecutionTarget] = useState<ExecutionTarget>("local");
 
   const handleRerun = async () => {
     setRerunStatus("loading");
     setRerunMsg("");
     try {
-      const res = await fetch(`${API}/gallery/${item.id}/rerun`, { method: "POST" });
+      const res = await fetch(`${API}/gallery/${item.id}/rerun`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ execution_target: executionTarget }),
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setRerunStatus("ok");
@@ -261,6 +267,11 @@ function DetailModal({
             </div>
           )}
         </div>
+        <ExecutionTargetSelect
+          value={executionTarget}
+          onChange={setExecutionTarget}
+          className="mt-4 max-w-xs"
+        />
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={handleRerun}

@@ -50,6 +50,7 @@ def test_generate_like_sends_only_provided_overrides() -> None:
     assert body == {
         "locator": "123",
         "download_missing": True,
+        "execution_target": "local",
         "prompt": "my subject",
         "batch_size": 4,
     }

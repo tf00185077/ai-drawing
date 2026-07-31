@@ -31,6 +31,21 @@ def test_build_bot_registers_commands():
     assert api._base_url == "http://test"
 
 
+def test_all_generation_commands_offer_human_readable_execution_target_choices():
+    config = Config(discord_token="t", guild_id=123, backend_base_url="http://test")
+    _client, tree, _api = build_bot(config)
+    guild = discord.Object(id=123)
+
+    for command_name in ("draw", "animegen_i2v", "wan22_animate"):
+        command = tree.get_command(command_name, guild=guild)
+        parameter = next(p for p in command.parameters if p.name == "execution_target")
+        assert parameter.required is False
+        assert [(choice.name, choice.value) for choice in parameter.choices] == [
+            ("Mac（本機）", "local"),
+            ("Windows（Worker）", "worker"),
+        ]
+
+
 async def test_result_command_sends_successful_files_before_mixed_warning(tmp_path):
     config = Config(
         discord_token="t",
@@ -201,11 +216,15 @@ async def test_animegen_command_validates_attachment_then_opens_modal_without_do
     )
     interaction = SimpleNamespace(response=response)
 
-    await command.callback(interaction, attachment)
+    worker = discord.app_commands.Choice(name="Windows（Worker）", value="worker")
+    await command.callback(interaction, attachment, 1024, 1024, worker)
 
     response.send_modal.assert_awaited_once()
     modal = response.send_modal.await_args.args[0]
     assert modal.image is attachment
+    assert modal.width == 1024
+    assert modal.height == 1024
+    assert modal.execution_target == "worker"
     attachment.read.assert_not_awaited()
     response.send_message.assert_not_awaited()
 
@@ -228,3 +247,17 @@ async def test_wan_command_rejects_oversize_driver_before_opening_modal(tmp_path
     reference.read.assert_not_awaited()
     driver.read.assert_not_awaited()
     assert "大小" in response.send_message.await_args.args[0]
+
+
+async def test_wan_command_defaults_execution_target_to_local(tmp_path):
+    config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
+                    delivery_ledger_path=tmp_path / "deliveries.json")
+    _client, tree, _api = build_bot(config)
+    command = tree.get_command("wan22_animate", guild=discord.Object(id=123))
+    reference = SimpleNamespace(filename="ref.png", content_type="image/png", size=10)
+    driver = SimpleNamespace(filename="driver.mp4", content_type="video/mp4", size=10)
+    response = SimpleNamespace(send_modal=AsyncMock(), send_message=AsyncMock())
+
+    await command.callback(SimpleNamespace(response=response), reference, driver)
+
+    assert response.send_modal.await_args.args[0].execution_target == "local"

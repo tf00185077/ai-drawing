@@ -28,6 +28,14 @@ def parse_count(raw: str, *, default: int = 4) -> int:
     return value
 
 
+def parse_video_dimensions(width: int | str, height: int | str) -> tuple[int, int]:
+    parsed_width = parse_dimension(str(width), field="寬度")
+    parsed_height = parse_dimension(str(height), field="高度")
+    if parsed_width % 16 or parsed_height % 16:
+        raise ValidationError("影片寬高必須是 16 的倍數")
+    return parsed_width, parsed_height
+
+
 def parse_video_contract(
     total_seconds: float | str,
     source_frames: int | str,

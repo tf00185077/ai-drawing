@@ -43,6 +43,7 @@ class CivitaiRecipeVariationSetCreateRequest(_StrictModel):
     runtime_provenance: RuntimeProvenance
     input_bindings: dict[str, CivitaiRecipeVariantInputBinding] = Field(default_factory=dict)
     children: list[CivitaiRecipeVariationSetChildSpec] = Field(min_length=1, max_length=8)
+    execution_target: Literal["local", "worker"] = "local"
 
     @model_validator(mode="after")
     def validate_frozen_children(self) -> "CivitaiRecipeVariationSetCreateRequest":
@@ -64,6 +65,7 @@ class CivitaiRecipeVariationSetCreateRequest(_StrictModel):
                 runtime_capabilities=self.runtime_capabilities,
                 runtime_provenance=self.runtime_provenance,
                 input_bindings=self.input_bindings,
+                execution_target=self.execution_target,
             )
         return self
 

@@ -24,11 +24,13 @@ def build_profile_options(profiles: list[str]) -> list[discord.SelectOption]:
 
 class DrawModal(discord.ui.Modal, title="生圖設定"):
     def __init__(self, api, preset_id: str, profile: str | None,
-                 positive_default: str, negative_default: str):
+                 positive_default: str, negative_default: str,
+                 execution_target: str = "local"):
         super().__init__()
         self._api = api
         self._preset_id = preset_id
         self._profile = profile
+        self.execution_target = execution_target
         self.positive_prompt = discord.ui.TextInput(
             label="正向 Prompt（preset 預設，可編輯）",
             style=discord.TextStyle.paragraph,
@@ -74,6 +76,7 @@ class DrawModal(discord.ui.Modal, title="生圖設定"):
                 width,
                 height,
                 count,
+                execution_target=self.execution_target,
             )
         except BackendError as exc:
             await interaction.followup.send(f"❌ {exc}", ephemeral=True)
@@ -91,9 +94,13 @@ class FixedVideoModal(discord.ui.Modal):
     """Collect the five editable fields after slash-command attachment selection."""
 
     def __init__(self, api, mode: str, image: discord.Attachment,
-                 driver_video: discord.Attachment | None = None):
+                 driver_video: discord.Attachment | None = None,
+                 width: int | None = None, height: int | None = None,
+                 execution_target: str = "local"):
         if mode not in {"animegen", "wan22_animate"}:
             raise ValueError(f"unsupported fixed-video mode: {mode}")
+        if mode == "animegen" and (width is None or height is None):
+            raise ValueError("animegen requires output width and height")
         if mode == "wan22_animate" and driver_video is None:
             raise ValueError("wan22_animate requires a driver video")
         title = "AnimeGen I2V 設定" if mode == "animegen" else "Wan2.2 Animate 設定"
@@ -102,6 +109,9 @@ class FixedVideoModal(discord.ui.Modal):
         self.mode = mode
         self.image = image
         self.driver_video = driver_video
+        self.width = width
+        self.height = height
+        self.execution_target = execution_target
         self.prompt = discord.ui.TextInput(
             label="動作 Prompt",
             style=discord.TextStyle.paragraph,
@@ -165,13 +175,17 @@ class FixedVideoModal(discord.ui.Modal):
             image_data = await self.image.read()
             negative = self.negative_prompt.value.strip() or None
             if self.mode == "animegen":
+                assert self.width is not None and self.height is not None
                 job_id = await self._api.submit_animegen_i2v(
                     image=(self.image.filename, image_data, self.image.content_type or ""),
                     prompt=prompt,
                     negative_prompt=negative,
+                    width=self.width,
+                    height=self.height,
                     total_seconds=seconds,
                     source_frames=source,
                     film_target_frames=target,
+                    execution_target=self.execution_target,
                 )
                 label = "AnimeGen I2V"
             else:
@@ -193,6 +207,7 @@ class FixedVideoModal(discord.ui.Modal):
                     total_seconds=seconds,
                     source_frames=source,
                     film_target_frames=target,
+                    execution_target=self.execution_target,
                 )
                 label = "Wan2.2 Animate 動作轉移"
         except BackendError as exc:
@@ -212,7 +227,8 @@ class FixedVideoModal(discord.ui.Modal):
 
 
 async def send_draw_modal(interaction: discord.Interaction, api, preset_id: str,
-                          profile: str | None) -> None:
+                          profile: str | None,
+                          execution_target: str = "local") -> None:
     try:
         positive_default, negative_default = await asyncio.wait_for(
             api.get_prompt_defaults(preset_id, profile),
@@ -247,40 +263,49 @@ async def send_draw_modal(interaction: discord.Interaction, api, preset_id: str,
             profile,
             positive_default,
             negative_default,
+            execution_target,
         )
     )
 
 
 class ProfileSelect(discord.ui.Select):
-    def __init__(self, api, preset_id: str, profiles: list[str]):
+    def __init__(self, api, preset_id: str, profiles: list[str],
+                 execution_target: str = "local"):
         super().__init__(placeholder="選擇風格變體（profile）", options=build_profile_options(profiles))
         self._api = api
         self._preset_id = preset_id
+        self._execution_target = execution_target
 
     async def callback(self, interaction: discord.Interaction):
         await send_draw_modal(
-            interaction, self._api, self._preset_id, self.values[0]
+            interaction, self._api, self._preset_id, self.values[0],
+            self._execution_target,
         )
 
 
 class PresetSelect(discord.ui.Select):
-    def __init__(self, api, presets: list[dict]):
+    def __init__(self, api, presets: list[dict], execution_target: str = "local"):
         super().__init__(placeholder="選擇畫風 preset", options=build_preset_options(presets))
         self._api = api
         self._presets = {p["id"]: p for p in presets}
+        self._execution_target = execution_target
 
     async def callback(self, interaction: discord.Interaction):
         preset = self._presets[self.values[0]]
         profiles = preset.get("profiles") or []
         if profiles:
             view = discord.ui.View(timeout=300)
-            view.add_item(ProfileSelect(self._api, preset["id"], profiles))
+            view.add_item(ProfileSelect(
+                self._api, preset["id"], profiles, self._execution_target
+            ))
             await interaction.response.edit_message(content="選擇風格變體：", view=view)
         else:
-            await send_draw_modal(interaction, self._api, preset["id"], None)
+            await send_draw_modal(
+                interaction, self._api, preset["id"], None, self._execution_target
+            )
 
 
 class PresetView(discord.ui.View):
-    def __init__(self, api, presets: list[dict]):
+    def __init__(self, api, presets: list[dict], execution_target: str = "local"):
         super().__init__(timeout=300)
-        self.add_item(PresetSelect(api, presets))
+        self.add_item(PresetSelect(api, presets, execution_target))

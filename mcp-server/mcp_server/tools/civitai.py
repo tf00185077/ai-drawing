@@ -11,7 +11,7 @@ The backend owns all state; these tools only pass locators, prompts, and IDs.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 
@@ -73,6 +73,7 @@ def civitai_generate_like(
     height: int | None = None,
     checkpoint: str | None = None,
     download_missing: bool = True,
+    execution_target: Literal["local", "worker"] = "local",
 ) -> dict[str, Any]:
     """Generate images based on a Civitai image's recipe, with your own prompt.
 
@@ -86,7 +87,11 @@ def civitai_generate_like(
     to pick a favourite and iterate. Returns job_id; poll get_generation_status.
     """
     tool = "civitai_generate_like"
-    body: dict[str, Any] = {"locator": source, "download_missing": download_missing}
+    body: dict[str, Any] = {
+        "locator": source,
+        "download_missing": download_missing,
+        "execution_target": execution_target,
+    }
     optional = {
         "prompt": prompt,
         "negative_prompt": negative_prompt,

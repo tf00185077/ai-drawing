@@ -379,6 +379,7 @@ def generate_like(
     height: int | None = None,
     checkpoint: str | None = None,
     download_missing: bool = True,
+    execution_target: str = "local",
     transport: Any | None = None,
     submit_fn: Callable[[dict[str, Any]], str] | None = None,
     acquire_fn: Callable[..., dict[str, Any]] | None = None,
@@ -441,6 +442,7 @@ def generate_like(
         "seed": seed,
         "steps": steps if steps is not None else (plan["steps"] or 20),
         "cfg": cfg if cfg is not None else (plan["cfg"] or 7.0),
+        "execution_target": execution_target,
     }
     if plan["template"]:
         params["template"] = plan["template"]

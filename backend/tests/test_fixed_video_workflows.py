@@ -29,6 +29,8 @@ def test_animegen_builder_keeps_fixed_models_prompts_length_and_fps(tmp_path: Pa
         prompt="turn and smile",
         negative_prompt="bad motion",
         timing=timing,
+        width=1024,
+        height=1024,
     )
     assert workflow["110"]["inputs"]["unet_name"] == "AnimeGen-I2V-GGUF/I2V_high_noise_Q4_K_M.gguf"
     assert workflow["111"]["inputs"]["unet_name"] == "AnimeGen-I2V-GGUF/I2V_low_noise_Q4_K_M.gguf"
@@ -36,6 +38,8 @@ def test_animegen_builder_keeps_fixed_models_prompts_length_and_fps(tmp_path: Pa
     assert workflow["89"]["inputs"]["text"] == "bad motion"
     assert workflow["97"]["inputs"]["image"] == str(tmp_path / "input.png")
     assert workflow["98"]["inputs"]["length"] == 81
+    assert workflow["98"]["inputs"]["width"] == 1024
+    assert workflow["98"]["inputs"]["height"] == 1024
     assert workflow["94"]["inputs"]["fps"] == 16.0
 
 

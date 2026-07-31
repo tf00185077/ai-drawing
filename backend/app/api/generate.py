@@ -38,6 +38,7 @@ from app.db.models import (
     GeneratedImage,
     GenerationBatchMember,
 )
+from app.schemas.execution import ExecutionTarget
 from app.schemas.generate import (
     FixedVideoContract,
     GenerateCustomRequest,
@@ -59,6 +60,7 @@ def _custom_request_params(body: GenerateCustomRequest) -> dict:
         "prompt": body.prompt,
         "negative_prompt": body.negative_prompt,
         "seed": body.seed,
+        "execution_target": body.execution_target,
     }
     if body.steps is not None:
         params["steps"] = body.steps
@@ -100,6 +102,7 @@ async def trigger_generate(body: GenerateRequest):
     """觸發圖片生成"""
     try:
         params = {"prompt": body.prompt, "negative_prompt": body.negative_prompt}
+        params["execution_target"] = body.execution_target
         for key in ("checkpoint", "lora", "seed", "steps", "cfg"):
             value = getattr(body, key)
             if value is not None:
@@ -199,36 +202,74 @@ def _fixed_video_params(*, workflow: dict, contract: FixedVideoContract, staged_
             "target_frames": contract.film_target_frames,
             "total_seconds": contract.total_seconds,
         },
+        "execution_target": contract.execution_target,
     })
 
 
-def _contract(prompt: str, negative_prompt: str | None, total_seconds: float, source_frames: int, film_target_frames: int) -> tuple[FixedVideoContract, VideoTiming]:
+def _contract(prompt: str, negative_prompt: str | None, total_seconds: float, source_frames: int, film_target_frames: int, execution_target: str = "local") -> tuple[FixedVideoContract, VideoTiming]:
     contract = FixedVideoContract.model_validate({
         "prompt": prompt,
         "negative_prompt": negative_prompt,
         "total_seconds": total_seconds,
         "source_frames": source_frames,
         "film_target_frames": film_target_frames,
+        "execution_target": execution_target,
     })
     timing = validate_video_timing(total_seconds, source_frames, film_target_frames)
     return contract, timing
 
 
+def _wan_workflow_input_files(workflow: dict, input_root: Path) -> list[dict[str, str]]:
+    """Collect backend-staged Wan input bindings for selected-client upload."""
+    bindings: list[dict[str, str]] = []
+    root = input_root.expanduser().resolve()
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict) or not isinstance(node.get("inputs"), dict):
+            continue
+        class_type = node.get("class_type")
+        input_name = (
+            "image" if class_type == "LoadImage"
+            else "audio" if class_type == "LoadAudio"
+            else None
+        )
+        if input_name is None:
+            continue
+        relative = node["inputs"].get(input_name)
+        if not isinstance(relative, str) or not relative:
+            continue
+        source = (root / relative).resolve()
+        try:
+            source.relative_to(root)
+        except ValueError as exc:
+            raise ValueError("Wan workflow input escaped ComfyUI input root") from exc
+        bindings.append({
+            "node_id": str(node_id),
+            "input_name": input_name,
+            "path": str(source),
+        })
+    return bindings
+
+
 @router.post("/video/animegen-i2v", response_model=GenerateResponse, status_code=201)
 async def trigger_animegen_i2v(
     image: UploadFile = File(...), prompt: str = Form(...), negative_prompt: str | None = Form(None),
-    total_seconds: float = Form(...), source_frames: int = Form(...), film_target_frames: int = Form(...),
+    width: int = Form(...), height: int = Form(...), total_seconds: float = Form(...),
+    source_frames: int = Form(...), film_target_frames: int = Form(...),
+    execution_target: ExecutionTarget = Form("local"),
 ):
     """Submit the immutable AnimeGen high/low single-image I2V graph plus exact FILM."""
     staged: list[Path] = []
     try:
         settings = get_settings()
-        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames)
+        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames, execution_target)
         image_path = stage_upload(image.file, filename=image.filename or "", content_type=image.content_type,
                                   size=image.size, kind="image", staging_dir=settings.video_staging_dir)
         staged.append(image_path)
-        workflow = build_animegen_i2v_workflow(image_path=image_path, prompt=contract.prompt,
-                                                negative_prompt=contract.negative_prompt, timing=timing)
+        workflow = build_animegen_i2v_workflow(
+            image_path=image_path, prompt=contract.prompt,
+            negative_prompt=contract.negative_prompt, timing=timing,
+            width=width, height=height,
+        )
         job_id = submit(_fixed_video_params(workflow=workflow, contract=contract, staged_paths=staged,
                                             template="discord_animegen_i2v_fixed"))
         return GenerateResponse(job_id=job_id, status="queued", message="已加入 AnimeGen I2V + FILM 佇列")
@@ -251,12 +292,13 @@ async def trigger_wan22_animate(
     reference_image: UploadFile = File(...), driver_video: UploadFile = File(...),
     prompt: str = Form(...), negative_prompt: str | None = Form(None), total_seconds: float = Form(...),
     source_frames: int = Form(...), film_target_frames: int = Form(...),
+    execution_target: ExecutionTarget = Form("local"),
 ):
     """Submit the immutable Wan2.2 reference+face/body-driver motion-transfer graph plus exact FILM."""
     staged: list[Path] = []
     try:
         settings = get_settings()
-        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames)
+        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames, execution_target)
         reference_path = stage_upload(reference_image.file, filename=reference_image.filename or "",
                                       content_type=reference_image.content_type, size=reference_image.size,
                                       kind="image", staging_dir=settings.video_staging_dir)
@@ -304,6 +346,9 @@ async def trigger_generate_video_wan_keyframes(body: GenerateWanKeyframesVideoRe
             seed=body.seed,
             filename_prefix=body.filename_prefix,
         )
+        workflow_input_files = _wan_workflow_input_files(
+            workflow, Path(settings.comfyui_input_dir)
+        )
         params = {
             "workflow": workflow,
             "prompt": body.prompt,
@@ -314,6 +359,9 @@ async def trigger_generate_video_wan_keyframes(body: GenerateWanKeyframesVideoRe
             "cfg": body.cfg,
             "seed": body.seed,
             "template": "gen_img2video_wan_5keyframe_single_workflow",
+            "execution_target": body.execution_target,
+            "workflow_input_files": workflow_input_files,
+            "staged_input_paths": [item["path"] for item in workflow_input_files],
         }
         job_id = submit_custom(cast(GenerateParams, params))
         return GenerateResponse(

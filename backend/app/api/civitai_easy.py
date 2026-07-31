@@ -6,7 +6,7 @@ substitution, and actionable errors. The audited strict pipeline stays at
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -34,6 +34,7 @@ class GenerateLikeRequest(BaseModel):
     height: int | None = Field(default=None, ge=256, le=2048)
     checkpoint: str | None = Field(default=None, description="強制使用指定本地 checkpoint 檔名")
     download_missing: bool = Field(default=True, description="缺模型時先自動下載（false 則以最接近的本地模型代替）")
+    execution_target: Literal["local", "worker"] = "local"
 
 
 class AcquireRequest(BaseModel):
@@ -77,6 +78,7 @@ def post_generate_like(request: GenerateLikeRequest, db: Session = Depends(get_d
             height=request.height,
             checkpoint=request.checkpoint,
             download_missing=request.download_missing,
+            execution_target=request.execution_target,
         )
     except EasyGenerateError as exc:
         raise _easy_error(exc) from exc

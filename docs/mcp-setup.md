@@ -224,6 +224,10 @@ style preset 維護、workflow catalog、ComfyUI node 查詢等已從 MCP 移除
 `civitai_source_info` / `civitai_generate_like` / `civitai_resource_acquire` / `civitai_resource_status`。
 <!-- MCP-OMISSIONS:END -->
 
+### ComfyUI 執行目標
+
+所有會排入產品級 ComfyUI 工作的 MCP 工具都公開 `execution_target: local|worker`，省略時明確轉送 `local`：`generate_image`、`generate_image_custom_workflow`、`generate_video_custom_workflow`、`generate_video_wan_keyframes`、`civitai_generate_like`、`gallery_rerun`、`test_saved_style_preset_workflow`、`lora_train_smoke_test`。選擇 `worker` 後若配對、能力、資源或執行失敗，工作會失敗且不回退本機；重跑與測試入口也只採用本次呼叫值。
+
 ### LoRA recipe：寬進、嚴出
 
 `lora_training_decision_preflight` 的 `recipe` 是選填；`lora_train_start` 的

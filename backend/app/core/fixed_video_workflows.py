@@ -59,6 +59,14 @@ def validate_video_timing(seconds: float, source_frames: int, film_frames: int) 
     )
 
 
+def validate_video_dimensions(width: int, height: int) -> tuple[int, int]:
+    if not 256 <= width <= 2048 or not 256 <= height <= 2048:
+        raise ValueError("width and height must be between 256 and 2048")
+    if width % 16 or height % 16:
+        raise ValueError("width and height must be multiples of 16")
+    return width, height
+
+
 def validate_attachment(filename: str, content_type: str | None, size: int | None, *, kind: Literal["image", "video"]) -> str:
     types = IMAGE_TYPES if kind == "image" else VIDEO_TYPES
     limit = IMAGE_MAX_BYTES if kind == "image" else VIDEO_MAX_BYTES
@@ -133,11 +141,18 @@ def _safe_prefix(prefix: str) -> str:
     return f"video/{clean or 'discord_video'}"
 
 
-def build_animegen_i2v_workflow(*, image_path: Path, prompt: str, negative_prompt: str | None, timing: VideoTiming, filename_prefix: str = "discord_animegen_i2v") -> dict[str, Any]:
+def build_animegen_i2v_workflow(
+    *, image_path: Path, prompt: str, negative_prompt: str | None,
+    timing: VideoTiming, width: int, height: int,
+    filename_prefix: str = "discord_animegen_i2v",
+) -> dict[str, Any]:
+    width, height = validate_video_dimensions(width, height)
     workflow = copy.deepcopy(_load("discord_animegen_i2v_fixed.json"))
     workflow["97"]["inputs"]["image"] = str(image_path)
     workflow["93"]["inputs"]["text"] = prompt
     workflow["89"]["inputs"]["text"] = negative_prompt if negative_prompt is not None else DEFAULT_NEGATIVE
+    workflow["98"]["inputs"]["width"] = width
+    workflow["98"]["inputs"]["height"] = height
     workflow["98"]["inputs"]["length"] = timing.source_frames
     workflow["94"]["inputs"]["fps"] = timing.source_fps
     workflow["108"]["inputs"]["filename_prefix"] = _safe_prefix(filename_prefix)

@@ -67,37 +67,49 @@ class ApiClient:
     async def submit_fixed_video(
         self, endpoint: str, *, files: dict[str, tuple[str, bytes, str]], prompt: str,
         negative_prompt: str | None, total_seconds: float, source_frames: int,
-        film_target_frames: int,
+        film_target_frames: int, width: int | None = None, height: int | None = None,
+        execution_target: str = "local",
     ) -> str:
         data = {
             "prompt": prompt,
             "total_seconds": str(total_seconds),
             "source_frames": str(source_frames),
             "film_target_frames": str(film_target_frames),
+            "execution_target": execution_target,
         }
+        if width is not None:
+            data["width"] = str(width)
+        if height is not None:
+            data["height"] = str(height)
         if negative_prompt is not None:
             data["negative_prompt"] = negative_prompt
         response = self._check(await self._client.post(endpoint, data=data, files=files, timeout=120.0))
         return response.json()["job_id"]
 
     async def submit_animegen_i2v(self, *, image: tuple[str, bytes, str], prompt: str,
-                                  negative_prompt: str | None, total_seconds: float,
-                                  source_frames: int, film_target_frames: int) -> str:
+                                  negative_prompt: str | None, width: int, height: int,
+                                  total_seconds: float, source_frames: int,
+                                  film_target_frames: int,
+                                  execution_target: str = "local") -> str:
         return await self.submit_fixed_video(
             "/api/generate/video/animegen-i2v", files={"image": image}, prompt=prompt,
-            negative_prompt=negative_prompt, total_seconds=total_seconds,
-            source_frames=source_frames, film_target_frames=film_target_frames,
+            negative_prompt=negative_prompt, width=width, height=height,
+            total_seconds=total_seconds, source_frames=source_frames,
+            film_target_frames=film_target_frames,
+            execution_target=execution_target,
         )
 
     async def submit_wan22_animate(self, *, reference_image: tuple[str, bytes, str],
                                    driver_video: tuple[str, bytes, str], prompt: str,
                                    negative_prompt: str | None, total_seconds: float,
-                                   source_frames: int, film_target_frames: int) -> str:
+                                   source_frames: int, film_target_frames: int,
+                                   execution_target: str = "local") -> str:
         return await self.submit_fixed_video(
             "/api/generate/video/wan22-animate",
             files={"reference_image": reference_image, "driver_video": driver_video}, prompt=prompt,
             negative_prompt=negative_prompt, total_seconds=total_seconds,
             source_frames=source_frames, film_target_frames=film_target_frames,
+            execution_target=execution_target,
         )
 
     async def get_job(self, job_id: str) -> dict:
@@ -116,7 +128,8 @@ class ApiClient:
 
     async def compose_and_submit(self, preset_id: str, profile: str | None,
                                  positive_prompt: str, negative_prompt: str,
-                                 width: int, height: int, count: int) -> str:
+                                 width: int, height: int, count: int, *,
+                                 execution_target: str = "local") -> str:
         overrides: dict[str, object] = {
             "prompt": positive_prompt,
             "negative_prompt": negative_prompt,
@@ -135,6 +148,7 @@ class ApiClient:
             "seed_mode": "random",
             "use_workflow_defaults": False,
             "batch_seed_mode": "independent",
+            "execution_target": execution_target,
         }
         generation.pop("seed", None)
         return await self.submit_generate(generation)

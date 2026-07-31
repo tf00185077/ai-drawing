@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.execution import ExecutionTarget
+
 
 KeywordInput = str | list[str]
 
@@ -31,6 +33,7 @@ class TestStylePresetWorkflowRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     profile: str | None = None
+    execution_target: ExecutionTarget = "local"
 
 
 class TestStylePresetWorkflowResponse(BaseModel):

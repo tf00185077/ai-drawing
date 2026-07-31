@@ -876,6 +876,7 @@ class LoraSmokeTestRequest(BaseModel):
     diffusion_model: str | None = None
     text_encoder: str | None = None
     vae: str | None = None
+    execution_target: Literal["local", "worker"] = "local"
 
 
 class LoraSmokeTestResponse(BaseModel):

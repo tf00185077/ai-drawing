@@ -192,7 +192,8 @@ def test_orchestrates_all_preserve_freshly_in_fixed_order_and_submits_exactly_on
 
     assert events == ["derive", "resolve", "compatibility", "build", "provenance", "queue"]
     assert result.status == "queued" and result.variant_id == "opaque-variant" and result.job_id
-    assert len(submissions) == 1 and set(submissions[0]) == {"workflow", "recipe_provenance"}
+    assert len(submissions) == 1 and set(submissions[0]) == {"workflow", "recipe_provenance", "execution_target"}
+    assert submissions[0]["execution_target"] == "local"
     assert submissions[0]["recipe_provenance"]["variant_lineage"]["variant_id"] == "opaque-variant"
 
 
