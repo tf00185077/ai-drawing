@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
+import sys
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -88,3 +93,92 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
     dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
     for name in ("worker.py", "worker-manifest.json", "Install-Worker.ps1", "Start-Worker.ps1", "requirements.txt", "README.md"):
         assert (dist / name).read_bytes() == (source / name).read_bytes()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Worker launcher requires Windows process semantics")
+def test_installed_worker_launcher_redirects_comfyui_output_to_rotated_logs(tmp_path) -> None:
+    """Catch a regression to an attached ComfyUI console whose output can block Python."""
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    root = tmp_path / "AI-Drawing-Worker"
+    (root / "config").mkdir(parents=True)
+    comfy_root = root / "runtime" / "ComfyUI"
+    comfy_root.mkdir(parents=True)
+    logs = root / "runtime" / "logs"
+    logs.mkdir()
+
+    for name in ("Start-Worker.ps1", "Start-Worker.cmd"):
+        shutil.copy2(source / name, root / name)
+    start_script = root / "Start-Worker.ps1"
+    start_script.write_text(
+        start_script.read_text(encoding="utf-8").replace(
+            '$Root = "C:\\AI-Drawing-Worker"',
+            f'$Root = "{root}"',
+        ),
+        encoding="utf-8",
+    )
+    (root / "config" / "python-path.txt").write_text(sys.executable, encoding="utf-8")
+    (logs / "comfyui.stdout.log").write_text("old stdout\n", encoding="utf-8")
+    (logs / "comfyui.stderr.log").write_text("old stderr\n", encoding="utf-8")
+    (comfy_root / "main.py").write_text(
+        """import os
+import sys
+import threading
+import time
+from pathlib import Path
+
+Path(__file__).with_name(\"fixture.pid\").write_text(str(os.getpid()))
+def write_output():
+    while True:
+        print(\"comfy stdout fixture\", flush=True)
+        print(\"comfy stderr fixture\", file=sys.stderr, flush=True)
+        time.sleep(0.1)
+threading.Thread(target=write_output, daemon=True).start()
+while True:
+    time.sleep(1)
+""",
+        encoding="utf-8",
+    )
+
+    launcher = subprocess.Popen(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(start_script)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    fixture_pid_path = comfy_root / "fixture.pid"
+    stdout_log = logs / "comfyui.stdout.log"
+    stderr_log = logs / "comfyui.stderr.log"
+    try:
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline and not fixture_pid_path.exists():
+            time.sleep(0.1)
+        assert fixture_pid_path.exists(), "ComfyUI fixture was not launched"
+
+        while time.monotonic() < deadline:
+            if (
+                (logs / "comfyui.stdout.previous.log").exists()
+                and (logs / "comfyui.stderr.previous.log").exists()
+                and "comfy stdout fixture" in stdout_log.read_bytes().decode("utf-8", errors="replace")
+                and "comfy stderr fixture" in stderr_log.read_bytes().decode("utf-8", errors="replace")
+            ):
+                break
+            time.sleep(0.1)
+
+        assert (logs / "comfyui.stdout.previous.log").read_text(encoding="utf-8") == "old stdout\n"
+        assert (logs / "comfyui.stderr.previous.log").read_text(encoding="utf-8") == "old stderr\n"
+        assert "comfy stdout fixture" in stdout_log.read_bytes().decode("utf-8", errors="replace")
+        assert "comfy stderr fixture" in stderr_log.read_bytes().decode("utf-8", errors="replace")
+    finally:
+        launcher.terminate()
+        try:
+            launcher.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            launcher.kill()
+            launcher.wait(timeout=5)
+        if fixture_pid_path.exists():
+            subprocess.run(
+                ["taskkill.exe", "/PID", fixture_pid_path.read_text(encoding="utf-8").strip(), "/T", "/F"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
