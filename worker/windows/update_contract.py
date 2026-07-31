@@ -21,6 +21,9 @@ class UpdateAlreadyRunning(Exception):
     """A distinct target was requested before the current one completed."""
 
 
+TERMINAL_UPDATE_STATES = {"ready", "rolled_back", "failed_before_activation"}
+
+
 def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -41,9 +44,11 @@ def queue_update(request_path: Path, status_path: Path, target_commit: str) -> s
     if isinstance(active_request, dict):
         active_target = active_request.get("target_commit")
         active_request_id = active_request.get("request_id")
-        if active_target == target_commit and isinstance(active_request_id, str):
-            return active_request_id
-        raise UpdateAlreadyRunning
+        state = read_public_update_status(status_path)["state"]
+        if state not in TERMINAL_UPDATE_STATES:
+            if active_target == target_commit and isinstance(active_request_id, str):
+                return active_request_id
+            raise UpdateAlreadyRunning
 
     request_id = str(uuid.uuid4())
     write_update_status(status_path, "queued")
