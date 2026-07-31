@@ -23,6 +23,7 @@ try:
         UpdateRequest,
         queue_update,
         read_public_update_status,
+        write_update_status,
     )
 except ModuleNotFoundError:  # Supports direct execution from worker/windows.
     from update_contract import (
@@ -30,6 +31,7 @@ except ModuleNotFoundError:  # Supports direct execution from worker/windows.
         UpdateRequest,
         queue_update,
         read_public_update_status,
+        write_update_status,
     )
 
 ROOT = Path(os.environ.get("AI_DRAWING_WORKER_ROOT", r"C:\AI-Drawing-Worker")).resolve()
@@ -218,14 +220,20 @@ def status() -> dict[str, Any]:
 @app.post("/v1/admin/update", dependencies=[Depends(_auth)], status_code=202)
 def request_update(body: UpdateRequest) -> dict[str, str]:
     try:
-        request_id = queue_update(UPDATE_REQUEST_PATH, body.target_commit)
+        request_id = queue_update(
+            UPDATE_REQUEST_PATH, UPDATE_STATUS_PATH, body.target_commit
+        )
     except UpdateAlreadyRunning as error:
         raise HTTPException(409, detail={"code": "update_already_running"}) from error
-    subprocess.run(
-        ["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"],
-        check=True,
-        timeout=15,
-    )
+    try:
+        subprocess.run(
+            ["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"],
+            check=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        write_update_status(UPDATE_STATUS_PATH, "failed_before_activation")
+        raise HTTPException(503, detail={"code": "update_activation_failed"}) from error
     return {"request_id": request_id, "status": "queued"}
 
 

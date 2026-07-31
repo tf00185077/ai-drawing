@@ -8,10 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     target_commit: str = Field(pattern=r"^[0-9a-f]{40}$")
 
 
@@ -26,7 +28,11 @@ def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
     os.replace(temporary, path)
 
 
-def queue_update(request_path: Path, target_commit: str) -> str:
+def write_update_status(status_path: Path, state: str) -> None:
+    atomic_write_json(status_path, {"state": state})
+
+
+def queue_update(request_path: Path, status_path: Path, target_commit: str) -> str:
     try:
         active_request = json.loads(request_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -40,6 +46,7 @@ def queue_update(request_path: Path, target_commit: str) -> str:
         raise UpdateAlreadyRunning
 
     request_id = str(uuid.uuid4())
+    write_update_status(status_path, "queued")
     atomic_write_json(
         request_path,
         {
