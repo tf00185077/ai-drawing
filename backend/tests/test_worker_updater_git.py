@@ -47,6 +47,20 @@ def _git_blob(path: Path, contents: bytes) -> str:
     return result.stdout.decode("ascii").strip()
 
 
+def _tar_with_member(name: str, *, member_type: bytes = tarfile.REGTYPE, linkname: str = "") -> bytes:
+    payload = io.BytesIO()
+    with tarfile.open(fileobj=payload, mode="w") as archive:
+        member = tarfile.TarInfo(name)
+        member.type = member_type
+        member.linkname = linkname
+        if member_type == tarfile.REGTYPE:
+            member.size = len(b"contents")
+            archive.addfile(member, io.BytesIO(b"contents"))
+        else:
+            archive.addfile(member)
+    return payload.getvalue()
+
+
 @pytest.fixture
 def git_fixture(tmp_path: Path) -> GitFixture:
     seed = tmp_path / "seed"
@@ -175,3 +189,139 @@ def test_export_rejects_an_archive_symlink_that_could_escape_the_export_root(
 
     assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
     assert not (tmp_path / "escaped.txt").exists()
+
+
+@pytest.mark.parametrize(
+    "member_name",
+    [
+        "worker/windows/CON",
+        "worker/windows/aux.txt",
+        "worker/windows/file.txt:secret",
+        "worker/windows/trailing-space ",
+        "worker/windows/trailing-dot.",
+        "worker/windows/control\x01.txt",
+        "/absolute.txt",
+        "C:/drive-rooted.txt",
+    ],
+)
+def test_export_rejects_archive_paths_windows_would_normalize_or_omit(
+    git_fixture: GitFixture, tmp_path: Path, member_name: str
+) -> None:
+    """Removing Win32 path validation must make this test fail."""
+    source = GitSource(git_fixture.checkout, "origin", "main")
+
+    with pytest.raises(UpdateError) as raised:
+        source._safe_extract_archive(_tar_with_member(member_name), tmp_path / "export")
+
+    assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
+
+
+@pytest.mark.parametrize(
+    "first,second",
+    [
+        ("worker/windows/Worker.py", "worker/windows/worker.py"),
+        ("worker/windows/component", "worker/windows/COMPONENT/file.py"),
+    ],
+)
+def test_export_rejects_case_insensitive_archive_path_collisions(
+    git_fixture: GitFixture, tmp_path: Path, first: str, second: str
+) -> None:
+    """Removing collision detection must make this test fail."""
+    payload = io.BytesIO()
+    with tarfile.open(fileobj=payload, mode="w") as archive:
+        for name in (first, second):
+            member = tarfile.TarInfo(name)
+            member.size = len(b"contents")
+            archive.addfile(member, io.BytesIO(b"contents"))
+
+    source = GitSource(git_fixture.checkout, "origin", "main")
+    with pytest.raises(UpdateError) as raised:
+        source._safe_extract_archive(payload.getvalue(), tmp_path / "export")
+
+    assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
+
+
+class _FetchForbiddenGitSource(GitSource):
+    def __init__(self, root: Path, remote: str, branch: str) -> None:
+        super().__init__(root, remote, branch)
+        self.fetch_attempted = False
+
+    def _run_git(self, *args: str) -> subprocess.CompletedProcess[bytes]:
+        if args[0] == "fetch":
+            self.fetch_attempted = True
+            raise AssertionError("fetch must not be reached for invalid selectors")
+        return super()._run_git(*args)
+
+
+@pytest.mark.parametrize(
+    ("remote", "branch"),
+    [
+        ("origin", "main*"),
+        ("origin", "--upload-pack=unexpected"),
+        ("origin*", "main"),
+        ("--upload-pack=unexpected", "main"),
+    ],
+)
+def test_export_rejects_invalid_remote_or_branch_before_fetch(
+    git_fixture: GitFixture, tmp_path: Path, remote: str, branch: str
+) -> None:
+    """Moving selector validation below fetch must make this test fail."""
+    source = _FetchForbiddenGitSource(git_fixture.checkout, remote, branch)
+
+    with pytest.raises(UpdateError) as raised:
+        source.export_commit(git_fixture.remote_head, tmp_path / "export")
+
+    assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
+    assert not source.fetch_attempted
+
+
+def test_export_disables_recursive_submodule_fetch_even_when_repo_config_enables_it(
+    git_fixture: GitFixture, tmp_path: Path
+) -> None:
+    """Removing --no-recurse-submodules must make this test fail."""
+    seed = git_fixture.remote.parent / "seed"
+    submodule_remote = tmp_path / "submodule.git"
+    submodule_seed = tmp_path / "submodule-seed"
+    _git(tmp_path, "init", "--bare", "--initial-branch=main", str(submodule_remote))
+    _git(tmp_path, "init", "--initial-branch=main", str(submodule_seed))
+    _git(submodule_seed, "config", "user.name", "Updater Test")
+    _git(submodule_seed, "config", "user.email", "updater@example.test")
+    (submodule_seed / "helper.py").write_text("version = 1\n", encoding="utf-8")
+    _git(submodule_seed, "add", ".")
+    _git(submodule_seed, "commit", "--quiet", "-m", "submodule v1")
+    _git(submodule_seed, "remote", "add", "origin", str(submodule_remote))
+    _git(submodule_seed, "push", "--quiet", "origin", "main")
+    subprocess.run(
+        ["git", "-C", str(seed), "-c", "protocol.file.allow=always", "submodule", "add", str(submodule_remote), "deps/helper"],
+        check=True,
+        capture_output=True,
+    )
+    _git(seed, "add", ".gitmodules", "deps/helper")
+    _git(seed, "commit", "--quiet", "-m", "add submodule")
+    _git(seed, "push", "--quiet", "origin", "main")
+
+    checkout = tmp_path / "submodule-checkout"
+    _git(tmp_path, "clone", "--quiet", str(git_fixture.remote), str(checkout))
+    subprocess.run(
+        ["git", "-C", str(checkout), "-c", "protocol.file.allow=always", "submodule", "update", "--init"],
+        check=True,
+        capture_output=True,
+    )
+    _git(checkout, "config", "fetch.recurseSubmodules", "true")
+    _git(checkout / "deps" / "helper", "remote", "set-url", "origin", str(tmp_path / "missing-submodule.git"))
+
+    (submodule_seed / "helper.py").write_text("version = 2\n", encoding="utf-8")
+    _git(submodule_seed, "commit", "--quiet", "-am", "submodule v2")
+    _git(submodule_seed, "push", "--quiet", "origin", "main")
+    subprocess.run(
+        ["git", "-C", str(seed), "-c", "protocol.file.allow=always", "submodule", "update", "--remote", "deps/helper"],
+        check=True,
+        capture_output=True,
+    )
+    _git(seed, "commit", "--quiet", "-am", "advance submodule")
+    _git(seed, "push", "--quiet", "origin", "main")
+    target = _git(seed, "rev-parse", "HEAD")
+
+    exported = GitSource(checkout, "origin", "main").export_commit(target, tmp_path / "export")
+
+    assert (exported / "worker" / "windows" / "worker.py").is_file()
