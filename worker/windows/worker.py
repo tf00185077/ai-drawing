@@ -17,10 +17,27 @@ from typing import Annotated, Any
 import httpx
 from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+try:
+    from worker.windows.update_contract import (
+        UpdateAlreadyRunning,
+        UpdateRequest,
+        queue_update,
+        read_public_update_status,
+    )
+except ModuleNotFoundError:  # Supports direct execution from worker/windows.
+    from update_contract import (
+        UpdateAlreadyRunning,
+        UpdateRequest,
+        queue_update,
+        read_public_update_status,
+    )
 
 ROOT = Path(os.environ.get("AI_DRAWING_WORKER_ROOT", r"C:\AI-Drawing-Worker")).resolve()
 CONFIG_PATH = ROOT / "config" / "worker.json"
 PARTIAL_ROOT = ROOT / "cache" / ".partial"
+SOURCE_COMMIT_PATH = ROOT / "source-commit.txt"
+UPDATE_REQUEST_PATH = ROOT / "state" / "update-request.json"
+UPDATE_STATUS_PATH = ROOT / "state" / "update-status.json"
 COMFYUI_ROOT = ROOT / "runtime" / "ComfyUI"
 COMFYUI_URL = "http://127.0.0.1:8188"
 MODEL_ROOTS = {
@@ -47,6 +64,15 @@ def _auth(authorization: Annotated[str | None, Header()] = None) -> None:
     expected = str(_config().get("token", ""))
     if not expected or authorization != f"Bearer {expected}":
         raise HTTPException(401, "invalid worker token")
+
+
+def _update_state() -> str:
+    return read_public_update_status(UPDATE_STATUS_PATH)["state"]
+
+
+def _require_update_idle() -> None:
+    if _update_state() not in {"idle", "ready", "rolled_back", "failed_before_activation"}:
+        raise HTTPException(409, detail={"code": "worker_updating"})
 
 
 def _safe_destination(kind: str, name: str) -> Path:
@@ -160,7 +186,7 @@ def _enforce_cache(
         raise HTTPException(507, "worker cache cannot preserve its free-space reserve")
 
 
-app = FastAPI(title="AI-Drawing NVIDIA Worker", version="0.1.0")
+app = FastAPI(title="AI-Drawing NVIDIA Worker", version="0.3.0")
 
 
 @app.get("/v1/worker/status", dependencies=[Depends(_auth)])
@@ -174,8 +200,13 @@ def status() -> dict[str, Any]:
         stats = {}
         comfyui = "unavailable"
     return {
-        "protocol_version": 1,
-        "worker_version": "0.1.0",
+        "protocol_version": 2,
+        "worker_version": "0.3.0",
+        "source_commit": SOURCE_COMMIT_PATH.read_text(encoding="utf-8").strip()
+        if SOURCE_COMMIT_PATH.is_file()
+        else "",
+        "update_capability": 1,
+        "update_state": _update_state(),
         "comfyui": comfyui,
         "hostname": os.environ.get("COMPUTERNAME", ""),
         "cache_gb": config.get("cache_gb", 100),
@@ -184,8 +215,28 @@ def status() -> dict[str, Any]:
     }
 
 
+@app.post("/v1/admin/update", dependencies=[Depends(_auth)], status_code=202)
+def request_update(body: UpdateRequest) -> dict[str, str]:
+    try:
+        request_id = queue_update(UPDATE_REQUEST_PATH, body.target_commit)
+    except UpdateAlreadyRunning as error:
+        raise HTTPException(409, detail={"code": "update_already_running"}) from error
+    subprocess.run(
+        ["schtasks.exe", "/Run", "/TN", "AI-Drawing Worker Updater"],
+        check=True,
+        timeout=15,
+    )
+    return {"request_id": request_id, "status": "queued"}
+
+
+@app.get("/v1/admin/update/status", dependencies=[Depends(_auth)])
+def update_status() -> dict[str, Any]:
+    return read_public_update_status(UPDATE_STATUS_PATH)
+
+
 @app.post("/v1/resources/plan", dependencies=[Depends(_auth)])
 def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
+    _require_update_idle()
     missing: list[dict[str, Any]] = []
     protected: set[Path] = set()
     incoming_bytes = 0
@@ -222,6 +273,7 @@ async def resource_content(
     size: int = Query(..., ge=0),
     offset: int = Query(..., ge=0),
 ) -> dict[str, Any]:
+    _require_update_idle()
     destination = _safe_destination(kind, name)
     PARTIAL_ROOT.mkdir(parents=True, exist_ok=True)
     partial = PARTIAL_ROOT / f"{sha256}.part"
@@ -284,6 +336,7 @@ def workflow_preflight(body: dict[str, Any]) -> dict[str, Any]:
 
 @app.post("/prompt", dependencies=[Depends(_auth)])
 def prompt(body: dict[str, Any]) -> Response:
+    _require_update_idle()
     return _proxy("POST", "/prompt", json=body)
 
 
