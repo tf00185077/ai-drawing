@@ -14,6 +14,13 @@
 
 # 進度追蹤
 
+## 2026-07-31 Discord 固定影片指令與精確 FILM 補幀（non-live）
+
+- Backend 新增兩條固定、server-owned 影片流程：AnimeGen 單圖 I2V，以及 Wan2.2 Animate 角色參考圖＋必要 driver 影片的臉部／身體動作轉移。兩者皆驗證附件、限制原始總幀數為 `4n+1`，依首幀到末幀的 `total_seconds` 計算 FPS，完成後以 FILM 產生呼叫者指定的任意精確目標總幀數；原始影片或 FILM 失敗的部分結果不會持久化為成功 artifact。
+- Discord Bot 新增 `/animegen_i2v`、`/wan22_animate`，只做附件／參數驗證與 Backend multipart 呼叫；工作排入後沿用 `/result id:<job_id>` 交付 Backend 已持久化的最終影片。README 已記載完整參數、`4n+1`、driver、時間跨度與 FILM 目標幀語意。
+- FILM metadata 明確分開 `timeline_span_seconds`（使用者指定的首末幀跨度）與 `container_duration_seconds`（`frame_count / fps`）；`GeneratedArtifact.duration` 保存後者，不再把跨度誤記為 MP4 容器時長。
+- Non-live 驗證：Backend fixed-video focused `10 passed`；Discord Bot 全套 `68 passed`；Backend／Discord Python `compileall` 與 `git diff --check` 通過。本項沒有啟動／重啟 Discord runtime，亦沒有執行 ComfyUI、GPU 或重型影片 E2E；live command sync 與真實模型生成仍待另行驗證。
+
 ## 2026-07-30 Discord 結果統一交付與 Operator/MCP escape-hatch
 
 - `/result` 與新的 operator endpoint 共用單一 `ResultDeliveryService`：只讀取既有 completed job，分批附加所有 Backend 回傳的持久化 SaveImage artifacts（每訊息最多 10 檔且受 upload byte limit 約束），過大檔案使用完整 gallery links；mixed batch warning 沿用 bounded/sanitized failure 摘要。

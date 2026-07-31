@@ -168,24 +168,32 @@ class ResultDeliveryService:
         if status != "completed":
             raise DeliveryError("invalid_job_status", "後端回傳未知的 job 狀態", status_code=502)
 
-        images = outcome.get("images") or []
-        if not isinstance(images, list) or not images:
-            raise DeliveryError("artifacts_missing", "完成，但找不到圖檔", status_code=409)
+        artifacts = outcome.get("artifacts") or outcome.get("images") or []
+        if not isinstance(artifacts, list) or not artifacts:
+            raise DeliveryError("artifacts_missing", "完成，但找不到結果檔", status_code=409)
         if not all(
             isinstance(item, (tuple, list))
             and len(item) == 2
             and isinstance(item[0], str)
             and isinstance(item[1], bytes)
-            for item in images
+            for item in artifacts
         ):
             raise DeliveryError("invalid_artifacts", "後端回傳無效的圖檔", status_code=502)
 
+        video_extensions = (".mp4", ".webm", ".mov")
+        if all(name.lower().endswith(video_extensions) for name, _ in artifacts):
+            count_text = f"{len(artifacts)} 支影片"
+        elif all(not name.lower().endswith(video_extensions) for name, _ in artifacts):
+            count_text = f"{len(artifacts)} 張"
+        else:
+            count_text = f"{len(artifacts)} 個結果"
+
         sent: list[object] = []
-        if any(len(data) > DISCORD_UPLOAD_LIMIT_BYTES for _, data in images):
+        if any(len(data) > DISCORD_UPLOAD_LIMIT_BYTES for _, data in artifacts):
             urls = outcome.get("urls") or []
-            if not isinstance(urls, list) or len(urls) < len(images) or not all(isinstance(url, str) for url in urls):
+            if not isinstance(urls, list) or len(urls) < len(artifacts) or not all(isinstance(url, str) for url in urls):
                 raise DeliveryError("artifacts_too_large", "圖檔超過 Discord 限制且沒有完整下載連結", status_code=409)
-            prefix = f"✅ 完成，共 {len(images)} 張（檔案過大，改附連結）："
+            prefix = f"✅ 完成，共 {count_text}（檔案過大，改附連結）："
             current = prefix
             for url in urls:
                 line = f"\n{url}"
@@ -197,21 +205,21 @@ class ResultDeliveryService:
             if current:
                 sent.append(await send(current))
         else:
-            for chunk in self._attachment_chunks(images):
+            for chunk in self._attachment_chunks(artifacts):
                 files = [discord.File(io.BytesIO(data), filename=name) for name, data in chunk]
-                sent.append(await send(f"✅ 完成，共 {len(images)} 張", files=files))
+                sent.append(await send(f"✅ 完成，共 {count_text}", files=files))
 
         warning = mixed_batch_warning(outcome)
         if warning:
             sent.append(await send(warning))
-        return sent, len(images)
+        return sent, len(artifacts)
 
     @staticmethod
-    def _attachment_chunks(images: list) -> list[list]:
+    def _attachment_chunks(artifacts: list) -> list[list]:
         chunks: list[list] = []
         current: list = []
         current_bytes = 0
-        for image in images:
+        for image in artifacts:
             size = len(image[1])
             if current and (
                 len(current) >= DISCORD_MAX_FILES_PER_MESSAGE

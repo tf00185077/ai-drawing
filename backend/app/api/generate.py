@@ -7,7 +7,8 @@ import json
 from pathlib import Path
 from typing import cast
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -24,6 +25,13 @@ from app.core.generation_batches import (
 )
 from app.core.queue import QueueFullError, GenerateParams, cancel as queue_cancel, get_job_status as queue_get_job_status, get_status, submit, submit_custom
 from app.core.wan_keyframes import build_wan_keyframe_workflow
+from app.core.fixed_video_workflows import (
+    VideoTiming,
+    build_animegen_i2v_workflow,
+    build_wan_animate_workflow,
+    stage_upload,
+    validate_video_timing,
+)
 from app.db.database import get_db
 from app.db.models import (
     GeneratedArtifact,
@@ -31,6 +39,7 @@ from app.db.models import (
     GenerationBatchMember,
 )
 from app.schemas.generate import (
+    FixedVideoContract,
     GenerateCustomRequest,
     GenerateRequest,
     GenerateResponse,
@@ -175,6 +184,105 @@ async def trigger_generate_video_custom(body: GenerateVideoCustomRequest):
         )
     except QueueFullError as e:
         raise HTTPException(503, str(e))
+
+
+def _fixed_video_params(*, workflow: dict, contract: FixedVideoContract, staged_paths: list[Path], template: str) -> GenerateParams:
+    return cast(GenerateParams, {
+        "workflow": workflow,
+        "server_owned_verbatim": True,
+        "fixed_video_template": template,
+        "staged_input_paths": [str(path) for path in staged_paths],
+        "prompt": contract.prompt,
+        "negative_prompt": contract.negative_prompt,
+        "template": template,
+        "film_postprocess": {
+            "target_frames": contract.film_target_frames,
+            "total_seconds": contract.total_seconds,
+        },
+    })
+
+
+def _contract(prompt: str, negative_prompt: str | None, total_seconds: float, source_frames: int, film_target_frames: int) -> tuple[FixedVideoContract, VideoTiming]:
+    contract = FixedVideoContract.model_validate({
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "total_seconds": total_seconds,
+        "source_frames": source_frames,
+        "film_target_frames": film_target_frames,
+    })
+    timing = validate_video_timing(total_seconds, source_frames, film_target_frames)
+    return contract, timing
+
+
+@router.post("/video/animegen-i2v", response_model=GenerateResponse, status_code=201)
+async def trigger_animegen_i2v(
+    image: UploadFile = File(...), prompt: str = Form(...), negative_prompt: str | None = Form(None),
+    total_seconds: float = Form(...), source_frames: int = Form(...), film_target_frames: int = Form(...),
+):
+    """Submit the immutable AnimeGen high/low single-image I2V graph plus exact FILM."""
+    staged: list[Path] = []
+    try:
+        settings = get_settings()
+        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames)
+        image_path = stage_upload(image.file, filename=image.filename or "", content_type=image.content_type,
+                                  size=image.size, kind="image", staging_dir=settings.video_staging_dir)
+        staged.append(image_path)
+        workflow = build_animegen_i2v_workflow(image_path=image_path, prompt=contract.prompt,
+                                                negative_prompt=contract.negative_prompt, timing=timing)
+        job_id = submit(_fixed_video_params(workflow=workflow, contract=contract, staged_paths=staged,
+                                            template="discord_animegen_i2v_fixed"))
+        return GenerateResponse(job_id=job_id, status="queued", message="已加入 AnimeGen I2V + FILM 佇列")
+    except (ValueError, ValidationError) as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(422, str(exc))
+    except QueueFullError as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(503, str(exc))
+    except Exception:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise
+
+
+@router.post("/video/wan22-animate", response_model=GenerateResponse, status_code=201)
+async def trigger_wan22_animate(
+    reference_image: UploadFile = File(...), driver_video: UploadFile = File(...),
+    prompt: str = Form(...), negative_prompt: str | None = Form(None), total_seconds: float = Form(...),
+    source_frames: int = Form(...), film_target_frames: int = Form(...),
+):
+    """Submit the immutable Wan2.2 reference+face/body-driver motion-transfer graph plus exact FILM."""
+    staged: list[Path] = []
+    try:
+        settings = get_settings()
+        contract, timing = _contract(prompt, negative_prompt, total_seconds, source_frames, film_target_frames)
+        reference_path = stage_upload(reference_image.file, filename=reference_image.filename or "",
+                                      content_type=reference_image.content_type, size=reference_image.size,
+                                      kind="image", staging_dir=settings.video_staging_dir)
+        staged.append(reference_path)
+        driver_path = stage_upload(driver_video.file, filename=driver_video.filename or "",
+                                   content_type=driver_video.content_type, size=driver_video.size,
+                                   kind="video", staging_dir=settings.video_staging_dir)
+        staged.append(driver_path)
+        workflow = build_wan_animate_workflow(reference_path=reference_path, driver_path=driver_path,
+                                              prompt=contract.prompt, negative_prompt=contract.negative_prompt,
+                                              timing=timing)
+        job_id = submit(_fixed_video_params(workflow=workflow, contract=contract, staged_paths=staged,
+                                            template="discord_wan22_animate_fixed"))
+        return GenerateResponse(job_id=job_id, status="queued", message="已加入 Wan2.2 Animate 動作轉移 + FILM 佇列")
+    except (ValueError, ValidationError) as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(422, str(exc))
+    except QueueFullError as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(503, str(exc))
+    except Exception:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise
 
 
 @router.post("/video/wan-keyframes", response_model=GenerateResponse, status_code=201)
@@ -394,6 +502,17 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
                 "job_id": artifact.job_id,
                 "source_node_id": artifact.source_node_id,
                 "source_node_type": artifact.source_node_type,
+                **{
+                    key: value
+                    for key, value in (
+                        ("fps", artifact.fps),
+                        ("frame_count", artifact.frame_count),
+                        ("duration", artifact.duration),
+                        ("width", artifact.width),
+                        ("height", artifact.height),
+                    )
+                    if value is not None
+                },
                 **(
                     {
                         "batch_index": artifact_metadata(artifact).get(

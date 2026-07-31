@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import random
+import shutil
 import threading
 import time
 import uuid
@@ -102,6 +103,9 @@ class GenerateParams(TypedDict, total=False):
     denoise: float
     recipe_provenance: dict[str, Any]  # CIV-F verified CIV-E bundle, persisted on completion
     server_owned_verbatim: bool  # internal saved-style-workflow submission marker
+    fixed_video_template: str  # backend-owned Discord fixed graph marker
+    staged_input_paths: list[str]  # opaque backend staging files; never caller paths
+    film_postprocess: dict[str, Any]  # exact target_frames + first-to-last total_seconds
 
 
 class _Job:
@@ -199,6 +203,22 @@ def _reset_for_test() -> None:
         _failed.clear()
 
 
+def _cleanup_staged_inputs(job: "_Job") -> None:
+    """Best-effort deletion limited to configured external staging/Comfy input roots."""
+    staged_inputs = job.params.get("staged_input_paths", [])
+    if not staged_inputs:
+        return
+    settings = get_settings()
+    roots = (Path(settings.video_staging_dir).resolve(), Path(settings.comfyui_input_dir).resolve())
+    for raw in staged_inputs:
+        try:
+            path = Path(raw).resolve()
+            if any(path.is_relative_to(root) for root in roots):
+                path.unlink(missing_ok=True)
+        except OSError:
+            logger.warning("Could not remove fixed-video staged input")
+
+
 def _record_failure(
     job: "_Job",
     error: Exception,
@@ -207,6 +227,7 @@ def _record_failure(
     failure_code: str | None = None,
 ) -> None:
     """記錄失敗任務（不重試）。validation 類錯誤帶 node_errors 供 agent 修正。"""
+    _cleanup_staged_inputs(job)
     safe_error = sanitize_failure_message(error)
     if recording_error is not None:
         recording_error = {
@@ -629,6 +650,37 @@ def _process_pending(comfy: ComfyUIClient) -> None:
                     "server-owned saved workflow is missing its graph"
                 )
             prompt = copy.deepcopy(saved_workflow)
+            fixed_template = job.params.get("fixed_video_template")
+            if fixed_template:
+                staged = [Path(value).resolve() for value in job.params.get("staged_input_paths", [])]
+                if not staged:
+                    raise FileNotFoundError("fixed video staged inputs are missing")
+                settings = get_settings()
+                staging_root = Path(settings.video_staging_dir).resolve()
+                for path in staged:
+                    try:
+                        path.relative_to(staging_root)
+                    except ValueError as exc:
+                        raise FileNotFoundError("fixed video input escaped staging root") from exc
+                    if not path.is_file():
+                        raise FileNotFoundError(f"fixed video staged input missing: {path.name}")
+                image_node = "97" if fixed_template == "discord_animegen_i2v_fixed" else "5"
+                uploaded = comfy.upload_image(staged[0], subfolder="discord-video")
+                uploaded_name = uploaded["name"]
+                if uploaded.get("subfolder"):
+                    uploaded_name = f"{uploaded['subfolder']}/{uploaded_name}"
+                prompt[image_node]["inputs"]["image"] = uploaded_name
+                if fixed_template == "discord_wan22_animate_fixed":
+                    input_root = Path(settings.comfyui_input_dir).resolve()
+                    video_dir = input_root / "discord-video"
+                    video_dir.mkdir(parents=True, exist_ok=True)
+                    video_input = video_dir / f"{uuid.uuid4().hex}{staged[1].suffix.lower()}"
+                    try:
+                        video_input.hardlink_to(staged[1])
+                    except OSError:
+                        shutil.copy2(staged[1], video_input)
+                    job.params.setdefault("staged_input_paths", []).append(str(video_input))
+                    prompt["1"]["inputs"]["file"] = str(Path("discord-video") / video_input.name)
             job.params["workflow_json"] = copy.deepcopy(prompt)
             try:
                 prompt_id = comfy.submit_prompt(prompt)
@@ -950,20 +1002,55 @@ def _save_job_outputs(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     saved_infos: list[tuple[str, dict[str, Any], int]] = []
-    for i, artifact in enumerate(artifacts_info):
-        data = comfy.fetch_image(
-            artifact["filename"],
-            subfolder=artifact.get("subfolder", ""),
-            ftype=artifact.get("type", "output"),
-        )
-        out_name = gallery_output_filename(
-            artifact["filename"],
-            job.public_job_id,
-            i,
-            batch_index=job.batch_index,
-        )
-        (out_dir / out_name).write_bytes(data)
-        saved_infos.append((str(Path(date_str) / out_name), artifact, len(data)))
+    created_paths: list[Path] = []
+    try:
+        for i, artifact in enumerate(artifacts_info):
+            data = comfy.fetch_image(
+                artifact["filename"],
+                subfolder=artifact.get("subfolder", ""),
+                ftype=artifact.get("type", "output"),
+            )
+            out_name = gallery_output_filename(
+                artifact["filename"],
+                job.public_job_id,
+                i,
+                batch_index=job.batch_index,
+            )
+            destination = out_dir / out_name
+            destination.write_bytes(data)
+            created_paths.append(destination)
+            artifact_to_save = dict(artifact)
+            film = job.params.get("film_postprocess")
+            if artifact.get("artifact_type") == "video" and isinstance(film, dict):
+                from app.services.film_postprocess import interpolate_video_exact
+
+                final_path = destination.with_name(f"{destination.stem}_film{destination.suffix}")
+                created_paths.append(final_path)
+                film_info = interpolate_video_exact(
+                    input_path=destination,
+                    output_path=final_path,
+                    target_frames=int(film["target_frames"]),
+                    total_seconds=float(film["total_seconds"]),
+                    model_path=Path(settings.film_model_path),
+                    work_root=Path(settings.film_work_dir),
+                )
+                destination.unlink(missing_ok=True)
+                destination = final_path
+                artifact_to_save["film_info"] = film_info
+                artifact_to_save["output_key"] = "film_postprocessed"
+            saved_infos.append(
+                (
+                    str(Path(date_str) / destination.name),
+                    artifact_to_save,
+                    destination.stat().st_size,
+                )
+            )
+    except Exception:
+        # Fixed-video completion is all-or-nothing: a raw pre-FILM video or
+        # partial interpolation must never look like a successful result.
+        for path in created_paths:
+            path.unlink(missing_ok=True)
+        raise
 
     count = 0
     for rel_path, artifact, file_size in saved_infos:
@@ -1017,6 +1104,7 @@ def _save_job_outputs(
                     negative_prompt=job.params.get("negative_prompt"),
                     metadata={
                         "output_key": artifact.get("output_key"),
+                        **(artifact.get("film_info") or {}),
                         **(
                             {
                                 "batch_index": job.batch_index,
@@ -1026,6 +1114,11 @@ def _save_job_outputs(
                             else {}
                         ),
                     },
+                    fps=(artifact.get("film_info") or {}).get("fps"),
+                    frame_count=(artifact.get("film_info") or {}).get("frame_count"),
+                    duration=(artifact.get("film_info") or {}).get("container_duration_seconds"),
+                    width=(artifact.get("film_info") or {}).get("width"),
+                    height=(artifact.get("film_info") or {}).get("height"),
                     db=db,
                 )
             count += 1
@@ -1213,6 +1306,7 @@ def _check_running_complete(comfy: ComfyUIClient) -> None:
 
     try:
         n = _save_job_outputs(comfy, job, artifacts_info)
+        _cleanup_staged_inputs(job)
         _record_success(job)
         logger.info("Job %s completed, saved %d artifact(s)", job.job_id, n)
     except Exception as e:
