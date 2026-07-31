@@ -14,6 +14,12 @@
 
 # 進度追蹤
 
+## 2026-07-31 Prompt Library 髮型子分類建置
+
+- 在 `髮型`（hair，掛於 人物與身形 下）底下新增 7 個子分類（`parent_id: "hair"`）：長度（hair-length, 11）、瀏海（hair-bangs, 6）、綁髮（hair-tied, 16）、捲度（hair-texture, 9）、分線（hair-parting, 3）、髮尾（hair-ends, 4）、特殊髮型（hair-special, 8），共 57 個原子詞條。
+- 每個詞條為單一無逗號 tag，`id` 由英文 slug 化（如 shoulder-length hair→shoulder-length-hair），`name_zh`/`description_zh` 帶中文，`order` 以 10 遞增；子分類 `order` 10~70。
+- 純資料變更（prompt_library/positive/ 新增 7 檔），後端/前端程式不動。驗證：全部通過嚴格 `PromptCategory` schema、無含逗號詞條，分類樹整合測試 `15 passed`。
+
 ## 2026-07-31 Discord 固定影片指令與精確 FILM 補幀（non-live）
 
 - Backend 新增兩條固定、server-owned 影片流程：AnimeGen 單圖 I2V，以及 Wan2.2 Animate 角色參考圖＋必要 driver 影片的臉部／身體動作轉移。兩者皆驗證附件、限制原始總幀數為 `4n+1`，依首幀到末幀的 `total_seconds` 計算 FPS，完成後以 FILM 產生呼叫者指定的任意精確目標總幀數；原始影片或 FILM 失敗的部分結果不會持久化為成功 artifact。
