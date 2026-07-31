@@ -8,6 +8,7 @@ returns the local client as a fallback.
 from __future__ import annotations
 
 import hashlib
+import math
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -164,32 +165,71 @@ class NvidiaWorkerClient(ComfyUIClient):
         )
         self._headers = {"Authorization": f"Bearer {token}"}
 
-    def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        timeout: float | None = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        if timeout is None:
+            request_timeout = self._timeout_submit
+        else:
+            if (
+                type(timeout) not in (int, float)
+                or not math.isfinite(timeout)
+                or timeout <= 0
+            ):
+                raise ValueError("timeout override must be positive and finite")
+            request_timeout = min(self._timeout_submit, float(timeout))
         headers = dict(self._headers)
         headers.update(kwargs.pop("headers", {}))
-        with httpx.Client(timeout=self._timeout_submit) as client:
+        with httpx.Client(timeout=request_timeout) as client:
             response = client.request(
                 method, self._url(path), headers=headers, **kwargs
             )
         response.raise_for_status()
         return response
 
-    def health(self) -> dict[str, Any]:
-        return self._request("GET", "/v1/worker/status").json()
+    def health(self, *, timeout: float | None = None) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/v1/worker/status",
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
 
-    def request_update(self, target_commit: str) -> dict[str, Any]:
+    def request_update(
+        self,
+        target_commit: str,
+        *,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         return self._request(
             "POST",
             "/v1/admin/update",
             json={"target_commit": target_commit},
+            **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
-    def update_status(self) -> dict[str, Any]:
-        return self._request("GET", "/v1/admin/update/status").json()
-
-    def preflight(self, node_types: list[str]) -> dict[str, Any]:
+    def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
         return self._request(
-            "POST", "/v1/workflows/preflight", json={"node_types": node_types}
+            "GET",
+            "/v1/admin/update/status",
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def preflight(
+        self,
+        node_types: list[str],
+        *,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/v1/workflows/preflight",
+            json={"node_types": node_types},
+            **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
     def _synchronize(self, prompt: dict[str, Any]) -> None:

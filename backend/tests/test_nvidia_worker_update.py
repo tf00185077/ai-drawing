@@ -82,9 +82,13 @@ class FakeWorkerClient:
             "missing_node_types": [],
         }
         self.health_calls = 0
+        self.health_timeouts: list[float | None] = []
         self.update_requests: list[str] = []
+        self.update_request_timeouts: list[float | None] = []
         self.status_calls = 0
+        self.status_timeouts: list[float | None] = []
         self.preflight_calls: list[list[str]] = []
+        self.preflight_timeouts: list[float | None] = []
 
     @staticmethod
     def _value(queue: deque, last: Any = None) -> Any:
@@ -93,8 +97,9 @@ class FakeWorkerClient:
             raise value
         return value
 
-    def health(self) -> dict[str, Any]:
+    def health(self, *, timeout: float | None = None) -> dict[str, Any]:
         self.health_calls += 1
+        self.health_timeouts.append(timeout)
         if self._health_results:
             self._last_health = self._health_results.popleft()
         value = self._last_health
@@ -103,12 +108,16 @@ class FakeWorkerClient:
         assert isinstance(value, dict)
         return value
 
-    def request_update(self, target_commit: str) -> dict[str, Any]:
+    def request_update(
+        self, target_commit: str, *, timeout: float | None = None
+    ) -> dict[str, Any]:
         self.update_requests.append(target_commit)
+        self.update_request_timeouts.append(timeout)
         return self._value(self._update_results)
 
-    def update_status(self) -> dict[str, Any]:
+    def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
         self.status_calls += 1
+        self.status_timeouts.append(timeout)
         if self._status_results:
             self._last_status = self._status_results.popleft()
         value = self._last_status
@@ -117,8 +126,11 @@ class FakeWorkerClient:
         assert isinstance(value, dict)
         return value
 
-    def preflight(self, node_types: list[str]) -> dict[str, Any]:
+    def preflight(
+        self, node_types: list[str], *, timeout: float | None = None
+    ) -> dict[str, Any]:
         self.preflight_calls.append(node_types)
+        self.preflight_timeouts.append(timeout)
         if isinstance(self.preflight_result, Exception):
             raise self.preflight_result
         return self.preflight_result
@@ -202,6 +214,36 @@ def test_mismatch_requests_update_and_tolerates_expected_outage(git_repo) -> Non
     assert clock.sleeps == [1, 1]
 
 
+def test_coordinator_accepts_every_canonical_pre_ready_graph_state(git_repo) -> None:
+    client = FakeWorkerClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)],
+        status_results=[
+            {"state": state}
+            for state in (
+                "queued",
+                "fetching",
+                "staging",
+                "installing",
+                "validating",
+                "activating",
+                "restarting",
+                "ready",
+            )
+        ],
+    )
+    clock = FakeClock()
+
+    result = NvidiaWorkerUpdateCoordinator(
+        clock=clock,
+        sleeper=clock.sleep,
+        poll_interval=1,
+    ).ensure_worker_compatible(client, git_repo.path, timeout=30)
+
+    assert result.updated is True
+    assert client.status_calls == 8
+    assert clock.sleeps == [1, 1, 1, 1, 1, 1, 1]
+
+
 def test_pre_acceptance_connection_failure_is_not_tolerated(git_repo) -> None:
     secret = "Bearer-request-must-not-leak"
     client = FakeWorkerClient(
@@ -241,6 +283,129 @@ def test_accepted_update_stops_at_injected_30_minute_deadline(git_repo) -> None:
     assert clock.sleeps == [600, 600, 600]
 
 
+def test_status_result_returned_after_deadline_is_rejected(git_repo) -> None:
+    clock = FakeClock()
+
+    class SlowStatusClient(FakeWorkerClient):
+        def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
+            self.status_calls += 1
+            self.status_timeouts.append(timeout)
+            clock.now = 1801
+            return {"state": "ready"}
+
+    client = SlowStatusClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)]
+    )
+
+    with pytest.raises(WorkerUpdateError) as caught:
+        NvidiaWorkerUpdateCoordinator(
+            clock=clock,
+            sleeper=clock.sleep,
+        ).ensure_worker_compatible(client, git_repo.path, timeout=1800)
+
+    assert caught.value.code == "WORKER_UPDATE_TIMEOUT"
+    assert client.status_timeouts == [1800]
+    assert client.health_calls == 1
+    assert client.preflight_calls == []
+
+
+def test_final_health_result_returned_after_deadline_is_rejected(git_repo) -> None:
+    clock = FakeClock()
+
+    class SlowHealthClient(FakeWorkerClient):
+        def health(self, *, timeout: float | None = None) -> dict[str, Any]:
+            value = super().health(timeout=timeout)
+            if self.health_calls == 2:
+                clock.now = 1801
+            return value
+
+    client = SlowHealthClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)],
+        status_results=[{"state": "ready"}],
+    )
+
+    with pytest.raises(WorkerUpdateError) as caught:
+        NvidiaWorkerUpdateCoordinator(
+            clock=clock,
+            sleeper=clock.sleep,
+        ).ensure_worker_compatible(client, git_repo.path, timeout=1800)
+
+    assert caught.value.code == "WORKER_UPDATE_TIMEOUT"
+    assert client.status_timeouts == [1800]
+    assert client.health_timeouts == [None, 1800]
+    assert client.preflight_calls == []
+
+
+def test_preflight_result_returned_after_deadline_is_rejected(git_repo) -> None:
+    clock = FakeClock()
+
+    class SlowPreflightClient(FakeWorkerClient):
+        def preflight(
+            self, node_types: list[str], *, timeout: float | None = None
+        ) -> dict[str, Any]:
+            value = super().preflight(node_types, timeout=timeout)
+            clock.now = 1801
+            return value
+
+    client = SlowPreflightClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)],
+        status_results=[{"state": "ready"}],
+    )
+
+    with pytest.raises(WorkerUpdateError) as caught:
+        NvidiaWorkerUpdateCoordinator(
+            clock=clock,
+            sleeper=clock.sleep,
+        ).ensure_worker_compatible(client, git_repo.path, timeout=1800)
+
+    assert caught.value.code == "WORKER_UPDATE_TIMEOUT"
+    assert client.status_timeouts == [1800]
+    assert client.health_timeouts == [None, 1800]
+    assert client.preflight_timeouts == [1800]
+
+
+def test_each_post_acceptance_call_receives_shrinking_remaining_timeout(
+    git_repo,
+) -> None:
+    clock = FakeClock()
+
+    class AdvancingClient(FakeWorkerClient):
+        def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
+            value = super().update_status(timeout=timeout)
+            clock.now += 5
+            return value
+
+        def health(self, *, timeout: float | None = None) -> dict[str, Any]:
+            value = super().health(timeout=timeout)
+            if self.health_calls == 2:
+                clock.now += 7
+            return value
+
+        def preflight(
+            self, node_types: list[str], *, timeout: float | None = None
+        ) -> dict[str, Any]:
+            value = super().preflight(node_types, timeout=timeout)
+            clock.now += 3
+            return value
+
+    client = AdvancingClient(
+        health_results=[_health("a" * 40), _health(git_repo.origin_main)],
+        status_results=[{"state": "ready"}],
+    )
+
+    result = NvidiaWorkerUpdateCoordinator(
+        clock=clock,
+        sleeper=clock.sleep,
+    ).ensure_worker_compatible(client, git_repo.path, timeout=30)
+
+    assert result.updated is True
+    assert client.update_request_timeouts == [None]
+    assert client.status_timeouts == [30]
+    assert client.health_timeouts == [None, 25]
+    assert client.preflight_timeouts == [18]
+    assert clock.now == 15
+
+
 @pytest.mark.parametrize(
     ("final_health", "preflight", "error_code"),
     [
@@ -278,8 +443,9 @@ def test_same_target_callers_join_one_coordinator_operation(git_repo) -> None:
     release_status = threading.Event()
 
     class BlockingClient(FakeWorkerClient):
-        def update_status(self) -> dict[str, Any]:
+        def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
             self.status_calls += 1
+            self.status_timeouts.append(timeout)
             entered_status.set()
             assert release_status.wait(2)
             return {"state": "ready"}
@@ -321,10 +487,10 @@ def test_background_start_is_nonblocking_and_reuses_one_thread(git_repo) -> None
     release_health = threading.Event()
 
     class BlockingHealthClient(FakeWorkerClient):
-        def health(self) -> dict[str, Any]:
+        def health(self, *, timeout: float | None = None) -> dict[str, Any]:
             entered_health.set()
             assert release_health.wait(2)
-            return super().health()
+            return super().health(timeout=timeout)
 
     client = BlockingHealthClient(
         health_results=[_health(git_repo.origin_main)]
@@ -364,6 +530,52 @@ def test_worker_client_update_apis_use_fixed_authenticated_routes(monkeypatch) -
         ("POST", "/v1/admin/update", {"json": {"target_commit": "a" * 40}}),
         ("GET", "/v1/admin/update/status", {}),
     ]
+
+
+def test_worker_client_caps_coordinator_timeout_at_configured_timeout(
+    monkeypatch,
+) -> None:
+    constructed_timeouts: list[float] = []
+
+    class Response:
+        @staticmethod
+        def json() -> dict[str, Any]:
+            return {"state": "queued"}
+
+        @staticmethod
+        def raise_for_status() -> None:
+            return None
+
+    class Client:
+        def __init__(self, *, timeout: float) -> None:
+            constructed_timeouts.append(timeout)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            return None
+
+        @staticmethod
+        def request(*_args, **_kwargs) -> Response:
+            return Response()
+
+    monkeypatch.setattr(nvidia_worker.httpx, "Client", Client)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+
+    client.health(timeout=90)
+    client.update_status(timeout=4)
+    client.preflight([], timeout=2.5)
+
+    assert constructed_timeouts == [10, 4, 2.5]
+
+
+@pytest.mark.parametrize("timeout", [True, 0, -1])
+def test_worker_client_rejects_invalid_timeout_override(timeout) -> None:
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+
+    with pytest.raises(ValueError, match="timeout override must be positive"):
+        client.health(timeout=timeout)
 
 
 def test_worker_submission_waits_for_update_then_submits_exactly_once(
