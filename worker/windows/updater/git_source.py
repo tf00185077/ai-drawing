@@ -16,6 +16,10 @@ _URL_CREDENTIALS = re.compile(r"://[^/\s@]+@")
 _SECRET_VALUE = re.compile(
     r"(?i)\b(?:token|secret|password|api[_-]?key|authorization|bearer)\b\s*(?:=|:)?\s*[^\s,;]+"
 )
+_WINDOWS_RESERVED_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL", *(f"COM{number}" for number in range(1, 10)), *(f"LPT{number}" for number in range(1, 10))}
+)
+_REF_WILDCARDS = frozenset("*?[")
 
 
 class UpdateError(RuntimeError):
@@ -43,9 +47,9 @@ class GitSource:
         if destination.exists():
             raise UpdateError("SOURCE_REPOSITORY_INVALID", "export destination must not already exist")
 
+        remote_ref = self._validated_remote_ref()
         self._git("remote", "get-url", self.remote)
-        remote_ref = f"refs/remotes/{self.remote}/{self.branch}"
-        self._git("fetch", "--no-tags", self.remote, f"+refs/heads/{self.branch}:{remote_ref}")
+        self._git("fetch", "--no-tags", "--no-recurse-submodules", self.remote, f"+refs/heads/{self.branch}:{remote_ref}")
         fetched_commit = self._fetched_commit()
         if fetched_commit != target_commit:
             raise UpdateError("WINDOWS_REMOTE_HEAD_MISMATCH", "requested commit is not the fetched remote branch head")
@@ -53,6 +57,17 @@ class GitSource:
         self._require_worker_source(target_commit)
         archive = self._git_bytes("archive", "--format=tar", target_commit)
         return self._write_export(destination, archive, target_commit)
+
+    def _validated_remote_ref(self) -> str:
+        if _is_unsafe_selector(self.remote) or _is_unsafe_selector(self.branch):
+            raise UpdateError("SOURCE_REPOSITORY_INVALID", "configured remote or branch is invalid")
+        remote_ref = f"refs/remotes/{self.remote}/{self.branch}"
+        try:
+            self._git("check-ref-format", "--branch", self.branch)
+            self._git("check-ref-format", remote_ref)
+        except UpdateError as error:
+            raise UpdateError("SOURCE_REPOSITORY_INVALID", "configured remote or branch is invalid") from error
+        return remote_ref
 
     def _fetched_commit(self) -> str:
         remote_ref = f"refs/remotes/{self.remote}/{self.branch}"
@@ -114,10 +129,13 @@ class GitSource:
             raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive destination must not already exist")
         destination.mkdir(parents=True)
         root = destination.resolve(strict=True)
+        seen_paths: dict[str, str] = {}
         try:
             with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as contents:
                 for member in contents:
                     relative = _canonical_archive_path(member.name)
+                    member_kind = "directory" if member.isdir() else "file" if member.isfile() else "other"
+                    _reject_windows_path_collision(relative, member_kind, seen_paths)
                     output = destination.joinpath(*relative.parts)
                     resolved_output = output.resolve(strict=False)
                     if not resolved_output.is_relative_to(root):
@@ -143,9 +161,43 @@ def _canonical_archive_path(raw_path: str) -> PurePosixPath:
     if not raw_path or "\\" in raw_path:
         raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains a non-canonical path")
     path = PurePosixPath(raw_path)
-    if raw_path != path.as_posix() or path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+    if (
+        raw_path != path.as_posix()
+        or not path.parts
+        or path.is_absolute()
+        or any(part in {"", ".", ".."} for part in path.parts)
+        or any(_is_unsafe_windows_component(part) for part in path.parts)
+    ):
         raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains a non-canonical path")
     return path
+
+
+def _is_unsafe_windows_component(component: str) -> bool:
+    base_name = component.split(".", 1)[0].upper()
+    return (
+        ":" in component
+        or component.endswith((".", " "))
+        or any(ord(character) < 32 for character in component)
+        or base_name in _WINDOWS_RESERVED_NAMES
+    )
+
+
+def _reject_windows_path_collision(relative: PurePosixPath, kind: str, seen_paths: dict[str, str]) -> None:
+    if kind == "other":
+        return
+    key = "/".join(part.casefold() for part in relative.parts)
+    if key in seen_paths:
+        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains colliding Windows paths")
+    parent_keys = ("/".join(part.casefold() for part in relative.parts[:index]) for index in range(1, len(relative.parts)))
+    if any(seen_paths.get(parent) == "file" for parent in parent_keys):
+        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains file-directory path collisions")
+    if kind == "file" and any(existing.startswith(key + "/") for existing in seen_paths):
+        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains file-directory path collisions")
+    seen_paths[key] = kind
+
+
+def _is_unsafe_selector(value: str) -> bool:
+    return not value or value.startswith("-") or any(character.isspace() or character in _REF_WILDCARDS for character in value)
 
 
 def _redact(stderr: str) -> str:

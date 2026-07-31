@@ -63,3 +63,48 @@
   The non-commit regression therefore writes a real blob into the cloned test
   repository's `refs/remotes/origin/main` and exercises the same required
   `^{commit}` resolver directly.
+
+## Fix round 1
+
+### RED
+
+- Added in-memory tar regressions for Win32 reserved device names (including
+  extensions), ADS colons, trailing dots/spaces, controls/NUL, POSIX/drive
+  absolute paths, case-only duplicates, and directory/file case collisions.
+  The pre-fix extractor accepted the Windows-normalized path cases.
+- Added selector tests that make any attempted `fetch` fail immediately. The
+  pre-fix exporter reached fetch for wildcard and option-like remote/branch
+  values, or exposed the generic Git error for an invalid remote.
+- Added a real local submodule fixture: its repository config enables recursive
+  fetching, its initialized submodule remote is deliberately missing, and the
+  upstream project advances that gitlink. The pre-fix fetch contacted the
+  missing submodule remote and failed.
+
+### GREEN
+
+- `py -3.11 -m pytest backend/tests/test_worker_updater_git.py -q` passed:
+  **23 passed**.
+
+### Changes
+
+- Archive extraction now rejects Windows device names (`CON`, `AUX`, `COM1`,
+  `LPT1`, and variants with extensions), colons/ADS, control characters,
+  trailing dots/spaces, drive-like components, and all case-insensitive
+  duplicate or file/directory-colliding paths before any member is written.
+- Remote and branch selectors are rejected before remote lookup/fetch when
+  empty, option-like, whitespace-bearing, or wildcard-bearing. The exporter
+  then uses checked `git check-ref-format --branch <branch>` and validates the
+  composed `refs/remotes/<remote>/<branch>` as a single ref.
+- Fetch now passes `--no-recurse-submodules`, overriding a repository's
+  `fetch.recurseSubmodules=true` setting while retaining the prior exact
+  remote/branch refspec, time limit, cleanup, and stderr redaction behavior.
+
+### Verification
+
+- `py -3.11 -m pytest backend/tests/test_worker_updater_git.py
+  backend/tests/test_worker_updater_config.py backend/tests/test_worker_updater_state.py -q`
+  passed: **63 passed**.
+- `py -3.11 -m compileall -q worker\\windows\\updater` and `git diff --check`
+  passed.
+- The only test output warning remains the pre-existing Pydantic v2 deprecation
+  at `backend/app/config.py:54`.
