@@ -241,6 +241,31 @@ def test_export_rejects_case_insensitive_archive_path_collisions(
     assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
 
 
+@pytest.mark.parametrize(
+    "first,second",
+    [
+        ("Foo/a.txt", "foo/b.txt"),
+        ("Foo/Bar/a.txt", "Foo/bar/b.txt"),
+    ],
+)
+def test_export_rejects_case_variants_in_implicit_parent_directories(
+    git_fixture: GitFixture, tmp_path: Path, first: str, second: str
+) -> None:
+    """Recording only leaf members must make this test fail."""
+    payload = io.BytesIO()
+    with tarfile.open(fileobj=payload, mode="w") as archive:
+        for name in (first, second):
+            member = tarfile.TarInfo(name)
+            member.size = len(b"contents")
+            archive.addfile(member, io.BytesIO(b"contents"))
+
+    source = GitSource(git_fixture.checkout, "origin", "main")
+    with pytest.raises(UpdateError) as raised:
+        source._safe_extract_archive(payload.getvalue(), tmp_path / "export")
+
+    assert raised.value.code == "SOURCE_REPOSITORY_INVALID"
+
+
 class _FetchForbiddenGitSource(GitSource):
     def __init__(self, root: Path, remote: str, branch: str) -> None:
         super().__init__(root, remote, branch)

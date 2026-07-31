@@ -129,7 +129,7 @@ class GitSource:
             raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive destination must not already exist")
         destination.mkdir(parents=True)
         root = destination.resolve(strict=True)
-        seen_paths: dict[str, str] = {}
+        seen_paths: dict[str, tuple[str, str]] = {}
         try:
             with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as contents:
                 for member in contents:
@@ -182,18 +182,20 @@ def _is_unsafe_windows_component(component: str) -> bool:
     )
 
 
-def _reject_windows_path_collision(relative: PurePosixPath, kind: str, seen_paths: dict[str, str]) -> None:
+def _reject_windows_path_collision(
+    relative: PurePosixPath, kind: str, seen_paths: dict[str, tuple[str, str]]
+) -> None:
     if kind == "other":
         return
-    key = "/".join(part.casefold() for part in relative.parts)
-    if key in seen_paths:
-        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains colliding Windows paths")
-    parent_keys = ("/".join(part.casefold() for part in relative.parts[:index]) for index in range(1, len(relative.parts)))
-    if any(seen_paths.get(parent) == "file" for parent in parent_keys):
-        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains file-directory path collisions")
-    if kind == "file" and any(existing.startswith(key + "/") for existing in seen_paths):
-        raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains file-directory path collisions")
-    seen_paths[key] = kind
+    for index in range(1, len(relative.parts) + 1):
+        key = "/".join(part.casefold() for part in relative.parts[:index])
+        spelling = "/".join(relative.parts[:index])
+        required_kind = kind if index == len(relative.parts) else "directory"
+        previous = seen_paths.get(key)
+        if previous is None:
+            seen_paths[key] = (spelling, required_kind)
+        elif previous != (spelling, required_kind):
+            raise UpdateError("SOURCE_REPOSITORY_INVALID", "archive contains colliding Windows paths")
 
 
 def _is_unsafe_selector(value: str) -> bool:
