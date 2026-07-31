@@ -164,6 +164,35 @@ def test_scheduler_failure_marks_update_failed_before_activation(
     assert mutation.status_code == 200
 
 
+def test_scheduler_failure_releases_a_different_target_for_queueing(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    attempts = 0
+
+    def run_task(*args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise worker_module.subprocess.CalledProcessError(1, args[0])
+
+    monkeypatch.setattr(worker_module.subprocess, "run", run_task)
+
+    failed = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "b" * 40}
+    )
+    queued = worker_client.post(
+        "/v1/admin/update", headers=_auth(), json={"target_commit": "c" * 40}
+    )
+
+    assert failed.status_code == 503
+    assert queued.status_code == 202
+    request = json.loads(worker_module.UPDATE_REQUEST_PATH.read_text(encoding="utf-8"))
+    assert request["target_commit"] == "c" * 40
+    assert worker_client.get("/v1/admin/update/status", headers=_auth()).json() == {
+        "state": "queued"
+    }
+
+
 def test_update_reuses_an_active_request_for_the_same_target(
     worker_client, worker_module, monkeypatch
 ) -> None:
