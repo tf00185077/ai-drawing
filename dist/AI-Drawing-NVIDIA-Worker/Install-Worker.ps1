@@ -4,6 +4,7 @@ $Root = "C:\AI-Drawing-Worker"
 $Source = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | ConvertFrom-Json
 $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
+. (Join-Path $Source "WorkerSecurity.ps1")
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -44,12 +45,17 @@ if ($Drive.Free -lt $Required) {
     throw "C: needs enough free space for runtime, temporary files, the $($Manifest.cache_gb)GB model cache, and the $($Manifest.minimum_free_gb)GB reserve."
 }
 
-if ((Test-Path $Root) -and -not (Test-Path (Join-Path $Root ".ai-drawing-worker-owned"))) {
-    throw "$Root exists but is not owned by this installer."
+if (Test-Path -LiteralPath $Root) {
+    Assert-ExistingWorkerRoot -Path $Root
+} else {
+    New-Item -ItemType Directory -Path $Root | Out-Null
+    Set-SecureUpdaterRootAcl -Path $Root
+    Assert-SecureUpdaterTree -Path $Root
 }
 
-New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "config\update-owned\state"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs"), (Join-Path $Root "shared\models"), (Join-Path $Root "shared\cache"), (Join-Path $Root "shared\partial"), (Join-Path $Root "shared\input"), (Join-Path $Root "shared\output") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $Root "app"), (Join-Path $Root "config"), (Join-Path $Root "config\update-owned\state"), (Join-Path $Root "runtime"), (Join-Path $Root "runtime\logs"), (Join-Path $Root "shared\models"), (Join-Path $Root "shared\cache"), (Join-Path $Root "shared\partial"), (Join-Path $Root "shared\input"), (Join-Path $Root "shared\output") | Out-Null
 [IO.File]::WriteAllText((Join-Path $Root ".ai-drawing-worker-owned"), "AI-Drawing NVIDIA Worker`n", $Utf8NoBom)
+Reset-SecureUpdaterChildAcl -Path (Join-Path $Root ".ai-drawing-worker-owned")
 
 $ExistingConfigPath = Join-Path $Root "config\worker.json"
 if (Test-Path $ExistingConfigPath) {
@@ -99,6 +105,8 @@ if (-not (Test-Path $UpdaterPython -PathType Leaf)) {
 $UpdaterPackage = Join-Path $Root "updater"
 New-Item -ItemType Directory -Force -Path $UpdaterPackage | Out-Null
 Copy-Item (Join-Path $Source "updater\*") $UpdaterPackage -Recurse -Force
+Protect-UpdaterTree -Path $UpdaterRuntime
+Protect-UpdaterTree -Path $UpdaterPackage
 
 $ComfyRoot = Join-Path $Root "runtime\ComfyUI"
 if (-not (Test-Path (Join-Path $ComfyRoot ".git"))) {
@@ -148,7 +156,13 @@ if ($LASTEXITCODE -ne 0 -or -not $ActualRemoteUrl) {
 [IO.File]::WriteAllText((Join-Path $Root "config\expected-remote-url.txt"), $ExpectedRemoteUrl + "`n", $Utf8NoBom)
 
 $ProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"
-New-Item -ItemType Directory -Force -Path $ProgramDataRoot | Out-Null
+if (Test-Path -LiteralPath $ProgramDataRoot) {
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+} else {
+    New-Item -ItemType Directory -Path $ProgramDataRoot | Out-Null
+    Set-SecureUpdaterRootAcl -Path $ProgramDataRoot
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+}
 $BootstrapPath = Join-Path $ProgramDataRoot "UpdaterBootstrap.ps1"
 Copy-Item (Join-Path $Source "UpdaterBootstrap.ps1") $BootstrapPath -Force
 $UpdaterEnvironment = @(
@@ -159,8 +173,7 @@ $UpdaterEnvironment = @(
 )
 $UpdaterEnvironmentText = ($UpdaterEnvironment -join [Environment]::NewLine) + [Environment]::NewLine
 [IO.File]::WriteAllText((Join-Path $ProgramDataRoot "updater.env"), $UpdaterEnvironmentText, $Utf8NoBom)
-& icacls.exe $ProgramDataRoot /inheritance:r /grant:r "SYSTEM:(OI)(CI)F" "BUILTIN\Administrators:(OI)(CI)F" | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Updater configuration ACL could not be restricted." }
+Protect-UpdaterTree -Path $ProgramDataRoot
 
 $UpdaterTaskAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
     -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$env:ProgramData\AI-Drawing-Worker\UpdaterBootstrap.ps1`""

@@ -3,8 +3,12 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
+import threading
+import urllib.request
 from dataclasses import dataclass, field
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -25,7 +29,19 @@ from worker.windows.updater.windows_runtime import (
     HttpHealthProbe,
     ScheduledTaskController,
     SubprocessCommandRunner,
+    SubprocessHandle,
     WorkerTokenProvider,
+    UrllibJsonTransport,
+)
+
+
+REQUIRED_COMFY_NODE_TYPES = (
+    "CheckpointLoaderSimple",
+    "CLIPTextEncode",
+    "EmptyLatentImage",
+    "KSampler",
+    "VAEDecode",
+    "SaveImage",
 )
 
 
@@ -87,6 +103,44 @@ def test_subprocess_runner_starts_a_bounded_detached_argv_process() -> None:
     assert handle.wait(timeout=10) == 0
 
 
+def test_subprocess_runner_translates_timeout_without_captured_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def time_out(*args: Any, **kwargs: Any) -> None:
+        raise subprocess.TimeoutExpired(
+            cmd=["tool", "Bearer argv-secret"],
+            timeout=1,
+            output="Bearer stdout-secret",
+            stderr="TOKEN=stderr-secret",
+        )
+
+    monkeypatch.setattr(subprocess, "run", time_out)
+    with pytest.raises(TimeoutError) as raised:
+        SubprocessCommandRunner().run(("tool",), cwd=None, timeout=1, env=None)
+
+    assert raised.value.__cause__ is None
+    assert raised.value.__suppress_context__ is True
+    assert "secret" not in str(raised.value)
+
+
+def test_subprocess_handle_timeout_is_safe_for_runtime_cleanup() -> None:
+    class TimedOutProcess:
+        def wait(self, *, timeout: float) -> int:
+            raise subprocess.TimeoutExpired(
+                cmd=["runtime", "Bearer argv-secret"],
+                timeout=timeout,
+                output="Bearer stdout-secret",
+                stderr="TOKEN=stderr-secret",
+            )
+
+    with pytest.raises(TimeoutError) as raised:
+        SubprocessHandle(TimedOutProcess()).wait(timeout=1)  # type: ignore[arg-type]
+
+    assert raised.value.__cause__ is None
+    assert raised.value.__suppress_context__ is True
+    assert "secret" not in str(raised.value)
+
+
 def test_scheduled_task_controller_uses_only_the_fixed_worker_task() -> None:
     """Allowing a caller-selected task or command must make this test fail."""
     commands = RecordingCommands()
@@ -132,28 +186,36 @@ class RecordingTransport:
         return response
 
 
+def _complete_health_responses(
+    worker_url: str, comfy_url: str, commit: str
+) -> dict[tuple[str, str], Any]:
+    return {
+        ("GET", f"{comfy_url}/system_stats"): {
+            "devices": [{"type": "cuda", "name": "NVIDIA RTX"}]
+        },
+        ("GET", f"{comfy_url}/object_info"): {
+            node_type: {} for node_type in REQUIRED_COMFY_NODE_TYPES
+        },
+        ("GET", f"{worker_url}/v1/worker/status"): {
+            "protocol_version": 2,
+            "update_capability": 1,
+            "source_commit": commit,
+            "comfyui": "ready",
+        },
+        ("POST", f"{worker_url}/v1/resources/plan"): {"missing": []},
+        ("POST", f"{worker_url}/v1/workflows/preflight"): {
+            "ready": True,
+            "missing_node_types": [],
+        },
+    }
+
+
 def test_http_health_probe_returns_complete_typed_evidence_without_retaining_token(tmp_path: Path) -> None:
     """Skipping any authenticated health boundary or retaining the token must make this test fail."""
     commit = "a" * 40
     worker_url = "http://127.0.0.1:8791"
     comfy_url = "http://127.0.0.1:8188"
-    transport = RecordingTransport(
-        {
-            ("GET", f"{comfy_url}/system_stats"): {
-                "devices": [{"type": "cuda", "name": "NVIDIA RTX"}]
-            },
-            ("GET", f"{comfy_url}/object_info"): {"KSampler": {}},
-            ("GET", f"{worker_url}/v1/worker/status"): {
-                "source_commit": commit,
-                "comfyui": "ready",
-            },
-            ("POST", f"{worker_url}/v1/resources/plan"): {"missing": []},
-            ("POST", f"{worker_url}/v1/workflows/preflight"): {
-                "ready": True,
-                "missing_node_types": [],
-            },
-        }
-    )
+    transport = RecordingTransport(_complete_health_responses(worker_url, comfy_url, commit))
     provider = _token_provider(tmp_path)
     probe = HttpHealthProbe(provider, ScheduledTaskController(RecordingCommands()), transport=transport)
 
@@ -177,6 +239,7 @@ def test_http_health_probe_returns_complete_typed_evidence_without_retaining_tok
         ("POST", f"{worker_url}/v1/workflows/preflight"),
     ]
     assert all(call[2] == {"Authorization": "Bearer very-secret-token"} for call in transport.calls[2:])
+    assert transport.calls[-1][3] == {"node_types": list(REQUIRED_COMFY_NODE_TYPES)}
     assert "very-secret-token" not in repr(probe)
     assert "very-secret-token" not in repr(provider)
 
@@ -205,6 +268,117 @@ def test_http_health_probe_maps_transport_exception_without_token_text(tmp_path:
 
     assert raised.value.code == "WORKER_CONTRACT_FAILED"
     assert "very-secret-token" not in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    ("response_key", "replacement", "evidence_field"),
+    [
+        ("status", {"protocol_version": 1, "update_capability": 1, "source_commit": "a" * 40, "comfyui": "ready"}, "authenticated_status_ok"),
+        ("status", {"protocol_version": 2, "update_capability": 0, "source_commit": "a" * 40, "comfyui": "ready"}, "authenticated_status_ok"),
+        ("status", {"protocol_version": 2, "update_capability": 1, "source_commit": "b" * 40, "comfyui": "ready"}, "authenticated_status_ok"),
+        ("status", {"protocol_version": 2, "update_capability": 1, "source_commit": "a" * 40, "comfyui": "unavailable"}, "authenticated_status_ok"),
+        ("system", {"devices": [{"type": "cpu", "name": "CPU"}]}, "cuda_available"),
+        ("system", {"devices": [{"type": "cuda", "name": ""}]}, "gpu_name"),
+        ("objects", {"KSampler": {}}, "object_info_ok"),
+        ("plan", {"missing": [{"kind": "models"}]}, "resource_plan_ok"),
+        ("preflight", {"ready": False, "missing_node_types": []}, "preflight_ok"),
+        ("preflight", {"ready": True, "missing_node_types": ["KSampler"]}, "preflight_ok"),
+    ],
+)
+def test_http_health_probe_rejects_incomplete_exact_contract(
+    tmp_path: Path,
+    response_key: str,
+    replacement: Any,
+    evidence_field: str,
+) -> None:
+    """Treating a partial/malformed health response as complete must make this test fail."""
+    commit = "a" * 40
+    worker_url = "http://127.0.0.1:8791"
+    comfy_url = "http://127.0.0.1:8188"
+    responses = _complete_health_responses(worker_url, comfy_url, commit)
+    keys = {
+        "status": ("GET", f"{worker_url}/v1/worker/status"),
+        "system": ("GET", f"{comfy_url}/system_stats"),
+        "objects": ("GET", f"{comfy_url}/object_info"),
+        "plan": ("POST", f"{worker_url}/v1/resources/plan"),
+        "preflight": ("POST", f"{worker_url}/v1/workflows/preflight"),
+    }
+    responses[keys[response_key]] = replacement
+    probe = HttpHealthProbe(
+        _token_provider(tmp_path),
+        ScheduledTaskController(RecordingCommands()),
+        transport=RecordingTransport(responses),
+        attempts=1,
+    )
+
+    evidence = probe.validate_staged(worker_url, comfy_url, commit)
+
+    assert not getattr(evidence, evidence_field)
+
+
+def test_urllib_transport_bypasses_proxy_and_sends_authorization_only_to_loopback_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Using the process-global proxy-aware opener must make this test fail."""
+    target_headers: list[str | None] = []
+    proxy_headers: list[str | None] = []
+
+    class TargetHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            target_headers.append(self.headers.get("Authorization"))
+            body = b'{"ok":true}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args: object) -> None:
+            return
+
+    class ProxyHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            proxy_headers.append(self.headers.get("Authorization"))
+            body = b'{"proxied":true}'
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args: object) -> None:
+            return
+
+    target = ThreadingHTTPServer(("127.0.0.1", 0), TargetHandler)
+    proxy = ThreadingHTTPServer(("127.0.0.1", 0), ProxyHandler)
+    target_thread = threading.Thread(target=target.serve_forever, daemon=True)
+    proxy_thread = threading.Thread(target=proxy.serve_forever, daemon=True)
+    target_thread.start()
+    proxy_thread.start()
+    proxy_url = f"http://127.0.0.1:{proxy.server_port}"
+    monkeypatch.setattr(urllib.request, "proxy_bypass", lambda _host: False)
+    urllib.request.install_opener(
+        urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy_url}))
+    )
+    try:
+        response = UrllibJsonTransport().request_json(
+            "GET",
+            f"http://127.0.0.1:{target.server_port}/health",
+            headers={"Authorization": "Bearer target-only-secret"},
+            body=None,
+            timeout=5,
+        )
+    finally:
+        urllib.request.install_opener(None)
+        target.shutdown()
+        proxy.shutdown()
+        target.server_close()
+        proxy.server_close()
+        target_thread.join(timeout=5)
+        proxy_thread.join(timeout=5)
+
+    assert response == {"ok": True}
+    assert target_headers == ["Bearer target-only-secret"]
+    assert proxy_headers == []
 
 
 def test_token_provider_rejects_noncanonical_config_location(tmp_path: Path) -> None:
@@ -329,6 +503,14 @@ def test_updater_cli_advances_success_states(tmp_path: Path) -> None:
         "ready",
     ]
     assert services.calls == ["claim", "candidate", "fetch", "install", "validate", "activate"]
+
+
+def test_updater_cli_treats_terminal_request_acknowledgement_as_success(tmp_path: Path) -> None:
+    services = FakeUpdaterServices(tmp_path)
+    services.claim_request = lambda: None  # type: ignore[method-assign]
+
+    assert main([], services=services) == EXIT_READY
+    assert services.calls == []
 
 
 @pytest.mark.parametrize(

@@ -45,3 +45,33 @@ DONE
 ## Commit
 
 - `feat(worker): install privileged update orchestrator`
+
+---
+
+## Fix Round 1
+
+### RED
+
+- The ACL review suite first reported **2 failed / 1 skipped**: the installer had no SID-based, read-back-verifying ACL helper and accepted an ownership marker on an insecure pre-existing root. A subsequent real temporary junction test failed because the required no-follow traversal did not exist.
+- The hardened health suite first reported **7 failed / 24 passed**: the probe inherited the process-global proxy opener, sent an empty node list, and accepted partial status, object-info, and resource-plan responses.
+- Request-consumption tests first reported **3 failures**: replaying a terminal request queued it again, and an active request could be claimed with an inconsistent ID or commit.
+- Timeout tests first reported **2 failures**: `subprocess.run` leaked `TimeoutExpired` directly and process cleanup chained the exception carrying captured/argv data.
+
+### GREEN
+
+- `WorkerSecurity.ps1` now uses the well-known SYSTEM (`S-1-5-18`) and Administrators (`S-1-5-32-544`) SIDs, sets SYSTEM ownership, disables inherited ACLs at roots, installs only two inheritable allow/full-control rules, and fails closed after re-reading owner, protection, principal, access type, and rights for every ACE.
+- Worker and ProgramData roots reject reparse points. Pre-existing Worker roots require the exact ownership marker plus verified secure ACLs across existing updater executable trees; pre-existing insecure layouts point to Task 7 migration. Fresh roots are secured before executable content is written, and updater runtime/package plus bootstrap/environment descendants are inherited and re-verified.
+- Tree traversal uses an iterative no-follow walk. It detects any reparse point before ACL mutation, and a real temporary junction test proves an external target is rejected rather than traversed.
+- `UrllibJsonTransport` owns a dedicated `ProxyHandler({})` opener. A malicious local proxy integration proves the Authorization header reaches only the loopback target.
+- Health evidence now requires protocol 2, update capability 1, the exact source commit, ready ComfyUI status, a CUDA device with a non-empty GPU name, all six base workflow node types, `missing == []`, and exact ready/empty-missing preflight flags.
+- Request claim is one locked state transaction. Active state requires the request-file ID and commit to match private state exactly; a terminal record with the same ID is a durable no-op acknowledgement, the atomically replaced request file remains crash-replay safe, and only a new request ID can queue new work. A terminal no-op exits successfully.
+- Command and process-wait timeouts translate to fixed `TimeoutError` messages with `from None`, never retaining captured stdout/stderr or sensitive argv in the visible exception chain.
+
+### Verification
+
+- ACL integration: **2 passed / 1 skipped**. The mandatory temporary insecure-root and junction tests passed; the exact-owner/only-two-ACE mutation test requires an elevated Windows pytest process and was skipped in this non-elevated session.
+- `py -3.11 -m pytest backend/tests/test_worker_updater_cli.py backend/tests/test_worker_updater_state.py -q` -- **67 passed**.
+- `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-worker.ps1` -- passed and rebuilt directory plus ZIP assets.
+- Focused Task 1-5 suite -- **225 passed / 1 skipped / 2 pre-existing warnings**.
+- Python compileall, Windows PowerShell AST parsing for all changed/entry scripts, and `git diff --check` -- passed.
+- No production Worker, ComfyUI, ProgramData root, ACL, installer, or Scheduled Task was contacted or mutated.

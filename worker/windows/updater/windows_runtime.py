@@ -21,6 +21,14 @@ HTTP_TIMEOUT = 10.0
 HEALTH_ATTEMPTS = 30
 HEALTH_RETRY_DELAY = 2.0
 WORKER_TASK_NAME = "AI-Drawing NVIDIA Worker"
+REQUIRED_COMFY_NODE_TYPES = (
+    "CheckpointLoaderSimple",
+    "CLIPTextEncode",
+    "EmptyLatentImage",
+    "KSampler",
+    "VAEDecode",
+    "SaveImage",
+)
 _URL_CREDENTIALS = re.compile(r"://[^/\s@]+@")
 _BEARER_SECRET = re.compile(r"(?i)\bbearer\s+[^\s,;]+")
 _NAMED_SECRET = re.compile(
@@ -47,8 +55,8 @@ class SubprocessHandle(ProcessHandle):
     def wait(self, *, timeout: float) -> int:
         try:
             return self._process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as error:
-            raise TimeoutError("process did not stop before the deadline") from error
+        except subprocess.TimeoutExpired:
+            raise TimeoutError("process did not stop before the deadline") from None
 
     def kill(self) -> None:
         self._process.kill()
@@ -66,19 +74,22 @@ class SubprocessCommandRunner(CommandRunner):
         env: Mapping[str, str] | None = None,
     ) -> CommandResult:
         args = _validated_argv(argv, timeout)
-        result = subprocess.run(
-            args,
-            cwd=cwd,
-            timeout=timeout,
-            env=_merged_environment(env),
-            shell=False,
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            creationflags=_creation_flags(),
-        )
+        try:
+            result = subprocess.run(
+                args,
+                cwd=cwd,
+                timeout=timeout,
+                env=_merged_environment(env),
+                shell=False,
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                creationflags=_creation_flags(),
+            )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError("command did not complete before the deadline") from None
         return CompletedCommand(
             returncode=result.returncode,
             stdout=_redact(result.stdout),
@@ -155,6 +166,10 @@ class WorkerTokenProvider:
 class UrllibJsonTransport:
     """Minimal JSON transport whose failures never include response/request bodies."""
 
+    def __init__(self) -> None:
+        # Authenticated loopback requests must never inherit machine/user proxy settings.
+        self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
     def request_json(
         self,
         method: str,
@@ -173,7 +188,7 @@ class UrllibJsonTransport:
         request = urllib.request.Request(
             url, data=data, headers=request_headers, method=method
         )
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with self._opener.open(request, timeout=timeout) as response:
             raw = response.read()
         return json.loads(raw.decode("utf-8"))
 
@@ -256,7 +271,7 @@ class HttpHealthProbe:
             "POST",
             f"{worker_url}/v1/workflows/preflight",
             headers=authorization,
-            body={"node_types": []},
+            body={"node_types": list(REQUIRED_COMFY_NODE_TYPES)},
             timeout=HTTP_TIMEOUT,
         )
         devices = system_stats.get("devices", []) if isinstance(system_stats, dict) else []
@@ -270,10 +285,24 @@ class HttpHealthProbe:
         return HealthEvidence(
             cuda_available=bool(cuda_devices),
             gpu_name=gpu_name,
-            system_stats_ok=isinstance(system_stats, dict) and bool(system_stats),
-            object_info_ok=isinstance(object_info, dict),
-            authenticated_status_ok=isinstance(status, dict),
-            resource_plan_ok=isinstance(plan, dict) and isinstance(plan.get("missing"), list),
+            system_stats_ok=(
+                isinstance(system_stats, dict)
+                and isinstance(system_stats.get("devices"), list)
+            ),
+            object_info_ok=(
+                isinstance(object_info, dict)
+                and all(node_type in object_info for node_type in REQUIRED_COMFY_NODE_TYPES)
+            ),
+            authenticated_status_ok=(
+                isinstance(status, dict)
+                and type(status.get("protocol_version")) is int
+                and status.get("protocol_version") == 2
+                and type(status.get("update_capability")) is int
+                and status.get("update_capability") == 1
+                and status.get("source_commit") == expected_commit
+                and status.get("comfyui") == "ready"
+            ),
+            resource_plan_ok=isinstance(plan, dict) and plan.get("missing") == [],
             preflight_ok=(
                 isinstance(preflight, dict)
                 and preflight.get("ready") is True
