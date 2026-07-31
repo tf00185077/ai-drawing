@@ -85,3 +85,34 @@ DONE_WITH_CONCERNS
 
 - Task 5's launcher must pass the resolved release directory rather than the mutable `current` junction because Worker startup intentionally rejects reparse components.
 - The concrete Task 5 runner/probe remains responsible for carrying the bounded command and authenticated `HealthEvidence` contracts into production.
+
+---
+
+## Fix Round 2
+
+### RED
+
+- A native-junction regression test pointed both `staging` and `staging/validation-state` at an external directory. The old implementation followed the junction, removed the commit child, and destroyed its sentinel before later containment validation failed.
+- Staged Worker integration proved partial uploads and resource-plan resume offsets were derived from the isolated update-state root. The validator also omitted an explicit partial-root environment contract, and the Worker accepted missing/outside or wrong-target partial roots.
+- Six `BaseException` cases covered ComfyUI start, Worker start, and health-probe interruption with both `KeyboardInterrupt` and `SystemExit`. The old control flow bypassed reservation/process cleanup; a simultaneous cleanup failure also lost typed cleanup metadata.
+
+### GREEN
+
+- Validation state now performs lexical no-follow checks on every existing component of the canonical contained `staging` and `validation-state` parent chain before any commit-child removal or creation. Existing commit children receive the same no-reparse check before removal.
+- Worker partial storage is independently selected by `AI_DRAWING_WORKER_PARTIAL_ROOT`. Non-versioned installs retain `ROOT/cache/.partial`; staged managed validation passes the release-local `cache/.partial` junction and verifies that it targets `ROOT/shared/partial`, independent of the isolated update-state root.
+- The real Worker integration now demonstrates an incomplete content upload materializing under shared partial storage, a subsequent plan observing the exact resume offset, and no cache data being written below validation state.
+- Staged process and socket cleanup runs from an unconditional `finally`. The primary path catches `BaseException`: `KeyboardInterrupt` and `SystemExit` are cleaned and re-raised as the same object when cleanup succeeds, while a simultaneous cleanup failure raises typed aggregation retaining the original primary and cleanup code/failures/cause.
+- Cleanup adapters catch `BaseException` per operation so every reservation and every started process still receives its cleanup attempt.
+
+### Verification
+
+- Focused RED produced the expected external-child sentinel deletion, missing partial-root contract, state-coupled partial writes, leaked resources for all six interruption cases, and unaggregated `SystemExit` plus cleanup failure.
+- Targeted GREEN: **18 passed**; the strengthened staging and validation-state parent-junction test passes for both parent positions.
+- Final full focused suite: `py -3.11 -m pytest backend/tests/test_worker_runtime.py backend/tests/test_worker_updater_config.py backend/tests/test_worker_updater_state.py backend/tests/test_worker_updater_git.py backend/tests/test_worker_updater_runtime.py -q` -- **158 passed**.
+- `py -3.11 -m compileall -q worker\\windows\\updater worker\\windows\\worker.py` -- passed.
+- `git diff --check` -- passed.
+- The sole warning remains the pre-existing Pydantic v2 deprecation from `backend/app/config.py:54`; this fix round adds no warnings.
+
+### Commit
+
+- `fix(worker): secure staged validation resources`
