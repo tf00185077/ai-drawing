@@ -1,4 +1,7 @@
-param([Parameter(Mandatory = $true)][string]$Root)
+param(
+    [Parameter(Mandatory = $true)][string]$Root,
+    [switch]$GenerateNewToken
+)
 
 $ErrorActionPreference = "Stop"
 $TaskName = "AI-Drawing NVIDIA Worker"
@@ -77,7 +80,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Root "app"), (Join-Path $R
 Reset-SecureUpdaterChildAcl -Path (Join-Path $Root ".ai-drawing-worker-owned")
 
 $ExistingConfigPath = Join-Path $Root "config\worker.json"
-if (Test-Path $ExistingConfigPath) {
+if (-not $GenerateNewToken -and (Test-Path $ExistingConfigPath)) {
     $ExistingConfig = Get-Content $ExistingConfigPath -Raw | ConvertFrom-Json
     $Token = [string]$ExistingConfig.token
 }

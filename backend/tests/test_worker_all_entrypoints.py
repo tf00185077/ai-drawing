@@ -170,6 +170,17 @@ def test_direct_d_installer_derives_managed_paths_from_the_validated_root() -> N
     assert 'C:\\AI-Drawing-Worker-Source' not in installer
 
 
+def test_direct_d_installer_can_force_a_new_worker_token_without_printing_it() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+
+    assert "[switch]$GenerateNewToken" in installer
+    assert "if (-not $GenerateNewToken -and (Test-Path $ExistingConfigPath))" in installer
+    assert "RandomNumberGenerator" in installer
+    assert 'Write-Host $Token' not in installer
+    assert 'Write-Output $Token' not in installer
+
+
 def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     source = tmp_path / "legacy-worker"
     target = tmp_path / "managed-worker"
