@@ -110,7 +110,8 @@ function Get-CleanInstallDeletionPlan {
         }
     }
     $Sorted = @($Records | Sort-Object path)
-    $Payload = ConvertTo-Json $Sorted -Compress -Depth 5
+    $AuthorizationRecords = @($Sorted | ForEach-Object { [pscustomobject]@{ path = $_.path; kind = $_.kind } })
+    $Payload = ConvertTo-Json $AuthorizationRecords -Compress -Depth 5
     return [pscustomobject]@{
         targets = $Sorted
         total_bytes = [int64](($Sorted | Measure-Object -Property total_bytes -Sum).Sum)
