@@ -63,7 +63,7 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
         throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
     }
     try {
-        Invoke-RestMethod "http://127.0.0.1:8188/system_stats" -TimeoutSec 2 | Out-Null
+        Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats" -TimeoutSec 2 | Out-Null
         $Ready = $true
         break
     } catch {
