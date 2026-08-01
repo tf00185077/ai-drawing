@@ -7,6 +7,7 @@ from collections import deque
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import MagicMock
 
 import httpx
 import pytest
@@ -783,11 +784,9 @@ def test_worker_status_exposes_only_safe_coordinator_error(monkeypatch) -> None:
             nvidia_worker_auto_update=True,
         ),
     )
-    monkeypatch.setattr(
-        workers.NvidiaWorkerClient,
-        "health",
-        lambda self: (_ for _ in ()).throw(RuntimeError(secret)),
-    )
+    worker_client = MagicMock()
+    worker_client.health.side_effect = RuntimeError(secret)
+    monkeypatch.setattr(workers, "get_worker_client", lambda: worker_client)
     monkeypatch.setattr(
         workers,
         "worker_update_status",

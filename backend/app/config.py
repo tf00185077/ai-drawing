@@ -84,6 +84,14 @@ class Settings(BaseSettings):
     nvidia_worker_url: str = ""
     nvidia_worker_token: str = ""
     nvidia_worker_timeout: float = 60.0
+    # Connect failures may discover the paired Worker at its new DHCP address.
+    # Discovery is intentionally constrained to one IPv4 /24 and authenticates
+    # status with the existing bearer token before changing only runtime state.
+    nvidia_worker_discovery_enabled: bool = False
+    nvidia_worker_discovery_cidr: str = ""
+    nvidia_worker_discovery_timeout: float = Field(default=0.25, gt=0, le=5)
+    nvidia_worker_hostname: str = ""
+    nvidia_worker_protocol_version: int = Field(default=1, ge=1)
     nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
     nvidia_worker_auto_update: bool = False
     nvidia_worker_update_timeout: float = 1800.0

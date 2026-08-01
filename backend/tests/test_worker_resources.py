@@ -98,7 +98,7 @@ def test_worker_submit_prompt_surfaces_node_errors(monkeypatch) -> None:
         "node_errors": {"6": "checkpoint not found"},
     }
     instance = MagicMock()
-    instance.post.return_value = response
+    instance.request.return_value = response
     fake = MagicMock()
     fake.__enter__.return_value = instance
     fake.__exit__.return_value = None

@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.config import get_settings
-from app.services.nvidia_worker import NvidiaWorkerClient
+from app.services.nvidia_worker import get_worker_client
 from app.services.nvidia_worker_update import worker_update_status
 
 router = APIRouter(prefix="/api/workers", tags=["NVIDIA Worker"])
@@ -16,7 +16,7 @@ def worker_status() -> dict:
     configured = bool(settings.nvidia_worker_url and settings.nvidia_worker_token)
     update = worker_update_status()
     auto_update = {
-        "enabled": settings.nvidia_worker_auto_update,
+        "enabled": bool(getattr(settings, "nvidia_worker_auto_update", False)),
         "state": update["state"],
         "error_code": update["error_code"],
     }
@@ -28,11 +28,9 @@ def worker_status() -> dict:
             "auto_update": auto_update,
         }
     try:
-        status = NvidiaWorkerClient(
-            settings.nvidia_worker_url,
-            settings.nvidia_worker_token,
-            settings.nvidia_worker_timeout,
-        ).health()
+        # Use the same discovery-aware runtime factory as generation. This
+        # keeps status and every Worker HTTP endpoint on one resolved URL.
+        status = get_worker_client().health()
     except Exception as error:
         return {
             "configured": True,
