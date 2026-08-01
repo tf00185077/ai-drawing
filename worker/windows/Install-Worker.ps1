@@ -5,6 +5,7 @@ $Source = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | ConvertFrom-Json
 $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
 . (Join-Path $Source "WorkerSecurity.ps1")
+. (Join-Path $Source "Migrate-Worker.ps1")
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -76,6 +77,7 @@ $Config = @{
 Copy-Item (Join-Path $Source "worker.py") (Join-Path $Root "app\worker.py") -Force
 Copy-Item (Join-Path $Source "Start-Worker.cmd") (Join-Path $Root "Start-Worker.cmd") -Force
 Copy-Item (Join-Path $Source "Start-Worker.ps1") (Join-Path $Root "Start-Worker.ps1") -Force
+Copy-Item (Join-Path $Source "Migrate-Worker.ps1") (Join-Path $Root "Migrate-Worker.ps1") -Force
 Copy-Item (Join-Path $Source "worker-manifest.json") (Join-Path $Root "worker-manifest.json") -Force
 
 $UvRoot = Join-Path $Root "runtime\uv"
@@ -169,6 +171,7 @@ $UpdaterEnvironment = @(
 )
 $UpdaterEnvironmentText = ($UpdaterEnvironment -join [Environment]::NewLine) + [Environment]::NewLine
 [IO.File]::WriteAllText((Join-Path $ProgramDataRoot "updater.env"), $UpdaterEnvironmentText, $Utf8NoBom)
+Install-FixedMigrationEnvironment -ProgramDataRoot $ProgramDataRoot | Out-Null
 Protect-UpdaterTree -Path $ProgramDataRoot
 
 $UpdaterTaskAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `

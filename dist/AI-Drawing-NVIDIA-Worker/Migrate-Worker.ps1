@@ -4,6 +4,7 @@ $script:MigrationSourceRoot = "C:\AI-Drawing-Worker"
 $script:MigrationPayloadRoot = $PSScriptRoot
 $script:MigrationProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"
 $script:MigrationEnvironmentPath = Join-Path $script:MigrationProgramDataRoot "updater.env"
+$script:MigrationTargetEnvironmentPath = Join-Path $script:MigrationProgramDataRoot "migration.env"
 $script:MigrationTaskNames = @(
     "AI-Drawing NVIDIA Worker",
     "AI-Drawing Worker Updater",
@@ -53,6 +54,58 @@ function Get-MigrationTreeNoFollow {
         }
     }
     return $Files.ToArray()
+}
+
+function Assert-MigrationTargetPathNoFollow {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+
+    $FullRoot = [IO.Path]::GetFullPath($Root).TrimEnd("\")
+    $FullPath = [IO.Path]::GetFullPath($Path).TrimEnd("\")
+    if (
+        -not $FullPath.Equals($FullRoot, [StringComparison]::OrdinalIgnoreCase) -and
+        -not $FullPath.StartsWith($FullRoot + "\", [StringComparison]::OrdinalIgnoreCase)
+    ) {
+        throw "MIGRATION_PATH_INVALID"
+    }
+    $DriveRoot = [IO.Path]::GetPathRoot($FullPath)
+    $Cursor = $DriveRoot
+    $Relative = $FullPath.Substring($DriveRoot.Length)
+    foreach ($Part in @($Relative.Split(@("\", "/"), [StringSplitOptions]::RemoveEmptyEntries))) {
+        $Cursor = Join-Path $Cursor $Part
+        if (-not (Test-Path -LiteralPath $Cursor)) { break }
+        $Item = Get-Item -LiteralPath $Cursor -Force -ErrorAction Stop
+        if (($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "MIGRATION_REPARSE_POINT"
+        }
+    }
+}
+
+function Assert-MigrationTargetTreeNoFollow {
+    param([Parameter(Mandatory = $true)][string]$Root)
+
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Root
+    if (Test-Path -LiteralPath $Root -PathType Container) {
+        Get-MigrationTreeNoFollow -Root $Root | Out-Null
+    }
+}
+
+function New-MigrationDirectorySafe {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Path
+    if (-not (Test-Path -LiteralPath $Path)) {
+        [IO.Directory]::CreateDirectory($Path) | Out-Null
+    }
+    $Item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    if (-not $Item.PSIsContainer -or ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw "MIGRATION_REPARSE_POINT"
+    }
 }
 
 function Get-MigrationInventory {
@@ -148,6 +201,37 @@ function Read-FixedMigrationEnvironment {
     return [pscustomobject]$Values
 }
 
+function Install-FixedMigrationEnvironment {
+    param([Parameter(Mandatory = $true)][string]$ProgramDataRoot)
+
+    $Root = Get-Item -LiteralPath $ProgramDataRoot -Force -ErrorAction Stop
+    if (-not $Root.PSIsContainer -or ($Root.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw "MIGRATION_CONFIG_INVALID"
+    }
+    $Path = Join-Path $Root.FullName "migration.env"
+    [IO.File]::WriteAllText(
+        $Path,
+        "AI_DRAWING_WORKER_MIGRATION_TARGET=D:\code\AI-Drawing-Worker`r`n",
+        $script:Utf8NoBom
+    )
+}
+
+function Read-FixedMigrationTargetEnvironment {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    try {
+        $Lines = @(Get-Content -LiteralPath $Path -Encoding UTF8 -ErrorAction Stop | Where-Object { $_ })
+        if ($Lines.Count -ne 1) { throw "invalid" }
+        $Prefix = "AI_DRAWING_WORKER_MIGRATION_TARGET="
+        if (-not $Lines[0].StartsWith($Prefix, [StringComparison]::Ordinal)) { throw "invalid" }
+        $Target = $Lines[0].Substring($Prefix.Length)
+        if (-not $Target) { throw "invalid" }
+        return $Target
+    } catch {
+        throw "MIGRATION_CONFIG_INVALID"
+    }
+}
+
 function Write-FixedMigrationWorkerRoot {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -190,13 +274,13 @@ function Copy-MigrationFileVerified {
     param(
         [Parameter(Mandatory = $true)][string]$Source,
         [Parameter(Mandatory = $true)][string]$Target,
-        [Parameter(Mandatory = $true)]$Records
+        [Parameter(Mandatory = $true)]$Records,
+        [Parameter(Mandatory = $true)][string]$TargetRoot
     )
 
     $Parent = Split-Path -Parent $Target
-    if (-not (Test-Path -LiteralPath $Parent)) {
-        New-Item -ItemType Directory -Path $Parent -Force | Out-Null
-    }
+    New-MigrationDirectorySafe -Root $TargetRoot -Path $Parent
+    Assert-MigrationTargetPathNoFollow -Root $TargetRoot -Path $Target
     if (Test-Path -LiteralPath $Target) {
         $ExistingHash = Get-MigrationSha256 -Path $Target
         $SourceHash = Get-MigrationSha256 -Path $Source
@@ -214,19 +298,18 @@ function Copy-MigrationTreeVerified {
         [Parameter(Mandatory = $true)][string]$Source,
         [Parameter(Mandatory = $true)][string]$Target,
         [Parameter(Mandatory = $true)]$Records,
+        [Parameter(Mandatory = $true)][string]$TargetRoot,
         [string[]]$ExcludedRoots = @()
     )
 
     if (-not (Test-Path -LiteralPath $Source -PathType Container)) { return }
     $CanonicalSource = (Get-Item -LiteralPath $Source -Force).FullName.TrimEnd("\")
-    if (-not (Test-Path -LiteralPath $Target)) {
-        New-Item -ItemType Directory -Path $Target -Force | Out-Null
-    }
+    New-MigrationDirectorySafe -Root $TargetRoot -Path $Target
     foreach ($File in @(Get-MigrationTreeNoFollow -Root $CanonicalSource)) {
         $Relative = $File.FullName.Substring($CanonicalSource.Length).TrimStart("\", "/")
         $RootName = $Relative.Split(@("\", "/"), [StringSplitOptions]::RemoveEmptyEntries)[0]
         if ($ExcludedRoots -contains $RootName) { continue }
-        Copy-MigrationFileVerified -Source $File.FullName -Target (Join-Path $Target $Relative) -Records $Records
+        Copy-MigrationFileVerified -Source $File.FullName -Target (Join-Path $Target $Relative) -Records $Records -TargetRoot $TargetRoot
     }
 }
 
@@ -260,16 +343,17 @@ function Assert-MigrationInventoryUnchanged {
 function New-MigrationJunction {
     param(
         [Parameter(Mandatory = $true)][string]$Link,
-        [Parameter(Mandatory = $true)][string]$Target
+        [Parameter(Mandatory = $true)][string]$Target,
+        [Parameter(Mandatory = $true)][string]$Root
     )
 
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Link
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Target
     if (Test-Path -LiteralPath $Link) { throw "MIGRATION_LAYOUT_INVALID" }
     $TargetItem = Get-Item -LiteralPath $Target -Force -ErrorAction Stop
     if (-not $TargetItem.PSIsContainer) { throw "MIGRATION_LAYOUT_INVALID" }
     $Parent = Split-Path -Parent $Link
-    if (-not (Test-Path -LiteralPath $Parent)) {
-        New-Item -ItemType Directory -Path $Parent -Force | Out-Null
-    }
+    New-MigrationDirectorySafe -Root $Root -Path $Parent
     New-Item -ItemType Junction -Path $Link -Target $TargetItem.FullName -ErrorAction Stop | Out-Null
     $LinkItem = Get-Item -LiteralPath $Link -Force -ErrorAction Stop
     if (-not ($LinkItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "MIGRATION_LAYOUT_INVALID" }
@@ -290,39 +374,39 @@ function New-FirstMigrationRelease {
     )
 
     if ($Commit -notmatch "^[0-9a-f]{40}$") { throw "MIGRATION_COMMIT_INVALID" }
-    if (Test-Path -LiteralPath $TargetRoot) { throw "MIGRATION_TARGET_EXISTS" }
-    New-Item -ItemType Directory -Path $TargetRoot | Out-Null
+    Assert-MigrationTargetTreeNoFollow -Root $TargetRoot
+    if (-not (Test-Path -LiteralPath $TargetRoot -PathType Container)) { throw "MIGRATION_TARGET_INVALID" }
     foreach ($Relative in @("config", "shared", "releases", "updater", "tools", "shared\models", "shared\cache", "shared\partial", "shared\input", "shared\output", "shared\logs")) {
-        New-Item -ItemType Directory -Path (Join-Path $TargetRoot $Relative) -Force | Out-Null
+        New-MigrationDirectorySafe -Root $TargetRoot -Path (Join-Path $TargetRoot $Relative)
     }
     $Release = Join-Path (Join-Path $TargetRoot "releases") $Commit
-    New-Item -ItemType Directory -Path $Release | Out-Null
+    New-MigrationDirectorySafe -Root $TargetRoot -Path $Release
 
     $IsProductionSource = $SourceRoot.Equals($script:MigrationSourceRoot, [StringComparison]::OrdinalIgnoreCase)
     if ($IsProductionSource) {
-        Copy-MigrationTreeVerified -Source $script:MigrationPayloadRoot -Target (Join-Path $Release "worker\windows") -Records $Records
+        Copy-MigrationTreeVerified -Source $script:MigrationPayloadRoot -Target (Join-Path $Release "worker\windows") -Records $Records -TargetRoot $TargetRoot
     } else {
-        Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "app") -Target (Join-Path $Release "worker\windows") -Records $Records
+        Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "app") -Target (Join-Path $Release "worker\windows") -Records $Records -TargetRoot $TargetRoot
     }
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\python") -Target (Join-Path $Release ".venv") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI") -Target (Join-Path $Release "ComfyUI") -Records $Records -ExcludedRoots @("models", "input", "output")
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "config") -Target (Join-Path $TargetRoot "config") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "shared") -Target (Join-Path $TargetRoot "shared") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\models") -Target (Join-Path $TargetRoot "shared\models") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\input") -Target (Join-Path $TargetRoot "shared\input") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\output") -Target (Join-Path $TargetRoot "shared\output") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\logs") -Target (Join-Path $TargetRoot "shared\logs") -Records $Records
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\python") -Target (Join-Path $Release ".venv") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI") -Target (Join-Path $Release "ComfyUI") -Records $Records -TargetRoot $TargetRoot -ExcludedRoots @("models", "input", "output")
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "config") -Target (Join-Path $TargetRoot "config") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "shared") -Target (Join-Path $TargetRoot "shared") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\models") -Target (Join-Path $TargetRoot "shared\models") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\input") -Target (Join-Path $TargetRoot "shared\input") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\ComfyUI\output") -Target (Join-Path $TargetRoot "shared\output") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "runtime\logs") -Target (Join-Path $TargetRoot "shared\logs") -Records $Records -TargetRoot $TargetRoot
     $UpdaterSource = if ($IsProductionSource) { Join-Path $script:MigrationPayloadRoot "updater" } else { Join-Path $SourceRoot "updater" }
-    Copy-MigrationTreeVerified -Source $UpdaterSource -Target (Join-Path $TargetRoot "updater") -Records $Records
-    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "updater-runtime") -Target (Join-Path $TargetRoot "updater-runtime") -Records $Records
+    Copy-MigrationTreeVerified -Source $UpdaterSource -Target (Join-Path $TargetRoot "updater") -Records $Records -TargetRoot $TargetRoot
+    Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "updater-runtime") -Target (Join-Path $TargetRoot "updater-runtime") -Records $Records -TargetRoot $TargetRoot
 
     foreach ($Name in @(".ai-drawing-worker-owned", "Start-Worker.cmd", "Start-Worker.ps1", "Uninstall-Worker.cmd", "Migrate-Worker.ps1", "UpdaterBootstrap.ps1", "WorkerSecurity.ps1", "worker-manifest.json", "requirements.txt", "Restart-Worker.ps1", "Restart-Worker.cmd", "Wait-Restart-Result.ps1")) {
         $SurfaceRoot = if ($IsProductionSource -and $Name -ne ".ai-drawing-worker-owned") { $script:MigrationPayloadRoot } else { $SourceRoot }
         $Source = Join-Path $SurfaceRoot $Name
         if (Test-Path -LiteralPath $Source -PathType Leaf) {
-            Copy-MigrationFileVerified -Source $Source -Target (Join-Path $TargetRoot $Name) -Records $Records
+            Copy-MigrationFileVerified -Source $Source -Target (Join-Path $TargetRoot $Name) -Records $Records -TargetRoot $TargetRoot
             if ($Name -in @("worker-manifest.json", "requirements.txt")) {
-                Copy-MigrationFileVerified -Source $Source -Target (Join-Path (Join-Path $Release "worker\windows") $Name) -Records $Records
+                Copy-MigrationFileVerified -Source $Source -Target (Join-Path (Join-Path $Release "worker\windows") $Name) -Records $Records -TargetRoot $TargetRoot
             }
         }
     }
@@ -351,9 +435,9 @@ function New-MigrationReleaseLinks {
         @((Join-Path $Release ".cache"), (Join-Path $TargetRoot "shared\cache")),
         @((Join-Path $Release "cache\.partial"), (Join-Path $TargetRoot "shared\partial"))
     )) {
-        New-MigrationJunction -Link $Pair[0] -Target $Pair[1]
+        New-MigrationJunction -Link $Pair[0] -Target $Pair[1] -Root $TargetRoot
     }
-    New-MigrationJunction -Link (Join-Path $TargetRoot "current") -Target $Release
+    New-MigrationJunction -Link (Join-Path $TargetRoot "current") -Target $Release -Root $TargetRoot
 }
 
 function Assert-MigrationHealth {
@@ -363,7 +447,19 @@ function Assert-MigrationHealth {
         [Parameter(Mandatory = $true)][string]$ExpectedTokenHash
     )
 
-    if (
+    if (-not (Test-MigrationHealth -Evidence $Evidence -ExpectedCommit $ExpectedCommit -ExpectedTokenHash $ExpectedTokenHash)) {
+        throw "MIGRATION_HEALTH_FAILED"
+    }
+}
+
+function Test-MigrationHealth {
+    param(
+        [Parameter(Mandatory = $true)]$Evidence,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit,
+        [Parameter(Mandatory = $true)][string]$ExpectedTokenHash
+    )
+
+    return -not (
         $null -eq $Evidence -or
         $Evidence.cuda_available -ne $true -or
         -not [string]$Evidence.gpu_name -or
@@ -373,8 +469,37 @@ function Assert-MigrationHealth {
         $Evidence.object_info_ok -ne $true -or
         [string]$Evidence.source_commit -ne $ExpectedCommit -or
         [string]$Evidence.token_sha256 -ne $ExpectedTokenHash
-    ) {
-        throw "MIGRATION_HEALTH_FAILED"
+    )
+}
+
+function Wait-MigrationHealth {
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Adapter,
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Mode,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit,
+        [Parameter(Mandatory = $true)][string]$ExpectedTokenHash
+    )
+
+    [int64]$DeadlineMilliseconds = [int64](& $Adapter["GetMonotonicMilliseconds"]) + 120000
+    while ($true) {
+        [int64]$Now = [int64](& $Adapter["GetMonotonicMilliseconds"])
+        [int64]$Remaining = $DeadlineMilliseconds - $Now
+        if ($Remaining -le 0) { throw "MIGRATION_HEALTH_FAILED" }
+        $CallTimeoutSeconds = [Math]::Max(1, [Math]::Min(10, [int][Math]::Ceiling($Remaining / 1000.0)))
+        try {
+            $Evidence = & $Adapter["ValidateWorker"] $Root $Mode $ExpectedCommit $ExpectedTokenHash $CallTimeoutSeconds
+            if (Test-MigrationHealth -Evidence $Evidence -ExpectedCommit $ExpectedCommit -ExpectedTokenHash $ExpectedTokenHash) {
+                return $Evidence
+            }
+        } catch {
+            # Connection and incomplete-health failures are expected while the fixed task starts.
+        }
+        $Now = [int64](& $Adapter["GetMonotonicMilliseconds"])
+        $Remaining = $DeadlineMilliseconds - $Now
+        if ($Remaining -le 0) { throw "MIGRATION_HEALTH_FAILED" }
+        $WaitMilliseconds = [int][Math]::Min(1000, $Remaining)
+        & $Adapter["WaitForHealthRetry"] $WaitMilliseconds
     }
 }
 
@@ -388,7 +513,7 @@ function Invoke-WorkerMigrationTransaction {
         [Parameter(Mandatory = $true)][int64]$ReserveBytes
     )
 
-    $RequiredAdapterKeys = @("GetFreeBytes", "ProtectTarget", "CaptureTaskActions", "SwitchTaskActions", "RestoreTaskActions", "StopWorker", "StartWorker", "ValidateWorker")
+    $RequiredAdapterKeys = @("GetFreeBytes", "InitializeTarget", "GetMonotonicMilliseconds", "WaitForHealthRetry", "ProtectTarget", "CaptureSwitchState", "SwitchTaskActions", "RestoreSwitchState", "StopWorker", "StartWorker", "ValidateWorker")
     foreach ($Key in $RequiredAdapterKeys) {
         if (-not $Adapter.ContainsKey($Key) -or $Adapter[$Key] -isnot [scriptblock]) {
             throw "MIGRATION_ADAPTER_INVALID"
@@ -397,18 +522,27 @@ function Invoke-WorkerMigrationTransaction {
     $Source = (Get-Item -LiteralPath $SourceRoot -Force -ErrorAction Stop).FullName.TrimEnd("\")
     $Target = [IO.Path]::GetFullPath($TargetRoot).TrimEnd("\")
     if ($Source.Equals($Target, [StringComparison]::OrdinalIgnoreCase)) { throw "MIGRATION_PATH_INVALID" }
+    Assert-MigrationTargetPathNoFollow -Root $Target -Path $Target
     $ConfigPath = Join-Path $Source "config\worker.json"
     $Before = Get-MigrationInventory -Root $Source -ConfigPath $ConfigPath
     $Available = [int64](& $Adapter["GetFreeBytes"] $Target)
     Assert-MigrationCapacity -SourceBytes $Before.total_bytes -AvailableBytes $Available -ReserveBytes $ReserveBytes
-    $OriginalTasks = @(& $Adapter["CaptureTaskActions"])
+    $SwitchState = & $Adapter["CaptureSwitchState"] $EnvironmentPath
+    if ($null -eq $SwitchState) { throw "MIGRATION_SWITCH_STATE_INVALID" }
     $Records = New-Object "System.Collections.Generic.List[object]"
+    $SwitchAttempted = $false
     $Switched = $false
+    $SourceStopped = $false
+    $TargetStarted = $false
     $BackedUp = $false
     $BackupRoot = $null
     $Stage = "copying"
 
     try {
+        $Stage = "initializing-target"
+        & $Adapter["InitializeTarget"] $Target
+        Assert-MigrationTargetTreeNoFollow -Root $Target
+        $Stage = "copying"
         $Release = New-FirstMigrationRelease -SourceRoot $Source -TargetRoot $Target -Commit $Commit -Records $Records
         $Stage = "protecting"
         & $Adapter["ProtectTarget"] $Target
@@ -419,16 +553,17 @@ function Invoke-WorkerMigrationTransaction {
         Assert-MigrationInventoryUnchanged -Before $Before -After $AfterCopy
         New-MigrationReleaseLinks -Release $Release -TargetRoot $Target
         $Stage = "validating-staged"
-        $Staged = & $Adapter["ValidateWorker"] $Target "staged" $Commit $Before.token_sha256
-        Assert-MigrationHealth -Evidence $Staged -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256
+        Wait-MigrationHealth -Adapter $Adapter -Root $Target -Mode "staged" -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256 | Out-Null
 
+        $SwitchAttempted = $true
         Write-FixedMigrationWorkerRoot -Path $EnvironmentPath -WorkerRoot $Target
         & $Adapter["SwitchTaskActions"] $Target
         $Switched = $true
         & $Adapter["StopWorker"] $Source
+        $SourceStopped = $true
         & $Adapter["StartWorker"] $Target
-        $Production = & $Adapter["ValidateWorker"] $Target "production-before-backup" $Commit $Before.token_sha256
-        Assert-MigrationHealth -Evidence $Production -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256
+        $TargetStarted = $true
+        Wait-MigrationHealth -Adapter $Adapter -Root $Target -Mode "production-before-backup" -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256 | Out-Null
 
         & $Adapter["StopWorker"] $Target
         $BackupRoot = $Source + ".backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
@@ -436,23 +571,21 @@ function Invoke-WorkerMigrationTransaction {
         [IO.Directory]::Move($Source, $BackupRoot)
         $BackedUp = $true
         & $Adapter["StartWorker"] $Target
-        $AfterBackup = & $Adapter["ValidateWorker"] $Target "production-after-backup" $Commit $Before.token_sha256
-        Assert-MigrationHealth -Evidence $AfterBackup -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256
+        Wait-MigrationHealth -Adapter $Adapter -Root $Target -Mode "production-after-backup" -ExpectedCommit $Commit -ExpectedTokenHash $Before.token_sha256 | Out-Null
         return [pscustomobject]@{ status = "ready"; backup_root = $BackupRoot; release_root = $Release }
     } catch {
         $Code = if ([string]$_.Exception.Message -match "^MIGRATION_[A-Z_]+$") { [string]$_.Exception.Message } else { "MIGRATION_FAILED" }
-        if (-not $Switched -and -not $BackedUp) {
+        if (-not $SwitchAttempted -and -not $BackedUp) {
             return [pscustomobject]@{ status = "failed_before_switch"; error_code = $Code; failed_stage = $Stage; backup_root = $null }
         }
         try {
-            & $Adapter["StopWorker"] $Target
+            if ($TargetStarted) { & $Adapter["StopWorker"] $Target }
             if ($BackedUp -and -not (Test-Path -LiteralPath $Source)) {
                 [IO.Directory]::Move($BackupRoot, $Source)
                 $BackedUp = $false
             }
-            & $Adapter["RestoreTaskActions"] $OriginalTasks
-            Write-FixedMigrationWorkerRoot -Path $EnvironmentPath -WorkerRoot $Source
-            & $Adapter["StartWorker"] $Source
+            & $Adapter["RestoreSwitchState"] $SwitchState
+            if ($SourceStopped) { & $Adapter["StartWorker"] $Source }
             return [pscustomobject]@{ status = "rolled_back"; error_code = $Code; backup_root = $null }
         } catch {
             return [pscustomobject]@{ status = "recovery_required"; error_code = "MIGRATION_RECOVERY_REQUIRED"; backup_root = $BackupRoot }
@@ -462,7 +595,11 @@ function Invoke-WorkerMigrationTransaction {
 
 function Get-ProductionMigrationContext {
     $Environment = Read-FixedMigrationEnvironment -Path $script:MigrationEnvironmentPath
-    $Target = [IO.Path]::GetFullPath([string]$Environment.AI_DRAWING_WORKER_ROOT)
+    if (-not ([string]$Environment.AI_DRAWING_WORKER_ROOT).Equals($script:MigrationSourceRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "MIGRATION_CONFIG_INVALID"
+    }
+    $MigrationTarget = Read-FixedMigrationTargetEnvironment -Path $script:MigrationTargetEnvironmentPath
+    $Target = [IO.Path]::GetFullPath([string]$MigrationTarget)
     if ([IO.Path]::GetPathRoot($Target) -ne "D:\") { throw "MIGRATION_CONFIG_INVALID" }
     return [pscustomobject]@{
         source_root = $script:MigrationSourceRoot
@@ -480,15 +617,43 @@ function Get-ProductionMigrationAdapter {
     $RestartTask = "AI-Drawing NVIDIA Worker Restart"
     return @{
         GetFreeBytes = { param($Root) ([IO.DriveInfo]::new([IO.Path]::GetPathRoot($Root))).AvailableFreeSpace }.GetNewClosure()
+        InitializeTarget = {
+            param($Root)
+            if (Test-Path -LiteralPath $Root) {
+                Assert-ExistingWorkerRoot -Path $Root
+            } else {
+                New-SecureUpdaterDirectory -Path $Root
+                $Marker = Join-Path $Root ".ai-drawing-worker-owned"
+                [IO.File]::WriteAllText($Marker, "AI-Drawing NVIDIA Worker`n", $script:Utf8NoBom)
+                Reset-SecureUpdaterChildAcl -Path $Marker
+                Assert-ExistingWorkerRoot -Path $Root
+            }
+        }.GetNewClosure()
+        GetMonotonicMilliseconds = {
+            [int64]([Diagnostics.Stopwatch]::GetTimestamp() * 1000 / [Diagnostics.Stopwatch]::Frequency)
+        }.GetNewClosure()
+        WaitForHealthRetry = { param($Milliseconds) Start-Sleep -Milliseconds $Milliseconds }.GetNewClosure()
         ProtectTarget = { param($Root) Protect-UpdaterTree -Path $Root }.GetNewClosure()
-        CaptureTaskActions = {
+        CaptureSwitchState = {
+            param($EnvironmentPath)
             $Captured = @()
             foreach ($Name in @($WorkerTask, $UpdaterTask, $RestartTask)) {
                 $Task = Get-ScheduledTask -TaskName $Name -ErrorAction SilentlyContinue
-                if ($Task) { $Captured += [pscustomobject]@{ name = $Name; actions = @($Task.Actions) } }
+                if ($Task) {
+                    $Captured += [pscustomobject]@{
+                        name = $Name
+                        actions = @($Task.Actions)
+                        principal = $Task.Principal
+                        settings = $Task.Settings
+                    }
+                }
             }
             if (($Captured.name -notcontains $WorkerTask) -or ($Captured.name -notcontains $UpdaterTask)) { throw "MIGRATION_TASK_INVALID" }
-            return $Captured
+            return [pscustomobject]@{
+                environment_path = $EnvironmentPath
+                environment_bytes = [IO.File]::ReadAllBytes($EnvironmentPath)
+                tasks = $Captured
+            }
         }.GetNewClosure()
         SwitchTaskActions = {
             param($Root)
@@ -502,9 +667,13 @@ function Get-ProductionMigrationAdapter {
                 Set-ScheduledTask -TaskName $RestartTask -Action $RestartAction | Out-Null
             }
         }.GetNewClosure()
-        RestoreTaskActions = {
-            param($Actions)
-            foreach ($Record in @($Actions)) { Set-ScheduledTask -TaskName $Record.name -Action $Record.actions | Out-Null }
+        RestoreSwitchState = {
+            param($State)
+            [IO.File]::WriteAllBytes([string]$State.environment_path, [byte[]]$State.environment_bytes)
+            foreach ($Record in @($State.tasks)) {
+                Set-ScheduledTask -TaskName $Record.name -Action $Record.actions `
+                    -Principal $Record.principal -Settings $Record.settings | Out-Null
+            }
         }.GetNewClosure()
         StopWorker = {
             param($Root)
@@ -513,7 +682,7 @@ function Get-ProductionMigrationAdapter {
         }.GetNewClosure()
         StartWorker = { param($Root) Start-ScheduledTask -TaskName $WorkerTask -ErrorAction Stop }.GetNewClosure()
         ValidateWorker = {
-            param($Root, $Mode, $ExpectedCommit, $ExpectedTokenHash)
+            param($Root, $Mode, $ExpectedCommit, $ExpectedTokenHash, $CallTimeoutSeconds)
             try {
                 $Release = (Get-Item -LiteralPath (Join-Path $Root "current") -Force -ErrorAction Stop).Target
                 if ($Release -is [array]) { $Release = $Release[0] }
@@ -529,11 +698,11 @@ function Get-ProductionMigrationAdapter {
                     return [pscustomobject]@{ cuda_available = $Ready; gpu_name = $(if ($Ready) { "staged CUDA runtime" } else { "" }); status_ok = $Ready; resource_plan_ok = $Ready; preflight_ok = $Ready; object_info_ok = $Ready; source_commit = $ExpectedCommit; token_sha256 = $TokenHash }
                 }
                 $Headers = @{ Authorization = "Bearer $Token" }
-                $System = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8188/system_stats" -TimeoutSec 10
-                $Objects = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8188/object_info" -TimeoutSec 10
-                $Status = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8791/v1/worker/status" -Headers $Headers -TimeoutSec 10
-                $Plan = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8791/v1/resources/plan" -Headers $Headers -ContentType "application/json" -Body '{"resources":[]}' -TimeoutSec 10
-                $Preflight = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8791/v1/workflows/preflight" -Headers $Headers -ContentType "application/json" -Body '{"node_types":["CheckpointLoaderSimple","CLIPTextEncode","EmptyLatentImage","KSampler","VAEDecode","SaveImage"]}' -TimeoutSec 10
+                $System = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8188/system_stats" -TimeoutSec $CallTimeoutSeconds
+                $Objects = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8188/object_info" -TimeoutSec $CallTimeoutSeconds
+                $Status = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:8791/v1/worker/status" -Headers $Headers -TimeoutSec $CallTimeoutSeconds
+                $Plan = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8791/v1/resources/plan" -Headers $Headers -ContentType "application/json" -Body '{"resources":[]}' -TimeoutSec $CallTimeoutSeconds
+                $Preflight = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8791/v1/workflows/preflight" -Headers $Headers -ContentType "application/json" -Body '{"node_types":["CheckpointLoaderSimple","CLIPTextEncode","EmptyLatentImage","KSampler","VAEDecode","SaveImage"]}' -TimeoutSec $CallTimeoutSeconds
                 $Cuda = @($System.devices | Where-Object { [string]$_.type -eq "cuda" }) | Select-Object -First 1
                 $RequiredNodes = @("CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage", "KSampler", "VAEDecode", "SaveImage")
                 $ObjectNames = @($Objects.PSObject.Properties.Name)
