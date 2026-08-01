@@ -309,7 +309,7 @@ def test_login_startup_runs_fixed_activation_recovery_before_current_resolution(
     start = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
     recovery = repo / "worker/windows/updater/recovery.py"
     assert recovery.is_file()
-    assert "-m updater.recovery" in start
+    assert "-B -m updater.recovery" in start
     assert start.index("-m updater.recovery") < start.index('$Current = Join-Path $Root "current"')
 
 

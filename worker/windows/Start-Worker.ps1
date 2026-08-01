@@ -6,7 +6,7 @@ $RecoveryModule = Join-Path $Root "updater\recovery.py"
 if ((Test-Path -LiteralPath $RecoveryPython -PathType Leaf) -and (Test-Path -LiteralPath $RecoveryModule -PathType Leaf)) {
     Push-Location $Root
     try {
-        & $RecoveryPython -m updater.recovery
+        & $RecoveryPython -B -m updater.recovery
         if ($LASTEXITCODE -ne 0) { throw "Managed Worker activation recovery failed." }
     } finally {
         Pop-Location
