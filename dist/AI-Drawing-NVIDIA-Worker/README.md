@@ -17,10 +17,15 @@
 versioned `current/releases` runtime，並安裝 `AI-Drawing Worker Updater` 與
 `AI-Drawing NVIDIA Worker Restart` 系統排程。
 
+Setup 使用 uv 管理的固定版本 Python，並以明確的 standalone interpreter 安裝模式
+安裝所有必要套件；任何必要套件安裝失敗都會立即停止。首次建立 managed runtime
+前，只會移除 target 仍位於同一個 `runtime\python` 內的已驗證 uv Python alias
+junction；其他 reparse point 一律拒絕，不會跟隨或刪除。
+
 要將 managed runtime 移到 `D:\code\AI-Drawing-Worker`，Setup 成功後以系統管理員執行：
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\AI-Drawing-Worker\Migrate-Worker.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\AI-Drawing-Worker-Source\worker\windows\Migrate-Worker.ps1
 ```
 
 遷移採 transaction/health-check/rollback；成功後會切換排程與桌面一鍵重啟入口。
