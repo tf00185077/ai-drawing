@@ -392,7 +392,7 @@ Get-MigrationInventory -Root {_ps_quote(root)} -ConfigPath {_ps_quote(config)} |
     assert result.returncode == 0, result.stderr
     inventory = json.loads(result.stdout)
     assert "current" not in inventory["file_digests"]
-    assert all("ComfyUI/models" not in path for path in inventory["file_digests"])
+    assert all(not path.startswith("releases/") for path in inventory["file_digests"])
     assert "config/worker.json" in inventory["file_digests"]
 
 
