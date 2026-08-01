@@ -424,7 +424,9 @@ def test_start_worker_uses_bounded_curl_comfy_readiness_probe() -> None:
     repo = Path(__file__).resolve().parents[2]
     launcher = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
 
-    assert 'curl.exe --silent --show-error --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"' in launcher
+    assert 'for ($Attempt = 0; $Attempt -lt 300; $Attempt++)' in launcher
+    assert 'curl.exe --silent --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"' in launcher
+    assert "show-error" not in launcher
     assert "if ($LASTEXITCODE -eq 0)" in launcher
     assert 'Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats"' not in launcher
     assert 'Invoke-RestMethod "http://127.0.0.1:8188/system_stats"' not in launcher

@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- Bounded curl 部署後證實 8188 最終可回 exit 0，但此機 custom-node 冷啟動超過舊的 60 秒總上限，啟動器已先退出而 ComfyUI 稍後才 ready。Readiness budget 擴為 10 分鐘（每次 probe 仍硬限 2 秒），並移除正常重試期間的 curl stderr 噪音；focused gate `175 passed, 1 skipped`。
 - `Invoke-WebRequest` 在互動 shell 可立即取得 8188 HTTP 200，但 SYSTEM scheduled-task 的 Windows PowerShell 5.1 仍會卡住；改採 Windows 內建 `curl.exe --fail --max-time 2`，以 child-process exit code 作 readiness gate，讓 timeout 不再依賴 PowerShell web cmdlet。相同實機 endpoint 已驗證 curl exit 0；focused gate 維持 `175 passed, 1 skipped`，待部署 launcher 後確認 8791。
 - Direct-to-D recovery 修正後 exit code 0；實機排程連續兩次只留下可正常回 HTTP 200 的 ComfyUI 8188，Worker 8791 未啟動。程序與 TCP evidence 定位為 Windows PowerShell 5.1 的 `Invoke-RestMethod -TimeoutSec 2` readiness probe 卡在 ESTABLISHED、不返回；同 endpoint 用 `Invoke-WebRequest -UseBasicParsing` 立即成功。啟動器改用後者並加入回歸契約，focused gate `175 passed, 1 skipped`；實機待替換單一 launcher 後重啟確認。
 - Direct-to-D 實機安裝已完成，但 recovery 以 exit 40 明確指出 `project and worker roots must not contain one another`：installer 曾把 Git checkout 放在 `D:\code\AI-Drawing-Worker\source`，違反 updater 的 source/runtime 隔離契約。修正為並列的 `D:\code\AI-Drawing-Worker-Source` 與 `D:\code\AI-Drawing-Worker`，clean-install scope 同步涵蓋 source sibling 與舊 One-Click Restart task；移除不適用於 authenticated LAN discovery 的 DHCP reservation 提示及路由器頁面自動開啟。Focused gate `174 passed, 1 skipped`，distribution 已重建；實機只需移動既有 41 MiB source checkout 並更新受保護 updater config，不需重裝 runtime／模型或旋轉 Token。
