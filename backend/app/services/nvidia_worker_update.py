@@ -53,6 +53,7 @@ _SAFE_MESSAGES = {
     "MAC_COMMIT_NOT_ORIGIN_MAIN": "Local HEAD is not the published origin/main commit.",
     "WORKER_UNAVAILABLE": "NVIDIA Worker status is unavailable.",
     "WORKER_PROTOCOL_INCOMPATIBLE": "NVIDIA Worker protocol is incompatible.",
+    "WORKER_BOOTSTRAP_MIGRATION_REQUIRED": "Legacy protocol 1 Worker requires the managed Worker bootstrap/migration installer.",
     "WORKER_UPDATE_CAPABILITY_INCOMPATIBLE": "NVIDIA Worker update capability is incompatible.",
     "WORKER_UPDATE_REQUEST_FAILED": "NVIDIA Worker update request failed.",
     "WORKER_UPDATE_REQUEST_INVALID": "NVIDIA Worker update request was not accepted.",
@@ -323,6 +324,8 @@ class NvidiaWorkerUpdateCoordinator:
     @staticmethod
     def _validate_identity(health: dict[str, Any], target_commit: str) -> None:
         protocol_version = health.get("protocol_version")
+        if protocol_version == 1:
+            raise WorkerUpdateError("WORKER_BOOTSTRAP_MIGRATION_REQUIRED")
         if (
             type(protocol_version) is not int
             or protocol_version != EXPECTED_PROTOCOL_VERSION
@@ -377,6 +380,8 @@ class NvidiaWorkerUpdateCoordinator:
             return WorkerCompatibilityResult(target_commit, updated=False)
 
         protocol_version = health.get("protocol_version")
+        if protocol_version == 1:
+            raise WorkerUpdateError("WORKER_BOOTSTRAP_MIGRATION_REQUIRED")
         if (
             type(protocol_version) is not int
             or protocol_version != EXPECTED_PROTOCOL_VERSION
@@ -419,6 +424,13 @@ class NvidiaWorkerUpdateCoordinator:
             if not isinstance(status, dict) or not isinstance(status.get("state"), str):
                 raise WorkerUpdateError("WORKER_UPDATE_STATUS_INVALID")
             state = status["state"]
+            if (
+                status.get("request_id") != request_id
+                or status.get("target_commit") != target_commit
+                or not isinstance(status.get("timestamp"), str)
+                or not status["timestamp"]
+            ):
+                raise WorkerUpdateError("WORKER_UPDATE_STATUS_INVALID")
             if state in _FAILED_UPDATE_STATES:
                 raise WorkerUpdateError("WORKER_UPDATE_FAILED")
             if state == "ready":
@@ -483,13 +495,9 @@ def start_worker_update_background() -> threading.Thread | None:
         return None
     # Local import prevents a module cycle: NvidiaWorkerClient uses the public
     # ensure_worker_compatible function for its pre-submission gate.
-    from app.services.nvidia_worker import NvidiaWorkerClient
+    from app.services.nvidia_worker import get_worker_client
 
-    client = NvidiaWorkerClient(
-        settings.nvidia_worker_url.rstrip("/"),
-        settings.nvidia_worker_token,
-        settings.nvidia_worker_timeout,
-    )
+    client = get_worker_client()
     return _default_coordinator.start_background(
         client,
         _PROJECT_ROOT,

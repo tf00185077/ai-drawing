@@ -126,6 +126,13 @@ class FakeWorkerClient:
         if isinstance(value, Exception):
             raise value
         assert isinstance(value, dict)
+        value = dict(value)
+        # Protocol 2's canonical status projection is correlated to the
+        # accepted request. Tests may provide explicit bad values to exercise
+        # rejection; setdefault deliberately preserves those values.
+        value.setdefault("request_id", "request-1")
+        value.setdefault("target_commit", self.update_requests[-1])
+        value.setdefault("timestamp", "2026-08-01T00:00:00+00:00")
         return value
 
     def preflight(
@@ -244,6 +251,30 @@ def test_coordinator_accepts_every_canonical_pre_ready_graph_state(git_repo) -> 
     assert result.updated is True
     assert client.status_calls == 8
     assert clock.sleeps == [1, 1, 1, 1, 1, 1, 1]
+
+
+@pytest.mark.parametrize(
+    "bad_status",
+    [
+        {"state": "ready", "request_id": None},
+        {"state": "ready", "request_id": "another-request"},
+        {"state": "ready", "target_commit": None},
+        {"state": "ready", "target_commit": "b" * 40},
+        {"state": "ready", "timestamp": None},
+        {"state": "ready", "timestamp": ""},
+    ],
+)
+def test_protocol_two_rejects_uncorrelated_update_status(git_repo, bad_status) -> None:
+    client = FakeWorkerClient(
+        health_results=[_health("a" * 40)],
+        status_results=[bad_status],
+    )
+
+    with pytest.raises(WorkerUpdateError) as caught:
+        NvidiaWorkerUpdateCoordinator().ensure_worker_compatible(client, git_repo.path)
+
+    assert caught.value.code == "WORKER_UPDATE_STATUS_INVALID"
+    assert client.health_calls == 1
 
 
 def test_pre_acceptance_connection_failure_is_not_tolerated(git_repo) -> None:
@@ -450,7 +481,12 @@ def test_same_target_callers_join_one_coordinator_operation(git_repo) -> None:
             self.status_timeouts.append(timeout)
             entered_status.set()
             assert release_status.wait(2)
-            return {"state": "ready"}
+            return {
+                "state": "ready",
+                "request_id": "request-1",
+                "target_commit": self.update_requests[-1],
+                "timestamp": "2026-08-01T00:00:00+00:00",
+            }
 
     client = BlockingClient(
         health_results=[_health("a" * 40), _health(git_repo.origin_main)]
@@ -532,6 +568,30 @@ def test_worker_client_update_apis_use_fixed_authenticated_routes(monkeypatch) -
         ("POST", "/v1/admin/update", {"json": {"target_commit": "a" * 40}}),
         ("GET", "/v1/admin/update/status", {}),
     ]
+
+
+def test_worker_client_restart_apis_use_fixed_routes_without_command_or_path(monkeypatch) -> None:
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    calls = []
+
+    class Response:
+        def json(self):
+            return {"request_id": "restart-1", "state": "queued"}
+
+    monkeypatch.setattr(client, "_request", lambda method, path, **kwargs: calls.append((method, path, kwargs)) or Response())
+    assert client.request_restart() == {"request_id": "restart-1", "state": "queued"}
+    client.restart_status("restart-1")
+    assert calls == [
+        ("POST", "/v1/admin/restart", {"json": {}}),
+        ("GET", "/v1/admin/restart/status", {"params": {"request_id": "restart-1"}}),
+    ]
+
+
+def test_protocol_one_has_explicit_bootstrap_migration_error(git_repo) -> None:
+    client = FakeWorkerClient(health_results=[_health("a" * 40, protocol_version=1, update_capability=0)])
+    with pytest.raises(WorkerUpdateError) as caught:
+        NvidiaWorkerUpdateCoordinator().ensure_worker_compatible(client, git_repo.path)
+    assert caught.value.code == "WORKER_BOOTSTRAP_MIGRATION_REQUIRED"
 
 
 def test_worker_client_caps_coordinator_timeout_at_configured_timeout(

@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     nvidia_worker_discovery_cidr: str = ""
     nvidia_worker_discovery_timeout: float = Field(default=0.25, gt=0, le=5)
     nvidia_worker_hostname: str = ""
-    nvidia_worker_protocol_version: int = Field(default=1, ge=1)
+    nvidia_worker_protocol_version: int = Field(default=2, ge=1)
     nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
     nvidia_worker_auto_update: bool = False
     nvidia_worker_update_timeout: float = 1800.0

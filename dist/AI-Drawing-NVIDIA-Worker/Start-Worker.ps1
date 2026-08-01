@@ -1,5 +1,16 @@
 $ErrorActionPreference = "Stop"
 $Root = (Get-Item -LiteralPath $PSScriptRoot -Force).FullName
+$RecoveryPython = Join-Path $Root "updater-runtime\Scripts\python.exe"
+$RecoveryModule = Join-Path $Root "updater\recovery.py"
+if ((Test-Path -LiteralPath $RecoveryPython -PathType Leaf) -and (Test-Path -LiteralPath $RecoveryModule -PathType Leaf)) {
+    Push-Location $Root
+    try {
+        & $RecoveryPython -m updater.recovery
+        if ($LASTEXITCODE -ne 0) { throw "Managed Worker activation recovery failed." }
+    } finally {
+        Pop-Location
+    }
+}
 $Current = Join-Path $Root "current"
 if (Test-Path $Current) {
     $ReleaseRoot = (Resolve-Path -LiteralPath $Current).Path

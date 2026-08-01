@@ -347,9 +347,25 @@ function New-MigrationJunction {
         [Parameter(Mandatory = $true)][string]$Root
     )
 
-    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Link
     Assert-MigrationTargetPathNoFollow -Root $Root -Path $Target
-    if (Test-Path -LiteralPath $Link) { throw "MIGRATION_LAYOUT_INVALID" }
+    if (Test-Path -LiteralPath $Link) {
+        # A prior interrupted bootstrap may have already created this exact
+        # managed junction. Validate its parent without following the link,
+        # then accept only the expected target so reruns are idempotent.
+        Assert-MigrationTargetPathNoFollow -Root $Root -Path (Split-Path -Parent $Link)
+        $Existing = Get-Item -LiteralPath $Link -Force -ErrorAction Stop
+        if (-not ($Existing.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw "MIGRATION_LAYOUT_INVALID"
+        }
+        $ExistingTarget = $Existing.Target
+        if ($ExistingTarget -is [array]) { $ExistingTarget = $ExistingTarget[0] }
+        if (-not [IO.Path]::GetFullPath([string]$ExistingTarget).TrimEnd("\").Equals(
+            (Get-Item -LiteralPath $Target -Force -ErrorAction Stop).FullName.TrimEnd("\"),
+            [StringComparison]::OrdinalIgnoreCase
+        )) { throw "MIGRATION_LAYOUT_INVALID" }
+        return
+    }
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Link
     $TargetItem = Get-Item -LiteralPath $Target -Force -ErrorAction Stop
     if (-not $TargetItem.PSIsContainer) { throw "MIGRATION_LAYOUT_INVALID" }
     $Parent = Split-Path -Parent $Link
@@ -374,12 +390,38 @@ function New-FirstMigrationRelease {
     )
 
     if ($Commit -notmatch "^[0-9a-f]{40}$") { throw "MIGRATION_COMMIT_INVALID" }
-    Assert-MigrationTargetTreeNoFollow -Root $TargetRoot
     if (-not (Test-Path -LiteralPath $TargetRoot -PathType Container)) { throw "MIGRATION_TARGET_INVALID" }
+    $Release = Join-Path (Join-Path $TargetRoot "releases") $Commit
+
+    # A crash after creating release-local shared junctions but before current
+    # is published must be safely retryable. Remove only known links whose
+    # targets exactly match this managed root; unknown reparse points remain a
+    # hard failure in the tree-wide no-follow check below.
+    foreach ($Pair in @(
+        @((Join-Path $Release "ComfyUI\models"), (Join-Path $TargetRoot "shared\models")),
+        @((Join-Path $Release "ComfyUI\input"), (Join-Path $TargetRoot "shared\input")),
+        @((Join-Path $Release "ComfyUI\output"), (Join-Path $TargetRoot "shared\output")),
+        @((Join-Path $Release ".cache"), (Join-Path $TargetRoot "shared\cache")),
+        @((Join-Path $Release "cache\.partial"), (Join-Path $TargetRoot "shared\partial"))
+    )) {
+        $Link = $Pair[0]
+        $ExpectedTarget = $Pair[1]
+        if (Test-Path -LiteralPath $Link) {
+            $Item = Get-Item -LiteralPath $Link -Force -ErrorAction Stop
+            if (-not ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue }
+            $ActualTarget = $Item.Target
+            if ($ActualTarget -is [array]) { $ActualTarget = $ActualTarget[0] }
+            if (-not [IO.Path]::GetFullPath([string]$ActualTarget).TrimEnd("\").Equals(
+                [IO.Path]::GetFullPath($ExpectedTarget).TrimEnd("\"),
+                [StringComparison]::OrdinalIgnoreCase
+            )) { throw "MIGRATION_LAYOUT_INVALID" }
+            Remove-Item -LiteralPath $Link -Force -ErrorAction Stop
+        }
+    }
+    Assert-MigrationTargetTreeNoFollow -Root $TargetRoot
     foreach ($Relative in @("config", "shared", "releases", "updater", "tools", "shared\models", "shared\cache", "shared\partial", "shared\input", "shared\output", "shared\logs")) {
         New-MigrationDirectorySafe -Root $TargetRoot -Path (Join-Path $TargetRoot $Relative)
     }
-    $Release = Join-Path (Join-Path $TargetRoot "releases") $Commit
     New-MigrationDirectorySafe -Root $TargetRoot -Path $Release
 
     $IsProductionSource = $SourceRoot.Equals($script:MigrationSourceRoot, [StringComparison]::OrdinalIgnoreCase)
@@ -438,6 +480,49 @@ function New-MigrationReleaseLinks {
         New-MigrationJunction -Link $Pair[0] -Target $Pair[1] -Root $TargetRoot
     }
     New-MigrationJunction -Link (Join-Path $TargetRoot "current") -Target $Release -Root $TargetRoot
+}
+
+function Initialize-ManagedWorkerLayout {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Commit
+    )
+
+    $CanonicalRoot = (Get-Item -LiteralPath $Root -Force -ErrorAction Stop).FullName.TrimEnd("\")
+    $Current = Join-Path $CanonicalRoot "current"
+    $Release = Join-Path (Join-Path $CanonicalRoot "releases") $Commit
+    $HadCurrent = Test-Path -LiteralPath $Current
+    $Records = New-Object "System.Collections.Generic.List[object]"
+    try {
+        if (-not $HadCurrent) {
+            $Release = New-FirstMigrationRelease -SourceRoot $CanonicalRoot -TargetRoot $CanonicalRoot -Commit $Commit -Records $Records
+            Assert-MigrationCopies -Records $Records
+            New-MigrationReleaseLinks -Release $Release -TargetRoot $CanonicalRoot
+        }
+        $CurrentItem = Get-Item -LiteralPath $Current -Force -ErrorAction Stop
+        if (-not ($CurrentItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "MIGRATION_LAYOUT_INVALID" }
+        $CurrentTarget = $CurrentItem.Target
+        if ($CurrentTarget -is [array]) { $CurrentTarget = $CurrentTarget[0] }
+        if (-not [IO.Path]::GetFullPath([string]$CurrentTarget).TrimEnd("\").Equals(
+            [IO.Path]::GetFullPath($Release).TrimEnd("\"), [StringComparison]::OrdinalIgnoreCase
+        )) { throw "MIGRATION_LAYOUT_INVALID" }
+        foreach ($Required in @("source-commit.txt", ".managed-release.json", "worker\windows\worker.py", "ComfyUI\main.py")) {
+            if (-not (Test-Path -LiteralPath (Join-Path $Release $Required) -PathType Leaf)) { throw "MIGRATION_LAYOUT_INVALID" }
+        }
+        return $Release
+    } catch {
+        # Never leave a newly-created, unverified current active.  The legacy
+        # runtime remains intact and a rerun can resume exact verified copies.
+        if (-not $HadCurrent -and (Test-Path -LiteralPath $Current)) {
+            try {
+                $Item = Get-Item -LiteralPath $Current -Force -ErrorAction Stop
+                if ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                    Remove-Item -LiteralPath $Current -Force -ErrorAction Stop
+                }
+            } catch { }
+        }
+        throw
+    }
 }
 
 function Assert-MigrationHealth {

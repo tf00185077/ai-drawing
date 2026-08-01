@@ -29,7 +29,13 @@ class UpdateAlreadyRunning(Exception):
     """A distinct target was requested before the current one completed."""
 
 
-TERMINAL_UPDATE_STATES = {"ready", "rolled_back", "failed_before_activation"}
+TERMINAL_UPDATE_STATES = {
+    "ready",
+    "rejected",
+    "failed_before_activation",
+    "rolled_back",
+    "recovery_required",
+}
 
 
 def atomic_write_json(path: Path, value: Mapping[str, Any]) -> None:
@@ -112,14 +118,31 @@ def read_public_update_status(status_path: Path) -> dict[str, str]:
         return _read_public_update_status_unlocked(status_path)
 
 
-def _read_public_update_status_unlocked(status_path: Path) -> dict[str, str]:
+def _read_public_update_status_unlocked(status_path: Path) -> dict[str, Any]:
     try:
         value = json.loads(status_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         value = {}
     state = value.get("state") if isinstance(value, dict) else None
-    return {"state": state if isinstance(state, str) and state else "idle"}
+    result: dict[str, Any] = {
+        "state": state if isinstance(state, str) and state else "idle"
+    }
+    if isinstance(value, dict):
+        for key in ("request_id", "target_commit", "timestamp", "error_code", "message"):
+            if isinstance(value.get(key), str):
+                result[key] = value[key]
+    return result
 
 
 def _write_update_status_unlocked(status_path: Path, state: str) -> None:
-    atomic_write_json(status_path, {"state": state})
+    request_path = status_path.with_name("update-request.json")
+    try:
+        request = json.loads(request_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        request = {}
+    value = {"state": state, "timestamp": datetime.now(timezone.utc).isoformat()}
+    if isinstance(request, dict):
+        for key in ("request_id", "target_commit"):
+            if isinstance(request.get(key), str):
+                value[key] = request[key]
+    atomic_write_json(status_path, value)

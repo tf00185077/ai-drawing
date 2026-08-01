@@ -583,7 +583,10 @@ def test_updater_cli_maps_typed_failures_to_terminal_state(
     assert main([], services=services) == exit_code
     public = services.state.read_public()
     private = json.loads(services.state.private_path.read_text(encoding="utf-8"))
-    assert public == {"state": expected_state, "error_code": error_code}
+    assert public["state"] == expected_state
+    assert public["error_code"] == error_code
+    assert public["request_id"] == "request-1"
+    assert public["target_commit"] == "a" * 40
     assert "must-not-leak" not in private["error_message"]
     assert "also-secret" not in private["error_message"]
 
@@ -598,10 +601,10 @@ def test_updater_cli_records_typed_rollback_result(tmp_path: Path) -> None:
     )
 
     assert main([], services=services) == EXIT_ROLLED_BACK
-    assert services.state.read_public() == {
-        "state": "rolled_back",
-        "error_code": "ACTIVATION_FAILED_ROLLED_BACK",
-    }
+    public = services.state.read_public()
+    assert public["state"] == "rolled_back"
+    assert public["error_code"] == "ACTIVATION_FAILED_ROLLED_BACK"
+    assert public["request_id"] == "request-1"
 
 
 @pytest.mark.parametrize(
@@ -627,4 +630,7 @@ def test_updater_cli_resumes_forward_from_durable_state(
 
     assert main([], services=services) == EXIT_READY
     assert services.calls == expected_calls
-    assert services.state.read_public() == {"state": "ready"}
+    public = services.state.read_public()
+    assert public["state"] == "ready"
+    assert public["request_id"] == "request-1"
+    assert public["target_commit"] == "a" * 40

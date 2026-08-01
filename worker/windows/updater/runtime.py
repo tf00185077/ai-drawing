@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import socket
+import sys
 import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -161,7 +162,12 @@ class WindowsJunctionOps:
     def remove(self, link: Path) -> None:
         link = Path(link)
         self.read_target(link)
-        link.rmdir()
+        # Windows junctions are directory reparse points and are removed with
+        # rmdir. The POSIX test implementation uses a real symlink instead.
+        if os.name == "nt":
+            link.rmdir()
+        else:
+            link.unlink()
 
 
 @dataclass(frozen=True)
@@ -233,10 +239,12 @@ class RuntimeBuilder:
         layout: RuntimeLayout,
         commands: CommandRunner,
         junctions: JunctionOps | None = None,
+        bootstrap_python: Path | None = None,
     ) -> None:
         self.layout = layout
         self.commands = commands
         self.junctions = junctions or WindowsJunctionOps()
+        self.bootstrap_python = Path(bootstrap_python or sys.executable).resolve()
 
     def stage(self, exported: Path, commit: str) -> Path:
         release = self.layout.release(commit)
@@ -278,7 +286,9 @@ class RuntimeBuilder:
         manifest = self._read_manifest(release)
         venv = release / ".venv"
         python = venv / "Scripts" / "python.exe"
-        self._checked(("py", f"-{manifest['python']}", "-m", "venv", str(venv)), cwd=release)
+        # The clean installer owns this pinned interpreter; Windows' optional
+        # py.exe launcher is intentionally not a runtime prerequisite.
+        self._checked((str(self.bootstrap_python), "-m", "venv", str(venv)), cwd=release)
         self._checked(
             (str(python), "-m", "pip", "install", "--disable-pip-version-check", f"uv=={manifest['uv']}"),
             cwd=release,
@@ -676,6 +686,19 @@ class Activator:
             except (OSError, UpdateError, ValueError):
                 return ActivationResult("recovery_required", commit, previous_commit, "RECOVERY_REQUIRED")
             return ActivationResult("ready", commit, previous_commit)
+
+    def recover_interrupted_activation(self) -> str | None:
+        """Restore a consistent current junction before login startup uses it."""
+        with _exclusive_path_lock(self.lock):
+            if not any(
+                os.path.lexists(path)
+                for path in (self.layout.current, self.next, self.previous_switch)
+            ):
+                # A wholly legacy layout has no managed switch to recover.
+                return None
+            self._recover_interrupted_switch()
+            _target, commit = self._current_release()
+            return commit
 
     def _recover_interrupted_switch(self) -> None:
         has_current = self.layout.current.exists()

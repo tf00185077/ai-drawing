@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import socket
+import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Mapping, Sequence
@@ -361,7 +362,8 @@ def test_stage_installs_cuda_index_before_requirements_and_pins_every_repository
     requirements_calls = [index for index, argv in enumerate(calls) if "--requirement" in argv]
     assert requirements_calls
     assert cuda_call < min(requirements_calls)
-    assert calls[0][0:4] == ("py", "-3.12", "-m", "venv")
+    assert Path(calls[0][0]).resolve() == Path(sys.executable).resolve()
+    assert calls[0][1:3] == ("-m", "venv")
     assert any("uv==0.11.29" in argv for argv in calls)
     staged = layout.staging / COMMIT_A
     assert any(

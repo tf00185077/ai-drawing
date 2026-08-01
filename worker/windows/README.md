@@ -10,6 +10,22 @@
 3. 等待固定版本 Python、ComfyUI、CUDA PyTorch及 Worker安裝完成。
 4. 將桌面的 `AI-Drawing-Worker-Pairing.txt` 安全地提供給 Mac端。
 
+## 既有舊版升級
+
+舊版 `C:\AI-Drawing-Worker` 不需刪除，也不需重新下載模型。解壓新版 ZIP 到暫存
+資料夾後，以系統管理員重新執行 `Setup.cmd`；安裝程式會保留既有 Token、建立
+versioned `current/releases` runtime，並安裝 `AI-Drawing Worker Updater` 與
+`AI-Drawing NVIDIA Worker Restart` 系統排程。
+
+要將 managed runtime 移到 `D:\code\AI-Drawing-Worker`，Setup 成功後以系統管理員執行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\AI-Drawing-Worker\Migrate-Worker.ps1
+```
+
+遷移採 transaction/health-check/rollback；成功後會切換排程與桌面一鍵重啟入口。
+失敗時保留舊 runtime，不要手動刪除 `C:\AI-Drawing-Worker` 或 migration backup。
+
 ComfyUI只監聽 `127.0.0.1:8188`。Worker使用8791埠，Windows防火牆僅允許
 Private profile及LocalSubnet。
 
@@ -23,7 +39,7 @@ NVIDIA_WORKER_TOKEN=產生的隨機權杖
 NVIDIA_WORKER_DISCOVERY_ENABLED=true
 NVIDIA_WORKER_DISCOVERY_CIDR=192.168.1.0/24
 NVIDIA_WORKER_HOSTNAME=DESKTOP-AV90PQ4
-NVIDIA_WORKER_PROTOCOL_VERSION=1
+NVIDIA_WORKER_PROTOCOL_VERSION=2
 ```
 
 若 DHCP 改變 Windows IP，Mac Backend 只會在上述 IPv4 `/24` 掃描 `8791`

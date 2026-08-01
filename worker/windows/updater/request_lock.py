@@ -13,6 +13,10 @@ from typing import Any, Callable, Iterator
 
 REQUEST_FILENAME = "update-request.json"
 REQUEST_LOCK_FILENAME = "update-request.lock"
+_REQUEST_LOCK_FILENAMES = {
+    REQUEST_FILENAME: REQUEST_LOCK_FILENAME,
+    "restart-request.json": "restart-request.lock",
+}
 DEFAULT_REQUEST_LOCK_TIMEOUT = 15.0
 LOCK_RETRY_INTERVAL = 0.05
 _THREAD_LOCKS: dict[str, threading.Lock] = {}
@@ -40,12 +44,13 @@ def exclusive_request_lock(
 ) -> Iterator[None]:
     """Lock the fixed sibling lock file without depending on replaceable JSON bytes."""
     path = Path(request_path)
-    if path.name != REQUEST_FILENAME:
-        raise ValueError("update request path is not fixed")
+    lock_filename = _REQUEST_LOCK_FILENAMES.get(path.name)
+    if lock_filename is None:
+        raise ValueError("management request path is not fixed")
     if not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("update request lock timeout is invalid")
     deadline = clock() + float(timeout)
-    lock_path = path.with_name(REQUEST_LOCK_FILENAME)
+    lock_path = path.with_name(lock_filename)
     key = os.path.normcase(str(lock_path.resolve(strict=False)))
     with _THREAD_LOCKS_GUARD:
         thread_lock = _THREAD_LOCKS.setdefault(key, threading.Lock())

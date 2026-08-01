@@ -1,20 +1,11 @@
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$Source = Join-Path $ProjectRoot "worker\windows"
-$Destination = Join-Path $ProjectRoot "dist\AI-Drawing-NVIDIA-Worker"
-
-if (Test-Path $Destination) {
-    Remove-Item $Destination -Recurse -Force
+$Builder = Join-Path $PSScriptRoot "build-windows-worker.py"
+$Python = Get-Command py.exe -ErrorAction SilentlyContinue
+if ($Python) {
+    & $Python.Source -3.11 $Builder
+} else {
+    $Python = Get-Command python.exe -ErrorAction Stop
+    & $Python.Source $Builder
 }
-New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-Copy-Item (Join-Path $Source "*") $Destination -Recurse -Force
-Get-ChildItem -Path $Destination -Directory -Recurse -Force |
-    Where-Object { $_.Name -eq "__pycache__" } |
-    Remove-Item -Recurse -Force
-Get-ChildItem -Path $Destination -File -Recurse -Force -Include "*.pyc", "*.pyo" |
-    Remove-Item -Force
-
-$Archive = Join-Path $ProjectRoot "dist\AI-Drawing-NVIDIA-Worker.zip"
-if (Test-Path $Archive) { Remove-Item $Archive -Force }
-Compress-Archive -Path (Join-Path $Destination "*") -DestinationPath $Archive
-Write-Host "Built $Archive"
+if ($LASTEXITCODE -ne 0) { throw "Windows Worker distribution build failed." }
