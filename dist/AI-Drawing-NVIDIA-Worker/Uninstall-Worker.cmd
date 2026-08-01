@@ -1,9 +1,8 @@
 @echo off
 setlocal
-echo This removes the Worker firewall rule and auto-start task.
-echo Runtime and cached models will be moved only after separate confirmation.
-pause
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-  "schtasks.exe /Delete /TN 'AI-Drawing NVIDIA Worker' /F 2>$null; Get-NetFirewallRule -DisplayName 'AI-Drawing NVIDIA Worker' -ErrorAction SilentlyContinue | Remove-NetFirewallRule"
-echo Startup and firewall integration removed. C:\AI-Drawing-Worker remains recoverable.
-pause
+for %%T in ("AI-Drawing NVIDIA Worker" "AI-Drawing Worker Updater" "AI-Drawing NVIDIA Worker Restart") do (
+  schtasks.exe /Delete /TN "%%~T" /F >nul 2>&1
+)
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ^
+  "Get-NetFirewallRule -DisplayName 'AI-Drawing NVIDIA Worker' -ErrorAction SilentlyContinue | Remove-NetFirewallRule"
+echo Startup tasks and firewall integration removed. Worker roots, releases, backups, configuration, and shared data were retained.

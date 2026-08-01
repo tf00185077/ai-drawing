@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -20,6 +21,103 @@ from app.schemas.generate import GenerateWanKeyframesVideoRequest
 from app.schemas.lora_train import LoraSmokeTestRequest
 from app.schemas.style_preset_workflows import TestStylePresetWorkflowRequest
 from app.services import nvidia_worker
+
+
+MIGRATION_COMMIT = "a" * 40
+
+
+def _ps_quote(value: str | Path) -> str:
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def _run_migration_harness(
+    tmp_path: Path, body: str
+) -> subprocess.CompletedProcess[str]:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Migrate-Worker.ps1"
+    harness = tmp_path / "migration-harness.ps1"
+    harness.write_text(
+        "$ErrorActionPreference = 'Stop'\n"
+        f". {_ps_quote(script)}\n"
+        f"{body}\n",
+        encoding="utf-8",
+    )
+    return subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(harness),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+
+def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
+    source = tmp_path / "legacy-worker"
+    target = tmp_path / "managed-worker"
+    program_data = tmp_path / "ProgramData" / "AI-Drawing-Worker"
+    token = "Bearer-fixture-migration-secret"
+    files = {
+        ".ai-drawing-worker-owned": "AI-Drawing NVIDIA Worker\n",
+        "app/worker.py": "print('legacy worker')\n",
+        "config/worker.json": json.dumps(
+            {"token": token, "cache_gb": 100, "minimum_free_gb": 1}
+        ),
+        "config/expected-remote-url.txt": "https://example.invalid/repo\n",
+        "runtime/python/python.exe": "fake-python",
+        "runtime/ComfyUI/main.py": "print('fake comfy')\n",
+        "runtime/ComfyUI/models/model.bin": "model-bytes",
+        "runtime/ComfyUI/input/request.png": "input-bytes",
+        "runtime/ComfyUI/output/result.png": "output-bytes",
+        "runtime/logs/comfyui.stdout.log": "old-log\n",
+        "shared/cache/cache.bin": "cache-bytes",
+        "shared/partial/download.part": "partial-bytes",
+        "updater/cli.py": "pass\n",
+        "updater-runtime/Scripts/python.exe": "fake-updater-python",
+        "Start-Worker.cmd": "@echo off\n",
+        "Start-Worker.ps1": "$ErrorActionPreference = 'Stop'\n",
+        "Uninstall-Worker.cmd": "@echo off\n",
+        "UpdaterBootstrap.ps1": "$ErrorActionPreference = 'Stop'\n",
+        "WorkerSecurity.ps1": "$ErrorActionPreference = 'Stop'\n",
+        "worker-manifest.json": "{}\n",
+        "requirements.txt": "fastapi\n",
+    }
+    for relative, contents in files.items():
+        path = source / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(contents, encoding="utf-8")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    program_data.mkdir(parents=True)
+    (program_data / "updater.env").write_text(
+        "\n".join(
+            (
+                f"AI_DRAWING_PROJECT_ROOT={tmp_path / 'source-repository'}",
+                f"AI_DRAWING_WORKER_ROOT={source}",
+                "AI_DRAWING_WORKER_REMOTE=origin",
+                "AI_DRAWING_WORKER_BRANCH=main",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    return source, target, program_data / "updater.env", token
+
+
+def _tree_snapshot(root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
 
 
 @pytest.mark.parametrize(
@@ -96,6 +194,7 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         "worker.py",
         "worker-manifest.json",
         "Install-Worker.ps1",
+        "Migrate-Worker.ps1",
         "Start-Worker.ps1",
         "UpdaterBootstrap.ps1",
         "WorkerSecurity.ps1",
@@ -119,6 +218,7 @@ def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
     archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
     with zipfile.ZipFile(archive) as package:
         names = {
+            "Migrate-Worker.ps1",
             "UpdaterBootstrap.ps1",
             "WorkerSecurity.ps1",
             "updater/cli.py",
@@ -132,6 +232,276 @@ def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
         for name in names:
             packaged = package.read(name)
             assert packaged == (source / name).read_bytes()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_migration_inventory_uses_canonical_paths_and_hashes_without_secret_output(
+    tmp_path: Path,
+) -> None:
+    """Returning raw config/token values or skipping per-file digests must fail."""
+    root = tmp_path / "worker"
+    config = root / "config" / "worker.json"
+    payload = root / "runtime" / "payload.bin"
+    secret = "Bearer-inventory-must-not-leak"
+    config.parent.mkdir(parents=True)
+    payload.parent.mkdir(parents=True)
+    config.write_text(json.dumps({"token": secret, "cache_gb": 100}), encoding="utf-8")
+    payload.write_bytes(b"payload")
+
+    result = _run_migration_harness(
+        tmp_path,
+        f"Get-MigrationInventory -Root {_ps_quote(root)} "
+        f"-ConfigPath {_ps_quote(config)} | ConvertTo-Json -Depth 8 -Compress",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+    inventory = json.loads(result.stdout)
+    expected_files = [config, payload]
+    assert inventory["canonical_path"].casefold() == str(root.resolve()).casefold()
+    assert inventory["file_count"] == 2
+    assert inventory["total_bytes"] == sum(path.stat().st_size for path in expected_files)
+    assert inventory["config_sha256"] == hashlib.sha256(config.read_bytes()).hexdigest()
+    assert inventory["token_sha256"] == hashlib.sha256(secret.encode()).hexdigest()
+    assert inventory["file_digests"] == {
+        "config/worker.json": hashlib.sha256(config.read_bytes()).hexdigest(),
+        "runtime/payload.bin": hashlib.sha256(payload.read_bytes()).hexdigest(),
+    }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_migration_inventory_fails_closed_on_reparse_without_following_it(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "worker"
+    outside = tmp_path / "outside"
+    root.mkdir()
+    outside.mkdir()
+    sentinel = outside / "sentinel.txt"
+    sentinel.write_text("must-not-be-read", encoding="utf-8")
+    junction = root / "escape"
+    created = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f"New-Item -ItemType Junction -Path {_ps_quote(junction)} "
+            f"-Target {_ps_quote(outside)} | Out-Null",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if created.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {created.stderr}")
+
+    result = _run_migration_harness(
+        tmp_path,
+        f"Get-MigrationInventory -Root {_ps_quote(root)} "
+        f"-ConfigPath {_ps_quote(root / 'missing.json')} | Out-Null",
+    )
+
+    assert result.returncode != 0
+    assert "MIGRATION_REPARSE_POINT" in result.stderr
+    assert sentinel.read_text(encoding="utf-8") == "must-not-be-read"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_migration_capacity_requires_temporary_copy_plus_reserve(tmp_path: Path) -> None:
+    too_small = _run_migration_harness(
+        tmp_path,
+        "Assert-MigrationCapacity -SourceBytes 100 -AvailableBytes 149 -ReserveBytes 50",
+    )
+    exact = _run_migration_harness(
+        tmp_path,
+        "Assert-MigrationCapacity -SourceBytes 100 -AvailableBytes 150 -ReserveBytes 50; "
+        "[Console]::Out.Write('ok')",
+    )
+
+    assert too_small.returncode != 0
+    assert "MIGRATION_FREE_SPACE_INSUFFICIENT" in too_small.stderr
+    assert exact.returncode == 0, exact.stderr
+    assert exact.stdout == "ok"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_migration_env_rejects_unknown_key_without_echoing_value(tmp_path: Path) -> None:
+    env_path = tmp_path / "updater.env"
+    secret = "Bearer-env-must-not-leak"
+    env_path.write_text(f"UNKNOWN={secret}\n", encoding="utf-8")
+
+    result = _run_migration_harness(
+        tmp_path,
+        f"Read-FixedMigrationEnvironment -Path {_ps_quote(env_path)} | Out-Null",
+    )
+
+    assert result.returncode != 0
+    assert "MIGRATION_CONFIG_INVALID" in result.stderr
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+def _migration_adapter_script(
+    source: Path,
+    target: Path,
+    *,
+    fail_mode: str = "",
+) -> str:
+    return f"""
+$Events = New-Object 'System.Collections.Generic.List[string]'
+$SourceRoot = {_ps_quote(source)}
+$TargetRoot = {_ps_quote(target)}
+$FailMode = {_ps_quote(fail_mode)}
+$Adapter = @{{
+  GetFreeBytes = {{ param($Root) [int64]1TB }}
+  ProtectTarget = {{ param($Root) $Events.Add('protect-target') }}
+  CaptureTaskActions = {{
+    $Events.Add('capture-tasks')
+    return @(@{{ name='AI-Drawing NVIDIA Worker'; execute='legacy'; arguments=''; working_directory='' }})
+  }}
+  SwitchTaskActions = {{ param($Root) $Events.Add('switch-tasks:' + [IO.Path]::GetFileName($Root)) }}
+  RestoreTaskActions = {{ param($Actions) $Events.Add('restore-tasks') }}
+  StopWorker = {{ param($Root) $Events.Add('stop:' + [IO.Path]::GetFileName($Root)) }}
+  StartWorker = {{
+    param($Root)
+    $Configured = (Read-FixedMigrationEnvironment -Path $EnvironmentPath).AI_DRAWING_WORKER_ROOT
+    $Events.Add('start:' + [IO.Path]::GetFileName($Root) + ':env=' + [IO.Path]::GetFileName($Configured))
+  }}
+  ValidateWorker = {{
+    param($Root, $Mode, $ExpectedCommit, $ExpectedTokenHash)
+    if ($Mode -eq 'staged') {{
+      $Configured = (Read-FixedMigrationEnvironment -Path $EnvironmentPath).AI_DRAWING_WORKER_ROOT
+      if ($Configured -ne $SourceRoot) {{ throw 'staged validation observed an early env switch' }}
+      if (-not (Test-Path -LiteralPath (Join-Path $TargetRoot ('releases\\' + $ExpectedCommit + '\\worker\\windows\\worker.py')))) {{
+        throw 'staged release was not copied first'
+      }}
+    }}
+    $Events.Add('health:' + $Mode)
+    $Healthy = $Mode -ne $FailMode
+    return @{{
+      cuda_available=$Healthy
+      gpu_name=$(if ($Healthy) {{ 'Fake CUDA GPU' }} else {{ '' }})
+      status_ok=$Healthy
+      resource_plan_ok=$Healthy
+      preflight_ok=$Healthy
+      object_info_ok=$Healthy
+      source_commit=$ExpectedCommit
+      token_sha256=$ExpectedTokenHash
+    }}
+  }}
+}}
+"""
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_transaction_copies_and_validates_d_before_switch_then_backs_up_c(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, token = _migration_fixture(tmp_path)
+    before = _tree_snapshot(source)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(source, target)
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    events = record["events"]
+    assert events.index("health:staged") < events.index("switch-tasks:managed-worker")
+    assert events.index("health:staged") < events.index("stop:legacy-worker")
+    assert events[-2:] == ["start:managed-worker:env=managed-worker", "health:production-after-backup"]
+    assert record["result"]["status"] == "ready"
+    backup = Path(record["result"]["backup_root"])
+    assert not source.exists()
+    assert backup.is_dir()
+    assert _tree_snapshot(backup) == before
+    release = target / "releases" / MIGRATION_COMMIT
+    assert (release / "worker" / "windows" / "worker.py").is_file()
+    assert (release / "ComfyUI" / "main.py").is_file()
+    assert (target / "shared" / "models" / "model.bin").is_file()
+    assert (target / "current").resolve() == release.resolve()
+    assert (release / "ComfyUI" / "models").resolve() == (
+        target / "shared" / "models"
+    ).resolve()
+    env_text = environment_path.read_text(encoding="utf-8")
+    assert f"AI_DRAWING_WORKER_ROOT={target}" in env_text
+    assert token not in result.stdout
+    assert token not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_transaction_failure_restores_task_env_and_starts_unchanged_c(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, token = _migration_fixture(tmp_path)
+    before = _tree_snapshot(source)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(
+            source, target, fail_mode="production-before-backup"
+        )
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert record["result"]["error_code"] == "MIGRATION_HEALTH_FAILED"
+    events = record["events"]
+    assert events.index("restore-tasks") < events.index(
+        "start:legacy-worker:env=legacy-worker"
+    )
+    assert source.is_dir()
+    assert _tree_snapshot(source) == before
+    assert (target / "shared" / "models" / "model.bin").is_file()
+    env_text = environment_path.read_text(encoding="utf-8")
+    assert f"AI_DRAWING_WORKER_ROOT={source}" in env_text
+    assert token not in result.stdout
+    assert token not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_post_backup_failure_restores_c_before_starting_legacy_worker(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    before = _tree_snapshot(source)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(
+            source, target, fail_mode="production-after-backup"
+        )
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert source.is_dir()
+    assert _tree_snapshot(source) == before
+    assert record["events"][-1] == "start:legacy-worker:env=legacy-worker"
 
 
 def test_updater_bootstrap_uses_fixed_programdata_config_and_updater_owned_python() -> None:

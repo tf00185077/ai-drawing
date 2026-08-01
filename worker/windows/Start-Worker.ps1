@@ -1,20 +1,31 @@
 $ErrorActionPreference = "Stop"
-$Root = "C:\AI-Drawing-Worker"
+$Root = (Get-Item -LiteralPath $PSScriptRoot -Force).FullName
 $Current = Join-Path $Root "current"
 if (Test-Path $Current) {
     $ReleaseRoot = (Resolve-Path -LiteralPath $Current).Path
-    $Python = Join-Path $ReleaseRoot ".venv\Scripts\python.exe"
+    $MigratedPythonPath = Join-Path $ReleaseRoot "python-path.txt"
+    if (Test-Path -LiteralPath $MigratedPythonPath -PathType Leaf) {
+        $RelativePython = (Get-Content -LiteralPath $MigratedPythonPath -Raw -Encoding UTF8).Trim()
+        $Python = [IO.Path]::GetFullPath((Join-Path $ReleaseRoot $RelativePython))
+        if (-not $Python.StartsWith($ReleaseRoot + "\", [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Worker Python path leaves the current release."
+        }
+    } else {
+        $Python = Join-Path $ReleaseRoot ".venv\Scripts\python.exe"
+    }
     $ComfyRoot = Join-Path $ReleaseRoot "ComfyUI"
     $WorkerAppRoot = Join-Path $ReleaseRoot "worker\windows"
     $env:AI_DRAWING_WORKER_RELEASE_ROOT = $ReleaseRoot
     $env:AI_DRAWING_WORKER_CONFIG_PATH = Join-Path $Root "config\worker.json"
-    $env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $ReleaseRoot "cache\.partial"
+    $env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $Root "shared\partial"
     $env:AI_DRAWING_WORKER_VERIFICATION_ROOT = Join-Path $Root "shared\cache\verified"
+    $LogsRoot = Join-Path $Root "shared\logs"
 } else {
     $PythonPath = Get-Content (Join-Path $Root "config\python-path.txt") -Raw
     $Python = $PythonPath.Trim()
     $ComfyRoot = Join-Path $Root "runtime\ComfyUI"
     $WorkerAppRoot = Join-Path $Root "app"
+    $LogsRoot = Join-Path $Root "runtime\logs"
 }
 if (-not (Test-Path $Python)) { throw "Worker Python runtime is missing." }
 
@@ -23,7 +34,6 @@ $ComfyArgs = @(
     "--listen", "127.0.0.1",
     "--port", "8188"
 )
-$LogsRoot = Join-Path $Root "runtime\logs"
 New-Item -ItemType Directory -Force -Path $LogsRoot | Out-Null
 $ComfyStdoutLog = Join-Path $LogsRoot "comfyui.stdout.log"
 $ComfyStderrLog = Join-Path $LogsRoot "comfyui.stderr.log"
