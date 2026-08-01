@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- 使用者決定不保留任何舊 Token、模型、cache、input/output 或 rollback，停止修補 flat-to-managed migration，改採 direct-to-D destructive clean install。新增 canonical `D:\code\AI-Drawing-Worker` root contract、固定 scope＋ownership＋contained-junction 驗證的 plan-hashed cleanup、D-root installer/source/updater path derivation、新 Token rotation 與 retry-stable pairing、`Setup-D` entrypoints。Focused gate `173 passed, 1 skipped`；source/dist/ZIP parity 通過，ZIP SHA-256 `84d15e6c93fe7cc515129f6acad021790b9bdbefd1cdf72a9c5319a8c96c265b`。實機 destructive dry-run 尚待執行。
 - Windows 11 實機升級重現兩個 deterministic installer blocker：`uv pip install --python` 對 uv-managed standalone Python 回 externally-managed error，但舊 Setup 未檢查 exit code；其後 `uv python install` 建立的內部版本 alias junction 又被首次 managed inventory 以 `MIGRATION_REPARSE_POINT` 正確拒絕。
 - 新增可獨立測試的 `WorkerInstall.ps1`：所有必要 pip 安裝對專用 standalone interpreter 明確使用 `--system --break-system-packages` 並將非零 exit code 轉成 terminating `INSTALL_DEPENDENCY_FAILED`；Python install 也以 checked command gate 處理。首輪只使用 `--system` 的實機重試仍被 uv PEP 668 gate 正確拒絕，依 uv 官方 CLI contract 補上後者。
 - Python executable 現在只從符合 manifest 完整版本、非 reparse 的實體安裝目錄選取。首次 bootstrap 前只移除名稱符合 uv alias、target 位於同一 `runtime/python`、target 本身非 reparse 且與選定 executable 一致的 junction；外部 target、未知名稱或巢狀 reparse 一律 `INSTALL_PYTHON_REPARSE_UNSAFE`，migration 原有 no-follow/fail-closed 規則未放寬。

@@ -327,6 +327,10 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
     for name in (
         "worker.py",
         "worker-manifest.json",
+        "WorkerRoot.ps1",
+        "Clean-Install-Worker.ps1",
+        "Setup-D.ps1",
+        "Setup-D.cmd",
         "Install-Worker.ps1",
         "Migrate-Worker.ps1",
         "Start-Worker.ps1",
