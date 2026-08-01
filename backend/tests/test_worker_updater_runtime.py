@@ -543,6 +543,7 @@ def test_validator_starts_both_services_on_distinct_reserved_loopback_ports(tmp_
     assert comfy_timeout > 0 and worker_timeout > 0
     assert comfy_env is not None and comfy_env["PYTHONUTF8"] == "1"
     assert worker_env is not None and worker_env["AI_DRAWING_WORKER_ROOT"] == str(layout.root)
+    assert worker_env["PYTHONPATH"] == str(layout.root)
     assert worker_env["AI_DRAWING_WORKER_RELEASE_ROOT"] == str(release)
     assert worker_env["AI_DRAWING_WORKER_CONFIG_PATH"] == str(layout.config / "worker.json")
     state_root = Path(worker_env["AI_DRAWING_WORKER_UPDATE_STATE_ROOT"])
