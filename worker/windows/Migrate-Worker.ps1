@@ -30,7 +30,10 @@ function Get-MigrationStringSha256 {
 }
 
 function Get-MigrationTreeNoFollow {
-    param([Parameter(Mandatory = $true)][string]$Root)
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Collections.Generic.HashSet[string]]$AllowedReparsePaths
+    )
 
     $RootItem = Get-Item -LiteralPath $Root -Force -ErrorAction Stop
     if (-not $RootItem.PSIsContainer) { throw "MIGRATION_PATH_INVALID" }
@@ -44,6 +47,9 @@ function Get-MigrationTreeNoFollow {
         }
         foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
             if (($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+                if ($null -ne $AllowedReparsePaths -and $AllowedReparsePaths.Contains($Item.FullName)) {
+                    continue
+                }
                 throw "MIGRATION_REPARSE_POINT"
             }
             if ($Item.PSIsContainer) {
@@ -54,6 +60,50 @@ function Get-MigrationTreeNoFollow {
         }
     }
     return $Files.ToArray()
+}
+
+function Get-ManagedMigrationSourceLinks {
+    param([Parameter(Mandatory = $true)][string]$Root)
+
+    $Allowed = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    $Current = Join-Path $Root "current"
+    if (-not (Test-Path -LiteralPath $Current)) { return $Allowed }
+    $CurrentItem = Get-Item -LiteralPath $Current -Force -ErrorAction Stop
+    if (-not ($CurrentItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw "MIGRATION_REPARSE_POINT"
+    }
+    $CurrentTarget = $CurrentItem.Target
+    if ($CurrentTarget -is [array]) { $CurrentTarget = $CurrentTarget[0] }
+    $Release = [IO.Path]::GetFullPath([string]$CurrentTarget).TrimEnd("\")
+    $Releases = [IO.Path]::GetFullPath((Join-Path $Root "releases")).TrimEnd("\")
+    if (
+        -not $Release.StartsWith($Releases + "\", [StringComparison]::OrdinalIgnoreCase) -or
+        [IO.Path]::GetDirectoryName($Release) -ne $Releases -or
+        [IO.Path]::GetFileName($Release) -notmatch "^[0-9a-f]{40}$"
+    ) { throw "MIGRATION_REPARSE_POINT" }
+    Assert-MigrationTargetPathNoFollow -Root $Root -Path $Release
+    [void]$Allowed.Add($CurrentItem.FullName)
+
+    foreach ($Pair in @(
+        @((Join-Path $Release "ComfyUI\models"), (Join-Path $Root "shared\models")),
+        @((Join-Path $Release "ComfyUI\input"), (Join-Path $Root "shared\input")),
+        @((Join-Path $Release "ComfyUI\output"), (Join-Path $Root "shared\output")),
+        @((Join-Path $Release ".cache"), (Join-Path $Root "shared\cache")),
+        @((Join-Path $Release "cache\.partial"), (Join-Path $Root "shared\partial"))
+    )) {
+        $Link = $Pair[0]
+        if (-not (Test-Path -LiteralPath $Link)) { continue }
+        $Item = Get-Item -LiteralPath $Link -Force -ErrorAction Stop
+        if (-not ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue }
+        $Actual = $Item.Target
+        if ($Actual -is [array]) { $Actual = $Actual[0] }
+        if (-not [IO.Path]::GetFullPath([string]$Actual).TrimEnd("\").Equals(
+            [IO.Path]::GetFullPath($Pair[1]).TrimEnd("\"),
+            [StringComparison]::OrdinalIgnoreCase
+        )) { throw "MIGRATION_REPARSE_POINT" }
+        [void]$Allowed.Add($Item.FullName)
+    }
+    return $Allowed
 }
 
 function Assert-MigrationTargetPathNoFollow {
@@ -115,7 +165,8 @@ function Get-MigrationInventory {
     )
 
     $CanonicalRoot = (Get-Item -LiteralPath $Root -Force -ErrorAction Stop).FullName.TrimEnd("\")
-    $Files = @(Get-MigrationTreeNoFollow -Root $CanonicalRoot | Sort-Object FullName)
+    $AllowedReparsePaths = Get-ManagedMigrationSourceLinks -Root $CanonicalRoot
+    $Files = @(Get-MigrationTreeNoFollow -Root $CanonicalRoot -AllowedReparsePaths $AllowedReparsePaths | Sort-Object FullName)
     $Digests = [ordered]@{}
     [int64]$TotalBytes = 0
     foreach ($File in $Files) {
