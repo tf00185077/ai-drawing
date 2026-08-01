@@ -332,8 +332,8 @@ def test_stage_rejects_a_reparse_source_instead_of_copying_through_it(
     assert not (layout.releases / COMMIT_A).exists()
 
 
-def test_stage_installs_cuda_index_before_requirements_and_pins_every_repository(tmp_path: Path) -> None:
-    """Reordering CUDA or cloning an unpinned repository must make this test fail."""
+def test_stage_reinstalls_cuda_after_requirements_and_pins_every_repository(tmp_path: Path) -> None:
+    """Letting requirements retain a same-version CPU torch wheel must make this test fail."""
     layout = RuntimeLayout.create(tmp_path / "worker")
     nodes = [
         {
@@ -361,7 +361,19 @@ def test_stage_installs_cuda_index_before_requirements_and_pins_every_repository
     )
     requirements_calls = [index for index, argv in enumerate(calls) if "--requirement" in argv]
     assert requirements_calls
-    assert cuda_call < min(requirements_calls)
+    assert cuda_call > max(requirements_calls)
+    cuda_argv = calls[cuda_call]
+    for package in ("torch", "torchvision", "torchaudio"):
+        assert any(
+            cuda_argv[index : index + 2] == ("--reinstall-package", package)
+            for index in range(len(cuda_argv) - 1)
+        )
+    cuda_gate = next(
+        index
+        for index, argv in enumerate(calls)
+        if "torch.cuda.is_available()" in " ".join(argv)
+    )
+    assert cuda_gate > cuda_call
     assert Path(calls[0][0]).resolve() == Path(sys.executable).resolve()
     assert calls[0][1:3] == ("-m", "venv")
     assert any("uv==0.11.29" in argv for argv in calls)
