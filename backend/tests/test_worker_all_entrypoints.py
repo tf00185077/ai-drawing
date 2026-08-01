@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import hashlib
 import os
@@ -31,7 +32,7 @@ def _ps_quote(value: str | Path) -> str:
 
 
 def _run_migration_harness(
-    tmp_path: Path, body: str
+    tmp_path: Path, body: str, *, environment: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
     repo = Path(__file__).resolve().parents[2]
     script = repo / "worker" / "windows" / "Migrate-Worker.ps1"
@@ -42,6 +43,12 @@ def _run_migration_harness(
         f"{body}\n",
         encoding="utf-8",
     )
+    process_environment = dict(os.environ)
+    for key, value in (environment or {}).items():
+        for existing in tuple(process_environment):
+            if existing.casefold() == key.casefold():
+                del process_environment[existing]
+        process_environment[key] = value
     return subprocess.run(
         [
             "powershell.exe",
@@ -57,6 +64,7 @@ def _run_migration_harness(
         text=True,
         encoding="utf-8",
         errors="replace",
+        env=process_environment,
         timeout=30,
     )
 
@@ -344,26 +352,115 @@ def test_migration_env_rejects_unknown_key_without_echoing_value(tmp_path: Path)
     assert secret not in result.stderr
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_installed_migration_asset_keeps_updater_on_c_until_transaction_switch(
+    tmp_path: Path,
+) -> None:
+    program_data = tmp_path / "ProgramData"
+    config_root = program_data / "AI-Drawing-Worker"
+    config_root.mkdir(parents=True)
+    updater_path = config_root / "updater.env"
+    updater_bytes = (
+        "AI_DRAWING_PROJECT_ROOT=D:\\code\\ai-drawing\r\n"
+        "AI_DRAWING_WORKER_ROOT=C:\\AI-Drawing-Worker\r\n"
+        "AI_DRAWING_WORKER_REMOTE=origin\r\n"
+        "AI_DRAWING_WORKER_BRANCH=main\r\n"
+    ).encode()
+    updater_path.write_bytes(updater_bytes)
+    body = """
+Install-FixedMigrationEnvironment -ProgramDataRoot $script:MigrationProgramDataRoot
+$Context = Get-ProductionMigrationContext
+[pscustomobject]@{
+  source_root=$Context.source_root
+  target_root=$Context.target_root
+  updater_sha256=(Get-MigrationSha256 -Path $script:MigrationEnvironmentPath)
+  migration_text=[IO.File]::ReadAllText((Join-Path $script:MigrationProgramDataRoot 'migration.env'))
+} | ConvertTo-Json -Compress
+"""
+
+    result = _run_migration_harness(
+        tmp_path, body, environment={"ProgramData": str(program_data)}
+    )
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["source_root"] == r"C:\AI-Drawing-Worker"
+    assert record["target_root"] == r"D:\code\AI-Drawing-Worker"
+    assert record["updater_sha256"] == hashlib.sha256(updater_bytes).hexdigest()
+    assert record["migration_text"] == (
+        "AI_DRAWING_WORKER_MIGRATION_TARGET=D:\\code\\AI-Drawing-Worker\r\n"
+    )
+
+
 def _migration_adapter_script(
     source: Path,
     target: Path,
     *,
     fail_mode: str = "",
+    ready_after: int = 1,
+    clock_step_ms: int = 120_000,
 ) -> str:
     return f"""
 $Events = New-Object 'System.Collections.Generic.List[string]'
 $SourceRoot = {_ps_quote(source)}
 $TargetRoot = {_ps_quote(target)}
 $FailMode = {_ps_quote(fail_mode)}
+$ReadyAfter = {ready_after}
+$ClockStepMs = {clock_step_ms}
+$Clock = @{{ now=[int64]0 }}
+$HealthAttempts = @{{}}
+$HealthCallTimeouts = New-Object 'System.Collections.Generic.List[int]'
+$HealthWaits = New-Object 'System.Collections.Generic.List[int]'
+$TaskState = [ordered]@{{
+  worker=[ordered]@{{ action='legacy-worker'; principal='interactive-highest'; settings='login' }}
+  updater=[ordered]@{{ action='programdata-bootstrap'; principal='system-highest'; settings='ignore-new' }}
+  restart=[ordered]@{{ action='legacy-restart'; principal='interactive-highest'; settings='on-demand' }}
+}}
+$InitialTaskStateJson = $TaskState | ConvertTo-Json -Depth 8 -Compress
 $Adapter = @{{
   GetFreeBytes = {{ param($Root) [int64]1TB }}
-  ProtectTarget = {{ param($Root) $Events.Add('protect-target') }}
-  CaptureTaskActions = {{
-    $Events.Add('capture-tasks')
-    return @(@{{ name='AI-Drawing NVIDIA Worker'; execute='legacy'; arguments=''; working_directory='' }})
+  InitializeTarget = {{
+    param($Root)
+    $Events.Add('initialize-target')
+    if (-not [IO.Directory]::Exists($Root)) {{ [IO.Directory]::CreateDirectory($Root) | Out-Null }}
   }}
-  SwitchTaskActions = {{ param($Root) $Events.Add('switch-tasks:' + [IO.Path]::GetFileName($Root)) }}
-  RestoreTaskActions = {{ param($Actions) $Events.Add('restore-tasks') }}
+  GetMonotonicMilliseconds = {{ [int64]$Clock.now }}
+  WaitForHealthRetry = {{
+    param($Milliseconds)
+    $HealthWaits.Add([int]$Milliseconds)
+    $Clock.now += [Math]::Max([int64]$Milliseconds, [int64]$ClockStepMs)
+  }}
+  ProtectTarget = {{ param($Root) $Events.Add('protect-target') }}
+  CaptureSwitchState = {{
+    param($Path)
+    $Events.Add('capture-switch')
+    return @{{ environment_bytes=[IO.File]::ReadAllBytes($Path); task_json=$InitialTaskStateJson }}
+  }}
+  RestoreSwitchState = {{
+    param($State)
+    [IO.File]::WriteAllBytes($EnvironmentPath, [byte[]]$State.environment_bytes)
+    $Restored = $State.task_json | ConvertFrom-Json
+    foreach ($Name in @('worker', 'updater', 'restart')) {{
+      $TaskState[$Name]['action'] = [string]$Restored.$Name.action
+      $TaskState[$Name]['principal'] = [string]$Restored.$Name.principal
+      $TaskState[$Name]['settings'] = [string]$Restored.$Name.settings
+    }}
+    $Events.Add('restore-switch')
+  }}
+  SwitchTaskActions = {{
+    param($Root)
+    if ($FailMode -eq 'after-env') {{ throw 'injected switch failure after env' }}
+    $Index = 0
+    foreach ($Name in @('worker', 'updater', 'restart')) {{
+      $Index += 1
+      $TaskState[$Name]['action'] = 'managed-' + $Name
+      $TaskState[$Name]['principal'] = 'changed-' + $Name
+      $TaskState[$Name]['settings'] = 'changed-' + $Name
+      $Events.Add('switch-task:' + $Name)
+      if ($FailMode -eq ('after-task' + $Index)) {{ throw 'injected partial task switch' }}
+    }}
+    $Events.Add('switch-tasks:' + [IO.Path]::GetFileName($Root))
+  }}
   StopWorker = {{ param($Root) $Events.Add('stop:' + [IO.Path]::GetFileName($Root)) }}
   StartWorker = {{
     param($Root)
@@ -371,7 +468,10 @@ $Adapter = @{{
     $Events.Add('start:' + [IO.Path]::GetFileName($Root) + ':env=' + [IO.Path]::GetFileName($Configured))
   }}
   ValidateWorker = {{
-    param($Root, $Mode, $ExpectedCommit, $ExpectedTokenHash)
+    param($Root, $Mode, $ExpectedCommit, $ExpectedTokenHash, $CallTimeoutSeconds)
+    $HealthCallTimeouts.Add([int]$CallTimeoutSeconds)
+    if (-not $HealthAttempts.ContainsKey($Mode)) {{ $HealthAttempts[$Mode] = 0 }}
+    $HealthAttempts[$Mode] += 1
     if ($Mode -eq 'staged') {{
       $Configured = (Read-FixedMigrationEnvironment -Path $EnvironmentPath).AI_DRAWING_WORKER_ROOT
       if ($Configured -ne $SourceRoot) {{ throw 'staged validation observed an early env switch' }}
@@ -380,7 +480,8 @@ $Adapter = @{{
       }}
     }}
     $Events.Add('health:' + $Mode)
-    $Healthy = $Mode -ne $FailMode
+    $RequiredAttempts = $(if ($Mode -eq 'staged') {{ 1 }} else {{ $ReadyAfter }})
+    $Healthy = $Mode -ne $FailMode -and $HealthAttempts[$Mode] -ge $RequiredAttempts
     return @{{
       cuda_available=$Healthy
       gpu_name=$(if ($Healthy) {{ 'Fake CUDA GPU' }} else {{ '' }})
@@ -464,7 +565,7 @@ $Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot 
     assert record["result"]["status"] == "rolled_back"
     assert record["result"]["error_code"] == "MIGRATION_HEALTH_FAILED"
     events = record["events"]
-    assert events.index("restore-tasks") < events.index(
+    assert events.index("restore-switch") < events.index(
         "start:legacy-worker:env=legacy-worker"
     )
     assert source.is_dir()
@@ -502,6 +603,195 @@ $Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot 
     assert source.is_dir()
     assert _tree_snapshot(source) == before
     assert record["events"][-1] == "start:legacy-worker:env=legacy-worker"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+@pytest.mark.parametrize("fail_mode", ["after-env", "after-task1", "after-task2", "after-task3"])
+def test_each_partial_switch_failure_restores_exact_env_and_complete_task_state(
+    tmp_path: Path, fail_mode: str
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    source_before = _tree_snapshot(source)
+    environment_before = environment_path.read_bytes()
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(source, target, fail_mode=fail_mode)
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{
+  result=$Result
+  environment_base64=[Convert]::ToBase64String([IO.File]::ReadAllBytes($EnvironmentPath))
+  task_json=($TaskState | ConvertTo-Json -Depth 8 -Compress)
+  initial_task_json=$InitialTaskStateJson
+  events=$Events
+}} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert record["environment_base64"] == base64.b64encode(environment_before).decode()
+    assert json.loads(record["task_json"]) == json.loads(record["initial_task_json"])
+    assert record["events"].count("restore-switch") == 1
+    assert source.is_dir()
+    assert _tree_snapshot(source) == source_before
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_production_health_polls_until_delayed_worker_is_ready_without_real_sleep(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(
+            source, target, ready_after=3, clock_step_ms=1_000
+        )
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{
+  result=$Result
+  attempts=$HealthAttempts
+  call_timeouts=$HealthCallTimeouts
+  waits=$HealthWaits
+}} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "ready"
+    assert record["attempts"]["production-before-backup"] == 3
+    assert record["attempts"]["production-after-backup"] == 3
+    assert len(record["waits"]) == 4
+    assert all(0 < timeout <= 10 for timeout in record["call_timeouts"])
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_production_health_deadline_rolls_back_with_bounded_calls_without_real_sleep(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(
+            source,
+            target,
+            fail_mode="production-before-backup",
+            clock_step_ms=60_000,
+        )
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{
+  result=$Result
+  attempts=$HealthAttempts
+  call_timeouts=$HealthCallTimeouts
+  waits=$HealthWaits
+  elapsed_ms=$Clock.now
+}} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert record["result"]["error_code"] == "MIGRATION_HEALTH_FAILED"
+    assert record["attempts"]["production-before-backup"] >= 2
+    assert record["elapsed_ms"] >= 120_000
+    assert record["waits"]
+    assert all(0 < timeout <= 10 for timeout in record["call_timeouts"])
+
+
+def _create_temp_junction(link: Path, target: Path) -> None:
+    created = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f"New-Item -ItemType Junction -Path {_ps_quote(link)} "
+            f"-Target {_ps_quote(target)} | Out-Null",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if created.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {created.stderr}")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_target_ancestor_junction_fails_before_initialize_or_external_mutation(
+    tmp_path: Path,
+) -> None:
+    source, _unused_target, environment_path, _token = _migration_fixture(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    sentinel = outside / "sentinel.txt"
+    sentinel.write_text("external", encoding="utf-8")
+    redirected_parent = tmp_path / "redirected-parent"
+    _create_temp_junction(redirected_parent, outside)
+    target = redirected_parent / "managed-worker"
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(source, target)
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode != 0 or json.loads(result.stdout)["result"]["error_code"] == "MIGRATION_REPARSE_POINT"
+    if result.stdout:
+        assert "initialize-target" not in json.loads(result.stdout)["events"]
+    assert sentinel.read_text(encoding="utf-8") == "external"
+    assert sorted(path.name for path in outside.iterdir()) == ["sentinel.txt"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_preexisting_target_tree_junction_fails_before_copying_external_sentinel(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    target.mkdir()
+    (target / ".ai-drawing-worker-owned").write_text(
+        "AI-Drawing NVIDIA Worker\n", encoding="utf-8"
+    )
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    sentinel = outside / "sentinel.txt"
+    sentinel.write_text("external", encoding="utf-8")
+    _create_temp_junction(target / "escape", outside)
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(source, target)
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode != 0 or json.loads(result.stdout)["result"]["error_code"] == "MIGRATION_REPARSE_POINT"
+    assert sentinel.read_text(encoding="utf-8") == "external"
+    assert sorted(path.name for path in outside.iterdir()) == ["sentinel.txt"]
+    assert not (target / "releases").exists()
 
 
 def test_updater_bootstrap_uses_fixed_programdata_config_and_updater_owned_python() -> None:
