@@ -420,11 +420,13 @@ def test_installer_registers_fixed_restart_task_and_desktop_launcher() -> None:
     assert "-Trigger" not in installer[installer.index("$RestartTaskAction") :]
 
 
-def test_start_worker_uses_powershell_51_safe_comfy_readiness_probe() -> None:
+def test_start_worker_uses_bounded_curl_comfy_readiness_probe() -> None:
     repo = Path(__file__).resolve().parents[2]
     launcher = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
 
-    assert 'Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats"' in launcher
+    assert 'curl.exe --silent --show-error --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"' in launcher
+    assert "if ($LASTEXITCODE -eq 0)" in launcher
+    assert 'Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats"' not in launcher
     assert 'Invoke-RestMethod "http://127.0.0.1:8188/system_stats"' not in launcher
 
 
