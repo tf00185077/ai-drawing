@@ -174,6 +174,15 @@ $ActualRemoteUrl = (git -C $SourceRepositoryRoot remote get-url origin).Trim()
 if ($LASTEXITCODE -ne 0 -or -not $ActualRemoteUrl) {
     throw "Worker source repository remote is unavailable."
 }
+if ($ActualRemoteUrl.TrimEnd("/") -ne $ExpectedRemoteUrl.TrimEnd("/")) {
+    throw "Worker source repository remote does not match the pinned manifest."
+}
+git -C $SourceRepositoryRoot fetch --prune origin $ExpectedBranch
+if ($LASTEXITCODE -ne 0) { throw "Worker source repository fetch failed." }
+git -C $SourceRepositoryRoot checkout --force $ExpectedBranch
+if ($LASTEXITCODE -ne 0) { throw "Worker source repository checkout failed." }
+git -C $SourceRepositoryRoot reset --hard "origin/$ExpectedBranch"
+if ($LASTEXITCODE -ne 0) { throw "Worker source repository reset failed." }
 [IO.File]::WriteAllText((Join-Path $Root "config\expected-remote-url.txt"), $ExpectedRemoteUrl + "`n", $Utf8NoBom)
 
 $ProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"

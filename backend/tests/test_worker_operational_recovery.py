@@ -73,6 +73,16 @@ def test_existing_install_is_stopped_before_runtime_copy_and_bootstrap() -> None
     assert ".ai-drawing-worker-owned" in installer[:copy_runtime]
 
 
+def test_installer_refreshes_owned_source_before_managed_bootstrap() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+    remote_check = installer.index("remote does not match the pinned manifest")
+    fetch = installer.index("fetch --prune origin")
+    reset = installer.index('reset --hard "origin/$ExpectedBranch"')
+    bootstrap = installer.index("Initialize-ManagedWorkerLayout")
+    assert remote_check < fetch < reset < bootstrap
+
+
 def test_updater_runtime_creation_uses_owned_python_not_windows_launcher() -> None:
     repo = Path(__file__).resolve().parents[2]
     runtime = (repo / "worker/windows/updater/runtime.py").read_text(encoding="utf-8")
