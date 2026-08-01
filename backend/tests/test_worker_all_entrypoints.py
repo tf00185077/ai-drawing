@@ -156,6 +156,20 @@ def test_clean_install_cleanup_is_plan_hashed_and_fixed_scope() -> None:
     assert "Remove-Item -Path" not in script
 
 
+def test_direct_d_installer_derives_managed_paths_from_the_validated_root() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+
+    assert "param(" in installer
+    assert "[string]$Root" in installer
+    assert '. (Join-Path $Source "WorkerRoot.ps1")' in installer
+    assert "$Root = Resolve-WorkerInstallRoot -Path $Root" in installer
+    assert '$SourceRepositoryRoot = Join-Path $Root "source"' in installer
+    assert 'Get-PSDrive -Name ([IO.Path]::GetPathRoot($Root).Substring(0, 1))' in installer
+    assert 'C:\\AI-Drawing-Worker"' not in installer
+    assert 'C:\\AI-Drawing-Worker-Source' not in installer
+
+
 def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     source = tmp_path / "legacy-worker"
     target = tmp_path / "managed-worker"

@@ -1,13 +1,15 @@
-$ErrorActionPreference = "Stop"
+param([Parameter(Mandatory = $true)][string]$Root)
 
-$Root = "C:\AI-Drawing-Worker"
+$ErrorActionPreference = "Stop"
 $TaskName = "AI-Drawing NVIDIA Worker"
 $Source = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | ConvertFrom-Json
 $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
+. (Join-Path $Source "WorkerRoot.ps1")
 . (Join-Path $Source "WorkerSecurity.ps1")
 . (Join-Path $Source "Migrate-Worker.ps1")
 . (Join-Path $Source "WorkerInstall.ps1")
+$Root = Resolve-WorkerInstallRoot -Path $Root
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -58,10 +60,10 @@ if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) {
     throw "Git installation did not become available."
 }
 
-$Drive = Get-PSDrive -Name C
+$Drive = Get-PSDrive -Name ([IO.Path]::GetPathRoot($Root).Substring(0, 1))
 $Required = ([int64]$Manifest.minimum_free_gb * 1GB + [int64]$Manifest.cache_gb * 1GB + 10GB)
 if ($Drive.Free -lt $Required) {
-    throw "C: needs enough free space for runtime, temporary files, the $($Manifest.cache_gb)GB model cache, and the $($Manifest.minimum_free_gb)GB reserve."
+    throw "$($Drive.Name): needs enough free space for runtime, temporary files, the $($Manifest.cache_gb)GB model cache, and the $($Manifest.minimum_free_gb)GB reserve."
 }
 
 if (Test-Path -LiteralPath $Root) {
@@ -96,6 +98,7 @@ Copy-Item (Join-Path $Source "worker.py") (Join-Path $Root "app\worker.py") -For
 Copy-Item (Join-Path $Source "Start-Worker.cmd") (Join-Path $Root "Start-Worker.cmd") -Force
 Copy-Item (Join-Path $Source "Start-Worker.ps1") (Join-Path $Root "Start-Worker.ps1") -Force
 Copy-Item (Join-Path $Source "WorkerPaths.ps1") (Join-Path $Root "WorkerPaths.ps1") -Force
+Copy-Item (Join-Path $Source "WorkerRoot.ps1") (Join-Path $Root "WorkerRoot.ps1") -Force
 Copy-Item (Join-Path $Source "Restart-Worker.ps1") (Join-Path $Root "Restart-Worker.ps1") -Force
 Copy-Item (Join-Path $Source "Wait-Restart-Result.ps1") (Join-Path $Root "Wait-Restart-Result.ps1") -Force
 Copy-Item (Join-Path $Source "Restart-Worker.cmd") (Join-Path $Root "Restart-Worker.cmd") -Force
@@ -166,7 +169,7 @@ Assert-WorkerCudaRuntime -Python $Python
 
 schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL HIGHEST /TR "`"$Root\Start-Worker.cmd`"" /F | Out-Null
 
-$SourceRepositoryRoot = "C:\AI-Drawing-Worker-Source"
+$SourceRepositoryRoot = Join-Path $Root "source"
 $ExpectedRemoteUrl = [string]$Manifest.source_repository
 $ExpectedBranch = [string]$Manifest.source_branch
 if (-not $ExpectedRemoteUrl -or -not $ExpectedBranch) {
