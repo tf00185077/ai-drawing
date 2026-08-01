@@ -151,6 +151,7 @@ def test_clean_install_cleanup_is_plan_hashed_and_fixed_scope() -> None:
     assert "Invoke-CleanInstallDeletion" in script
     assert "ExpectedPlanSha256" in script
     assert "CLEAN_INSTALL_PLAN_MISMATCH" in script
+    assert '$AuthorizationRecords = @($Sorted | ForEach-Object { [pscustomobject]@{ path = $_.path; kind = $_.kind } })' in script
     assert "AI-Drawing-NVIDIA-Worker-fixed-*" in script
     assert "Remove-Item -LiteralPath" in script
     assert "Remove-Item -Path" not in script
