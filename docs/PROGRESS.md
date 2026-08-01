@@ -19,7 +19,7 @@
 - Windows 11 實機升級重現兩個 deterministic installer blocker：`uv pip install --python` 對 uv-managed standalone Python 回 externally-managed error，但舊 Setup 未檢查 exit code；其後 `uv python install` 建立的內部版本 alias junction 又被首次 managed inventory 以 `MIGRATION_REPARSE_POINT` 正確拒絕。
 - 新增可獨立測試的 `WorkerInstall.ps1`：所有必要 pip 安裝明確使用 `--system` 並將非零 exit code 轉成 terminating `INSTALL_DEPENDENCY_FAILED`；Python install 也以 checked command gate 處理。
 - Python executable 現在只從符合 manifest 完整版本、非 reparse 的實體安裝目錄選取。首次 bootstrap 前只移除名稱符合 uv alias、target 位於同一 `runtime/python`、target 本身非 reparse 且與選定 executable 一致的 junction；外部 target、未知名稱或巢狀 reparse 一律 `INSTALL_PYTHON_REPARSE_UNSAFE`，migration 原有 no-follow/fail-closed 規則未放寬。
-- README 的 D 槽正式 migration 命令同步修正為 `C:\AI-Drawing-Worker-Source\worker\windows\Migrate-Worker.ps1`。Focused fake-uv／真實 Windows junction RED→GREEN：`4 passed`；Worker focused gate：`264 passed, 1 skipped`，Python compileall 與 `git diff --check` 通過。source/dist/ZIP 共 27 檔逐位元一致；修正版 ZIP SHA-256：`c6959bc0c9e035c8b29f42b91825c24e7d959a7915db830e8377c7309edc154f`。實機 Setup/migration 結果待本節後續補記。
+- README 的 D 槽正式 migration 命令同步修正為 `C:\AI-Drawing-Worker-Source\worker\windows\Migrate-Worker.ps1`。Focused fake-uv／真實 Windows junction RED→GREEN：`4 passed`；首輪實機另抓出 manifest minor selector `3.12` 與實體 patch 目錄 `3.12.13` 的差異，補為 minor selector 僅匹配唯一 `3.12.x`、完整 patch selector 仍精確匹配。Worker focused gate：`264 passed, 1 skipped`，Python compileall 與 `git diff --check` 通過。source/dist/ZIP 共 27 檔逐位元一致；第二版修正 ZIP SHA-256：`05e96135b3e0fe9e9955af23ec8deb588c40dbd9adf1f811062ada8529166cc6`。實機 Setup/migration 結果待本節後續補記。
 
 ## 2026-08-01 Mac 自動更新 NVIDIA Worker coordinator（Task 6，non-live）
 

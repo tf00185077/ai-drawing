@@ -89,7 +89,7 @@ def test_installer_normalizes_only_internal_uv_python_alias(tmp_path: Path) -> N
     _create_junction(alias, concrete)
     command = (
         f'$Python = Get-ConcreteInstalledPython -PythonRoot "{python_root}" '
-        '-ExpectedVersion "3.12.13"; '
+        '-ExpectedVersion "3.12"; '
         f'Remove-TrustedUvPythonAliases -PythonRoot "{python_root}" -SelectedPython $Python; '
         '[pscustomobject]@{python=$Python;alias_exists=(Test-Path -LiteralPath '
         f'"{alias}");target_sentinel=[string](Get-Content -LiteralPath "{sentinel}" -Raw)}} '

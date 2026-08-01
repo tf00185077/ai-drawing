@@ -31,8 +31,12 @@ function Get-ConcreteInstalledPython {
         [Parameter(Mandatory = $true)][string]$ExpectedVersion
     )
 
+    if ($ExpectedVersion -notmatch "^[0-9]+\.[0-9]+(?:\.[0-9]+)?$") {
+        throw "INSTALL_PYTHON_INVALID"
+    }
     $EscapedVersion = [Regex]::Escape($ExpectedVersion)
-    $Pattern = "^cpython-$EscapedVersion-windows-[A-Za-z0-9_]+-none$"
+    $PatchSuffix = if ($ExpectedVersion -match "^[0-9]+\.[0-9]+$") { "\.[0-9]+" } else { "" }
+    $Pattern = "^cpython-$EscapedVersion$PatchSuffix-windows-[A-Za-z0-9_]+-none$"
     $Candidates = @(
         Get-ChildItem -LiteralPath $PythonRoot -Force -Directory -ErrorAction Stop |
             Where-Object {
