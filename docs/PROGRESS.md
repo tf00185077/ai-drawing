@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- Direct-to-D 實機最終健康驗證通過：`request_lock` runtime path 修正部署後，ComfyUI `127.0.0.1:8188` 與 Worker `0.0.0.0:8791` 同時持續 LISTEN；`/system_stats` 回 HTTP 200，未帶 Token 的 `/v1/worker/status` 回預期 HTTP 401，證明服務與 auth gate 均運作。現場 Worker release 仍為 source commit `c49828386da8f76c2b3be356f712e674e7435249`，Mac 端 protocol/update/restart 實機驗證與自動更新啟用仍待後續。
 - 持久 launcher log 首次取得真正 traceback：排程與 ComfyUI 均正常，Uvicorn import `update_contract` 時找不到 root privileged updater 的 `request_lock`。Managed release 的 app-dir 是 `releases/<commit>/worker/windows`，而 updater package 位於 Worker root；啟動器現在把受保護 Worker root prepend 到 process `PYTHONPATH`（保留既有值），讓 fallback `updater.request_lock` 可解析。回歸契約及 focused gate `177 passed, 1 skipped` 通過。
 - 10-minute probe 部署後，實機 deployed script 正確、8188 health curl exit 0，但排程 PowerShell 已退出且未留下 8791；既有 scheduled launcher 丟棄 stdout/stderr，無法判斷 readiness 後的 uvicorn failure。`Start-Worker.cmd` 現永久追加 `shared/logs/launcher.{stdout,stderr}.log`（fresh root 會先建立 logs），下一次重現可取得真正 traceback；focused gate `176 passed, 1 skipped`。
 - Bounded curl 部署後證實 8188 最終可回 exit 0，但此機 custom-node 冷啟動超過舊的 60 秒總上限，啟動器已先退出而 ComfyUI 稍後才 ready。Readiness budget 擴為 10 分鐘（每次 probe 仍硬限 2 秒），並移除正常重試期間的 curl stderr 噪音；focused gate `175 passed, 1 skipped`。
