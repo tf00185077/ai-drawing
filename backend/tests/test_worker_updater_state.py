@@ -250,7 +250,14 @@ def test_same_target_after_completed_terminal_request_gets_new_request_id(
         json.loads(request_path.read_text(encoding="utf-8"))["request_id"]
         == retried_request_id
     )
-    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    assert status == {
+        "state": "queued",
+        "request_id": retried_request_id,
+        "target_commit": target_commit,
+        "timestamp": status["timestamp"],
+    }
+    assert isinstance(status["timestamp"], str) and status["timestamp"]
 
 
 def test_queue_replaces_request_before_publishing_queued_status(
@@ -294,7 +301,7 @@ def test_failed_request_replace_never_publishes_queued_with_old_request(
         queue_update(request_path, status_path, "a" * 40)
 
     assert json.loads(request_path.read_text(encoding="utf-8"))["request_id"] == "old-request"
-    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "ready"}
+    assert json.loads(status_path.read_text(encoding="utf-8"))["state"] == "ready"
 
 
 def test_failed_status_publish_is_retryable_without_losing_or_replacing_request(
@@ -315,12 +322,18 @@ def test_failed_status_publish_is_retryable_without_losing_or_replacing_request(
         queue_update(request_path, status_path, "a" * 40)
     pending = json.loads(request_path.read_text(encoding="utf-8"))
     assert pending["target_commit"] == "a" * 40
-    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "ready"}
+    assert json.loads(status_path.read_text(encoding="utf-8"))["state"] == "ready"
 
     monkeypatch.undo()
     retried_id = queue_update(request_path, status_path, "a" * 40)
     assert retried_id == pending["request_id"]
-    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    assert status == {
+        "state": "queued",
+        "request_id": retried_id,
+        "target_commit": "a" * 40,
+        "timestamp": status["timestamp"],
+    }
 
 
 def test_different_target_replaces_only_unaccepted_request_after_publish_failure(
@@ -351,7 +364,13 @@ def test_different_target_replaces_only_unaccepted_request_after_publish_failure
         "target_commit": "b" * 40,
         "timestamp": accepted["timestamp"],
     }
-    assert json.loads(status_path.read_text(encoding="utf-8")) == {"state": "queued"}
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    assert status == {
+        "state": "queued",
+        "request_id": accepted_id,
+        "target_commit": "b" * 40,
+        "timestamp": status["timestamp"],
+    }
 
 
 def test_state_machine_rejects_skipped_activation(tmp_path: Path) -> None:
@@ -369,7 +388,7 @@ def test_state_machine_allows_only_the_declared_activation_path(tmp_path: Path) 
     for state in ("fetching", "staging", "installing", "validating", "activating", "restarting", "ready"):
         store.transition(state)
 
-    assert store.read_public() == {"state": "ready"}
+    assert store.read_public()["state"] == "ready"
 
 
 def test_queue_is_idempotent_for_the_same_request_and_commit(tmp_path: Path) -> None:
@@ -392,7 +411,10 @@ def test_queue_same_target_returns_stored_request_id_and_repairs_missing_public_
     retried_request_id = store.queue("retry-with-a-different-request-id", "a" * 40)
 
     assert retried_request_id == stored_request_id
-    assert json.loads(store.public_path.read_text(encoding="utf-8")) == {"state": "queued"}
+    repaired = json.loads(store.public_path.read_text(encoding="utf-8"))
+    assert repaired["state"] == "queued"
+    assert repaired["request_id"] == stored_request_id
+    assert repaired["target_commit"] == "a" * 40
 
 
 def test_read_public_repairs_stale_public_projection_from_private_state(tmp_path: Path) -> None:
@@ -401,8 +423,11 @@ def test_read_public_repairs_stale_public_projection_from_private_state(tmp_path
     store.transition("fetching")
     store.public_path.write_text('{"state":"queued"}', encoding="utf-8")
 
-    assert store.read_public() == {"state": "fetching"}
-    assert json.loads(store.public_path.read_text(encoding="utf-8")) == {"state": "fetching"}
+    repaired = store.read_public()
+    assert repaired["state"] == "fetching"
+    assert repaired["request_id"] == "req"
+    assert repaired["target_commit"] == "a" * 40
+    assert json.loads(store.public_path.read_text(encoding="utf-8")) == repaired
 
 
 def test_malformed_private_state_fails_closed_instead_of_queueing_over_it(tmp_path: Path) -> None:
@@ -433,7 +458,7 @@ def test_unreadable_private_state_fails_closed_instead_of_queueing_over_it(
 
 def test_public_state_redacts_secret_and_command(tmp_path: Path) -> None:
     store = UpdateStateStore(tmp_path)
-    store.queue("Bearer super-secret TOKEN=do-not-publish", "a" * 40)
+    store.queue("request-1", "a" * 40)
     store.transition("fetching")
     store.fail("RUNTIME_INSTALL_FAILED", "safe message; command TOKEN Bearer super-secret")
 
@@ -441,7 +466,10 @@ def test_public_state_redacts_secret_and_command(tmp_path: Path) -> None:
     assert "Bearer" not in text
     assert "TOKEN" not in text
     assert "command" not in text.casefold()
-    assert json.loads(text) == {"state": "failed_before_activation", "error_code": "RUNTIME_INSTALL_FAILED"}
+    public = json.loads(text)
+    assert public["state"] == "failed_before_activation"
+    assert public["error_code"] == "RUNTIME_INSTALL_FAILED"
+    assert public["request_id"] == "request-1"
 
 
 @pytest.mark.parametrize(
@@ -468,7 +496,10 @@ def test_public_state_exposes_each_canonical_error_code(tmp_path: Path, error_co
     store.transition("fetching")
     store.fail(error_code, "safe private diagnostic")
 
-    assert store.read_public() == {"state": "failed_before_activation", "error_code": error_code}
+    public = store.read_public()
+    assert public["state"] == "failed_before_activation"
+    assert public["error_code"] == error_code
+    assert public["request_id"] == "req"
 
 
 def test_public_state_maps_unknown_error_codes_to_update_failed(tmp_path: Path) -> None:
@@ -477,7 +508,9 @@ def test_public_state_maps_unknown_error_codes_to_update_failed(tmp_path: Path) 
     store.transition("fetching")
     store.fail("TOKEN_SECRET", "safe private diagnostic")
 
-    assert store.read_public() == {"state": "failed_before_activation", "error_code": "UPDATE_FAILED"}
+    public = store.read_public()
+    assert public["state"] == "failed_before_activation"
+    assert public["error_code"] == "UPDATE_FAILED"
     assert json.loads(store.private_path.read_text(encoding="utf-8"))["error_code"] == "UPDATE_FAILED"
 
 
@@ -487,7 +520,7 @@ def test_each_state_write_is_atomic_and_leaves_no_temporary_file(tmp_path: Path)
     store.transition("fetching")
 
     assert json.loads(store.private_path.read_text(encoding="utf-8"))["state"] == "fetching"
-    assert json.loads(store.public_path.read_text(encoding="utf-8")) == {"state": "fetching"}
+    assert json.loads(store.public_path.read_text(encoding="utf-8"))["state"] == "fetching"
     assert not list(tmp_path.glob("*.tmp"))
 
 
@@ -523,10 +556,10 @@ def test_terminal_failure_records_rollback_code_and_redacts_private_message(tmp_
     assert "alice" not in private["error_message"]
     assert "very-secret" not in private["error_message"]
     assert "also-secret" not in private["error_message"]
-    assert store.read_public() == {
-        "state": "rolled_back",
-        "error_code": "ACTIVATION_FAILED_ROLLED_BACK",
-    }
+    public = store.read_public()
+    assert public["state"] == "rolled_back"
+    assert public["error_code"] == "ACTIVATION_FAILED_ROLLED_BACK"
+    assert public["request_id"] == "request-1"
 
 
 def test_claim_queued_request_validates_fixed_request_shape_and_queues_it(tmp_path: Path) -> None:
@@ -570,7 +603,7 @@ def test_claim_terminal_request_is_durable_noop_and_new_id_can_queue(tmp_path: P
 
     assert store.claim_queued_request(request_path) is None
     assert request_path.exists()
-    assert store.read_public() == {"state": "ready"}
+    assert store.read_public()["state"] == "ready"
 
     request_path.write_text(
         json.dumps(

@@ -77,6 +77,11 @@ $Config = @{
 Copy-Item (Join-Path $Source "worker.py") (Join-Path $Root "app\worker.py") -Force
 Copy-Item (Join-Path $Source "Start-Worker.cmd") (Join-Path $Root "Start-Worker.cmd") -Force
 Copy-Item (Join-Path $Source "Start-Worker.ps1") (Join-Path $Root "Start-Worker.ps1") -Force
+Copy-Item (Join-Path $Source "Restart-Worker.ps1") (Join-Path $Root "Restart-Worker.ps1") -Force
+Copy-Item (Join-Path $Source "Wait-Restart-Result.ps1") (Join-Path $Root "Wait-Restart-Result.ps1") -Force
+Copy-Item (Join-Path $Source "Restart-Worker.cmd") (Join-Path $Root "Restart-Worker.cmd") -Force
+Copy-Item (Join-Path $Source "restart_contract.py") (Join-Path $Root "app\restart_contract.py") -Force
+Copy-Item (Join-Path $Source "update_contract.py") (Join-Path $Root "app\update_contract.py") -Force
 Copy-Item (Join-Path $Source "Migrate-Worker.ps1") (Join-Path $Root "Migrate-Worker.ps1") -Force
 Copy-Item (Join-Path $Source "worker-manifest.json") (Join-Path $Root "worker-manifest.json") -Force
 
@@ -181,11 +186,20 @@ $UpdaterTaskSettings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName "AI-Drawing Worker Updater" -Action $UpdaterTaskAction `
     -Principal $UpdaterTaskPrincipal -Settings $UpdaterTaskSettings -Force | Out-Null
 
+$RestartTaskAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$Root\Restart-Worker.ps1`""
+$RestartTaskPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$RestartTaskSettings = New-ScheduledTaskSettingsSet -MultipleInstances Queue -ExecutionTimeLimit (New-TimeSpan -Minutes 3)
+Register-ScheduledTask -TaskName "AI-Drawing NVIDIA Worker Restart" -Action $RestartTaskAction `
+    -Principal $RestartTaskPrincipal -Settings $RestartTaskSettings -Force | Out-Null
+
 Get-NetFirewallRule -DisplayName $TaskName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 New-NetFirewallRule -DisplayName $TaskName -Direction Inbound -Action Allow -Protocol TCP `
     -LocalPort $Manifest.listen_port -Profile Private -RemoteAddress LocalSubnet | Out-Null
 
 $Desktop = [Environment]::GetFolderPath("Desktop")
+$DesktopLauncher = Join-Path $Desktop "一鍵重啟 AI-Drawing Worker.cmd"
+Copy-Item (Join-Path $Source "Restart-Worker.cmd") $DesktopLauncher -Force
 $PrivateProfile = $Profiles | Where-Object { $_.NetworkCategory -eq "Private" } | Select-Object -First 1
 $WorkerIp = Get-NetIPAddress -AddressFamily IPv4 -InterfaceIndex $PrivateProfile.InterfaceIndex |
     Where-Object { $_.IPAddress -notlike "169.254.*" } |
@@ -217,6 +231,21 @@ Write-Host "  After reserving the IP, the desktop pairing file remains valid."
 Write-Host "============================================================"
 if ($Gateway) {
     try { Start-Process "http://$Gateway" } catch { }
+}
+
+# Convert the freshly installed legacy directories into the versioned managed
+# layout before the Worker can advertise protocol 2/update capability.  A
+# failure leaves the legacy runtime intact and aborts installation rather than
+# exposing a Worker that cannot activate or roll back its first update.
+$InstalledCommit = (& git.exe -C $SourceRepositoryRoot rev-parse HEAD 2>$null).Trim()
+if ($LASTEXITCODE -ne 0 -or $InstalledCommit -notmatch "^[0-9a-f]{40}$") {
+    throw "MIGRATION_COMMIT_INVALID"
+}
+$ManagedRelease = Initialize-ManagedWorkerLayout -Root $Root -Commit $InstalledCommit
+if (-not (Test-Path -LiteralPath (Join-Path $Root "current")) -or
+    -not (Test-Path -LiteralPath (Join-Path $ManagedRelease "source-commit.txt") -PathType Leaf) -or
+    -not (Test-Path -LiteralPath (Join-Path $Root "releases") -PathType Container)) {
+    throw "MIGRATION_LAYOUT_INVALID"
 }
 
 Start-Process (Join-Path $Root "Start-Worker.cmd")

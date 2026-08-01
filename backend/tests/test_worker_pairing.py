@@ -266,11 +266,21 @@ def test_worker_status_uses_discovery_aware_factory(monkeypatch) -> None:
     assert result["reachable"] is True
 
 
-def test_worker_discovery_settings_defaults() -> None:
+def test_worker_discovery_settings_defaults(monkeypatch) -> None:
+    # app.config loads the repository .env at import time. A defaults test must
+    # not inherit deployment-specific values copied into os.environ.
+    for name in (
+        "NVIDIA_WORKER_DISCOVERY_ENABLED",
+        "NVIDIA_WORKER_DISCOVERY_CIDR",
+        "NVIDIA_WORKER_DISCOVERY_TIMEOUT",
+        "NVIDIA_WORKER_HOSTNAME",
+        "NVIDIA_WORKER_PROTOCOL_VERSION",
+    ):
+        monkeypatch.delenv(name, raising=False)
     settings = Settings(_env_file=None)
 
     assert settings.nvidia_worker_discovery_enabled is False
     assert settings.nvidia_worker_discovery_cidr == ""
     assert settings.nvidia_worker_discovery_timeout > 0
     assert settings.nvidia_worker_hostname == ""
-    assert settings.nvidia_worker_protocol_version == 1
+    assert settings.nvidia_worker_protocol_version == 2

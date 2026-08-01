@@ -7,6 +7,7 @@ import re
 import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
@@ -94,9 +95,14 @@ class UpdateStateStore:
                     self._reconcile_public(private)
                     return private["request_id"]
                 raise UpdateAlreadyRunning("a different update request is already active")
-            next_private = {"state": "queued", "request_id": request_id, "target_commit": target_commit}
+            next_private = {
+                "state": "queued",
+                "request_id": request_id,
+                "target_commit": target_commit,
+                "timestamp": _timestamp(),
+            }
             self._write_private(next_private)
-            self._write_public({"state": "queued"})
+            self._write_public(_public_projection(next_private))
             return request_id
 
     def claim_queued_request(self, request_path: Path) -> ActiveUpdateRequest | None:
@@ -161,9 +167,10 @@ class UpdateStateStore:
                 "state": "queued",
                 "request_id": request_id,
                 "target_commit": target_commit,
+                "timestamp": timestamp,
             }
             self._write_private(next_private)
-            self._write_public({"state": "queued"})
+            self._write_public(_public_projection(next_private))
             return ActiveUpdateRequest(request_id, target_commit, "queued")
 
     def transition(self, next_state: str) -> None:
@@ -177,8 +184,9 @@ class UpdateStateStore:
             if next_state not in TRANSITIONS.get(current_state, set()):
                 raise InvalidUpdateTransition(f"cannot transition from {current_state} to {next_state}")
             private["state"] = next_state
+            private["timestamp"] = _timestamp()
             self._write_private(private)
-            self._write_public({"state": next_state})
+            self._write_public(_public_projection(private))
 
     def fail(self, error_code: str, message: str) -> None:
         """Record a private diagnostic and expose only a safe state and error code."""
@@ -197,10 +205,11 @@ class UpdateStateStore:
                     "state": next_state,
                     "error_code": safe_error_code,
                     "error_message": _redact_private_message(message),
+                    "timestamp": _timestamp(),
                 }
             )
             self._write_private(private)
-            self._write_public({"state": next_state, "error_code": safe_error_code})
+            self._write_public(_public_projection(private))
 
     def terminal_failure(self, next_state: str, error_code: str, message: str) -> None:
         """Persist a declared terminal result without exposing arbitrary diagnostics."""
@@ -217,12 +226,11 @@ class UpdateStateStore:
                     "state": next_state,
                     "error_code": safe_error_code,
                     "error_message": _redact_private_message(message),
+                    "timestamp": _timestamp(),
                 }
             )
             self._write_private(private)
-            self._write_public(
-                {"state": next_state, "error_code": safe_error_code}
-            )
+            self._write_public(_public_projection(private))
 
     def read_active_request(self) -> ActiveUpdateRequest | None:
         """Return a typed snapshot of an active private request under the state lock."""
@@ -238,7 +246,7 @@ class UpdateStateStore:
             )
 
     def read_public(self) -> dict[str, str]:
-        """Return the public status only, never request IDs or diagnostics."""
+        """Return safe progress plus correlation required by the Mac poller."""
         with self._exclusive_lock():
             return self._reconcile_public(self._read_private())
 
@@ -254,6 +262,11 @@ class UpdateStateStore:
         return _validated_private_state(value)
 
     def _reconcile_public(self, private: Mapping[str, Any]) -> dict[str, str]:
+        if private.get("state") != "idle" and not isinstance(private.get("timestamp"), str):
+            # Upgrade state written by the pre-correlation implementation.
+            private = dict(private)
+            private["timestamp"] = _timestamp()
+            self._write_private(private)
         projection = _public_projection(private)
         try:
             current = json.loads(self.public_path.read_text(encoding="utf-8"))
@@ -333,10 +346,19 @@ def _validated_private_state(value: Any) -> dict[str, Any]:
 
 def _public_projection(private: Mapping[str, Any]) -> dict[str, str]:
     projection = {"state": str(private["state"])}
+    if private.get("state") != "idle":
+        for key in ("request_id", "target_commit", "timestamp"):
+            value = private.get(key)
+            if isinstance(value, str) and value:
+                projection[key] = value
     error_code = private.get("error_code")
     if isinstance(error_code, str):
         projection["error_code"] = _public_error_code(error_code)
     return projection
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _lock_exclusive(lock_file: Any) -> None:

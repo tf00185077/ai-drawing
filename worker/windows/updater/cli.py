@@ -155,6 +155,9 @@ class ProductionUpdaterServices:
     ) -> ActivationResult:
         return self._activator.activate(target_commit, on_restarting=on_restarting)
 
+    def recover_activation(self) -> str | None:
+        return self._activator.recover_interrupted_activation()
+
 
 def main(argv: list[str] | None = None, *, services: UpdaterServices | None = None) -> int:
     """Run one fixed queued update; command-line selectors are never accepted."""

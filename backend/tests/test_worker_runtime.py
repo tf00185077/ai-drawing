@@ -636,6 +636,84 @@ def test_update_rejects_extra_control_fields(
     assert response.status_code == 422
 
 
+def test_restart_uses_only_the_fixed_task_and_correlated_status(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    task_runs: list[list[str]] = []
+    monkeypatch.setattr(
+        worker_module.subprocess,
+        "run",
+        lambda command, *, check, timeout: task_runs.append(command),
+    )
+
+    queued = worker_client.post("/v1/admin/restart", headers=_auth(), json={})
+    request_id = queued.json()["request_id"]
+    status = worker_client.get(
+        "/v1/admin/restart/status",
+        headers=_auth(),
+        params={"request_id": request_id},
+    )
+
+    assert queued.status_code == 202
+    assert status.status_code == 200
+    assert status.json()["request_id"] == request_id
+    assert status.json()["state"] == "queued"
+    assert isinstance(status.json()["timestamp"], str) and status.json()["timestamp"]
+    assert task_runs == [["schtasks.exe", "/Run", "/TN", "AI-Drawing NVIDIA Worker Restart"]]
+
+
+def test_restart_rejects_control_fields(worker_client) -> None:
+    response = worker_client.post(
+        "/v1/admin/restart", headers=_auth(), json={"command": "untrusted"}
+    )
+    assert response.status_code == 422
+
+
+def test_restart_scheduler_failure_is_durable_and_retryable(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    def fail_task(*args, **kwargs):
+        raise worker_module.subprocess.CalledProcessError(1, args[0])
+
+    monkeypatch.setattr(worker_module.subprocess, "run", fail_task)
+    failed = worker_client.post("/v1/admin/restart", headers=_auth(), json={})
+    request_id = json.loads(
+        worker_module.RESTART_REQUEST_PATH.read_text(encoding="utf-8")
+    )["request_id"]
+    status = worker_client.get(
+        "/v1/admin/restart/status",
+        headers=_auth(),
+        params={"request_id": request_id},
+    )
+
+    assert failed.status_code == 503
+    assert failed.json()["detail"] == {"code": "restart_activation_failed"}
+    assert status.json()["state"] == "failed"
+    assert status.json()["error_code"] == "RESTART_ACTIVATION_FAILED"
+
+    monkeypatch.setattr(worker_module.subprocess, "run", lambda *args, **kwargs: None)
+    retried = worker_client.post("/v1/admin/restart", headers=_auth(), json={})
+    assert retried.status_code == 202
+    assert retried.json()["request_id"] != request_id
+
+
+def test_restart_status_lock_timeout_maps_to_safe_503(
+    worker_client, worker_module, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        worker_module,
+        "read_restart_status",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RequestLockTimeout()),
+    )
+    response = worker_client.get(
+        "/v1/admin/restart/status",
+        headers=_auth(),
+        params={"request_id": "request-1"},
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"] == {"code": "restart_lock_unavailable"}
+
+
 def test_update_queues_a_commit_and_persists_only_request_metadata(
     worker_client, worker_module, monkeypatch
 ) -> None:
@@ -675,7 +753,10 @@ def test_queued_update_immediately_blocks_mutations(
     )
 
     assert queued.status_code == 202
-    assert status.json() == {"state": "queued"}
+    assert status.json()["state"] == "queued"
+    assert status.json()["request_id"] == queued.json()["request_id"]
+    assert status.json()["target_commit"] == "b" * 40
+    assert isinstance(status.json()["timestamp"], str) and status.json()["timestamp"]
     assert mutation.status_code == 409
     assert mutation.json()["detail"]["code"] == "worker_updating"
 
@@ -698,7 +779,10 @@ def test_scheduler_failure_marks_update_failed_before_activation(
 
     assert response.status_code == 503
     assert response.json()["detail"]["code"] == "update_activation_failed"
-    assert status.json() == {"state": "failed_before_activation"}
+    assert status.json()["state"] == "failed_before_activation"
+    assert status.json()["target_commit"] == "b" * 40
+    assert isinstance(status.json()["request_id"], str)
+    assert isinstance(status.json()["timestamp"], str)
     assert mutation.status_code == 200
 
 
@@ -726,9 +810,11 @@ def test_scheduler_failure_releases_a_different_target_for_queueing(
     assert queued.status_code == 202
     request = json.loads(worker_module.UPDATE_REQUEST_PATH.read_text(encoding="utf-8"))
     assert request["target_commit"] == "c" * 40
-    assert worker_client.get("/v1/admin/update/status", headers=_auth()).json() == {
-        "state": "queued"
-    }
+    status = worker_client.get("/v1/admin/update/status", headers=_auth()).json()
+    assert status["state"] == "queued"
+    assert status["request_id"] == queued.json()["request_id"]
+    assert status["target_commit"] == "c" * 40
+    assert isinstance(status["timestamp"], str) and status["timestamp"]
 
 
 def test_update_reuses_an_active_request_for_the_same_target(

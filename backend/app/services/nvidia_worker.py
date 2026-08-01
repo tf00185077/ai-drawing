@@ -311,7 +311,7 @@ class NvidiaWorkerClient(ComfyUIClient):
         timeout: float = 60.0,
         *,
         expected_hostname: str = "",
-        expected_protocol_version: int = 1,
+        expected_protocol_version: int = 2,
         discovery_enabled: bool = False,
         discovery_cidr: str = "",
         discovery_timeout: float = 0.25,
@@ -420,6 +420,24 @@ class NvidiaWorkerClient(ComfyUIClient):
         return self._request(
             "GET",
             "/v1/admin/update/status",
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def request_restart(self, *, timeout: float | None = None) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/v1/admin/restart",
+            json={},
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def restart_status(
+        self, request_id: str, *, timeout: float | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/v1/admin/restart/status",
+            params={"request_id": request_id},
             **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
@@ -604,7 +622,7 @@ def get_worker_client() -> NvidiaWorkerClient:
     configured_url = settings.nvidia_worker_url.rstrip("/")
     expected_hostname = getattr(settings, "nvidia_worker_hostname", "")
     expected_protocol_version = int(
-        getattr(settings, "nvidia_worker_protocol_version", 1)
+        getattr(settings, "nvidia_worker_protocol_version", 2)
     )
     runtime_url = _remembered_runtime_worker_url(
         configured_url,

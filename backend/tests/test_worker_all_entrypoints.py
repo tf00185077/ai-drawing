@@ -242,6 +242,53 @@ def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
             assert packaged == (source / name).read_bytes()
 
 
+def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
+    names = ("restart_contract.py", "Restart-Worker.ps1", "Wait-Restart-Result.ps1", "Restart-Worker.cmd")
+    for name in names:
+        assert (source / name).is_file()
+        assert (dist / name).read_bytes() == (source / name).read_bytes()
+
+    launcher = (source / "Restart-Worker.cmd").read_text(encoding="utf-8")
+    assert "AI-Drawing NVIDIA Worker Restart" in launcher
+    assert "%*" not in launcher and "%1" not in launcher
+    restart = (source / "Restart-Worker.ps1").read_text(encoding="utf-8")
+    for marker in (
+        "FileMode]::OpenOrCreate", "FileShare]::None", "8188, 8791", "Get-NetTCPConnection",
+        "Start-Worker.ps1", "/system_stats", "/v1/worker/status",
+        "/v1/workflows/preflight", "TaskTimeoutSeconds", "request_id",
+        "Move-Item", "Select-Object -Skip 5",
+    ):
+        assert marker in restart
+    assert "NVIDIA_WORKER_TOKEN" not in restart
+
+
+def test_installer_registers_fixed_restart_task_and_desktop_launcher() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+    assert '"AI-Drawing NVIDIA Worker Restart"' in installer
+    assert "Restart-Worker.ps1" in installer
+    assert "Wait-Restart-Result.ps1" in installer
+    assert "一鍵重啟 AI-Drawing Worker.cmd" in installer
+    assert "New-ScheduledTaskAction" in installer
+    assert "-RunLevel Highest" in installer
+    assert "-Trigger" not in installer[installer.index("$RestartTaskAction") :]
+
+
+def test_distribution_zip_uses_canonical_names_and_exact_source_bytes() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
+    with zipfile.ZipFile(archive) as package:
+        assert all("\\\\" not in name for name in package.namelist())
+        for path in source.rglob("*"):
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}:
+                name = path.relative_to(source).as_posix()
+                assert package.read(name) == path.read_bytes()
+
+
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
 def test_migration_inventory_uses_canonical_paths_and_hashes_without_secret_output(
     tmp_path: Path,

@@ -37,6 +37,21 @@ except ModuleNotFoundError:  # Supports direct execution from worker/windows.
         write_update_status,
     )
 
+try:
+    from worker.windows.restart_contract import (
+        RestartRequest,
+        queue_restart,
+        read_restart_status,
+        write_restart_status,
+    )
+except ModuleNotFoundError:  # Supports direct execution from worker/windows.
+    from restart_contract import (
+        RestartRequest,
+        queue_restart,
+        read_restart_status,
+        write_restart_status,
+    )
+
 def _runtime_path(
     name: str,
     default: Path,
@@ -234,6 +249,8 @@ VERIFICATION_ROOT = _verification_root()
 SOURCE_COMMIT_PATH = RELEASE_ROOT / "source-commit.txt"
 UPDATE_REQUEST_PATH = UPDATE_STATE_ROOT / "state" / "update-request.json"
 UPDATE_STATUS_PATH = UPDATE_STATE_ROOT / "state" / "update-status.json"
+RESTART_REQUEST_PATH = UPDATE_STATE_ROOT / "state" / "restart-request.json"
+RESTART_STATUS_PATH = UPDATE_STATE_ROOT / "state" / "restart-status.json"
 
 
 def _comfyui_url() -> str:
@@ -478,7 +495,64 @@ def request_update(body: UpdateRequest) -> dict[str, str]:
 
 @app.get("/v1/admin/update/status", dependencies=[Depends(_auth)])
 def update_status() -> dict[str, Any]:
-    return {"state": _update_state()}
+    try:
+        return read_public_update_status(UPDATE_STATUS_PATH)
+    except RequestLockError as error:
+        raise HTTPException(
+            503, detail={"code": "update_lock_unavailable"}
+        ) from error
+    except OSError as error:
+        raise HTTPException(
+            503, detail={"code": "update_status_unavailable"}
+        ) from error
+
+
+@app.post("/v1/admin/restart", dependencies=[Depends(_auth)], status_code=202)
+def request_restart(body: RestartRequest) -> dict[str, Any]:
+    try:
+        request_id, created = queue_restart(RESTART_REQUEST_PATH, RESTART_STATUS_PATH)
+    except RequestLockError as error:
+        raise HTTPException(503, detail={"code": "restart_lock_unavailable"}) from error
+    except OSError as error:
+        raise HTTPException(503, detail={"code": "restart_request_unavailable"}) from error
+    if created:
+        try:
+            subprocess.run(
+                ["schtasks.exe", "/Run", "/TN", "AI-Drawing NVIDIA Worker Restart"],
+                check=True,
+                timeout=15,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            try:
+                write_restart_status(
+                    RESTART_STATUS_PATH,
+                    request_id,
+                    "failed",
+                    error_code="RESTART_ACTIVATION_FAILED",
+                )
+            except RequestLockError as lock_error:
+                raise HTTPException(
+                    503, detail={"code": "restart_lock_unavailable"}
+                ) from lock_error
+            except OSError as status_error:
+                raise HTTPException(
+                    503, detail={"code": "restart_request_unavailable"}
+                ) from status_error
+            raise HTTPException(503, detail={"code": "restart_activation_failed"}) from error
+    return {"request_id": request_id, "state": "queued"}
+
+
+@app.get("/v1/admin/restart/status", dependencies=[Depends(_auth)])
+def restart_status(request_id: str = Query(..., min_length=1, max_length=64)) -> dict[str, Any]:
+    try:
+        status = read_restart_status(RESTART_STATUS_PATH)
+    except RequestLockError as error:
+        raise HTTPException(503, detail={"code": "restart_lock_unavailable"}) from error
+    except OSError as error:
+        raise HTTPException(503, detail={"code": "restart_status_unavailable"}) from error
+    if status.get("request_id") != request_id:
+        raise HTTPException(404, detail={"code": "restart_request_not_found"})
+    return status
 
 
 @app.post("/v1/resources/plan", dependencies=[Depends(_auth)])
