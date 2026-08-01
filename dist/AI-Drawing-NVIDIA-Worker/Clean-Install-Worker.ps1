@@ -11,12 +11,14 @@ $script:FixedCleanRoots = @(
     @{ path = "C:\AI-Drawing-Worker"; kind = "worker" },
     @{ path = "C:\AI-Drawing-Worker-Source"; kind = "source" },
     @{ path = "C:\ProgramData\AI-Drawing-Worker"; kind = "programdata" },
-    @{ path = "D:\code\AI-Drawing-Worker"; kind = "worker" }
+    @{ path = "D:\code\AI-Drawing-Worker"; kind = "worker" },
+    @{ path = "D:\code\AI-Drawing-Worker-Source"; kind = "source" }
 )
 $script:FixedTaskNames = @(
     "AI-Drawing NVIDIA Worker",
     "AI-Drawing Worker Updater",
-    "AI-Drawing NVIDIA Worker Restart"
+    "AI-Drawing NVIDIA Worker Restart",
+    "AI-Drawing Worker One-Click Restart"
 )
 $script:ExpectedRemote = "https://github.com/tf00185077/ai-drawing"
 

@@ -172,7 +172,7 @@ Assert-WorkerCudaRuntime -Python $Python
 
 schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL HIGHEST /TR "`"$Root\Start-Worker.cmd`"" /F | Out-Null
 
-$SourceRepositoryRoot = Join-Path $Root "source"
+$SourceRepositoryRoot = "D:\code\AI-Drawing-Worker-Source"
 $ExpectedRemoteUrl = [string]$Manifest.source_repository
 $ExpectedBranch = [string]$Manifest.source_branch
 if (-not $ExpectedRemoteUrl -or -not $ExpectedBranch) {
@@ -246,28 +246,6 @@ NVIDIA_WORKER_URL=http://$($WorkerIp):$($Manifest.listen_port)
 NVIDIA_WORKER_TOKEN=$Token
 "@
 Set-Content -Path (Join-Path $Desktop "AI-Drawing-Worker-Pairing.txt") -Value $Pairing -Encoding UTF8
-
-$Adapter = Get-NetAdapter -InterfaceIndex $PrivateProfile.InterfaceIndex
-$Mac = $Adapter.MacAddress
-$Gateway = Get-NetRoute -InterfaceIndex $PrivateProfile.InterfaceIndex -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
-    Sort-Object RouteMetric | Select-Object -ExpandProperty NextHop -First 1
-
-Write-Host ""
-Write-Host "============================================================"
-Write-Host " Recommended: reserve this Worker IP in your router DHCP settings"
-Write-Host "============================================================"
-Write-Host "  Adapter MAC : $Mac"
-Write-Host "  Worker IP   : $WorkerIp   (reserve this address)"
-if ($Gateway) {
-    Write-Host "  Router page : http://$Gateway   (opening the login page)"
-} else {
-    Write-Host "  Router page : open the router admin page manually (usually http://192.168.x.1)"
-}
-Write-Host "  After reserving the IP, the desktop pairing file remains valid."
-Write-Host "============================================================"
-if ($Gateway) {
-    try { Start-Process "http://$Gateway" } catch { }
-}
 
 # Convert the freshly installed legacy directories into the versioned managed
 # layout before the Worker can advertise protocol 2/update capability.  A

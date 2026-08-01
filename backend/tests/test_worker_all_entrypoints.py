@@ -144,6 +144,7 @@ def test_clean_install_cleanup_is_plan_hashed_and_fixed_scope() -> None:
         r"C:\AI-Drawing-Worker-Source",
         r"C:\ProgramData\AI-Drawing-Worker",
         r"D:\code\AI-Drawing-Worker",
+        r"D:\code\AI-Drawing-Worker-Source",
     ):
         assert path in script
     assert "D:\\code\\ai-drawing" in script
@@ -155,6 +156,7 @@ def test_clean_install_cleanup_is_plan_hashed_and_fixed_scope() -> None:
     assert "AI-Drawing-NVIDIA-Worker-fixed-*" in script
     assert "Remove-Item -LiteralPath" in script
     assert "Remove-Item -Path" not in script
+    assert '"AI-Drawing Worker One-Click Restart"' in script
 
 
 def test_direct_d_installer_derives_managed_paths_from_the_validated_root() -> None:
@@ -165,10 +167,20 @@ def test_direct_d_installer_derives_managed_paths_from_the_validated_root() -> N
     assert "[string]$Root" in installer
     assert '. (Join-Path $Source "WorkerRoot.ps1")' in installer
     assert "$Root = Resolve-WorkerInstallRoot -Path $Root" in installer
-    assert '$SourceRepositoryRoot = Join-Path $Root "source"' in installer
+    assert '$SourceRepositoryRoot = "D:\\code\\AI-Drawing-Worker-Source"' in installer
+    assert '$SourceRepositoryRoot = Join-Path $Root "source"' not in installer
     assert 'Get-PSDrive -Name ([IO.Path]::GetPathRoot($Root).Substring(0, 1))' in installer
     assert 'C:\\AI-Drawing-Worker"' not in installer
     assert 'C:\\AI-Drawing-Worker-Source' not in installer
+
+
+def test_direct_d_installer_does_not_prompt_for_dhcp_or_open_the_router() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+
+    assert "reserve this Worker IP" not in installer
+    assert "Router page" not in installer
+    assert 'Start-Process "http://$Gateway"' not in installer
 
 
 def test_direct_d_installer_can_force_a_new_worker_token_without_printing_it() -> None:
