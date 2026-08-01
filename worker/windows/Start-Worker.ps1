@@ -63,12 +63,14 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
         throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
     }
     try {
-        Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats" -TimeoutSec 2 | Out-Null
-        $Ready = $true
-        break
+        curl.exe --silent --show-error --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
+        if ($LASTEXITCODE -eq 0) {
+            $Ready = $true
+            break
+        }
     } catch {
-        Start-Sleep -Seconds 2
     }
+    Start-Sleep -Seconds 2
 }
 if (-not $Ready) { throw "ComfyUI did not become ready within 60 seconds." }
 
