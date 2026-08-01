@@ -181,6 +181,20 @@ def test_direct_d_installer_can_force_a_new_worker_token_without_printing_it() -
     assert 'Write-Output $Token' not in installer
 
 
+def test_direct_d_setup_never_invokes_migration_and_rotates_only_before_config_exists() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    root = repo / "worker/windows"
+    cmd = (root / "Setup-D.cmd").read_text(encoding="utf-8")
+    setup = (root / "Setup-D.ps1").read_text(encoding="utf-8")
+
+    assert "Setup-D.ps1" in cmd
+    assert "Migrate-Worker" not in cmd + setup
+    assert 'D:\\code\\AI-Drawing-Worker' in setup
+    assert 'Test-Path -LiteralPath (Join-Path $Root "config\\worker.json")' in setup
+    assert "GenerateNewToken" in setup
+    assert "Install-Worker.ps1" in setup
+
+
 def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     source = tmp_path / "legacy-worker"
     target = tmp_path / "managed-worker"

@@ -5,6 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "WorkerSecurity.ps1")
 $script:DevelopmentRoot = "D:\code\ai-drawing"
 $script:FixedCleanRoots = @(
     @{ path = "C:\AI-Drawing-Worker"; kind = "worker" },
@@ -130,7 +131,22 @@ function Invoke-CleanInstallDeletion {
     foreach ($Record in @($Fresh.targets | Sort-Object { $_.path.Length } -Descending)) {
         if (Test-Path -LiteralPath $Record.path) { Remove-Item -LiteralPath $Record.path -Recurse -Force -ErrorAction Stop }
     }
-    return [pscustomobject]@{ status = "cleaned"; released_bytes = $Fresh.total_bytes }
+    $WorkerRoot = "D:\code\AI-Drawing-Worker"
+    $ProgramDataRoot = "C:\ProgramData\AI-Drawing-Worker"
+    foreach ($Root in @($WorkerRoot, $ProgramDataRoot)) {
+        New-Item -ItemType Directory -Path $Root -ErrorAction Stop | Out-Null
+        Set-SecureUpdaterRootAcl -Path $Root
+    }
+    $Utf8NoBom = New-Object Text.UTF8Encoding -ArgumentList $false
+    $OwnershipMarker = Join-Path $WorkerRoot ".ai-drawing-worker-owned"
+    [IO.File]::WriteAllText($OwnershipMarker, "AI-Drawing NVIDIA Worker`n", $Utf8NoBom)
+    Reset-SecureUpdaterChildAcl -Path $OwnershipMarker
+    $PreparedMarker = Join-Path $WorkerRoot ".clean-install-prepared"
+    [IO.File]::WriteAllText($PreparedMarker, "direct-d-clean-install-v1`n", $Utf8NoBom)
+    Reset-SecureUpdaterChildAcl -Path $PreparedMarker
+    Assert-ExistingWorkerRoot -Path $WorkerRoot
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    return [pscustomobject]@{ status = "prepared"; released_bytes = $Fresh.total_bytes; worker_root = $WorkerRoot }
 }
 
 if ($MyInvocation.InvocationName -ne ".") {
