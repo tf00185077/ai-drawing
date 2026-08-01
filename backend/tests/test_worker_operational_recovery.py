@@ -77,6 +77,34 @@ def test_installer_checked_uv_install_uses_system_and_stops_on_failure(tmp_path:
     )
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell installer integration requires Windows")
+def test_installer_forces_cuda_wheels_and_fails_when_cuda_is_unavailable(tmp_path: Path) -> None:
+    """A same-version CPU torch wheel or a missing final CUDA gate must fail this test."""
+    uv_arguments = tmp_path / "uv-args.txt"
+    fake_uv = tmp_path / "fake-uv.cmd"
+    fake_uv.write_text(
+        f'@echo off\r\necho %* > "{uv_arguments}"\r\nexit /b 0\r\n',
+        encoding="utf-8",
+    )
+    fake_python = tmp_path / "fake-python.cmd"
+    fake_python.write_text("@echo off\r\nexit /b 9\r\n", encoding="utf-8")
+    command = (
+        f'Invoke-CudaPipInstall -Uv "{fake_uv}" -Python "{fake_python}" '
+        '-IndexUrl "https://download.pytorch.org/whl/cu130"; '
+        f'Assert-WorkerCudaRuntime -Python "{fake_python}"'
+    )
+
+    result = _run_worker_install_helper(command)
+
+    assert result.returncode != 0
+    assert "INSTALL_CUDA_UNAVAILABLE" in result.stderr
+    arguments = uv_arguments.read_text(encoding="utf-8").strip()
+    assert "--index-url https://download.pytorch.org/whl/cu130" in arguments
+    assert "--reinstall-package torch" in arguments
+    assert "--reinstall-package torchvision" in arguments
+    assert "--reinstall-package torchaudio" in arguments
+
+
 @pytest.mark.skipif(os.name != "nt", reason="Windows junction integration requires Windows")
 def test_installer_normalizes_only_internal_uv_python_alias(tmp_path: Path) -> None:
     """Leaving uv's validated internal alias must make managed bootstrap fail."""

@@ -293,24 +293,6 @@ class RuntimeBuilder:
             (str(python), "-m", "pip", "install", "--disable-pip-version-check", f"uv=={manifest['uv']}"),
             cwd=release,
         )
-        self._checked(
-            (
-                str(python),
-                "-m",
-                "uv",
-                "pip",
-                "install",
-                "--python",
-                str(python),
-                "--index-url",
-                manifest["pytorch_index"],
-                "torch",
-                "torchvision",
-                "torchaudio",
-            ),
-            cwd=release,
-        )
-
         comfy_root = release / "ComfyUI"
         self._clone_pinned(manifest["comfyui_repository"], manifest["comfyui_version"], comfy_root, release)
         requirement_files = [release / "worker" / "windows" / "requirements.txt", comfy_root / "requirements.txt"]
@@ -339,6 +321,37 @@ class RuntimeBuilder:
                 ),
                 cwd=release,
             )
+        self._checked(
+            (
+                str(python),
+                "-m",
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                str(python),
+                "--index-url",
+                manifest["pytorch_index"],
+                "--reinstall-package",
+                "torch",
+                "--reinstall-package",
+                "torchvision",
+                "--reinstall-package",
+                "torchaudio",
+                "torch",
+                "torchvision",
+                "torchaudio",
+            ),
+            cwd=release,
+        )
+        self._checked(
+            (
+                str(python),
+                "-c",
+                "import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)",
+            ),
+            cwd=release,
+        )
 
     def _read_manifest(self, release: Path) -> dict[str, Any]:
         try:

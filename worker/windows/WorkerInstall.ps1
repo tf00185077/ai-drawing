@@ -25,6 +25,30 @@ function Invoke-WorkerPipInstall {
         -ErrorCode "INSTALL_DEPENDENCY_FAILED"
 }
 
+function Invoke-CudaPipInstall {
+    param(
+        [Parameter(Mandatory = $true)][string]$Uv,
+        [Parameter(Mandatory = $true)][string]$Python,
+        [Parameter(Mandatory = $true)][string]$IndexUrl
+    )
+
+    Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @(
+        "--index-url", $IndexUrl,
+        "--reinstall-package", "torch",
+        "--reinstall-package", "torchvision",
+        "--reinstall-package", "torchaudio",
+        "torch", "torchvision", "torchaudio"
+    )
+}
+
+function Assert-WorkerCudaRuntime {
+    param([Parameter(Mandatory = $true)][string]$Python)
+
+    Invoke-CheckedInstallerCommand -FilePath $Python `
+        -Arguments @("-c", "import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)") `
+        -ErrorCode "INSTALL_CUDA_UNAVAILABLE"
+}
+
 function Get-ConcreteInstalledPython {
     param(
         [Parameter(Mandatory = $true)][string]$PythonRoot,

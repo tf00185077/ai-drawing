@@ -141,8 +141,6 @@ git -C $ComfyRoot fetch --tags --force
 git -C $ComfyRoot checkout --detach $Manifest.comfyui_version
 
 Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", (Join-Path $ComfyRoot "requirements.txt"))
-Invoke-WorkerPipInstall -Uv $Uv -Python $Python `
-    -Arguments @("torch", "torchvision", "torchaudio", "--index-url", [string]$Manifest.pytorch_index)
 Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", (Join-Path $Source "requirements.txt"))
 
 $CustomRoot = Join-Path $ComfyRoot "custom_nodes"
@@ -162,6 +160,8 @@ foreach ($Node in $Manifest.custom_nodes) {
         Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", $NodeRequirements)
     }
 }
+Invoke-CudaPipInstall -Uv $Uv -Python $Python -IndexUrl ([string]$Manifest.pytorch_index)
+Assert-WorkerCudaRuntime -Python $Python
 
 schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL HIGHEST /TR "`"$Root\Start-Worker.cmd`"" /F | Out-Null
 
