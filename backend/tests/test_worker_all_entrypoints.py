@@ -420,6 +420,14 @@ def test_installer_registers_fixed_restart_task_and_desktop_launcher() -> None:
     assert "-Trigger" not in installer[installer.index("$RestartTaskAction") :]
 
 
+def test_start_worker_uses_powershell_51_safe_comfy_readiness_probe() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    launcher = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
+
+    assert 'Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats"' in launcher
+    assert 'Invoke-RestMethod "http://127.0.0.1:8188/system_stats"' not in launcher
+
+
 def test_distribution_zip_uses_canonical_names_and_exact_source_bytes() -> None:
     repo = Path(__file__).resolve().parents[2]
     source = repo / "worker" / "windows"
