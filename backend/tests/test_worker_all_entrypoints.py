@@ -365,6 +365,38 @@ def test_migration_inventory_fails_closed_on_reparse_without_following_it(
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
+def test_migration_inventory_skips_only_verified_managed_runtime_junctions(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "worker"
+    release = root / "releases" / MIGRATION_COMMIT
+    shared_models = root / "shared" / "models"
+    config = root / "config" / "worker.json"
+    release.mkdir(parents=True)
+    shared_models.mkdir(parents=True)
+    config.parent.mkdir(parents=True)
+    config.write_text(json.dumps({"token": "secret"}), encoding="utf-8")
+    (release / "source-commit.txt").write_text(MIGRATION_COMMIT + "\n", encoding="utf-8")
+    (release / ".managed-release.json").write_text(
+        json.dumps({"schema": 1, "commit": MIGRATION_COMMIT}), encoding="utf-8"
+    )
+    (release / "ComfyUI").mkdir()
+    body = f"""
+New-Item -ItemType Junction -Path {_ps_quote(release / 'ComfyUI' / 'models')} -Target {_ps_quote(shared_models)} | Out-Null
+New-Item -ItemType Junction -Path {_ps_quote(root / 'current')} -Target {_ps_quote(release)} | Out-Null
+Get-MigrationInventory -Root {_ps_quote(root)} -ConfigPath {_ps_quote(config)} | ConvertTo-Json -Depth 8 -Compress
+"""
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    inventory = json.loads(result.stdout)
+    assert "current" not in inventory["file_digests"]
+    assert all("ComfyUI/models" not in path for path in inventory["file_digests"])
+    assert "config/worker.json" in inventory["file_digests"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")
 def test_migration_capacity_requires_temporary_copy_plus_reserve(tmp_path: Path) -> None:
     too_small = _run_migration_harness(
         tmp_path,
