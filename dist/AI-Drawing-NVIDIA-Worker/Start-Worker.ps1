@@ -58,12 +58,12 @@ $ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgs -Workin
     -WindowStyle Hidden -RedirectStandardOutput $ComfyStdoutLog -RedirectStandardError $ComfyStderrLog -PassThru
 
 $Ready = $false
-for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
+for ($Attempt = 0; $Attempt -lt 300; $Attempt++) {
     if ($ComfyProcess.HasExited) {
         throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
     }
     try {
-        curl.exe --silent --show-error --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
+        curl.exe --silent --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
         if ($LASTEXITCODE -eq 0) {
             $Ready = $true
             break
@@ -72,7 +72,7 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
     }
     Start-Sleep -Seconds 2
 }
-if (-not $Ready) { throw "ComfyUI did not become ready within 60 seconds." }
+if (-not $Ready) { throw "ComfyUI did not become ready within 10 minutes." }
 
 $env:AI_DRAWING_WORKER_ROOT = $Root
 $env:AI_DRAWING_WORKER_UPDATE_STATE_ROOT = Join-Path $Root "config\update-owned"
