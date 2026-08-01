@@ -77,5 +77,10 @@ if (-not $Ready) { throw "ComfyUI did not become ready within 10 minutes." }
 $env:AI_DRAWING_WORKER_ROOT = $Root
 $env:AI_DRAWING_WORKER_UPDATE_STATE_ROOT = Join-Path $Root "config\update-owned"
 $env:AI_DRAWING_COMFYUI_ROOT = $ComfyRoot
+$ExistingPythonPath = [Environment]::GetEnvironmentVariable("PYTHONPATH", "Process")
+$env:PYTHONPATH = $Root
+if ($ExistingPythonPath) {
+    $env:PYTHONPATH += [IO.Path]::PathSeparator + $ExistingPythonPath
+}
 & $Python -m uvicorn worker:app --app-dir $WorkerAppRoot --host 0.0.0.0 --port 8791
 exit $LASTEXITCODE

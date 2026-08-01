@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- 持久 launcher log 首次取得真正 traceback：排程與 ComfyUI 均正常，Uvicorn import `update_contract` 時找不到 root privileged updater 的 `request_lock`。Managed release 的 app-dir 是 `releases/<commit>/worker/windows`，而 updater package 位於 Worker root；啟動器現在把受保護 Worker root prepend 到 process `PYTHONPATH`（保留既有值），讓 fallback `updater.request_lock` 可解析。回歸契約及 focused gate `177 passed, 1 skipped` 通過。
 - 10-minute probe 部署後，實機 deployed script 正確、8188 health curl exit 0，但排程 PowerShell 已退出且未留下 8791；既有 scheduled launcher 丟棄 stdout/stderr，無法判斷 readiness 後的 uvicorn failure。`Start-Worker.cmd` 現永久追加 `shared/logs/launcher.{stdout,stderr}.log`（fresh root 會先建立 logs），下一次重現可取得真正 traceback；focused gate `176 passed, 1 skipped`。
 - Bounded curl 部署後證實 8188 最終可回 exit 0，但此機 custom-node 冷啟動超過舊的 60 秒總上限，啟動器已先退出而 ComfyUI 稍後才 ready。Readiness budget 擴為 10 分鐘（每次 probe 仍硬限 2 秒），並移除正常重試期間的 curl stderr 噪音；focused gate `175 passed, 1 skipped`。
 - `Invoke-WebRequest` 在互動 shell 可立即取得 8188 HTTP 200，但 SYSTEM scheduled-task 的 Windows PowerShell 5.1 仍會卡住；改採 Windows 內建 `curl.exe --fail --max-time 2`，以 child-process exit code 作 readiness gate，讓 timeout 不再依賴 PowerShell web cmdlet。相同實機 endpoint 已驗證 curl exit 0；focused gate 維持 `175 passed, 1 skipped`，待部署 launcher 後確認 8791。
