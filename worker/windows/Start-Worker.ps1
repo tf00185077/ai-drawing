@@ -29,7 +29,7 @@ if (Test-Path $Current) {
     $WorkerAppRoot = Join-Path $ReleaseRoot "worker\windows"
     $env:AI_DRAWING_WORKER_RELEASE_ROOT = $ReleaseRoot
     $env:AI_DRAWING_WORKER_CONFIG_PATH = Join-Path $Root "config\worker.json"
-    $env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $Root "shared\partial"
+    $env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $ReleaseRoot "cache\.partial"
     $env:AI_DRAWING_WORKER_VERIFICATION_ROOT = Join-Path $Root "shared\cache\verified"
     $LogsRoot = Join-Path $Root "shared\logs"
 } else {
