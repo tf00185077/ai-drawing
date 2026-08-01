@@ -392,6 +392,21 @@ $Context = Get-ProductionMigrationContext
     )
 
 
+def test_migration_main_bootstraps_legacy_install_before_reading_context() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    text = (repo / "worker" / "windows" / "Migrate-Worker.ps1").read_text()
+
+    bootstrap = text.index("function Initialize-ProductionMigrationPrerequisites")
+    main = text.index("function Invoke-MigrationMain")
+    bootstrap_call = text.index("Initialize-ProductionMigrationPrerequisites", main)
+    context_call = text.index("Get-ProductionMigrationContext", main)
+
+    assert bootstrap < main < bootstrap_call < context_call
+    assert "AI_DRAWING_PROJECT_ROOT" in text[bootstrap:main]
+    assert "AI-Drawing Worker Updater" in text[bootstrap:main]
+    assert "New-SecureUpdaterDirectory" in text[bootstrap:main]
+
+
 def _migration_adapter_script(
     source: Path,
     target: Path,
