@@ -9,7 +9,7 @@ function Get-FixedWorkerRoot {
     $Found = $null
     foreach ($Line in [IO.File]::ReadAllLines($EnvironmentPath)) {
         if (-not $Line -or $Line.StartsWith("#")) { continue }
-        $Parts = $Line.Split(@('='), 2)
+        $Parts = $Line -split '=', 2
         if ($Parts.Count -ne 2) { throw "RESTART_CONFIG_INVALID" }
         if ($Parts[0] -eq "AI_DRAWING_WORKER_ROOT") { $Found = $Parts[1] }
     }

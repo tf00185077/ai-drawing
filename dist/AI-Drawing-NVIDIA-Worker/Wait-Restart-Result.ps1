@@ -5,7 +5,7 @@ $EnvironmentPath = Join-Path $env:ProgramData "AI-Drawing-Worker\updater.env"
 $Root = $null
 foreach ($Line in [IO.File]::ReadAllLines($EnvironmentPath)) {
     if (-not $Line -or $Line.StartsWith("#")) { continue }
-    $Parts = $Line.Split(@('='), 2)
+    $Parts = $Line -split '=', 2
     if ($Parts.Count -eq 2 -and $Parts[0] -eq "AI_DRAWING_WORKER_ROOT") { $Root = $Parts[1] }
 }
 if (-not $Root -or -not [IO.Path]::IsPathRooted($Root) -or $Root.StartsWith("\\")) {

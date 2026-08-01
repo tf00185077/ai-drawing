@@ -398,6 +398,7 @@ def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
     assert "AI-Drawing NVIDIA Worker Restart" in launcher
     assert "%*" not in launcher and "%1" not in launcher
     restart = (source / "Restart-Worker.ps1").read_text(encoding="utf-8")
+    wait_restart = (source / "Wait-Restart-Result.ps1").read_text(encoding="utf-8")
     for marker in (
         "FileMode]::OpenOrCreate", "FileShare]::None", "8188, 8791", "Get-NetTCPConnection",
         "Start-Worker.ps1", "/system_stats", "/v1/worker/status",
@@ -406,6 +407,9 @@ def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
     ):
         assert marker in restart
     assert "NVIDIA_WORKER_TOKEN" not in restart
+    for script in (restart, wait_restart):
+        assert "$Parts = $Line -split '=', 2" in script
+        assert ".Split(@('='), 2)" not in script
 
 
 def test_installer_registers_fixed_restart_task_and_desktop_launcher() -> None:
