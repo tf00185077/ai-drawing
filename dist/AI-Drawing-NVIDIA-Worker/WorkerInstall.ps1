@@ -21,7 +21,7 @@ function Invoke-WorkerPipInstall {
     )
 
     Invoke-CheckedInstallerCommand -FilePath $Uv `
-        -Arguments (@("pip", "install", "--system", "--python", $Python) + $Arguments) `
+        -Arguments (@("pip", "install", "--system", "--break-system-packages", "--python", $Python) + $Arguments) `
         -ErrorCode "INSTALL_DEPENDENCY_FAILED"
 }
 

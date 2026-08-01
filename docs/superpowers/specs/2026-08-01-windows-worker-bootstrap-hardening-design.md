@@ -29,7 +29,7 @@ The migration's general reparse-point rejection is a security boundary and must 
 
 ### Dependency installation
 
-Every `uv pip install` invocation that targets the uv standalone interpreter will include `--system`, which is uv's explicit opt-in for modifying an interpreter outside a virtual environment. A small PowerShell helper will run required external commands and throw a stable installer error when `$LASTEXITCODE` is non-zero. ComfyUI, PyTorch, Worker, and custom-node requirements will all use this gate.
+Every `uv pip install` invocation that targets the dedicated uv standalone interpreter will include `--system` and `--break-system-packages`. The first flag opts into a non-virtual interpreter; the second explicitly permits modifying its `EXTERNALLY-MANAGED` installation. A small PowerShell helper will run required external commands and throw a stable installer error when `$LASTEXITCODE` is non-zero. ComfyUI, PyTorch, Worker, and custom-node requirements will all use this gate.
 
 ### Python path selection
 

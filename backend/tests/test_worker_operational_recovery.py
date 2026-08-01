@@ -72,7 +72,8 @@ def test_installer_checked_uv_install_uses_system_and_stops_on_failure(tmp_path:
     assert result.returncode != 0
     assert "INSTALL_DEPENDENCY_FAILED" in result.stderr
     assert arguments_path.read_text(encoding="utf-8").strip() == (
-        "pip install --system --python C:\\runtime\\python.exe -r requirements.txt"
+        "pip install --system --break-system-packages --python "
+        "C:\\runtime\\python.exe -r requirements.txt"
     )
 
 
