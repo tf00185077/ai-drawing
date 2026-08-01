@@ -399,7 +399,9 @@ def _migration_adapter_script(
     fail_mode: str = "",
     ready_after: int = 1,
     clock_step_ms: int = 120_000,
+    verify_real_acl: bool = False,
 ) -> str:
+    verify_real_acl_literal = "$true" if verify_real_acl else "$false"
     return f"""
 $Events = New-Object 'System.Collections.Generic.List[string]'
 $SourceRoot = {_ps_quote(source)}
@@ -407,6 +409,7 @@ $TargetRoot = {_ps_quote(target)}
 $FailMode = {_ps_quote(fail_mode)}
 $ReadyAfter = {ready_after}
 $ClockStepMs = {clock_step_ms}
+$VerifyRealAcl = {verify_real_acl_literal}
 $Clock = @{{ now=[int64]0 }}
 $HealthAttempts = @{{}}
 $HealthCallTimeouts = New-Object 'System.Collections.Generic.List[int]'
@@ -418,11 +421,40 @@ $TaskState = [ordered]@{{
 }}
 $InitialTaskStateJson = $TaskState | ConvertTo-Json -Depth 8 -Compress
 $Adapter = @{{
-  GetFreeBytes = {{ param($Root) [int64]1TB }}
+  GetSourceInventory = {{
+    param($Root, $ConfigPath)
+    $Events.Add('inventory-source')
+    return Get-MigrationInventory -Root $Root -ConfigPath $ConfigPath
+  }}
+  GetFreeBytes = {{ param($Root) $Events.Add('get-free-bytes'); [int64]1TB }}
   InitializeTarget = {{
     param($Root)
     $Events.Add('initialize-target')
     if (-not [IO.Directory]::Exists($Root)) {{ [IO.Directory]::CreateDirectory($Root) | Out-Null }}
+  }}
+  AssertSecureTarget = {{
+    param($Root)
+    $Events.Add('verify-secure-target')
+    if ($VerifyRealAcl) {{
+      $AllowedSids = @('S-1-5-18', 'S-1-5-32-544')
+      $InsecurePaths = New-Object 'System.Collections.Generic.List[string]'
+      foreach ($File in @(Get-MigrationTreeNoFollow -Root $Root)) {{
+        $Relative = $File.FullName.Substring($Root.TrimEnd('\\').Length).TrimStart('\\').Replace('\\', '/')
+        $Events.Add('acl-check:' + $Relative)
+        $Acl = Get-Acl -LiteralPath $File.FullName -ErrorAction Stop
+        $Owner = $Acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+        $Rules = @($Acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+        $BadRules = @($Rules | Where-Object {{
+          $AllowedSids -notcontains $_.IdentityReference.Value -or
+          $_.AccessControlType -ne [Security.AccessControl.AccessControlType]::Allow -or
+          ($_.FileSystemRights -band [Security.AccessControl.FileSystemRights]::FullControl) -ne [Security.AccessControl.FileSystemRights]::FullControl
+        }})
+        if ($Owner -ne 'S-1-5-18' -or $Rules.Count -eq 0 -or $BadRules.Count -gt 0) {{
+          $InsecurePaths.Add($Relative)
+        }}
+      }}
+      if ($InsecurePaths.Count -gt 0) {{ throw 'MIGRATION_TARGET_SECURITY_INVALID' }}
+    }}
   }}
   GetMonotonicMilliseconds = {{ [int64]$Clock.now }}
   WaitForHealthRetry = {{
@@ -518,6 +550,11 @@ $Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot 
     assert result.returncode == 0, result.stderr
     record = json.loads(result.stdout)
     events = record["events"]
+    assert events.index("initialize-target") < events.index("verify-secure-target")
+    assert events.index("verify-secure-target") < events.index("inventory-source")
+    assert events.index("inventory-source") < events.index("get-free-bytes")
+    assert events.index("get-free-bytes") < events.index("capture-switch")
+    assert events.index("verify-secure-target") < events.index("protect-target")
     assert events.index("health:staged") < events.index("switch-tasks:managed-worker")
     assert events.index("health:staged") < events.index("stop:legacy-worker")
     assert events[-2:] == ["start:managed-worker:env=managed-worker", "health:production-after-backup"]
@@ -759,6 +796,76 @@ $Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot 
     if result.stdout:
         assert "initialize-target" not in json.loads(result.stdout)["events"]
     assert sentinel.read_text(encoding="utf-8") == "external"
+    assert sorted(path.name for path in outside.iterdir()) == ["sentinel.txt"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL integration requires Windows")
+def test_existing_target_acl_is_verified_before_inventory_copy_or_mutation(
+    tmp_path: Path,
+) -> None:
+    source, target, environment_path, _token = _migration_fixture(tmp_path)
+    target.mkdir()
+    (target / ".ai-drawing-worker-owned").write_text(
+        "AI-Drawing NVIDIA Worker\n", encoding="utf-8"
+    )
+    for relative in (
+        "releases/permissive.txt",
+        "shared/permissive.txt",
+        "unknown/permissive.txt",
+    ):
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(relative, encoding="utf-8")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    outside_sentinel = outside / "sentinel.txt"
+    outside_sentinel.write_text("external", encoding="utf-8")
+    source_before = _tree_snapshot(source)
+    target_before = _tree_snapshot(target)
+    target_directories_before = {
+        path.relative_to(target).as_posix()
+        for path in target.rglob("*")
+        if path.is_dir()
+    }
+    body = (
+        f"$EnvironmentPath = {_ps_quote(environment_path)}\n"
+        + _migration_adapter_script(source, target, verify_real_acl=True)
+        + f"""
+$Result = Invoke-WorkerMigrationTransaction -SourceRoot $SourceRoot -TargetRoot $TargetRoot `
+  -EnvironmentPath $EnvironmentPath -Commit '{MIGRATION_COMMIT}' -Adapter $Adapter -ReserveBytes 1
+[pscustomobject]@{{ result=$Result; events=$Events }} | ConvertTo-Json -Depth 8 -Compress
+"""
+    )
+
+    result = _run_migration_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "failed_before_switch"
+    assert record["result"]["error_code"] == "MIGRATION_TARGET_SECURITY_INVALID"
+    assert record["events"][:2] == ["initialize-target", "verify-secure-target"]
+    checked_paths = {
+        event.removeprefix("acl-check:")
+        for event in record["events"]
+        if event.startswith("acl-check:")
+    }
+    assert {
+        "releases/permissive.txt",
+        "shared/permissive.txt",
+        "unknown/permissive.txt",
+    } <= checked_paths
+    assert "inventory-source" not in record["events"]
+    assert "get-free-bytes" not in record["events"]
+    assert "capture-switch" not in record["events"]
+    assert "protect-target" not in record["events"]
+    assert _tree_snapshot(source) == source_before
+    assert _tree_snapshot(target) == target_before
+    assert {
+        path.relative_to(target).as_posix()
+        for path in target.rglob("*")
+        if path.is_dir()
+    } == target_directories_before
+    assert outside_sentinel.read_text(encoding="utf-8") == "external"
     assert sorted(path.name for path in outside.iterdir()) == ["sentinel.txt"]
 
 

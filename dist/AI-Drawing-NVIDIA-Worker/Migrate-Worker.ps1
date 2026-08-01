@@ -513,7 +513,7 @@ function Invoke-WorkerMigrationTransaction {
         [Parameter(Mandatory = $true)][int64]$ReserveBytes
     )
 
-    $RequiredAdapterKeys = @("GetFreeBytes", "InitializeTarget", "GetMonotonicMilliseconds", "WaitForHealthRetry", "ProtectTarget", "CaptureSwitchState", "SwitchTaskActions", "RestoreSwitchState", "StopWorker", "StartWorker", "ValidateWorker")
+    $RequiredAdapterKeys = @("GetSourceInventory", "GetFreeBytes", "InitializeTarget", "AssertSecureTarget", "GetMonotonicMilliseconds", "WaitForHealthRetry", "ProtectTarget", "CaptureSwitchState", "SwitchTaskActions", "RestoreSwitchState", "StopWorker", "StartWorker", "ValidateWorker")
     foreach ($Key in $RequiredAdapterKeys) {
         if (-not $Adapter.ContainsKey($Key) -or $Adapter[$Key] -isnot [scriptblock]) {
             throw "MIGRATION_ADAPTER_INVALID"
@@ -524,24 +524,30 @@ function Invoke-WorkerMigrationTransaction {
     if ($Source.Equals($Target, [StringComparison]::OrdinalIgnoreCase)) { throw "MIGRATION_PATH_INVALID" }
     Assert-MigrationTargetPathNoFollow -Root $Target -Path $Target
     $ConfigPath = Join-Path $Source "config\worker.json"
-    $Before = Get-MigrationInventory -Root $Source -ConfigPath $ConfigPath
-    $Available = [int64](& $Adapter["GetFreeBytes"] $Target)
-    Assert-MigrationCapacity -SourceBytes $Before.total_bytes -AvailableBytes $Available -ReserveBytes $ReserveBytes
-    $SwitchState = & $Adapter["CaptureSwitchState"] $EnvironmentPath
-    if ($null -eq $SwitchState) { throw "MIGRATION_SWITCH_STATE_INVALID" }
     $Records = New-Object "System.Collections.Generic.List[object]"
+    $Before = $null
+    $SwitchState = $null
     $SwitchAttempted = $false
     $Switched = $false
     $SourceStopped = $false
     $TargetStarted = $false
     $BackedUp = $false
     $BackupRoot = $null
-    $Stage = "copying"
+    $Stage = "initializing-target"
 
     try {
-        $Stage = "initializing-target"
         & $Adapter["InitializeTarget"] $Target
         Assert-MigrationTargetTreeNoFollow -Root $Target
+        $Stage = "verifying-target-security"
+        & $Adapter["AssertSecureTarget"] $Target
+        $Stage = "inventorying-source"
+        $Before = & $Adapter["GetSourceInventory"] $Source $ConfigPath
+        if ($null -eq $Before) { throw "MIGRATION_INVENTORY_INVALID" }
+        $Available = [int64](& $Adapter["GetFreeBytes"] $Target)
+        Assert-MigrationCapacity -SourceBytes $Before.total_bytes -AvailableBytes $Available -ReserveBytes $ReserveBytes
+        $Stage = "capturing-switch-state"
+        $SwitchState = & $Adapter["CaptureSwitchState"] $EnvironmentPath
+        if ($null -eq $SwitchState) { throw "MIGRATION_SWITCH_STATE_INVALID" }
         $Stage = "copying"
         $Release = New-FirstMigrationRelease -SourceRoot $Source -TargetRoot $Target -Commit $Commit -Records $Records
         $Stage = "protecting"
@@ -616,6 +622,10 @@ function Get-ProductionMigrationAdapter {
     $UpdaterTask = "AI-Drawing Worker Updater"
     $RestartTask = "AI-Drawing NVIDIA Worker Restart"
     return @{
+        GetSourceInventory = {
+            param($Root, $ConfigPath)
+            Get-MigrationInventory -Root $Root -ConfigPath $ConfigPath
+        }.GetNewClosure()
         GetFreeBytes = { param($Root) ([IO.DriveInfo]::new([IO.Path]::GetPathRoot($Root))).AvailableFreeSpace }.GetNewClosure()
         InitializeTarget = {
             param($Root)
@@ -627,6 +637,14 @@ function Get-ProductionMigrationAdapter {
                 [IO.File]::WriteAllText($Marker, "AI-Drawing NVIDIA Worker`n", $script:Utf8NoBom)
                 Reset-SecureUpdaterChildAcl -Path $Marker
                 Assert-ExistingWorkerRoot -Path $Root
+            }
+        }.GetNewClosure()
+        AssertSecureTarget = {
+            param($Root)
+            try {
+                Assert-SecureUpdaterTree -Path $Root
+            } catch {
+                throw "MIGRATION_TARGET_SECURITY_INVALID"
             }
         }.GetNewClosure()
         GetMonotonicMilliseconds = {
