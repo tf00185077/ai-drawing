@@ -69,6 +69,72 @@ def _run_migration_harness(
     )
 
 
+def _run_worker_root_harness(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
+    repo = Path(__file__).resolve().parents[2]
+    helper = repo / "worker" / "windows" / "WorkerRoot.ps1"
+    harness = tmp_path / "worker-root-harness.ps1"
+    harness.write_text(
+        "$ErrorActionPreference = 'Stop'\n"
+        f". {_ps_quote(helper)}\n"
+        f"{body}\n",
+        encoding="utf-8",
+    )
+    return subprocess.run(
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(harness)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=15,
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows root contract requires Windows")
+def test_direct_d_root_accepts_only_the_canonical_install_path(tmp_path: Path) -> None:
+    accepted = _run_worker_root_harness(
+        tmp_path,
+        "Resolve-WorkerInstallRoot -Path 'D:\\code\\AI-Drawing-Worker'",
+    )
+    assert accepted.returncode == 0, accepted.stderr
+    assert accepted.stdout.strip().casefold() == r"D:\code\AI-Drawing-Worker".casefold()
+
+    for invalid in (
+        r"AI-Drawing-Worker",
+        r"\\server\share\AI-Drawing-Worker",
+        "D:\\",
+        r"D:\code\ai-drawing",
+        "D:\\code\\AI-Drawing-Worker ",
+        r"C:\AI-Drawing-Worker",
+    ):
+        rejected = _run_worker_root_harness(
+            tmp_path,
+            f"Resolve-WorkerInstallRoot -Path {_ps_quote(invalid)} | Out-Null",
+        )
+        assert rejected.returncode != 0, invalid
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows root contract requires Windows")
+def test_direct_d_root_rejects_a_reparse_parent_without_following_it(tmp_path: Path) -> None:
+    outside = tmp_path / "outside"
+    link = tmp_path / "link"
+    outside.mkdir()
+    created = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-Command", f"New-Item -ItemType Junction -Path {_ps_quote(link)} -Target {_ps_quote(outside)} | Out-Null"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if created.returncode != 0:
+        pytest.skip(created.stderr)
+    result = _run_worker_root_harness(
+        tmp_path,
+        f"Assert-WorkerInstallParentNoReparse -Path {_ps_quote(link / 'worker')} | Out-Null",
+    )
+    assert result.returncode != 0
+    assert "WORKER_ROOT_REPARSE" in result.stderr
+
+
 def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     source = tmp_path / "legacy-worker"
     target = tmp_path / "managed-worker"
