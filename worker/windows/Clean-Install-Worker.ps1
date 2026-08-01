@@ -29,7 +29,7 @@ function Get-CleanInstallSha256 {
 }
 
 function Get-CleanInstallTreeStats {
-    param([Parameter(Mandatory = $true)][string]$Path)
+    param([Parameter(Mandatory = $true)][string]$Path, [switch]$AllowContainedReparse)
     $Root = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
     if ($Root.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "CLEAN_INSTALL_REPARSE" }
     [int64]$Bytes = 0
@@ -39,7 +39,17 @@ function Get-CleanInstallTreeStats {
     while ($Pending.Count -gt 0) {
         $Directory = $Pending.Pop()
         foreach ($Item in @(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop)) {
-            if ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+            if ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                if (-not $AllowContainedReparse) { throw "CLEAN_INSTALL_REPARSE" }
+                $Target = $Item.Target
+                if ($Target -is [array]) { $Target = $Target[0] }
+                $CanonicalTarget = [IO.Path]::GetFullPath([string]$Target).TrimEnd("\")
+                $CanonicalRoot = $Root.FullName.TrimEnd("\")
+                if (-not $CanonicalTarget.StartsWith($CanonicalRoot + "\", [StringComparison]::OrdinalIgnoreCase)) {
+                    throw "CLEAN_INSTALL_REPARSE"
+                }
+                continue
+            }
             if ($Item.PSIsContainer) { $Pending.Push($Item) }
             else { $Files += 1; $Bytes += [int64]$Item.Length }
         }
@@ -58,6 +68,7 @@ function Assert-CleanInstallTarget {
         if ((Get-Content -LiteralPath $Marker -Raw -Encoding UTF8 -ErrorAction Stop).Trim() -ne "AI-Drawing NVIDIA Worker") {
             throw "CLEAN_INSTALL_OWNERSHIP_INVALID"
         }
+        Assert-ExistingWorkerRoot -Path $FullPath
     } elseif ($Kind -eq "source") {
         $GitConfig = Join-Path $FullPath ".git\config"
         if (-not (Test-Path -LiteralPath $GitConfig -PathType Leaf)) { throw "CLEAN_INSTALL_OWNERSHIP_INVALID" }
@@ -70,6 +81,7 @@ function Assert-CleanInstallTarget {
         if (-not (Test-Path -LiteralPath (Join-Path $FullPath "updater.env") -PathType Leaf)) {
             throw "CLEAN_INSTALL_OWNERSHIP_INVALID"
         }
+        Assert-SecureUpdaterTree -Path $FullPath
     } elseif ($Kind -eq "package") {
         $Name = [IO.Path]::GetFileName($FullPath)
         if ($Name -notlike "AI-Drawing-NVIDIA-Worker-fixed-*") { throw "CLEAN_INSTALL_SCOPE_INVALID" }
@@ -83,7 +95,7 @@ function Get-CleanInstallDeletionPlan {
     foreach ($Candidate in $script:FixedCleanRoots) {
         if (-not (Test-Path -LiteralPath $Candidate.path)) { continue }
         $Path = Assert-CleanInstallTarget -Path $Candidate.path -Kind $Candidate.kind
-        $Stats = Get-CleanInstallTreeStats -Path $Path
+        $Stats = Get-CleanInstallTreeStats -Path $Path -AllowContainedReparse:($Candidate.kind -eq "worker")
         $Records.Add([pscustomobject]@{ path = $Path; kind = $Candidate.kind; file_count = $Stats.file_count; total_bytes = $Stats.total_bytes })
     }
     $CanonicalDownloads = [IO.Path]::GetFullPath($DownloadsRoot).TrimEnd("\")
