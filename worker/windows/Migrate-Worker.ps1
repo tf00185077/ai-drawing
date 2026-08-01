@@ -32,7 +32,8 @@ function Get-MigrationStringSha256 {
 function Get-MigrationTreeNoFollow {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [Collections.Generic.HashSet[string]]$AllowedReparsePaths
+        [Collections.Generic.HashSet[string]]$AllowedReparsePaths,
+        [Collections.Generic.HashSet[string]]$ExcludedDirectoryPaths
     )
 
     $RootItem = Get-Item -LiteralPath $Root -Force -ErrorAction Stop
@@ -53,6 +54,9 @@ function Get-MigrationTreeNoFollow {
                 throw "MIGRATION_REPARSE_POINT"
             }
             if ($Item.PSIsContainer) {
+                if ($null -ne $ExcludedDirectoryPaths -and $ExcludedDirectoryPaths.Contains($Item.FullName)) {
+                    continue
+                }
                 $Pending.Push($Item)
             } else {
                 $Files.Add($Item)
@@ -66,8 +70,11 @@ function Get-ManagedMigrationSourceLinks {
     param([Parameter(Mandatory = $true)][string]$Root)
 
     $Allowed = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    $Excluded = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     $Current = Join-Path $Root "current"
-    if (-not (Test-Path -LiteralPath $Current)) { return $Allowed }
+    if (-not (Test-Path -LiteralPath $Current)) {
+        return [pscustomobject]@{ allowed_reparse_paths = $Allowed; excluded_directories = $Excluded }
+    }
     $CurrentItem = Get-Item -LiteralPath $Current -Force -ErrorAction Stop
     if (-not ($CurrentItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
         throw "MIGRATION_REPARSE_POINT"
@@ -82,28 +89,17 @@ function Get-ManagedMigrationSourceLinks {
         [IO.Path]::GetFileName($Release) -notmatch "^[0-9a-f]{40}$"
     ) { throw "MIGRATION_REPARSE_POINT" }
     Assert-MigrationTargetPathNoFollow -Root $Root -Path $Release
+    try {
+        $Commit = [IO.Path]::GetFileName($Release)
+        $SourceCommit = (Get-Content -LiteralPath (Join-Path $Release "source-commit.txt") -Raw -Encoding UTF8 -ErrorAction Stop).Trim()
+        $Marker = Get-Content -LiteralPath (Join-Path $Release ".managed-release.json") -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ($SourceCommit -ne $Commit -or [int]$Marker.schema -ne 1 -or [string]$Marker.commit -ne $Commit) {
+            throw "invalid"
+        }
+    } catch { throw "MIGRATION_REPARSE_POINT" }
     [void]$Allowed.Add($CurrentItem.FullName)
-
-    foreach ($Pair in @(
-        @((Join-Path $Release "ComfyUI\models"), (Join-Path $Root "shared\models")),
-        @((Join-Path $Release "ComfyUI\input"), (Join-Path $Root "shared\input")),
-        @((Join-Path $Release "ComfyUI\output"), (Join-Path $Root "shared\output")),
-        @((Join-Path $Release ".cache"), (Join-Path $Root "shared\cache")),
-        @((Join-Path $Release "cache\.partial"), (Join-Path $Root "shared\partial"))
-    )) {
-        $Link = $Pair[0]
-        if (-not (Test-Path -LiteralPath $Link)) { continue }
-        $Item = Get-Item -LiteralPath $Link -Force -ErrorAction Stop
-        if (-not ($Item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue }
-        $Actual = $Item.Target
-        if ($Actual -is [array]) { $Actual = $Actual[0] }
-        if (-not [IO.Path]::GetFullPath([string]$Actual).TrimEnd("\").Equals(
-            [IO.Path]::GetFullPath($Pair[1]).TrimEnd("\"),
-            [StringComparison]::OrdinalIgnoreCase
-        )) { throw "MIGRATION_REPARSE_POINT" }
-        [void]$Allowed.Add($Item.FullName)
-    }
-    return $Allowed
+    [void]$Excluded.Add($Releases)
+    return [pscustomobject]@{ allowed_reparse_paths = $Allowed; excluded_directories = $Excluded }
 }
 
 function Assert-MigrationTargetPathNoFollow {
@@ -165,8 +161,10 @@ function Get-MigrationInventory {
     )
 
     $CanonicalRoot = (Get-Item -LiteralPath $Root -Force -ErrorAction Stop).FullName.TrimEnd("\")
-    $AllowedReparsePaths = Get-ManagedMigrationSourceLinks -Root $CanonicalRoot
-    $Files = @(Get-MigrationTreeNoFollow -Root $CanonicalRoot -AllowedReparsePaths $AllowedReparsePaths | Sort-Object FullName)
+    $ManagedSource = Get-ManagedMigrationSourceLinks -Root $CanonicalRoot
+    $Files = @(Get-MigrationTreeNoFollow -Root $CanonicalRoot `
+        -AllowedReparsePaths $ManagedSource.allowed_reparse_paths `
+        -ExcludedDirectoryPaths $ManagedSource.excluded_directories | Sort-Object FullName)
     $Digests = [ordered]@{}
     [int64]$TotalBytes = 0
     foreach ($File in $Files) {
