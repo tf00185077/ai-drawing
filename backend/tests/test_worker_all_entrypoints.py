@@ -441,6 +441,15 @@ def test_start_worker_cmd_persists_scheduled_launcher_output() -> None:
     assert 'launcher.stderr.log' in launcher
 
 
+def test_start_worker_exposes_root_updater_package_to_worker_runtime() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    launcher = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
+
+    assert '[Environment]::GetEnvironmentVariable("PYTHONPATH", "Process")' in launcher
+    assert '$env:PYTHONPATH = $Root' in launcher
+    assert "[IO.Path]::PathSeparator" in launcher
+
+
 def test_distribution_zip_uses_canonical_names_and_exact_source_bytes() -> None:
     repo = Path(__file__).resolve().parents[2]
     source = repo / "worker" / "windows"
