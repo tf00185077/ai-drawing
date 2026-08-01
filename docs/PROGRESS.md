@@ -14,6 +14,12 @@
 
 # 進度追蹤
 
+## 2026-08-01 NVIDIA Worker 同 /24 自動發現與 runtime failover
+
+- Mac Backend 在已配對 Worker URL 發生 connect failure 時，僅掃描設定 URL 同一個明確 IPv4 `/24` 的 `8791` port；只對 TCP 開放候選以既有 Bearer Token 查 `/v1/worker/status`，並要求唯一候選同時符合 `hostname=DESKTOP-AV90PQ4` 與 `protocol_version=1`。
+- status、preflight、資源 plan/content、prompt、history、queue、view、upload 全部共用 discovery-aware request 層；發現成功後原請求只重試一次，runtime URL cache 供後續 client（含 `/api/workers/status`）沿用，不寫回 `.env`。停用 discovery 或非 connect 類錯誤不會掃描。
+- `local` 路徑維持原行為；明確選擇 Worker 仍 fail-closed，不會 fallback Mac。驗證為 non-live：focused Worker/config/API `48 passed, 1 deselected`；Backend 排除缺少可選 `mcp` 套件而無法 collection 的 parity test 後為 `1363 passed, 18 failed`，18 筆皆為既有 Prompt Library inventory/migration、multi-LoRA 與 Worker dist/source 不一致，與本功能無關。未啟動／重啟服務、未操作 GPU 或真實 Worker。
+
 ## 2026-07-31 NVIDIA Worker 路由效能與錯誤呈現加固
 
 - **Mac 端 digest 快取**：`nvidia_worker._digest` 以 `(path, size, mtime_ns)` 快取 SHA256，長駐 queue worker 行程內每個模型檔一生只 hash 一次；不再每次送生成就把整個 checkpoint/LoRA 全量重讀重算。任何真實編輯（size 或 mtime 變動）自動失效。

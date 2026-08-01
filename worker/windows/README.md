@@ -20,7 +20,16 @@ Private profile及LocalSubnet。
 ```text
 NVIDIA_WORKER_URL=http://WINDOWS_IP:8791
 NVIDIA_WORKER_TOKEN=產生的隨機權杖
+NVIDIA_WORKER_DISCOVERY_ENABLED=true
+NVIDIA_WORKER_DISCOVERY_CIDR=192.168.1.0/24
+NVIDIA_WORKER_HOSTNAME=DESKTOP-AV90PQ4
+NVIDIA_WORKER_PROTOCOL_VERSION=1
 ```
+
+若 DHCP 改變 Windows IP，Mac Backend 只會在上述 IPv4 `/24` 掃描 `8791`
+連接埠，並以既有 Bearer Token 驗證 `/v1/worker/status` 的 hostname 與 protocol
+version。僅有唯一匹配時才在目前 Backend runtime 改用新 URL；不會覆寫 `.env`。
+可用 `NVIDIA_WORKER_DISCOVERY_ENABLED=false` 完全停用掃描。
 
 Backend重啟須由操作者另行批准。重啟後可查：
 

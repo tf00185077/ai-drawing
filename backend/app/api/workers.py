@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.config import get_settings
-from app.services.nvidia_worker import NvidiaWorkerClient
+from app.services.nvidia_worker import get_worker_client
 
 router = APIRouter(prefix="/api/workers", tags=["NVIDIA Worker"])
 
@@ -20,11 +20,9 @@ def worker_status() -> dict:
             "status": "not_paired",
         }
     try:
-        status = NvidiaWorkerClient(
-            settings.nvidia_worker_url,
-            settings.nvidia_worker_token,
-            settings.nvidia_worker_timeout,
-        ).health()
+        # Use the same discovery-aware runtime factory as generation. This
+        # keeps status and every Worker HTTP endpoint on one resolved URL.
+        status = get_worker_client().health()
     except Exception as error:
         return {
             "configured": True,
