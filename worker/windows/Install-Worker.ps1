@@ -7,6 +7,7 @@ $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | Conver
 $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
 . (Join-Path $Source "WorkerSecurity.ps1")
 . (Join-Path $Source "Migrate-Worker.ps1")
+. (Join-Path $Source "WorkerInstall.ps1")
 
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -111,9 +112,11 @@ if (-not (Test-Path $Uv)) {
 }
 
 $PythonRoot = Join-Path $Root "runtime\python"
-& $Uv python install $Manifest.python --install-dir $PythonRoot
-$Python = (Get-ChildItem $PythonRoot -Recurse -Filter python.exe | Select-Object -First 1).FullName
-if (-not $Python) { throw "Pinned Python installation failed." }
+Invoke-CheckedInstallerCommand -FilePath $Uv `
+    -Arguments @("python", "install", [string]$Manifest.python, "--install-dir", $PythonRoot) `
+    -ErrorCode "INSTALL_PYTHON_FAILED"
+$Python = Get-ConcreteInstalledPython -PythonRoot $PythonRoot -ExpectedVersion ([string]$Manifest.python)
+Remove-TrustedUvPythonAliases -PythonRoot $PythonRoot -SelectedPython $Python
 [IO.File]::WriteAllText((Join-Path $Root "config\python-path.txt"), $Python + "`n", $Utf8NoBom)
 
 $UpdaterRuntime = Join-Path $Root "updater-runtime"
@@ -137,9 +140,10 @@ if (-not (Test-Path (Join-Path $ComfyRoot ".git"))) {
 git -C $ComfyRoot fetch --tags --force
 git -C $ComfyRoot checkout --detach $Manifest.comfyui_version
 
-& $Uv pip install --python $Python -r (Join-Path $ComfyRoot "requirements.txt")
-& $Uv pip install --python $Python torch torchvision torchaudio --index-url $Manifest.pytorch_index
-& $Uv pip install --python $Python -r (Join-Path $Source "requirements.txt")
+Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", (Join-Path $ComfyRoot "requirements.txt"))
+Invoke-WorkerPipInstall -Uv $Uv -Python $Python `
+    -Arguments @("torch", "torchvision", "torchaudio", "--index-url", [string]$Manifest.pytorch_index)
+Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", (Join-Path $Source "requirements.txt"))
 
 $CustomRoot = Join-Path $ComfyRoot "custom_nodes"
 New-Item -ItemType Directory -Force -Path $CustomRoot | Out-Null
@@ -155,7 +159,7 @@ foreach ($Node in $Manifest.custom_nodes) {
     git -C $NodeRoot checkout --detach $Node.revision
     $NodeRequirements = Join-Path $NodeRoot "requirements.txt"
     if (Test-Path $NodeRequirements) {
-        & $Uv pip install --python $Python -r $NodeRequirements
+        Invoke-WorkerPipInstall -Uv $Uv -Python $Python -Arguments @("-r", $NodeRequirements)
     }
 }
 

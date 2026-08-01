@@ -2,14 +2,135 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
+
+import pytest
 
 from worker.windows.updater.state import UpdateStateStore
 
 
 COMMIT = "a" * 40
+
+
+def _create_junction(link: Path, target: Path) -> None:
+    result = subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(target)],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if result.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {result.stderr or result.stdout}")
+
+
+def _run_worker_install_helper(command: str) -> subprocess.CompletedProcess[str]:
+    repo = Path(__file__).resolve().parents[2]
+    helper = repo / "worker/windows/WorkerInstall.ps1"
+    return subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            f'. "{helper}"; {command}',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell installer integration requires Windows")
+def test_installer_checked_uv_install_uses_system_and_stops_on_failure(tmp_path: Path) -> None:
+    """Dropping --system or ignoring uv's exit code must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    helper = repo / "worker/windows/WorkerInstall.ps1"
+    arguments_path = tmp_path / "uv-args.txt"
+    fake_uv = tmp_path / "fake-uv.cmd"
+    fake_uv.write_text(
+        f'@echo off\r\necho %* > "{arguments_path}"\r\nexit /b 23\r\n',
+        encoding="utf-8",
+    )
+    command = (
+        f'. "{helper}"; '
+        f'Invoke-WorkerPipInstall -Uv "{fake_uv}" -Python "C:\\runtime\\python.exe" '
+        '-Arguments @("-r", "requirements.txt")'
+    )
+
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert result.returncode != 0
+    assert "INSTALL_DEPENDENCY_FAILED" in result.stderr
+    assert arguments_path.read_text(encoding="utf-8").strip() == (
+        "pip install --system --python C:\\runtime\\python.exe -r requirements.txt"
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junction integration requires Windows")
+def test_installer_normalizes_only_internal_uv_python_alias(tmp_path: Path) -> None:
+    """Leaving uv's validated internal alias must make managed bootstrap fail."""
+    python_root = tmp_path / "runtime" / "python"
+    concrete = python_root / "cpython-3.12.13-windows-x86_64-none"
+    concrete.mkdir(parents=True)
+    (concrete / "python.exe").write_bytes(b"concrete-python")
+    sentinel = concrete / "sentinel.txt"
+    sentinel.write_text("preserved", encoding="utf-8")
+    alias = python_root / "cpython-3.12-windows-x86_64-none"
+    _create_junction(alias, concrete)
+    command = (
+        f'$Python = Get-ConcreteInstalledPython -PythonRoot "{python_root}" '
+        '-ExpectedVersion "3.12.13"; '
+        f'Remove-TrustedUvPythonAliases -PythonRoot "{python_root}" -SelectedPython $Python; '
+        '[pscustomobject]@{python=$Python;alias_exists=(Test-Path -LiteralPath '
+        f'"{alias}");target_sentinel=[string](Get-Content -LiteralPath "{sentinel}" -Raw)}} '
+        '| ConvertTo-Json -Compress'
+    )
+
+    result = _run_worker_install_helper(command)
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["alias_exists"] is False
+    assert payload["target_sentinel"] == "preserved"
+    assert "cpython-3.12.13-windows-x86_64-none" in payload["python"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junction integration requires Windows")
+@pytest.mark.parametrize("alias_name", ["cpython-3.12-windows-x86_64-none", "unexpected-python"])
+def test_installer_never_removes_untrusted_python_reparse(tmp_path: Path, alias_name: str) -> None:
+    """An external target or an unrecognized alias must remain untouched and fail closed."""
+    python_root = tmp_path / "runtime" / "python"
+    concrete = python_root / "cpython-3.12.13-windows-x86_64-none"
+    concrete.mkdir(parents=True)
+    selected_python = concrete / "python.exe"
+    selected_python.write_bytes(b"concrete-python")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    sentinel = outside / "sentinel.txt"
+    sentinel.write_text("preserved", encoding="utf-8")
+    alias = python_root / alias_name
+    _create_junction(alias, outside)
+    command = (
+        f'Remove-TrustedUvPythonAliases -PythonRoot "{python_root}" '
+        f'-SelectedPython "{selected_python}"'
+    )
+
+    result = _run_worker_install_helper(command)
+
+    assert result.returncode != 0
+    assert "INSTALL_PYTHON_REPARSE_UNSAFE" in result.stderr
+    assert alias.exists()
+    assert sentinel.read_text(encoding="utf-8") == "preserved"
 
 
 def test_worker_queue_to_privileged_state_keeps_public_correlation(tmp_path: Path) -> None:
