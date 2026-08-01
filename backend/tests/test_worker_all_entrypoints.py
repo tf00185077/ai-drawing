@@ -432,6 +432,15 @@ def test_start_worker_uses_bounded_curl_comfy_readiness_probe() -> None:
     assert 'Invoke-RestMethod "http://127.0.0.1:8188/system_stats"' not in launcher
 
 
+def test_start_worker_cmd_persists_scheduled_launcher_output() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    launcher = (repo / "worker/windows/Start-Worker.cmd").read_text(encoding="utf-8")
+
+    assert 'if not exist "%~dp0shared\\logs" mkdir "%~dp0shared\\logs"' in launcher
+    assert 'launcher.stdout.log' in launcher
+    assert 'launcher.stderr.log' in launcher
+
+
 def test_distribution_zip_uses_canonical_names_and_exact_source_bytes() -> None:
     repo = Path(__file__).resolve().parents[2]
     source = repo / "worker" / "windows"

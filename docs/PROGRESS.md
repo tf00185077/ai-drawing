@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- 10-minute probe 部署後，實機 deployed script 正確、8188 health curl exit 0，但排程 PowerShell 已退出且未留下 8791；既有 scheduled launcher 丟棄 stdout/stderr，無法判斷 readiness 後的 uvicorn failure。`Start-Worker.cmd` 現永久追加 `shared/logs/launcher.{stdout,stderr}.log`（fresh root 會先建立 logs），下一次重現可取得真正 traceback；focused gate `176 passed, 1 skipped`。
 - Bounded curl 部署後證實 8188 最終可回 exit 0，但此機 custom-node 冷啟動超過舊的 60 秒總上限，啟動器已先退出而 ComfyUI 稍後才 ready。Readiness budget 擴為 10 分鐘（每次 probe 仍硬限 2 秒），並移除正常重試期間的 curl stderr 噪音；focused gate `175 passed, 1 skipped`。
 - `Invoke-WebRequest` 在互動 shell 可立即取得 8188 HTTP 200，但 SYSTEM scheduled-task 的 Windows PowerShell 5.1 仍會卡住；改採 Windows 內建 `curl.exe --fail --max-time 2`，以 child-process exit code 作 readiness gate，讓 timeout 不再依賴 PowerShell web cmdlet。相同實機 endpoint 已驗證 curl exit 0；focused gate 維持 `175 passed, 1 skipped`，待部署 launcher 後確認 8791。
 - Direct-to-D recovery 修正後 exit code 0；實機排程連續兩次只留下可正常回 HTTP 200 的 ComfyUI 8188，Worker 8791 未啟動。程序與 TCP evidence 定位為 Windows PowerShell 5.1 的 `Invoke-RestMethod -TimeoutSec 2` readiness probe 卡在 ESTABLISHED、不返回；同 endpoint 用 `Invoke-WebRequest -UseBasicParsing` 立即成功。啟動器改用後者並加入回歸契約，focused gate `175 passed, 1 skipped`；實機待替換單一 launcher 後重啟確認。
