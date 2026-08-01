@@ -313,6 +313,16 @@ def test_login_startup_runs_fixed_activation_recovery_before_current_resolution(
     assert start.index("-m updater.recovery") < start.index('$Current = Join-Path $Root "current"')
 
 
+def test_login_startup_uses_the_release_partial_junction() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    start = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
+
+    assert (
+        '$env:AI_DRAWING_WORKER_PARTIAL_ROOT = Join-Path $ReleaseRoot "cache\\.partial"'
+        in start
+    )
+
+
 def test_runtime_builder_default_python_is_running_updater_interpreter(tmp_path: Path) -> None:
     from worker.windows.updater.runtime import RuntimeBuilder, RuntimeLayout
 
