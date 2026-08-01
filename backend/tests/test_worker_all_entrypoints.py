@@ -1260,7 +1260,7 @@ def test_installed_worker_launcher_redirects_comfyui_output_to_rotated_logs(tmp_
     logs = root / "runtime" / "logs"
     logs.mkdir()
 
-    for name in ("Start-Worker.ps1", "Start-Worker.cmd"):
+    for name in ("Start-Worker.ps1", "Start-Worker.cmd", "WorkerPaths.ps1"):
         shutil.copy2(source / name, root / name)
     start_script = root / "Start-Worker.ps1"
     start_script.write_text(

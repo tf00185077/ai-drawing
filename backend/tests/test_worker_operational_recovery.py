@@ -162,6 +162,55 @@ def test_installer_never_removes_untrusted_python_reparse(tmp_path: Path, alias_
     assert sentinel.read_text(encoding="utf-8") == "preserved"
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows junction integration requires Windows")
+def test_startup_resolves_current_to_concrete_managed_release(tmp_path: Path) -> None:
+    """Passing the current junction itself to the Worker must make this test fail."""
+    root = tmp_path / "worker"
+    release = root / "releases" / COMMIT
+    release.mkdir(parents=True)
+    current = root / "current"
+    _create_junction(current, release)
+    repo = Path(__file__).resolve().parents[2]
+    helper = repo / "worker/windows/WorkerPaths.ps1"
+    command = f'. "{helper}"; Resolve-ManagedCurrentRelease -Root "{root}"'
+
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert Path(result.stdout.strip()) == release
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junction integration requires Windows")
+def test_startup_rejects_current_junction_outside_releases(tmp_path: Path) -> None:
+    """An external current target must remain unusable and untouched."""
+    root = tmp_path / "worker"
+    (root / "releases").mkdir(parents=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    sentinel = outside / "sentinel.txt"
+    sentinel.write_text("preserved", encoding="utf-8")
+    _create_junction(root / "current", outside)
+    repo = Path(__file__).resolve().parents[2]
+    helper = repo / "worker/windows/WorkerPaths.ps1"
+    command = f'. "{helper}"; Resolve-ManagedCurrentRelease -Root "{root}"'
+
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+
+    assert result.returncode != 0
+    assert "WORKER_CURRENT_INVALID" in result.stderr
+    assert sentinel.read_text(encoding="utf-8") == "preserved"
+
+
 def test_worker_queue_to_privileged_state_keeps_public_correlation(tmp_path: Path) -> None:
     """The Mac poll contract must survive every privileged state transition."""
     request = tmp_path / "update-request.json"

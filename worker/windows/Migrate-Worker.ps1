@@ -442,7 +442,7 @@ function New-FirstMigrationRelease {
     Copy-MigrationTreeVerified -Source $UpdaterSource -Target (Join-Path $TargetRoot "updater") -Records $Records -TargetRoot $TargetRoot
     Copy-MigrationTreeVerified -Source (Join-Path $SourceRoot "updater-runtime") -Target (Join-Path $TargetRoot "updater-runtime") -Records $Records -TargetRoot $TargetRoot
 
-    foreach ($Name in @(".ai-drawing-worker-owned", "Start-Worker.cmd", "Start-Worker.ps1", "Uninstall-Worker.cmd", "Migrate-Worker.ps1", "UpdaterBootstrap.ps1", "WorkerSecurity.ps1", "worker-manifest.json", "requirements.txt", "Restart-Worker.ps1", "Restart-Worker.cmd", "Wait-Restart-Result.ps1")) {
+    foreach ($Name in @(".ai-drawing-worker-owned", "Start-Worker.cmd", "Start-Worker.ps1", "WorkerPaths.ps1", "Uninstall-Worker.cmd", "Migrate-Worker.ps1", "UpdaterBootstrap.ps1", "WorkerSecurity.ps1", "worker-manifest.json", "requirements.txt", "Restart-Worker.ps1", "Restart-Worker.cmd", "Wait-Restart-Result.ps1")) {
         $SurfaceRoot = if ($IsProductionSource -and $Name -ne ".ai-drawing-worker-owned") { $script:MigrationPayloadRoot } else { $SourceRoot }
         $Source = Join-Path $SurfaceRoot $Name
         if (Test-Path -LiteralPath $Source -PathType Leaf) {

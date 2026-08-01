@@ -95,6 +95,7 @@ $Config = @{
 Copy-Item (Join-Path $Source "worker.py") (Join-Path $Root "app\worker.py") -Force
 Copy-Item (Join-Path $Source "Start-Worker.cmd") (Join-Path $Root "Start-Worker.cmd") -Force
 Copy-Item (Join-Path $Source "Start-Worker.ps1") (Join-Path $Root "Start-Worker.ps1") -Force
+Copy-Item (Join-Path $Source "WorkerPaths.ps1") (Join-Path $Root "WorkerPaths.ps1") -Force
 Copy-Item (Join-Path $Source "Restart-Worker.ps1") (Join-Path $Root "Restart-Worker.ps1") -Force
 Copy-Item (Join-Path $Source "Wait-Restart-Result.ps1") (Join-Path $Root "Wait-Restart-Result.ps1") -Force
 Copy-Item (Join-Path $Source "Restart-Worker.cmd") (Join-Path $Root "Restart-Worker.cmd") -Force
