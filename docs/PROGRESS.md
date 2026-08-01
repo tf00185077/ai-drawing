@@ -16,6 +16,7 @@
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正
 
+- Push 前完整稽核 remote-update activation path，發現 staged validation 與登入 launcher 有同一 updater import boundary：staged Uvicorn env 原未提供 Worker root `PYTHONPATH`。Updater validator 現明確注入受保護 root，確保 target release 在切換前能 import `updater.request_lock`；RED→GREEN targeted test 及含 Mac coordinator 的 focused gate `246 passed, 1 skipped`，避免首次 Mac 主動 update 到新 commit 時於 validation 安全回滾。
 - Direct-to-D 實機最終健康驗證通過：`request_lock` runtime path 修正部署後，ComfyUI `127.0.0.1:8188` 與 Worker `0.0.0.0:8791` 同時持續 LISTEN；`/system_stats` 回 HTTP 200，未帶 Token 的 `/v1/worker/status` 回預期 HTTP 401，證明服務與 auth gate 均運作。現場 Worker release 仍為 source commit `c49828386da8f76c2b3be356f712e674e7435249`，Mac 端 protocol/update/restart 實機驗證與自動更新啟用仍待後續。
 - 持久 launcher log 首次取得真正 traceback：排程與 ComfyUI 均正常，Uvicorn import `update_contract` 時找不到 root privileged updater 的 `request_lock`。Managed release 的 app-dir 是 `releases/<commit>/worker/windows`，而 updater package 位於 Worker root；啟動器現在把受保護 Worker root prepend 到 process `PYTHONPATH`（保留既有值），讓 fallback `updater.request_lock` 可解析。回歸契約及 focused gate `177 passed, 1 skipped` 通過。
 - 10-minute probe 部署後，實機 deployed script 正確、8188 health curl exit 0，但排程 PowerShell 已退出且未留下 8791；既有 scheduled launcher 丟棄 stdout/stderr，無法判斷 readiness 後的 uvicorn failure。`Start-Worker.cmd` 現永久追加 `shared/logs/launcher.{stdout,stderr}.log`（fresh root 會先建立 logs），下一次重現可取得真正 traceback；focused gate `176 passed, 1 skipped`。

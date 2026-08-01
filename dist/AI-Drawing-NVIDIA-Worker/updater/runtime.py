@@ -562,6 +562,7 @@ class RuntimeValidator:
                             self.layout.shared_cache / "verified"
                         ),
                         "AI_DRAWING_COMFYUI_URL": comfy_url,
+                        "PYTHONPATH": str(self.layout.root),
                         "PYTHONUTF8": "1",
                     },
                     code="WORKER_CONTRACT_FAILED",
