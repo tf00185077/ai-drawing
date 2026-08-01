@@ -135,6 +135,27 @@ def test_direct_d_root_rejects_a_reparse_parent_without_following_it(tmp_path: P
     assert "WORKER_ROOT_REPARSE" in result.stderr
 
 
+def test_clean_install_cleanup_is_plan_hashed_and_fixed_scope() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = (repo / "worker/windows/Clean-Install-Worker.ps1").read_text(encoding="utf-8")
+
+    for path in (
+        r"C:\AI-Drawing-Worker",
+        r"C:\AI-Drawing-Worker-Source",
+        r"C:\ProgramData\AI-Drawing-Worker",
+        r"D:\code\AI-Drawing-Worker",
+    ):
+        assert path in script
+    assert "D:\\code\\ai-drawing" in script
+    assert "Get-CleanInstallDeletionPlan" in script
+    assert "Invoke-CleanInstallDeletion" in script
+    assert "ExpectedPlanSha256" in script
+    assert "CLEAN_INSTALL_PLAN_MISMATCH" in script
+    assert "AI-Drawing-NVIDIA-Worker-fixed-*" in script
+    assert "Remove-Item -LiteralPath" in script
+    assert "Remove-Item -Path" not in script
+
+
 def _migration_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     source = tmp_path / "legacy-worker"
     target = tmp_path / "managed-worker"
