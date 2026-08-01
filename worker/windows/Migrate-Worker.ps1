@@ -615,6 +615,56 @@ function Get-ProductionMigrationContext {
     }
 }
 
+function Initialize-ProductionMigrationPrerequisites {
+    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator
+    )) {
+        throw "MIGRATION_ADMIN_REQUIRED"
+    }
+    if (
+        -not (Test-Path -LiteralPath (Join-Path $script:MigrationSourceRoot ".ai-drawing-worker-owned") -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $script:MigrationSourceRoot "config\worker.json") -PathType Leaf)
+    ) {
+        throw "MIGRATION_SOURCE_INVALID"
+    }
+
+    $ProjectRoot = (& git.exe -C $script:MigrationPayloadRoot rev-parse --show-toplevel 2>$null).Trim()
+    if ($LASTEXITCODE -ne 0 -or -not $ProjectRoot -or -not (Test-Path -LiteralPath (Join-Path $ProjectRoot ".git"))) {
+        throw "MIGRATION_PROJECT_INVALID"
+    }
+
+    . (Join-Path $script:MigrationPayloadRoot "WorkerSecurity.ps1")
+    if (Test-Path -LiteralPath $script:MigrationProgramDataRoot) {
+        Assert-SecureUpdaterTree -Path $script:MigrationProgramDataRoot
+    } else {
+        New-SecureUpdaterDirectory -Path $script:MigrationProgramDataRoot
+    }
+
+    Copy-Item (Join-Path $script:MigrationPayloadRoot "UpdaterBootstrap.ps1") `
+        (Join-Path $script:MigrationProgramDataRoot "UpdaterBootstrap.ps1") -Force
+    $UpdaterEnvironment = @(
+        "AI_DRAWING_PROJECT_ROOT=$ProjectRoot"
+        "AI_DRAWING_WORKER_ROOT=$script:MigrationSourceRoot"
+        "AI_DRAWING_WORKER_REMOTE=origin"
+        "AI_DRAWING_WORKER_BRANCH=main"
+    )
+    [IO.File]::WriteAllText(
+        $script:MigrationEnvironmentPath,
+        (($UpdaterEnvironment -join [Environment]::NewLine) + [Environment]::NewLine),
+        $script:Utf8NoBom
+    )
+    Install-FixedMigrationEnvironment -ProgramDataRoot $script:MigrationProgramDataRoot | Out-Null
+    Protect-UpdaterTree -Path $script:MigrationProgramDataRoot
+
+    $PowerShell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $Action = New-ScheduledTaskAction -Execute $PowerShell `
+        -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$script:MigrationProgramDataRoot\UpdaterBootstrap.ps1`""
+    $Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+    $Settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2)
+    Register-ScheduledTask -TaskName "AI-Drawing Worker Updater" -Action $Action `
+        -Principal $Principal -Settings $Settings -Force | Out-Null
+}
+
 function Get-ProductionMigrationAdapter {
     . (Join-Path $PSScriptRoot "WorkerSecurity.ps1")
     $ProgramDataRoot = $script:MigrationProgramDataRoot
@@ -734,6 +784,7 @@ function Get-ProductionMigrationAdapter {
 }
 
 function Invoke-MigrationMain {
+    Initialize-ProductionMigrationPrerequisites
     $Context = Get-ProductionMigrationContext
     if (-not (Test-Path -LiteralPath $Context.source_root -PathType Container)) { throw "MIGRATION_SOURCE_INVALID" }
     $Commit = (& git.exe -C $Context.project_root rev-parse HEAD 2>$null).Trim()
