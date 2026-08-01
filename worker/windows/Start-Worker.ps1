@@ -1,5 +1,6 @@
 $ErrorActionPreference = "Stop"
 $Root = (Get-Item -LiteralPath $PSScriptRoot -Force).FullName
+. (Join-Path $Root "WorkerPaths.ps1")
 $RecoveryPython = Join-Path $Root "updater-runtime\Scripts\python.exe"
 $RecoveryModule = Join-Path $Root "updater\recovery.py"
 if ((Test-Path -LiteralPath $RecoveryPython -PathType Leaf) -and (Test-Path -LiteralPath $RecoveryModule -PathType Leaf)) {
@@ -13,7 +14,7 @@ if ((Test-Path -LiteralPath $RecoveryPython -PathType Leaf) -and (Test-Path -Lit
 }
 $Current = Join-Path $Root "current"
 if (Test-Path $Current) {
-    $ReleaseRoot = (Resolve-Path -LiteralPath $Current).Path
+    $ReleaseRoot = Resolve-ManagedCurrentRelease -Root $Root
     $MigratedPythonPath = Join-Path $ReleaseRoot "python-path.txt"
     if (Test-Path -LiteralPath $MigratedPythonPath -PathType Leaf) {
         $RelativePython = (Get-Content -LiteralPath $MigratedPythonPath -Raw -Encoding UTF8).Trim()
