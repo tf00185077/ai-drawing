@@ -61,6 +61,18 @@ def test_installer_bootstraps_managed_release_before_worker_start() -> None:
     assert "MIGRATION" in block
 
 
+def test_existing_install_is_stopped_before_runtime_copy_and_bootstrap() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    installer = (repo / "worker/windows/Install-Worker.ps1").read_text(encoding="utf-8")
+    stop_task = installer.index("Stop-ScheduledTask")
+    stop_ports = installer.index("Get-NetTCPConnection -LocalPort 8188, 8791")
+    copy_runtime = installer.index('Copy-Item (Join-Path $Source "worker.py")')
+    bootstrap = installer.index("Initialize-ManagedWorkerLayout")
+    assert stop_task < copy_runtime < bootstrap
+    assert stop_ports < copy_runtime
+    assert ".ai-drawing-worker-owned" in installer[:copy_runtime]
+
+
 def test_updater_runtime_creation_uses_owned_python_not_windows_launcher() -> None:
     repo = Path(__file__).resolve().parents[2]
     runtime = (repo / "worker/windows/updater/runtime.py").read_text(encoding="utf-8")

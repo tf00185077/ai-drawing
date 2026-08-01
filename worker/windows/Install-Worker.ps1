@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $Root = "C:\AI-Drawing-Worker"
+$TaskName = "AI-Drawing NVIDIA Worker"
 $Source = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = Get-Content (Join-Path $Source "worker-manifest.json") -Raw | ConvertFrom-Json
 $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
@@ -10,6 +11,22 @@ $Utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw "Run Setup.cmd as Administrator."
+}
+
+# An in-place upgrade must not copy a live Python/ComfyUI runtime or launch a
+# second listener. Only stop the fixed task/ports for a recognized owned
+# installation; a fresh install does not terminate unrelated local services.
+$ExistingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+$OwnedInstall = Test-Path -LiteralPath (Join-Path $Root ".ai-drawing-worker-owned") -PathType Leaf
+if ($ExistingTask -or $OwnedInstall) {
+    if ($ExistingTask -and $ExistingTask.State -eq "Running") {
+        Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+    }
+    $ExistingListenerPids = Get-NetTCPConnection -LocalPort 8188, 8791 -State Listen -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty OwningProcess -Unique
+    foreach ($ListenerPid in $ExistingListenerPids) {
+        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop
+    }
 }
 
 $Profiles = Get-NetConnectionProfile | Where-Object {
@@ -142,7 +159,6 @@ foreach ($Node in $Manifest.custom_nodes) {
     }
 }
 
-$TaskName = "AI-Drawing NVIDIA Worker"
 schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL HIGHEST /TR "`"$Root\Start-Worker.cmd`"" /F | Out-Null
 
 $SourceRepositoryRoot = "C:\AI-Drawing-Worker-Source"
