@@ -364,6 +364,10 @@ def _record_verified(destination: Path, sha: str) -> None:
     )
 
 
+def _remove_verification(destination: Path) -> None:
+    _sidecar_path(destination).unlink(missing_ok=True)
+
+
 def _verified_sha(destination: Path) -> str:
     """Trusted digest for an existing file without re-reading it every submit.
 
@@ -371,19 +375,21 @@ def _verified_sha(destination: Path) -> str:
     unchanged file — matching size and mtime_ns — be trusted by a cheap string
     compare. Any real edit advances mtime and forces a one-time rehash.
     """
-    stat = destination.stat()
     try:
+        stat = destination.stat()
         record = json.loads(_sidecar_path(destination).read_text(encoding="utf-8"))
-        if (
-            record.get("size") == stat.st_size
-            and record.get("mtime_ns") == stat.st_mtime_ns
-        ):
-            return str(record.get("sha256", ""))
     except (OSError, ValueError):
-        pass
-    sha = _sha256(destination)
-    _record_verified(destination, sha)
-    return sha
+        return ""
+    if not isinstance(record, dict):
+        return ""
+    sha = record.get("sha256")
+    if (
+        record.get("size") == stat.st_size
+        and record.get("mtime_ns") == stat.st_mtime_ns
+        and isinstance(sha, str)
+    ):
+        return sha
+    return ""
 
 
 def _touch_atime(destination: Path) -> None:
@@ -420,6 +426,7 @@ def _enforce_cache(
             continue
         size = path.stat().st_size
         path.unlink()
+        _remove_verification(path)
         reclaimed += size
         if reclaimed >= required:
             break
@@ -574,6 +581,8 @@ def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
             if _verified_sha(destination) == sha:
                 _touch_atime(destination)
                 continue
+        elif not destination.is_file():
+            _remove_verification(destination)
         partial = PARTIAL_ROOT / f"{sha}.part"
         offset = partial.stat().st_size if partial.is_file() else 0
         if offset > size:
