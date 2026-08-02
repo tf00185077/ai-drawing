@@ -1349,15 +1349,19 @@ def _create_updater_bootstrap_switch_fixture(tmp_path: Path) -> SimpleNamespace:
     staging = deployment_root / f"staging-{commit}"
     staged_updater = staging / "updater"
     program_data = tmp_path / "program data"
+    program_data_deployment_root = program_data / "updater-bootstrap-deployment-owned"
+    bootstrap_staging_root = program_data_deployment_root / f"staging-{commit}"
+    bootstrap_staging = bootstrap_staging_root / "UpdaterBootstrap.ps1"
     installed_updater.mkdir(parents=True)
     staged_updater.mkdir(parents=True)
-    program_data.mkdir()
+    bootstrap_staging_root.mkdir(parents=True)
     (installed_updater / "marker.txt").write_text("old-updater", encoding="utf-8")
     for relative in ("__init__.py", "cli.py", "runtime.py", "windows_runtime.py", "state.py"):
         (staged_updater / relative).write_text(f"# new {relative}\n", encoding="utf-8")
     (staged_updater / "marker.txt").write_text("new-updater", encoding="utf-8")
     (program_data / "UpdaterBootstrap.ps1").write_text("old-bootstrap", encoding="utf-8")
     (staging / "UpdaterBootstrap.ps1").write_text("new-bootstrap", encoding="utf-8")
+    bootstrap_staging.write_text("new-bootstrap", encoding="utf-8")
 
     sentinels: list[Path] = []
     for relative in ("models", "shared", "releases/release-one"):
@@ -1377,6 +1381,9 @@ def _create_updater_bootstrap_switch_fixture(tmp_path: Path) -> SimpleNamespace:
         deployment_root=deployment_root,
         staging=staging,
         program_data=program_data,
+        program_data_deployment_root=program_data_deployment_root,
+        bootstrap_staging_root=bootstrap_staging_root,
+        bootstrap_staging=bootstrap_staging,
         updater_backup=deployment_root / f"backup-{commit}",
         bootstrap_backup=program_data / f"UpdaterBootstrap.ps1.backup-{commit}",
         sentinels=sentinels,
@@ -1391,6 +1398,7 @@ def _updater_bootstrap_filesystem_adapter_script(
 $FailStage = {_ps_quote(fail_value)}
 $Protected = New-Object "System.Collections.Generic.List[string]"
 $Asserted = New-Object "System.Collections.Generic.List[string]"
+$Moves = New-Object "System.Collections.Generic.List[object]"
 $script:RollbackSmokeCalls = 0
 function Protect-UpdaterTree {{ param($Path) [void]$Protected.Add([IO.Path]::GetFullPath($Path)) }}
 function Assert-SecureUpdaterTree {{ param($Path) [void]$Asserted.Add([IO.Path]::GetFullPath($Path)) }}
@@ -1399,6 +1407,26 @@ function Invoke-UpdaterBootstrapImportSmoke {{
   $script:RollbackSmokeCalls += 1
   if ($FailStage -eq "rollback-smoke") {{ throw "UPDATER_BOOTSTRAP_IMPORT_FAILED" }}
 }}
+function Move-Item {{
+  param($LiteralPath, $Destination, $ErrorAction)
+  $SourcePath = [IO.Path]::GetFullPath([string]$LiteralPath)
+  $DestinationPath = [IO.Path]::GetFullPath([string]$Destination)
+  [void]$Moves.Add([pscustomobject]@{{ source=$SourcePath; destination=$DestinationPath }})
+  if (
+    $SourcePath -eq [IO.Path]::GetFullPath({_ps_quote(fixture.bootstrap_staging)}) -and
+    $DestinationPath -eq [IO.Path]::GetFullPath({_ps_quote(fixture.program_data / 'UpdaterBootstrap.ps1')})
+  ) {{
+    if ($FailStage -eq "activate-second-move") {{
+      throw "injected second activation move failure"
+    }}
+    if ($FailStage -eq "activate-partial-bootstrap") {{
+      [IO.File]::WriteAllText($DestinationPath, "partial-new-bootstrap")
+      throw "injected partial bootstrap destination failure"
+    }}
+  }}
+  Microsoft.PowerShell.Management\\Move-Item -LiteralPath $LiteralPath `
+    -Destination $Destination -ErrorAction Stop
+}}
 $ProductionAdapter = Get-ProductionUpdaterBootstrapAdapter
 $StagingPath = {_ps_quote(fixture.staging)}
 $Adapter = [pscustomobject]@{{
@@ -1406,7 +1434,7 @@ $Adapter = [pscustomobject]@{{
   AcquireLock = {{}}
   StopUpdaterTask = {{}}
   Stage = {{ $StagingPath }}
-  ValidateStage = {{ param($Staging) Assert-UpdaterBootstrapStageStructure -StagingPath $Staging }}
+  ValidateStage = $ProductionAdapter.ValidateStage
   Backup = $ProductionAdapter.Backup
   Activate = {{ param($Staging, $WorkerRoot, $ProgramDataRoot)
     & $ProductionAdapter.Activate $Staging $WorkerRoot $ProgramDataRoot
@@ -1430,9 +1458,58 @@ $Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot "repository" `
   result=$Result
   protected=$Protected
   asserted=$Asserted
+  moves=$Moves
   rollback_smoke_calls=$script:RollbackSmokeCalls
 }} | ConvertTo-Json -Depth 7 -Compress
 """
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows bootstrap staging requires Windows")
+def test_updater_bootstrap_deployment_switch_stages_bootstrap_on_program_data_volume(
+    tmp_path: Path,
+) -> None:
+    commit = "c" * 40
+    worker_staging = (
+        tmp_path
+        / "worker root"
+        / "updater-deployment-owned"
+        / f"staging-{commit}"
+    )
+    worker_staging.mkdir(parents=True)
+    (worker_staging / "UpdaterBootstrap.ps1").write_text(
+        "new-bootstrap", encoding="utf-8"
+    )
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    expected_stage_root = (
+        program_data / "updater-bootstrap-deployment-owned" / f"staging-{commit}"
+    )
+    body = f"""
+$Protected = New-Object "System.Collections.Generic.List[string]"
+$Asserted = New-Object "System.Collections.Generic.List[string]"
+function New-SecureUpdaterDirectory {{
+  param($Path)
+  [void][IO.Directory]::CreateDirectory($Path)
+}}
+function Protect-UpdaterTree {{ param($Path) [void]$Protected.Add([IO.Path]::GetFullPath($Path)) }}
+function Assert-SecureUpdaterTree {{ param($Path) [void]$Asserted.Add([IO.Path]::GetFullPath($Path)) }}
+$Stage = New-UpdaterBootstrapProgramDataStage `
+  -WorkerStagingPath {_ps_quote(worker_staging)} `
+  -ProgramDataRoot {_ps_quote(program_data)} -ExpectedCommit {_ps_quote(commit)}
+[pscustomobject]@{{ stage=$Stage; protected=$Protected; asserted=$Asserted }} |
+  ConvertTo-Json -Depth 4 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert Path(record["stage"]) == expected_stage_root
+    assert (expected_stage_root / "UpdaterBootstrap.ps1").read_text(
+        encoding="utf-8"
+    ) == "new-bootstrap"
+    assert str(expected_stage_root) in record["protected"]
+    assert str(expected_stage_root) in record["asserted"]
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows directory switch requires Windows")
@@ -1455,6 +1532,11 @@ def test_updater_bootstrap_deployment_switch_installs_new_and_retains_backup(
     assert not fixture.staging.exists()
     assert fixture.updater_backup.is_dir()
     assert fixture.bootstrap_backup.is_file()
+    assert not fixture.bootstrap_staging_root.exists()
+    assert {
+        "source": str(fixture.bootstrap_staging),
+        "destination": str(fixture.program_data / "UpdaterBootstrap.ps1"),
+    } in record["moves"]
     protected = {Path(path) for path in record["protected"]}
     asserted = {Path(path) for path in record["asserted"]}
     assert {fixture.installed_updater, fixture.program_data} <= protected
@@ -1470,6 +1552,8 @@ def test_updater_bootstrap_deployment_switch_installs_new_and_retains_backup(
     ("fail_stage", "error_code"),
     [
         ("activate", "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"),
+        ("activate-second-move", "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"),
+        ("activate-partial-bootstrap", "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"),
         ("smoke", "UPDATER_BOOTSTRAP_SMOKE_FAILED"),
     ],
 )
