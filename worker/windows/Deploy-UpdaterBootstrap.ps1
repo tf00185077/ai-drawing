@@ -1152,6 +1152,17 @@ function Get-UpdaterBootstrapPublicTerminalError {
     return "UPDATER_BOOTSTRAP_STAGE_FAILED"
 }
 
+function Assert-UpdaterBootstrapPowerShell51 {
+    param(
+        [Parameter(Mandatory = $true)][string]$Edition,
+        [Parameter(Mandatory = $true)][Version]$PSVersion
+    )
+
+    if ($Edition -ne "Desktop" -or $PSVersion.Major -ne 5 -or $PSVersion.Minor -ne 1) {
+        throw "UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED"
+    }
+}
+
 function Invoke-UpdaterBootstrapMain {
     param(
         [Parameter(Mandatory = $true)][string]$ExpectedCommit
@@ -1163,9 +1174,8 @@ function Invoke-UpdaterBootstrapMain {
     if (-not $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         throw "UPDATER_BOOTSTRAP_ADMIN_REQUIRED"
     }
-    if ($PSVersionTable.PSEdition -ne "Desktop" -or $PSVersionTable.PSVersion.Major -ne 5) {
-        throw "UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED"
-    }
+    Assert-UpdaterBootstrapPowerShell51 -Edition $PSVersionTable.PSEdition `
+        -PSVersion $PSVersionTable.PSVersion
 
     try {
         $Adapter = Get-ProductionUpdaterBootstrapAdapter
