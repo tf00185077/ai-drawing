@@ -2,12 +2,51 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from app.config import get_settings
 from app.services.nvidia_worker import get_worker_client
 from app.services.nvidia_worker_update import worker_update_status
 
 router = APIRouter(prefix="/api/workers", tags=["NVIDIA Worker"])
+
+
+class PowerShellCommandRequest(BaseModel):
+    script: str
+    working_directory: str | None = None
+
+
+@router.post("/powershell/commands", status_code=202)
+def submit_powershell_command(request: PowerShellCommandRequest) -> dict:
+    try:
+        return get_worker_client().submit_powershell(
+            request.script,
+            working_directory=request.working_directory,
+        )
+    except Exception as error:
+        raise HTTPException(
+            503, detail={"code": "worker_powershell_submit_failed"}
+        ) from error
+
+
+@router.get("/powershell/commands/{command_id:path}")
+def powershell_command_status(command_id: str) -> dict:
+    try:
+        return get_worker_client().powershell_status(command_id)
+    except Exception as error:
+        raise HTTPException(
+            503, detail={"code": "worker_powershell_status_failed"}
+        ) from error
+
+
+@router.post("/powershell/commands/{command_id:path}/cancel")
+def cancel_powershell_command(command_id: str) -> dict:
+    try:
+        return get_worker_client().cancel_powershell(command_id)
+    except Exception as error:
+        raise HTTPException(
+            503, detail={"code": "worker_powershell_cancel_failed"}
+        ) from error
 
 
 @router.post("/restart", status_code=202)
@@ -49,7 +88,7 @@ def restart_worker_status(
 @router.get("/status")
 def worker_status() -> dict:
     settings = get_settings()
-    configured = bool(settings.nvidia_worker_url and settings.nvidia_worker_token)
+    configured = bool(settings.nvidia_worker_url)
     update = worker_update_status()
     auto_update = {
         "enabled": bool(getattr(settings, "nvidia_worker_auto_update", False)),
