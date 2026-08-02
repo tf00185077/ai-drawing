@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -237,6 +238,7 @@ def test_staged_worker_uses_explicit_release_config_state_and_comfy_roots(
     for name, value in values.items():
         monkeypatch.setenv(name, str(value))
     worker = _load_worker()
+    worker._record_verified(model, hashlib.sha256(model_bytes).hexdigest())
     client = TestClient(worker.app)
     seen: list[str] = []
 
@@ -1023,12 +1025,13 @@ def test_plan_reports_same_size_different_content_as_missing(
     assert [item["sha256"] for item in plan.json()["missing"]] == [replacement_digest]
 
 
-def test_plan_self_heals_when_sidecar_absent(tmp_path, monkeypatch) -> None:
+def test_plan_does_not_self_heal_missing_verification_sidecar(tmp_path, monkeypatch) -> None:
     worker, client = _configured_worker(tmp_path, monkeypatch)
     root = worker.MODEL_ROOTS["loras"]
     root.mkdir(parents=True, exist_ok=True)
     data = b"preexisting-model"
-    (root / "legacy.safetensors").write_bytes(data)
+    destination = root / "legacy.safetensors"
+    destination.write_bytes(data)
     headers = {"Authorization": "Bearer secret"}
     body = {
         "resources": [
@@ -1044,9 +1047,125 @@ def test_plan_self_heals_when_sidecar_absent(tmp_path, monkeypatch) -> None:
     calls = _spy_sha256(worker, monkeypatch)
 
     first = client.post("/v1/resources/plan", json=body, headers=headers)
-    assert first.json()["missing"] == []
-    assert calls["n"] == 1, "unknown file is hashed once to establish trust"
+    assert first.json()["missing"] == [{**body["resources"][0], "offset": 0}]
+    assert calls["n"] == 0, "planning must never hash an unverified destination"
+    assert not worker._sidecar_path(destination).exists()
 
-    second = client.post("/v1/resources/plan", json=body, headers=headers)
-    assert second.json()["missing"] == []
-    assert calls["n"] == 1, "sidecar now serves the file with no further hashing"
+    worker._sidecar_path(destination).write_text("[]", encoding="utf-8")
+    malformed = client.post("/v1/resources/plan", json=body, headers=headers)
+    assert malformed.json()["missing"] == [{**body["resources"][0], "offset": 0}]
+    assert calls["n"] == 0
+
+
+def test_plan_removes_stale_sidecar_when_destination_is_missing(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"verified-model"
+    digest = hashlib.sha256(data).hexdigest()
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(data)
+    worker._record_verified(destination, digest)
+    sidecar = worker._sidecar_path(destination)
+    destination.unlink()
+
+    plan = client.post(
+        "/v1/resources/plan",
+        headers=_auth(),
+        json={
+            "resources": [
+                {
+                    "kind": "loras",
+                    "name": destination.name,
+                    "sha256": digest,
+                    "size": len(data),
+                }
+            ]
+        },
+    )
+
+    assert plan.json()["missing"] == [
+        {
+            "kind": "loras",
+            "name": destination.name,
+            "sha256": digest,
+            "size": len(data),
+            "offset": 0,
+        }
+    ]
+    assert not sidecar.exists()
+
+
+def test_plan_requires_retransfer_when_size_or_mtime_changes(tmp_path, monkeypatch) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"verified-model"
+    digest = hashlib.sha256(data).hexdigest()
+    headers = _auth()
+    params = {
+        "kind": "loras",
+        "name": "style.safetensors",
+        "sha256": digest,
+        "size": len(data),
+    }
+    uploaded = client.put(
+        "/v1/resources/content",
+        params={**params, "offset": 0},
+        content=data,
+        headers={**headers, "Content-Type": "application/octet-stream"},
+    )
+    assert uploaded.json()["ready"] is True
+    destination = worker.MODEL_ROOTS["loras"] / params["name"]
+
+    destination.write_bytes(data + b"!")
+    changed_size = client.post(
+        "/v1/resources/plan", headers=headers, json={"resources": [params]}
+    )
+    assert changed_size.json()["missing"] == [{**params, "offset": 0}]
+
+    destination.write_bytes(data)
+    worker._record_verified(destination, digest)
+    stat = destination.stat()
+    os.utime(destination, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000_000))
+    assert destination.stat().st_mtime_ns != stat.st_mtime_ns
+    changed_mtime = client.post(
+        "/v1/resources/plan", headers=headers, json={"resources": [params]}
+    )
+    assert changed_mtime.json()["missing"] == [{**params, "offset": 0}]
+
+
+def test_cache_eviction_removes_destination_verification_sidecar(tmp_path, monkeypatch) -> None:
+    worker, _client = _configured_worker(tmp_path, monkeypatch)
+    data = b"verified-model"
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(data)
+    worker._record_verified(destination, hashlib.sha256(data).hexdigest())
+    sidecar = worker._sidecar_path(destination)
+    worker._config = lambda: {"cache_gb": 0, "minimum_free_gb": 0}
+
+    worker._enforce_cache(incoming_bytes=0, protected=set())
+
+    assert not destination.exists()
+    assert not sidecar.exists()
+
+
+def test_digest_mismatch_leaves_no_destination_or_sidecar(tmp_path, monkeypatch) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    response = client.put(
+        "/v1/resources/content",
+        params={
+            "kind": "loras",
+            "name": destination.name,
+            "sha256": hashlib.sha256(b"expected-model").hexdigest(),
+            "size": len(b"wrong-model!!"),
+            "offset": 0,
+        },
+        content=b"wrong-model!!",
+        headers={**_auth(), "Content-Type": "application/octet-stream"},
+    )
+
+    assert response.status_code == 422
+    assert not destination.exists()
+    assert not worker._sidecar_path(destination).exists()

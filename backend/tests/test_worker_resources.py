@@ -4,6 +4,7 @@ import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 
 from app.core.comfyui import ComfyUIError
@@ -111,6 +112,114 @@ def test_worker_submit_prompt_surfaces_node_errors(monkeypatch) -> None:
 
     assert exc.value.args[0] == "invalid prompt"
     assert exc.value.node_errors == {"6": "checkpoint not found"}
+
+
+def test_worker_submission_keeps_resource_preflight_plan_transfer_and_prompt_order(
+    tmp_path, monkeypatch
+) -> None:
+    loras = tmp_path / "loras"
+    loras.mkdir()
+    model = loras / "style.safetensors"
+    model.write_bytes(b"model-bytes")
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    calls: list[tuple[str, str]] = []
+
+    class Response:
+        is_success = True
+
+        def __init__(self, body):
+            self.body = body
+
+        def json(self):
+            return self.body
+
+        def raise_for_status(self):
+            return None
+
+    def request(method, path, **_kwargs):
+        calls.append((method, path))
+        if path == "/v1/workflows/preflight":
+            return Response({"ready": True, "missing_node_types": []})
+        if path == "/v1/resources/plan":
+            return Response(
+                {
+                    "missing": [
+                        {
+                            "kind": "loras",
+                            "name": model.name,
+                            "sha256": nvidia_worker._digest(model),
+                            "offset": 0,
+                        }
+                    ]
+                }
+            )
+        if path == "/v1/resources/content":
+            return Response({"ready": True, "offset": model.stat().st_size})
+        assert path == "/prompt"
+        return Response({"prompt_id": "worker-prompt-42"})
+
+    monkeypatch.setattr(client, "_request_once", request)
+
+    prompt_id = client._submit_prompt_once(
+        {
+            "1": {
+                "class_type": "LoraLoader",
+                "inputs": {"lora_name": model.name},
+            }
+        }
+    )
+
+    assert prompt_id == "worker-prompt-42"
+    assert calls == [
+        ("POST", "/v1/workflows/preflight"),
+        ("POST", "/v1/resources/plan"),
+        ("PUT", "/v1/resources/content"),
+        ("POST", "/prompt"),
+    ]
+
+
+def test_worker_submission_preserves_comfyui_http_error_after_resource_plan(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    calls: list[tuple[str, str]] = []
+    prompt_error = httpx.Response(
+        500, request=httpx.Request("POST", "http://worker/prompt")
+    )
+
+    class Response:
+        is_success = True
+
+        def __init__(self, body):
+            self.body = body
+
+        def json(self):
+            return self.body
+
+        def raise_for_status(self):
+            return None
+
+    def request(method, path, **_kwargs):
+        calls.append((method, path))
+        if path == "/v1/workflows/preflight":
+            return Response({"ready": True, "missing_node_types": []})
+        if path == "/v1/resources/plan":
+            return Response({"missing": []})
+        assert path == "/prompt"
+        return prompt_error
+
+    monkeypatch.setattr(client, "_request_once", request)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        client._submit_prompt_once({"1": {"class_type": "KSampler", "inputs": {}}})
+
+    assert calls == [
+        ("POST", "/v1/workflows/preflight"),
+        ("POST", "/v1/resources/plan"),
+        ("POST", "/prompt"),
+    ]
 
 
 def test_workflow_resources_rejects_traversal(tmp_path, monkeypatch) -> None:
