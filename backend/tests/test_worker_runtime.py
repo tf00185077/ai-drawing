@@ -147,7 +147,7 @@ def test_loopback_comfyui_override_is_used_by_status_preflight_and_proxy(
     monkeypatch.setattr(worker.httpx, "request", request)
 
     worker.status()
-    assert worker.workflow_preflight({"node_types": ["ExampleNode"]}) == {
+    assert worker.workflow_capabilities({"node_types": ["ExampleNode"]}) == {
         "ready": True,
         "missing_node_types": [],
     }
