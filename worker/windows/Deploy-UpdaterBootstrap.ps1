@@ -375,6 +375,112 @@ function New-UpdaterBootstrapStage {
     return $Staging
 }
 
+function Get-UpdaterBootstrapWorkerStageCommit {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath
+    )
+
+    $Canonical = [IO.Path]::GetFullPath($WorkerStagingPath)
+    $Parent = [IO.Path]::GetDirectoryName($Canonical)
+    $Leaf = [IO.Path]::GetFileName($Canonical)
+    if (
+        [IO.Path]::GetFileName($Parent) -cne "updater-deployment-owned" -or
+        $Leaf -cnotmatch "^staging-([0-9a-f]{40})$"
+    ) {
+        throw "UPDATER_BOOTSTRAP_STAGE_INVALID"
+    }
+    return $Matches[1]
+}
+
+function Get-UpdaterBootstrapProgramDataStagePath {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $Commit = Get-UpdaterBootstrapWorkerStageCommit `
+        -WorkerStagingPath $WorkerStagingPath
+    $DeploymentRoot = Join-Path $ProgramDataRoot "updater-bootstrap-deployment-owned"
+    return (Join-Path $DeploymentRoot "staging-$Commit")
+}
+
+function Assert-UpdaterBootstrapProgramDataStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $Staging = Get-UpdaterBootstrapProgramDataStagePath `
+        -WorkerStagingPath $WorkerStagingPath -ProgramDataRoot $ProgramDataRoot
+    $Bootstrap = Join-Path $Staging "UpdaterBootstrap.ps1"
+    Assert-UpdaterBootstrapNoReparseTree -Path $Staging
+    Assert-UpdaterBootstrapNoReparseComponents -Path $Bootstrap
+    if (-not (Test-Path -LiteralPath $Bootstrap -PathType Leaf)) {
+        throw "UPDATER_BOOTSTRAP_STAGE_INVALID"
+    }
+    Assert-SecureUpdaterTree -Path $Staging
+}
+
+function Assert-UpdaterBootstrapSwitchStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    Assert-UpdaterBootstrapStageStructure -StagingPath $WorkerStagingPath
+    Assert-SecureUpdaterTree -Path $WorkerStagingPath
+    Assert-UpdaterBootstrapProgramDataStage `
+        -WorkerStagingPath $WorkerStagingPath -ProgramDataRoot $ProgramDataRoot
+}
+
+function New-UpdaterBootstrapProgramDataStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $ExpectedCommit
+    $WorkerCommit = Get-UpdaterBootstrapWorkerStageCommit `
+        -WorkerStagingPath $WorkerStagingPath
+    if ($WorkerCommit -cne $ExpectedCommit) {
+        throw "UPDATER_BOOTSTRAP_COMMIT_MISMATCH"
+    }
+    Assert-UpdaterBootstrapNoReparseTree -Path $WorkerStagingPath
+    Assert-SecureUpdaterTree -Path $WorkerStagingPath
+
+    $BootstrapSource = Join-Path $WorkerStagingPath "UpdaterBootstrap.ps1"
+    Assert-UpdaterBootstrapNoReparseComponents -Path $BootstrapSource
+    if (-not (Test-Path -LiteralPath $BootstrapSource -PathType Leaf)) {
+        throw "UPDATER_BOOTSTRAP_STAGE_INVALID"
+    }
+
+    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    $DeploymentRoot = Join-Path $ProgramDataRoot "updater-bootstrap-deployment-owned"
+    if (Test-Path -LiteralPath $DeploymentRoot) {
+        Assert-UpdaterBootstrapNoReparseTree -Path $DeploymentRoot
+        Assert-SecureUpdaterTree -Path $DeploymentRoot
+    } else {
+        New-SecureUpdaterDirectory -Path $DeploymentRoot
+        Assert-UpdaterBootstrapNoReparseTree -Path $DeploymentRoot
+        Assert-SecureUpdaterTree -Path $DeploymentRoot
+    }
+
+    $Staging = Join-Path $DeploymentRoot "staging-$ExpectedCommit"
+    if (Test-Path -LiteralPath $Staging) {
+        Assert-UpdaterBootstrapNoReparseTree -Path $Staging
+        throw "UPDATER_BOOTSTRAP_STAGE_EXISTS"
+    }
+    New-SecureUpdaterDirectory -Path $Staging
+    Copy-Item -LiteralPath $BootstrapSource `
+        -Destination (Join-Path $Staging "UpdaterBootstrap.ps1") -ErrorAction Stop
+    Assert-UpdaterBootstrapNoReparseTree -Path $Staging
+    Protect-UpdaterTree -Path $Staging
+    Assert-SecureUpdaterTree -Path $Staging
+    return $Staging
+}
+
 function Enter-UpdaterBootstrapTransactionLock {
     param(
         [Parameter(Mandatory = $true)][string]$ProgramDataRoot
@@ -557,9 +663,12 @@ function Install-UpdaterBootstrapStage {
         [Parameter(Mandatory = $true)][string]$ProgramDataRoot
     )
 
-    Assert-UpdaterBootstrapStageStructure -StagingPath $StagingPath
+    Assert-UpdaterBootstrapSwitchStage -WorkerStagingPath $StagingPath `
+        -ProgramDataRoot $ProgramDataRoot
     $StagedUpdater = Join-Path $StagingPath "updater"
-    $StagedBootstrap = Join-Path $StagingPath "UpdaterBootstrap.ps1"
+    $ProgramDataStaging = Get-UpdaterBootstrapProgramDataStagePath `
+        -WorkerStagingPath $StagingPath -ProgramDataRoot $ProgramDataRoot
+    $StagedBootstrap = Join-Path $ProgramDataStaging "UpdaterBootstrap.ps1"
     $InstalledUpdater = Join-Path $WorkerRoot "updater"
     $InstalledBootstrap = Join-Path $ProgramDataRoot "UpdaterBootstrap.ps1"
     Assert-UpdaterBootstrapNoReparseTree -Path $StagedUpdater
@@ -567,6 +676,24 @@ function Install-UpdaterBootstrapStage {
     Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledUpdater
     Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledBootstrap
     if ((Test-Path -LiteralPath $InstalledUpdater) -or (Test-Path -LiteralPath $InstalledBootstrap)) {
+        throw "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"
+    }
+    $UpdaterSourceRoot = [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($StagedUpdater))
+    $UpdaterDestinationRoot = [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($InstalledUpdater))
+    $BootstrapSourceRoot = [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($StagedBootstrap))
+    $BootstrapDestinationRoot = [IO.Path]::GetPathRoot(
+        [IO.Path]::GetFullPath($InstalledBootstrap)
+    )
+    if (
+        -not $UpdaterSourceRoot.Equals(
+            $UpdaterDestinationRoot,
+            [StringComparison]::OrdinalIgnoreCase
+        ) -or
+        -not $BootstrapSourceRoot.Equals(
+            $BootstrapDestinationRoot,
+            [StringComparison]::OrdinalIgnoreCase
+        )
+    ) {
         throw "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"
     }
     Move-Item -LiteralPath $StagedUpdater -Destination $InstalledUpdater -ErrorAction Stop
@@ -711,6 +838,36 @@ function Remove-UpdaterBootstrapStage {
     Remove-Item -LiteralPath $Canonical -Recurse -Force -ErrorAction Stop
 }
 
+function Remove-UpdaterBootstrapProgramDataStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $Staging = Get-UpdaterBootstrapProgramDataStagePath `
+        -WorkerStagingPath $WorkerStagingPath -ProgramDataRoot $ProgramDataRoot
+    Assert-UpdaterBootstrapNoReparseTree -Path $Staging
+    Assert-SecureUpdaterTree -Path $Staging
+    Remove-Item -LiteralPath $Staging -Recurse -Force -ErrorAction Stop
+}
+
+function Remove-UpdaterBootstrapSwitchStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerStagingPath,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    Assert-UpdaterBootstrapNoReparseTree -Path $WorkerStagingPath
+    Assert-SecureUpdaterTree -Path $WorkerStagingPath
+    $ProgramDataStaging = Get-UpdaterBootstrapProgramDataStagePath `
+        -WorkerStagingPath $WorkerStagingPath -ProgramDataRoot $ProgramDataRoot
+    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataStaging
+    Assert-SecureUpdaterTree -Path $ProgramDataStaging
+    Remove-UpdaterBootstrapStage -StagingPath $WorkerStagingPath
+    Remove-UpdaterBootstrapProgramDataStage `
+        -WorkerStagingPath $WorkerStagingPath -ProgramDataRoot $ProgramDataRoot
+}
+
 function Assert-UpdaterBootstrapBackupDescriptor {
     param(
         [Parameter(Mandatory = $true)]$Backup,
@@ -800,13 +957,22 @@ function Get-ProductionUpdaterBootstrapAdapter {
         StopUpdaterTask = { Stop-UpdaterBootstrapTask }
         Stage = {
             param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
-            New-UpdaterBootstrapStage -RepositoryRoot $RepositoryRoot `
+            $WorkerStaging = New-UpdaterBootstrapStage -RepositoryRoot $RepositoryRoot `
                 -WorkerRoot $WorkerRoot -ExpectedCommit $ExpectedCommit
+            $null = New-UpdaterBootstrapProgramDataStage `
+                -WorkerStagingPath $WorkerStaging -ProgramDataRoot $ProgramDataRoot `
+                -ExpectedCommit $ExpectedCommit
+            return $WorkerStaging
         }
         ValidateStage = {
-            param($Staging)
-            Assert-UpdaterBootstrapStageStructure -StagingPath $Staging
-            Assert-SecureUpdaterTree -Path $Staging
+            param($Staging, $ProgramDataRoot)
+            if ([string]::IsNullOrEmpty([string]$ProgramDataRoot)) {
+                Assert-UpdaterBootstrapStageStructure -StagingPath $Staging
+                Assert-SecureUpdaterTree -Path $Staging
+            } else {
+                Assert-UpdaterBootstrapSwitchStage -WorkerStagingPath $Staging `
+                    -ProgramDataRoot $ProgramDataRoot
+            }
         }
         Backup = {
             param($WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
@@ -833,8 +999,9 @@ function Get-ProductionUpdaterBootstrapAdapter {
             Assert-UpdaterBootstrapScheduledTaskAction -ProgramDataRoot $ProgramDataRoot
         }
         CleanupSuccess = {
-            param($Staging)
-            Remove-UpdaterBootstrapStage -StagingPath $Staging
+            param($Staging, $ProgramDataRoot)
+            Remove-UpdaterBootstrapSwitchStage -WorkerStagingPath $Staging `
+                -ProgramDataRoot $ProgramDataRoot
         }
         Rollback = {
             param($Backup, $WorkerRoot, $ProgramDataRoot)
@@ -890,7 +1057,7 @@ function Invoke-UpdaterBootstrapTransaction {
         & $Adapter.StopUpdaterTask
         $Stage = "staging"
         $Staging = & $Adapter.Stage $RepositoryRoot $WorkerRoot $ProgramDataRoot $ExpectedCommit
-        & $Adapter.ValidateStage $Staging
+        & $Adapter.ValidateStage $Staging $ProgramDataRoot
         $Stage = "backing-up"
         $Backup = & $Adapter.Backup $WorkerRoot $ProgramDataRoot $ExpectedCommit
         $Stage = "activating"
@@ -902,7 +1069,7 @@ function Invoke-UpdaterBootstrapTransaction {
         $Stage = "validating-task"
         & $Adapter.ValidateTask $ProgramDataRoot
         $Stage = "cleaning-up"
-        & $Adapter.CleanupSuccess $Staging
+        & $Adapter.CleanupSuccess $Staging $ProgramDataRoot
         $Result = [pscustomobject]@{
             status = "ready"
             error_code = $null
