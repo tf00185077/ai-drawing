@@ -14,6 +14,14 @@
 
 # 進度追蹤
 
+## 2026-08-02 NVIDIA Worker open PowerShell control
+
+- Worker 在既有 `8791` listener 新增三個**未驗證** PowerShell command routes：`POST /v1/powershell/commands`、`GET /v1/powershell/commands/{command_id}`、`POST /v1/powershell/commands/{command_id}/cancel`。任一能連到此 port 的 host 都可提交任意 PowerShell，故 network reachability 即是該 Windows scheduled-task account 的完整控制權；命令不會自動以 SYSTEM 執行。此變更沒有啟用 WinRM、SSH、SMB、RDP、VNC 或任何額外 Windows port/listener。
+- 命令 lifecycle 與 process state 僅存在 Worker 記憶體；Worker restart 後所有 command ID、輸出與執行中的 state 都會遺失。舊 pairing/token 檔與 `NVIDIA_WORKER_TOKEN` 僅保留 backward-compatible parsing，open-control request 不使用它們。
+- Mac Backend 以 URL-only client（保留 hostname/protocol 的 URL discovery 與 runtime URL cache，但不作 request authorization）代理三個對應 routes：`POST /api/workers/powershell/commands`、`GET /api/workers/powershell/commands/{command_id}`、`POST /api/workers/powershell/commands/{command_id}/cancel`。這完成先前 Task 1、3、5、6 延後的 progress/documentation 記錄；Task 5 的穩定 per-operation 503 code test coverage 建議仍屬獨立低優先測試改善。
+- 一般產圖直接送 native payload 到 ComfyUI `/prompt`；prompt path 不會使用 `/v1/resources/plan`、`/v1/workflows/preflight`、resource planning 或 managed updater coordination。缺失資源、node 或 capacity 問題由 ComfyUI 直接回傳。
+- 一次性管理員 `Enable-Open-PowerShell-Control.ps1` 從 `D:\code\ai-drawing` 直接複製 `worker.py` 與 `powershell_control.py` 至 installed current runtime，並重啟既有 `AI-Drawing NVIDIA Worker` scheduled task。部署僅保留 `HEAD == origin/main` 與 supplied `-ExpectedCommit` 兩個 version checks；沒有 hash、resource/preflight、配對或 managed-updater gate。
+
 ## 2026-08-02 NVIDIA Worker installed-updater bootstrap 部署發行
 
 - 已確認 one-time installed-updater bootstrap 邊界：由系統管理員從受信任的 canonical `D:\code\ai-drawing` `main` checkout 升級既有 privileged updater，不重裝或停止 production Worker／ComfyUI。部署會先精確驗證 configured HTTPS origin，再進行任何 fetch/contact，之後要求 clean tracked worktree 與 `HEAD == origin/main == -ExpectedCommit`。staging 先取得 `git ls-files`，只檢查及複製 tracked updater components；untracked 一般檔案或 junction 均忽略且不複製。
