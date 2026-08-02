@@ -570,6 +570,361 @@ $Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot 'repository-root' `
     assert record["events"] == expected_events
 
 
+def _create_bootstrap_test_repository(tmp_path: Path) -> Path:
+    origin = tmp_path / "origin.git"
+    repository = tmp_path / "repository with spaces"
+    subprocess.run(
+        ["git.exe", "init", "--bare", "--initial-branch=main", str(origin)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subprocess.run(
+        ["git.exe", "init", "--initial-branch=main", str(repository)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subprocess.run(
+        ["git.exe", "-C", str(repository), "config", "user.name", "Bootstrap Test"],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git.exe",
+            "-C",
+            str(repository),
+            "config",
+            "user.email",
+            "bootstrap@example.invalid",
+        ],
+        check=True,
+    )
+    source = repository / "worker" / "windows"
+    updater = source / "updater"
+    updater.mkdir(parents=True)
+    for relative in (
+        "__init__.py",
+        "cli.py",
+        "runtime.py",
+        "windows_runtime.py",
+        "state.py",
+    ):
+        (updater / relative).write_text(f"# tracked {relative}\n", encoding="utf-8")
+    (source / "UpdaterBootstrap.ps1").write_text(
+        "$ErrorActionPreference = 'Stop'\n", encoding="utf-8"
+    )
+    subprocess.run(
+        ["git.exe", "-C", str(repository), "add", "worker/windows"], check=True
+    )
+    subprocess.run(
+        ["git.exe", "-C", str(repository), "commit", "-m", "bootstrap fixture"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subprocess.run(
+        ["git.exe", "-C", str(repository), "remote", "add", "origin", str(origin)],
+        check=True,
+    )
+    subprocess.run(
+        ["git.exe", "-C", str(repository), "push", "-u", "origin", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return repository
+
+
+def _mutate_bootstrap_repository(repository: Path, mutation: str) -> None:
+    if mutation == "wrong_path" or mutation == "expected_commit_differs":
+        return
+    if mutation == "wrong_branch":
+        subprocess.run(
+            ["git.exe", "-C", str(repository), "checkout", "-b", "other"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return
+    if mutation == "wrong_origin":
+        other_origin = repository.parent / "other-origin.git"
+        subprocess.run(
+            ["git.exe", "clone", "--bare", str(repository), str(other_origin)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            [
+                "git.exe",
+                "-C",
+                str(repository),
+                "remote",
+                "set-url",
+                "origin",
+                str(other_origin),
+            ],
+            check=True,
+        )
+        return
+    tracked = repository / "worker" / "windows" / "updater" / "state.py"
+    tracked.write_text("# changed tracked state\n", encoding="utf-8")
+    if mutation == "origin_main_differs":
+        subprocess.run(
+            ["git.exe", "-C", str(repository), "add", str(tracked)], check=True
+        )
+        subprocess.run(
+            ["git.exe", "-C", str(repository), "commit", "-m", "local commit"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return
+    if mutation != "tracked_dirty":
+        raise AssertionError(f"unknown bootstrap repository mutation: {mutation}")
+
+
+def _run_bootstrap_repository_preflight(
+    repository: Path, mutation: str
+) -> subprocess.CompletedProcess[str]:
+    expected_commit = subprocess.run(
+        ["git.exe", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if mutation == "expected_commit_differs":
+        expected_commit = "0" * 40
+    trusted_root = repository.parent / "different trusted root" if mutation == "wrong_path" else repository
+    body = f"""
+Assert-TrustedUpdaterBootstrapRepository `
+  -RepositoryRoot {_ps_quote(repository)} `
+  -ExpectedCommit {_ps_quote(expected_commit)} `
+  -TrustedRepositoryRoot {_ps_quote(trusted_root)} `
+  -TrustedRemoteUrl {_ps_quote(repository.parent / 'origin.git')}
+"""
+    return _run_updater_bootstrap_harness(repository.parent, body)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Git preflight requires Windows")
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        ("wrong_path", "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"),
+        ("wrong_branch", "UPDATER_BOOTSTRAP_BRANCH_INVALID"),
+        ("wrong_origin", "UPDATER_BOOTSTRAP_REMOTE_INVALID"),
+        ("origin_main_differs", "UPDATER_BOOTSTRAP_SOURCE_STALE"),
+        ("expected_commit_differs", "UPDATER_BOOTSTRAP_COMMIT_MISMATCH"),
+        ("tracked_dirty", "UPDATER_BOOTSTRAP_SOURCE_DIRTY"),
+    ],
+)
+def test_updater_bootstrap_deployment_rejects_untrusted_repository_state(
+    tmp_path: Path, mutation: str, expected: str
+) -> None:
+    repository = _create_bootstrap_test_repository(tmp_path)
+    _mutate_bootstrap_repository(repository, mutation)
+
+    result = _run_bootstrap_repository_preflight(repository, mutation)
+
+    assert result.returncode != 0
+    assert expected in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Git preflight requires Windows")
+@pytest.mark.parametrize("expected_commit", ["abc", "A" * 40])
+def test_updater_bootstrap_deployment_repository_rejects_malformed_expected_commit(
+    tmp_path: Path, expected_commit: str
+) -> None:
+    result = _run_updater_bootstrap_harness(
+        tmp_path,
+        f"Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit {_ps_quote(expected_commit)}",
+    )
+
+    assert result.returncode != 0
+    assert "UPDATER_BOOTSTRAP_COMMIT_INVALID" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows Git staging requires Windows")
+def test_updater_bootstrap_deployment_staging_ignores_untracked_repository_files(
+    tmp_path: Path,
+) -> None:
+    repository = _create_bootstrap_test_repository(tmp_path)
+    untracked = repository / "worker" / "windows" / "updater" / "untracked-sentinel.txt"
+    untracked.write_text("must not be staged\n", encoding="utf-8")
+    worker_root = tmp_path / "worker root"
+    worker_root.mkdir()
+    security = Path(__file__).resolve().parents[2] / "worker" / "windows" / "WorkerSecurity.ps1"
+    expected_commit = subprocess.run(
+        ["git.exe", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    body = f"""
+. {_ps_quote(security)}
+$ExpectedCommit = {_ps_quote(expected_commit)}
+Assert-TrustedUpdaterBootstrapRepository -RepositoryRoot {_ps_quote(repository)} `
+  -ExpectedCommit $ExpectedCommit -TrustedRepositoryRoot {_ps_quote(repository)} `
+  -TrustedRemoteUrl {_ps_quote(repository.parent / 'origin.git')}
+$CurrentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+$Staging = New-UpdaterBootstrapStage -RepositoryRoot {_ps_quote(repository)} `
+  -WorkerRoot {_ps_quote(worker_root)} -ExpectedCommit $ExpectedCommit `
+  -OwnerSid $CurrentSid -AllowedSids @($CurrentSid)
+Assert-UpdaterBootstrapStageStructure -StagingPath $Staging
+[pscustomobject]@{{
+  staging = $Staging
+  sentinel = Test-Path -LiteralPath (Join-Path $Staging "updater\\untracked-sentinel.txt")
+}} | ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["sentinel"] is False
+    assert Path(record["staging"]).is_dir()
+
+
+def test_updater_bootstrap_deployment_has_no_per_file_hash_gate() -> None:
+    script = (
+        Path(__file__).resolve().parents[2]
+        / "worker"
+        / "windows"
+        / "Deploy-UpdaterBootstrap.ps1"
+    )
+    text = script.read_text(encoding="utf-8").lower()
+    for forbidden in (
+        "get-filehash",
+        "sha256",
+        "sha-256",
+        "hashalgorithm",
+        "digest-manifest",
+    ):
+        assert forbidden not in text
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevation contract requires Windows")
+def test_updater_bootstrap_deployment_elevation_rejects_non_administrator(
+    tmp_path: Path,
+) -> None:
+    result = _run_updater_bootstrap_harness(
+        tmp_path, "Assert-UpdaterBootstrapElevation -AdministratorProbe { $false }"
+    )
+
+    assert result.returncode != 0
+    assert "UPDATER_BOOTSTRAP_ELEVATION_REQUIRED" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows repository context requires Windows")
+@pytest.mark.parametrize("marker", ["wrong marker", "AI-Drawing NVIDIA Worker"])
+def test_updater_bootstrap_deployment_repository_context_rejects_invalid_worker_tree(
+    tmp_path: Path, marker: str
+) -> None:
+    worker_root = tmp_path / "worker"
+    program_data = tmp_path / "program data"
+    worker_root.mkdir()
+    program_data.mkdir()
+    (worker_root / ".ai-drawing-worker-owned").write_text(marker, encoding="utf-8")
+    security = Path(__file__).resolve().parents[2] / "worker" / "windows" / "WorkerSecurity.ps1"
+    body = f"""
+. {_ps_quote(security)}
+Assert-UpdaterBootstrapWorkerPaths -WorkerRoot {_ps_quote(worker_root)} `
+  -ProgramDataRoot {_ps_quote(program_data)} -ExpectedCommit {'a' * 40}
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode != 0
+    assert "Task 7 migration is required" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows reparse contract requires Windows")
+@pytest.mark.parametrize(
+    ("path_kind", "nested"),
+    [
+        ("source", True),
+        ("updater", True),
+        ("staging", False),
+        ("backup", False),
+        ("program-data", True),
+    ],
+)
+def test_updater_bootstrap_deployment_reparse_paths_are_rejected(
+    tmp_path: Path, path_kind: str, nested: bool
+) -> None:
+    outside = tmp_path / f"outside-{path_kind}"
+    outside.mkdir()
+    (outside / "must-not-be-read.txt").write_text("sentinel", encoding="utf-8")
+    if nested:
+        candidate = tmp_path / f"{path_kind}-root"
+        candidate.mkdir()
+        junction = candidate / "escape"
+    else:
+        candidate = tmp_path / f"{path_kind}-junction"
+        junction = candidate
+    created = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f"New-Item -ItemType Junction -Path {_ps_quote(junction)} -Target {_ps_quote(outside)} | Out-Null",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if created.returncode != 0:
+        pytest.skip(f"junction creation unavailable: {created.stderr}")
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path,
+        f"Assert-UpdaterBootstrapNoReparseTree -Path {_ps_quote(candidate)}",
+    )
+
+    assert result.returncode != 0
+    assert "UPDATER_BOOTSTRAP_REPARSE_POINT" in result.stderr
+    assert (outside / "must-not-be-read.txt").read_text(encoding="utf-8") == "sentinel"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows staging contract requires Windows")
+def test_updater_bootstrap_deployment_staging_requires_structural_files(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "staging"
+    (staging / "updater").mkdir(parents=True)
+    for relative in ("__init__.py", "cli.py", "runtime.py", "windows_runtime.py"):
+        (staging / "updater" / relative).write_text("fixture\n", encoding="utf-8")
+    (staging / "UpdaterBootstrap.ps1").write_text("fixture\n", encoding="utf-8")
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path,
+        f"Assert-UpdaterBootstrapStageStructure -StagingPath {_ps_quote(staging)}",
+    )
+
+    assert result.returncode != 0
+    assert "UPDATER_BOOTSTRAP_STAGE_INVALID" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows staging adapter requires Windows")
+def test_updater_bootstrap_deployment_staging_adapter_enforces_structure(
+    tmp_path: Path,
+) -> None:
+    staging = tmp_path / "incomplete staging"
+    staging.mkdir()
+    body = f"""
+$Adapter = Get-ProductionUpdaterBootstrapAdapter
+& $Adapter.ValidateStage {_ps_quote(staging)}
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode != 0
+    assert "UPDATER_BOOTSTRAP_STAGE_INVALID" in result.stderr
+
+
 def _run_worker_root_harness(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
     repo = Path(__file__).resolve().parents[2]
     helper = repo / "worker" / "windows" / "WorkerRoot.ps1"
