@@ -14,6 +14,15 @@
 
 # 進度追蹤
 
+## 2026-08-02 NVIDIA Worker installed-updater bootstrap 部署發行
+
+- 已確認 one-time installed-updater bootstrap 邊界：由系統管理員從受信任的 canonical `D:\code\ai-drawing` `main` checkout 升級既有 privileged updater，不重裝或停止 production Worker／ComfyUI。部署前要求預期 HTTPS origin、clean tracked worktree、`HEAD == origin/main == -ExpectedCommit`，並驗證固定 updater／ProgramData 路徑的 ownership、ACL 與 no-reparse 契約；staging allowlist 只來自 `git ls-files`。
+- `Deploy-UpdaterBootstrap.ps1` 以 secured ProgramData exclusive lock 串行 transaction，只停止並等待 `AI-Drawing Worker Updater` task；在 Worker 與 ProgramData 各自 volume 以 whole-path backup／staging／switch 完成啟用，再套用 ACL、執行 installed updater import/config/recovery smoke，並只驗證既有 scheduled-task action 而不啟動 task。成功時清除 staging 並保留兩份舊 backup；backup 後任一步失敗會驗證 backup、回滾兩邊、重套 ACL 並重跑 restored smoke，無法安全復原則回 `UPDATER_BOOTSTRAP_RECOVERY_REQUIRED` 且保留 recovery evidence。
+- 信任邊界仍是完整 Git commit 與 tracked-file allowlist；部署流程明確沒有 `Get-FileHash`、digest manifest、per-file content hash／內容相等比較或 source/staging/installed content gate。ZIP SHA-256 `85f08c2880b47e8f4361bf4823e2f6da7d5e373d920dea75df8fc7466e82ab60` 僅是下載／發行 metadata，不是部署 acceptance gate。
+- Elevated entrypoint 嚴格要求 Windows PowerShell Desktop 5.1。non-live focused gate 為 `388 passed, 1 skipped`（2 個既有 warnings）；distribution／archive／updater-bootstrap parity 與 no-hash contract 子集為 `60 passed, 55 deselected`，`git diff --check` 通過。dist directory 與 ZIP 均已包含 `Deploy-UpdaterBootstrap.ps1` 與更新後 runbook。
+- 尚待系統管理員在 elevated Windows PowerShell 5.1 以本次發行的 exact commit 執行一次 bootstrap、取得 `UPDATER_BOOTSTRAP_READY`，並確認 production Worker 仍 ready；之後才能由 Mac 送出恰好一個全新 live remote-update request ID，完成 update、restart、discovery 與 reconnection smoke。禁止重用 `b49f9c07-272c-4f19-aa16-25415997f8ed` 或任何更早的失敗 ID。
+- `NVIDIA_WORKER_AUTO_UPDATE=false` 持續維持，直到上述全新 live smoke 全部通過。本輪只做 build／test／documentation／publication，未操作 installed Worker、ProgramData、scheduled task、service、ComfyUI、GPU 或 remote update。
+
 ## 2026-08-02 NVIDIA Worker minimal health validation 發行與 final-review 修正
 
 - 移除更新流程中重複的 `/object_info` readiness probe 與 resource-plan health gate；一般產圖 submission 仍完整保留 resource scan／plan／transfer，且有效的 verification sidecar 可避免對未變更資源重複計算 hash。
