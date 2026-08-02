@@ -1057,6 +1057,37 @@ def test_plan_does_not_self_heal_missing_verification_sidecar(tmp_path, monkeypa
     assert calls["n"] == 0
 
 
+def test_plan_requires_retransfer_for_non_hex_sidecar_digest(tmp_path, monkeypatch) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"preexisting-model"
+    invalid_digest = "z" * 64
+    destination = worker.MODEL_ROOTS["loras"] / "legacy.safetensors"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(data)
+    stat = destination.stat()
+    sidecar = worker._sidecar_path(destination)
+    sidecar.write_text(
+        json.dumps(
+            {
+                "size": stat.st_size,
+                "mtime_ns": stat.st_mtime_ns,
+                "sha256": invalid_digest,
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "kind": "loras",
+        "name": destination.name,
+        "sha256": invalid_digest,
+        "size": len(data),
+    }
+
+    plan = client.post("/v1/resources/plan", headers=_auth(), json={"resources": [manifest]})
+
+    assert plan.json()["missing"] == [{**manifest, "offset": 0}]
+
+
 def test_plan_removes_stale_sidecar_when_destination_is_missing(
     tmp_path, monkeypatch
 ) -> None:
@@ -1153,6 +1184,11 @@ def test_cache_eviction_removes_destination_verification_sidecar(tmp_path, monke
 def test_digest_mismatch_leaves_no_destination_or_sidecar(tmp_path, monkeypatch) -> None:
     worker, client = _configured_worker(tmp_path, monkeypatch)
     destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    previous = b"previous-model"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(previous)
+    worker._record_verified(destination, hashlib.sha256(previous).hexdigest())
+    sidecar = worker._sidecar_path(destination)
     response = client.put(
         "/v1/resources/content",
         params={
@@ -1168,4 +1204,4 @@ def test_digest_mismatch_leaves_no_destination_or_sidecar(tmp_path, monkeypatch)
 
     assert response.status_code == 422
     assert not destination.exists()
-    assert not worker._sidecar_path(destination).exists()
+    assert not sidecar.exists()
