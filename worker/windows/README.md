@@ -1,81 +1,54 @@
-# AI-Drawing NVIDIA Worker（Windows 11）
+# AI-Drawing Windows Worker: open PowerShell control
 
-## Direct-to-D 全新安裝
+## Security boundary
 
-此套件將 Worker 直接安裝到：
+**Security-critical:** TCP port 8791 accepts unauthenticated arbitrary
+PowerShell from any host that can reach it. Treat network access to this port
+as full control of the Windows account running the existing `AI-Drawing NVIDIA
+Worker` scheduled task. This is an intentional high-risk open-control
+interface, not a paired or token-authenticated service.
 
-```text
-D:\code\AI-Drawing-Worker
-```
+Commands run as the Windows account configured for that existing scheduled
+task. They do not automatically run as SYSTEM. Pairing and token files are
+legacy compatibility artifacts and are ignored by open-control Worker requests.
 
-大型 Python／ComfyUI runtime、模型、cache、input/output 都位於 D 槽。C 槽只保留很小的 privileged updater 控制資料：
+Open control uses the existing Worker listener on port 8791 only. It does not
+enable WinRM, SSH, SMB, RDP, VNC, or any additional Windows listener. Restrict
+who can reach port 8791 before enabling this interface.
 
-```text
-C:\ProgramData\AI-Drawing-Worker
-```
+The Worker exposes these unauthenticated command routes:
 
-此流程是破壞性的 clean install，不是 migration。它會移除舊 C 槽 Worker、舊 Token、模型、cache、input/output、舊 pairing 與失敗 migration 內容，且不提供 C 槽 rollback。
+- `POST /v1/powershell/commands` submits a script and optional working
+  directory.
+- `GET /v1/powershell/commands/{command_id}` reads its lifecycle record.
+- `POST /v1/powershell/commands/{command_id}/cancel` requests cancellation.
 
-## 安裝流程
+Command records and active-process state live only in Worker memory. They are
+lost when the Worker restarts; a previous command ID then cannot be recovered.
 
-1. 以系統管理員 PowerShell 執行 `Clean-Install-Worker.ps1`，先取得 deletion plan 與 `plan_sha256`。
-2. 核對所有目標與容量後，以相同 hash 加上 `-Apply -ExpectedPlanSha256 <hash>` 執行清理。
-3. 右鍵執行 `Setup-D.cmd`，或在系統管理員 PowerShell 執行 `Setup-D.ps1`。
-4. 等待 Python、CUDA PyTorch、ComfyUI、custom nodes、managed release 與排程安裝完成。
-5. 將桌面的新 `AI-Drawing-Worker-Pairing.txt` 提供給 Mac operator。舊 pairing 必然失效。
+## Generation behavior
 
-不要把 Token、pairing 檔內容或 `worker.json` 上傳到 Git 或貼到對話中。
+Ordinary generation is sent directly to ComfyUI at `/prompt`. It does not use
+`/v1/resources/plan`, `/v1/workflows/preflight`, resource planning, or managed
+updater coordination. ComfyUI directly returns missing-resource, node, and
+capacity errors to the caller.
 
-## 成功條件
+## One-time enablement
 
-- ComfyUI 在 `127.0.0.1:8188` healthy 且回報 CUDA GPU。
-- Worker 在 `0.0.0.0:8791` healthy，未帶 Token 請求回 401。
-- Worker status 回報 protocol 2、正確 source commit、update/restart capability。
-- `D:\code\AI-Drawing-Worker\current` 指向正確的 versioned release。
-- 三個固定排程與 ProgramData updater metadata 都指向 D 槽 root。
-
-若安裝失敗，保留 D 槽 Worker 目錄與 logs 供診斷；不要再次執行廣泛清理，也不要手動刪除未知 junction。
-
-## Mac 配對
-
-新的 pairing 檔包含 Windows Worker URL 與新 Token。匯入 Mac 後，再由 Mac Backend 驗證 discovery、protocol 2、CUDA／ComfyUI ready、restart 與 update。
-
-在所有實機驗證完成前，維持：
-
-```text
-NVIDIA_WORKER_AUTO_UPDATE=false
-```
-
-## Updater bootstrap deployment (Windows PowerShell 5.1 Administrator)
-
-Open **Windows PowerShell 5.1 as Administrator** and run exactly:
+Open Windows PowerShell 5.1 as Administrator and run exactly:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-$ExpectedCommit = (& git.exe -C "D:\code\ai-drawing" rev-parse HEAD).Trim()
-& "D:\code\ai-drawing\worker\windows\Deploy-UpdaterBootstrap.ps1" `
-    -ExpectedCommit $ExpectedCommit
+& "D:\code\ai-drawing\worker\windows\Enable-Open-PowerShell-Control.ps1" `
+    -ExpectedCommit "<40-character commit shown after the final push>"
 ```
 
-Wait for `UPDATER_BOOTSTRAP_READY` before proceeding. Keep
-`NVIDIA_WORKER_AUTO_UPDATE=false` throughout this one-time deployment. Do not
-rerun a failed request ID.
+The angle-bracket value is documentation notation, not executable code. In the
+final operator handoff, replace it with the actual 40-character commit shown
+after the final push.
 
-Before contacting Git, the deployment verifies the exact configured HTTPS
-origin. It then requires `HEAD == origin/main == ExpectedCommit`, obtains the
-tracked file list before inspecting source components, and copies only those
-tracked updater files. Untracked files and junctions are ignored and are never
-packaged into the staging tree.
-
-The switch runs under an exclusive ProgramData lock. A small, secret-free,
-ACL-protected journal at
-`updater-bootstrap-deployment-owned\transaction-journal.json` is flushed before
-the first destructive move and advanced after every move. On the next run,
-journal recovery happens under the lock before normal installed-updater
-preflight, so an interrupted switch is restored or safely finalized. Rollback
-copies the complete backups and retains both backup paths after validation; it
-does not consume them. A lock-file cleanup warning does not change an otherwise
-successful or successfully rolled-back result.
-
-If the result is `UPDATER_BOOTSTRAP_RECOVERY_REQUIRED`, do not delete the
-reported journal, backup, or staging evidence and do not submit an update.
+The deployment script fetches `origin/main`, requires `HEAD == origin/main`,
+and requires the supplied `-ExpectedCommit` to match both. These are its only
+deployment version checks. It copies the two open-control Worker files into the
+installed current runtime and restarts the existing Worker scheduled task; it
+does not create another service, listener, or updater workflow.

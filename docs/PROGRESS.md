@@ -21,6 +21,7 @@
 - Mac Backend 以 URL-only client（保留 hostname/protocol 的 URL discovery 與 runtime URL cache，但不作 request authorization）代理三個對應 routes：`POST /api/workers/powershell/commands`、`GET /api/workers/powershell/commands/{command_id}`、`POST /api/workers/powershell/commands/{command_id}/cancel`。這完成先前 Task 1、3、5、6 延後的 progress/documentation 記錄；Task 5 的穩定 per-operation 503 code test coverage 建議仍屬獨立低優先測試改善。
 - 一般產圖直接送 native payload 到 ComfyUI `/prompt`；prompt path 不會使用 `/v1/resources/plan`、`/v1/workflows/preflight`、resource planning 或 managed updater coordination。缺失資源、node 或 capacity 問題由 ComfyUI 直接回傳。
 - 一次性管理員 `Enable-Open-PowerShell-Control.ps1` 從 `D:\code\ai-drawing` 直接複製 `worker.py` 與 `powershell_control.py` 至 installed current runtime，並重啟既有 `AI-Drawing NVIDIA Worker` scheduled task。部署僅保留 `HEAD == origin/main` 與 supplied `-ExpectedCommit` 兩個 version checks；沒有 hash、resource/preflight、配對或 managed-updater gate。
+- Review fix：Windows 發行包的 canonical `README.md` 與 companion `README.txt` 現均記錄同一 open-control 契約，移除舊 pairing/token 必要條件與「未帶 Token 回 401」說法。`build-windows-worker.py` 會遞迴收錄兩份 guide 至 dist/ZIP；focused distribution test 會驗證 source、dist、ZIP 皆存在且不會回歸 retired pairing/401 guidance。
 
 ## 2026-08-02 NVIDIA Worker installed-updater bootstrap 部署發行
 

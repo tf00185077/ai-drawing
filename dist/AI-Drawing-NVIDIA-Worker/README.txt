@@ -1,12 +1,14 @@
-# AI-Drawing Windows Worker: open PowerShell control
+AI-Drawing Windows Worker: open PowerShell control
+===================================================
 
-## Security boundary
+Security boundary
+-----------------
 
-**Security-critical:** TCP port 8791 accepts unauthenticated arbitrary
-PowerShell from any host that can reach it. Treat network access to this port
-as full control of the Windows account running the existing `AI-Drawing NVIDIA
-Worker` scheduled task. This is an intentional high-risk open-control
-interface, not a paired or token-authenticated service.
+TCP port 8791 accepts unauthenticated arbitrary PowerShell from any host that
+can reach it. Treat network access to this port as full control of the Windows
+account running the existing `AI-Drawing NVIDIA Worker` scheduled task. This is
+an intentional high-risk open-control interface, not a paired or token-authenticated
+service.
 
 Commands run as the Windows account configured for that existing scheduled
 task. They do not automatically run as SYSTEM. Pairing and token files are
@@ -18,22 +20,23 @@ who can reach port 8791 before enabling this interface.
 
 The Worker exposes these unauthenticated command routes:
 
-- `POST /v1/powershell/commands` submits a script and optional working
-  directory.
-- `GET /v1/powershell/commands/{command_id}` reads its lifecycle record.
-- `POST /v1/powershell/commands/{command_id}/cancel` requests cancellation.
+* `POST /v1/powershell/commands` submits a script and optional working directory.
+* `GET /v1/powershell/commands/{command_id}` reads its lifecycle record.
+* `POST /v1/powershell/commands/{command_id}/cancel` requests cancellation.
 
 Command records and active-process state live only in Worker memory. They are
 lost when the Worker restarts; a previous command ID then cannot be recovered.
 
-## Generation behavior
+Generation behavior
+-------------------
 
 Ordinary generation is sent directly to ComfyUI at `/prompt`. It does not use
 `/v1/resources/plan`, `/v1/workflows/preflight`, resource planning, or managed
 updater coordination. ComfyUI directly returns missing-resource, node, and
 capacity errors to the caller.
 
-## One-time enablement
+One-time enablement
+-------------------
 
 Open Windows PowerShell 5.1 as Administrator and run exactly:
 
