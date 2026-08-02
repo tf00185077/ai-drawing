@@ -674,3 +674,9 @@ checkpoint」而改用本地預設模型。修正（`backend/app/services/civita
 
 （無。舊清單中的 queue 隊首阻塞已於 2026-06 修復；R5–R7 的 COMBO/catalog blockers 隨
 strict 工具面移除而不再適用。）
+## 2026-08-02 NVIDIA Worker existing-ComfyUI launcher recovery
+
+- Root cause from the installed launcher log: ComfyUI was already listening on `127.0.0.1:8188` and still owned `comfyui.stdout.log`; `Start-Worker.ps1` unconditionally rotated that live log and exited before starting port 8791.
+- `Start-Worker.ps1` now probes `/system_stats` before touching ComfyUI logs. When 8188 is already ready it reuses that process, skips log rotation and `Start-Process`, and proceeds directly to the open Worker listener. A new ComfyUI instance still uses the existing bounded readiness loop and rotated redirected logs.
+- `Enable-Open-PowerShell-Control.ps1` now deploys `Start-Worker.ps1` together with `worker.py` and `powershell_control.py`, so rerunning the one-time command repairs the installed launcher directly.
+- Focused Windows launcher/deployment/distribution gate: `153 passed, 1 skipped`. Rebuilt ZIP SHA-256: `88d936178bcf4c21917aeb0cf2daaaa042eeb703f22823f59a314308e451a051`.

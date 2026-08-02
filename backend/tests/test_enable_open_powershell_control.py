@@ -432,10 +432,10 @@ def test_deployment_command_ast_uses_only_the_approved_command_vocabulary() -> N
     assert summary["dynamic_command_count"] == 0
     assert Counter(summary["command_names"]) == Counter(
         {
-            "Copy-Item": 2,
+            "Copy-Item": 3,
             "Get-NetTCPConnection": 2,
             "Get-ScheduledTask": 1,
-            "Join-Path": 7,
+            "Join-Path": 10,
             "New-Object": 1,
             "Select-Object": 1,
             "Set-StrictMode": 1,
@@ -443,7 +443,7 @@ def test_deployment_command_ast_uses_only_the_approved_command_vocabulary() -> N
             "Start-Sleep": 1,
             "Stop-Process": 1,
             "Stop-ScheduledTask": 1,
-            "Test-Path": 3,
+            "Test-Path": 4,
             "Write-Output": 1,
             "git.exe": 3,
         }
@@ -516,8 +516,8 @@ def test_deployment_stops_and_starts_only_the_existing_worker_task() -> None:
     ]
 
 
-def test_deployment_copies_only_the_two_control_runtime_files_directly() -> None:
-    """Staging or omitting either direct runtime copy must fail this test."""
+def test_deployment_copies_only_the_three_open_control_runtime_files_directly() -> None:
+    """The API, process manager, and fixed launcher must deploy together."""
     script = _script_text()
 
     copy_lines = re.findall(r"(?im)^[ \t]*Copy-Item\b[^\r\n]*", script)
@@ -528,6 +528,9 @@ def test_deployment_copies_only_the_two_control_runtime_files_directly() -> None
         "    Copy-Item -LiteralPath "
         '(Join-Path $SourceWindowsRoot "powershell_control.py") -Destination '
         '(Join-Path $InstalledWindowsRoot "powershell_control.py") -Force',
+        "    Copy-Item -LiteralPath "
+        '(Join-Path $SourceWindowsRoot "Start-Worker.ps1") -Destination '
+        '(Join-Path $InstalledWorkerRoot "Start-Worker.ps1") -Force',
     ]
 
 
@@ -542,12 +545,21 @@ def test_deployment_checks_both_sources_and_target_before_shutdown() -> None:
         'Test-Path -LiteralPath (Join-Path $SourceWindowsRoot '
         '"powershell_control.py") -PathType Leaf'
     )
+    source_launcher_guard = (
+        'Test-Path -LiteralPath (Join-Path $SourceWindowsRoot '
+        '"Start-Worker.ps1") -PathType Leaf'
+    )
     installed_target_guard = (
         "Test-Path -LiteralPath $InstalledWindowsRoot -PathType Container"
     )
     shutdown_boundary = script.index("$WorkerTask = Get-ScheduledTask")
 
-    for guard in (source_worker_guard, source_control_guard, installed_target_guard):
+    for guard in (
+        source_worker_guard,
+        source_control_guard,
+        source_launcher_guard,
+        installed_target_guard,
+    ):
         assert script.count(guard) == 1
         assert script.index(guard) < shutdown_boundary
 
@@ -561,7 +573,7 @@ def test_deployment_restarts_the_task_from_finally_after_stop_and_copy() -> None
     deployment_try = summary["try_statements"][0]
     assert deployment_try["body_commands"].count("Stop-ScheduledTask") == 1
     assert deployment_try["body_commands"].count("Stop-Process") == 1
-    assert deployment_try["body_commands"].count("Copy-Item") == 2
+    assert deployment_try["body_commands"].count("Copy-Item") == 3
     assert "Start-ScheduledTask" not in deployment_try["body_commands"]
     assert deployment_try["finally_commands"] == ["Start-ScheduledTask"]
 
