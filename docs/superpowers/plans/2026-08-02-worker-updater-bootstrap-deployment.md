@@ -475,7 +475,7 @@ git commit -m "docs(worker): add updater bootstrap runbook"
 py -3.11 scripts/build-windows-worker.py
 ```
 
-Expected: the package and ZIP include `Deploy-UpdaterBootstrap.ps1` automatically because the builder copies every tracked file under `worker/windows` except Python bytecode caches.
+Expected: the package and ZIP include `Deploy-UpdaterBootstrap.ps1` automatically because the builder copies package files under `worker/windows` except Python bytecode caches. Verify that no user-owned untracked file exists below that package source before rebuilding.
 
 - [ ] **Step 2: Run the complete focused gate**
 
@@ -547,3 +547,29 @@ Expected: only the two user-owned untracked files remain; push succeeds; `HEAD =
 ## Live operator gate
 
 Implementation and publication do not authorize operating the installed updater. After publication, run the deployment script once in an elevated Windows PowerShell 5.1 session with the exact published commit. Require `UPDATER_BOOTSTRAP_READY`, confirm the production Worker remains ready, and then submit exactly one new remote update request ID from the Mac. Never reuse `b49f9c07-272c-4f19-aa16-25415997f8ed` or earlier failed IDs. Keep `NVIDIA_WORKER_AUTO_UPDATE=false` until the new update, restart, discovery, and reconnection smoke all pass.
+
+## Final review fix wave
+
+- [x] Add behavior-level RED tests for process death after each backup and
+  activation move, preserved rollback backups, untracked file/junction
+  non-enumeration, exact-origin-before-fetch ordering, and nonfatal lock release
+  failure after both success and rollback.
+- [x] Add the fixed ProgramData `transaction-journal.json` with the exact
+  secret-free schema `schema_version`, `expected_commit`, and closed `stage`.
+  Write it atomically before the first destructive move and after every move.
+- [x] Under the exclusive lock and before normal installed-updater preflight,
+  recover an existing unsmoked journal using only fixed derived paths. Keep the
+  journal and existing evidence on any unproven recovery.
+- [x] Restore by copying the whole updater backup and bootstrap backup; validate
+  the restored installation before removing the journal and never consume the
+  backups.
+- [x] Obtain `git ls-files` before inspecting tracked source paths, and validate
+  the exact configured origin before any fetch/contact.
+- [x] Keep lock-file cleanup failures nonfatal, always dispose the exclusive
+  handle, and expose only `UPDATER_BOOTSTRAP_LOCK_CLEANUP_WARNING`.
+- [x] Keep pre-recovery validation limited to the ProgramData root and exact
+  recovery-control paths; run whole-tree ProgramData validation only on the
+  no-journal installed-preflight path.
+- [x] Run focused GREEN, rebuild directory/ZIP artifacts, run full focused and
+  parity gates, update `docs/PROGRESS.md` and the final-fix report, then commit
+  and push `main` without operating live state.
