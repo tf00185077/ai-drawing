@@ -2991,12 +2991,24 @@ def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
     wait_restart = (source / "Wait-Restart-Result.ps1").read_text(encoding="utf-8")
     for marker in (
         "FileMode]::OpenOrCreate", "FileShare]::None", "8188, 8791", "Get-NetTCPConnection",
-        "Start-Worker.ps1", "/system_stats", "/v1/worker/status",
-        "/v1/workflows/preflight", "TaskTimeoutSeconds", "request_id",
+        "Start-Worker.ps1", 'Write-State "started"', "request_id",
         "Move-Item", "Select-Object -Skip 5",
     ):
         assert marker in restart
-    assert "NVIDIA_WORKER_TOKEN" not in restart
+    for retired_gate in (
+        "NVIDIA_WORKER_TOKEN",
+        "Authorization",
+        "Bearer",
+        "/system_stats",
+        "/v1/worker/status",
+        "/v1/workflows/preflight",
+        "Invoke-RestMethod",
+        "TaskTimeoutSeconds",
+        "RESTART_HEALTH_TIMEOUT",
+        'Write-State "verifying"',
+        'Write-State "timed_out"',
+    ):
+        assert retired_gate not in restart
     for script in (restart, wait_restart):
         assert "$Parts = $Line -split '=', 2" in script
         assert ".Split(@('='), 2)" not in script

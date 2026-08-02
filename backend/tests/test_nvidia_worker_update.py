@@ -546,47 +546,6 @@ def test_background_start_is_nonblocking_and_reuses_one_thread(git_repo) -> None
     assert not first.is_alive()
 
 
-def test_worker_client_update_apis_use_fixed_authenticated_routes(monkeypatch) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
-    calls: list[tuple[str, str, dict[str, Any]]] = []
-
-    class Response:
-        @staticmethod
-        def json() -> dict[str, Any]:
-            return {"request_id": "request-1", "status": "queued"}
-
-    def request(method: str, path: str, **kwargs: Any):
-        calls.append((method, path, kwargs))
-        return Response()
-
-    monkeypatch.setattr(client, "_request", request)
-
-    assert client.request_update("a" * 40)["request_id"] == "request-1"
-    client.update_status()
-
-    assert calls == [
-        ("POST", "/v1/admin/update", {"json": {"target_commit": "a" * 40}}),
-        ("GET", "/v1/admin/update/status", {}),
-    ]
-
-
-def test_worker_client_restart_apis_use_fixed_routes_without_command_or_path(monkeypatch) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
-    calls = []
-
-    class Response:
-        def json(self):
-            return {"request_id": "restart-1", "state": "queued"}
-
-    monkeypatch.setattr(client, "_request", lambda method, path, **kwargs: calls.append((method, path, kwargs)) or Response())
-    assert client.request_restart() == {"request_id": "restart-1", "state": "queued"}
-    client.restart_status("restart-1")
-    assert calls == [
-        ("POST", "/v1/admin/restart", {"json": {}}),
-        ("GET", "/v1/admin/restart/status", {"params": {"request_id": "restart-1"}}),
-    ]
-
-
 def test_protocol_one_has_explicit_bootstrap_migration_error(git_repo) -> None:
     client = FakeWorkerClient(health_results=[_health("a" * 40, protocol_version=1, update_capability=0)])
     with pytest.raises(WorkerUpdateError) as caught:
@@ -626,8 +585,8 @@ def test_worker_client_caps_coordinator_timeout_at_configured_timeout(
     client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
 
     client.health(timeout=90)
-    client.update_status(timeout=4)
-    client.preflight([], timeout=2.5)
+    client.powershell_status("command-1", timeout=4)
+    client.cancel_powershell("command-1", timeout=2.5)
 
     assert constructed_timeouts == [10, 4, 2.5]
 
@@ -769,11 +728,15 @@ def test_coordinator_rejects_non_finite_or_non_positive_deadline(
     assert client.update_requests == []
 
 
-def test_fastapi_startup_launches_update_check_without_awaiting_it(monkeypatch) -> None:
+def test_fastapi_startup_never_launches_retired_update_coordination(monkeypatch) -> None:
     from app import main
     from app.db import database
+    from app.services import nvidia_worker_update
 
     events: list[str] = []
+    monkeypatch.setenv("NVIDIA_WORKER_AUTO_UPDATE", "true")
+    monkeypatch.setenv("NVIDIA_WORKER_TOKEN", "legacy-token-must-be-ignored")
+    monkeypatch.setenv("NVIDIA_WORKER_URL", "http://worker:8791")
     monkeypatch.setattr(database, "init_db", lambda: events.append("db"))
     monkeypatch.setattr(main.lora_trainer, "register_on_complete", lambda callback: None)
     monkeypatch.setattr(main.lora_trainer, "ensure_worker", lambda: None)
@@ -784,9 +747,25 @@ def test_fastapi_startup_launches_update_check_without_awaiting_it(monkeypatch) 
     monkeypatch.setattr(main, "start_comfyui_watcher", lambda: None)
     monkeypatch.setattr(main, "stop_comfyui_watcher", lambda: None)
     monkeypatch.setattr(
-        main,
+        nvidia_worker_update,
         "start_worker_update_background",
         lambda: events.append("update-background"),
+    )
+    monkeypatch.setattr(
+        nvidia_worker_update,
+        "stop_worker_update_background",
+        lambda: events.append("update-stop"),
+    )
+    monkeypatch.setattr(
+        main,
+        "start_worker_update_background",
+        lambda: events.append("bound-update-background"),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        main,
+        "stop_worker_update_background",
+        lambda: events.append("bound-update-stop"),
         raising=False,
     )
 
@@ -798,10 +777,10 @@ def test_fastapi_startup_launches_update_check_without_awaiting_it(monkeypatch) 
 
     asyncio.run(exercise())
 
-    assert events[:3] == ["db", "update-background", "serving"]
+    assert events == ["db", "serving"]
 
 
-def test_worker_status_exposes_only_safe_coordinator_error(monkeypatch) -> None:
+def test_worker_status_ignores_legacy_update_settings_and_token(monkeypatch) -> None:
     from app.api import workers
 
     secret = "Bearer-status-secret"
@@ -816,20 +795,11 @@ def test_worker_status_exposes_only_safe_coordinator_error(monkeypatch) -> None:
         ),
     )
     worker_client = MagicMock()
-    worker_client.health.side_effect = RuntimeError(secret)
+    worker_client.health.return_value = {"protocol_version": 2}
     monkeypatch.setattr(workers, "get_worker_client", lambda: worker_client)
-    monkeypatch.setattr(
-        workers,
-        "worker_update_status",
-        lambda: {"state": "error", "error_code": "WORKER_UPDATE_TIMEOUT"},
-        raising=False,
-    )
 
     result = workers.worker_status()
 
-    assert result["auto_update"] == {
-        "enabled": True,
-        "state": "error",
-        "error_code": "WORKER_UPDATE_TIMEOUT",
-    }
+    assert result["reachable"] is True
+    assert "auto_update" not in result
     assert secret not in str(result)

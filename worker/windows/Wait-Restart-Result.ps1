@@ -22,7 +22,7 @@ while ((Get-Date) -lt $Deadline) {
         $Result = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
         if ($Item.LastWriteTime -ge $Started -and $Result.request_id) { $SeenRequest = $Result.request_id }
         if ($SeenRequest -and $Result.request_id -eq $SeenRequest) {
-            if ($Result.state -eq "ready") { Write-Host "READY" -ForegroundColor Green; exit 0 }
+            if ($Result.state -eq "started") { Write-Host "STARTED" -ForegroundColor Green; exit 0 }
             if ($Result.state -in @("failed", "timed_out")) {
                 Write-Host ("FAILED: " + $Result.error_code) -ForegroundColor Red
                 Write-Host ("Logs: " + (Join-Path $Root "config\update-owned\restart"))

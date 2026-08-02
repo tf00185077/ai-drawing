@@ -10,6 +10,14 @@ from typing import Any, Callable
 
 
 _DEFAULT_POWERSHELL_EXECUTABLE = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+_UTF8_STDIN_BOOTSTRAP = (
+    "$Utf8 = New-Object System.Text.UTF8Encoding($false, $true); "
+    "[Console]::InputEncoding = $Utf8; "
+    "[Console]::OutputEncoding = $Utf8; "
+    "$OutputEncoding = $Utf8; "
+    "$Source = [Console]::In.ReadToEnd(); "
+    "& ([ScriptBlock]::Create($Source))"
+)
 _TERMINAL_STATES = frozenset({"completed", "failed", "cancelled"})
 
 
@@ -68,12 +76,20 @@ class PowerShellCommandManager:
             if record["state"] in _TERMINAL_STATES:
                 return dict(record)
             self._cancelled.add(command_id)
+            record.update(state="cancelled", finished_at=self._utc_timestamp())
+            self._terminal_order.append(command_id)
+            snapshot = dict(record)
+            self._trim_terminal_records()
             process = self._processes.get(command_id)
             should_terminate = process is not None and self._begin_termination(command_id)
 
         if should_terminate:
-            self._terminate_process(process)
-        return self.get(command_id)
+            threading.Thread(
+                target=self._terminate_process,
+                args=(process,),
+                daemon=True,
+            ).start()
+        return snapshot
 
     def _run_command(self, command_id: str, script: str, working_directory: str | None) -> None:
         try:
@@ -85,14 +101,14 @@ class PowerShellCommandManager:
                     "-ExecutionPolicy",
                     "Bypass",
                     "-Command",
-                    "-",
+                    _UTF8_STDIN_BOOTSTRAP,
                 ],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 encoding="utf-8",
-                errors="replace",
+                errors="strict",
                 shell=False,
                 creationflags=subprocess.CREATE_NO_WINDOW,
                 cwd=working_directory,
@@ -119,20 +135,25 @@ class PowerShellCommandManager:
         with self._lock:
             record = self._records.get(command_id)
             if record is None:
+                self._processes.pop(command_id, None)
+                self._cancelled.discard(command_id)
+                self._terminating.discard(command_id)
                 return
-            was_cancelled = command_id in self._cancelled
-            record.update(
-                exit_code=exit_code,
-                stdout=stdout,
-                stderr=stderr,
-                state="cancelled" if was_cancelled else ("completed" if exit_code == 0 else "failed"),
-                finished_at=self._utc_timestamp(),
-            )
+            if record["state"] == "cancelled":
+                record.update(exit_code=exit_code, stdout=stdout, stderr=stderr)
+            else:
+                record.update(
+                    exit_code=exit_code,
+                    stdout=stdout,
+                    stderr=stderr,
+                    state="completed" if exit_code == 0 else "failed",
+                    finished_at=self._utc_timestamp(),
+                )
+                self._terminal_order.append(command_id)
+                self._trim_terminal_records()
             self._processes.pop(command_id, None)
             self._cancelled.discard(command_id)
             self._terminating.discard(command_id)
-            self._terminal_order.append(command_id)
-            self._trim_terminal_records()
 
     def _begin_termination(self, command_id: str) -> bool:
         if command_id in self._terminating:

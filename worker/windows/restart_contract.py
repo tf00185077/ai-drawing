@@ -17,8 +17,8 @@ except ModuleNotFoundError:  # direct installed execution
 
 
 RESTART_TASK_NAME = "AI-Drawing NVIDIA Worker Restart"
-ACTIVE_RESTART_STATES = frozenset({"queued", "restarting", "verifying"})
-TERMINAL_RESTART_STATES = frozenset({"ready", "failed", "timed_out"})
+ACTIVE_RESTART_STATES = frozenset({"queued", "restarting"})
+TERMINAL_RESTART_STATES = frozenset({"started", "failed", "timed_out"})
 STALE_RESTART_AFTER = timedelta(minutes=4)
 
 

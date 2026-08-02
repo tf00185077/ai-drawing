@@ -26,6 +26,21 @@ The Worker exposes these unauthenticated command routes:
 
 Command records and active-process state live only in Worker memory. They are
 lost when the Worker restarts; a previous command ID then cannot be recovered.
+Cancellation publishes `cancelled` before the cancel response returns. Process
+exit and output capture may finish later, but cannot change that terminal state.
+
+PowerShell 5.1 text transport
+-----------------------------
+
+The Worker starts the fixed system Windows PowerShell 5.1 executable with a
+fixed ASCII bootstrap. The bootstrap sets console input/output to strict UTF-8,
+then reads the caller's script from standard input. The submitted script is not
+placed in process arguments and no temporary script file is created. Standard
+output and standard error are returned separately using strict UTF-8.
+
+This is a Unicode text-stream API, not an arbitrary binary-stream API. A script
+that must move byte-exact binary data should encode it as text (for example,
+Base64) and decode it at its destination.
 
 Generation behavior
 -------------------
@@ -34,6 +49,12 @@ Ordinary generation is sent directly to ComfyUI at `/prompt`. It does not use
 `/v1/resources/plan`, `/v1/workflows/preflight`, resource planning, or managed
 updater coordination. ComfyUI directly returns missing-resource, node, and
 capacity errors to the caller.
+
+The live Worker has no managed update, managed restart, resource-plan/content,
+or workflow-preflight HTTP routes. Update, repair, and restart actions are
+ordinary scripts submitted through the open PowerShell command routes. Backend
+startup does not launch the retired managed-update coordinator, and legacy
+update state cannot block `/prompt`.
 
 One-time enablement
 -------------------

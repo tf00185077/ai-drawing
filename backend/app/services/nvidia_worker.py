@@ -1,9 +1,7 @@
-"""NVIDIA Worker client.
+"""URL-only client for open Worker control and the direct ComfyUI proxy.
 
-The Worker intentionally presents the small ComfyUI API surface used by the
-queue alongside explicit administrative and file-transfer operations. A
-selected Worker is fail-closed: this module never returns the local client as a
-fallback.
+A selected Worker remains explicit: this module never returns the local client
+as a fallback.
 """
 from __future__ import annotations
 
@@ -290,57 +288,6 @@ class NvidiaWorkerClient(ComfyUIClient):
             **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
-    def request_update(
-        self,
-        target_commit: str,
-        *,
-        timeout: float | None = None,
-    ) -> dict[str, Any]:
-        return self._request(
-            "POST",
-            "/v1/admin/update",
-            json={"target_commit": target_commit},
-            **({} if timeout is None else {"timeout": timeout}),
-        ).json()
-
-    def update_status(self, *, timeout: float | None = None) -> dict[str, Any]:
-        return self._request(
-            "GET",
-            "/v1/admin/update/status",
-            **({} if timeout is None else {"timeout": timeout}),
-        ).json()
-
-    def request_restart(self, *, timeout: float | None = None) -> dict[str, Any]:
-        return self._request(
-            "POST",
-            "/v1/admin/restart",
-            json={},
-            **({} if timeout is None else {"timeout": timeout}),
-        ).json()
-
-    def restart_status(
-        self, request_id: str, *, timeout: float | None = None
-    ) -> dict[str, Any]:
-        return self._request(
-            "GET",
-            "/v1/admin/restart/status",
-            params={"request_id": request_id},
-            **({} if timeout is None else {"timeout": timeout}),
-        ).json()
-
-    def preflight(
-        self,
-        node_types: list[str],
-        *,
-        timeout: float | None = None,
-    ) -> dict[str, Any]:
-        return self._request(
-            "POST",
-            "/v1/workflows/preflight",
-            json={"node_types": node_types},
-            **({} if timeout is None else {"timeout": timeout}),
-        ).json()
-
     def submit_prompt(
         self,
         prompt: dict[str, Any],
@@ -432,7 +379,7 @@ def get_worker_client() -> NvidiaWorkerClient:
     """Build a Worker client using any hostname/protocol runtime URL cache."""
     settings = get_settings()
     if not settings.nvidia_worker_url:
-        raise WorkerConfigurationError("NVIDIA Worker is not paired")
+        raise WorkerConfigurationError("NVIDIA Worker URL is not configured")
     configured_url = settings.nvidia_worker_url.rstrip("/")
     expected_hostname = getattr(settings, "nvidia_worker_hostname", "")
     expected_protocol_version = int(

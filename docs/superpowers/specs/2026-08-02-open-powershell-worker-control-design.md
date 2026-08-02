@@ -111,19 +111,27 @@ PowerShell executable:
 -NoProfile
 -NonInteractive
 -ExecutionPolicy Bypass
--Command -
+-Command <fixed ASCII UTF-8 stdin bootstrap>
 ```
 
-The exact script is written to the process standard input. It is not embedded
-inside `-Command`, `cmd.exe`, a batch file, or `Start-Process -ArgumentList`, so
-PowerShell quoting does not alter caller content.
+The final argument is a fixed, implementation-owned ASCII bootstrap. It creates
+a strict, BOM-less UTF-8 encoding, assigns it to console input, console output,
+and `$OutputEncoding`, reads standard input to end, and evaluates that text as a
+script block. The submitted script itself is written unchanged to process
+standard input. It is never embedded in an argument, temporary script,
+`cmd.exe`, batch file, or `Start-Process -ArgumentList`, so argument quoting does
+not alter caller content.
 
 The submitted `working_directory` is passed directly as the subprocess working
 directory. A nonexistent or inaccessible directory causes process creation to
 fail and is returned as a failed command result.
 
-The Worker captures stdout and stderr separately as text. It does not parse,
-redact, classify, retry, or interpret command output.
+Python's stdin, stdout, and stderr pipe wrappers also use strict UTF-8. The
+Worker captures stdout and stderr separately as text and does not silently
+replace undecodable bytes. This API transports Unicode text streams, not
+arbitrary binary streams; callers that need byte-exact binary transport must
+encode the bytes into text themselves (for example, Base64). The Worker does
+not parse, redact, classify, retry, or interpret command output.
 
 ## Command lifecycle
 
@@ -131,8 +139,11 @@ redact, classify, retry, or interpret command output.
 - State transitions are `running` to exactly one of `completed`, `failed`, or
   `cancelled`.
 - Exit code zero produces `completed`; a nonzero code produces `failed`.
-- Cancellation produces `cancelled`; the observed exit code may be platform
-  dependent.
+- Cancellation atomically publishes `cancelled` before the cancel request
+  returns, whether it wins before or after process registration. Later process
+  exit and output capture may fill `exit_code`, `stdout`, and `stderr`, but they
+  cannot change that terminal state or its `finished_at` timestamp. The
+  observed exit code may be platform dependent.
 - Worker shutdown terminates command tracking. Running commands are not
   recovered after restart.
 - Completed records are retained in memory up to a fixed count. Oldest terminal
@@ -146,11 +157,13 @@ does not reject executable content or limit command capabilities.
 
 ## Authentication removal
 
-Remove authentication dependencies from every Worker HTTP endpoint, including
-status, update, restart, resource, workflow, prompt proxy, and the new
-PowerShell endpoints. The Mac client no longer sends an Authorization header,
-does not require a pairing token, and discovers a matching Worker through the
-existing subnet scan without credentials.
+The live Worker surface is deliberately small: open status and PowerShell
+control plus direct ComfyUI prompt, queue, history, view, and upload proxies.
+Every retained endpoint is unauthenticated. The legacy managed update, restart,
+resource-plan/content, and workflow-preflight HTTP routes are removed rather
+than converted into alternate open validation flows. The Mac client no longer
+sends an Authorization header, does not require a pairing token, and discovers
+a matching Worker through the existing subnet scan without credentials.
 
 Existing pairing files and token fields may remain on disk for backward
 compatibility, but they are ignored by the Worker and Mac connection logic.
@@ -161,6 +174,10 @@ They are not required for startup or discovery.
 The Mac no longer calls the managed updater validation workflow. It submits
 PowerShell commands that perform the desired Git, copy, install, restart, or
 rollback operations directly.
+
+Backend startup never starts the legacy update coordinator, legacy update
+settings and state cannot block `/prompt`, and the retained local restart
+artifact does not call a token-authenticated Worker health/preflight contract.
 
 Normal job submission also removes Worker-side preflight/resource-plan gates:
 
