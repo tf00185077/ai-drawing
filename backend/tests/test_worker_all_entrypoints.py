@@ -6,6 +6,7 @@ import hashlib
 import os
 from pathlib import Path
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -2948,8 +2949,8 @@ def test_open_control_guides_are_distributed_without_legacy_auth_instructions() 
             normalized_source = " ".join(source_text.split())
             assert all(text in normalized_source for text in required)
             assert not any(text in source_text for text in stale)
-            assert (dist / name).read_text(encoding="utf-8") == source_text
-            assert package.read(name).decode("utf-8") == source_text
+            assert (dist / name).read_bytes() == (source / name).read_bytes()
+            assert package.read(name) == (source / name).read_bytes()
 
 
 def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
@@ -3036,6 +3037,19 @@ def test_start_worker_uses_bounded_curl_comfy_readiness_probe() -> None:
     assert "if ($LASTEXITCODE -eq 0)" in launcher
     assert 'Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8188/system_stats"' not in launcher
     assert 'Invoke-RestMethod "http://127.0.0.1:8188/system_stats"' not in launcher
+
+
+def test_start_worker_reuses_running_comfyui_without_rotating_its_logs() -> None:
+    """A live 8188 process owns its logs, so probing must precede rotation/start."""
+    repo = Path(__file__).resolve().parents[2]
+    launcher = (repo / "worker/windows/Start-Worker.ps1").read_text(encoding="utf-8")
+
+    probe = launcher.index("$ComfyAlreadyReady")
+    rotation = launcher.index("foreach ($Log in @($ComfyStdoutLog, $ComfyStderrLog))")
+    start = launcher.index("$ComfyProcess = Start-Process")
+    assert probe < rotation < start
+    assert "if (-not $ComfyAlreadyReady)" in launcher[probe:rotation]
+    assert "if ($ComfyProcess -and $ComfyProcess.HasExited)" in launcher
 
 
 def test_start_worker_cmd_persists_scheduled_launcher_output() -> None:
@@ -4070,28 +4084,43 @@ def test_installed_worker_launcher_redirects_comfyui_output_to_rotated_logs(tmp_
     comfy_root.mkdir(parents=True)
     logs = root / "runtime" / "logs"
     logs.mkdir()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as reserved:
+        reserved.bind(("127.0.0.1", 0))
+        comfy_port = reserved.getsockname()[1]
 
     for name in ("Start-Worker.ps1", "Start-Worker.cmd", "WorkerPaths.ps1"):
         shutil.copy2(source / name, root / name)
     start_script = root / "Start-Worker.ps1"
+    start_text = start_script.read_text(encoding="utf-8").replace(
+        '$Root = "C:\\AI-Drawing-Worker"',
+        f'$Root = "{root}"',
+    )
     start_script.write_text(
-        start_script.read_text(encoding="utf-8").replace(
-            '$Root = "C:\\AI-Drawing-Worker"',
-            f'$Root = "{root}"',
-        ),
+        start_text.replace("8188", str(comfy_port)),
         encoding="utf-8",
     )
     (root / "config" / "python-path.txt").write_text(sys.executable, encoding="utf-8")
     (logs / "comfyui.stdout.log").write_text("old stdout\n", encoding="utf-8")
     (logs / "comfyui.stderr.log").write_text("old stderr\n", encoding="utf-8")
     (comfy_root / "main.py").write_text(
-        """import os
+        """import http.server
+import os
 import sys
 import threading
 import time
 from pathlib import Path
 
 Path(__file__).with_name(\"fixture.pid\").write_text(str(os.getpid()))
+port = int(sys.argv[sys.argv.index(\"--port\") + 1])
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b\"{}\")
+    def log_message(self, format, *args):
+        pass
+server = http.server.ThreadingHTTPServer((\"127.0.0.1\", port), Handler)
+threading.Thread(target=server.serve_forever, daemon=True).start()
 def write_output():
     while True:
         print(\"comfy stdout fixture\", flush=True)

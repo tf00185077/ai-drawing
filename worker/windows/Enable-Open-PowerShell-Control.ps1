@@ -58,6 +58,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") -Pat
 if (-not (Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "powershell_control.py") -PathType Leaf)) {
     throw "SOURCE_POWERSHELL_CONTROL_NOT_FOUND"
 }
+if (-not (Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "Start-Worker.ps1") -PathType Leaf)) {
+    throw "SOURCE_START_WORKER_NOT_FOUND"
+}
 
 $WorkerTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
 try {
@@ -75,6 +78,7 @@ try {
 
     Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") -Destination (Join-Path $InstalledWindowsRoot "worker.py") -Force
     Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "powershell_control.py") -Destination (Join-Path $InstalledWindowsRoot "powershell_control.py") -Force
+    Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "Start-Worker.ps1") -Destination (Join-Path $InstalledWorkerRoot "Start-Worker.ps1") -Force
 }
 finally {
     Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop

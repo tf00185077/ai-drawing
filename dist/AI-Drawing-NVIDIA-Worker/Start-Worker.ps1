@@ -50,28 +50,37 @@ $ComfyArgumentList = '"{0}" --listen 127.0.0.1 --port 8188' -f $ComfyArgs[0]
 New-Item -ItemType Directory -Force -Path $LogsRoot | Out-Null
 $ComfyStdoutLog = Join-Path $LogsRoot "comfyui.stdout.log"
 $ComfyStderrLog = Join-Path $LogsRoot "comfyui.stderr.log"
-foreach ($Log in @($ComfyStdoutLog, $ComfyStderrLog)) {
-    $PreviousLog = $Log -replace "\.log$", ".previous.log"
-    if (Test-Path $PreviousLog) { Remove-Item $PreviousLog -Force }
-    if (Test-Path $Log) { Move-Item $Log $PreviousLog }
+$ComfyAlreadyReady = $false
+try {
+    curl.exe --silent --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
+    $ComfyAlreadyReady = ($LASTEXITCODE -eq 0)
+} catch {
 }
-$ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgumentList -WorkingDirectory $ComfyRoot `
-    -WindowStyle Hidden -RedirectStandardOutput $ComfyStdoutLog -RedirectStandardError $ComfyStderrLog -PassThru
 
-$Ready = $false
-for ($Attempt = 0; $Attempt -lt 300; $Attempt++) {
-    if ($ComfyProcess.HasExited) {
-        throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
+$Ready = $ComfyAlreadyReady
+if (-not $ComfyAlreadyReady) {
+    foreach ($Log in @($ComfyStdoutLog, $ComfyStderrLog)) {
+        $PreviousLog = $Log -replace "\.log$", ".previous.log"
+        if (Test-Path $PreviousLog) { Remove-Item $PreviousLog -Force }
+        if (Test-Path $Log) { Move-Item $Log $PreviousLog }
     }
-    try {
-        curl.exe --silent --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
-        if ($LASTEXITCODE -eq 0) {
-            $Ready = $true
-            break
+    $ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgumentList -WorkingDirectory $ComfyRoot `
+        -WindowStyle Hidden -RedirectStandardOutput $ComfyStdoutLog -RedirectStandardError $ComfyStderrLog -PassThru
+
+    for ($Attempt = 0; $Attempt -lt 300; $Attempt++) {
+        if ($ComfyProcess -and $ComfyProcess.HasExited) {
+            throw "ComfyUI stopped before becoming ready. See $ComfyStdoutLog and $ComfyStderrLog."
         }
-    } catch {
+        try {
+            curl.exe --silent --fail --max-time 2 --output NUL "http://127.0.0.1:8188/system_stats"
+            if ($LASTEXITCODE -eq 0) {
+                $Ready = $true
+                break
+            }
+        } catch {
+        }
+        Start-Sleep -Seconds 2
     }
-    Start-Sleep -Seconds 2
 }
 if (-not $Ready) { throw "ComfyUI did not become ready within 10 minutes." }
 
