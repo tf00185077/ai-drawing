@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 import threading
 import time
 from datetime import datetime, timezone
@@ -14,6 +15,7 @@ if str(WORKER_WINDOWS_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKER_WINDOWS_ROOT))
 
 from powershell_control import PowerShellCommandManager, PowerShellCommandNotFound
+import powershell_control
 
 
 def wait_for_terminal(manager: PowerShellCommandManager, command_id: str) -> dict[str, object]:
@@ -24,6 +26,15 @@ def wait_for_terminal(manager: PowerShellCommandManager, command_id: str) -> dic
             return command
         time.sleep(0.01)
     raise AssertionError(f"command {command_id} did not become terminal")
+
+
+def wait_for_process(factory: "FakeProcessFactory") -> FakeProcess:
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        if factory.processes:
+            return factory.processes[0]
+        time.sleep(0.01)
+    raise AssertionError("command process was not created")
 
 
 class FakeProcess:
@@ -41,21 +52,25 @@ class FakeProcess:
 
     def terminate(self) -> None:
         self.terminated = True
-        self._factory.release(returncode=-15)
+        if self._factory.terminate_exits:
+            self._factory.release(returncode=-15)
 
     def kill(self) -> None:
         self.killed = True
         self._factory.release(returncode=-9)
 
     def wait(self, timeout: float | None = None) -> int | None:
+        self._factory.wait_timeouts.append(timeout)
+        if self._factory.wait_times_out and not self.killed:
+            raise subprocess.TimeoutExpired("powershell.exe", timeout)
         if not self._factory._released.wait(timeout):
-            raise TimeoutError("fake process did not exit")
+            raise subprocess.TimeoutExpired("powershell.exe", timeout)
         self.returncode = self._factory.returncode
         return self.returncode
 
 
 class FakeProcessFactory:
-    def __init__(self) -> None:
+    def __init__(self, *, terminate_exits: bool = True, wait_times_out: bool = False) -> None:
         self.argv: list[str] | None = None
         self.cwd: str | None = None
         self.script: str | None = None
@@ -63,6 +78,9 @@ class FakeProcessFactory:
         self.stderr = ""
         self.returncode = 0
         self.processes: list[FakeProcess] = []
+        self.terminate_exits = terminate_exits
+        self.wait_times_out = wait_times_out
+        self.wait_timeouts: list[float | None] = []
         self._released = threading.Event()
 
     def __call__(self, argv: list[str], **kwargs: object) -> FakeProcess:
@@ -123,13 +141,51 @@ def test_cancel_terminates_running_command_and_preserves_cancelled_state() -> No
     factory = FakeProcessFactory()
     manager = PowerShellCommandManager(process_factory=factory)
     command = manager.submit(script="Start-Sleep 99", working_directory=None)
+    process = wait_for_process(factory)
 
     cancelled = manager.cancel(command["command_id"])
 
-    assert cancelled["state"] == "running"
+    assert cancelled["command_id"] == command["command_id"]
     terminal = wait_for_terminal(manager, command["command_id"])
     assert terminal["state"] == "cancelled"
-    assert factory.processes[0].terminated is True
+    assert process.terminated is True
+
+
+def test_cancel_kills_process_after_terminate_wait_times_out() -> None:
+    factory = FakeProcessFactory(terminate_exits=False, wait_times_out=True)
+    manager = PowerShellCommandManager(process_factory=factory)
+    command = manager.submit(script="Start-Sleep 99", working_directory=None)
+    process = wait_for_process(factory)
+
+    try:
+        manager.cancel(command["command_id"])
+        assert process.terminated is True
+        assert factory.wait_timeouts == [5]
+        assert process.killed is True
+    finally:
+        factory.release(returncode=-9)
+
+    assert wait_for_terminal(manager, command["command_id"])["state"] == "cancelled"
+
+
+def test_submit_returns_running_snapshot_when_worker_finishes_inline(monkeypatch: pytest.MonkeyPatch) -> None:
+    class InlineThread:
+        def __init__(self, *, target: object, args: tuple[object, ...], daemon: bool) -> None:
+            self._target = target
+            self._args = args
+
+        def start(self) -> None:
+            self._target(*self._args)  # type: ignore[operator]
+
+    monkeypatch.setattr(powershell_control.threading, "Thread", InlineThread)
+    factory = FakeProcessFactory()
+    factory.release(returncode=0)
+    manager = PowerShellCommandManager(process_factory=factory)
+
+    submitted = manager.submit(script="Write-Output done", working_directory=None)
+
+    assert submitted["state"] == "running"
+    assert manager.get(submitted["command_id"])["state"] == "completed"
 
 
 def test_unknown_command_raises_not_found() -> None:

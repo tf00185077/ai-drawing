@@ -32,6 +32,7 @@ class PowerShellCommandManager:
         self._records: dict[str, dict[str, Any]] = {}
         self._processes: dict[str, subprocess.Popen[str]] = {}
         self._cancelled: set[str] = set()
+        self._terminating: set[str] = set()
         self._terminal_order: deque[str] = deque()
 
     def submit(self, *, script: str, working_directory: str | None) -> dict[str, Any]:
@@ -49,12 +50,13 @@ class PowerShellCommandManager:
         }
         with self._lock:
             self._records[command_id] = record
+            snapshot = dict(record)
         threading.Thread(
             target=self._run_command,
             args=(command_id, script, working_directory),
             daemon=True,
         ).start()
-        return dict(record)
+        return snapshot
 
     def get(self, command_id: str) -> dict[str, Any]:
         with self._lock:
@@ -67,9 +69,10 @@ class PowerShellCommandManager:
                 return dict(record)
             self._cancelled.add(command_id)
             process = self._processes.get(command_id)
+            should_terminate = process is not None and self._begin_termination(command_id)
 
-        if process is not None:
-            process.terminate()
+        if should_terminate:
+            self._terminate_process(process)
         return self.get(command_id)
 
     def _run_command(self, command_id: str, script: str, working_directory: str | None) -> None:
@@ -94,26 +97,20 @@ class PowerShellCommandManager:
                 creationflags=subprocess.CREATE_NO_WINDOW,
                 cwd=working_directory,
             )
-        except BaseException as error:
+        except Exception as error:
             self._finish(command_id, exit_code=None, stdout="", stderr=str(error))
             return
 
         with self._lock:
             self._processes[command_id] = process
-            should_cancel = command_id in self._cancelled
-        if should_cancel:
-            process.terminate()
+            should_terminate = command_id in self._cancelled and self._begin_termination(command_id)
+        if should_terminate:
+            self._terminate_process(process)
 
         try:
             stdout, stderr = process.communicate(input=script)
             exit_code = process.returncode
-            if self._is_cancelled(command_id):
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait()
-        except BaseException as error:
+        except Exception as error:
             stdout, stderr, exit_code = "", str(error), getattr(process, "returncode", None)
 
         self._finish(command_id, exit_code=exit_code, stdout=stdout, stderr=stderr)
@@ -133,8 +130,26 @@ class PowerShellCommandManager:
             )
             self._processes.pop(command_id, None)
             self._cancelled.discard(command_id)
+            self._terminating.discard(command_id)
             self._terminal_order.append(command_id)
             self._trim_terminal_records()
+
+    def _begin_termination(self, command_id: str) -> bool:
+        if command_id in self._terminating:
+            return False
+        self._terminating.add(command_id)
+        return True
+
+    @staticmethod
+    def _terminate_process(process: subprocess.Popen[str]) -> None:
+        try:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+        except ProcessLookupError:
+            pass
 
     def _trim_terminal_records(self) -> None:
         while len(self._terminal_order) > self._max_terminal_records:
@@ -146,10 +161,6 @@ class PowerShellCommandManager:
             return self._records[command_id]
         except KeyError as error:
             raise PowerShellCommandNotFound(command_id) from error
-
-    def _is_cancelled(self, command_id: str) -> bool:
-        with self._lock:
-            return command_id in self._cancelled
 
     @staticmethod
     def _utc_timestamp() -> str:
