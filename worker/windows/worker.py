@@ -1,4 +1,4 @@
-"""Authenticated Windows NVIDIA Worker.
+"""Windows NVIDIA Worker.
 
 ComfyUI stays on loopback. This process owns resource ingestion and proxies only
 the API paths required by ai-drawing.
@@ -13,12 +13,13 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
-from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi import Body, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from pydantic import BaseModel
 
 _SHA256_PATTERN = re.compile(r"[0-9a-fA-F]{64}\Z")
 
@@ -40,6 +41,14 @@ except ModuleNotFoundError:  # Supports direct execution from worker/windows.
         read_public_update_status,
         write_update_status,
     )
+
+try:
+    from worker.windows.powershell_control import (
+        PowerShellCommandManager,
+        PowerShellCommandNotFound,
+    )
+except ModuleNotFoundError:  # Supports direct execution from worker/windows.
+    from powershell_control import PowerShellCommandManager, PowerShellCommandNotFound
 
 try:
     from worker.windows.restart_contract import (
@@ -301,12 +310,6 @@ def _config() -> dict[str, Any]:
         raise RuntimeError("Worker is not configured") from error
 
 
-def _auth(authorization: Annotated[str | None, Header()] = None) -> None:
-    expected = str(_config().get("token", ""))
-    if not expected or authorization != f"Bearer {expected}":
-        raise HTTPException(401, "invalid worker token")
-
-
 def _update_state() -> str:
     try:
         return read_public_update_status(UPDATE_STATUS_PATH)["state"]
@@ -445,9 +448,15 @@ def _enforce_cache(
 
 
 app = FastAPI(title="AI-Drawing NVIDIA Worker", version="0.3.0")
+_powershell_commands = PowerShellCommandManager()
 
 
-@app.get("/v1/worker/status", dependencies=[Depends(_auth)])
+class PowerShellCommandRequest(BaseModel):
+    script: str
+    working_directory: str | None = None
+
+
+@app.get("/v1/worker/status")
 def status() -> dict[str, Any]:
     config = _config()
     disk = shutil.disk_usage(ROOT)
@@ -473,7 +482,35 @@ def status() -> dict[str, Any]:
     }
 
 
-@app.post("/v1/admin/update", dependencies=[Depends(_auth)], status_code=202)
+@app.post("/v1/powershell/commands", status_code=202)
+def submit_powershell_command(request: PowerShellCommandRequest) -> dict[str, Any]:
+    return _powershell_commands.submit(
+        script=request.script,
+        working_directory=request.working_directory,
+    )
+
+
+@app.get("/v1/powershell/commands/{command_id}")
+def powershell_command_status(command_id: str) -> dict[str, Any]:
+    try:
+        return _powershell_commands.get(command_id)
+    except PowerShellCommandNotFound as error:
+        raise HTTPException(
+            404, detail={"code": "powershell_command_not_found"}
+        ) from error
+
+
+@app.post("/v1/powershell/commands/{command_id}/cancel")
+def cancel_powershell_command(command_id: str) -> dict[str, Any]:
+    try:
+        return _powershell_commands.cancel(command_id)
+    except PowerShellCommandNotFound as error:
+        raise HTTPException(
+            404, detail={"code": "powershell_command_not_found"}
+        ) from error
+
+
+@app.post("/v1/admin/update", status_code=202)
 def request_update(body: UpdateRequest) -> dict[str, str]:
     try:
         request_id = queue_update(
@@ -510,7 +547,7 @@ def request_update(body: UpdateRequest) -> dict[str, str]:
     return {"request_id": request_id, "status": "queued"}
 
 
-@app.get("/v1/admin/update/status", dependencies=[Depends(_auth)])
+@app.get("/v1/admin/update/status")
 def update_status() -> dict[str, Any]:
     try:
         return read_public_update_status(UPDATE_STATUS_PATH)
@@ -524,7 +561,7 @@ def update_status() -> dict[str, Any]:
         ) from error
 
 
-@app.post("/v1/admin/restart", dependencies=[Depends(_auth)], status_code=202)
+@app.post("/v1/admin/restart", status_code=202)
 def request_restart(body: RestartRequest) -> dict[str, Any]:
     try:
         request_id, created = queue_restart(RESTART_REQUEST_PATH, RESTART_STATUS_PATH)
@@ -559,7 +596,7 @@ def request_restart(body: RestartRequest) -> dict[str, Any]:
     return {"request_id": request_id, "state": "queued"}
 
 
-@app.get("/v1/admin/restart/status", dependencies=[Depends(_auth)])
+@app.get("/v1/admin/restart/status")
 def restart_status(request_id: str = Query(..., min_length=1, max_length=64)) -> dict[str, Any]:
     try:
         status = read_restart_status(RESTART_STATUS_PATH)
@@ -572,7 +609,7 @@ def restart_status(request_id: str = Query(..., min_length=1, max_length=64)) ->
     return status
 
 
-@app.post("/v1/resources/plan", dependencies=[Depends(_auth)])
+@app.post("/v1/resources/plan")
 def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
     _require_update_idle()
     missing: list[dict[str, Any]] = []
@@ -604,7 +641,7 @@ def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
     return {"missing": missing}
 
 
-@app.put("/v1/resources/content", dependencies=[Depends(_auth)])
+@app.put("/v1/resources/content")
 async def resource_content(
     body: bytes = Body(b"", media_type="application/octet-stream"),
     kind: str = Query(...),
@@ -667,7 +704,7 @@ def _proxy(method: str, path: str, **kwargs: Any) -> Response:
     )
 
 
-@app.post("/v1/workflows/preflight", dependencies=[Depends(_auth)])
+@app.post("/v1/workflows/preflight")
 def workflow_preflight(body: dict[str, Any]) -> dict[str, Any]:
     requested = body.get("node_types")
     if not isinstance(requested, list) or any(
@@ -686,23 +723,23 @@ def workflow_preflight(body: dict[str, Any]) -> dict[str, Any]:
     return {"ready": not missing, "missing_node_types": missing}
 
 
-@app.post("/prompt", dependencies=[Depends(_auth)])
+@app.post("/prompt")
 def prompt(body: dict[str, Any]) -> Response:
     _require_update_idle()
     return _proxy("POST", "/prompt", json=body)
 
 
-@app.get("/queue", dependencies=[Depends(_auth)])
+@app.get("/queue")
 def queue() -> Response:
     return _proxy("GET", "/queue")
 
 
-@app.get("/history/{prompt_id}", dependencies=[Depends(_auth)])
+@app.get("/history/{prompt_id}")
 def history(prompt_id: str) -> Response:
     return _proxy("GET", f"/history/{prompt_id}")
 
 
-@app.get("/view", dependencies=[Depends(_auth)])
+@app.get("/view")
 def view(filename: str, subfolder: str = "", type: str = "output") -> Response:
     return _proxy(
         "GET",
@@ -711,7 +748,7 @@ def view(filename: str, subfolder: str = "", type: str = "output") -> Response:
     )
 
 
-@app.post("/upload/image", dependencies=[Depends(_auth)])
+@app.post("/upload/image")
 async def upload_image(
     image: UploadFile = File(...),
     overwrite: str = "true",

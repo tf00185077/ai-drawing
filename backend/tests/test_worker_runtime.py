@@ -895,12 +895,27 @@ def test_mutations_are_blocked_while_worker_is_updating(
     assert response.json()["detail"]["code"] == "worker_updating"
 
 
-def test_worker_rejects_missing_token(tmp_path, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    ("method", "path", "kwargs"),
+    [
+        ("get", "/v1/worker/status", {}),
+        ("get", "/v1/admin/update/status", {}),
+        ("get", "/v1/admin/restart/status?request_id=unknown", {}),
+        ("post", "/v1/resources/plan", {"json": {"resources": []}}),
+        ("post", "/v1/workflows/preflight", {"json": {"node_types": []}}),
+        ("post", "/prompt", {"json": {"prompt": {}}}),
+        ("get", "/queue", {}),
+    ],
+)
+def test_existing_worker_routes_do_not_require_authorization(
+    tmp_path, monkeypatch, method: str, path: str, kwargs: dict[str, object]
+) -> None:
     _worker, client = _configured_worker(tmp_path, monkeypatch)
 
-    response = client.post("/v1/resources/plan", json={"resources": []})
+    response = getattr(client, method)(path, **kwargs)
 
-    assert response.status_code == 401
+    assert "Authorization" not in response.request.headers
+    assert response.status_code != 401
 
 
 def test_worker_promotes_only_complete_verified_resource(
