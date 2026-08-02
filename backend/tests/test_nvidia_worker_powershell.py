@@ -118,30 +118,38 @@ def test_mac_api_cancels_open_powershell_command_unchanged(monkeypatch) -> None:
 
 
 @pytest.mark.parametrize(
-    ("method", "path", "payload", "operation"),
+    ("method", "path", "payload", "operation", "expected_code"),
     [
         (
             "post",
             "/api/workers/powershell/commands",
             {"script": "Get-Date"},
             "submit_powershell",
+            "worker_powershell_submit_failed",
         ),
         (
             "get",
             "/api/workers/powershell/commands/unknown",
             None,
             "powershell_status",
+            "worker_powershell_status_failed",
         ),
         (
             "post",
             "/api/workers/powershell/commands/unknown/cancel",
             None,
             "cancel_powershell",
+            "worker_powershell_cancel_failed",
         ),
     ],
 )
 def test_mac_api_maps_worker_powershell_errors_to_unavailable(
-    monkeypatch, method: str, path: str, payload: dict | None, operation: str
+    monkeypatch,
+    method: str,
+    path: str,
+    payload: dict | None,
+    operation: str,
+    expected_code: str,
 ) -> None:
     fake = FakePowerShellWorker()
     monkeypatch.setattr(
@@ -159,6 +167,28 @@ def test_mac_api_maps_worker_powershell_errors_to_unavailable(
     )
 
     assert response.status_code == 503
+    assert response.json()["detail"]["code"] == expected_code
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("post", "/api/workers/restart"),
+        ("get", "/api/workers/restart/status?request_id=legacy"),
+    ],
+)
+def test_mac_api_has_no_legacy_restart_surface(
+    monkeypatch, method: str, path: str
+) -> None:
+    monkeypatch.setattr(
+        workers,
+        "get_worker_client",
+        lambda: (_ for _ in ()).throw(AssertionError("legacy restart client used")),
+    )
+
+    response = getattr(TestClient(app), method)(path)
+
+    assert response.status_code == 404
 
 
 def test_worker_status_is_configured_with_only_worker_url(monkeypatch) -> None:
@@ -170,14 +200,8 @@ def test_worker_status_is_configured_with_only_worker_url(monkeypatch) -> None:
             (),
             {
                 "nvidia_worker_url": "http://worker:8791",
-                "nvidia_worker_auto_update": False,
             },
         )(),
-    )
-    monkeypatch.setattr(
-        workers,
-        "worker_update_status",
-        lambda: {"state": "idle", "error_code": None},
     )
     monkeypatch.setattr(
         workers,
@@ -189,3 +213,4 @@ def test_worker_status_is_configured_with_only_worker_url(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert response.json()["configured"] is True
+    assert "auto_update" not in response.json()

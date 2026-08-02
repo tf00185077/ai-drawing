@@ -8,13 +8,40 @@
 
 **Tech Stack:** Python 3.11/3.12, FastAPI, Pydantic, httpx, subprocess/threading, Windows PowerShell 5.1, pytest, PowerShell Pester-free static tests.
 
+## Final fix-wave amendment
+
+The final whole-branch review exposed four gaps in the first implementation.
+The authoritative final implementation therefore also:
+
+- removes the legacy managed update/restart/resource/preflight routes from the
+  live Worker, never starts the Backend update coordinator, and never lets
+  legacy update state block `/prompt`;
+- passes a fixed ASCII bootstrap as the `-Command` argument while passing the
+  caller's exact script only through stdin. The bootstrap sets strict UTF-8 on
+  Windows PowerShell 5.1 input/output before reading stdin; Python uses strict
+  UTF-8 text pipes. This is Unicode text transport, not arbitrary binary
+  transport, and no temporary script is created;
+- publishes `cancelled` atomically before `cancel()` returns and permits later
+  capture to fill only exit/output fields, never to overwrite terminal state or
+  `finished_at`;
+- makes protocol 2 identical in `.env.example`, Settings, Worker status, and
+  discovery expectations; and
+- asserts the exact three Mac API 503 detail codes.
+
+This amendment supersedes any historical step below that treats a legacy
+managed route as a retained unauthenticated route.
+
 ---
 
 ## File map
 
 - Create `worker/windows/powershell_control.py`: thread-safe, in-memory lifecycle manager for arbitrary PowerShell processes.
-- Modify `worker/windows/worker.py`: remove endpoint authentication and add submit/status/cancel PowerShell routes.
-- Create `backend/tests/test_worker_powershell_control.py`: isolated process-manager and Worker route tests with fake processes; tests never execute real PowerShell.
+- Modify `worker/windows/worker.py`: retain only open status, direct ComfyUI
+  proxy, and submit/status/cancel PowerShell routes; remove the legacy managed
+  update/restart/resource/preflight routes.
+- Create `backend/tests/test_worker_powershell_control.py`: isolated
+  process-manager and Worker route tests with fake processes, plus one harmless
+  host-only Windows PowerShell 5.1 Unicode stream integration test.
 - Modify `backend/app/services/nvidia_worker.py`: remove token headers and submission gates; add PowerShell client methods.
 - Modify `backend/app/api/workers.py`: treat a URL as configured and expose Mac-side command submit/status/cancel routes.
 - Modify `backend/app/config.py`: retain the legacy token setting for configuration compatibility but document it as ignored.
@@ -57,7 +84,14 @@ assert factory.argv == [
     "-ExecutionPolicy",
     "Bypass",
     "-Command",
-    "-",
+    (
+        "$Utf8 = New-Object System.Text.UTF8Encoding($false, $true); "
+        "[Console]::InputEncoding = $Utf8; "
+        "[Console]::OutputEncoding = $Utf8; "
+        "$OutputEncoding = $Utf8; "
+        "$Source = [Console]::In.ReadToEnd(); "
+        "& ([ScriptBlock]::Create($Source))"
+    ),
 ]
 ```
 
@@ -92,7 +126,7 @@ class PowerShellCommandManager:
     def cancel(self, command_id: str) -> dict[str, Any]: ...
 ```
 
-Use `uuid.uuid4()` for `command_id`, `datetime.now(timezone.utc).isoformat()` for timestamps, a `threading.RLock` for records/process maps, and one daemon thread per command. Start the process with `stdin/stdout/stderr=subprocess.PIPE`, `text=True`, `encoding="utf-8"`, `errors="replace"`, `shell=False`, `creationflags=subprocess.CREATE_NO_WINDOW`, and the exact PowerShell argument vector from Step 1. Feed `script` unchanged through `process.communicate(input=script)`; do not parse commands or paths and do not set a timeout. Return copied public dictionaries so callers cannot mutate manager state.
+Use `uuid.uuid4()` for `command_id`, `datetime.now(timezone.utc).isoformat()` for timestamps, a `threading.RLock` for records/process maps, and one daemon thread per command. Start the process with `stdin/stdout/stderr=subprocess.PIPE`, `text=True`, `encoding="utf-8"`, `errors="strict"`, `shell=False`, `creationflags=subprocess.CREATE_NO_WINDOW`, and the exact PowerShell argument vector from Step 1. Feed `script` unchanged through `process.communicate(input=script)`; do not put the submitted script in argv or a temporary file, do not parse commands or paths, and do not set a timeout. The fixed ASCII bootstrap owns only PowerShell 5.1 UTF-8 stream setup. Return copied public dictionaries so callers cannot mutate manager state.
 
 Each record must contain:
 
@@ -109,13 +143,16 @@ Each record must contain:
 }
 ```
 
-On cancellation, call `terminate()`, wait at most five seconds inside the background worker, then call `kill()` only if the process still has not exited. A cancellation race must remain terminal and must never be overwritten as `completed` or `failed`. Retention applies only after a record becomes terminal and keeps the newest `max_terminal_records` terminal records.
+On cancellation, atomically publish `cancelled` and `finished_at` before returning, then call `terminate()`, wait at most five seconds outside the request's state-publication critical section, and call `kill()` only if the process still has not exited. A race before or after process registration must return `cancelled` immediately, append only one terminal transition, and allow later capture to update only `exit_code`, `stdout`, and `stderr`. It must never be overwritten as `completed` or `failed`. Retention applies only after a record becomes terminal and keeps the newest `max_terminal_records` terminal records.
 
 - [ ] **Step 4: Run the manager tests**
 
 Run: `pytest backend/tests/test_worker_powershell_control.py -q`
 
-Expected: all manager tests pass and no real `powershell.exe` process is started.
+Expected: fake-manager tests pass, plus one isolated harmless real Windows
+PowerShell 5.1 integration test proves exact Traditional Chinese, Japanese, and
+emoji stdin/stdout/stderr on the host's non-UTF-8 console code page and proves
+no temporary script was created.
 
 - [ ] **Step 5: Commit the isolated manager**
 
@@ -153,7 +190,7 @@ assert "Authorization" not in response.request.headers
 
 Assert `GET /v1/powershell/commands/cmd-1` returns the manager record, `POST /v1/powershell/commands/cmd-1/cancel` returns the cancelled record, unknown IDs return 404 with `detail.code == "powershell_command_not_found"`, malformed JSON/wrong field types return FastAPI 422, and strings are not rejected based on command text or working-directory location.
 
-In `backend/tests/test_worker_runtime.py`, replace authenticated requests with requests that omit `Authorization` and assert representative existing routes (`/v1/worker/status`, `/v1/admin/update/status`, `/v1/admin/restart/status`, `/v1/resources/plan`, `/v1/workflows/preflight`, `/prompt`, `/queue`) do not return 401.
+In `backend/tests/test_worker_runtime.py`, replace authenticated requests with requests that omit `Authorization` and assert retained routes (`/v1/worker/status`, the three PowerShell routes, `/prompt`, `/queue`, `/history`, `/view`, and `/upload/image`) do not return 401. Assert legacy `/v1/admin/update`, `/v1/admin/restart`, `/v1/resources/*`, and `/v1/workflows/preflight` routes return 404.
 
 - [ ] **Step 2: Run focused route tests and verify they fail**
 
@@ -167,7 +204,10 @@ In `worker/windows/worker.py`:
 
 - remove `Depends` and `Header` imports;
 - delete `_auth`;
-- remove every `dependencies=[Depends(_auth)]` argument from Worker, admin, resource, preflight, prompt, history, queue, view, and upload routes;
+- remove every `dependencies=[Depends(_auth)]` argument from retained status,
+  PowerShell, prompt, history, queue, view, and upload routes;
+- delete the legacy managed update/restart/resource/preflight route handlers
+  and their runtime imports;
 - import `PowerShellCommandManager` and `PowerShellCommandNotFound`;
 - instantiate one module-level `_powershell_commands = PowerShellCommandManager()`;
 - define a Pydantic request model containing only `script: str` and `working_directory: str | None = None`;
@@ -527,7 +567,9 @@ In `.env.example`, retain `NVIDIA_WORKER_TOKEN=` for backward-compatible parsing
 NVIDIA_WORKER_TOKEN=
 ```
 
-Keep `NVIDIA_WORKER_AUTO_UPDATE=false` and explain that managed updater coordination is not part of prompt submission or open PowerShell control.
+Keep `NVIDIA_WORKER_AUTO_UPDATE=false` only as a legacy-compatible parsed value
+and explain that it is ignored: Backend lifespan never starts managed updater
+coordination and prompt submission never consults update state.
 
 - [ ] **Step 3: Record completion criteria in progress documentation**
 

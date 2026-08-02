@@ -18,7 +18,7 @@ def _isolate_runtime_worker_url_cache():
     nvidia_worker.clear_runtime_worker_urls()
 
 
-def test_worker_target_fails_closed_when_not_paired(monkeypatch) -> None:
+def test_worker_target_fails_closed_when_url_is_not_configured(monkeypatch) -> None:
     monkeypatch.setattr(
         nvidia_worker,
         "get_settings",
@@ -31,7 +31,7 @@ def test_worker_target_fails_closed_when_not_paired(monkeypatch) -> None:
 
     with pytest.raises(
         nvidia_worker.WorkerConfigurationError,
-        match="not paired",
+        match="URL is not configured",
     ):
         nvidia_worker.get_generation_client("worker")
 
@@ -51,7 +51,7 @@ def test_unknown_target_is_rejected() -> None:
         nvidia_worker.get_generation_client("auto")
 
 
-def _paired_settings(**overrides):
+def _worker_settings(**overrides):
     values = {
         "nvidia_worker_url": "http://192.168.1.106:8791",
         "nvidia_worker_timeout": 60,
@@ -106,7 +106,7 @@ def test_probe_worker_status_is_url_only(monkeypatch) -> None:
 def test_worker_retry_scans_cidr_and_adopts_protocol_2_worker_without_auth(
     monkeypatch,
 ) -> None:
-    settings = _paired_settings()
+    settings = _worker_settings()
     remembered_url = "http://192.168.1.110:8791"
     reachable_url = "http://192.168.1.120:8791"
     nvidia_worker.remember_runtime_worker_url(
@@ -232,7 +232,7 @@ def test_discovery_refuses_when_identity_does_not_match(monkeypatch, status) -> 
 
 
 def test_generation_client_reuses_runtime_discovered_url(monkeypatch) -> None:
-    settings = _paired_settings()
+    settings = _worker_settings()
     monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
     nvidia_worker.clear_runtime_worker_urls()
     nvidia_worker.remember_runtime_worker_url(
@@ -319,7 +319,7 @@ def test_non_connection_error_does_not_scan(monkeypatch) -> None:
 def test_worker_status_uses_discovery_aware_factory(monkeypatch) -> None:
     # The Mac API's legacy configuration gate is removed in Task 5. This task
     # changes only the Worker client, so keep this route-focused test isolated.
-    settings = _paired_settings(nvidia_worker_token="legacy")
+    settings = _worker_settings(nvidia_worker_token="legacy")
     client = MagicMock()
     client.health.return_value = {"protocol_version": 1, "hostname": "DESKTOP-AV90PQ4"}
     factory = MagicMock(return_value=client)

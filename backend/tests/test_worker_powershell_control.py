@@ -6,6 +6,7 @@ import time
 from datetime import datetime, timezone
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -149,10 +150,12 @@ class FakeProcessFactory:
         self.terminate_exits = terminate_exits
         self.wait_times_out = wait_times_out
         self.wait_timeouts: list[float | None] = []
+        self.kwargs: dict[str, object] | None = None
         self._released = threading.Event()
 
     def __call__(self, argv: list[str], **kwargs: object) -> FakeProcess:
         self.argv = argv
+        self.kwargs = dict(kwargs)
         self.cwd = kwargs["cwd"]  # type: ignore[assignment,index]
         process = FakeProcess(self)
         self.processes.append(process)
@@ -165,21 +168,75 @@ class FakeProcessFactory:
         self._released.set()
 
 
+class DelayedCaptureProcess(FakeProcess):
+    def communicate(self, input: str | None = None) -> tuple[str, str]:
+        self._factory.script = input
+        assert isinstance(self._factory, DelayedCaptureFactory)
+        assert self._factory.capture_release.wait(timeout=2)
+        self.returncode = self._factory.returncode
+        return self._factory.stdout, self._factory.stderr
+
+    def terminate(self) -> None:
+        self.terminated = True
+        self.returncode = -15
+
+    def wait(self, timeout: float | None = None) -> int | None:
+        self._factory.wait_timeouts.append(timeout)
+        return self.returncode
+
+
+class DelayedCaptureFactory(FakeProcessFactory):
+    def __init__(self, *, block_registration: bool = False) -> None:
+        super().__init__(terminate_exits=False)
+        self.block_registration = block_registration
+        self.factory_entered = threading.Event()
+        self.registration_release = threading.Event()
+        self.capture_release = threading.Event()
+
+    def __call__(self, argv: list[str], **kwargs: object) -> DelayedCaptureProcess:
+        self.factory_entered.set()
+        if self.block_registration:
+            assert self.registration_release.wait(timeout=2)
+        self.argv = argv
+        self.kwargs = dict(kwargs)
+        self.cwd = kwargs["cwd"]  # type: ignore[assignment,index]
+        process = DelayedCaptureProcess(self)
+        self.processes.append(process)
+        return process
+
+
+def wait_for_capture_cleanup(
+    manager: PowerShellCommandManager, command_id: str
+) -> dict[str, object]:
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        with manager._lock:
+            active = (
+                command_id in manager._processes
+                or command_id in manager._cancelled
+                or command_id in manager._terminating
+            )
+        if not active:
+            return manager.get(command_id)
+        time.sleep(0.01)
+    raise AssertionError(f"command {command_id} did not finish output capture")
+
+
 def test_submit_runs_script_with_fixed_powershell_contract() -> None:
     factory = FakeProcessFactory()
     manager = PowerShellCommandManager(process_factory=factory, max_terminal_records=2)
 
     command = manager.submit(
-        script="Get-ChildItem C:\\\nWrite-Output '螳梧・'",
+        script="Get-ChildItem C:\\\nWrite-Output '完成'",
         working_directory=r"D:\code\ai-drawing",
     )
 
     assert command["state"] == "running"
-    factory.release(returncode=0, stdout="螳梧・\n", stderr="")
+    factory.release(returncode=0, stdout="完成\n", stderr="")
     terminal = wait_for_terminal(manager, command["command_id"])
     assert terminal["state"] == "completed"
     assert terminal["exit_code"] == 0
-    assert factory.script == "Get-ChildItem C:\\\nWrite-Output '螳梧・'"
+    assert factory.script == "Get-ChildItem C:\\\nWrite-Output '完成'"
     assert factory.cwd == r"D:\code\ai-drawing"
     assert factory.argv == [
         r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
@@ -188,8 +245,20 @@ def test_submit_runs_script_with_fixed_powershell_contract() -> None:
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        "-",
+        (
+            "$Utf8 = New-Object System.Text.UTF8Encoding($false, $true); "
+            "[Console]::InputEncoding = $Utf8; "
+            "[Console]::OutputEncoding = $Utf8; "
+            "$OutputEncoding = $Utf8; "
+            "$Source = [Console]::In.ReadToEnd(); "
+            "& ([ScriptBlock]::Create($Source))"
+        ),
     ]
+    assert factory.kwargs is not None
+    assert factory.kwargs["text"] is True
+    assert factory.kwargs["encoding"] == "utf-8"
+    assert factory.kwargs["errors"] == "strict"
+    assert factory.kwargs["shell"] is False
 
 
 def test_nonzero_exit_marks_command_failed() -> None:
@@ -214,9 +283,55 @@ def test_cancel_terminates_running_command_and_preserves_cancelled_state() -> No
     cancelled = manager.cancel(command["command_id"])
 
     assert cancelled["command_id"] == command["command_id"]
+    assert cancelled["state"] == "cancelled"
+    assert isinstance(cancelled["finished_at"], str) and cancelled["finished_at"]
     terminal = wait_for_terminal(manager, command["command_id"])
     assert terminal["state"] == "cancelled"
     assert process.terminated is True
+
+
+def test_cancel_before_process_registration_returns_one_terminal_cancelled_state() -> None:
+    factory = DelayedCaptureFactory(block_registration=True)
+    manager = PowerShellCommandManager(process_factory=factory)
+    command = manager.submit(script="Write-Output late", working_directory=None)
+    assert factory.factory_entered.wait(timeout=2)
+
+    cancelled = manager.cancel(command["command_id"])
+
+    assert cancelled["state"] == "cancelled"
+    finished_at = cancelled["finished_at"]
+    factory.returncode = 0
+    factory.stdout = "late output"
+    factory.registration_release.set()
+    process = wait_for_process(factory)
+    assert process.terminated is True
+    factory.capture_release.set()
+    captured = wait_for_capture_cleanup(manager, command["command_id"])
+    assert captured["state"] == "cancelled"
+    assert captured["finished_at"] == finished_at
+    assert captured["stdout"] == "late output"
+    assert list(manager._terminal_order).count(command["command_id"]) == 1
+
+
+def test_cancel_after_process_registration_returns_before_delayed_capture() -> None:
+    factory = DelayedCaptureFactory()
+    manager = PowerShellCommandManager(process_factory=factory)
+    command = manager.submit(script="Write-Output late", working_directory=None)
+    process = wait_for_process(factory)
+
+    cancelled = manager.cancel(command["command_id"])
+
+    assert cancelled["state"] == "cancelled"
+    assert process.terminated is True
+    finished_at = cancelled["finished_at"]
+    factory.returncode = 0
+    factory.stdout = "captured after cancel"
+    factory.capture_release.set()
+    captured = wait_for_capture_cleanup(manager, command["command_id"])
+    assert captured["state"] == "cancelled"
+    assert captured["finished_at"] == finished_at
+    assert captured["stdout"] == "captured after cancel"
+    assert list(manager._terminal_order).count(command["command_id"]) == 1
 
 
 def test_cancel_kills_process_after_terminate_wait_times_out() -> None:
@@ -305,6 +420,54 @@ def test_terminal_retention_evicts_oldest_terminal_but_keeps_running_command() -
         manager.get(first["command_id"])
     assert manager.get(second["command_id"])["state"] == "completed"
     assert manager.get(third["command_id"])["state"] == "completed"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_real_windows_powershell_51_round_trips_utf8_text_streams(
+    tmp_path: Path,
+) -> None:
+    executable = (
+        Path(os.environ["SystemRoot"])
+        / "System32"
+        / "WindowsPowerShell"
+        / "v1.0"
+        / "powershell.exe"
+    )
+    version = subprocess.run(
+        [
+            str(executable),
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "$PSVersionTable.PSEdition + ' ' + $PSVersionTable.PSVersion.ToString()",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="strict",
+        shell=False,
+    ).stdout.strip()
+    assert version.startswith("Desktop 5.1.")
+
+    stdout = "繁體中文\n日本語\nemoji 😀"
+    stderr = "錯誤：繁體中文\nエラー：日本語\nemoji 🚫"
+    script = (
+        f'$Stdout = "{stdout.replace(chr(10), "`n")}"\n'
+        f'$Stderr = "{stderr.replace(chr(10), "`n")}"\n'
+        "[Console]::Out.Write($Stdout)\n"
+        "[Console]::Error.Write($Stderr)"
+    )
+    manager = PowerShellCommandManager(powershell_executable=str(executable))
+
+    accepted = manager.submit(script=script, working_directory=str(tmp_path))
+    terminal = wait_for_terminal(manager, accepted["command_id"])
+
+    assert terminal["state"] == "completed"
+    assert terminal["exit_code"] == 0
+    assert terminal["stdout"] == stdout
+    assert terminal["stderr"] == stderr
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_powershell_command_routes_are_open_and_delegate_to_the_manager(

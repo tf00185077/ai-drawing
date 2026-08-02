@@ -79,13 +79,13 @@ class Settings(BaseSettings):
     # workflows stage gallery images and generated silent wavs here.
     comfyui_input_dir: str = "~/comfyui/input"
     comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
-    # Optional paired Windows NVIDIA Worker. Local generation remains the
+    # Optional open-control Windows NVIDIA Worker. Local generation remains the
     # default; these values are used only when a request explicitly selects it.
     nvidia_worker_url: str = ""
     # Retained so existing .env files load; open-control mode ignores this value.
     nvidia_worker_token: str = ""
     nvidia_worker_timeout: float = 60.0
-    # Connect failures may discover the paired Worker at its new DHCP address.
+    # Connect failures may discover the configured Worker at its new DHCP address.
     # Discovery is intentionally constrained to one IPv4 /24 and matches the
     # configured hostname/protocol before changing only runtime state.
     nvidia_worker_discovery_enabled: bool = False
@@ -94,6 +94,7 @@ class Settings(BaseSettings):
     nvidia_worker_hostname: str = ""
     nvidia_worker_protocol_version: int = Field(default=2, ge=1)
     nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
+    # Retained so existing .env files load; managed updater coordination is retired.
     nvidia_worker_auto_update: bool = False
     nvidia_worker_update_timeout: float = 1800.0
     comfyui_timeout_submit: float = 60.0
