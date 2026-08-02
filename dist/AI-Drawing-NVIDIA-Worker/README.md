@@ -45,3 +45,20 @@ C:\ProgramData\AI-Drawing-Worker
 ```text
 NVIDIA_WORKER_AUTO_UPDATE=false
 ```
+
+## Updater bootstrap deployment (Windows PowerShell 5.1 Administrator)
+
+Open **Windows PowerShell 5.1 as Administrator** and run exactly:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$ExpectedCommit = (& git.exe -C "D:\code\ai-drawing" rev-parse HEAD).Trim()
+& "D:\code\ai-drawing\worker\windows\Deploy-UpdaterBootstrap.ps1" `
+    -ExpectedCommit $ExpectedCommit
+```
+
+Wait for `UPDATER_BOOTSTRAP_READY` before proceeding. Keep
+`NVIDIA_WORKER_AUTO_UPDATE=false` throughout this one-time deployment. Do not
+rerun a failed request ID. If the result is
+`UPDATER_BOOTSTRAP_RECOVERY_REQUIRED`, do not delete backup or staging paths
+and do not submit an update.
