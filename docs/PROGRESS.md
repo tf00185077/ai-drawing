@@ -14,12 +14,16 @@
 
 # 進度追蹤
 
-## 2026-08-02 NVIDIA Worker minimal health validation 發行
+## 2026-08-02 NVIDIA Worker minimal health validation 發行與 final-review 修正
 
 - 移除更新流程中重複的 `/object_info` readiness probe 與 resource-plan health gate；一般產圖 submission 仍完整保留 resource scan／plan／transfer，且有效的 verification sidecar 可避免對未變更資源重複計算 hash。
 - LRU eviction 與目標檔案不存在時會同步移除 stale verification sidecar，避免已刪除或已逐出的資源留下過期驗證狀態。
 - 保留必要的最小安全 gate：服務 readiness、認證狀態、protocol/capability、精確 source commit、CUDA 與 ComfyUI 健康、restart／reconnection；Worker discovery 與 auth ownership 契約未變更。
-- Windows 發行包已重建；focused gate `317 passed, 1 skipped`，distribution/archive parity `3 passed, 55 deselected`，`git diff --check` 通過。ZIP SHA-256：`a625dc4c6d5449e80098eb9784a6926e9a041f045d14451ec7080b1964e3b0f4`。
+- Final review 安全修正：resource manifest/content 的 SHA-256 僅接受完整 64 位 hex（大小寫輸入皆正規化為小寫），在任何 `.part` 路徑組裝前即拒絕 traversal／absolute-path payload；回傳 manifest、sidecar 與 partial filename 皆使用小寫 digest。
+- 完整長度但尚未 promotion 的 interrupted partial 現由 Mac 送出 bounded zero-byte `finalize=true` PUT；Worker 必須重新 SHA-256 驗證後才 atomic promote 並允許 `/prompt`，失敗會依既有契約移除 partial、destination 與 verification sidecar，且不會整檔重傳。
+- Mac digest cache identity 現包含 `size`、`mtime_ns`、`st_ino`、`st_ctime_ns`，hash 前後都重新 stat；同 size/mtime 的 atomic replacement 會失效重算，讀取期間 metadata 改變則不快取並回安全的本機錯誤。Updater public state 也保留 `COMFYUI_START_TIMEOUT`、`WORKER_START_TIMEOUT`、`WORKER_STATUS_INVALID`、`WORKER_PREFLIGHT_FAILED` 的安全 stage code，不再折疊成 generic contract failure，且不持久化 raw exception/token。
+- Windows 發行包已重建；Task 6 focused gate `331 passed, 1 skipped`，updater state suite `51 passed`，distribution/archive parity `3 passed, 55 deselected`。ZIP SHA-256：`955c4b8c63d2a35e45d8c5d3f4c1e76937153bb6ed2787302825cd7224bb90cf`。
+- 發行狀態：本 final-review 修正、回歸測試、dist 與本進度紀錄由本節所在的 `main` commit 一併發布；commit／push／HEAD 對齊證據記錄於 `.superpowers/sdd/2026-08-02-worker-update-minimal-health-validation/final-fix-report.md`。
 - 本輪僅執行 non-live build/test/documentation；舊 update request 未重試，下一次 live update retry 仍待新 package/updater 部署且 Mac fast-forward 後另送新 request ID。`NVIDIA_WORKER_AUTO_UPDATE=false` 維持不變，未操作真實 Worker、ComfyUI 或 GPU。
 
 ## 2026-08-01 Windows Worker 首次 managed bootstrap 實機修正

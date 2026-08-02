@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -18,6 +19,9 @@ from urllib.parse import urlsplit
 import httpx
 from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+
+_SHA256_PATTERN = re.compile(r"[0-9a-fA-F]{64}\Z")
+
 try:
     from worker.windows.update_contract import (
         RequestLockError,
@@ -333,6 +337,12 @@ def _safe_destination(kind: str, name: str) -> Path:
     return destination
 
 
+def _normalized_sha256(value: str) -> str:
+    if not _SHA256_PATTERN.fullmatch(value):
+        raise HTTPException(422, "invalid resource SHA-256")
+    return value.lower()
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -386,10 +396,9 @@ def _verified_sha(destination: Path) -> str:
         record.get("size") == stat.st_size
         and record.get("mtime_ns") == stat.st_mtime_ns
         and isinstance(sha, str)
-        and len(sha) == 64
-        and all(character in "0123456789abcdefABCDEF" for character in sha)
+        and _SHA256_PATTERN.fullmatch(sha)
     ):
-        return sha
+        return sha.lower()
     return ""
 
 
@@ -572,9 +581,9 @@ def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
     for item in body.get("resources", []):
         kind = str(item.get("kind", ""))
         name = str(item.get("name", ""))
-        sha = str(item.get("sha256", ""))
+        sha = _normalized_sha256(str(item.get("sha256", "")))
         size = int(item.get("size", -1))
-        if len(sha) != 64 or size < 0:
+        if size < 0:
             raise HTTPException(422, "invalid resource manifest")
         destination = _safe_destination(kind, name)
         protected.add(destination.resolve())
@@ -590,35 +599,45 @@ def resource_plan(body: dict[str, Any]) -> dict[str, Any]:
             partial.unlink(missing_ok=True)
             offset = 0
         incoming_bytes += size - offset
-        missing.append({**item, "offset": offset})
+        missing.append({**item, "sha256": sha, "offset": offset})
     _enforce_cache(incoming_bytes=incoming_bytes, protected=protected)
     return {"missing": missing}
 
 
 @app.put("/v1/resources/content", dependencies=[Depends(_auth)])
 async def resource_content(
-    body: bytes = Body(..., media_type="application/octet-stream"),
+    body: bytes = Body(b"", media_type="application/octet-stream"),
     kind: str = Query(...),
     name: str = Query(...),
     sha256: str = Query(..., min_length=64, max_length=64),
     size: int = Query(..., ge=0),
     offset: int = Query(..., ge=0),
+    finalize: bool = Query(False),
 ) -> dict[str, Any]:
     _require_update_idle()
+    sha = _normalized_sha256(sha256)
     destination = _safe_destination(kind, name)
     PARTIAL_ROOT.mkdir(parents=True, exist_ok=True)
-    partial = PARTIAL_ROOT / f"{sha256}.part"
+    partial = PARTIAL_ROOT / f"{sha}.part"
     actual_offset = partial.stat().st_size if partial.exists() else 0
     if actual_offset != offset:
         raise HTTPException(409, detail={"accepted_offset": actual_offset})
-    mode = "ab" if offset else "wb"
-    with partial.open(mode) as output:
-        output.write(body)
-        output.flush()
-        os.fsync(output.fileno())
+    if finalize:
+        if body:
+            raise HTTPException(422, "finalize request must not contain resource bytes")
+        if offset != size:
+            raise HTTPException(409, detail={"accepted_offset": actual_offset})
+        if size == 0 and not partial.exists():
+            partial.touch()
+    else:
+        mode = "ab" if offset else "wb"
+        with partial.open(mode) as output:
+            output.write(body)
+            output.flush()
+            os.fsync(output.fileno())
     if partial.stat().st_size < size:
         return {"ready": False, "offset": partial.stat().st_size}
-    if partial.stat().st_size != size or _sha256(partial) != sha256:
+    if partial.stat().st_size != size or _sha256(partial) != sha:
         partial.unlink(missing_ok=True)
         destination.unlink(missing_ok=True)
         _remove_verification(destination)
@@ -627,8 +646,8 @@ async def resource_content(
     os.replace(partial, destination)
     # The bytes were just digest-verified above; record the sidecar so future
     # plans trust this file by size+mtime without re-hashing it.
-    _record_verified(destination, sha256)
-    return {"ready": True, "offset": size, "size": size, "sha256": sha256}
+    _record_verified(destination, sha)
+    return {"ready": True, "offset": size, "size": size, "sha256": sha}
 
 
 def _proxy(method: str, path: str, **kwargs: Any) -> Response:
