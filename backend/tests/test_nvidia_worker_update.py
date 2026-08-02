@@ -667,11 +667,9 @@ def test_worker_request_revalidates_effective_timeout_before_http(
         client.health(timeout=1)
 
 
-def test_worker_submission_waits_for_update_then_submits_exactly_once(
-    monkeypatch,
-) -> None:
+def test_worker_submission_ignores_legacy_auto_update_setting(monkeypatch) -> None:
     client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
-    events: list[str] = []
+    requests: list[tuple[str, str, dict[str, Any]]] = []
     monkeypatch.setattr(
         nvidia_worker,
         "get_settings",
@@ -683,57 +681,30 @@ def test_worker_submission_waits_for_update_then_submits_exactly_once(
     monkeypatch.setattr(
         nvidia_worker,
         "ensure_worker_compatible",
-        lambda selected, **kwargs: events.append("update")
-        if selected is client and kwargs["timeout"] == 1800
-        else None,
-    )
-    monkeypatch.setattr(
-        client,
-        "_submit_prompt_once",
-        lambda prompt, *, client_id=None, extra_data=None: events.append("submit")
-        or "prompt-1",
-    )
-
-    result = client.submit_prompt({"1": {"class_type": "KSampler"}})
-
-    assert result == "prompt-1"
-    assert events == ["update", "submit"]
-
-
-def test_worker_submission_update_failure_has_no_submit_or_local_fallback(
-    monkeypatch,
-) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
-    submitted = 0
-    monkeypatch.setattr(
-        nvidia_worker,
-        "get_settings",
-        lambda: SimpleNamespace(
-            nvidia_worker_auto_update=True,
-            nvidia_worker_update_timeout=1800,
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("prompt submission invoked the updater")
         ),
+        raising=False,
     )
 
-    def fail_update(*_args, **_kwargs):
-        raise WorkerUpdateError("WORKER_UPDATE_TIMEOUT", "Worker update timed out.")
+    class Response:
+        is_success = True
+        text = ""
+        reason_phrase = "OK"
 
-    def submit_once(*_args, **_kwargs):
-        nonlocal submitted
-        submitted += 1
-        return "unexpected"
+        @staticmethod
+        def json() -> dict[str, Any]:
+            return {"prompt_id": "prompt-1"}
 
-    monkeypatch.setattr(nvidia_worker, "ensure_worker_compatible", fail_update)
-    monkeypatch.setattr(client, "_submit_prompt_once", submit_once)
-    monkeypatch.setattr(
-        nvidia_worker,
-        "get_comfy_client",
-        lambda: (_ for _ in ()).throw(AssertionError("local fallback used")),
-    )
+    def request(method: str, path: str, **kwargs: Any) -> Response:
+        requests.append((method, path, kwargs["json"]))
+        return Response()
 
-    with pytest.raises(WorkerUpdateError, match="WORKER_UPDATE_TIMEOUT"):
-        client.submit_prompt({})
+    monkeypatch.setattr(client, "_request_raw", request)
+    prompt = {"1": {"class_type": "KSampler", "inputs": {}}}
 
-    assert submitted == 0
+    assert client.submit_prompt(prompt) == "prompt-1"
+    assert requests == [("POST", "/prompt", {"prompt": prompt})]
 
 
 def test_settings_default_and_environment_override(monkeypatch) -> None:

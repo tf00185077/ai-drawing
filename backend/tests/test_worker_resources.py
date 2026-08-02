@@ -1,162 +1,79 @@
 from __future__ import annotations
 
-import hashlib
-import os
-from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock
 
-import httpx
 import pytest
 
 from app.core.comfyui import ComfyUIError
 from app.services import nvidia_worker
 
 
-def _settings(root):
-    empty = root / "empty"
-    empty.mkdir(exist_ok=True)
-    return SimpleNamespace(
-        comfyui_checkpoints_dir=str(root / "checkpoints"),
-        comfyui_diffusion_models_dir=str(root / "diffusion_models"),
-        comfyui_text_encoders_dir=str(root / "text_encoders"),
-        comfyui_vae_dir=str(root / "vae"),
-        comfyui_loras_dir=str(root / "loras"),
-        comfyui_controlnet_dir=str(empty),
-        comfyui_upscale_models_dir=str(empty),
-    )
-
-
-def test_workflow_resources_resolves_and_hashes_known_loaders(
-    tmp_path, monkeypatch
+def test_worker_submission_sends_resource_references_directly_to_comfyui(
+    monkeypatch,
 ) -> None:
-    for folder in ("checkpoints", "diffusion_models", "text_encoders", "vae", "loras"):
-        (tmp_path / folder).mkdir()
-    model = tmp_path / "diffusion_models" / "anima.safetensors"
-    lora = tmp_path / "loras" / "style.safetensors"
-    model.write_bytes(b"anima")
-    lora.write_bytes(b"lora")
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    workflow = {
-        "1": {"class_type": "UNETLoader", "inputs": {"unet_name": model.name}},
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
+    requests: list[tuple[str, str, dict[str, Any]]] = []
+    digest_calls = []
+
+    class Response:
+        is_success = True
+        text = ""
+        reason_phrase = "OK"
+
+        def __init__(self, body: dict[str, Any]) -> None:
+            self._body = body
+
+        def json(self) -> dict[str, Any]:
+            return self._body
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def request(method: str, path: str, **kwargs: Any) -> Response:
+        requests.append((method, path, kwargs["json"]))
+        if path == "/v1/workflows/preflight":
+            return Response({"ready": True, "missing_node_types": []})
+        if path == "/v1/resources/plan":
+            return Response({"missing": []})
+        return Response({"prompt_id": "prompt-1"})
+
+    def read_and_hash(path) -> str:
+        digest_calls.append(path)
+        return "0" * 64
+
+    monkeypatch.setattr(client, "_request_raw", request)
+    monkeypatch.setattr(
+        nvidia_worker,
+        "_read_and_hash",
+        read_and_hash,
+        raising=False,
+    )
+    prompt = {
+        "1": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "model.safetensors"},
+        },
         "2": {
-            "class_type": "LoraLoaderModelOnly",
-            "inputs": {"lora_name": lora.name},
+            "class_type": "LoraLoader",
+            "inputs": {"lora_name": "style.safetensors"},
+        },
+        "3": {
+            "class_type": "LoadImage",
+            "inputs": {"image": "reference.png"},
         },
     }
 
-    resources = nvidia_worker.workflow_resources(workflow)
+    assert client.submit_prompt(prompt) == "prompt-1"
 
-    assert [(item.kind, item.name, item.size) for item in resources] == [
-        ("diffusion_models", model.name, 5),
-        ("loras", lora.name, 4),
+    assert requests == [
+        ("POST", "/prompt", {"prompt": prompt}),
     ]
-    assert all(len(item.sha256) == 64 for item in resources)
-
-
-def test_digest_reuses_cache_until_file_changes(tmp_path, monkeypatch) -> None:
-    nvidia_worker._digest_cache.clear()
-    model = tmp_path / "big.safetensors"
-    model.write_bytes(b"seven!!")  # 7 bytes
-
-    reads = {"n": 0}
-    real = nvidia_worker._read_and_hash
-
-    def counting(path):
-        reads["n"] += 1
-        return real(path)
-
-    monkeypatch.setattr(nvidia_worker, "_read_and_hash", counting)
-
-    first = nvidia_worker._digest(model)
-    second = nvidia_worker._digest(model)
-    assert first == second
-    assert reads["n"] == 1, "unchanged file must not be re-hashed on every call"
-
-    # Different size invalidates the cache.
-    model.write_bytes(b"different-bytes")
-    third = nvidia_worker._digest(model)
-    assert third != first
-    assert reads["n"] == 2
-
-    # Same size but newer mtime invalidates the cache.
-    model.write_bytes(b"same-length-xyz")  # same 15 bytes as previous write
-    stat = model.stat()
-    os.utime(model, (stat.st_atime, stat.st_mtime + 100))
-    nvidia_worker._digest(model)
-    assert reads["n"] == 3
-
-
-def test_digest_cache_invalidates_atomic_replacement_with_same_size_and_mtime(
-    tmp_path, monkeypatch
-) -> None:
-    nvidia_worker._digest_cache.clear()
-    model = tmp_path / "big.safetensors"
-    replacement = tmp_path / "replacement.safetensors"
-    original = b"original"
-    changed = b"replaced"
-    assert len(original) == len(changed)
-    model.write_bytes(original)
-
-    reads = {"n": 0}
-    real = nvidia_worker._read_and_hash
-
-    def counting(path):
-        reads["n"] += 1
-        return real(path)
-
-    monkeypatch.setattr(nvidia_worker, "_read_and_hash", counting)
-    first = nvidia_worker._digest(model)
-    original_stat = model.stat()
-    replacement.write_bytes(changed)
-    replacement_stat = replacement.stat()
-    os.utime(
-        replacement,
-        ns=(replacement_stat.st_atime_ns, original_stat.st_mtime_ns),
-    )
-    os.replace(replacement, model)
-    replaced_stat = model.stat()
-    assert replaced_stat.st_size == original_stat.st_size
-    assert replaced_stat.st_mtime_ns == original_stat.st_mtime_ns
-    assert (
-        replaced_stat.st_ino != original_stat.st_ino
-        or replaced_stat.st_ctime_ns != original_stat.st_ctime_ns
-    )
-
-    second = nvidia_worker._digest(model)
-
-    assert first == hashlib.sha256(original).hexdigest()
-    assert second == hashlib.sha256(changed).hexdigest()
-    assert reads["n"] == 2
-
-
-def test_digest_does_not_cache_file_that_changes_while_hashing(
-    tmp_path, monkeypatch
-) -> None:
-    nvidia_worker._digest_cache.clear()
-    model = tmp_path / "changing.safetensors"
-    original = b"stable-before-read"
-    model.write_bytes(original)
-
-    def replace_during_hash(path):
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        path.write_bytes(b"different-size-after-read")
-        return digest
-
-    monkeypatch.setattr(nvidia_worker, "_read_and_hash", replace_during_hash)
-
-    with pytest.raises(
-        nvidia_worker.WorkerConfigurationError,
-        match="resource changed while hashing",
-    ):
-        nvidia_worker._digest(model)
-
-    assert str(model) not in nvidia_worker._digest_cache
+    assert digest_calls == []
 
 
 def test_worker_submit_prompt_surfaces_node_errors(monkeypatch) -> None:
     client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
-    monkeypatch.setattr(client, "_preflight", lambda prompt: None)
-    monkeypatch.setattr(client, "_synchronize", lambda prompt: None)
 
     response = MagicMock()
     response.is_success = False
@@ -180,252 +97,3 @@ def test_worker_submit_prompt_surfaces_node_errors(monkeypatch) -> None:
 
     assert exc.value.args[0] == "invalid prompt"
     assert exc.value.node_errors == {"6": "checkpoint not found"}
-
-
-def test_worker_submission_keeps_resource_preflight_plan_transfer_and_prompt_order(
-    tmp_path, monkeypatch
-) -> None:
-    loras = tmp_path / "loras"
-    loras.mkdir()
-    model = loras / "style.safetensors"
-    model.write_bytes(b"model-bytes")
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
-    calls: list[tuple[str, str]] = []
-
-    class Response:
-        is_success = True
-
-        def __init__(self, body):
-            self.body = body
-
-        def json(self):
-            return self.body
-
-        def raise_for_status(self):
-            return None
-
-    def request(method, path, **_kwargs):
-        calls.append((method, path))
-        if path == "/v1/workflows/preflight":
-            return Response({"ready": True, "missing_node_types": []})
-        if path == "/v1/resources/plan":
-            return Response(
-                {
-                    "missing": [
-                        {
-                            "kind": "loras",
-                            "name": model.name,
-                            "sha256": nvidia_worker._digest(model),
-                            "offset": 0,
-                        }
-                    ]
-                }
-            )
-        if path == "/v1/resources/content":
-            return Response({"ready": True, "offset": model.stat().st_size})
-        assert path == "/prompt"
-        return Response({"prompt_id": "worker-prompt-42"})
-
-    monkeypatch.setattr(client, "_request_once", request)
-
-    prompt_id = client._submit_prompt_once(
-        {
-            "1": {
-                "class_type": "LoraLoader",
-                "inputs": {"lora_name": model.name},
-            }
-        }
-    )
-
-    assert prompt_id == "worker-prompt-42"
-    assert calls == [
-        ("POST", "/v1/workflows/preflight"),
-        ("POST", "/v1/resources/plan"),
-        ("PUT", "/v1/resources/content"),
-        ("POST", "/prompt"),
-    ]
-
-
-def test_worker_submission_finalizes_complete_partial_before_prompt(
-    tmp_path, monkeypatch
-) -> None:
-    loras = tmp_path / "loras"
-    loras.mkdir()
-    model = loras / "style.safetensors"
-    model.write_bytes(b"model-bytes")
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
-    calls: list[tuple[str, str, dict]] = []
-
-    class Response:
-        is_success = True
-
-        def __init__(self, body):
-            self.body = body
-
-        def json(self):
-            return self.body
-
-        def raise_for_status(self):
-            return None
-
-    def request(method, path, **kwargs):
-        calls.append((method, path, kwargs))
-        if path == "/v1/workflows/preflight":
-            return Response({"ready": True, "missing_node_types": []})
-        if path == "/v1/resources/plan":
-            return Response(
-                {
-                    "missing": [
-                        {
-                            "kind": "loras",
-                            "name": model.name,
-                            "sha256": nvidia_worker._digest(model),
-                            "offset": model.stat().st_size,
-                        }
-                    ]
-                }
-            )
-        if path == "/v1/resources/content":
-            return Response({"ready": True, "offset": model.stat().st_size})
-        assert path == "/prompt"
-        return Response({"prompt_id": "worker-prompt-finalized"})
-
-    monkeypatch.setattr(client, "_request_once", request)
-
-    prompt_id = client._submit_prompt_once(
-        {"1": {"class_type": "LoraLoader", "inputs": {"lora_name": model.name}}}
-    )
-
-    assert prompt_id == "worker-prompt-finalized"
-    assert [(method, path) for method, path, _kwargs in calls] == [
-        ("POST", "/v1/workflows/preflight"),
-        ("POST", "/v1/resources/plan"),
-        ("PUT", "/v1/resources/content"),
-        ("POST", "/prompt"),
-    ]
-    finalize = calls[2][2]
-    assert finalize["params"]["offset"] == model.stat().st_size
-    assert finalize["params"]["finalize"] is True
-    assert finalize["content"] == b""
-
-
-def test_worker_submission_stops_when_complete_partial_cannot_finalize(
-    tmp_path, monkeypatch
-) -> None:
-    loras = tmp_path / "loras"
-    loras.mkdir()
-    model = loras / "style.safetensors"
-    model.write_bytes(b"model-bytes")
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
-    calls: list[tuple[str, str]] = []
-
-    class Response:
-        is_success = True
-
-        def __init__(self, body):
-            self.body = body
-
-        def json(self):
-            return self.body
-
-        def raise_for_status(self):
-            return None
-
-    def request(method, path, **_kwargs):
-        calls.append((method, path))
-        if path == "/v1/workflows/preflight":
-            return Response({"ready": True, "missing_node_types": []})
-        if path == "/v1/resources/plan":
-            return Response(
-                {
-                    "missing": [
-                        {
-                            "kind": "loras",
-                            "name": model.name,
-                            "sha256": nvidia_worker._digest(model),
-                            "offset": model.stat().st_size,
-                        }
-                    ]
-                }
-            )
-        if path == "/v1/resources/content":
-            return Response({"ready": False, "offset": model.stat().st_size})
-        return Response({"prompt_id": "must-not-run"})
-
-    monkeypatch.setattr(client, "_request_once", request)
-
-    with pytest.raises(
-        nvidia_worker.WorkerConfigurationError,
-        match="worker did not finalize resource",
-    ):
-        client._submit_prompt_once(
-            {"1": {"class_type": "LoraLoader", "inputs": {"lora_name": model.name}}}
-        )
-
-    assert calls == [
-        ("POST", "/v1/workflows/preflight"),
-        ("POST", "/v1/resources/plan"),
-        ("PUT", "/v1/resources/content"),
-    ]
-
-
-def test_worker_submission_preserves_comfyui_http_error_after_resource_plan(
-    tmp_path, monkeypatch
-) -> None:
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
-    calls: list[tuple[str, str]] = []
-    prompt_error = httpx.Response(
-        500, request=httpx.Request("POST", "http://worker/prompt")
-    )
-
-    class Response:
-        is_success = True
-
-        def __init__(self, body):
-            self.body = body
-
-        def json(self):
-            return self.body
-
-        def raise_for_status(self):
-            return None
-
-    def request(method, path, **_kwargs):
-        calls.append((method, path))
-        if path == "/v1/workflows/preflight":
-            return Response({"ready": True, "missing_node_types": []})
-        if path == "/v1/resources/plan":
-            return Response({"missing": []})
-        assert path == "/prompt"
-        return prompt_error
-
-    monkeypatch.setattr(client, "_request_once", request)
-
-    with pytest.raises(httpx.HTTPStatusError):
-        client._submit_prompt_once({"1": {"class_type": "KSampler", "inputs": {}}})
-
-    assert calls == [
-        ("POST", "/v1/workflows/preflight"),
-        ("POST", "/v1/resources/plan"),
-        ("POST", "/prompt"),
-    ]
-
-
-def test_workflow_resources_rejects_traversal(tmp_path, monkeypatch) -> None:
-    for folder in ("checkpoints", "diffusion_models", "text_encoders", "vae", "loras"):
-        (tmp_path / folder).mkdir()
-    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-
-    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="unsafe"):
-        nvidia_worker.workflow_resources(
-            {
-                "1": {
-                    "class_type": "UNETLoader",
-                    "inputs": {"unet_name": "../escape.safetensors"},
-                }
-            }
-        )
