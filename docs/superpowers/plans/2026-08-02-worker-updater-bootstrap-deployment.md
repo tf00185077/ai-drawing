@@ -350,7 +350,7 @@ Backup and switch whole paths using fixed paths and `Move-Item -LiteralPath`; ke
 Smoke from `$WorkerRoot` with updater-owned Python:
 
 ```powershell
-& $UpdaterPython -B -c "from updater.cli import WindowsUpdaterApplication; WindowsUpdaterApplication.from_program_data(); import updater.runtime, updater.windows_runtime, updater.state"
+& $UpdaterPython -B -c "from updater.cli import ProductionUpdaterServices; ProductionUpdaterServices.from_program_data(); import updater.runtime, updater.windows_runtime, updater.state"
 if ($LASTEXITCODE -ne 0) { throw "UPDATER_BOOTSTRAP_IMPORT_FAILED" }
 & $UpdaterPython -B -m updater.recovery
 if ($LASTEXITCODE -ne 0) { throw "UPDATER_BOOTSTRAP_RECOVERY_FAILED" }

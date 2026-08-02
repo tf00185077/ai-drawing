@@ -1123,19 +1123,605 @@ Assert-UpdaterBootstrapProductionContext -RepositoryRoot {_ps_quote(repository)}
     assert "UPDATER_BOOTSTRAP_REPARSE_POINT" in result.stderr
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows backup boundary requires Windows")
-def test_updater_bootstrap_deployment_backup_reparse_validation_is_deferred_with_closed_adapter(
+def test_updater_bootstrap_deployment_task_stop_is_isolated_to_updater() -> None:
+    """Touching Worker/Restart processes or starting a task must make this test fail."""
+    script = (
+        Path(__file__).resolve().parents[2]
+        / "worker"
+        / "windows"
+        / "Deploy-UpdaterBootstrap.ps1"
+    )
+    script_text = script.read_text(encoding="utf-8")
+    start = script_text.index("function Stop-UpdaterBootstrapTask")
+    stop_block = script_text[start : script_text.index("\nfunction ", start + 1)]
+
+    assert '"AI-Drawing Worker Updater"' in stop_block
+    assert "Get-ScheduledTask" in stop_block
+    assert "Stop-ScheduledTask" in stop_block
+    for forbidden in ("AI-Drawing NVIDIA Worker", "AI-Drawing NVIDIA Worker Restart"):
+        assert forbidden not in stop_block
+    assert "Stop-Process" not in stop_block
+    assert "Start-ScheduledTask" not in script_text
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows task polling requires Windows")
+def test_updater_bootstrap_deployment_task_polling_waits_until_ready(
     tmp_path: Path,
 ) -> None:
     body = """
-$Adapter = Get-ProductionUpdaterBootstrapAdapter
-& $Adapter.Backup 'worker' 'program-data' 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+$States = New-Object "System.Collections.Generic.Queue[string]"
+foreach ($State in @("Running", "Running", "Ready")) { $States.Enqueue($State) }
+$Queries = New-Object "System.Collections.Generic.List[string]"
+$Stops = New-Object "System.Collections.Generic.List[string]"
+$Waits = New-Object "System.Collections.Generic.List[int]"
+Stop-UpdaterBootstrapTask `
+  -TaskLookup { param($Name)
+    [void]$Queries.Add($Name)
+    [pscustomobject]@{ State = $States.Dequeue() }
+  } `
+  -TaskStopper { param($Name) [void]$Stops.Add($Name) } `
+  -Delay { param($Milliseconds) [void]$Waits.Add($Milliseconds) } `
+  -UtcNow { [DateTime]::Parse("2026-08-02T00:00:00Z").ToUniversalTime() }
+[pscustomobject]@{ queries=$Queries; stops=$Stops; waits=$Waits } |
+  ConvertTo-Json -Depth 4 -Compress
 """
 
     result = _run_updater_bootstrap_harness(tmp_path, body)
 
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record == {
+        "queries": [
+            "AI-Drawing Worker Updater",
+            "AI-Drawing Worker Updater",
+            "AI-Drawing Worker Updater",
+        ],
+        "stops": ["AI-Drawing Worker Updater"],
+        "waits": [200],
+    }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows task timeout requires Windows")
+def test_updater_bootstrap_deployment_task_timeout_is_busy_before_backup(
+    tmp_path: Path,
+) -> None:
+    body = """
+$Events = New-Object "System.Collections.Generic.List[string]"
+$Times = New-Object "System.Collections.Generic.Queue[datetime]"
+$Times.Enqueue([DateTime]::Parse("2026-08-02T00:00:00Z").ToUniversalTime())
+$Times.Enqueue([DateTime]::Parse("2026-08-02T00:00:31Z").ToUniversalTime())
+$Adapter = [pscustomobject]@{
+  ValidateContext = { [void]$Events.Add("validate") }
+  AcquireLock = { [void]$Events.Add("lock") }
+  StopUpdaterTask = {
+    [void]$Events.Add("stop")
+    Stop-UpdaterBootstrapTask `
+      -TaskLookup { param($Name) [pscustomobject]@{ State = "Running" } } `
+      -TaskStopper { param($Name) } -Delay { param($Milliseconds) } `
+      -UtcNow { $Times.Dequeue() }
+  }
+  Stage = { [void]$Events.Add("stage") }
+  ValidateStage = {}
+  Backup = { [void]$Events.Add("backup"); "backup" }
+  Activate = {}
+  Protect = {}
+  Smoke = {}
+  ValidateTask = {}
+  CleanupSuccess = {}
+  Rollback = {}
+  ValidateRollback = {}
+  ReleaseLock = { [void]$Events.Add("release") }
+}
+$Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot "repository" `
+  -WorkerRoot "worker" -ProgramDataRoot "program-data" `
+  -ExpectedCommit "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" -Adapter $Adapter
+[pscustomobject]@{ result=$Result; events=$Events } | ConvertTo-Json -Depth 5 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"] == {
+        "status": "failed_before_switch",
+        "error_code": "UPDATER_BOOTSTRAP_TASK_BUSY",
+        "backup": None,
+    }
+    assert record["events"] == ["validate", "lock", "stop", "release"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows transaction lock requires Windows")
+def test_updater_bootstrap_deployment_task_lock_is_exclusive_and_released(
+    tmp_path: Path,
+) -> None:
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    body = f"""
+function Assert-SecureUpdaterTree {{ param($Path) }}
+Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}
+$LockPath = Join-Path {_ps_quote(program_data)} "updater-bootstrap-deployment.lock"
+$ExistsWhileHeld = Test-Path -LiteralPath $LockPath -PathType Leaf
+$SecondError = $null
+try {{
+  Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}
+}} catch {{
+  $SecondError = $_.Exception.Message
+}}
+Exit-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}
+[pscustomobject]@{{
+  exists_while_held=$ExistsWhileHeld
+  second_error=$SecondError
+  exists_after_release=(Test-Path -LiteralPath $LockPath)
+}} | ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "exists_while_held": True,
+        "second_error": "UPDATER_BOOTSTRAP_TRANSACTION_BUSY",
+        "exists_after_release": False,
+    }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows process lock requires Windows")
+def test_updater_bootstrap_deployment_task_lock_excludes_another_process(
+    tmp_path: Path,
+) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    deployment_script = repo / "worker" / "windows" / "Deploy-UpdaterBootstrap.ps1"
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    holder_script = tmp_path / "lock holder.ps1"
+    holder_script.write_text(
+        f'. {_ps_quote(deployment_script)}\n'
+        "function Assert-SecureUpdaterTree { param($Path) }\n"
+        f"Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}\n"
+        '[Console]::Out.WriteLine("READY")\n'
+        "[Console]::Out.Flush()\n"
+        "[void][Console]::In.ReadLine()\n"
+        f"Exit-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}\n",
+        encoding="utf-8",
+    )
+    holder = subprocess.Popen(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(holder_script),
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    assert holder.stdout is not None
+    try:
+        assert holder.stdout.readline().strip() == "READY"
+        contender = _run_updater_bootstrap_harness(
+            tmp_path,
+            "function Assert-SecureUpdaterTree { param($Path) }\n"
+            f"Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}",
+        )
+        assert contender.returncode != 0
+        assert "UPDATER_BOOTSTRAP_TRANSACTION_BUSY" in contender.stderr
+    finally:
+        remaining_stdout, holder_stderr = holder.communicate(input="release\n", timeout=10)
+    assert holder.returncode == 0, holder_stderr + remaining_stdout
+    assert not (program_data / "updater-bootstrap-deployment.lock").exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows lock release requires Windows")
+def test_updater_bootstrap_deployment_task_lock_release_failure_is_fixed_result(
+    tmp_path: Path,
+) -> None:
+    body = _updater_bootstrap_adapter_script() + """
+$Adapter.ReleaseLock = { throw "private release secret" }
+$Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot "repository" `
+  -WorkerRoot "worker" -ProgramDataRoot "program-data" `
+  -ExpectedCommit "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" -Adapter $Adapter
+$Result | ConvertTo-Json -Depth 5 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "status": "recovery_required",
+        "error_code": "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED",
+        "backup": "backup-token",
+    }
+    assert "private release secret" not in result.stdout
+    assert "private release secret" not in result.stderr
+
+
+def _create_updater_bootstrap_switch_fixture(tmp_path: Path) -> SimpleNamespace:
+    commit = "b" * 40
+    worker_root = tmp_path / "worker root"
+    installed_updater = worker_root / "updater"
+    deployment_root = worker_root / "updater-deployment-owned"
+    staging = deployment_root / f"staging-{commit}"
+    staged_updater = staging / "updater"
+    program_data = tmp_path / "program data"
+    installed_updater.mkdir(parents=True)
+    staged_updater.mkdir(parents=True)
+    program_data.mkdir()
+    (installed_updater / "marker.txt").write_text("old-updater", encoding="utf-8")
+    for relative in ("__init__.py", "cli.py", "runtime.py", "windows_runtime.py", "state.py"):
+        (staged_updater / relative).write_text(f"# new {relative}\n", encoding="utf-8")
+    (staged_updater / "marker.txt").write_text("new-updater", encoding="utf-8")
+    (program_data / "UpdaterBootstrap.ps1").write_text("old-bootstrap", encoding="utf-8")
+    (staging / "UpdaterBootstrap.ps1").write_text("new-bootstrap", encoding="utf-8")
+
+    sentinels: list[Path] = []
+    for relative in ("models", "shared", "releases/release-one"):
+        sentinel = worker_root / relative / "must-remain.txt"
+        sentinel.parent.mkdir(parents=True)
+        sentinel.write_text(relative, encoding="utf-8")
+        sentinels.append(sentinel)
+    current_target = tmp_path / "outside current"
+    current_sentinel = current_target / "must-remain.txt"
+    _create_bootstrap_test_junction(worker_root / "current", current_target)
+    current_sentinel.write_text("current", encoding="utf-8")
+    sentinels.append(current_sentinel)
+    return SimpleNamespace(
+        commit=commit,
+        worker_root=worker_root,
+        installed_updater=installed_updater,
+        deployment_root=deployment_root,
+        staging=staging,
+        program_data=program_data,
+        updater_backup=deployment_root / f"backup-{commit}",
+        bootstrap_backup=program_data / f"UpdaterBootstrap.ps1.backup-{commit}",
+        sentinels=sentinels,
+    )
+
+
+def _updater_bootstrap_filesystem_adapter_script(
+    fixture: SimpleNamespace, fail_stage: str | None = None
+) -> str:
+    fail_value = "" if fail_stage is None else fail_stage
+    return f"""
+$FailStage = {_ps_quote(fail_value)}
+$Protected = New-Object "System.Collections.Generic.List[string]"
+$Asserted = New-Object "System.Collections.Generic.List[string]"
+$script:RollbackSmokeCalls = 0
+function Protect-UpdaterTree {{ param($Path) [void]$Protected.Add([IO.Path]::GetFullPath($Path)) }}
+function Assert-SecureUpdaterTree {{ param($Path) [void]$Asserted.Add([IO.Path]::GetFullPath($Path)) }}
+function Invoke-UpdaterBootstrapImportSmoke {{
+  param($WorkerRoot, $ProgramDataRoot)
+  $script:RollbackSmokeCalls += 1
+  if ($FailStage -eq "rollback-smoke") {{ throw "UPDATER_BOOTSTRAP_IMPORT_FAILED" }}
+}}
+$ProductionAdapter = Get-ProductionUpdaterBootstrapAdapter
+$StagingPath = {_ps_quote(fixture.staging)}
+$Adapter = [pscustomobject]@{{
+  ValidateContext = {{}}
+  AcquireLock = {{}}
+  StopUpdaterTask = {{}}
+  Stage = {{ $StagingPath }}
+  ValidateStage = {{ param($Staging) Assert-UpdaterBootstrapStageStructure -StagingPath $Staging }}
+  Backup = $ProductionAdapter.Backup
+  Activate = {{ param($Staging, $WorkerRoot, $ProgramDataRoot)
+    & $ProductionAdapter.Activate $Staging $WorkerRoot $ProgramDataRoot
+    if ($FailStage -eq "activate") {{ throw "private activation failure" }}
+  }}
+  Protect = $ProductionAdapter.Protect
+  Smoke = {{
+    if ($FailStage -in @("smoke", "rollback-smoke")) {{ throw "private smoke failure" }}
+  }}
+  ValidateTask = {{}}
+  CleanupSuccess = $ProductionAdapter.CleanupSuccess
+  Rollback = $ProductionAdapter.Rollback
+  ValidateRollback = $ProductionAdapter.ValidateRollback
+  ReleaseLock = {{}}
+}}
+$Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot "repository" `
+  -WorkerRoot {_ps_quote(fixture.worker_root)} `
+  -ProgramDataRoot {_ps_quote(fixture.program_data)} `
+  -ExpectedCommit {_ps_quote(fixture.commit)} -Adapter $Adapter
+[pscustomobject]@{{
+  result=$Result
+  protected=$Protected
+  asserted=$Asserted
+  rollback_smoke_calls=$script:RollbackSmokeCalls
+}} | ConvertTo-Json -Depth 7 -Compress
+"""
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows directory switch requires Windows")
+def test_updater_bootstrap_deployment_switch_installs_new_and_retains_backup(
+    tmp_path: Path,
+) -> None:
+    fixture = _create_updater_bootstrap_switch_fixture(tmp_path)
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path, _updater_bootstrap_filesystem_adapter_script(fixture)
+    )
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "ready"
+    assert (fixture.installed_updater / "marker.txt").read_text(encoding="utf-8") == "new-updater"
+    assert (fixture.program_data / "UpdaterBootstrap.ps1").read_text(encoding="utf-8") == "new-bootstrap"
+    assert (fixture.updater_backup / "marker.txt").read_text(encoding="utf-8") == "old-updater"
+    assert fixture.bootstrap_backup.read_text(encoding="utf-8") == "old-bootstrap"
+    assert not fixture.staging.exists()
+    assert fixture.updater_backup.is_dir()
+    assert fixture.bootstrap_backup.is_file()
+    protected = {Path(path) for path in record["protected"]}
+    asserted = {Path(path) for path in record["asserted"]}
+    assert {fixture.installed_updater, fixture.program_data} <= protected
+    assert {fixture.installed_updater, fixture.program_data} <= asserted
+    for sentinel in fixture.sentinels:
+        assert sentinel.read_text(encoding="utf-8") in {
+            "models", "shared", "releases/release-one", "current"
+        }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows directory rollback requires Windows")
+@pytest.mark.parametrize(
+    ("fail_stage", "error_code"),
+    [
+        ("activate", "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"),
+        ("smoke", "UPDATER_BOOTSTRAP_SMOKE_FAILED"),
+    ],
+)
+def test_updater_bootstrap_deployment_switch_failure_restores_old_paths(
+    tmp_path: Path, fail_stage: str, error_code: str
+) -> None:
+    fixture = _create_updater_bootstrap_switch_fixture(tmp_path)
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path, _updater_bootstrap_filesystem_adapter_script(fixture, fail_stage)
+    )
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert record["result"]["error_code"] == error_code
+    assert (fixture.installed_updater / "marker.txt").read_text(encoding="utf-8") == "old-updater"
+    assert (fixture.program_data / "UpdaterBootstrap.ps1").read_text(encoding="utf-8") == "old-bootstrap"
+    assert record["rollback_smoke_calls"] == 1
+    for sentinel in fixture.sentinels:
+        assert sentinel.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows rollback smoke requires Windows")
+def test_updater_bootstrap_deployment_rollback_smoke_failure_requires_recovery(
+    tmp_path: Path,
+) -> None:
+    fixture = _create_updater_bootstrap_switch_fixture(tmp_path)
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path,
+        _updater_bootstrap_filesystem_adapter_script(fixture, "rollback-smoke"),
+    )
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "recovery_required"
+    assert record["result"]["error_code"] == "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+    assert (fixture.installed_updater / "marker.txt").read_text(encoding="utf-8") == "old-updater"
+    assert (fixture.program_data / "UpdaterBootstrap.ps1").read_text(encoding="utf-8") == "old-bootstrap"
+    assert record["rollback_smoke_calls"] == 1
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows backup boundary requires Windows")
+@pytest.mark.parametrize("backup_kind", ["updater", "bootstrap"])
+def test_updater_bootstrap_deployment_switch_rejects_backup_reparse_before_move(
+    tmp_path: Path, backup_kind: str
+) -> None:
+    fixture = _create_updater_bootstrap_switch_fixture(tmp_path)
+    candidate = (
+        fixture.updater_backup if backup_kind == "updater" else fixture.bootstrap_backup
+    )
+    outside = tmp_path / f"outside {backup_kind} backup"
+    _create_bootstrap_test_junction(candidate, outside)
+    sentinel = outside / "must-not-be-read.txt"
+    sentinel.write_text("outside", encoding="utf-8")
+
+    result = _run_updater_bootstrap_harness(
+        tmp_path,
+        "$Adapter = Get-ProductionUpdaterBootstrapAdapter\n"
+        f"& $Adapter.Backup {_ps_quote(fixture.worker_root)} "
+        f"{_ps_quote(fixture.program_data)} {_ps_quote(fixture.commit)}",
+    )
+
     assert result.returncode != 0
-    assert "UPDATER_BOOTSTRAP_NOT_IMPLEMENTED" in result.stderr
+    assert "UPDATER_BOOTSTRAP_REPARSE_POINT" in result.stderr
+    assert (fixture.installed_updater / "marker.txt").read_text(encoding="utf-8") == "old-updater"
+    assert (fixture.program_data / "UpdaterBootstrap.ps1").read_text(encoding="utf-8") == "old-bootstrap"
+    assert sentinel.read_text(encoding="utf-8") == "outside"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows partial backup requires Windows")
+def test_updater_bootstrap_deployment_switch_compensates_partial_backup(
+    tmp_path: Path,
+) -> None:
+    fixture = _create_updater_bootstrap_switch_fixture(tmp_path)
+    body = f"""
+function Protect-UpdaterTree {{ param($Path) }}
+function Assert-SecureUpdaterTree {{ param($Path) }}
+$script:MoveCount = 0
+function Move-Item {{
+  param($LiteralPath, $Destination, $ErrorAction)
+  $script:MoveCount += 1
+  if ($script:MoveCount -eq 2) {{ throw "injected bootstrap backup failure" }}
+  Microsoft.PowerShell.Management\\Move-Item -LiteralPath $LiteralPath `
+    -Destination $Destination -ErrorAction Stop
+}}
+$Adapter = Get-ProductionUpdaterBootstrapAdapter
+$Failure = $null
+try {{
+  & $Adapter.Backup {_ps_quote(fixture.worker_root)} `
+    {_ps_quote(fixture.program_data)} {_ps_quote(fixture.commit)} | Out-Null
+}} catch {{
+  $Failure = $_.Exception.Message
+}}
+[pscustomobject]@{{ failure=$Failure; moves=$script:MoveCount }} |
+  ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "failure": "injected bootstrap backup failure",
+        "moves": 3,
+    }
+    assert (fixture.installed_updater / "marker.txt").read_text(encoding="utf-8") == "old-updater"
+    assert (fixture.program_data / "UpdaterBootstrap.ps1").read_text(encoding="utf-8") == "old-bootstrap"
+    assert not fixture.updater_backup.exists()
+    assert not fixture.bootstrap_backup.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows updater smoke requires Windows")
+def test_updater_bootstrap_deployment_smoke_uses_owned_python_and_fixed_config(
+    tmp_path: Path,
+) -> None:
+    worker_root = tmp_path / "worker root"
+    updater_python = worker_root / "updater-runtime" / "Scripts" / "python.exe"
+    updater_python.parent.mkdir(parents=True)
+    updater_python.write_text("probe", encoding="utf-8")
+    (worker_root / "updater").mkdir()
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    body = f"""
+$Calls = New-Object "System.Collections.Generic.List[object]"
+Invoke-UpdaterBootstrapSmoke -WorkerRoot {_ps_quote(worker_root)} `
+  -ProgramDataRoot {_ps_quote(program_data)} `
+  -PythonInvoker {{ param($Python, $Arguments)
+    [void]$Calls.Add([pscustomobject]@{{
+      python=$Python
+      arguments=@($Arguments)
+      location=(Get-Location).Path
+    }})
+    0
+  }}
+$Calls | ConvertTo-Json -Depth 5 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    calls = json.loads(result.stdout)
+    assert calls == [
+        {
+            "python": str(updater_python),
+            "arguments": [
+                "-B",
+                "-c",
+                "from updater.cli import ProductionUpdaterServices; "
+                "ProductionUpdaterServices.from_program_data(); "
+                "import updater.runtime, updater.windows_runtime, updater.state",
+            ],
+            "location": str(worker_root),
+        },
+        {
+            "python": str(updater_python),
+            "arguments": ["-B", "-m", "updater.recovery"],
+            "location": str(worker_root),
+        },
+    ]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows updater smoke requires Windows")
+def test_updater_bootstrap_deployment_smoke_discards_private_stderr(
+    tmp_path: Path,
+) -> None:
+    worker_root = tmp_path / "worker root"
+    updater_python = worker_root / "updater-runtime" / "Scripts" / "python.exe"
+    updater_python.parent.mkdir(parents=True)
+    updater_python.write_text("probe", encoding="utf-8")
+    (worker_root / "updater").mkdir()
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    secret = "Bearer-smoke-stderr-must-not-leak"
+    body = f"""
+$Failure = $null
+try {{
+  Invoke-UpdaterBootstrapImportSmoke -WorkerRoot {_ps_quote(worker_root)} `
+    -ProgramDataRoot {_ps_quote(program_data)} `
+    -PythonInvoker {{ param($Python, $Arguments)
+      Write-Error {_ps_quote(secret)} -ErrorAction Continue
+      1
+    }}
+}} catch {{
+  $Failure = $_.Exception.Message
+}}
+[pscustomobject]@{{ failure=$Failure }} | ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"failure": "UPDATER_BOOTSTRAP_IMPORT_FAILED"}
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows task action validation requires Windows")
+def test_updater_bootstrap_deployment_task_action_is_fixed_and_never_started(
+    tmp_path: Path,
+) -> None:
+    program_data = tmp_path / "program data"
+    program_data.mkdir()
+    (program_data / "UpdaterBootstrap.ps1").write_text("fixture", encoding="utf-8")
+    expected_executable = (
+        Path(os.environ["SystemRoot"])
+        / "System32"
+        / "WindowsPowerShell"
+        / "v1.0"
+        / "powershell.exe"
+    )
+    expected_arguments = (
+        "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
+        f'"{program_data}\\UpdaterBootstrap.ps1"'
+    )
+    body = f"""
+$ExpectedAction = [pscustomobject]@{{
+  Execute={_ps_quote(expected_executable)}
+  Arguments={_ps_quote(expected_arguments)}
+}}
+$Cases = @(
+  [pscustomobject]@{{ name="valid"; actions=@($ExpectedAction) }},
+  [pscustomobject]@{{ name="wrong-executable"; actions=@([pscustomobject]@{{ Execute="pwsh.exe"; Arguments=$ExpectedAction.Arguments }}) }},
+  [pscustomobject]@{{ name="wrong-arguments"; actions=@([pscustomobject]@{{ Execute=$ExpectedAction.Execute; Arguments="-File wrong.ps1" }}) }},
+  [pscustomobject]@{{ name="extra-action"; actions=@($ExpectedAction, $ExpectedAction) }}
+)
+$Queries = New-Object "System.Collections.Generic.List[string]"
+$Results = New-Object "System.Collections.Generic.List[object]"
+foreach ($Case in $Cases) {{
+  $script:TaskCase = [pscustomobject]@{{ State="Ready"; Actions=@($Case.actions) }}
+  try {{
+    Assert-UpdaterBootstrapScheduledTaskAction -ProgramDataRoot {_ps_quote(program_data)} `
+      -TaskLookup {{ param($Name) [void]$Queries.Add($Name); $script:TaskCase }}
+    [void]$Results.Add([pscustomobject]@{{ name=$Case.name; result="ok" }})
+  }} catch {{
+    [void]$Results.Add([pscustomobject]@{{ name=$Case.name; result=$_.Exception.Message }})
+  }}
+}}
+[pscustomobject]@{{ results=$Results; queries=$Queries }} | ConvertTo-Json -Depth 5 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["results"] == [
+        {"name": "valid", "result": "ok"},
+        {"name": "wrong-executable", "result": "UPDATER_BOOTSTRAP_TASK_INVALID"},
+        {"name": "wrong-arguments", "result": "UPDATER_BOOTSTRAP_TASK_INVALID"},
+        {"name": "extra-action", "result": "UPDATER_BOOTSTRAP_TASK_INVALID"},
+    ]
+    assert record["queries"] == ["AI-Drawing Worker Updater"] * 4
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows staging contract requires Windows")
