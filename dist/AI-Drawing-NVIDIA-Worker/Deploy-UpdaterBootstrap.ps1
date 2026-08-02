@@ -94,6 +94,16 @@ function Assert-UpdaterBootstrapRepositoryState {
         throw "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"
     }
 
+    $Remote = [string](& git.exe -C $Canonical remote get-url origin 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        throw "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"
+    }
+    $Remote = $Remote.Trim().TrimEnd("/")
+    $ExpectedRemote = $TrustedRemoteUrl.Trim().TrimEnd("/")
+    if ($Remote -cne $ExpectedRemote) {
+        throw "UPDATER_BOOTSTRAP_REMOTE_INVALID"
+    }
+
     $PreviousErrorActionPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -118,10 +128,6 @@ function Assert-UpdaterBootstrapRepositoryState {
     if ($LASTEXITCODE -ne 0) {
         throw "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"
     }
-    $Remote = [string](& git.exe -C $Canonical remote get-url origin 2>$null)
-    if ($LASTEXITCODE -ne 0) {
-        throw "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"
-    }
     $Dirty = @(& git.exe -C $Canonical status --porcelain --untracked-files=no 2>$null)
     if ($LASTEXITCODE -ne 0) {
         throw "UPDATER_BOOTSTRAP_REPOSITORY_INVALID"
@@ -130,13 +136,8 @@ function Assert-UpdaterBootstrapRepositoryState {
     $Branch = $Branch.Trim()
     $Head = $Head.Trim()
     $OriginMain = $OriginMain.Trim()
-    $Remote = $Remote.Trim().TrimEnd("/")
-    $ExpectedRemote = $TrustedRemoteUrl.Trim().TrimEnd("/")
     if ($Branch -ne "main") {
         throw "UPDATER_BOOTSTRAP_BRANCH_INVALID"
-    }
-    if ($Remote -cne $ExpectedRemote) {
-        throw "UPDATER_BOOTSTRAP_REMOTE_INVALID"
     }
     if ($Head -cne $OriginMain) {
         throw "UPDATER_BOOTSTRAP_SOURCE_STALE"
@@ -161,7 +162,7 @@ function Assert-TrustedUpdaterBootstrapRepository {
         -TrustedRemoteUrl "https://github.com/tf00185077/ai-drawing.git"
 }
 
-function Assert-UpdaterBootstrapWorkerPaths {
+function Assert-UpdaterBootstrapBasePaths {
     param(
         [Parameter(Mandatory = $true)][string]$WorkerRoot,
         [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
@@ -170,15 +171,25 @@ function Assert-UpdaterBootstrapWorkerPaths {
 
     Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $ExpectedCommit
     Assert-UpdaterBootstrapNoReparseComponents -Path $WorkerRoot
-    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
-    $InstalledUpdater = Join-Path $WorkerRoot "updater"
-    if (Test-Path -LiteralPath $InstalledUpdater) {
-        Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledUpdater
+    Assert-UpdaterBootstrapNoReparseComponents -Path $ProgramDataRoot
+    Assert-NotReparsePoint -Path $WorkerRoot
+    $OwnershipMarker = Join-Path $WorkerRoot ".ai-drawing-worker-owned"
+    try {
+        $MarkerContents = (Get-Content -LiteralPath $OwnershipMarker -Raw `
+            -Encoding UTF8 -ErrorAction Stop).Trim()
+    } catch {
+        throw "Task 7 migration is required: the Worker ownership marker is missing."
     }
-    Assert-ExistingWorkerRoot -Path $WorkerRoot
-    Assert-UpdaterBootstrapNoReparseTree -Path $InstalledUpdater
-    Assert-SecureUpdaterTree -Path $InstalledUpdater
-    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    if ($MarkerContents -ne "AI-Drawing NVIDIA Worker") {
+        throw "Task 7 migration is required: the Worker ownership marker is invalid."
+    }
+    Assert-SecureUpdaterPath -Path $WorkerRoot -RequireProtected
+    Assert-SecureUpdaterPath -Path $OwnershipMarker
+    $UpdaterRuntime = Join-Path $WorkerRoot "updater-runtime"
+    if (Test-Path -LiteralPath $UpdaterRuntime) {
+        Assert-SecureUpdaterTree -Path $UpdaterRuntime
+    }
+    Assert-SecureUpdaterPath -Path $ProgramDataRoot -RequireProtected
 
     $DeploymentRoot = Join-Path $WorkerRoot "updater-deployment-owned"
     if (Test-Path -LiteralPath $DeploymentRoot) {
@@ -192,6 +203,26 @@ function Assert-UpdaterBootstrapWorkerPaths {
             Assert-SecureUpdaterTree -Path $Candidate
         }
     }
+}
+
+function Assert-UpdaterBootstrapWorkerPaths {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    $InstalledUpdater = Join-Path $WorkerRoot "updater"
+    if (Test-Path -LiteralPath $InstalledUpdater) {
+        Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledUpdater
+    }
+    Assert-UpdaterBootstrapBasePaths -WorkerRoot $WorkerRoot `
+        -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
+    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    Assert-ExistingWorkerRoot -Path $WorkerRoot
+    Assert-UpdaterBootstrapNoReparseTree -Path $InstalledUpdater
+    Assert-SecureUpdaterTree -Path $InstalledUpdater
 }
 
 function Import-UpdaterBootstrapWorkerSecurity {
@@ -219,7 +250,7 @@ function Import-UpdaterBootstrapWorkerSecurity {
     }
 }
 
-function Assert-UpdaterBootstrapProductionContext {
+function Assert-UpdaterBootstrapSourceContext {
     param(
         [Parameter(Mandatory = $true)][string]$RepositoryRoot,
         [Parameter(Mandatory = $true)][string]$WorkerRoot,
@@ -238,7 +269,33 @@ function Assert-UpdaterBootstrapProductionContext {
         throw "UPDATER_BOOTSTRAP_SECURITY_HELPER_INVALID"
     }
     Import-UpdaterBootstrapWorkerSecurity -SecurityPath $SecurityPath
+    Assert-UpdaterBootstrapBasePaths -WorkerRoot $WorkerRoot `
+        -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
+}
+
+function Assert-UpdaterBootstrapInstalledContext {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
     Assert-UpdaterBootstrapWorkerPaths -WorkerRoot $WorkerRoot `
+        -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
+}
+
+function Assert-UpdaterBootstrapProductionContext {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepositoryRoot,
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    Assert-UpdaterBootstrapSourceContext -RepositoryRoot $RepositoryRoot `
+        -WorkerRoot $WorkerRoot -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit
+    Assert-UpdaterBootstrapInstalledContext -WorkerRoot $WorkerRoot `
         -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
 }
 
@@ -292,14 +349,6 @@ function New-UpdaterBootstrapStage {
     Assert-UpdaterBootstrapNoReparseComponents -Path $WorkerRoot
     $Repository = (Resolve-Path -LiteralPath $RepositoryRoot -ErrorAction Stop).Path
     $Worker = (Resolve-Path -LiteralPath $WorkerRoot -ErrorAction Stop).Path
-
-    $UpdaterSource = Join-Path $Repository "worker\windows\updater"
-    $BootstrapSource = Join-Path $Repository "worker\windows\UpdaterBootstrap.ps1"
-    Assert-UpdaterBootstrapNoReparseTree -Path $UpdaterSource
-    Assert-UpdaterBootstrapNoReparseComponents -Path $BootstrapSource
-    if (-not (Test-Path -LiteralPath $BootstrapSource -PathType Leaf)) {
-        throw "UPDATER_BOOTSTRAP_SOURCE_INVALID"
-    }
 
     $UseCustomAcl = $PSBoundParameters.ContainsKey("OwnerSid") -or
         $PSBoundParameters.ContainsKey("AllowedSids")
@@ -485,6 +534,190 @@ function New-UpdaterBootstrapProgramDataStage {
     return $Staging
 }
 
+function Get-UpdaterBootstrapJournalPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    return (Join-Path (Join-Path $ProgramDataRoot `
+        "updater-bootstrap-deployment-owned") "transaction-journal.json")
+}
+
+function Assert-UpdaterBootstrapJournalStage {
+    param(
+        [Parameter(Mandatory = $true)][string]$Stage
+    )
+
+    if ($Stage -cnotin @(
+        "prepared",
+        "updater_backup_moved",
+        "bootstrap_backup_moved",
+        "updater_activated",
+        "bootstrap_activated",
+        "rolling_back",
+        "smoke_passed"
+    )) {
+        throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+    }
+}
+
+function Write-UpdaterBootstrapTransactionJournal {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit,
+        [Parameter(Mandatory = $true)][string]$Stage
+    )
+
+    Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $ExpectedCommit
+    Assert-UpdaterBootstrapJournalStage -Stage $Stage
+    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    $DeploymentRoot = Join-Path $ProgramDataRoot "updater-bootstrap-deployment-owned"
+    if (Test-Path -LiteralPath $DeploymentRoot) {
+        Assert-UpdaterBootstrapNoReparseTree -Path $DeploymentRoot
+        Assert-SecureUpdaterTree -Path $DeploymentRoot
+    } else {
+        New-SecureUpdaterDirectory -Path $DeploymentRoot
+        Assert-UpdaterBootstrapNoReparseTree -Path $DeploymentRoot
+        Assert-SecureUpdaterTree -Path $DeploymentRoot
+    }
+
+    $JournalPath = Get-UpdaterBootstrapJournalPath -ProgramDataRoot $ProgramDataRoot
+    $TemporaryPath = Join-Path $DeploymentRoot `
+        ("transaction-journal.tmp-{0}" -f [Guid]::NewGuid().ToString("N"))
+    $PreviousPath = Join-Path $DeploymentRoot `
+        ("transaction-journal.previous-{0}" -f [Guid]::NewGuid().ToString("N"))
+    Assert-UpdaterBootstrapNoReparseComponents -Path $TemporaryPath
+    try {
+        $Payload = [ordered]@{
+            schema_version = 1
+            expected_commit = $ExpectedCommit
+            stage = $Stage
+        } | ConvertTo-Json -Compress
+        $Encoding = New-Object Text.UTF8Encoding($false)
+        $Bytes = $Encoding.GetBytes($Payload)
+        $Stream = New-Object IO.FileStream(
+            $TemporaryPath,
+            [IO.FileMode]::CreateNew,
+            [IO.FileAccess]::Write,
+            [IO.FileShare]::None
+        )
+        try {
+            $Stream.Write($Bytes, 0, $Bytes.Length)
+            $Stream.Flush($true)
+        } finally {
+            $Stream.Dispose()
+        }
+        Reset-SecureUpdaterChildAcl -Path $TemporaryPath
+        Assert-SecureUpdaterPath -Path $TemporaryPath
+
+        if (Test-Path -LiteralPath $JournalPath -PathType Leaf) {
+            Assert-UpdaterBootstrapNoReparseComponents -Path $JournalPath
+            Assert-SecureUpdaterPath -Path $JournalPath
+            [IO.File]::Replace($TemporaryPath, $JournalPath, $PreviousPath)
+            Assert-UpdaterBootstrapNoReparseComponents -Path $PreviousPath
+            Remove-Item -LiteralPath $PreviousPath -Force -ErrorAction Stop
+        } else {
+            Assert-UpdaterBootstrapNoReparseComponents -Path $JournalPath
+            [IO.File]::Move($TemporaryPath, $JournalPath)
+        }
+        Reset-SecureUpdaterChildAcl -Path $JournalPath
+        Assert-SecureUpdaterPath -Path $JournalPath
+        return $JournalPath
+    } catch {
+        throw "UPDATER_BOOTSTRAP_JOURNAL_WRITE_FAILED"
+    } finally {
+        if (Test-Path -LiteralPath $TemporaryPath) {
+            try {
+                Assert-UpdaterBootstrapNoReparseComponents -Path $TemporaryPath
+                Remove-Item -LiteralPath $TemporaryPath -Force -ErrorAction Stop
+            } catch {
+                # The fixed journal state remains authoritative; stale temp is inert.
+            }
+        }
+        if (Test-Path -LiteralPath $PreviousPath) {
+            try {
+                Assert-UpdaterBootstrapNoReparseComponents -Path $PreviousPath
+                Remove-Item -LiteralPath $PreviousPath -Force -ErrorAction Stop
+            } catch {
+                # A protected, secret-free previous journal is inert evidence.
+            }
+        }
+    }
+}
+
+function Read-UpdaterBootstrapTransactionJournal {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $JournalPath = Get-UpdaterBootstrapJournalPath -ProgramDataRoot $ProgramDataRoot
+    if (-not (Test-Path -LiteralPath $JournalPath)) {
+        return $null
+    }
+    try {
+        Assert-UpdaterBootstrapNoReparseComponents -Path $JournalPath
+        if (-not (Test-Path -LiteralPath $JournalPath -PathType Leaf)) {
+            throw "invalid journal"
+        }
+        Assert-SecureUpdaterPath -Path $JournalPath
+        $Document = [IO.File]::ReadAllText($JournalPath) | ConvertFrom-Json
+        $PropertyNames = @($Document.PSObject.Properties | ForEach-Object { $_.Name })
+        if (
+            $PropertyNames.Count -ne 3 -or
+            "schema_version" -cnotin $PropertyNames -or
+            "expected_commit" -cnotin $PropertyNames -or
+            "stage" -cnotin $PropertyNames
+        ) {
+            throw "invalid journal"
+        }
+        if ([int]$Document.schema_version -ne 1) {
+            throw "invalid journal"
+        }
+        $Commit = [string]$Document.expected_commit
+        $Stage = [string]$Document.stage
+        Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $Commit
+        Assert-UpdaterBootstrapJournalStage -Stage $Stage
+        return [pscustomobject]@{
+            schema_version = 1
+            expected_commit = $Commit
+            stage = $Stage
+            journal_path = $JournalPath
+        }
+    } catch {
+        throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+    }
+}
+
+function Remove-UpdaterBootstrapTransactionJournal {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $JournalPath = Get-UpdaterBootstrapJournalPath -ProgramDataRoot $ProgramDataRoot
+    Assert-UpdaterBootstrapNoReparseComponents -Path $JournalPath
+    if (Test-Path -LiteralPath $JournalPath) {
+        Assert-SecureUpdaterPath -Path $JournalPath
+        Remove-Item -LiteralPath $JournalPath -Force -ErrorAction Stop
+    }
+}
+
+function Get-UpdaterBootstrapExistingEvidencePaths {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        $Backup
+    )
+
+    $Candidates = New-Object "System.Collections.Generic.List[string]"
+    [void]$Candidates.Add((Get-UpdaterBootstrapJournalPath `
+        -ProgramDataRoot $ProgramDataRoot))
+    if ($null -ne $Backup) {
+        [void]$Candidates.Add([string]$Backup.updater_backup)
+        [void]$Candidates.Add([string]$Backup.bootstrap_backup)
+    }
+    return @($Candidates | Where-Object { Test-Path -LiteralPath $_ })
+}
+
 function Enter-UpdaterBootstrapTransactionLock {
     param(
         [Parameter(Mandatory = $true)][string]$ProgramDataRoot
@@ -493,10 +726,13 @@ function Enter-UpdaterBootstrapTransactionLock {
     if ($null -ne $script:UpdaterBootstrapTransactionLockHandle) {
         throw "UPDATER_BOOTSTRAP_TRANSACTION_BUSY"
     }
-    Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
-    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    Assert-UpdaterBootstrapNoReparseComponents -Path $ProgramDataRoot
+    Assert-SecureUpdaterPath -Path $ProgramDataRoot -RequireProtected
     $LockPath = Join-Path $ProgramDataRoot "updater-bootstrap-deployment.lock"
     Assert-UpdaterBootstrapNoReparseComponents -Path $LockPath
+    if (Test-Path -LiteralPath $LockPath) {
+        Assert-SecureUpdaterPath -Path $LockPath
+    }
     try {
         $Handle = [IO.File]::Open(
             $LockPath,
@@ -509,6 +745,7 @@ function Enter-UpdaterBootstrapTransactionLock {
     }
     try {
         Assert-UpdaterBootstrapNoReparseComponents -Path $LockPath
+        Assert-SecureUpdaterPath -Path $LockPath
         $script:UpdaterBootstrapTransactionLockHandle = $Handle
     } catch {
         $Handle.Dispose()
@@ -526,15 +763,23 @@ function Exit-UpdaterBootstrapTransactionLock {
         return
     }
     $script:UpdaterBootstrapTransactionLockHandle = $null
-    $Handle.Dispose()
+    $CleanupFailed = $false
+    try {
+        $Handle.Dispose()
+    } catch {
+        $CleanupFailed = $true
+    }
     $LockPath = Join-Path $ProgramDataRoot "updater-bootstrap-deployment.lock"
-    if (Test-Path -LiteralPath $LockPath) {
-        Assert-UpdaterBootstrapNoReparseComponents -Path $LockPath
-        try {
+    try {
+        if (Test-Path -LiteralPath $LockPath) {
+            Assert-UpdaterBootstrapNoReparseComponents -Path $LockPath
             Remove-Item -LiteralPath $LockPath -Force -ErrorAction Stop
-        } catch [IO.IOException] {
-            # A following transaction may already own the same exclusive file.
         }
+    } catch {
+        $CleanupFailed = $true
+    }
+    if ($CleanupFailed) {
+        throw "UPDATER_BOOTSTRAP_LOCK_CLEANUP_WARNING"
     }
 }
 
@@ -623,41 +868,21 @@ function New-UpdaterBootstrapBackup {
     Assert-SecureUpdaterTree -Path $DeploymentRoot
     Assert-SecureUpdaterTree -Path $ProgramDataRoot
 
-    $UpdaterMoved = $false
-    $BootstrapMoved = $false
-    try {
-        Move-Item -LiteralPath ([string]$Descriptor.installed_updater) `
-            -Destination ([string]$Descriptor.updater_backup) -ErrorAction Stop
-        $UpdaterMoved = $true
-        Move-Item -LiteralPath ([string]$Descriptor.installed_bootstrap) `
-            -Destination ([string]$Descriptor.bootstrap_backup) -ErrorAction Stop
-        $BootstrapMoved = $true
-        Assert-UpdaterBootstrapNoReparseTree -Path ([string]$Descriptor.updater_backup)
-        Assert-UpdaterBootstrapNoReparseComponents -Path ([string]$Descriptor.bootstrap_backup)
-        Assert-SecureUpdaterTree -Path ([string]$Descriptor.updater_backup)
-        Assert-SecureUpdaterTree -Path $ProgramDataRoot
-        return $Descriptor
-    } catch {
-        $OriginalFailure = $_
-        try {
-            if ($BootstrapMoved) {
-                Assert-UpdaterBootstrapNoReparseComponents `
-                    -Path ([string]$Descriptor.bootstrap_backup)
-                Move-Item -LiteralPath ([string]$Descriptor.bootstrap_backup) `
-                    -Destination ([string]$Descriptor.installed_bootstrap) -ErrorAction Stop
-            }
-            if ($UpdaterMoved) {
-                Assert-UpdaterBootstrapNoReparseTree -Path ([string]$Descriptor.updater_backup)
-                Move-Item -LiteralPath ([string]$Descriptor.updater_backup) `
-                    -Destination ([string]$Descriptor.installed_updater) -ErrorAction Stop
-            }
-            Protect-UpdaterBootstrapInstallation -WorkerRoot $WorkerRoot `
-                -ProgramDataRoot $ProgramDataRoot
-        } catch {
-            throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
-        }
-        throw $OriginalFailure
-    }
+    Write-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit -Stage "prepared" | Out-Null
+    Move-Item -LiteralPath ([string]$Descriptor.installed_updater) `
+        -Destination ([string]$Descriptor.updater_backup) -ErrorAction Stop
+    Write-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit -Stage "updater_backup_moved" | Out-Null
+    Move-Item -LiteralPath ([string]$Descriptor.installed_bootstrap) `
+        -Destination ([string]$Descriptor.bootstrap_backup) -ErrorAction Stop
+    Write-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit -Stage "bootstrap_backup_moved" | Out-Null
+    Assert-UpdaterBootstrapNoReparseTree -Path ([string]$Descriptor.updater_backup)
+    Assert-UpdaterBootstrapNoReparseComponents -Path ([string]$Descriptor.bootstrap_backup)
+    Assert-SecureUpdaterTree -Path ([string]$Descriptor.updater_backup)
+    Assert-SecureUpdaterTree -Path $ProgramDataRoot
+    return $Descriptor
 }
 
 function Install-UpdaterBootstrapStage {
@@ -701,7 +926,13 @@ function Install-UpdaterBootstrapStage {
         throw "UPDATER_BOOTSTRAP_ACTIVATION_FAILED"
     }
     Move-Item -LiteralPath $StagedUpdater -Destination $InstalledUpdater -ErrorAction Stop
+    $ExpectedCommit = Get-UpdaterBootstrapWorkerStageCommit `
+        -WorkerStagingPath $StagingPath
+    Write-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit -Stage "updater_activated" | Out-Null
     Move-Item -LiteralPath $StagedBootstrap -Destination $InstalledBootstrap -ErrorAction Stop
+    Write-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot `
+        -ExpectedCommit $ExpectedCommit -Stage "bootstrap_activated" | Out-Null
     Assert-UpdaterBootstrapNoReparseTree -Path $InstalledUpdater
     Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledBootstrap
 }
@@ -925,8 +1156,10 @@ function Restore-UpdaterBootstrapBackup {
         Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledBootstrap
         Remove-Item -LiteralPath $InstalledBootstrap -Force -ErrorAction Stop
     }
-    Move-Item -LiteralPath $UpdaterBackup -Destination $InstalledUpdater -ErrorAction Stop
-    Move-Item -LiteralPath $BootstrapBackup -Destination $InstalledBootstrap -ErrorAction Stop
+    Copy-Item -LiteralPath $UpdaterBackup -Destination $InstalledUpdater `
+        -Recurse -Force -ErrorAction Stop
+    Copy-Item -LiteralPath $BootstrapBackup -Destination $InstalledBootstrap `
+        -Force -ErrorAction Stop
     Protect-UpdaterBootstrapInstallation -WorkerRoot $WorkerRoot `
         -ProgramDataRoot $ProgramDataRoot
 }
@@ -946,17 +1179,209 @@ function Assert-UpdaterBootstrapRollback {
         -ProgramDataRoot $ProgramDataRoot
 }
 
+function Remove-UpdaterBootstrapRecoveryStages {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    $WorkerStage = Join-Path (Join-Path $WorkerRoot "updater-deployment-owned") `
+        "staging-$ExpectedCommit"
+    $ProgramDataStage = Join-Path (Join-Path $ProgramDataRoot `
+        "updater-bootstrap-deployment-owned") "staging-$ExpectedCommit"
+    foreach ($Candidate in @($WorkerStage, $ProgramDataStage)) {
+        if (Test-Path -LiteralPath $Candidate) {
+            Assert-UpdaterBootstrapNoReparseTree -Path $Candidate
+            Assert-SecureUpdaterTree -Path $Candidate
+            Remove-Item -LiteralPath $Candidate -Recurse -Force -ErrorAction Stop
+        }
+    }
+}
+
+function New-UpdaterBootstrapRecoveryRequiredResult {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot,
+        $Backup
+    )
+
+    $ReportedBackup = $null
+    if (
+        $null -ne $Backup -and
+        (Test-Path -LiteralPath ([string]$Backup.updater_backup)) -and
+        (Test-Path -LiteralPath ([string]$Backup.bootstrap_backup))
+    ) {
+        $ReportedBackup = $Backup
+    }
+    return [pscustomobject]@{
+        status = "recovery_required"
+        error_code = "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+        backup = $ReportedBackup
+        evidence_paths = @(Get-UpdaterBootstrapExistingEvidencePaths `
+            -ProgramDataRoot $ProgramDataRoot -Backup $Backup)
+    }
+}
+
+function Get-UpdaterBootstrapPendingRecovery {
+    param(
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    try {
+        $Journal = Read-UpdaterBootstrapTransactionJournal `
+            -ProgramDataRoot $ProgramDataRoot
+        if ($null -eq $Journal) {
+            return $null
+        }
+        $Backup = Get-UpdaterBootstrapBackupDescriptor -WorkerRoot $WorkerRoot `
+            -ProgramDataRoot $ProgramDataRoot `
+            -ExpectedCommit ([string]$Journal.expected_commit)
+        return [pscustomobject]@{
+            status = "pending"
+            journal = $Journal
+            backup = $Backup
+        }
+    } catch {
+        return (New-UpdaterBootstrapRecoveryRequiredResult `
+            -ProgramDataRoot $ProgramDataRoot -Backup $null)
+    }
+}
+
+function Invoke-UpdaterBootstrapPendingRecovery {
+    param(
+        [Parameter(Mandatory = $true)]$Pending,
+        [Parameter(Mandatory = $true)][string]$WorkerRoot,
+        [Parameter(Mandatory = $true)][string]$ProgramDataRoot
+    )
+
+    $Backup = $Pending.backup
+    try {
+        if ([string]$Pending.status -cne "pending") {
+            throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+        }
+        $Journal = $Pending.journal
+        $Commit = [string]$Journal.expected_commit
+        $Stage = [string]$Journal.stage
+        Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $Commit
+        Assert-UpdaterBootstrapJournalStage -Stage $Stage
+        Assert-UpdaterBootstrapBackupDescriptor -Backup $Backup `
+            -WorkerRoot $WorkerRoot -ProgramDataRoot $ProgramDataRoot
+
+        $UpdaterBackupExists = Test-Path -LiteralPath ([string]$Backup.updater_backup) `
+            -PathType Container
+        $BootstrapBackupExists = Test-Path `
+            -LiteralPath ([string]$Backup.bootstrap_backup) -PathType Leaf
+
+        if ($Stage -ceq "smoke_passed") {
+            if (-not $UpdaterBackupExists -or -not $BootstrapBackupExists) {
+                throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+            }
+            Protect-UpdaterBootstrapInstallation -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot
+            Invoke-UpdaterBootstrapSmoke -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot
+            Assert-UpdaterBootstrapScheduledTaskAction `
+                -ProgramDataRoot $ProgramDataRoot
+            Remove-UpdaterBootstrapRecoveryStages -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $Commit
+            Remove-UpdaterBootstrapTransactionJournal `
+                -ProgramDataRoot $ProgramDataRoot
+            return [pscustomobject]@{
+                status = "ready"
+                error_code = $null
+                backup = $Backup
+                recovered = $true
+                evidence_paths = @(Get-UpdaterBootstrapExistingEvidencePaths `
+                    -ProgramDataRoot $ProgramDataRoot -Backup $Backup)
+            }
+        }
+
+        if (-not $UpdaterBackupExists) {
+            if (
+                $Stage -cne "prepared" -or
+                $BootstrapBackupExists -or
+                -not (Test-Path -LiteralPath ([string]$Backup.installed_updater) `
+                    -PathType Container) -or
+                -not (Test-Path -LiteralPath ([string]$Backup.installed_bootstrap) `
+                    -PathType Leaf)
+            ) {
+                throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+            }
+            Assert-UpdaterBootstrapRollback -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot
+            Remove-UpdaterBootstrapTransactionJournal `
+                -ProgramDataRoot $ProgramDataRoot
+            return [pscustomobject]@{
+                status = "rolled_back"
+                error_code = "UPDATER_BOOTSTRAP_STAGE_FAILED"
+                backup = $null
+                recovered = $true
+                evidence_paths = @()
+            }
+        }
+
+        if (-not $BootstrapBackupExists) {
+            if (
+                $Stage -cnotin @("prepared", "updater_backup_moved") -or
+                -not (Test-Path -LiteralPath ([string]$Backup.installed_bootstrap) `
+                    -PathType Leaf)
+            ) {
+                throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+            }
+            Assert-UpdaterBootstrapNoReparseComponents `
+                -Path ([string]$Backup.installed_bootstrap)
+            Copy-Item -LiteralPath ([string]$Backup.installed_bootstrap) `
+                -Destination ([string]$Backup.bootstrap_backup) -Force -ErrorAction Stop
+            Reset-SecureUpdaterChildAcl -Path ([string]$Backup.bootstrap_backup)
+            Assert-SecureUpdaterPath -Path ([string]$Backup.bootstrap_backup)
+        }
+
+        Restore-UpdaterBootstrapBackup -Backup $Backup -WorkerRoot $WorkerRoot `
+            -ProgramDataRoot $ProgramDataRoot
+        Assert-UpdaterBootstrapRollback -WorkerRoot $WorkerRoot `
+            -ProgramDataRoot $ProgramDataRoot
+        Remove-UpdaterBootstrapTransactionJournal -ProgramDataRoot $ProgramDataRoot
+        return [pscustomobject]@{
+            status = "rolled_back"
+            error_code = "UPDATER_BOOTSTRAP_STAGE_FAILED"
+            backup = $Backup
+            recovered = $true
+            evidence_paths = @(Get-UpdaterBootstrapExistingEvidencePaths `
+                -ProgramDataRoot $ProgramDataRoot -Backup $Backup)
+        }
+    } catch {
+        return (New-UpdaterBootstrapRecoveryRequiredResult `
+            -ProgramDataRoot $ProgramDataRoot -Backup $Backup)
+    }
+}
+
 function Get-ProductionUpdaterBootstrapAdapter {
     return [pscustomobject]@{
         ValidateContext = {
             param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
-            Assert-UpdaterBootstrapProductionContext -RepositoryRoot $RepositoryRoot `
+            Assert-UpdaterBootstrapSourceContext -RepositoryRoot $RepositoryRoot `
                 -WorkerRoot $WorkerRoot -ProgramDataRoot $ProgramDataRoot `
                 -ExpectedCommit $ExpectedCommit
         }
         AcquireLock = {
             param($ProgramDataRoot)
             Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot $ProgramDataRoot
+        }
+        DetectRecovery = {
+            param($WorkerRoot, $ProgramDataRoot)
+            Get-UpdaterBootstrapPendingRecovery -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot
+        }
+        Recover = {
+            param($Pending, $WorkerRoot, $ProgramDataRoot)
+            Invoke-UpdaterBootstrapPendingRecovery -Pending $Pending `
+                -WorkerRoot $WorkerRoot -ProgramDataRoot $ProgramDataRoot
+        }
+        ValidateInstalled = {
+            param($WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
+            Assert-UpdaterBootstrapInstalledContext -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
         }
         StopUpdaterTask = { Stop-UpdaterBootstrapTask }
         Stage = {
@@ -1002,6 +1427,12 @@ function Get-ProductionUpdaterBootstrapAdapter {
             param($ProgramDataRoot)
             Assert-UpdaterBootstrapScheduledTaskAction -ProgramDataRoot $ProgramDataRoot
         }
+        MarkSmokePassed = {
+            param($ProgramDataRoot, $ExpectedCommit)
+            Write-UpdaterBootstrapTransactionJournal `
+                -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit `
+                -Stage "smoke_passed" | Out-Null
+        }
         CleanupSuccess = {
             param($Staging, $ProgramDataRoot)
             Remove-UpdaterBootstrapSwitchStage -WorkerStagingPath $Staging `
@@ -1009,12 +1440,21 @@ function Get-ProductionUpdaterBootstrapAdapter {
         }
         Rollback = {
             param($Backup, $WorkerRoot, $ProgramDataRoot)
+            Write-UpdaterBootstrapTransactionJournal `
+                -ProgramDataRoot $ProgramDataRoot `
+                -ExpectedCommit ([string]$Backup.expected_commit) `
+                -Stage "rolling_back" | Out-Null
             Restore-UpdaterBootstrapBackup -Backup $Backup -WorkerRoot $WorkerRoot `
                 -ProgramDataRoot $ProgramDataRoot
         }
         ValidateRollback = {
             param($WorkerRoot, $ProgramDataRoot)
             Assert-UpdaterBootstrapRollback -WorkerRoot $WorkerRoot `
+                -ProgramDataRoot $ProgramDataRoot
+        }
+        CompleteJournal = {
+            param($ProgramDataRoot)
+            Remove-UpdaterBootstrapTransactionJournal `
                 -ProgramDataRoot $ProgramDataRoot
         }
         ReleaseLock = {
@@ -1038,6 +1478,20 @@ function Get-UpdaterBootstrapStageErrorCode {
     }
 }
 
+function Invoke-UpdaterBootstrapAdapterHook {
+    param(
+        [Parameter(Mandatory = $true)]$Adapter,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [object[]]$Arguments = @()
+    )
+
+    $Property = $Adapter.PSObject.Properties[$Name]
+    if ($null -eq $Property) {
+        return $null
+    }
+    return (& $Property.Value @Arguments)
+}
+
 function Invoke-UpdaterBootstrapTransaction {
     param(
         [Parameter(Mandatory = $true)][string]$RepositoryRoot,
@@ -1057,27 +1511,57 @@ function Invoke-UpdaterBootstrapTransaction {
         $Stage = "acquiring-lock"
         & $Adapter.AcquireLock $ProgramDataRoot
         $LockHeld = $true
-        $Stage = "stopping-updater-task"
-        & $Adapter.StopUpdaterTask
-        $Stage = "staging"
-        $Staging = & $Adapter.Stage $RepositoryRoot $WorkerRoot $ProgramDataRoot $ExpectedCommit
-        & $Adapter.ValidateStage $Staging $ProgramDataRoot
-        $Stage = "backing-up"
-        $Backup = & $Adapter.Backup $WorkerRoot $ProgramDataRoot $ExpectedCommit
-        $Stage = "activating"
-        & $Adapter.Activate $Staging $WorkerRoot $ProgramDataRoot
-        $Stage = "protecting"
-        & $Adapter.Protect $WorkerRoot $ProgramDataRoot
-        $Stage = "smoke-testing"
-        & $Adapter.Smoke $WorkerRoot $ProgramDataRoot
-        $Stage = "validating-task"
-        & $Adapter.ValidateTask $ProgramDataRoot
-        $Stage = "cleaning-up"
-        & $Adapter.CleanupSuccess $Staging $ProgramDataRoot
-        $Result = [pscustomobject]@{
-            status = "ready"
-            error_code = $null
-            backup = $Backup
+        $Stage = "detecting-recovery"
+        $Pending = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+            -Name "DetectRecovery" -Arguments @($WorkerRoot, $ProgramDataRoot)
+        if ($null -ne $Pending) {
+            if ([string]$Pending.status -eq "recovery_required") {
+                $Result = $Pending
+            } else {
+                $Stage = "stopping-updater-task"
+                & $Adapter.StopUpdaterTask
+                $Stage = "recovering"
+                $Result = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                    -Name "Recover" `
+                    -Arguments @($Pending, $WorkerRoot, $ProgramDataRoot)
+                if ($null -eq $Result) {
+                    throw "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+                }
+            }
+        } else {
+            $Stage = "validating-installed"
+            $null = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                -Name "ValidateInstalled" `
+                -Arguments @($WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
+            $Stage = "stopping-updater-task"
+            & $Adapter.StopUpdaterTask
+            $Stage = "staging"
+            $Staging = & $Adapter.Stage $RepositoryRoot $WorkerRoot $ProgramDataRoot $ExpectedCommit
+            & $Adapter.ValidateStage $Staging $ProgramDataRoot
+            $Stage = "backing-up"
+            $Backup = & $Adapter.Backup $WorkerRoot $ProgramDataRoot $ExpectedCommit
+            $Stage = "activating"
+            & $Adapter.Activate $Staging $WorkerRoot $ProgramDataRoot
+            $Stage = "protecting"
+            & $Adapter.Protect $WorkerRoot $ProgramDataRoot
+            $Stage = "smoke-testing"
+            & $Adapter.Smoke $WorkerRoot $ProgramDataRoot
+            $Stage = "validating-task"
+            & $Adapter.ValidateTask $ProgramDataRoot
+            $Stage = "marking-smoke-passed"
+            $null = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                -Name "MarkSmokePassed" `
+                -Arguments @($ProgramDataRoot, $ExpectedCommit)
+            $Stage = "cleaning-up"
+            & $Adapter.CleanupSuccess $Staging $ProgramDataRoot
+            $Stage = "completing-journal"
+            $null = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                -Name "CompleteJournal" -Arguments @($ProgramDataRoot)
+            $Result = [pscustomobject]@{
+                status = "ready"
+                error_code = $null
+                backup = $Backup
+            }
         }
     } catch {
         if ([string]$_.Exception.Message -eq "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED") {
@@ -1089,15 +1573,39 @@ function Invoke-UpdaterBootstrapTransaction {
         } else {
             $Code = Get-UpdaterBootstrapStageErrorCode -Stage $Stage
             if ($null -eq $Backup) {
-                $Result = [pscustomobject]@{
-                    status = "failed_before_switch"
-                    error_code = $Code
-                    backup = $null
+                $PendingAfterFailure = Invoke-UpdaterBootstrapAdapterHook `
+                    -Adapter $Adapter -Name "DetectRecovery" `
+                    -Arguments @($WorkerRoot, $ProgramDataRoot)
+                if ($null -ne $PendingAfterFailure) {
+                    if ([string]$PendingAfterFailure.status -eq "recovery_required") {
+                        $Result = $PendingAfterFailure
+                    } else {
+                        $Result = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                            -Name "Recover" `
+                            -Arguments @($PendingAfterFailure, $WorkerRoot, $ProgramDataRoot)
+                        if ($null -eq $Result) {
+                            $Result = [pscustomobject]@{
+                                status = "recovery_required"
+                                error_code = "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+                                backup = $null
+                            }
+                        } elseif ([string]$Result.status -eq "rolled_back") {
+                            $Result.error_code = $Code
+                        }
+                    }
+                } else {
+                    $Result = [pscustomobject]@{
+                        status = "failed_before_switch"
+                        error_code = $Code
+                        backup = $null
+                    }
                 }
             } else {
                 try {
                     & $Adapter.Rollback $Backup $WorkerRoot $ProgramDataRoot
                     & $Adapter.ValidateRollback $WorkerRoot $ProgramDataRoot
+                    $null = Invoke-UpdaterBootstrapAdapterHook -Adapter $Adapter `
+                        -Name "CompleteJournal" -Arguments @($ProgramDataRoot)
                     $Result = [pscustomobject]@{
                         status = "rolled_back"
                         error_code = $Code
@@ -1117,11 +1625,9 @@ function Invoke-UpdaterBootstrapTransaction {
             try {
                 & $Adapter.ReleaseLock $ProgramDataRoot | Out-Null
             } catch {
-                $Result = [pscustomobject]@{
-                    status = "recovery_required"
-                    error_code = "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
-                    backup = $Backup
-                }
+                $Result | Add-Member -MemberType NoteProperty `
+                    -Name cleanup_warning `
+                    -Value "UPDATER_BOOTSTRAP_LOCK_CLEANUP_WARNING" -Force
             }
         }
     }

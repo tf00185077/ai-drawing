@@ -83,29 +83,50 @@ flow prevents concurrent bootstrap deployments.
 
 ## Transaction
 
-1. Verify elevation, PowerShell 5.1 compatibility, trusted repository state,
-   Worker ownership marker, installed updater tree, ProgramData tree, and
-   absence of reparse points.
-2. Stop only the `AI-Drawing Worker Updater` scheduled task and poll until it
+1. Verify elevation and PowerShell 5.1 compatibility, validate the canonical
+   repository and exact configured origin before fetch, prove the commit and
+   clean tracked tree, then import the now-trusted fixed security helper.
+   Validate only the Worker ownership/base paths plus the ProgramData root and
+   exact recovery-control paths here; do not traverse the possibly transitional
+   ProgramData children or inspect the possibly interrupted installed updater.
+2. Acquire the exclusive ProgramData lock. Before normal installed updater
+   preflight, inspect the fixed ACL-protected journal at
+   `updater-bootstrap-deployment-owned\transaction-journal.json` below the
+   fixed ProgramData root. It contains only schema version, expected commit,
+   and a closed stage; recovery paths are derived from fixed roots.
+3. If a journal exists, stop only the updater task and recover before normal
+   installed-updater validation. Restore incomplete or unsmoked activation
+   from retained backups. Invalid state or failed restored smoke retains the
+   journal and existing evidence and returns
+   `UPDATER_BOOTSTRAP_RECOVERY_REQUIRED`.
+4. Verify the restored or normally installed updater tree and absence of
+   reparse points.
+5. Stop only the `AI-Drawing Worker Updater` scheduled task and poll until it
    is no longer running. Do not stop the NVIDIA Worker task or ComfyUI.
-3. Copy the fixed source set into secure staging.
-4. Confirm only structural requirements: required files and package modules
+6. Ask Git for the tracked source list first. Validate only each tracked path
+   and its components, then copy only those tracked files into secure staging.
+7. Confirm only structural requirements: required files and package modules
    exist and all staged paths satisfy the no-reparse policy. Do not hash or
    compare file contents.
-5. Move the currently installed updater and ProgramData bootstrap to the
+8. Atomically write the journal before the first destructive move, then
+   advance it atomically after every backup and activation move. Before any
+   rollback mutation, advance it to the closed `rolling_back` stage so a crash
+   cannot be mistaken for a smoke-complete activation.
+9. Move the currently installed updater and ProgramData bootstrap to the
    transaction backup.
-6. Move the staged updater into the installed updater path and install the
+10. Move the staged updater into the installed updater path and install the
    staged ProgramData bootstrap.
-7. Reapply and assert the updater ACL contract on installed and ProgramData
+11. Reapply and assert the updater ACL contract on installed and ProgramData
    trees.
-8. Run smoke validation with the updater-owned Python:
+12. Run smoke validation with the updater-owned Python:
    - import the updater modules required by the scheduled entrypoint;
    - load the fixed updater configuration;
    - execute managed activation recovery and require exit code zero.
-9. Confirm the scheduled task action still invokes the fixed ProgramData
+13. Confirm the scheduled task action still invokes the fixed ProgramData
    bootstrap using Windows PowerShell with the required non-interactive
    arguments.
-10. Write a non-sensitive transaction result and print
+14. Mark the journal smoke-complete, clean staging, remove the journal, write a
+    non-sensitive transaction result, and print
     `UPDATER_BOOTSTRAP_READY`.
 
 The deployment never starts an update. A later Mac smoke must use a new request
@@ -116,11 +137,13 @@ ID while `NVIDIA_WORKER_AUTO_UPDATE=false` remains in effect.
 Any failure after backup begins triggers rollback:
 
 - remove the failed newly installed updater and bootstrap;
-- restore the previous updater and ProgramData bootstrap from backup;
+- copy the whole previous updater tree and ProgramData bootstrap from backup
+  without consuming either backup;
 - reapply and assert their protected ACLs;
 - run the previous updater import/config smoke;
 - leave the production Worker and ComfyUI untouched;
-- preserve the backup and a private diagnostic result for inspection.
+- preserve both backup paths, the journal on unproven recovery, and a private
+  diagnostic result naming only evidence paths that still exist.
 
 Public output uses stable error codes and stage names. It must not print
 tokens, `updater.env` contents, authorization headers, response bodies, or raw
@@ -135,6 +158,10 @@ previous updater backup until one later remote update smoke reaches a healthy
 terminal state. The backup is small because it contains updater code and the
 bootstrap only; it contains no models, virtual environments, releases, cache,
 input, or output data.
+
+A lock-file deletion failure is a nonfatal fixed cleanup warning. The exclusive
+handle is disposed in all cases, and cleanup failure cannot change an already
+ready or rolled-back transaction into recovery-required.
 
 ## Testing
 

@@ -59,6 +59,23 @@ $ExpectedCommit = (& git.exe -C "D:\code\ai-drawing" rev-parse HEAD).Trim()
 
 Wait for `UPDATER_BOOTSTRAP_READY` before proceeding. Keep
 `NVIDIA_WORKER_AUTO_UPDATE=false` throughout this one-time deployment. Do not
-rerun a failed request ID. If the result is
-`UPDATER_BOOTSTRAP_RECOVERY_REQUIRED`, do not delete backup or staging paths
-and do not submit an update.
+rerun a failed request ID.
+
+Before contacting Git, the deployment verifies the exact configured HTTPS
+origin. It then requires `HEAD == origin/main == ExpectedCommit`, obtains the
+tracked file list before inspecting source components, and copies only those
+tracked updater files. Untracked files and junctions are ignored and are never
+packaged into the staging tree.
+
+The switch runs under an exclusive ProgramData lock. A small, secret-free,
+ACL-protected journal at
+`updater-bootstrap-deployment-owned\transaction-journal.json` is flushed before
+the first destructive move and advanced after every move. On the next run,
+journal recovery happens under the lock before normal installed-updater
+preflight, so an interrupted switch is restored or safely finalized. Rollback
+copies the complete backups and retains both backup paths after validation; it
+does not consume them. A lock-file cleanup warning does not change an otherwise
+successful or successfully rolled-back result.
+
+If the result is `UPDATER_BOOTSTRAP_RECOVERY_REQUIRED`, do not delete the
+reported journal, backup, or staging evidence and do not submit an update.
