@@ -68,7 +68,8 @@ try {
 
     $ListenerPids = Get-NetTCPConnection -LocalPort $Ports -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
     foreach ($ListenerPid in $ListenerPids) { Stop-Process -Id $ListenerPid -Force -ErrorAction Stop }
-    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $Root "Start-Worker.ps1")) | Out-Null
+    $StartWorkerArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f (Join-Path $Root "Start-Worker.ps1")
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList $StartWorkerArguments | Out-Null
 
     $Config = Get-Content -LiteralPath (Join-Path $Root "config\worker.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     if (-not $Config.token) { throw "RESTART_CONFIG_INVALID" }

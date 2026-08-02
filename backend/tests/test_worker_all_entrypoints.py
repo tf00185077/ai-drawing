@@ -31,6 +31,299 @@ def _ps_quote(value: str | Path) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def _run_powershell_51_command(command: str) -> subprocess.CompletedProcess[str]:
+    """Run a non-mutating compatibility probe in Windows PowerShell Desktop 5.1."""
+    parser_command = (
+        "$ErrorActionPreference = 'Stop'\n"
+        "[Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)\n"
+        f"{command}\n"
+    )
+    try:
+        return subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                parser_command,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
+        )
+    except subprocess.CalledProcessError as error:
+        pytest.fail(
+            "Windows PowerShell 5.1 compatibility probe failed\n"
+            f"stdout:\n{error.stdout}\n"
+            f"stderr:\n{error.stderr}"
+        )
+
+
+def _powershell_51_ast_prelude(script: Path) -> str:
+    return f"""
+$Tokens = $null
+$ParseErrors = $null
+$Ast = [Management.Automation.Language.Parser]::ParseFile(
+    {_ps_quote(script)}, [ref]$Tokens, [ref]$ParseErrors
+)
+if ($ParseErrors.Count -ne 0) {{
+    $Messages = @($ParseErrors | ForEach-Object {{
+        "{script}:$($_.Extent.StartLineNumber):$($_.Extent.StartColumnNumber): $($_.Message)"
+    }})
+    throw ($Messages -join [Environment]::NewLine)
+}}
+"""
+
+
+def _decode_powershell_51_utf8(result: subprocess.CompletedProcess[str]) -> str:
+    return base64.b64decode(result.stdout.strip()).decode("utf-8")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_desktop_parses_every_shipped_worker_script(tmp_path: Path) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    copied = tmp_path / "PowerShell 5.1 paths with spaces" / "新增資料夾"
+    copied.mkdir(parents=True)
+    scripts = sorted(source.glob("*.ps1"))
+    shutil.copy2(source / "Restart-Worker.ps1", copied / "Restart Worker 複本.ps1")
+    encoded_paths = base64.b64encode(
+        json.dumps([str(path) for path in (*scripts, copied / "Restart Worker 複本.ps1")]).encode()
+    ).decode()
+    result = _run_powershell_51_command(
+        f"""
+$Version = $PSVersionTable.PSVersion
+if ($PSVersionTable.PSEdition -ne "Desktop" -or $Version.Major -ne 5 -or $Version.Minor -ne 1) {{
+    throw "Expected Windows PowerShell Desktop 5.1, got $($PSVersionTable.PSEdition) $Version"
+}}
+$Json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{encoded_paths}"))
+$Paths = [string[]]($Json | ConvertFrom-Json)
+foreach ($Path in $Paths) {{
+    $Tokens = $null
+    $Errors = $null
+    [void][Management.Automation.Language.Parser]::ParseFile($Path, [ref]$Tokens, [ref]$Errors)
+    if ($Errors.Count -ne 0) {{
+        $Messages = @($Errors | ForEach-Object {{
+            "$Path`:$($_.Extent.StartLineNumber)`:$($_.Extent.StartColumnNumber): $($_.Message)"
+        }})
+        throw ($Messages -join [Environment]::NewLine)
+    }}
+}}
+"5.1 Desktop; parsed $($Paths.Count) scripts"
+"""
+    )
+
+    assert result.stdout.strip() == f"5.1 Desktop; parsed {len(scripts) + 1} scripts"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_split_preserves_equals_spaces_and_non_ascii_path(tmp_path: Path) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Restart-Worker.ps1"
+    expected_root = tmp_path / "Worker 路徑 = 新增資料夾"
+    environment_path = tmp_path / "updater env 新增資料夾" / "updater.env"
+    environment_path.parent.mkdir()
+    environment_path.write_text(
+        f"AI_DRAWING_WORKER_ROOT={expected_root}\n", encoding="utf-8"
+    )
+    result = _run_powershell_51_command(
+        _powershell_51_ast_prelude(script)
+        + f"""
+$Function = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+        $Node.Name -eq "Get-FixedWorkerRoot"
+}}, $true) | Select-Object -First 1
+if (-not $Function) {{ throw "Get-FixedWorkerRoot AST not found" }}
+Invoke-Expression $Function.Extent.Text
+$EnvironmentPath = {_ps_quote(environment_path)}
+$Resolved = Get-FixedWorkerRoot
+[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Resolved))
+"""
+    )
+
+    assert _decode_powershell_51_utf8(result) == str(expected_root.resolve())
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_constructs_quoted_scheduled_task_actions(tmp_path: Path) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Install-Worker.ps1"
+    root = tmp_path / "Worker Root 新增資料夾"
+    program_data = tmp_path / "Program Data 新增資料夾"
+    result = _run_powershell_51_command(
+        _powershell_51_ast_prelude(script)
+        + f"""
+function New-ScheduledTaskAction {{
+    param([string]$Execute, [string]$Argument)
+    [pscustomobject]@{{ Execute = $Execute; Argument = $Argument }}
+}}
+$Root = {_ps_quote(root)}
+$env:ProgramData = {_ps_quote(program_data)}
+$Actions = @{{}}
+foreach ($Name in @("UpdaterTaskAction", "RestartTaskAction")) {{
+    $Assignment = $Ast.FindAll({{ param($Node)
+        $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+            $Node.Left.Extent.Text -eq ('$' + $Name)
+    }}, $true) | Select-Object -First 1
+    if (-not $Assignment) {{ throw "$Name AST not found" }}
+    Invoke-Expression $Assignment.Extent.Text
+    $Actions[$Name] = Get-Variable -Name $Name -ValueOnly
+}}
+$Json = $Actions | ConvertTo-Json -Compress
+[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Json))
+"""
+    )
+    actions = json.loads(_decode_powershell_51_utf8(result))
+
+    expected_executable = str(
+        Path(os.environ["SystemRoot"])
+        / "System32"
+        / "WindowsPowerShell"
+        / "v1.0"
+        / "powershell.exe"
+    )
+    assert actions["UpdaterTaskAction"] == {
+        "Execute": expected_executable,
+        "Argument": (
+            "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
+            f'"{program_data}\\AI-Drawing-Worker\\UpdaterBootstrap.ps1"'
+        ),
+    }
+    assert actions["RestartTaskAction"] == {
+        "Execute": expected_executable,
+        "Argument": (
+            "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "
+            f'"{root}\\Restart-Worker.ps1"'
+        ),
+    }
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_restart_start_process_quotes_script_path(tmp_path: Path) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Restart-Worker.ps1"
+    root = tmp_path / "Worker Root 新增資料夾"
+    root.mkdir()
+    marker = root / "restart-fixture-ran.txt"
+    (root / "Start-Worker.ps1").write_text(
+        "[IO.File]::WriteAllText((Join-Path $PSScriptRoot 'restart-fixture-ran.txt'), 'ok')\n",
+        encoding="ascii",
+    )
+    _run_powershell_51_command(
+        _powershell_51_ast_prelude(script)
+        + f"""
+$ArgumentsAssignment = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$StartWorkerArguments'
+}}, $true) | Select-Object -First 1
+$Command = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.CommandAst] -and
+        $Node.GetCommandName() -eq "Start-Process"
+}}, $true) | Select-Object -First 1
+if (-not $ArgumentsAssignment -or -not $Command) {{ throw "restart Start-Process AST not found" }}
+$Root = {_ps_quote(root)}
+Invoke-Expression $ArgumentsAssignment.Extent.Text
+Invoke-Expression $Command.Extent.Text | Out-Null
+$Deadline = [DateTime]::UtcNow.AddSeconds(10)
+while (-not (Test-Path -LiteralPath {_ps_quote(marker)} -PathType Leaf) -and
+       [DateTime]::UtcNow -lt $Deadline) {{ Start-Sleep -Milliseconds 50 }}
+if (-not (Test-Path -LiteralPath {_ps_quote(marker)} -PathType Leaf)) {{
+    throw "Restart-Worker.ps1 Start-Process did not preserve the quoted script path"
+}}
+"""
+    )
+
+    assert marker.read_text(encoding="utf-8") == "ok"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_start_worker_quotes_comfy_main_path(tmp_path: Path) -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Start-Worker.ps1"
+    comfy_root = tmp_path / "Comfy UI 新增資料夾"
+    comfy_root.mkdir()
+    marker = comfy_root / "comfy-fixture-ran.txt"
+    (comfy_root / "main.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('ok', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    _run_powershell_51_command(
+        _powershell_51_ast_prelude(script)
+        + f"""
+$ComfyArgsAssignment = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$ComfyArgs'
+}}, $true) | Select-Object -First 1
+$ComfyArgumentListAssignment = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$ComfyArgumentList'
+}}, $true) | Select-Object -First 1
+$ProcessAssignment = $Ast.FindAll({{ param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$ComfyProcess'
+}}, $true) | Select-Object -First 1
+if (-not $ComfyArgsAssignment -or -not $ComfyArgumentListAssignment -or -not $ProcessAssignment) {{
+    throw "Comfy Start-Process AST not found"
+}}
+$Python = {_ps_quote(sys.executable)}
+$ComfyRoot = {_ps_quote(comfy_root)}
+$ComfyStdoutLog = {_ps_quote(tmp_path / 'comfy stdout.log')}
+$ComfyStderrLog = {_ps_quote(tmp_path / 'comfy stderr.log')}
+Invoke-Expression $ComfyArgsAssignment.Extent.Text
+Invoke-Expression $ComfyArgumentListAssignment.Extent.Text
+Invoke-Expression $ProcessAssignment.Extent.Text
+if (-not $ComfyProcess.WaitForExit(10000)) {{ $ComfyProcess.Kill(); throw "Comfy fixture timed out" }}
+if (-not (Test-Path -LiteralPath {_ps_quote(marker)} -PathType Leaf)) {{
+    throw ("Comfy fixture did not preserve the quoted main.py path: " +
+        [IO.File]::ReadAllText($ComfyStderrLog))
+}}
+"""
+    )
+
+    assert marker.read_text(encoding="utf-8") == "ok"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_powershell_51_listener_selection_uses_listen_state_and_unique_pids() -> None:
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Restart-Worker.ps1"
+    result = _run_powershell_51_command(
+        _powershell_51_ast_prelude(script)
+        + """
+$Selection = $Ast.FindAll({ param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst] -and
+        $Node.Left.Extent.Text -eq '$ListenerPids'
+}, $true) | Select-Object -First 1
+if (-not $Selection) { throw "listener selection AST not found" }
+$Captured = $null
+function Get-NetTCPConnection {
+    [CmdletBinding()]
+    param([int[]]$LocalPort, [string]$State)
+    $script:Captured = [pscustomobject]@{ LocalPort = @($LocalPort); State = $State }
+    [pscustomobject]@{ OwningProcess = 42 }
+    [pscustomobject]@{ OwningProcess = 42 }
+    [pscustomobject]@{ OwningProcess = 84 }
+}
+$Ports = @(8188, 8791)
+Invoke-Expression $Selection.Extent.Text
+$Record = [pscustomobject]@{ Captured = $Captured; ListenerPids = @($ListenerPids) }
+$Json = $Record | ConvertTo-Json -Depth 4 -Compress
+[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Json))
+"""
+    )
+    record = json.loads(_decode_powershell_51_utf8(result))
+
+    assert record == {
+        "Captured": {"LocalPort": [8188, 8791], "State": "Listen"},
+        "ListenerPids": [42, 84],
+    }
+
+
 def _run_migration_harness(
     tmp_path: Path, body: str, *, environment: dict[str, str] | None = None
 ) -> subprocess.CompletedProcess[str]:
