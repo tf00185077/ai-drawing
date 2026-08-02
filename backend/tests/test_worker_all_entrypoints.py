@@ -503,6 +503,45 @@ try {{
     assert secret not in result.stderr
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_requires_desktop_powershell_51_minor(
+    tmp_path: Path,
+) -> None:
+    """Allowing Desktop 5.0 would make the bootstrap run on an unsupported host."""
+    body = """
+$Results = @()
+foreach ($Case in @(
+    [pscustomobject]@{ version = [Version]::new(5, 0); expected = 'UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED' },
+    [pscustomobject]@{ version = [Version]::new(5, 1); expected = 'accepted' }
+)) {
+    try {
+        Assert-UpdaterBootstrapPowerShell51 -Edition 'Desktop' -PSVersion $Case.version
+        $Actual = 'accepted'
+    } catch {
+        $Actual = $_.Exception.Message
+    }
+    $Results += [pscustomobject]@{
+        version = $Case.version.ToString()
+        expected = $Case.expected
+        actual = $Actual
+    }
+}
+$Results | ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == [
+        {
+            "version": "5.0",
+            "expected": "UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED",
+            "actual": "UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED",
+        },
+        {"version": "5.1", "expected": "accepted", "actual": "accepted"},
+    ]
+
+
 @pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
 def test_updater_bootstrap_deployment_entrypoint_hides_adapter_exception(
     tmp_path: Path,
