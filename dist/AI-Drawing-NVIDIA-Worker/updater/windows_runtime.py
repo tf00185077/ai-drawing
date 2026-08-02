@@ -34,6 +34,24 @@ _BEARER_SECRET = re.compile(r"(?i)\bbearer\s+[^\s,;]+")
 _NAMED_SECRET = re.compile(
     r"(?i)\b(?:token|secret|password|api[_-]?key|authorization)\b\s*(?:=|:)?\s*[^\s,;]+"
 )
+_HEALTH_FAILURE_CODES = {
+    "comfyui": "COMFYUI_START_TIMEOUT",
+    "worker_status": "WORKER_START_TIMEOUT",
+    "worker_preflight": "WORKER_PREFLIGHT_FAILED",
+}
+_RETRYABLE_HEALTH_ERRORS = (
+    OSError,
+    TimeoutError,
+    ValueError,
+    TypeError,
+    KeyError,
+    json.JSONDecodeError,
+)
+
+
+class _HealthProbeStageError(Exception):
+    def __init__(self, stage: str) -> None:
+        self.stage = stage
 
 
 @dataclass(frozen=True)
@@ -234,45 +252,43 @@ class HttpHealthProbe:
     ) -> HealthEvidence:
         _require_loopback_http_url(worker_url)
         _require_loopback_http_url(comfy_url)
+        failed_stage = "comfyui"
         for attempt in range(self._attempts):
             try:
                 return self._read_evidence(worker_url, comfy_url, expected_commit)
-            except (OSError, TimeoutError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+            except _HealthProbeStageError as error:
+                failed_stage = error.stage
                 if attempt + 1 < self._attempts:
                     time.sleep(self._retry_delay)
-        raise UpdateError("WORKER_CONTRACT_FAILED", "local runtime health validation failed")
+        raise UpdateError(
+            _HEALTH_FAILURE_CODES[failed_stage], "local runtime health validation failed"
+        )
 
     def _read_evidence(
         self, worker_url: str, comfy_url: str, expected_commit: str
     ) -> HealthEvidence:
-        system_stats = self._transport.request_json(
-            "GET", f"{comfy_url}/system_stats", headers={}, body=None, timeout=HTTP_TIMEOUT
-        )
-        object_info = self._transport.request_json(
-            "GET", f"{comfy_url}/object_info", headers={}, body=None, timeout=HTTP_TIMEOUT
+        system_stats = self._health_request(
+            "comfyui",
+            "GET",
+            f"{comfy_url}/system_stats",
+            headers={},
+            body=None,
         )
         token = self._token_provider.read()
         authorization = {"Authorization": f"Bearer {token}"}
-        status = self._transport.request_json(
+        status = self._health_request(
+            "worker_status",
             "GET",
             f"{worker_url}/v1/worker/status",
             headers=authorization,
             body=None,
-            timeout=HTTP_TIMEOUT,
         )
-        plan = self._transport.request_json(
-            "POST",
-            f"{worker_url}/v1/resources/plan",
-            headers=authorization,
-            body={"resources": []},
-            timeout=HTTP_TIMEOUT,
-        )
-        preflight = self._transport.request_json(
+        preflight = self._health_request(
+            "worker_preflight",
             "POST",
             f"{worker_url}/v1/workflows/preflight",
             headers=authorization,
             body={"node_types": list(REQUIRED_COMFY_NODE_TYPES)},
-            timeout=HTTP_TIMEOUT,
         )
         devices = system_stats.get("devices", []) if isinstance(system_stats, dict) else []
         cuda_devices = [
@@ -289,10 +305,6 @@ class HttpHealthProbe:
                 isinstance(system_stats, dict)
                 and isinstance(system_stats.get("devices"), list)
             ),
-            object_info_ok=(
-                isinstance(object_info, dict)
-                and all(node_type in object_info for node_type in REQUIRED_COMFY_NODE_TYPES)
-            ),
             authenticated_status_ok=(
                 isinstance(status, dict)
                 and type(status.get("protocol_version")) is int
@@ -302,7 +314,6 @@ class HttpHealthProbe:
                 and status.get("source_commit") == expected_commit
                 and status.get("comfyui") == "ready"
             ),
-            resource_plan_ok=isinstance(plan, dict) and plan.get("missing") == [],
             preflight_ok=(
                 isinstance(preflight, dict)
                 and preflight.get("ready") is True
@@ -310,6 +321,22 @@ class HttpHealthProbe:
             ),
             source_commit=str(status.get("source_commit", "")) if isinstance(status, dict) else "",
         )
+
+    def _health_request(
+        self,
+        stage: str,
+        method: str,
+        url: str,
+        *,
+        headers: Mapping[str, str],
+        body: Any,
+    ) -> Any:
+        try:
+            return self._transport.request_json(
+                method, url, headers=headers, body=body, timeout=HTTP_TIMEOUT
+            )
+        except _RETRYABLE_HEALTH_ERRORS:
+            raise _HealthProbeStageError(stage) from None
 
 
 def _validated_argv(argv: Sequence[str], timeout: float) -> list[str]:

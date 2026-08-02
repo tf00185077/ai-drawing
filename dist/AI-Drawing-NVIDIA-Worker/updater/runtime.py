@@ -68,15 +68,13 @@ class HealthEvidence:
     cuda_available: bool
     gpu_name: str
     system_stats_ok: bool
-    object_info_ok: bool
     authenticated_status_ok: bool
-    resource_plan_ok: bool
     preflight_ok: bool
     source_commit: str
 
     @classmethod
     def complete(cls, source_commit: str) -> "HealthEvidence":
-        return cls(True, "NVIDIA GPU", True, True, True, True, True, source_commit)
+        return cls(True, "NVIDIA GPU", True, True, True, source_commit)
 
 
 class RuntimeValidationError(UpdateError):
@@ -951,15 +949,12 @@ def _require_complete_health(evidence: HealthEvidence, expected_commit: str) -> 
         raise UpdateError("WORKER_CONTRACT_FAILED", "health probe returned no typed evidence")
     if not evidence.cuda_available or not evidence.gpu_name.strip():
         raise UpdateError("CUDA_VALIDATION_FAILED", "staged runtime did not report a CUDA GPU")
-    if not evidence.system_stats_ok or not evidence.object_info_ok:
-        raise UpdateError("COMFYUI_VALIDATION_FAILED", "ComfyUI health contract is incomplete")
-    if (
-        not evidence.authenticated_status_ok
-        or not evidence.resource_plan_ok
-        or not evidence.preflight_ok
-        or evidence.source_commit != expected_commit
-    ):
-        raise UpdateError("WORKER_CONTRACT_FAILED", "Worker health contract or source commit is invalid")
+    if not evidence.system_stats_ok:
+        raise UpdateError("COMFYUI_START_TIMEOUT", "ComfyUI system stats are unavailable")
+    if not evidence.authenticated_status_ok or evidence.source_commit != expected_commit:
+        raise UpdateError("WORKER_STATUS_INVALID", "Worker status or source commit is invalid")
+    if not evidence.preflight_ok:
+        raise UpdateError("WORKER_PREFLIGHT_FAILED", "Worker required-node preflight failed")
 
 
 def _managed_release_commit(release: Path) -> str | None:
