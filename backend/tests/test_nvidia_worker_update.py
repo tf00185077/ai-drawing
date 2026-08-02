@@ -547,7 +547,7 @@ def test_background_start_is_nonblocking_and_reuses_one_thread(git_repo) -> None
 
 
 def test_worker_client_update_apis_use_fixed_authenticated_routes(monkeypatch) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
     calls: list[tuple[str, str, dict[str, Any]]] = []
 
     class Response:
@@ -571,7 +571,7 @@ def test_worker_client_update_apis_use_fixed_authenticated_routes(monkeypatch) -
 
 
 def test_worker_client_restart_apis_use_fixed_routes_without_command_or_path(monkeypatch) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
     calls = []
 
     class Response:
@@ -623,7 +623,7 @@ def test_worker_client_caps_coordinator_timeout_at_configured_timeout(
             return Response()
 
     monkeypatch.setattr(nvidia_worker.httpx, "Client", Client)
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
 
     client.health(timeout=90)
     client.update_status(timeout=4)
@@ -634,7 +634,7 @@ def test_worker_client_caps_coordinator_timeout_at_configured_timeout(
 
 @pytest.mark.parametrize("timeout", [True, 0, -1])
 def test_worker_client_rejects_invalid_timeout_override(timeout) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
 
     with pytest.raises(ValueError, match="timeout override must be positive"):
         client.health(timeout=timeout)
@@ -646,14 +646,14 @@ def test_worker_client_rejects_invalid_timeout_override(timeout) -> None:
 )
 def test_worker_client_rejects_invalid_configured_timeout(timeout) -> None:
     with pytest.raises(ValueError, match="configured timeout must be positive"):
-        nvidia_worker.NvidiaWorkerClient("http://worker", "secret", timeout)
+        nvidia_worker.NvidiaWorkerClient("http://worker", timeout)
 
 
 @pytest.mark.parametrize("corrupt_timeout", [float("nan"), float("inf"), 0])
 def test_worker_request_revalidates_effective_timeout_before_http(
     monkeypatch, corrupt_timeout
 ) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
     client._timeout_submit = corrupt_timeout
     monkeypatch.setattr(
         nvidia_worker.httpx,
@@ -670,7 +670,7 @@ def test_worker_request_revalidates_effective_timeout_before_http(
 def test_worker_submission_waits_for_update_then_submits_exactly_once(
     monkeypatch,
 ) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
     events: list[str] = []
     monkeypatch.setattr(
         nvidia_worker,
@@ -703,7 +703,7 @@ def test_worker_submission_waits_for_update_then_submits_exactly_once(
 def test_worker_submission_update_failure_has_no_submit_or_local_fallback(
     monkeypatch,
 ) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "secret", 10)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 10)
     submitted = 0
     monkeypatch.setattr(
         nvidia_worker,

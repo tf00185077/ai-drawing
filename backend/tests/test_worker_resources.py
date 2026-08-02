@@ -154,7 +154,7 @@ def test_digest_does_not_cache_file_that_changes_while_hashing(
 
 
 def test_worker_submit_prompt_surfaces_node_errors(monkeypatch) -> None:
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
     monkeypatch.setattr(client, "_preflight", lambda prompt: None)
     monkeypatch.setattr(client, "_synchronize", lambda prompt: None)
 
@@ -190,7 +190,7 @@ def test_worker_submission_keeps_resource_preflight_plan_transfer_and_prompt_ord
     model = loras / "style.safetensors"
     model.write_bytes(b"model-bytes")
     monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
     calls: list[tuple[str, str]] = []
 
     class Response:
@@ -255,7 +255,7 @@ def test_worker_submission_finalizes_complete_partial_before_prompt(
     model = loras / "style.safetensors"
     model.write_bytes(b"model-bytes")
     monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
     calls: list[tuple[str, str, dict]] = []
 
     class Response:
@@ -319,7 +319,7 @@ def test_worker_submission_stops_when_complete_partial_cannot_finalize(
     model = loras / "style.safetensors"
     model.write_bytes(b"model-bytes")
     monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
     calls: list[tuple[str, str]] = []
 
     class Response:
@@ -376,7 +376,7 @@ def test_worker_submission_preserves_comfyui_http_error_after_resource_plan(
     tmp_path, monkeypatch
 ) -> None:
     monkeypatch.setattr(nvidia_worker, "get_settings", lambda: _settings(tmp_path))
-    client = nvidia_worker.NvidiaWorkerClient("http://worker", "tok", 5.0)
+    client = nvidia_worker.NvidiaWorkerClient("http://worker", 5.0)
     calls: list[tuple[str, str]] = []
     prompt_error = httpx.Response(
         500, request=httpx.Request("POST", "http://worker/prompt")
