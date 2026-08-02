@@ -1,28 +1,25 @@
-"""NVIDIA Worker client and resource synchronization.
+"""NVIDIA Worker client.
 
 The Worker intentionally presents the small ComfyUI API surface used by the
-queue. Before prompt submission it receives a content-addressed resource plan
-and any missing files. A selected Worker is fail-closed: this module never
-returns the local client as a fallback.
+queue alongside explicit administrative and file-transfer operations. A
+selected Worker is fail-closed: this module never returns the local client as a
+fallback.
 """
 from __future__ import annotations
 
-import hashlib
 import ipaddress
 import math
 import socket
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
 
 from app.config import get_settings
 from app.core.comfyui import ComfyUIClient, ComfyUIError, get_comfy_client
-from app.services.nvidia_worker_update import ensure_worker_compatible
 
 
 class WorkerConfigurationError(RuntimeError):
@@ -167,167 +164,6 @@ def discover_worker_url(
         detail = "not found" if not matches else "ambiguous"
         raise WorkerConfigurationError(f"NVIDIA Worker discovery {detail}")
     return matches[0]
-
-
-@dataclass(frozen=True)
-class ResourceRef:
-    kind: str
-    name: str
-    path: Path
-    size: int
-    sha256: str
-
-    def manifest(self) -> dict[str, Any]:
-        return {
-            "kind": self.kind,
-            "name": self.name,
-            "size": self.size,
-            "sha256": self.sha256,
-        }
-
-
-_NODE_RESOURCES: dict[str, tuple[tuple[str, str], ...]] = {
-    "CheckpointLoaderSimple": (("ckpt_name", "checkpoints"),),
-    "UNETLoader": (("unet_name", "diffusion_models"),),
-    "UnetLoaderGGUF": (("unet_name", "diffusion_models"),),
-    "GGUFLoaderKJ": (("model_name", "diffusion_models"), ("extra_model_name", "diffusion_models")),
-    "CLIPLoader": (("clip_name", "text_encoders"),),
-    "DualCLIPLoader": (("clip_name1", "text_encoders"), ("clip_name2", "text_encoders")),
-    "CLIPVisionLoader": (("clip_name", "clip_vision"),),
-    "VAELoader": (("vae_name", "vae"),),
-    "LoraLoader": (("lora_name", "loras"),),
-    "LoraLoaderModelOnly": (("lora_name", "loras"),),
-    "ControlNetLoader": (("control_net_name", "controlnet"),),
-    "UpscaleModelLoader": (("model_name", "upscale_models"),),
-}
-
-
-def _roots() -> dict[str, tuple[Path, ...]]:
-    settings = get_settings()
-
-    def parts(value: str) -> tuple[Path, ...]:
-        return tuple(Path(item).resolve() for item in value.split(",") if item.strip())
-
-    return {
-        "checkpoints": parts(settings.comfyui_checkpoints_dir),
-        "diffusion_models": parts(settings.comfyui_diffusion_models_dir),
-        "text_encoders": parts(settings.comfyui_text_encoders_dir),
-        "vae": parts(settings.comfyui_vae_dir),
-        "loras": parts(settings.comfyui_loras_dir),
-        "controlnet": parts(settings.comfyui_controlnet_dir),
-        "upscale_models": parts(settings.comfyui_upscale_models_dir),
-        "clip_vision": parts(getattr(settings, "comfyui_clip_vision_dir", "")),
-        "audio": parts(getattr(settings, "comfyui_audio_models_dir", "")),
-    }
-
-
-def _safe_name(value: str) -> str:
-    normalized = value.replace("\\", "/")
-    path = Path(normalized)
-    if path.is_absolute() or ".." in path.parts:
-        raise WorkerConfigurationError(f"unsafe workflow resource name: {value}")
-    return normalized
-
-
-def _resolve(kind: str, name: str) -> Path:
-    safe = _safe_name(name)
-    for root in _roots().get(kind, ()):
-        candidate = (root / safe).resolve()
-        try:
-            candidate.relative_to(root)
-        except ValueError:
-            continue
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(f"authoritative {kind} resource not found: {safe}")
-
-
-# Content-addressed model files are large (multi-GB) and effectively immutable.
-# Hashing them on every prompt submission is pure disk I/O waste, so cache the
-# digest only while path identity and change metadata remain stable. Cache lives
-# in the long-running queue worker process.
-_DigestSignature = tuple[int, int, int, int]
-_digest_cache: dict[str, tuple[_DigestSignature, str]] = {}
-_digest_lock = threading.Lock()
-
-
-def _read_and_hash(path: Path) -> str:
-    value = hashlib.sha256()
-    with path.open("rb") as source:
-        for chunk in iter(lambda: source.read(8 * 1024 * 1024), b""):
-            value.update(chunk)
-    return value.hexdigest()
-
-
-def _digest_signature(stat: Any) -> _DigestSignature:
-    return (
-        int(stat.st_size),
-        int(stat.st_mtime_ns),
-        int(getattr(stat, "st_ino", 0)),
-        int(getattr(stat, "st_ctime_ns", round(stat.st_ctime * 1_000_000_000))),
-    )
-
-
-def _digest_changed_error(path: Path) -> WorkerConfigurationError:
-    return WorkerConfigurationError(f"resource changed while hashing: {path.name}")
-
-
-def _digest(path: Path) -> str:
-    key = str(path)
-    before = path.stat()
-    signature = _digest_signature(before)
-    with _digest_lock:
-        cached = _digest_cache.get(key)
-    if cached is not None and cached[0] == signature:
-        try:
-            after_cache_lookup = path.stat()
-        except OSError as error:
-            raise _digest_changed_error(path) from error
-        if _digest_signature(after_cache_lookup) == signature:
-            return cached[1]
-        before = after_cache_lookup
-        signature = _digest_signature(before)
-    try:
-        digest = _read_and_hash(path)
-        after_hash = path.stat()
-    except OSError as error:
-        with _digest_lock:
-            _digest_cache.pop(key, None)
-        raise _digest_changed_error(path) from error
-    if _digest_signature(after_hash) != signature:
-        with _digest_lock:
-            _digest_cache.pop(key, None)
-        raise _digest_changed_error(path)
-    with _digest_lock:
-        _digest_cache[key] = (signature, digest)
-    return digest
-
-
-def workflow_resources(workflow: dict[str, Any]) -> list[ResourceRef]:
-    found: dict[tuple[str, str], ResourceRef] = {}
-    for node in workflow.values():
-        if not isinstance(node, dict):
-            continue
-        bindings = _NODE_RESOURCES.get(str(node.get("class_type", "")))
-        if bindings is None:
-            continue
-        for field, kind in bindings:
-            value = node.get("inputs", {}).get(field)
-            if not isinstance(value, str) or not value or value.casefold() == "none":
-                continue
-            safe = _safe_name(value)
-            key = (kind, safe.casefold())
-            if key in found:
-                continue
-            path = _resolve(kind, safe)
-            found[key] = ResourceRef(
-                kind=kind,
-                name=safe,
-                path=path,
-                size=path.stat().st_size,
-                sha256=_digest(path),
-            )
-    return list(found.values())
 
 
 class NvidiaWorkerClient(ComfyUIClient):
@@ -505,83 +341,6 @@ class NvidiaWorkerClient(ComfyUIClient):
             **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
-    def _synchronize(self, prompt: dict[str, Any]) -> None:
-        resources = workflow_resources(prompt)
-        plan = self._request(
-            "POST",
-            "/v1/resources/plan",
-            json={"resources": [resource.manifest() for resource in resources]},
-        ).json()
-        missing = {
-            (item["kind"], item["name"], item["sha256"]): int(item.get("offset", 0))
-            for item in plan.get("missing", [])
-        }
-        for resource in resources:
-            key = (resource.kind, resource.name, resource.sha256)
-            if key not in missing:
-                continue
-            offset = missing[key]
-            response = None
-            if offset == resource.size:
-                response = self._request(
-                    "PUT",
-                    "/v1/resources/content",
-                    params={
-                        "kind": resource.kind,
-                        "name": resource.name,
-                        "sha256": resource.sha256,
-                        "size": resource.size,
-                        "offset": offset,
-                        "finalize": True,
-                    },
-                    content=b"",
-                    headers={"Content-Type": "application/octet-stream"},
-                )
-            else:
-                with resource.path.open("rb") as source:
-                    source.seek(offset)
-                    while offset < resource.size:
-                        chunk = source.read(min(8 * 1024 * 1024, resource.size - offset))
-                        if not chunk:
-                            raise WorkerConfigurationError(
-                                f"resource ended before declared size: {resource.name}"
-                            )
-                        response = self._request(
-                            "PUT",
-                            "/v1/resources/content",
-                            params={
-                                "kind": resource.kind,
-                                "name": resource.name,
-                                "sha256": resource.sha256,
-                                "size": resource.size,
-                                "offset": offset,
-                            },
-                            content=chunk,
-                            headers={"Content-Type": "application/octet-stream"},
-                        )
-                        offset = int(response.json().get("offset", offset + len(chunk)))
-                        if response.json().get("ready"):
-                            break
-            if response is None:
-                continue
-            if not response.json().get("ready"):
-                raise WorkerConfigurationError(
-                    f"worker did not finalize resource: {resource.name}"
-                )
-
-    def _preflight(self, prompt: dict[str, Any]) -> None:
-        node_types = sorted({
-            str(node.get("class_type"))
-            for node in prompt.values()
-            if isinstance(node, dict) and node.get("class_type")
-        })
-        result = self.preflight(node_types)
-        missing = result.get("missing_node_types") or []
-        if missing:
-            raise WorkerConfigurationError(
-                "worker_missing_nodes: " + ", ".join(str(item) for item in missing)
-            )
-
     def submit_prompt(
         self,
         prompt: dict[str, Any],
@@ -589,16 +348,6 @@ class NvidiaWorkerClient(ComfyUIClient):
         client_id: str | None = None,
         extra_data: dict[str, Any] | None = None,
     ) -> str:
-        settings = get_settings()
-        if settings.nvidia_worker_auto_update:
-            # This is a gate, not a recursive resubmission loop. A mismatched
-            # Worker is updated once, then the original prompt is submitted
-            # exactly once through the method below. Worker selection remains
-            # fail-closed and never switches to local ComfyUI.
-            ensure_worker_compatible(
-                self,
-                timeout=settings.nvidia_worker_update_timeout,
-            )
         return self._submit_prompt_once(
             prompt,
             client_id=client_id,
@@ -612,8 +361,6 @@ class NvidiaWorkerClient(ComfyUIClient):
         client_id: str | None = None,
         extra_data: dict[str, Any] | None = None,
     ) -> str:
-        self._preflight(prompt)
-        self._synchronize(prompt)
         payload: dict[str, Any] = {"prompt": prompt}
         if client_id:
             payload["client_id"] = client_id
