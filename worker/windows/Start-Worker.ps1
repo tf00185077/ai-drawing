@@ -46,6 +46,7 @@ $ComfyArgs = @(
     "--listen", "127.0.0.1",
     "--port", "8188"
 )
+$ComfyArgumentList = '"{0}" --listen 127.0.0.1 --port 8188' -f $ComfyArgs[0]
 New-Item -ItemType Directory -Force -Path $LogsRoot | Out-Null
 $ComfyStdoutLog = Join-Path $LogsRoot "comfyui.stdout.log"
 $ComfyStderrLog = Join-Path $LogsRoot "comfyui.stderr.log"
@@ -54,7 +55,7 @@ foreach ($Log in @($ComfyStdoutLog, $ComfyStderrLog)) {
     if (Test-Path $PreviousLog) { Remove-Item $PreviousLog -Force }
     if (Test-Path $Log) { Move-Item $Log $PreviousLog }
 }
-$ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgs -WorkingDirectory $ComfyRoot `
+$ComfyProcess = Start-Process -FilePath $Python -ArgumentList $ComfyArgumentList -WorkingDirectory $ComfyRoot `
     -WindowStyle Hidden -RedirectStandardOutput $ComfyStdoutLog -RedirectStandardError $ComfyStderrLog -PassThru
 
 $Ready = $false
