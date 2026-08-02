@@ -155,10 +155,63 @@ $ParameterNames = @($Ast.FindAll({{
     param($Node)
     $Node -is [Management.Automation.Language.ParameterAst]
 }}, $true) | ForEach-Object {{ $_.Name.Extent.Text }})
-$VariableReferences = @($Ast.FindAll({{
+$ListenerVariableUses = @($Ast.FindAll({{
     param($Node)
     $Node -is [Management.Automation.Language.VariableExpressionAst]
-}}, $true) | ForEach-Object {{ $_.Extent.Text }})
+}}, $true) | Where-Object {{
+    $_.VariablePath.UserPath -imatch
+        '^(?:(?:global|local|private|script):)?ListenerPids?$'
+}} | ForEach-Object {{
+    $Variable = $_
+    $Parent = $Variable.Parent
+    $Grandparent = $(if ($null -ne $Parent) {{ $Parent.Parent }} else {{ $null }})
+    $GreatGrandparent = $(
+        if ($null -ne $Grandparent) {{ $Grandparent.Parent }} else {{ $null }}
+    )
+    $IsStopProcessIdArgument = $false
+    if ($Parent -is [Management.Automation.Language.CommandAst]) {{
+        $Elements = @($Parent.CommandElements)
+        $IsStopProcessIdArgument = (
+            $Parent.GetCommandName() -eq "Stop-Process" -and
+            $Elements.Count -eq 6 -and
+            $Elements[1] -is [Management.Automation.Language.CommandParameterAst] -and
+            $Elements[1].ParameterName -eq "Id" -and
+            [object]::ReferenceEquals($Elements[2], $Variable)
+        )
+    }}
+    [pscustomobject]@{{
+        name = $Variable.VariablePath.UserPath
+        text = $Variable.Extent.Text
+        parent_type = $(
+            if ($null -ne $Parent) {{ $Parent.GetType().Name }} else {{ $null }}
+        )
+        grandparent_type = $(
+            if ($null -ne $Grandparent) {{ $Grandparent.GetType().Name }} else {{ $null }}
+        )
+        great_grandparent_type = $(
+            if ($null -ne $GreatGrandparent) {{
+                $GreatGrandparent.GetType().Name
+            }} else {{
+                $null
+            }}
+        )
+        is_assignment_target = (
+            $Parent -is [Management.Automation.Language.AssignmentStatementAst] -and
+            [object]::ReferenceEquals($Parent.Left, $Variable)
+        )
+        is_foreach_variable = (
+            $Parent -is [Management.Automation.Language.ForEachStatementAst] -and
+            [object]::ReferenceEquals($Parent.Variable, $Variable)
+        )
+        is_foreach_condition = (
+            $Parent -is [Management.Automation.Language.CommandExpressionAst] -and
+            $Grandparent -is [Management.Automation.Language.PipelineAst] -and
+            $GreatGrandparent -is [Management.Automation.Language.ForEachStatementAst] -and
+            [object]::ReferenceEquals($GreatGrandparent.Condition, $Grandparent)
+        )
+        is_stop_process_id_argument = $IsStopProcessIdArgument
+    }}
+}})
 $TryStatements = @($Ast.FindAll({{
     param($Node)
     $Node -is [Management.Automation.Language.TryStatementAst]
@@ -185,7 +238,7 @@ $TryData = @($TryStatements | ForEach-Object {{
         commands = $CommandShapes
         foreach_statements = $ForEachShapes
         parameter_names = $ParameterNames
-        variable_references = $VariableReferences
+        variable_uses = $ListenerVariableUses
     }}
 }} | ConvertTo-Json -Depth 5 -Compress
 """
@@ -269,12 +322,65 @@ def _assert_listener_stop_dataflow_shape(summary: dict[str, object]) -> None:
         }
     ]
 
-    listener_pid_references = [
-        reference
-        for reference in dataflow["variable_references"]
-        if _normalized_variable_name(reference) == "$listenerpid"
+    listener_pids_uses = [
+        use
+        for use in dataflow["variable_uses"]
+        if _normalized_variable_name("$" + use["name"]) == "$listenerpids"
     ]
-    assert listener_pid_references == ["$ListenerPid", "$ListenerPid"]
+    assert listener_pids_uses == [
+        {
+            "name": "ListenerPids",
+            "text": "$ListenerPids",
+            "parent_type": "AssignmentStatementAst",
+            "grandparent_type": "StatementBlockAst",
+            "great_grandparent_type": "TryStatementAst",
+            "is_assignment_target": True,
+            "is_foreach_variable": False,
+            "is_foreach_condition": False,
+            "is_stop_process_id_argument": False,
+        },
+        {
+            "name": "ListenerPids",
+            "text": "$ListenerPids",
+            "parent_type": "CommandExpressionAst",
+            "grandparent_type": "PipelineAst",
+            "great_grandparent_type": "ForEachStatementAst",
+            "is_assignment_target": False,
+            "is_foreach_variable": False,
+            "is_foreach_condition": True,
+            "is_stop_process_id_argument": False,
+        },
+    ]
+
+    listener_pid_uses = [
+        use
+        for use in dataflow["variable_uses"]
+        if _normalized_variable_name("$" + use["name"]) == "$listenerpid"
+    ]
+    assert listener_pid_uses == [
+        {
+            "name": "ListenerPid",
+            "text": "$ListenerPid",
+            "parent_type": "ForEachStatementAst",
+            "grandparent_type": "StatementBlockAst",
+            "great_grandparent_type": "TryStatementAst",
+            "is_assignment_target": False,
+            "is_foreach_variable": True,
+            "is_foreach_condition": False,
+            "is_stop_process_id_argument": False,
+        },
+        {
+            "name": "ListenerPid",
+            "text": "$ListenerPid",
+            "parent_type": "CommandAst",
+            "grandparent_type": "PipelineAst",
+            "great_grandparent_type": "StatementBlockAst",
+            "is_assignment_target": False,
+            "is_foreach_variable": False,
+            "is_foreach_condition": False,
+            "is_stop_process_id_argument": True,
+        },
+    ]
 
     stop_process_commands = [
         command
@@ -502,8 +608,33 @@ def test_deployment_listener_stop_has_a_single_ast_dataflow() -> None:
             "    foreach ($ListenerPid in $ListenerPids) {",
         ),
         (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    $ListenerPids.SetValue(1234, 0)\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+        (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    $CapturedPids = $ListenerPids\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+        (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    $FirstPid = $ListenerPids[0]\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+        (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    $SelectedPids = @($ListenerPids | Select-Object -First 1)\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+        (
             "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
             "        $ListenerPid = 1234\n"
+            "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+        ),
+        (
+            "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+            "        $CapturedPid = $ListenerPid\n"
             "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
         ),
         (
@@ -519,7 +650,12 @@ def test_deployment_listener_stop_has_a_single_ast_dataflow() -> None:
     ids=(
         "different-port",
         "listener-list-reassignment",
+        "listener-list-member-invocation",
+        "listener-list-alias",
+        "listener-list-index",
+        "listener-list-extra-pipeline",
         "iterator-reassignment",
+        "iterator-alias",
         "different-stop-id",
         "second-iterator-loop",
     ),
