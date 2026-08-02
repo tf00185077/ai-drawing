@@ -1,21 +1,89 @@
 from __future__ import annotations
 
-import sys
 import subprocess
 import threading
 import time
 from datetime import datetime, timezone
+import importlib.util
+import json
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 
 WORKER_WINDOWS_ROOT = Path(__file__).resolve().parents[2] / "worker" / "windows"
-if str(WORKER_WINDOWS_ROOT) not in sys.path:
-    sys.path.insert(0, str(WORKER_WINDOWS_ROOT))
+from worker.windows import powershell_control
+from worker.windows.powershell_control import (
+    PowerShellCommandManager,
+    PowerShellCommandNotFound,
+)
 
-from powershell_control import PowerShellCommandManager, PowerShellCommandNotFound
-import powershell_control
+
+class FakePowerShellCommandManager:
+    def __init__(self, not_found: type[Exception]) -> None:
+        self._not_found = not_found
+        self.submitted: dict[str, str | None] | None = None
+        self._records = {
+            "cmd-1": {
+                "command_id": "cmd-1",
+                "state": "running",
+                "exit_code": None,
+                "stdout": "",
+                "stderr": "",
+                "created_at": "2026-08-02T00:00:00+00:00",
+                "started_at": "2026-08-02T00:00:00+00:00",
+                "finished_at": None,
+            }
+        }
+
+    def submit(self, *, script: str, working_directory: str | None) -> dict[str, object]:
+        self.submitted = {
+            "script": script,
+            "working_directory": working_directory,
+        }
+        return dict(self._records["cmd-1"])
+
+    def get(self, command_id: str) -> dict[str, object]:
+        try:
+            return dict(self._records[command_id])
+        except KeyError as error:
+            raise self._not_found(command_id) from error
+
+    def cancel(self, command_id: str) -> dict[str, object]:
+        record = self.get(command_id)
+        record["state"] = "cancelled"
+        self._records[command_id] = record
+        return dict(record)
+
+
+def _worker_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    root = tmp_path / "deployed"
+    config = root / "config" / "worker.json"
+    comfy = root / "runtime" / "ComfyUI"
+    partial = root / "cache" / ".partial"
+    verification = root / "cache" / "verified"
+    config.parent.mkdir(parents=True)
+    config.write_text(json.dumps({"token": "secret"}), encoding="utf-8")
+    (comfy / "models").mkdir(parents=True)
+    partial.mkdir(parents=True)
+    verification.mkdir()
+    for name, value in {
+        "AI_DRAWING_WORKER_ROOT": root,
+        "AI_DRAWING_WORKER_RELEASE_ROOT": root,
+        "AI_DRAWING_WORKER_CONFIG_PATH": config,
+        "AI_DRAWING_WORKER_UPDATE_STATE_ROOT": root,
+        "AI_DRAWING_COMFYUI_ROOT": comfy,
+        "AI_DRAWING_WORKER_PARTIAL_ROOT": partial,
+        "AI_DRAWING_WORKER_VERIFICATION_ROOT": verification,
+    }.items():
+        monkeypatch.setenv(name, str(value))
+    worker_path = WORKER_WINDOWS_ROOT / "worker.py"
+    spec = importlib.util.spec_from_file_location("worker_powershell_routes", worker_path)
+    assert spec is not None and spec.loader is not None
+    worker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(worker)
+    return worker, TestClient(worker.app)
 
 
 def wait_for_terminal(manager: PowerShellCommandManager, command_id: str) -> dict[str, object]:
@@ -237,3 +305,64 @@ def test_terminal_retention_evicts_oldest_terminal_but_keeps_running_command() -
         manager.get(first["command_id"])
     assert manager.get(second["command_id"])["state"] == "completed"
     assert manager.get(third["command_id"])["state"] == "completed"
+
+
+def test_powershell_command_routes_are_open_and_delegate_to_the_manager(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    worker, client = _worker_client(tmp_path, monkeypatch)
+    fake_manager = FakePowerShellCommandManager(worker.PowerShellCommandNotFound)
+    monkeypatch.setattr(worker, "_powershell_commands", fake_manager)
+    payload = {
+        "script": "$x = '莉莎'; Remove-Item C:\\untrusted; Write-Output $x",
+        "working_directory": r"C:\Windows\System32",
+    }
+
+    submitted = client.post("/v1/powershell/commands", json=payload)
+
+    assert submitted.status_code == 202
+    assert fake_manager.submitted == payload
+    assert "Authorization" not in submitted.request.headers
+    status = client.get("/v1/powershell/commands/cmd-1")
+    assert status.status_code == 200
+    assert status.json() == {
+        "command_id": "cmd-1",
+        "state": "running",
+        "exit_code": None,
+        "stdout": "",
+        "stderr": "",
+        "created_at": "2026-08-02T00:00:00+00:00",
+        "started_at": "2026-08-02T00:00:00+00:00",
+        "finished_at": None,
+    }
+    cancelled = client.post("/v1/powershell/commands/cmd-1/cancel")
+    assert cancelled.status_code == 200
+    assert cancelled.json()["state"] == "cancelled"
+    unknown = client.get("/v1/powershell/commands/unknown")
+    assert unknown.status_code == 404
+    assert unknown.json()["detail"] == {
+        "code": "powershell_command_not_found"
+    }
+    unknown_cancel = client.post("/v1/powershell/commands/unknown/cancel")
+    assert unknown_cancel.status_code == 404
+    assert unknown_cancel.json()["detail"] == {
+        "code": "powershell_command_not_found"
+    }
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"content": b"{", "headers": {"Content-Type": "application/json"}},
+        {"json": {"script": 42}},
+        {"json": {"script": "Write-Output ok", "working_directory": 42}},
+    ],
+)
+def test_powershell_command_submission_rejects_malformed_request_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kwargs: dict[str, object]
+) -> None:
+    _worker, client = _worker_client(tmp_path, monkeypatch)
+
+    response = client.post("/v1/powershell/commands", **kwargs)
+
+    assert response.status_code == 422
