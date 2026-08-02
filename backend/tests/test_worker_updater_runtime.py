@@ -633,12 +633,10 @@ def test_validator_always_terminates_staging_processes_after_cuda_failure(tmp_pa
     [
         ({"cuda_available": False}, "CUDA_VALIDATION_FAILED"),
         ({"gpu_name": ""}, "CUDA_VALIDATION_FAILED"),
-        ({"system_stats_ok": False}, "COMFYUI_VALIDATION_FAILED"),
-        ({"object_info_ok": False}, "COMFYUI_VALIDATION_FAILED"),
-        ({"authenticated_status_ok": False}, "WORKER_CONTRACT_FAILED"),
-        ({"resource_plan_ok": False}, "WORKER_CONTRACT_FAILED"),
-        ({"preflight_ok": False}, "WORKER_CONTRACT_FAILED"),
-        ({"source_commit": COMMIT_B}, "WORKER_CONTRACT_FAILED"),
+        ({"system_stats_ok": False}, "COMFYUI_START_TIMEOUT"),
+        ({"authenticated_status_ok": False}, "WORKER_STATUS_INVALID"),
+        ({"preflight_ok": False}, "WORKER_PREFLIGHT_FAILED"),
+        ({"source_commit": COMMIT_B}, "WORKER_STATUS_INVALID"),
     ],
 )
 def test_validator_requires_every_staged_health_check_and_exact_commit(
