@@ -248,9 +248,10 @@ def _resolve(kind: str, name: str) -> Path:
 
 # Content-addressed model files are large (multi-GB) and effectively immutable.
 # Hashing them on every prompt submission is pure disk I/O waste, so cache the
-# digest keyed by (path, size, mtime_ns); any real edit changes size or mtime and
-# invalidates the entry. Cache lives in the long-running queue worker process.
-_digest_cache: dict[str, tuple[int, int, str]] = {}
+# digest only while path identity and change metadata remain stable. Cache lives
+# in the long-running queue worker process.
+_DigestSignature = tuple[int, int, int, int]
+_digest_cache: dict[str, tuple[_DigestSignature, str]] = {}
 _digest_lock = threading.Lock()
 
 
@@ -262,17 +263,47 @@ def _read_and_hash(path: Path) -> str:
     return value.hexdigest()
 
 
+def _digest_signature(stat: Any) -> _DigestSignature:
+    return (
+        int(stat.st_size),
+        int(stat.st_mtime_ns),
+        int(getattr(stat, "st_ino", 0)),
+        int(getattr(stat, "st_ctime_ns", round(stat.st_ctime * 1_000_000_000))),
+    )
+
+
+def _digest_changed_error(path: Path) -> WorkerConfigurationError:
+    return WorkerConfigurationError(f"resource changed while hashing: {path.name}")
+
+
 def _digest(path: Path) -> str:
-    stat = path.stat()
     key = str(path)
-    signature = (stat.st_size, stat.st_mtime_ns)
+    before = path.stat()
+    signature = _digest_signature(before)
     with _digest_lock:
         cached = _digest_cache.get(key)
-        if cached is not None and cached[:2] == signature:
-            return cached[2]
-    digest = _read_and_hash(path)
+    if cached is not None and cached[0] == signature:
+        try:
+            after_cache_lookup = path.stat()
+        except OSError as error:
+            raise _digest_changed_error(path) from error
+        if _digest_signature(after_cache_lookup) == signature:
+            return cached[1]
+        before = after_cache_lookup
+        signature = _digest_signature(before)
+    try:
+        digest = _read_and_hash(path)
+        after_hash = path.stat()
+    except OSError as error:
+        with _digest_lock:
+            _digest_cache.pop(key, None)
+        raise _digest_changed_error(path) from error
+    if _digest_signature(after_hash) != signature:
+        with _digest_lock:
+            _digest_cache.pop(key, None)
+        raise _digest_changed_error(path)
     with _digest_lock:
-        _digest_cache[key] = (*signature, digest)
+        _digest_cache[key] = (signature, digest)
     return digest
 
 
@@ -470,31 +501,47 @@ class NvidiaWorkerClient(ComfyUIClient):
             if key not in missing:
                 continue
             offset = missing[key]
-            with resource.path.open("rb") as source:
-                source.seek(offset)
-                response = None
-                while offset < resource.size:
-                    chunk = source.read(min(8 * 1024 * 1024, resource.size - offset))
-                    if not chunk:
-                        raise WorkerConfigurationError(
-                            f"resource ended before declared size: {resource.name}"
+            response = None
+            if offset == resource.size:
+                response = self._request(
+                    "PUT",
+                    "/v1/resources/content",
+                    params={
+                        "kind": resource.kind,
+                        "name": resource.name,
+                        "sha256": resource.sha256,
+                        "size": resource.size,
+                        "offset": offset,
+                        "finalize": True,
+                    },
+                    content=b"",
+                    headers={"Content-Type": "application/octet-stream"},
+                )
+            else:
+                with resource.path.open("rb") as source:
+                    source.seek(offset)
+                    while offset < resource.size:
+                        chunk = source.read(min(8 * 1024 * 1024, resource.size - offset))
+                        if not chunk:
+                            raise WorkerConfigurationError(
+                                f"resource ended before declared size: {resource.name}"
+                            )
+                        response = self._request(
+                            "PUT",
+                            "/v1/resources/content",
+                            params={
+                                "kind": resource.kind,
+                                "name": resource.name,
+                                "sha256": resource.sha256,
+                                "size": resource.size,
+                                "offset": offset,
+                            },
+                            content=chunk,
+                            headers={"Content-Type": "application/octet-stream"},
                         )
-                    response = self._request(
-                        "PUT",
-                        "/v1/resources/content",
-                        params={
-                            "kind": resource.kind,
-                            "name": resource.name,
-                            "sha256": resource.sha256,
-                            "size": resource.size,
-                            "offset": offset,
-                        },
-                        content=chunk,
-                        headers={"Content-Type": "application/octet-stream"},
-                    )
-                    offset = int(response.json().get("offset", offset + len(chunk)))
-                    if response.json().get("ready"):
-                        break
+                        offset = int(response.json().get("offset", offset + len(chunk)))
+                        if response.json().get("ready"):
+                            break
             if response is None:
                 continue
             if not response.json().get("ready"):

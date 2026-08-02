@@ -941,6 +941,192 @@ def test_worker_promotes_only_complete_verified_resource(
     assert destination.read_bytes() == data
 
 
+def test_resource_plan_rejects_traversal_sha_before_partial_path_access(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    external_name = "x" * 55
+    traversal_sha = "../../../" + external_name
+    assert len(traversal_sha) == 64
+    external_partial = tmp_path / f"{external_name}.part"
+    external_partial.write_bytes(b"must-survive")
+
+    response = client.post(
+        "/v1/resources/plan",
+        headers=_auth(),
+        json={
+            "resources": [
+                {
+                    "kind": "loras",
+                    "name": "style.safetensors",
+                    "sha256": traversal_sha,
+                    "size": 1,
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 422
+    assert external_partial.read_bytes() == b"must-survive"
+    assert not list(worker.PARTIAL_ROOT.rglob("*.part"))
+
+
+def test_resource_content_rejects_traversal_sha_before_partial_path_access(
+    tmp_path, monkeypatch
+) -> None:
+    _worker, client = _configured_worker(tmp_path, monkeypatch)
+    external_name = "y" * 55
+    traversal_sha = "../../../" + external_name
+    assert len(traversal_sha) == 64
+    external_partial = tmp_path / f"{external_name}.part"
+    external_partial.touch()
+
+    response = client.put(
+        "/v1/resources/content",
+        headers={**_auth(), "Content-Type": "application/octet-stream"},
+        params={
+            "kind": "loras",
+            "name": "style.safetensors",
+            "sha256": traversal_sha,
+            "size": 1,
+            "offset": 0,
+        },
+        content=b"x",
+    )
+
+    assert response.status_code == 422
+    assert external_partial.is_file()
+    assert external_partial.read_bytes() == b""
+
+
+def test_resource_plan_normalizes_uppercase_sha_before_using_manifest(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"resume-model"
+    digest = hashlib.sha256(data).hexdigest()
+    partial = worker.PARTIAL_ROOT / f"{digest}.part"
+    partial.write_bytes(data[:3])
+    manifest = {
+        "kind": "loras",
+        "name": "style.safetensors",
+        "sha256": digest.upper(),
+        "size": len(data),
+    }
+
+    response = client.post(
+        "/v1/resources/plan",
+        headers=_auth(),
+        json={"resources": [manifest]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["missing"] == [
+        {**manifest, "sha256": digest, "offset": 3}
+    ]
+
+
+def test_resource_content_accepts_uppercase_sha_and_records_lowercase(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"uppercase-digest-model"
+    digest = hashlib.sha256(data).hexdigest()
+
+    response = client.put(
+        "/v1/resources/content",
+        headers={**_auth(), "Content-Type": "application/octet-stream"},
+        params={
+            "kind": "loras",
+            "name": "style.safetensors",
+            "sha256": digest.upper(),
+            "size": len(data),
+            "offset": 0,
+        },
+        content=data,
+    )
+
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    assert response.status_code == 200
+    assert response.json()["sha256"] == digest
+    assert destination.read_bytes() == data
+    assert json.loads(worker._sidecar_path(destination).read_text(encoding="utf-8"))[
+        "sha256"
+    ] == digest
+
+
+def test_resource_content_finalizes_full_length_partial_without_reupload(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    data = b"complete-interrupted-model"
+    digest = hashlib.sha256(data).hexdigest()
+    partial = worker.PARTIAL_ROOT / f"{digest}.part"
+    partial.write_bytes(data)
+    params = {
+        "kind": "loras",
+        "name": "style.safetensors",
+        "sha256": digest,
+        "size": len(data),
+        "offset": len(data),
+        "finalize": True,
+    }
+
+    response = client.put(
+        "/v1/resources/content",
+        headers={**_auth(), "Content-Type": "application/octet-stream"},
+        params=params,
+        content=b"",
+    )
+
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    assert response.status_code == 200
+    assert response.json() == {
+        "ready": True,
+        "offset": len(data),
+        "size": len(data),
+        "sha256": digest,
+    }
+    assert destination.read_bytes() == data
+    assert not partial.exists()
+
+
+def test_finalize_digest_mismatch_cleans_partial_destination_and_sidecar(
+    tmp_path, monkeypatch
+) -> None:
+    worker, client = _configured_worker(tmp_path, monkeypatch)
+    expected = b"expected-model"
+    wrong = b"incorrect-data"
+    assert len(expected) == len(wrong)
+    digest = hashlib.sha256(expected).hexdigest()
+    destination = worker.MODEL_ROOTS["loras"] / "style.safetensors"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(b"stale-destination")
+    worker._record_verified(destination, hashlib.sha256(destination.read_bytes()).hexdigest())
+    sidecar = worker._sidecar_path(destination)
+    partial = worker.PARTIAL_ROOT / f"{digest}.part"
+    partial.write_bytes(wrong)
+
+    response = client.put(
+        "/v1/resources/content",
+        headers={**_auth(), "Content-Type": "application/octet-stream"},
+        params={
+            "kind": "loras",
+            "name": destination.name,
+            "sha256": digest,
+            "size": len(expected),
+            "offset": len(expected),
+            "finalize": True,
+        },
+        content=b"",
+    )
+
+    assert response.status_code == 422
+    assert not partial.exists()
+    assert not destination.exists()
+    assert not sidecar.exists()
+
+
 def _spy_sha256(worker, monkeypatch):
     calls = {"n": 0}
     real = worker._sha256
@@ -1079,7 +1265,7 @@ def test_plan_requires_retransfer_for_non_hex_sidecar_digest(tmp_path, monkeypat
     manifest = {
         "kind": "loras",
         "name": destination.name,
-        "sha256": invalid_digest,
+        "sha256": hashlib.sha256(data).hexdigest(),
         "size": len(data),
     }
 
