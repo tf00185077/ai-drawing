@@ -1,9 +1,6 @@
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$script:UpdaterBootstrapRepositoryRoot = "D:\code\ai-drawing"
-$script:UpdaterBootstrapRemoteUrl = "https://github.com/tf00185077/ai-drawing.git"
-
 function Assert-UpdaterBootstrapExpectedCommit {
     param(
         [Parameter(Mandatory = $true)][string]$ExpectedCommit
@@ -76,12 +73,12 @@ function Assert-UpdaterBootstrapNoReparseTree {
     }
 }
 
-function Assert-TrustedUpdaterBootstrapRepository {
+function Assert-UpdaterBootstrapRepositoryState {
     param(
         [Parameter(Mandatory = $true)][string]$RepositoryRoot,
         [Parameter(Mandatory = $true)][string]$ExpectedCommit,
-        [string]$TrustedRepositoryRoot = $script:UpdaterBootstrapRepositoryRoot,
-        [string]$TrustedRemoteUrl = $script:UpdaterBootstrapRemoteUrl
+        [Parameter(Mandatory = $true)][string]$TrustedRepositoryRoot,
+        [Parameter(Mandatory = $true)][string]$TrustedRemoteUrl
     )
 
     Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $ExpectedCommit
@@ -147,6 +144,18 @@ function Assert-TrustedUpdaterBootstrapRepository {
     }
 }
 
+function Assert-TrustedUpdaterBootstrapRepository {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepositoryRoot,
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    Assert-UpdaterBootstrapRepositoryState -RepositoryRoot $RepositoryRoot `
+        -ExpectedCommit $ExpectedCommit `
+        -TrustedRepositoryRoot "D:\code\ai-drawing" `
+        -TrustedRemoteUrl "https://github.com/tf00185077/ai-drawing.git"
+}
+
 function Assert-UpdaterBootstrapWorkerPaths {
     param(
         [Parameter(Mandatory = $true)][string]$WorkerRoot,
@@ -157,9 +166,11 @@ function Assert-UpdaterBootstrapWorkerPaths {
     Assert-UpdaterBootstrapExpectedCommit -ExpectedCommit $ExpectedCommit
     Assert-UpdaterBootstrapNoReparseComponents -Path $WorkerRoot
     Assert-UpdaterBootstrapNoReparseTree -Path $ProgramDataRoot
-    Assert-ExistingWorkerRoot -Path $WorkerRoot
-
     $InstalledUpdater = Join-Path $WorkerRoot "updater"
+    if (Test-Path -LiteralPath $InstalledUpdater) {
+        Assert-UpdaterBootstrapNoReparseComponents -Path $InstalledUpdater
+    }
+    Assert-ExistingWorkerRoot -Path $WorkerRoot
     Assert-UpdaterBootstrapNoReparseTree -Path $InstalledUpdater
     Assert-SecureUpdaterTree -Path $InstalledUpdater
     Assert-SecureUpdaterTree -Path $ProgramDataRoot
@@ -175,6 +186,31 @@ function Assert-UpdaterBootstrapWorkerPaths {
             Assert-UpdaterBootstrapNoReparseTree -Path $Candidate
             Assert-SecureUpdaterTree -Path $Candidate
         }
+    }
+}
+
+function Import-UpdaterBootstrapWorkerSecurity {
+    param(
+        [Parameter(Mandatory = $true)][string]$SecurityPath
+    )
+
+    . $SecurityPath
+    foreach ($FunctionName in @(
+        "Assert-NotReparsePoint",
+        "New-UpdaterDirectorySecurity",
+        "Assert-ExpectedUpdaterAcl",
+        "New-SecureUpdaterDirectory",
+        "Set-SecureUpdaterRootAcl",
+        "Reset-SecureUpdaterChildAcl",
+        "Assert-SecureUpdaterPath",
+        "Get-UpdaterTreeNoFollow",
+        "Protect-UpdaterTree",
+        "Assert-SecureUpdaterTree",
+        "Assert-ExistingWorkerRoot"
+    )) {
+        $Imported = Get-Command -Name $FunctionName -CommandType Function -ErrorAction Stop
+        Set-Item -Path ("Function:script:{0}" -f $FunctionName) `
+            -Value $Imported.ScriptBlock -Force
     }
 }
 
@@ -196,7 +232,7 @@ function Assert-UpdaterBootstrapProductionContext {
     if (-not (Test-Path -LiteralPath $SecurityPath -PathType Leaf)) {
         throw "UPDATER_BOOTSTRAP_SECURITY_HELPER_INVALID"
     }
-    . $SecurityPath
+    Import-UpdaterBootstrapWorkerSecurity -SecurityPath $SecurityPath
     Assert-UpdaterBootstrapWorkerPaths -WorkerRoot $WorkerRoot `
         -ProgramDataRoot $ProgramDataRoot -ExpectedCommit $ExpectedCommit
 }
