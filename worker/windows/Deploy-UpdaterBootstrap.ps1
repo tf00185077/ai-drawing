@@ -1,3 +1,7 @@
+param(
+    [Parameter(Mandatory = $true)][string]$ExpectedCommit
+)
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 $script:UpdaterBootstrapTransactionLockHandle = $null
@@ -1122,4 +1126,66 @@ function Invoke-UpdaterBootstrapTransaction {
         }
     }
     return $Result
+}
+
+function Get-UpdaterBootstrapPublicTerminalError {
+    param(
+        [Parameter(Mandatory = $true)]$Result
+    )
+
+    $Status = [string]$Result.status
+    $ErrorCode = [string]$Result.error_code
+    if ($Status -eq "recovery_required") {
+        return "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"
+    }
+    if ($Status -in @("failed_before_switch", "rolled_back")) {
+        if ($ErrorCode -in @(
+            "UPDATER_BOOTSTRAP_TASK_BUSY",
+            "UPDATER_BOOTSTRAP_ACTIVATION_FAILED",
+            "UPDATER_BOOTSTRAP_SMOKE_FAILED",
+            "UPDATER_BOOTSTRAP_TASK_INVALID",
+            "UPDATER_BOOTSTRAP_STAGE_FAILED"
+        )) {
+            return $ErrorCode
+        }
+    }
+    return "UPDATER_BOOTSTRAP_STAGE_FAILED"
+}
+
+function Invoke-UpdaterBootstrapMain {
+    param(
+        [Parameter(Mandatory = $true)][string]$ExpectedCommit
+    )
+
+    $Principal = New-Object Security.Principal.WindowsPrincipal(
+        [Security.Principal.WindowsIdentity]::GetCurrent()
+    )
+    if (-not $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw "UPDATER_BOOTSTRAP_ADMIN_REQUIRED"
+    }
+    if ($PSVersionTable.PSEdition -ne "Desktop" -or $PSVersionTable.PSVersion.Major -ne 5) {
+        throw "UPDATER_BOOTSTRAP_POWERSHELL_51_REQUIRED"
+    }
+
+    try {
+        $Adapter = Get-ProductionUpdaterBootstrapAdapter
+        $Result = Invoke-UpdaterBootstrapTransaction `
+            -RepositoryRoot "D:\code\ai-drawing" `
+            -WorkerRoot "D:\code\AI-Drawing-Worker" `
+            -ProgramDataRoot (Join-Path $env:ProgramData "AI-Drawing-Worker") `
+            -ExpectedCommit $ExpectedCommit `
+            -Adapter $Adapter
+    } catch {
+        throw "UPDATER_BOOTSTRAP_STAGE_FAILED"
+    }
+
+    if ([string]$Result.status -ne "ready") {
+        throw (Get-UpdaterBootstrapPublicTerminalError -Result $Result)
+    }
+    Write-Output "UPDATER_BOOTSTRAP_READY"
+    return $Result
+}
+
+if ($MyInvocation.InvocationName -ne ".") {
+    Invoke-UpdaterBootstrapMain -ExpectedCommit $ExpectedCommit | ConvertTo-Json -Compress
 }

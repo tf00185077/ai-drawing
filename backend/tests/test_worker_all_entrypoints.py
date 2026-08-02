@@ -369,7 +369,9 @@ def _run_updater_bootstrap_harness(
     harness = tmp_path / "updater bootstrap 測試 with spaces" / "bootstrap-harness.ps1"
     harness.parent.mkdir(parents=True)
     harness.write_text(
-        f'. "{repo / "worker/windows/Deploy-UpdaterBootstrap.ps1"}"\n{body}',
+        f'. "{repo / "worker/windows/Deploy-UpdaterBootstrap.ps1"}" '
+        '-ExpectedCommit "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n'
+        f"{body}",
         encoding="utf-8",
     )
     return subprocess.run(
@@ -389,6 +391,229 @@ def _run_updater_bootstrap_harness(
         errors="replace",
         timeout=30,
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_requires_expected_commit() -> None:
+    """Removing the mandatory operator commit must make direct invocation fail."""
+    script = Path(__file__).resolve().parents[2] / "worker" / "windows" / "Deploy-UpdaterBootstrap.ps1"
+
+    result = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(script),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+    assert result.returncode != 0
+    assert "ExpectedCommit" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_executes_main_but_dot_sourcing_does_not(
+    tmp_path: Path,
+) -> None:
+    """Changing the invocation guard must either skip main or run it while importing."""
+    script = Path(__file__).resolve().parents[2] / "worker" / "windows" / "Deploy-UpdaterBootstrap.ps1"
+    commit = "a" * 40
+    direct = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            f"""
+function New-Object {{
+    $Principal = [pscustomobject]@{{}}
+    $Principal | Add-Member -MemberType ScriptMethod -Name IsInRole -Value {{
+        param($Role) $false
+    }}
+    return $Principal
+}}
+try {{
+    & {_ps_quote(script)} -ExpectedCommit '{commit}'
+}} catch {{
+    [Console]::Out.Write($_.Exception.Message)
+    exit 1
+}}
+""",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+    dot_sourced = _run_powershell_51_command(
+        f"""
+function New-Object {{ throw 'dot source must not create a principal' }}
+. {_ps_quote(script)} -ExpectedCommit '{commit}'
+'dot-sourced'
+"""
+    )
+
+    assert direct.returncode != 0
+    assert direct.stdout == "UPDATER_BOOTSTRAP_ADMIN_REQUIRED"
+    assert direct.stderr == ""
+    assert dot_sourced.stdout.strip() == "dot-sourced"
+    assert dot_sourced.stderr == ""
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_rejects_non_administrator(
+    tmp_path: Path,
+) -> None:
+    """Skipping the administrator gate would allow the fake adapter to be reached."""
+    secret = "fake-adapter-admin-secret"
+    body = f"""
+function New-Object {{
+    $Principal = [pscustomobject]@{{}}
+    $Principal | Add-Member -MemberType ScriptMethod -Name IsInRole -Value {{
+        param($Role) $false
+    }}
+    return $Principal
+}}
+function Get-ProductionUpdaterBootstrapAdapter {{ throw '{secret}' }}
+try {{
+    Invoke-UpdaterBootstrapMain -ExpectedCommit ('a' * 40)
+}} catch {{
+    [Console]::Out.Write($_.Exception.Message)
+}}
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "UPDATER_BOOTSTRAP_ADMIN_REQUIRED"
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_hides_adapter_exception(
+    tmp_path: Path,
+) -> None:
+    """Letting an adapter exception escape would disclose its protected diagnostic."""
+    secret = "fake-adapter-exception-secret"
+    body = f"""
+function New-Object {{
+    $Principal = [pscustomobject]@{{}}
+    $Principal | Add-Member -MemberType ScriptMethod -Name IsInRole -Value {{
+        param($Role) $true
+    }}
+    return $Principal
+}}
+function Get-ProductionUpdaterBootstrapAdapter {{ throw '{secret}' }}
+try {{
+    Invoke-UpdaterBootstrapMain -ExpectedCommit ('a' * 40)
+}} catch {{
+    [Console]::Out.Write($_.Exception.Message)
+}}
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "UPDATER_BOOTSTRAP_STAGE_FAILED"
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
+def test_updater_bootstrap_deployment_entrypoint_outputs_only_safe_ready_result(
+    tmp_path: Path,
+) -> None:
+    """Serializing an adapter or environment data would expose the injected secret."""
+    secret = "fake-adapter-ready-secret"
+    body = f"""
+function New-Object {{
+    $Principal = [pscustomobject]@{{}}
+    $Principal | Add-Member -MemberType ScriptMethod -Name IsInRole -Value {{
+        param($Role) $true
+    }}
+    return $Principal
+}}
+function Get-ProductionUpdaterBootstrapAdapter {{
+    [pscustomobject]@{{ diagnostic = '{secret}' }}
+}}
+function Invoke-UpdaterBootstrapTransaction {{
+    param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit, $Adapter)
+    [pscustomobject]@{{ status = 'ready'; error_code = $null; backup = $null }}
+}}
+$Output = @(Invoke-UpdaterBootstrapMain -ExpectedCommit ('a' * 40))
+$Output | ConvertTo-Json -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == [
+        "UPDATER_BOOTSTRAP_READY",
+        {"status": "ready", "error_code": None, "backup": None},
+    ]
+    assert secret not in result.stdout
+    assert secret not in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows elevated entrypoint contract requires Windows")
+@pytest.mark.parametrize(
+    ("status", "error_code", "expected"),
+    [
+        ("failed_before_switch", "UPDATER_BOOTSTRAP_TASK_BUSY", "UPDATER_BOOTSTRAP_TASK_BUSY"),
+        ("rolled_back", "UPDATER_BOOTSTRAP_SMOKE_FAILED", "UPDATER_BOOTSTRAP_SMOKE_FAILED"),
+        ("recovery_required", "fake-adapter-recovery-secret", "UPDATER_BOOTSTRAP_RECOVERY_REQUIRED"),
+    ],
+)
+def test_updater_bootstrap_deployment_entrypoint_returns_fixed_terminal_errors(
+    tmp_path: Path, status: str, error_code: str, expected: str
+) -> None:
+    """Passing through an adapter result error would leak a protected diagnostic."""
+    body = f"""
+function New-Object {{
+    $Principal = [pscustomobject]@{{}}
+    $Principal | Add-Member -MemberType ScriptMethod -Name IsInRole -Value {{
+        param($Role) $true
+    }}
+    return $Principal
+}}
+function Get-ProductionUpdaterBootstrapAdapter {{
+    [pscustomobject]@{{ diagnostic = 'fake-adapter-object-secret' }}
+}}
+function Invoke-UpdaterBootstrapTransaction {{
+    param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit, $Adapter)
+    [pscustomobject]@{{
+        status = '{status}'
+        error_code = '{error_code}'
+        backup = 'backup-is-not-public-output'
+    }}
+}}
+try {{
+    Invoke-UpdaterBootstrapMain -ExpectedCommit ('a' * 40)
+}} catch {{
+    [Console]::Out.Write($_.Exception.Message)
+}}
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == expected
+    assert "fake-adapter" not in result.stdout
+    assert "fake-adapter" not in result.stderr
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
@@ -1275,7 +1500,8 @@ def test_updater_bootstrap_deployment_task_lock_excludes_another_process(
     program_data.mkdir()
     holder_script = tmp_path / "lock holder.ps1"
     holder_script.write_text(
-        f'. {_ps_quote(deployment_script)}\n'
+        f'. {_ps_quote(deployment_script)} '
+        '-ExpectedCommit "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n'
         "function Assert-SecureUpdaterTree { param($Path) }\n"
         f"Enter-UpdaterBootstrapTransactionLock -ProgramDataRoot {_ps_quote(program_data)}\n"
         '[Console]::Out.WriteLine("READY")\n'
