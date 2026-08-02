@@ -196,16 +196,12 @@ def _complete_health_responses(
         ("GET", f"{comfy_url}/system_stats"): {
             "devices": [{"type": "cuda", "name": "NVIDIA RTX"}]
         },
-        ("GET", f"{comfy_url}/object_info"): {
-            node_type: {} for node_type in REQUIRED_COMFY_NODE_TYPES
-        },
         ("GET", f"{worker_url}/v1/worker/status"): {
             "protocol_version": 2,
             "update_capability": 1,
             "source_commit": commit,
             "comfyui": "ready",
         },
-        ("POST", f"{worker_url}/v1/resources/plan"): {"missing": []},
         ("POST", f"{worker_url}/v1/workflows/preflight"): {
             "ready": True,
             "missing_node_types": [],
@@ -228,20 +224,18 @@ def test_http_health_probe_returns_complete_typed_evidence_without_retaining_tok
         cuda_available=True,
         gpu_name="NVIDIA RTX",
         system_stats_ok=True,
-        object_info_ok=True,
         authenticated_status_ok=True,
-        resource_plan_ok=True,
         preflight_ok=True,
         source_commit=commit,
     )
     assert [call[:2] for call in transport.calls] == [
         ("GET", f"{comfy_url}/system_stats"),
-        ("GET", f"{comfy_url}/object_info"),
         ("GET", f"{worker_url}/v1/worker/status"),
-        ("POST", f"{worker_url}/v1/resources/plan"),
         ("POST", f"{worker_url}/v1/workflows/preflight"),
     ]
-    assert all(call[2] == {"Authorization": "Bearer very-secret-token"} for call in transport.calls[2:])
+    assert not any(url.endswith("/object_info") for _, url, *_ in transport.calls)
+    assert not any(url.endswith("/v1/resources/plan") for _, url, *_ in transport.calls)
+    assert all(call[2] == {"Authorization": "Bearer very-secret-token"} for call in transport.calls[1:])
     assert transport.calls[-1][3] == {"node_types": list(REQUIRED_COMFY_NODE_TYPES)}
     assert "very-secret-token" not in repr(probe)
     assert "very-secret-token" not in repr(provider)
@@ -269,8 +263,44 @@ def test_http_health_probe_maps_transport_exception_without_token_text(tmp_path:
     with pytest.raises(UpdateError) as raised:
         probe.validate_production(worker_url, comfy_url, "a" * 40)
 
-    assert raised.value.code == "WORKER_CONTRACT_FAILED"
+    assert raised.value.code == "COMFYUI_START_TIMEOUT"
     assert "very-secret-token" not in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    ("failed_call", "expected_code"),
+    [
+        ("system", "COMFYUI_START_TIMEOUT"),
+        ("status", "WORKER_START_TIMEOUT"),
+        ("preflight", "WORKER_PREFLIGHT_FAILED"),
+    ],
+)
+def test_http_health_probe_reports_the_failed_minimal_stage(
+    tmp_path: Path, failed_call: str, expected_code: str
+) -> None:
+    commit = "a" * 40
+    worker_url = "http://127.0.0.1:8791"
+    comfy_url = "http://127.0.0.1:8188"
+    responses = _complete_health_responses(worker_url, comfy_url, commit)
+    keys = {
+        "system": ("GET", f"{comfy_url}/system_stats"),
+        "status": ("GET", f"{worker_url}/v1/worker/status"),
+        "preflight": ("POST", f"{worker_url}/v1/workflows/preflight"),
+    }
+    responses[keys[failed_call]] = TimeoutError("secret response detail")
+    probe = HttpHealthProbe(
+        _token_provider(tmp_path),
+        ScheduledTaskController(RecordingCommands()),
+        transport=RecordingTransport(responses),
+        attempts=1,
+        retry_delay=0,
+    )
+
+    with pytest.raises(UpdateError) as raised:
+        probe.validate_staged(worker_url, comfy_url, commit)
+
+    assert raised.value.code == expected_code
+    assert "secret response detail" not in str(raised.value)
 
 
 @pytest.mark.parametrize(
@@ -282,8 +312,6 @@ def test_http_health_probe_maps_transport_exception_without_token_text(tmp_path:
         ("status", {"protocol_version": 2, "update_capability": 1, "source_commit": "a" * 40, "comfyui": "unavailable"}, "authenticated_status_ok"),
         ("system", {"devices": [{"type": "cpu", "name": "CPU"}]}, "cuda_available"),
         ("system", {"devices": [{"type": "cuda", "name": ""}]}, "gpu_name"),
-        ("objects", {"KSampler": {}}, "object_info_ok"),
-        ("plan", {"missing": [{"kind": "models"}]}, "resource_plan_ok"),
         ("preflight", {"ready": False, "missing_node_types": []}, "preflight_ok"),
         ("preflight", {"ready": True, "missing_node_types": ["KSampler"]}, "preflight_ok"),
     ],
@@ -302,8 +330,6 @@ def test_http_health_probe_rejects_incomplete_exact_contract(
     keys = {
         "status": ("GET", f"{worker_url}/v1/worker/status"),
         "system": ("GET", f"{comfy_url}/system_stats"),
-        "objects": ("GET", f"{comfy_url}/object_info"),
-        "plan": ("POST", f"{worker_url}/v1/resources/plan"),
         "preflight": ("POST", f"{worker_url}/v1/workflows/preflight"),
     }
     responses[keys[response_key]] = replacement
