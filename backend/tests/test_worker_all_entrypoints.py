@@ -2908,6 +2908,7 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         "WorkerSecurity.ps1",
         "requirements.txt",
         "README.md",
+        "README.txt",
         "updater/cli.py",
         "updater/config.py",
         "updater/git_source.py",
@@ -2917,6 +2918,38 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         "updater/windows_runtime.py",
     ):
         assert (dist / name).read_bytes() == (source / name).read_bytes()
+
+
+def test_open_control_guides_are_distributed_without_legacy_auth_instructions() -> None:
+    """Prevent a packaged guide from restoring the retired pairing/401 contract."""
+    repo = Path(__file__).resolve().parents[2]
+    source = repo / "worker" / "windows"
+    dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
+    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
+    names = ("README.md", "README.txt")
+    required = (
+        "unauthenticated arbitrary PowerShell",
+        "not automatically run as SYSTEM",
+        "Pairing and token files are",
+        "ignored by open-control Worker requests",
+        "WinRM, SSH, SMB, RDP, VNC",
+        "lost when the Worker restarts",
+        "Enable-Open-PowerShell-Control.ps1",
+    )
+    stale = (
+        "AI-Drawing-Worker-Pairing.txt",
+        "未帶 Token 請求回 401",
+        "Bearer Token",
+    )
+
+    with zipfile.ZipFile(archive) as package:
+        for name in names:
+            source_text = (source / name).read_text(encoding="utf-8")
+            normalized_source = " ".join(source_text.split())
+            assert all(text in normalized_source for text in required)
+            assert not any(text in source_text for text in stale)
+            assert (dist / name).read_text(encoding="utf-8") == source_text
+            assert package.read(name).decode("utf-8") == source_text
 
 
 def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
