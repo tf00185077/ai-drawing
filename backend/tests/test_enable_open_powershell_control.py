@@ -58,13 +58,13 @@ def _run_powershell_51_parser(command: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def _deployment_ast_summary() -> dict[str, object]:
+def _deployment_ast_summary(script: Path = SCRIPT) -> dict[str, object]:
     command = f"""
 $ErrorActionPreference = "Stop"
 $Tokens = $null
 $ParseErrors = $null
 $Ast = [Management.Automation.Language.Parser]::ParseFile(
-    {_ps_quote(SCRIPT)}, [ref]$Tokens, [ref]$ParseErrors
+    {_ps_quote(script)}, [ref]$Tokens, [ref]$ParseErrors
 )
 if ($ParseErrors.Count -ne 0) {{
     throw ($ParseErrors | ForEach-Object {{ $_.Message }} | Out-String)
@@ -74,10 +74,91 @@ $CommandAsts = @($Ast.FindAll({{
     $Node -is [Management.Automation.Language.CommandAst]
 }}, $true))
 $CommandNames = @($CommandAsts | ForEach-Object {{ $_.GetCommandName() }})
-$AssignmentTargets = @($Ast.FindAll({{
+$CommandShapes = @($CommandAsts | ForEach-Object {{
+    [pscustomobject]@{{
+        name = $_.GetCommandName()
+        elements = @($_.CommandElements | ForEach-Object {{ $_.Extent.Text }})
+    }}
+}})
+$AssignmentAsts = @($Ast.FindAll({{
     param($Node)
     $Node -is [Management.Automation.Language.AssignmentStatementAst]
-}}, $true) | ForEach-Object {{ $_.Left.Extent.Text }})
+}}, $true))
+$AssignmentTargets = @($AssignmentAsts | ForEach-Object {{ $_.Left.Extent.Text }})
+$AssignmentShapes = @($AssignmentAsts | ForEach-Object {{
+    $Assignment = $_
+    $RightCommands = @($Assignment.Right.FindAll({{
+        param($Node)
+        $Node -is [Management.Automation.Language.CommandAst]
+    }}, $true))
+    $RightPipelines = @($Assignment.Right.FindAll({{
+        param($Node)
+        $Node -is [Management.Automation.Language.PipelineAst]
+    }}, $true))
+    [pscustomobject]@{{
+        target = $Assignment.Left.Extent.Text
+        rhs_type = $Assignment.Right.GetType().Name
+        rhs_expression_type = $(
+            if ($Assignment.Right -is [Management.Automation.Language.CommandExpressionAst]) {{
+                $Assignment.Right.Expression.GetType().Name
+            }} else {{
+                $null
+            }}
+        )
+        rhs_text = $Assignment.Right.Extent.Text
+        rhs_pipeline_count = $RightPipelines.Count
+        rhs_pipeline_elements = @($RightPipelines | ForEach-Object {{
+            $_.PipelineElements | ForEach-Object {{
+                if ($_ -is [Management.Automation.Language.CommandAst]) {{
+                    $_.GetCommandName()
+                }} else {{
+                    $_.GetType().Name
+                }}
+            }}
+        }})
+        rhs_commands = @($RightCommands | ForEach-Object {{
+            [pscustomobject]@{{
+                name = $_.GetCommandName()
+                elements = @($_.CommandElements | ForEach-Object {{ $_.Extent.Text }})
+            }}
+        }})
+    }}
+}})
+$ForEachAsts = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.ForEachStatementAst]
+}}, $true))
+$ForEachShapes = @($ForEachAsts | ForEach-Object {{
+    $BodyAssignments = @($_.Body.FindAll({{
+        param($Node)
+        $Node -is [Management.Automation.Language.AssignmentStatementAst]
+    }}, $true))
+    $BodyCommands = @($_.Body.FindAll({{
+        param($Node)
+        $Node -is [Management.Automation.Language.CommandAst]
+    }}, $true))
+    [pscustomobject]@{{
+        variable = $_.Variable.Extent.Text
+        condition = $_.Condition.Extent.Text
+        body_assignment_targets = @($BodyAssignments | ForEach-Object {{
+            $_.Left.Extent.Text
+        }})
+        body_commands = @($BodyCommands | ForEach-Object {{
+            [pscustomobject]@{{
+                name = $_.GetCommandName()
+                elements = @($_.CommandElements | ForEach-Object {{ $_.Extent.Text }})
+            }}
+        }})
+    }}
+}})
+$ParameterNames = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.ParameterAst]
+}}, $true) | ForEach-Object {{ $_.Name.Extent.Text }})
+$VariableReferences = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.VariableExpressionAst]
+}}, $true) | ForEach-Object {{ $_.Extent.Text }})
 $TryStatements = @($Ast.FindAll({{
     param($Node)
     $Node -is [Management.Automation.Language.TryStatementAst]
@@ -99,6 +180,13 @@ $TryData = @($TryStatements | ForEach-Object {{
     dynamic_command_count = @($CommandNames | Where-Object {{ $null -eq $_ }}).Count
     assignment_targets = $AssignmentTargets
     try_statements = $TryData
+    listener_stop_dataflow = [pscustomobject]@{{
+        assignments = $AssignmentShapes
+        commands = $CommandShapes
+        foreach_statements = $ForEachShapes
+        parameter_names = $ParameterNames
+        variable_references = $VariableReferences
+    }}
 }} | ConvertTo-Json -Depth 5 -Compress
 """
     result = _run_powershell_51_parser(command)
@@ -106,6 +194,106 @@ $TryData = @($TryStatements | ForEach-Object {{
         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
     return json.loads(result.stdout)
+
+
+def _normalized_variable_name(value: str) -> str:
+    match = re.fullmatch(
+        r"\$\{?(?:(?:global|local|private|script):)?([^}]+)\}?",
+        value,
+        flags=re.IGNORECASE,
+    )
+    assert match is not None, f"not a variable expression: {value}"
+    return "$" + match.group(1).casefold()
+
+
+def _assert_listener_stop_dataflow_shape(summary: dict[str, object]) -> None:
+    dataflow = summary["listener_stop_dataflow"]
+    assignments = dataflow["assignments"]
+
+    def assignments_to(variable: str) -> list[dict[str, object]]:
+        return [
+            assignment
+            for assignment in assignments
+            if _normalized_variable_name(assignment["target"]) == variable.casefold()
+        ]
+
+    worker_port_assignments = assignments_to("$WorkerPort")
+    assert len(worker_port_assignments) == 1
+    assert worker_port_assignments[0]["rhs_type"] == "CommandExpressionAst"
+    assert worker_port_assignments[0]["rhs_expression_type"] == "ConstantExpressionAst"
+    assert worker_port_assignments[0]["rhs_text"] == "8791"
+    assert worker_port_assignments[0]["rhs_pipeline_count"] == 0
+    assert worker_port_assignments[0]["rhs_pipeline_elements"] == []
+    assert worker_port_assignments[0]["rhs_commands"] == []
+
+    listener_assignments = assignments_to("$ListenerPids")
+    assert len(listener_assignments) == 1
+    assert listener_assignments[0]["rhs_type"] == "CommandExpressionAst"
+    assert listener_assignments[0]["rhs_expression_type"] == "ArrayExpressionAst"
+    assert listener_assignments[0]["rhs_pipeline_count"] == 1
+    assert listener_assignments[0]["rhs_pipeline_elements"] == [
+        "Get-NetTCPConnection",
+        "Select-Object",
+    ]
+    assert listener_assignments[0]["rhs_commands"] == [
+        {
+            "name": "Get-NetTCPConnection",
+            "elements": "Get-NetTCPConnection -State Listen "
+            "-LocalPort $WorkerPort -ErrorAction SilentlyContinue",
+        },
+        {
+            "name": "Select-Object",
+            "elements": "Select-Object -ExpandProperty OwningProcess -Unique",
+        },
+    ]
+
+    assert assignments_to("$ListenerPid") == []
+    assert all(
+        _normalized_variable_name(name) != "$listenerpid"
+        for name in dataflow["parameter_names"]
+    )
+
+    listener_loops = [
+        loop
+        for loop in dataflow["foreach_statements"]
+        if _normalized_variable_name(loop["variable"]) == "$listenerpid"
+    ]
+    assert len(listener_loops) == 1
+    listener_loop = listener_loops[0]
+    assert _normalized_variable_name(listener_loop["condition"]) == "$listenerpids"
+    assert listener_loop["body_assignment_targets"] == []
+    assert listener_loop["body_commands"] == [
+        {
+            "name": "Stop-Process",
+            "elements": "Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+        }
+    ]
+
+    listener_pid_references = [
+        reference
+        for reference in dataflow["variable_references"]
+        if _normalized_variable_name(reference) == "$listenerpid"
+    ]
+    assert listener_pid_references == ["$ListenerPid", "$ListenerPid"]
+
+    stop_process_commands = [
+        command
+        for command in dataflow["commands"]
+        if command["name"] == "Stop-Process"
+    ]
+    assert stop_process_commands == [
+        {
+            "name": "Stop-Process",
+            "elements": [
+                "Stop-Process",
+                "-Id",
+                "$ListenerPid",
+                "-Force",
+                "-ErrorAction",
+                "Stop",
+            ],
+        }
+    ]
 
 
 def test_deployment_requires_an_elevated_administrator_process() -> None:
@@ -290,6 +478,66 @@ def test_deployment_stops_only_port_8791_listeners() -> None:
         "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop"
     ]
     assert "8188" not in script
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_deployment_listener_stop_has_a_single_ast_dataflow() -> None:
+    """Reassigning listener or loop PID data before Stop-Process must fail."""
+    summary = _deployment_ast_summary()
+
+    _assert_listener_stop_dataflow_shape(summary)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+@pytest.mark.parametrize(
+    ("needle", "replacement"),
+    (
+        (
+            "$WorkerPort = 8791",
+            "$WorkerPort = 9999",
+        ),
+        (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    $ListenerPids = @(1234)\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+        (
+            "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+            "        $ListenerPid = 1234\n"
+            "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+        ),
+        (
+            "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop",
+            "        Stop-Process -Id $PID -Force -ErrorAction Stop",
+        ),
+        (
+            "    foreach ($ListenerPid in $ListenerPids) {",
+            "    foreach ($ListenerPid in @()) {}\n"
+            "    foreach ($ListenerPid in $ListenerPids) {",
+        ),
+    ),
+    ids=(
+        "different-port",
+        "listener-list-reassignment",
+        "iterator-reassignment",
+        "different-stop-id",
+        "second-iterator-loop",
+    ),
+)
+def test_deployment_listener_stop_dataflow_rejects_unsafe_mutations(
+    tmp_path: Path,
+    needle: str,
+    replacement: str,
+) -> None:
+    """Each unsafe PID dataflow mutation must be rejected by AST inspection."""
+    source = _script_text()
+    assert source.count(needle) == 1
+    unsafe_script = tmp_path / "unsafe-listener-dataflow.ps1"
+    unsafe_script.write_text(source.replace(needle, replacement), encoding="utf-8")
+
+    summary = _deployment_ast_summary(unsafe_script)
+    with pytest.raises(AssertionError):
+        _assert_listener_stop_dataflow_shape(summary)
 
 
 def test_deployment_waits_for_the_worker_listener_and_reports_readiness() -> None:
