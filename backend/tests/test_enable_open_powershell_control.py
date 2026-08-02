@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import Counter
+import json
 import os
 from pathlib import Path
 import re
@@ -26,6 +28,86 @@ def _ps_quote(value: str | Path) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def _powershell_51() -> Path:
+    return (
+        Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        / "System32"
+        / "WindowsPowerShell"
+        / "v1.0"
+        / "powershell.exe"
+    )
+
+
+def _run_powershell_51_parser(command: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            str(_powershell_51()),
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            command,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+
+def _deployment_ast_summary() -> dict[str, object]:
+    command = f"""
+$ErrorActionPreference = "Stop"
+$Tokens = $null
+$ParseErrors = $null
+$Ast = [Management.Automation.Language.Parser]::ParseFile(
+    {_ps_quote(SCRIPT)}, [ref]$Tokens, [ref]$ParseErrors
+)
+if ($ParseErrors.Count -ne 0) {{
+    throw ($ParseErrors | ForEach-Object {{ $_.Message }} | Out-String)
+}}
+$CommandAsts = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.CommandAst]
+}}, $true))
+$CommandNames = @($CommandAsts | ForEach-Object {{ $_.GetCommandName() }})
+$AssignmentTargets = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.AssignmentStatementAst]
+}}, $true) | ForEach-Object {{ $_.Left.Extent.Text }})
+$TryStatements = @($Ast.FindAll({{
+    param($Node)
+    $Node -is [Management.Automation.Language.TryStatementAst]
+}}, $true))
+$TryData = @($TryStatements | ForEach-Object {{
+    [pscustomobject]@{{
+        body_commands = @($_.Body.FindAll({{
+            param($Node)
+            $Node -is [Management.Automation.Language.CommandAst]
+        }}, $true) | ForEach-Object {{ $_.GetCommandName() }})
+        finally_commands = @($_.Finally.FindAll({{
+            param($Node)
+            $Node -is [Management.Automation.Language.CommandAst]
+        }}, $true) | ForEach-Object {{ $_.GetCommandName() }})
+    }}
+}})
+[pscustomobject]@{{
+    command_names = $CommandNames
+    dynamic_command_count = @($CommandNames | Where-Object {{ $null -eq $_ }}).Count
+    assignment_targets = $AssignmentTargets
+    try_statements = $TryData
+}} | ConvertTo-Json -Depth 5 -Compress
+"""
+    result = _run_powershell_51_parser(command)
+    assert result.returncode == 0, (
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
+    return json.loads(result.stdout)
+
+
 def test_deployment_requires_an_elevated_administrator_process() -> None:
     """Removing the current-principal Administrator guard must fail this test."""
     script = _script_text()
@@ -48,6 +130,71 @@ def test_deployment_has_fixed_direct_d_drive_roots_and_commit_parameter() -> Non
     assert 'Join-Path $InstalledWorkerRoot "current\\worker\\windows"' in script
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_deployment_command_ast_uses_only_the_approved_command_vocabulary() -> None:
+    """Adding any executable command outside the narrow deployment must fail."""
+    summary = _deployment_ast_summary()
+
+    assert summary["dynamic_command_count"] == 0
+    assert Counter(summary["command_names"]) == Counter(
+        {
+            "Copy-Item": 2,
+            "Get-NetTCPConnection": 2,
+            "Get-ScheduledTask": 1,
+            "Join-Path": 7,
+            "New-Object": 1,
+            "Select-Object": 1,
+            "Set-StrictMode": 1,
+            "Start-ScheduledTask": 1,
+            "Start-Sleep": 1,
+            "Stop-Process": 1,
+            "Stop-ScheduledTask": 1,
+            "Test-Path": 3,
+            "Write-Output": 1,
+            "git.exe": 3,
+        }
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_deployment_protected_targets_have_one_fixed_assignment() -> None:
+    """Reassigning a root, task, or listener port must fail this test."""
+    script = _script_text()
+    summary = _deployment_ast_summary()
+    protected_targets = (
+        "$RepositoryRoot",
+        "$SourceWindowsRoot",
+        "$InstalledWorkerRoot",
+        "$InstalledWindowsRoot",
+        "$TaskName",
+        "$WorkerPort",
+    )
+    normalized_assignments = [
+        re.sub(
+            r"^\$\{?(?:(?:global|local|private|script):)?([^}]+)\}?$",
+            r"$\1",
+            assignment,
+            flags=re.IGNORECASE,
+        ).casefold()
+        for assignment in summary["assignment_targets"]
+    ]
+
+    for target in protected_targets:
+        assert normalized_assignments.count(target.casefold()) == 1
+
+    assert re.findall(r'"(?:[A-Za-z]:\\|\\\\)[^"\r\n]+"', script) == [
+        '"D:\\code\\ai-drawing"',
+        '"D:\\code\\ai-drawing\\worker\\windows"',
+        '"D:\\code\\AI-Drawing-Worker"',
+    ]
+    assert re.search(r"'(?:[A-Za-z]:\\|\\\\)", script) is None
+    assert script.count('"AI-Drawing NVIDIA Worker"') == 1
+    assert "$WorkerPort = 8791" in script
+    listener_targets = re.findall(r"-LocalPort\s+([^\s|\r\n]+)", script)
+    assert len(listener_targets) >= 2
+    assert set(listener_targets) == {"$WorkerPort"}
+
+
 def test_deployment_fetches_and_requires_head_origin_main_and_expected_commit() -> None:
     """Dropping either requested version check must fail this test."""
     script = _script_text()
@@ -67,31 +214,62 @@ def test_deployment_stops_and_starts_only_the_existing_worker_task() -> None:
     assert '$TaskName = "AI-Drawing NVIDIA Worker"' in script
     assert "AI-Drawing NVIDIA Worker Restart" not in script
     task_actions = re.findall(
-        r"(?im)^\s*(?:Stop|Start)-ScheduledTask\b[^\r\n]*", script
+        r"(?im)^[ \t]*(?:Stop|Start)-ScheduledTask\b[^\r\n]*", script
     )
-    assert len(task_actions) == 2
-    assert any(line.lstrip().startswith("Stop-ScheduledTask") for line in task_actions)
-    assert any(line.lstrip().startswith("Start-ScheduledTask") for line in task_actions)
-    assert all("-TaskName $TaskName" in line for line in task_actions)
+    assert task_actions == [
+        "        Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop",
+        "    Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop",
+    ]
 
 
 def test_deployment_copies_only_the_two_control_runtime_files_directly() -> None:
     """Staging or omitting either direct runtime copy must fail this test."""
     script = _script_text()
 
-    copy_lines = re.findall(r"(?im)^\s*Copy-Item\b[^\r\n]*", script)
-    assert len(copy_lines) == 2
-    assert all("-LiteralPath" in line and "-Force" in line for line in copy_lines)
-    assert any(
-        'Join-Path $SourceWindowsRoot "worker.py"' in line
-        and 'Join-Path $InstalledWindowsRoot "worker.py"' in line
-        for line in copy_lines
+    copy_lines = re.findall(r"(?im)^[ \t]*Copy-Item\b[^\r\n]*", script)
+    assert copy_lines == [
+        "    Copy-Item -LiteralPath "
+        '(Join-Path $SourceWindowsRoot "worker.py") -Destination '
+        '(Join-Path $InstalledWindowsRoot "worker.py") -Force',
+        "    Copy-Item -LiteralPath "
+        '(Join-Path $SourceWindowsRoot "powershell_control.py") -Destination '
+        '(Join-Path $InstalledWindowsRoot "powershell_control.py") -Force',
+    ]
+
+
+def test_deployment_checks_both_sources_and_target_before_shutdown() -> None:
+    """Stopping the Worker before all copy paths exist must fail this test."""
+    script = _script_text()
+    source_worker_guard = (
+        'Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") '
+        "-PathType Leaf"
     )
-    assert any(
-        'Join-Path $SourceWindowsRoot "powershell_control.py"' in line
-        and 'Join-Path $InstalledWindowsRoot "powershell_control.py"' in line
-        for line in copy_lines
+    source_control_guard = (
+        'Test-Path -LiteralPath (Join-Path $SourceWindowsRoot '
+        '"powershell_control.py") -PathType Leaf'
     )
+    installed_target_guard = (
+        "Test-Path -LiteralPath $InstalledWindowsRoot -PathType Container"
+    )
+    shutdown_boundary = script.index("$WorkerTask = Get-ScheduledTask")
+
+    for guard in (source_worker_guard, source_control_guard, installed_target_guard):
+        assert script.count(guard) == 1
+        assert script.index(guard) < shutdown_boundary
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_deployment_restarts_the_task_from_finally_after_stop_and_copy() -> None:
+    """Moving the task restart outside the destructive phase's finally must fail."""
+    summary = _deployment_ast_summary()
+
+    assert len(summary["try_statements"]) == 1
+    deployment_try = summary["try_statements"][0]
+    assert deployment_try["body_commands"].count("Stop-ScheduledTask") == 1
+    assert deployment_try["body_commands"].count("Stop-Process") == 1
+    assert deployment_try["body_commands"].count("Copy-Item") == 2
+    assert "Start-ScheduledTask" not in deployment_try["body_commands"]
+    assert deployment_try["finally_commands"] == ["Start-ScheduledTask"]
 
 
 def test_deployment_stops_only_port_8791_listeners() -> None:
@@ -99,12 +277,18 @@ def test_deployment_stops_only_port_8791_listeners() -> None:
     script = _script_text()
 
     listener_queries = re.findall(
-        r"Get-NetTCPConnection\s+-State\s+Listen\s+-LocalPort\s+(\d+)", script
+        r"(?im)^[ \t]*Get-NetTCPConnection\b[^\r\n]*", script
     )
-    assert len(listener_queries) >= 2
-    assert set(listener_queries) == {"8791"}
+    assert listener_queries == [
+        "        Get-NetTCPConnection -State Listen -LocalPort $WorkerPort "
+        "-ErrorAction SilentlyContinue |",
+        "        Get-NetTCPConnection -State Listen -LocalPort $WorkerPort "
+        "-ErrorAction SilentlyContinue",
+    ]
     assert "Select-Object -ExpandProperty OwningProcess -Unique" in script
-    assert "Stop-Process -Id $ListenerPid" in script
+    assert re.findall(r"(?im)^[ \t]*Stop-Process\b[^\r\n]*", script) == [
+        "        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop"
+    ]
     assert "8188" not in script
 
 
@@ -137,9 +321,19 @@ def test_deployment_excludes_broader_security_update_and_recovery_machinery() ->
         "migrate-worker",
         "invoke-restmethod",
         "invoke-webrequest",
+        "start-bitstransfer",
+        "curl",
+        "wget",
+        "netsh",
+        "firewall",
         "new-netfirewallrule",
         "remove-netfirewallrule",
         "remove-item",
+        "clear-item",
+        "clear-content",
+        "set-content",
+        "move-item",
+        "rename-item",
     )
 
     for unexpected in forbidden:
@@ -150,13 +344,6 @@ def test_deployment_excludes_broader_security_update_and_recovery_machinery() ->
 def test_deployment_parses_with_windows_powershell_51_scriptblock_create() -> None:
     """PowerShell syntax newer than Windows PowerShell 5.1 must fail this test."""
     _script_text()
-    powershell = (
-        Path(os.environ.get("SystemRoot", r"C:\Windows"))
-        / "System32"
-        / "WindowsPowerShell"
-        / "v1.0"
-        / "powershell.exe"
-    )
     command = f"""
 $ErrorActionPreference = "Stop"
 $Version = $PSVersionTable.PSVersion
@@ -168,23 +355,7 @@ $Source = Get-Content -LiteralPath {_ps_quote(SCRIPT)} -Raw -Encoding UTF8
 "5.1 Desktop; parsed Enable-Open-PowerShell-Control.ps1"
 """
 
-    result = subprocess.run(
-        [
-            str(powershell),
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            command,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=30,
-    )
+    result = _run_powershell_51_parser(command)
 
     assert result.returncode == 0, f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     assert result.stdout.strip() == (

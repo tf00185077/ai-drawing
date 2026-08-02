@@ -20,6 +20,7 @@ $SourceWindowsRoot = "D:\code\ai-drawing\worker\windows"
 $InstalledWorkerRoot = "D:\code\AI-Drawing-Worker"
 $InstalledWindowsRoot = Join-Path $InstalledWorkerRoot "current\worker\windows"
 $TaskName = "AI-Drawing NVIDIA Worker"
+$WorkerPort = 8791
 
 & git.exe -C $RepositoryRoot fetch origin main
 if ($LASTEXITCODE -ne 0) {
@@ -51,29 +52,38 @@ if ($OriginMainCommit -ne $ExpectedCommit) {
 if (-not (Test-Path -LiteralPath $InstalledWindowsRoot -PathType Container)) {
     throw "INSTALLED_WORKER_RUNTIME_NOT_FOUND"
 }
+if (-not (Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") -PathType Leaf)) {
+    throw "SOURCE_WORKER_NOT_FOUND"
+}
+if (-not (Test-Path -LiteralPath (Join-Path $SourceWindowsRoot "powershell_control.py") -PathType Leaf)) {
+    throw "SOURCE_POWERSHELL_CONTROL_NOT_FOUND"
+}
 
 $WorkerTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
-if ($WorkerTask.State -eq "Running") {
-    Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+try {
+    if ($WorkerTask.State -eq "Running") {
+        Stop-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+    }
+
+    $ListenerPids = @(
+        Get-NetTCPConnection -State Listen -LocalPort $WorkerPort -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty OwningProcess -Unique
+    )
+    foreach ($ListenerPid in $ListenerPids) {
+        Stop-Process -Id $ListenerPid -Force -ErrorAction Stop
+    }
+
+    Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") -Destination (Join-Path $InstalledWindowsRoot "worker.py") -Force
+    Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "powershell_control.py") -Destination (Join-Path $InstalledWindowsRoot "powershell_control.py") -Force
 }
-
-$ListenerPids = @(
-    Get-NetTCPConnection -State Listen -LocalPort 8791 -ErrorAction SilentlyContinue |
-        Select-Object -ExpandProperty OwningProcess -Unique
-)
-foreach ($ListenerPid in $ListenerPids) {
-    Stop-Process -Id $ListenerPid -Force -ErrorAction Stop
+finally {
+    Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop
 }
-
-Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "worker.py") -Destination (Join-Path $InstalledWindowsRoot "worker.py") -Force
-Copy-Item -LiteralPath (Join-Path $SourceWindowsRoot "powershell_control.py") -Destination (Join-Path $InstalledWindowsRoot "powershell_control.py") -Force
-
-Start-ScheduledTask -TaskName $TaskName -ErrorAction Stop
 
 $Deadline = [DateTime]::UtcNow.AddSeconds(60)
 while ([DateTime]::UtcNow -lt $Deadline) {
     $ReadyListener = @(
-        Get-NetTCPConnection -State Listen -LocalPort 8791 -ErrorAction SilentlyContinue
+        Get-NetTCPConnection -State Listen -LocalPort $WorkerPort -ErrorAction SilentlyContinue
     )
     if ($ReadyListener.Count -gt 0) {
         Write-Output "OPEN_POWERSHELL_CONTROL_READY"
