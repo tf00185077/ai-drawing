@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import subprocess
 import threading
 import time
@@ -433,41 +434,62 @@ def test_real_windows_powershell_51_round_trips_utf8_text_streams(
         / "v1.0"
         / "powershell.exe"
     )
-    version = subprocess.run(
-        [
-            str(executable),
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "$PSVersionTable.PSEdition + ' ' + $PSVersionTable.PSVersion.ToString()",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="strict",
-        shell=False,
-    ).stdout.strip()
-    assert version.startswith("Desktop 5.1.")
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    original_input_code_page = kernel32.GetConsoleCP()
+    original_output_code_page = kernel32.GetConsoleOutputCP()
+    assert original_input_code_page > 0
+    assert original_output_code_page > 0
+    try:
+        assert kernel32.SetConsoleCP(932) != 0
+        assert kernel32.SetConsoleOutputCP(932) != 0
+        assert kernel32.GetConsoleCP() == 932
+        assert kernel32.GetConsoleOutputCP() == 932
 
-    stdout = "繁體中文\n日本語\nemoji 😀"
-    stderr = "錯誤：繁體中文\nエラー：日本語\nemoji 🚫"
-    script = (
-        f'$Stdout = "{stdout.replace(chr(10), "`n")}"\n'
-        f'$Stderr = "{stderr.replace(chr(10), "`n")}"\n'
-        "[Console]::Out.Write($Stdout)\n"
-        "[Console]::Error.Write($Stderr)"
-    )
-    manager = PowerShellCommandManager(powershell_executable=str(executable))
+        metadata = subprocess.run(
+            [
+                str(executable),
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                (
+                    "$PSVersionTable.PSEdition; "
+                    "$PSVersionTable.PSVersion.ToString(); "
+                    "[Console]::InputEncoding.CodePage; "
+                    "[Console]::OutputEncoding.CodePage"
+                ),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="ascii",
+            errors="strict",
+            shell=False,
+        ).stdout.splitlines()
+        assert metadata[0] == "Desktop"
+        assert metadata[1].startswith("5.1.")
+        assert metadata[2:] == ["932", "932"]
 
-    accepted = manager.submit(script=script, working_directory=str(tmp_path))
-    terminal = wait_for_terminal(manager, accepted["command_id"])
+        stdout = "繁體中文\n日本語\nemoji 😀"
+        stderr = "錯誤：繁體中文\nエラー：日本語\nemoji 🚫"
+        script = (
+            f'$Stdout = "{stdout.replace(chr(10), "`n")}"\n'
+            f'$Stderr = "{stderr.replace(chr(10), "`n")}"\n'
+            "[Console]::Out.Write($Stdout)\n"
+            "[Console]::Error.Write($Stderr)"
+        )
+        manager = PowerShellCommandManager(powershell_executable=str(executable))
 
-    assert terminal["state"] == "completed"
-    assert terminal["exit_code"] == 0
-    assert terminal["stdout"] == stdout
-    assert terminal["stderr"] == stderr
-    assert list(tmp_path.iterdir()) == []
+        accepted = manager.submit(script=script, working_directory=str(tmp_path))
+        terminal = wait_for_terminal(manager, accepted["command_id"])
+
+        assert terminal["state"] == "completed"
+        assert terminal["exit_code"] == 0
+        assert terminal["stdout"] == stdout
+        assert terminal["stderr"] == stderr
+        assert list(tmp_path.iterdir()) == []
+    finally:
+        assert kernel32.SetConsoleCP(original_input_code_page) != 0
+        assert kernel32.SetConsoleOutputCP(original_output_code_page) != 0
 
 
 def test_powershell_command_routes_are_open_and_delegate_to_the_manager(
