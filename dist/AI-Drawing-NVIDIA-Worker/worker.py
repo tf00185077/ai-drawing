@@ -705,7 +705,7 @@ def _proxy(method: str, path: str, **kwargs: Any) -> Response:
 
 
 @app.post("/v1/workflows/preflight")
-def workflow_preflight(body: dict[str, Any]) -> dict[str, Any]:
+def workflow_capabilities(body: dict[str, Any]) -> dict[str, Any]:
     requested = body.get("node_types")
     if not isinstance(requested, list) or any(
         not isinstance(item, str) or not item for item in requested
