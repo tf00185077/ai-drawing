@@ -54,10 +54,9 @@ def test_unknown_target_is_rejected() -> None:
 def _paired_settings(**overrides):
     values = {
         "nvidia_worker_url": "http://192.168.1.106:8791",
-        "nvidia_worker_token": "tok",
         "nvidia_worker_timeout": 60,
         "nvidia_worker_hostname": "DESKTOP-AV90PQ4",
-        "nvidia_worker_protocol_version": 1,
+        "nvidia_worker_protocol_version": 2,
         "nvidia_worker_discovery_enabled": True,
         "nvidia_worker_discovery_cidr": "192.168.1.0/24",
         "nvidia_worker_discovery_timeout": 0.1,
@@ -66,42 +65,110 @@ def _paired_settings(**overrides):
     return SimpleNamespace(**values)
 
 
-def test_worker_request_discovers_changed_ip_and_retries(monkeypatch) -> None:
-    nvidia_worker.clear_runtime_worker_urls()
-    client = nvidia_worker.NvidiaWorkerClient(
-        "http://192.168.1.106:8791",
-        "tok",
-        5.0,
-        expected_hostname="DESKTOP-AV90PQ4",
-        expected_protocol_version=1,
-        discovery_enabled=True,
-        discovery_cidr="192.168.1.0/24",
-        discovery_timeout=0.1,
-    )
-    calls = []
-    response = MagicMock()
-    response.raise_for_status.return_value = None
-    response.json.return_value = {"protocol_version": 1, "hostname": "DESKTOP-AV90PQ4"}
+def _install_recording_transport(monkeypatch, handler):
+    real_client = httpx.Client
+    requests = []
 
-    def request_once(method, path, **kwargs):
-        calls.append((client.base_url, method, path))
-        if client.base_url.endswith(".106:8791"):
-            raise httpx.ConnectError("old address refused")
-        return response
+    def record(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return handler(request)
 
-    monkeypatch.setattr(client, "_request_once", request_once)
+    transport = httpx.MockTransport(record)
     monkeypatch.setattr(
-        nvidia_worker,
-        "discover_worker_url",
-        lambda **kwargs: "http://192.168.1.120:8791",
+        nvidia_worker.httpx,
+        "Client",
+        lambda **kwargs: real_client(transport=transport, **kwargs),
+    )
+    return requests
+
+
+def test_probe_worker_status_is_url_only(monkeypatch) -> None:
+    requests = _install_recording_transport(
+        monkeypatch,
+        lambda request: httpx.Response(
+            200,
+            json={"protocol_version": 2, "hostname": "DESKTOP-AV90PQ4"},
+            request=request,
+        ),
     )
 
-    assert client.health()["hostname"] == "DESKTOP-AV90PQ4"
-    assert calls == [
-        ("http://192.168.1.106:8791", "GET", "/v1/worker/status"),
-        ("http://192.168.1.120:8791", "GET", "/v1/worker/status"),
+    status = nvidia_worker._probe_worker_status(
+        "http://192.168.1.120:8791",
+        timeout=0.1,
+    )
+
+    assert status == {"protocol_version": 2, "hostname": "DESKTOP-AV90PQ4"}
+    assert len(requests) == 1
+    assert requests[0].url.path == "/v1/worker/status"
+    assert "Authorization" not in requests[0].headers
+
+
+def test_worker_retry_scans_cidr_and_adopts_protocol_2_worker_without_auth(
+    monkeypatch,
+) -> None:
+    settings = _paired_settings()
+    remembered_url = "http://192.168.1.110:8791"
+    reachable_url = "http://192.168.1.120:8791"
+    nvidia_worker.remember_runtime_worker_url(
+        settings.nvidia_worker_url,
+        settings.nvidia_worker_hostname,
+        settings.nvidia_worker_protocol_version,
+        remembered_url,
+    )
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+    scans = []
+
+    def candidates(**kwargs):
+        scans.append(kwargs)
+        return [reachable_url]
+
+    monkeypatch.setattr(nvidia_worker, "_open_worker_candidates", candidates)
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "192.168.1.110":
+            raise httpx.ConnectError("remembered address refused", request=request)
+        return httpx.Response(
+            200,
+            json={"protocol_version": 2, "hostname": "DESKTOP-AV90PQ4"},
+            request=request,
+        )
+
+    requests = _install_recording_transport(monkeypatch, respond)
+    client = nvidia_worker.get_worker_client()
+
+    assert client.health() == {
+        "protocol_version": 2,
+        "hostname": "DESKTOP-AV90PQ4",
+    }
+    assert scans == [
+        {
+            "failed_url": remembered_url,
+            "discovery_cidr": "192.168.1.0/24",
+            "timeout": 0.1,
+        }
     ]
-    assert client.base_url == "http://192.168.1.120:8791"
+    assert client.base_url == reachable_url
+    assert [request.url.host for request in requests] == [
+        "192.168.1.110",
+        "192.168.1.120",
+        "192.168.1.120",
+    ]
+    assert all("Authorization" not in request.headers for request in requests)
+    assert nvidia_worker.get_worker_client().base_url == reachable_url
+
+
+def test_get_worker_client_requires_only_configured_url(monkeypatch) -> None:
+    monkeypatch.delenv("NVIDIA_WORKER_TOKEN", raising=False)
+    settings = Settings(
+        _env_file=None,
+        nvidia_worker_url="http://192.168.1.106:8791",
+    )
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+
+    client = nvidia_worker.get_worker_client()
+
+    assert isinstance(client, nvidia_worker.NvidiaWorkerClient)
+    assert client.base_url == "http://192.168.1.106:8791"
 
 
 def test_discovery_rejects_wrong_hostname_and_protocol(monkeypatch) -> None:
@@ -128,7 +195,6 @@ def test_discovery_rejects_wrong_hostname_and_protocol(monkeypatch) -> None:
 
     assert nvidia_worker.discover_worker_url(
         failed_url="http://192.168.1.106:8791",
-        token="tok",
         expected_hostname="DESKTOP-AV90PQ4",
         expected_protocol_version=1,
         discovery_cidr="192.168.1.0/24",
@@ -158,7 +224,6 @@ def test_discovery_refuses_when_identity_does_not_match(monkeypatch, status) -> 
     with pytest.raises(nvidia_worker.WorkerConfigurationError, match="not found"):
         nvidia_worker.discover_worker_url(
             failed_url="http://192.168.1.106:8791",
-            token="tok",
             expected_hostname="DESKTOP-AV90PQ4",
             expected_protocol_version=1,
             discovery_cidr="192.168.1.0/24",
@@ -198,7 +263,7 @@ def test_discovery_is_restricted_to_configured_ipv4_same_24(failed_url, cidr) ->
         nvidia_worker._discovery_target(failed_url, cidr)
 
 
-def test_discovery_requires_exactly_one_authenticated_match(monkeypatch) -> None:
+def test_discovery_requires_exactly_one_identity_match(monkeypatch) -> None:
     candidates = ["http://192.168.1.110:8791", "http://192.168.1.120:8791"]
     monkeypatch.setattr(nvidia_worker, "_open_worker_candidates", lambda **kwargs: candidates)
     monkeypatch.setattr(
@@ -210,7 +275,6 @@ def test_discovery_requires_exactly_one_authenticated_match(monkeypatch) -> None
     with pytest.raises(nvidia_worker.WorkerConfigurationError, match="ambiguous"):
         nvidia_worker.discover_worker_url(
             failed_url="http://192.168.1.106:8791",
-            token="tok",
             expected_hostname="DESKTOP-AV90PQ4",
             expected_protocol_version=1,
             discovery_cidr="192.168.1.0/24",
@@ -220,7 +284,7 @@ def test_discovery_requires_exactly_one_authenticated_match(monkeypatch) -> None
 
 def test_discovery_disabled_does_not_scan(monkeypatch) -> None:
     client = nvidia_worker.NvidiaWorkerClient(
-        "http://192.168.1.106:8791", "tok", discovery_enabled=False
+        "http://192.168.1.106:8791", discovery_enabled=False
     )
     monkeypatch.setattr(
         client,
@@ -237,7 +301,7 @@ def test_discovery_disabled_does_not_scan(monkeypatch) -> None:
 
 def test_non_connection_error_does_not_scan(monkeypatch) -> None:
     client = nvidia_worker.NvidiaWorkerClient(
-        "http://192.168.1.106:8791", "tok", discovery_enabled=True
+        "http://192.168.1.106:8791", discovery_enabled=True
     )
     monkeypatch.setattr(
         client,
@@ -253,7 +317,9 @@ def test_non_connection_error_does_not_scan(monkeypatch) -> None:
 
 
 def test_worker_status_uses_discovery_aware_factory(monkeypatch) -> None:
-    settings = _paired_settings()
+    # The Mac API's legacy configuration gate is removed in Task 5. This task
+    # changes only the Worker client, so keep this route-focused test isolated.
+    settings = _paired_settings(nvidia_worker_token="legacy")
     client = MagicMock()
     client.health.return_value = {"protocol_version": 1, "hostname": "DESKTOP-AV90PQ4"}
     factory = MagicMock(return_value=client)

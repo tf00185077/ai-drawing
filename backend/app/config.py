@@ -82,11 +82,12 @@ class Settings(BaseSettings):
     # Optional paired Windows NVIDIA Worker. Local generation remains the
     # default; these values are used only when a request explicitly selects it.
     nvidia_worker_url: str = ""
+    # Retained so existing .env files load; open-control mode ignores this value.
     nvidia_worker_token: str = ""
     nvidia_worker_timeout: float = 60.0
     # Connect failures may discover the paired Worker at its new DHCP address.
-    # Discovery is intentionally constrained to one IPv4 /24 and authenticates
-    # status with the existing bearer token before changing only runtime state.
+    # Discovery is intentionally constrained to one IPv4 /24 and matches the
+    # configured hostname/protocol before changing only runtime state.
     nvidia_worker_discovery_enabled: bool = False
     nvidia_worker_discovery_cidr: str = ""
     nvidia_worker_discovery_timeout: float = Field(default=0.25, gt=0, le=5)

@@ -1,4 +1,4 @@
-"""Paired NVIDIA Worker client and resource synchronization.
+"""NVIDIA Worker client and resource synchronization.
 
 The Worker intentionally presents the small ComfyUI API surface used by the
 queue. Before prompt submission it receives a content-addressed resource plan
@@ -127,13 +127,10 @@ def _open_worker_candidates(
     return [f"{scheme}://{host}:{port}" for host in sorted(open_hosts, key=ipaddress.ip_address)]
 
 
-def _probe_worker_status(url: str, *, token: str, timeout: float) -> dict[str, Any]:
+def _probe_worker_status(url: str, *, timeout: float) -> dict[str, Any]:
     request_timeout = httpx.Timeout(timeout)
     with httpx.Client(timeout=request_timeout) as client:
-        response = client.get(
-            f"{url.rstrip('/')}/v1/worker/status",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+        response = client.get(f"{url.rstrip('/')}/v1/worker/status")
     response.raise_for_status()
     body = response.json()
     if not isinstance(body, dict):
@@ -144,7 +141,6 @@ def _probe_worker_status(url: str, *, token: str, timeout: float) -> dict[str, A
 def discover_worker_url(
     *,
     failed_url: str,
-    token: str,
     expected_hostname: str,
     expected_protocol_version: int,
     discovery_cidr: str,
@@ -159,7 +155,7 @@ def discover_worker_url(
         timeout=discovery_timeout,
     ):
         try:
-            status = _probe_worker_status(candidate, token=token, timeout=discovery_timeout)
+            status = _probe_worker_status(candidate, timeout=discovery_timeout)
         except (httpx.HTTPError, ValueError, WorkerConfigurationError):
             continue
         if (
@@ -169,7 +165,7 @@ def discover_worker_url(
             matches.append(candidate)
     if len(matches) != 1:
         detail = "not found" if not matches else "ambiguous"
-        raise WorkerConfigurationError(f"authenticated NVIDIA Worker discovery {detail}")
+        raise WorkerConfigurationError(f"NVIDIA Worker discovery {detail}")
     return matches[0]
 
 
@@ -338,7 +334,6 @@ class NvidiaWorkerClient(ComfyUIClient):
     def __init__(
         self,
         base_url: str,
-        token: str,
         timeout: float = 60.0,
         *,
         expected_hostname: str = "",
@@ -357,8 +352,6 @@ class NvidiaWorkerClient(ComfyUIClient):
             timeout_fetch=configured_timeout,
             timeout_queue=configured_timeout,
         )
-        self._headers = {"Authorization": f"Bearer {token}"}
-        self._token = token
         self._expected_hostname = expected_hostname
         self._expected_protocol_version = expected_protocol_version
         self._discovery_enabled = discovery_enabled
@@ -385,12 +378,8 @@ class NvidiaWorkerClient(ComfyUIClient):
         request_timeout = _positive_finite_timeout(
             request_timeout, "effective timeout"
         )
-        headers = dict(self._headers)
-        headers.update(kwargs.pop("headers", {}))
         with httpx.Client(timeout=request_timeout) as client:
-            return client.request(
-                method, self._url(path), headers=headers, **kwargs
-            )
+            return client.request(method, self._url(path), **kwargs)
 
     def _request_raw(
         self,
@@ -407,7 +396,6 @@ class NvidiaWorkerClient(ComfyUIClient):
                 raise
             resolved_url = discover_worker_url(
                 failed_url=self.base_url,
-                token=self._token,
                 expected_hostname=self._expected_hostname,
                 expected_protocol_version=self._expected_protocol_version,
                 discovery_cidr=self._discovery_cidr,
@@ -431,6 +419,38 @@ class NvidiaWorkerClient(ComfyUIClient):
         return self._request(
             "GET",
             "/v1/worker/status",
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def submit_powershell(
+        self,
+        script: str,
+        *,
+        working_directory: str | None = None,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/v1/powershell/commands",
+            json={"script": script, "working_directory": working_directory},
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def powershell_status(
+        self, command_id: str, *, timeout: float | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            f"/v1/powershell/commands/{command_id}",
+            **({} if timeout is None else {"timeout": timeout}),
+        ).json()
+
+    def cancel_powershell(
+        self, command_id: str, *, timeout: float | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/v1/powershell/commands/{command_id}/cancel",
             **({} if timeout is None else {"timeout": timeout}),
         ).json()
 
@@ -662,9 +682,9 @@ class NvidiaWorkerClient(ComfyUIClient):
 
 
 def get_worker_client() -> NvidiaWorkerClient:
-    """Build a paired Worker client using any authenticated runtime URL cache."""
+    """Build a Worker client using any hostname/protocol runtime URL cache."""
     settings = get_settings()
-    if not settings.nvidia_worker_url or not settings.nvidia_worker_token:
+    if not settings.nvidia_worker_url:
         raise WorkerConfigurationError("NVIDIA Worker is not paired")
     configured_url = settings.nvidia_worker_url.rstrip("/")
     expected_hostname = getattr(settings, "nvidia_worker_hostname", "")
@@ -678,7 +698,6 @@ def get_worker_client() -> NvidiaWorkerClient:
     )
     return NvidiaWorkerClient(
         runtime_url or configured_url,
-        settings.nvidia_worker_token,
         settings.nvidia_worker_timeout,
         expected_hostname=expected_hostname,
         expected_protocol_version=expected_protocol_version,
