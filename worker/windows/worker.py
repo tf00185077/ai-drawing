@@ -371,9 +371,8 @@ def _remove_verification(destination: Path) -> None:
 def _verified_sha(destination: Path) -> str:
     """Trusted digest for an existing file without re-reading it every submit.
 
-    A sidecar recorded at ingestion (or self-healed here on first sight) lets an
-    unchanged file — matching size and mtime_ns — be trusted by a cheap string
-    compare. Any real edit advances mtime and forces a one-time rehash.
+    Only a sidecar recorded after completed upload verification can trust an
+    unchanged file. Missing, malformed, or stale records require retransfer.
     """
     try:
         stat = destination.stat()
@@ -387,6 +386,8 @@ def _verified_sha(destination: Path) -> str:
         record.get("size") == stat.st_size
         and record.get("mtime_ns") == stat.st_mtime_ns
         and isinstance(sha, str)
+        and len(sha) == 64
+        and all(character in "0123456789abcdefABCDEF" for character in sha)
     ):
         return sha
     return ""
@@ -619,6 +620,8 @@ async def resource_content(
         return {"ready": False, "offset": partial.stat().st_size}
     if partial.stat().st_size != size or _sha256(partial) != sha256:
         partial.unlink(missing_ok=True)
+        destination.unlink(missing_ok=True)
+        _remove_verification(destination)
         raise HTTPException(422, "resource digest mismatch")
     destination.parent.mkdir(parents=True, exist_ok=True)
     os.replace(partial, destination)
