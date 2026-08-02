@@ -362,6 +362,214 @@ def _run_migration_harness(
     )
 
 
+def _run_updater_bootstrap_harness(
+    tmp_path: Path, body: str
+) -> subprocess.CompletedProcess[str]:
+    repo = Path(__file__).resolve().parents[2]
+    harness = tmp_path / "updater bootstrap 測試 with spaces" / "bootstrap-harness.ps1"
+    harness.parent.mkdir(parents=True)
+    harness.write_text(
+        f'. "{repo / "worker/windows/Deploy-UpdaterBootstrap.ps1"}"\n{body}',
+        encoding="utf-8",
+    )
+    return subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(harness),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell 5.1 requires Windows")
+def test_updater_bootstrap_deployment_parses_on_windows_powershell_51() -> None:
+    """A syntax incompatible with Windows PowerShell 5.1 must make this test fail."""
+    repo = Path(__file__).resolve().parents[2]
+    script = repo / "worker" / "windows" / "Deploy-UpdaterBootstrap.ps1"
+
+    result = _run_powershell_51_command(
+        f"""
+$Version = $PSVersionTable.PSVersion
+if ($PSVersionTable.PSEdition -ne "Desktop" -or $Version.Major -ne 5 -or $Version.Minor -ne 1) {{
+    throw "Expected Windows PowerShell Desktop 5.1, got $($PSVersionTable.PSEdition) $Version"
+}}
+$Tokens = $null
+$ParseErrors = $null
+[void][System.Management.Automation.Language.Parser]::ParseFile(
+    {_ps_quote(script)}, [ref]$Tokens, [ref]$ParseErrors
+)
+if ($ParseErrors.Count -ne 0) {{
+    throw ($ParseErrors | ForEach-Object {{ $_.Message }} | Out-String)
+}}
+"5.1 Desktop; parsed Deploy-UpdaterBootstrap.ps1"
+"""
+    )
+
+    assert result.stdout.strip() == "5.1 Desktop; parsed Deploy-UpdaterBootstrap.ps1"
+
+
+def _updater_bootstrap_adapter_script(fail_stage: str | None = None) -> str:
+    fail_value = "" if fail_stage is None else fail_stage
+    return f"""
+$Events = [System.Collections.Generic.List[string]]::new()
+$FailStage = '{fail_value}'
+$Adapter = [pscustomobject]@{{
+    ValidateContext = {{ param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
+        [void]$Events.Add('validate-context')
+    }}
+    AcquireLock = {{ param($ProgramDataRoot)
+        [void]$Events.Add('acquire-lock')
+    }}
+    StopUpdaterTask = {{
+        [void]$Events.Add('stop-updater-task')
+    }}
+    Stage = {{ param($RepositoryRoot, $WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
+        [void]$Events.Add('stage')
+        'staging-token'
+    }}
+    ValidateStage = {{ param($Staging)
+        [void]$Events.Add('validate-stage')
+    }}
+    Backup = {{ param($WorkerRoot, $ProgramDataRoot, $ExpectedCommit)
+        [void]$Events.Add('backup')
+        'backup-token'
+    }}
+    Activate = {{ param($Staging, $WorkerRoot, $ProgramDataRoot)
+        [void]$Events.Add('activate')
+        if ($FailStage -eq 'activate') {{ throw 'adapter activate failure must remain private' }}
+    }}
+    Protect = {{ param($WorkerRoot, $ProgramDataRoot)
+        [void]$Events.Add('protect')
+        if ($FailStage -eq 'protect') {{ throw 'adapter protect failure must remain private' }}
+    }}
+    Smoke = {{ param($WorkerRoot, $ProgramDataRoot)
+        [void]$Events.Add('smoke')
+        if ($FailStage -eq 'smoke') {{ throw 'adapter smoke failure must remain private' }}
+    }}
+    ValidateTask = {{ param($ProgramDataRoot)
+        [void]$Events.Add('validate-task')
+        if ($FailStage -eq 'validate-task') {{ throw 'adapter task failure must remain private' }}
+    }}
+    CleanupSuccess = {{ param($Staging)
+        [void]$Events.Add('cleanup-success')
+    }}
+    Rollback = {{ param($Backup, $WorkerRoot, $ProgramDataRoot)
+        [void]$Events.Add('rollback')
+    }}
+    ValidateRollback = {{ param($WorkerRoot, $ProgramDataRoot)
+        [void]$Events.Add('validate-rollback')
+    }}
+    ReleaseLock = {{ param($ProgramDataRoot)
+        [void]$Events.Add('release-lock')
+    }}
+}}
+"""
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell transaction contract requires Windows")
+def test_updater_bootstrap_deployment_transaction_commits_in_order(tmp_path: Path) -> None:
+    """Skipping a transaction stage or cleanup/release ordering must make this test fail."""
+    body = _updater_bootstrap_adapter_script() + """
+$Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot 'repository-root' `
+  -WorkerRoot 'worker-root' -ProgramDataRoot 'program-data-root' `
+  -ExpectedCommit 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -Adapter $Adapter
+[pscustomobject]@{ result=$Result; events=$Events } | ConvertTo-Json -Depth 6 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "ready"
+    assert record["events"] == [
+        "validate-context",
+        "acquire-lock",
+        "stop-updater-task",
+        "stage",
+        "validate-stage",
+        "backup",
+        "activate",
+        "protect",
+        "smoke",
+        "validate-task",
+        "cleanup-success",
+        "release-lock",
+    ]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell transaction contract requires Windows")
+@pytest.mark.parametrize(
+    ("fail_stage", "error_code", "expected_events"),
+    [
+        (
+            "activate",
+            "UPDATER_BOOTSTRAP_ACTIVATION_FAILED",
+            [
+                "validate-context", "acquire-lock", "stop-updater-task", "stage",
+                "validate-stage", "backup", "activate", "rollback",
+                "validate-rollback", "release-lock",
+            ],
+        ),
+        (
+            "protect",
+            "UPDATER_BOOTSTRAP_STAGE_FAILED",
+            [
+                "validate-context", "acquire-lock", "stop-updater-task", "stage",
+                "validate-stage", "backup", "activate", "protect", "rollback",
+                "validate-rollback", "release-lock",
+            ],
+        ),
+        (
+            "smoke",
+            "UPDATER_BOOTSTRAP_SMOKE_FAILED",
+            [
+                "validate-context", "acquire-lock", "stop-updater-task", "stage",
+                "validate-stage", "backup", "activate", "protect", "smoke", "rollback",
+                "validate-rollback", "release-lock",
+            ],
+        ),
+        (
+            "validate-task",
+            "UPDATER_BOOTSTRAP_TASK_INVALID",
+            [
+                "validate-context", "acquire-lock", "stop-updater-task", "stage",
+                "validate-stage", "backup", "activate", "protect", "smoke",
+                "validate-task", "rollback", "validate-rollback", "release-lock",
+            ],
+        ),
+    ],
+)
+def test_updater_bootstrap_deployment_transaction_rolls_back_failed_switches(
+    tmp_path: Path, fail_stage: str, error_code: str, expected_events: list[str]
+) -> None:
+    """Leaking adapter errors or omitting rollback validation must make this test fail."""
+    body = _updater_bootstrap_adapter_script(fail_stage) + """
+$Result = Invoke-UpdaterBootstrapTransaction -RepositoryRoot 'repository-root' `
+  -WorkerRoot 'worker-root' -ProgramDataRoot 'program-data-root' `
+  -ExpectedCommit 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -Adapter $Adapter
+[pscustomobject]@{ result=$Result; events=$Events } | ConvertTo-Json -Depth 6 -Compress
+"""
+
+    result = _run_updater_bootstrap_harness(tmp_path, body)
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(result.stdout)
+    assert record["result"]["status"] == "rolled_back"
+    assert record["result"]["error_code"] == error_code
+    assert "adapter" not in record["result"]["error_code"]
+    assert record["events"] == expected_events
+
+
 def _run_worker_root_harness(tmp_path: Path, body: str) -> subprocess.CompletedProcess[str]:
     repo = Path(__file__).resolve().parents[2]
     helper = repo / "worker" / "windows" / "WorkerRoot.ps1"
