@@ -1,5 +1,4 @@
 $ErrorActionPreference = "Stop"
-$TaskTimeoutSeconds = 120
 $Ports = @(8188, 8791)
 $ProgramDataRoot = Join-Path $env:ProgramData "AI-Drawing-Worker"
 $EnvironmentPath = Join-Path $ProgramDataRoot "updater.env"
@@ -53,7 +52,7 @@ try {
     # task releases the handle automatically; the harmless file may remain and
     # is never deleted out from under a successor that already acquired it.
     $LockStream = [IO.File]::Open($LockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::Write, [IO.FileShare]::None)
-    foreach ($Path in @((Join-Path $Root "Start-Worker.ps1"), (Join-Path $Root "config\worker.json"))) {
+    foreach ($Path in @((Join-Path $Root "Start-Worker.ps1"))) {
         if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "RESTART_INSTALLATION_INCOMPLETE" }
     }
     try { $Request = Get-Content -LiteralPath $RequestPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $Request = $null }
@@ -70,25 +69,8 @@ try {
     foreach ($ListenerPid in $ListenerPids) { Stop-Process -Id $ListenerPid -Force -ErrorAction Stop }
     $StartWorkerArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}"' -f (Join-Path $Root "Start-Worker.ps1")
     Start-Process powershell.exe -WindowStyle Hidden -ArgumentList $StartWorkerArguments | Out-Null
-
-    $Config = Get-Content -LiteralPath (Join-Path $Root "config\worker.json") -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (-not $Config.token) { throw "RESTART_CONFIG_INVALID" }
-    $Headers = @{ Authorization = "Bearer $($Config.token)" }
-    $Deadline = (Get-Date).AddSeconds($TaskTimeoutSeconds)
-    Write-State "verifying"
-    $Healthy = $false
-    do {
-        try {
-            Invoke-RestMethod "http://127.0.0.1:8188/system_stats" -TimeoutSec 3 | Out-Null
-            $Status = Invoke-RestMethod "http://127.0.0.1:8791/v1/worker/status" -Headers $Headers -TimeoutSec 3
-            $Preflight = Invoke-RestMethod "http://127.0.0.1:8791/v1/workflows/preflight" -Method Post -Headers $Headers -ContentType "application/json" -Body '{"node_types":[]}' -TimeoutSec 5
-            if ($Status.comfyui -eq "ready" -and $Preflight.ready -eq $true) { $Healthy = $true; break }
-        } catch { }
-        Start-Sleep -Seconds 2
-    } while ((Get-Date) -lt $Deadline)
-    if (-not $Healthy) { Write-State "timed_out" "RESTART_HEALTH_TIMEOUT"; Write-SafeLog "Restart health verification timed out."; exit 1 }
-    Write-State "ready"
-    Write-SafeLog "Worker and ComfyUI are ready."
+    Write-State "started"
+    Write-SafeLog "Worker start process launched."
     exit 0
 } catch {
     if (-not $RequestId) { $RequestId = [Guid]::NewGuid().ToString() }
