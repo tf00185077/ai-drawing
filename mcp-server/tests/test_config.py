@@ -11,7 +11,7 @@ def test_mcp_settings_defaults_match_local_ai_drawing_runtime() -> None:
     assert settings.comfyui_api_url == "http://127.0.0.1:8188"
     assert (
         settings.gallery_dir
-        == "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery"
+        == "/Users/USER/Desktop/ai-drawing/outputs/gallery"
     )
 
 

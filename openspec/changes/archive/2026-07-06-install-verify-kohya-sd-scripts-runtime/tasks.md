@@ -15,7 +15,7 @@ fatal: unable to access 'https://github.com/kohya-ss/sd-scripts.git/': Could not
 $ test -e sd-scripts && find sd-scripts -maxdepth 2 -print | head -20 || echo 'sd-scripts directory absent after failed clone'
 sd-scripts directory absent after failed clone
 
-$ find /Users/tf00185088 /Volumes/AI-Drawing-16T -maxdepth 6 \( -iname '*sd-scripts*' -o -iname '*kohya*' -o -iname '*lora*train*' \) 2>/dev/null | head -120
+$ find /Users/USER /Volumes/AI-Drawing-16T -maxdepth 6 \( -iname '*sd-scripts*' -o -iname '*kohya*' -o -iname '*lora*train*' \) 2>/dev/null | head -120
 # No Kohya sd-scripts checkout or archive was found; output only listed this repo's LoRA code/docs.
 
 $ lora_train/kohya-runtime-venv/bin/python - <<'PY'
@@ -24,7 +24,7 @@ import accelerate
 print('sys.executable=', sys.executable)
 print('accelerate=', getattr(accelerate, '__version__', 'unknown'))
 PY
-sys.executable= /Users/tf00185088/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
+sys.executable= /Users/USER/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
 accelerate= 1.14.0
 
 $ lora_train/kohya-runtime-venv/bin/accelerate launch --help
@@ -44,14 +44,14 @@ print('comfyui_lora_dir=', s.comfyui_lora_dir)
 print('lora_default_checkpoint=', s.lora_default_checkpoint)
 print('lora_checkpoint_dirs=', s.lora_checkpoint_dirs)
 PY
-sd_scripts_python= /Users/tf00185088/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
+sd_scripts_python= /Users/USER/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
 sibling_accelerate_exists= True
-sd_scripts_path= /Users/tf00185088/Desktop/ai-drawing/sd-scripts
+sd_scripts_path= /Users/USER/Desktop/ai-drawing/sd-scripts
 comfyui_lora_dir= /Volumes/AI-Drawing-16T/ai-drawing/models/loras
 lora_default_checkpoint= v1-5-pruned-emaonly.ckpt
 lora_checkpoint_dirs= /Volumes/AI-Drawing-16T/ai-drawing/models/checkpoints
 
-$ printf 'sd-scripts path: '; test -d /Users/tf00185088/Desktop/ai-drawing/sd-scripts && echo present || echo missing
+$ printf 'sd-scripts path: '; test -d /Users/USER/Desktop/ai-drawing/sd-scripts && echo present || echo missing
 sd-scripts path: missing
 missing train_network.py
 missing sdxl_train_network.py
@@ -61,8 +61,8 @@ missing finetune/tag_images_by_wd14_tagger.py
 Local `.env` is ignored by git and now contains:
 
 ```text
-SD_SCRIPTS_PATH=/Users/tf00185088/Desktop/ai-drawing/sd-scripts
-SD_SCRIPTS_PYTHON=/Users/tf00185088/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
+SD_SCRIPTS_PATH=/Users/USER/Desktop/ai-drawing/sd-scripts
+SD_SCRIPTS_PYTHON=/Users/USER/Desktop/ai-drawing/lora_train/kohya-runtime-venv/bin/python
 COMFYUI_LORA_DIR=/Volumes/AI-Drawing-16T/ai-drawing/models/loras
 LORA_DEFAULT_CHECKPOINT=v1-5-pruned-emaonly.ckpt
 LORA_CHECKPOINT_DIRS=/Volumes/AI-Drawing-16T/ai-drawing/models/checkpoints
@@ -72,8 +72,8 @@ Secondary registration blocker observed under the current agent sandbox:
 
 ```text
 $ ls -ld /Volumes/AI-Drawing-16T/ai-drawing/models/checkpoints/v1-5-pruned-emaonly.ckpt /Volumes/AI-Drawing-16T/ai-drawing/models/loras
--rw-------  1 tf00185088  staff  4265380512 Jun  1 19:39 /Volumes/AI-Drawing-16T/ai-drawing/models/checkpoints/v1-5-pruned-emaonly.ckpt
-drwxr-xr-x  25 tf00185088  staff  800 Jul  3 18:56 /Volumes/AI-Drawing-16T/ai-drawing/models/loras
+-rw-------  1 USER  staff  4265380512 Jun  1 19:39 /Volumes/AI-Drawing-16T/ai-drawing/models/checkpoints/v1-5-pruned-emaonly.ckpt
+drwxr-xr-x  25 USER  staff  800 Jul  3 18:56 /Volumes/AI-Drawing-16T/ai-drawing/models/loras
 loras writable=no
 ```
 
@@ -123,7 +123,7 @@ Evidence / blocker (2026-07-06):
 
 ```text
 $ PYTHONPATH=backend backend/.venv/bin/python <create-small-dataset-script>
-/Users/tf00185088/Desktop/ai-drawing/lora_train/runtime_kohya_smoke_20260706
+/Users/USER/Desktop/ai-drawing/lora_train/runtime_kohya_smoke_20260706
 images= 10 captions= 10
 
 $ POST /api/lora-train/datasets/runtime_kohya_smoke_20260706?trigger_token=kohyaruntimeprobe
@@ -150,7 +150,7 @@ ok=true image_count=10 caption_count=10 missing_caption_count=0 errors=[]
 $ POST /api/lora-train/start epochs=1 resolution=256 batch_size=1 network_dim=4 network_alpha=4 mixed_precision=fp32
 status_code= 400
 detail.code=sd_scripts_path_missing
-detail.message=sd_scripts_path does not exist: /Users/tf00185088/Desktop/ai-drawing/sd-scripts
+detail.message=sd_scripts_path does not exist: /Users/USER/Desktop/ai-drawing/sd-scripts
 detail.details.expected_script=train_network.py
 ```
 
@@ -160,7 +160,7 @@ Additional evidence / code fix (2026-07-06):
 
 ```text
 Hermes installed/cloned Kohya sd-scripts at:
-/Users/tf00185088/Desktop/ai-drawing/sd-scripts
+/Users/USER/Desktop/ai-drawing/sd-scripts
 
 Using lora_train/kohya-runtime-venv/bin/python:
 train_network.py --help                         -> exit 0
@@ -293,7 +293,7 @@ current_epoch=1
 total_epochs=1
 trainer_script=anima_train_network.py
 network_module=networks.lora_anima
-output_path=/Users/tf00185088/Desktop/ai-drawing/lora_train/output/runtime_anima_smoke_clean_20260706.safetensors
+output_path=/Users/USER/Desktop/ai-drawing/lora_train/output/runtime_anima_smoke_clean_20260706.safetensors
 registered_lora_name=runtime_anima_smoke_clean_20260706.safetensors
 registered_lora_path=/Volumes/AI-Drawing-16T/ai-drawing/models/loras/runtime_anima_smoke_clean_20260706.safetensors
 registered_lora_size=33201416
@@ -305,7 +305,7 @@ import network module: networks.lora_anima
 create LoRA for Text Encoder 1: 196 modules
 create LoRA for Anima DiT: 280 modules
 total optimization steps: 3
-saving checkpoint: /Users/tf00185088/Desktop/ai-drawing/lora_train/output/runtime_anima_smoke_clean_20260706.safetensors
+saving checkpoint: /Users/USER/Desktop/ai-drawing/lora_train/output/runtime_anima_smoke_clean_20260706.safetensors
 Registered LoRA: runtime_anima_smoke_clean_20260706.safetensors -> /Volumes/AI-Drawing-16T/ai-drawing/models/loras/runtime_anima_smoke_clean_20260706.safetensors
 
 POST /api/lora-train/jobs/0b1c0988-83ad-469f-a5bf-6a8fd9273b4f/smoke-test

@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-MANIFEST = Path('/Users/tf00185088/Desktop/ai-drawing/model_benchmarks/20260711/download_manifest.json')
+MANIFEST = Path('/Users/USER/Desktop/ai-drawing/model_benchmarks/20260711/download_manifest.json')
 STATE = MANIFEST.with_name('download_state.json')
 CIVITAI_TOKEN_PATH = Path.home()/'.config/civitai/token.txt'
 HF_TOKEN_PATH = Path.home()/'.cache/huggingface/token'

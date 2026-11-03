@@ -89,7 +89,7 @@ def test_normalize_arch_rejects_unknown():
 
 
 def test_compose_asset_name_and_url_for_windows():
-    host = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/x"))
+    host = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/USER"))
     assert compose_asset_name(host) == "docker-compose-windows-x86_64.exe"
     assert compose_download_url(host) == (
         f"{constants.COMPOSE_RELEASE_URL}/v{constants.COMPOSE_BUNDLED_VERSION}"
@@ -107,7 +107,7 @@ def test_compose_cache_path_is_private_and_versioned(tmp_path):
     assert path == (
         tmp_path / "ai-drawing" / "compose" / constants.COMPOSE_BUNDLED_VERSION / "docker-compose"
     )
-    win = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/x"))
+    win = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/USER"))
     assert compose_cache_path(win, cache_root=tmp_path).name == "docker-compose.exe"
 
 
@@ -295,8 +295,8 @@ def test_compose_service_states_are_parsed_without_shell(tmp_path):
 
 
 def test_linux_bridge_host_comes_from_structured_docker_inspection():
-    runner = FakeRunner((result(stdout="172.17.0.1\n"),))
-    assert docker_bridge_host(runner) == "172.17.0.1"
+    runner = FakeRunner((result(stdout="192.0.2.19\n"),))
+    assert docker_bridge_host(runner) == "192.0.2.19"
     assert runner.commands[0][0] == [
         "docker",
         "network",

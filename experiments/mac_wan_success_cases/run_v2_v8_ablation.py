@@ -2,9 +2,9 @@
 import json, urllib.request, urllib.error, time, uuid, subprocess, copy, sys
 from pathlib import Path
 
-BASE = Path('/Users/tf00185088/Desktop/ai-drawing/experiments/mac_wan_success_cases')
-OUT = Path('/Users/tf00185088/comfyui/output')
-TEMP = Path('/Users/tf00185088/comfyui/temp')
+BASE = Path('/Users/USER/Desktop/ai-drawing/experiments/mac_wan_success_cases')
+OUT = Path('/Users/USER/comfyui/output')
+TEMP = Path('/Users/USER/comfyui/temp')
 BASELINE = json.loads((BASE/'video_wan2_2_14B_i2v_mac_api_baseline.json').read_text())
 V1 = json.loads((BASE/'video_wan2_2_14B_i2v_mac_api_v1_no_lightning_lora.json').read_text())
 RESULT_JSON = BASE/'ablation_v2_v8_results.json'
@@ -247,8 +247,8 @@ def print_report(results):
     print('\n=== FINAL V2-V8 ABLATION REPORT ===')
     print(f'Report file: {REPORT_MD}')
     print(f'JSON file: {RESULT_JSON}')
-    print('Baseline reference: MEDIA:/Users/tf00185088/comfyui/output/video/mac_i2v_baseline_asuka_faithful_00001_.mp4')
-    print('V1 reference no-Lightning: MEDIA:/Users/tf00185088/comfyui/output/video/mac_i2v_v1_no_lightning_lora_asuka_00001_.mp4')
+    print('Baseline reference: MEDIA:/Users/USER/comfyui/output/video/mac_i2v_baseline_asuka_faithful_00001_.mp4')
+    print('V1 reference no-Lightning: MEDIA:/Users/USER/comfyui/output/video/mac_i2v_v1_no_lightning_lora_asuka_00001_.mp4')
     for r in results:
         print(f"\n{r['id']} — {r['description']} — {r['status']} — prompt_id={r['prompt_id']}")
         if r.get('error'):

@@ -376,7 +376,7 @@ class NvidiaWorkerClient(ComfyUIClient):
 
 
 def get_worker_client() -> NvidiaWorkerClient:
-    """Build a Worker client using any hostname/protocol runtime URL cache."""
+    """Build a Worker client, using runtime URL cache only when discovery is enabled."""
     settings = get_settings()
     if not settings.nvidia_worker_url:
         raise WorkerConfigurationError("NVIDIA Worker URL is not configured")
@@ -385,19 +385,24 @@ def get_worker_client() -> NvidiaWorkerClient:
     expected_protocol_version = int(
         getattr(settings, "nvidia_worker_protocol_version", 2)
     )
-    runtime_url = _remembered_runtime_worker_url(
-        configured_url,
-        expected_hostname,
-        expected_protocol_version,
+    discovery_enabled = bool(
+        getattr(settings, "nvidia_worker_discovery_enabled", False)
+    )
+    runtime_url = (
+        _remembered_runtime_worker_url(
+            configured_url,
+            expected_hostname,
+            expected_protocol_version,
+        )
+        if discovery_enabled
+        else None
     )
     return NvidiaWorkerClient(
         runtime_url or configured_url,
         settings.nvidia_worker_timeout,
         expected_hostname=expected_hostname,
         expected_protocol_version=expected_protocol_version,
-        discovery_enabled=bool(
-            getattr(settings, "nvidia_worker_discovery_enabled", False)
-        ),
+        discovery_enabled=discovery_enabled,
         discovery_cidr=getattr(settings, "nvidia_worker_discovery_cidr", ""),
         discovery_timeout=float(
             getattr(settings, "nvidia_worker_discovery_timeout", 0.25)

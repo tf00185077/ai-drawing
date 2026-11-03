@@ -92,6 +92,31 @@ async def test_submit_animegen_video_includes_user_dimensions():
     assert job_id == "animegen-job"
 
 
+async def test_submit_minimax_h3_video_uses_duration_without_caller_source_frames():
+    def handler(req):
+        assert req.url.path == "/api/generate/video/minimax-h3-i2v"
+        body = req.content
+        assert b'name="width"' in body and b"768" in body
+        assert b'name="height"' in body and b"512" in body
+        assert b'name="total_seconds"' in body and b"5" in body
+        assert b'name="film_target_frames"' not in body
+        assert b'name="source_frames"' not in body
+        assert b'name="negative_prompt"' not in body
+        assert b'name="execution_target"' not in body
+        return httpx.Response(201, json={"job_id": "h3-job", "status": "queued"})
+
+    api = make_api(handler)
+    job_id = await api.submit_minimax_h3_i2v(
+        image=("source.png", b"png", "image/png"),
+        prompt="wave",
+
+        width=768,
+        height=512,
+        total_seconds=5,
+    )
+    assert job_id == "h3-job"
+
+
 async def test_get_job():
     def handler(req):
         assert req.url.path == "/api/generate/job/job-123"

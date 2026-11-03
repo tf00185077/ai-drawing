@@ -2,6 +2,7 @@
 專案配置
 """
 import math
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -26,6 +27,13 @@ def _resolve_project_path(path_str: str) -> str:
     if p.is_absolute():
         return str(p.resolve())
     return str((_PROJECT_ROOT / p).resolve())
+
+
+def _resolve_project_path_preserving_final_symlink(path_str: str) -> str:
+    """Resolve a project-relative path without dereferencing its final component."""
+    p = Path(path_str).expanduser()
+    candidate = p if p.is_absolute() else _PROJECT_ROOT / p
+    return os.path.abspath(candidate)
 
 
 def _resolve_sqlite_url(url: str) -> str:
@@ -114,6 +122,21 @@ class Settings(BaseSettings):
     video_staging_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/discord-video"
     film_work_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/film-work"
     film_model_path: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/frame_interpolation/film_net_fp16.pt"
+    # MiniMax H3 Argus/MLX runtime (fail closed; no download/fallback).
+    argus_mlx_runtime_root: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4"
+    argus_mlx_python: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4/.venv/bin/python"
+    argus_mlx_generate_script: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4/scripts/generate.py"
+    argus_mlx_checkpoint: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3/FL2VA"
+    argus_mlx_transformer: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3-MLX-Argus-Calibrated-INT8"
+    argus_mlx_turbo_lora: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3-Turbo-v4-step600-EMA-MLX"
+    argus_mlx_work_root: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/argus-minimax-h3"
+    argus_mlx_hf_cache: str = "/Volumes/AI-Drawing-16T/ai-drawing/cache/huggingface"
+    # Operator must explicitly accept the upstream MiniMax-H3 model license.
+    argus_mlx_accept_license: bool = False
+    argus_mlx_max_concurrency: Literal[1] = 1
+    argus_mlx_timeout_seconds: float = 3600.0
+    argus_mlx_ffmpeg: str = "/opt/homebrew/bin/ffmpeg"
+    argus_mlx_ffprobe: str = "/opt/homebrew/bin/ffprobe"
     prompt_library_dir: str = _project_root_path("prompt_library")
     prompt_library_lock_timeout: float = Field(default=5.0, gt=0)
 
@@ -169,6 +192,7 @@ class Settings(BaseSettings):
     @field_validator(
         "nvidia_worker_timeout",
         "nvidia_worker_update_timeout",
+        "argus_mlx_timeout_seconds",
         mode="before",
     )
     @classmethod
@@ -180,6 +204,7 @@ class Settings(BaseSettings):
     @field_validator(
         "nvidia_worker_timeout",
         "nvidia_worker_update_timeout",
+        "argus_mlx_timeout_seconds",
         mode="after",
     )
     @classmethod
@@ -196,6 +221,17 @@ class Settings(BaseSettings):
         self.video_staging_dir = _resolve_project_path(self.video_staging_dir)
         self.film_work_dir = _resolve_project_path(self.film_work_dir)
         self.film_model_path = _resolve_project_path(self.film_model_path)
+        for key in (
+            "argus_mlx_runtime_root",
+            "argus_mlx_generate_script", "argus_mlx_checkpoint",
+            "argus_mlx_transformer", "argus_mlx_turbo_lora",
+            "argus_mlx_work_root", "argus_mlx_hf_cache",
+            "argus_mlx_ffmpeg", "argus_mlx_ffprobe",
+        ):
+            setattr(self, key, _resolve_project_path(getattr(self, key)))
+        self.argus_mlx_python = _resolve_project_path_preserving_final_symlink(
+            self.argus_mlx_python
+        )
         self.prompt_library_dir = _resolve_project_path(self.prompt_library_dir)
         self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
         self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)

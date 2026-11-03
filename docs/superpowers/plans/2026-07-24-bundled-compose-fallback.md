@@ -134,7 +134,7 @@ def test_normalize_arch_rejects_unknown():
 
 
 def test_compose_asset_name_and_url_for_windows():
-    host = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/x"))
+    host = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/USER"))
     assert compose_asset_name(host) == "docker-compose-windows-x86_64.exe"
     assert compose_download_url(host) == (
         f"{constants.COMPOSE_RELEASE_URL}/v{constants.COMPOSE_BUNDLED_VERSION}"
@@ -151,7 +151,7 @@ def test_compose_cache_path_is_private_and_versioned(tmp_path):
     host = detect_host(system="Linux", machine="x86_64", home=Path("/home/x"))
     path = compose_cache_path(host, cache_root=tmp_path)
     assert path == tmp_path / "ai-drawing" / "compose" / constants.COMPOSE_BUNDLED_VERSION / "docker-compose"
-    win = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/x"))
+    win = detect_host(system="Windows", machine="AMD64", home=Path("C:/Users/USER"))
     assert compose_cache_path(win, cache_root=tmp_path).name == "docker-compose.exe"
 
 

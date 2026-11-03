@@ -48,7 +48,7 @@
       "note_path": "style_presets/human/digital-painting-a.md",
       "template": "anima",
       "checkpoint": null,
-      "lora": "anima-base-1-masterpiece-v51.safetensors",
+      "lora": null,
       "loras": [],
       "diffusion_model": "anima_baseV10.safetensors"
     },

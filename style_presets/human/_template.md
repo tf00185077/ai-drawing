@@ -1,55 +1,29 @@
 ---
 preset_id: replace-with-kebab-case-id
-catalog_path: style_presets/agent/catalog.json
+catalog_path: style_presets/agent/presets/replace-with-kebab-case-id.json
 checkpoint:
 lora:
 source_url:
 ---
 
-# Replace With Display Name
+# Display name
 
-## Resource Pairing
+**Status: Needs re-verification (需要再驗證).**
 
-- Checkpoint:
-- LoRA:
-- Trigger words:
-- Suggested LoRA strength:
-- Template:
+Intended style: medium, palette, lighting and content constraints. Distinguish prompt intent from observed output.
 
-## Prompt Base
-
-Base prompt:
-
-Negative prompt:
+Link the actual recipe and [shared operations/evidence rules](../README.md). Do not copy prompt/parameter JSON into this note.
 
 ## Profiles
 
-### default
+For each profile, link its existing saved workflow and state its purpose and content constraints. Without a profile, the base filename is `__base__.api.json`. Do not add placeholder links.
 
-Use for:
+## Differences and limits
 
-Prompt hints:
+Record differences between recipe composition and saved replay: resources, LoRA weights, VAE source, batch/size, prompt or processing stages. Refer to JSON for unchanged values.
 
-### portrait
+## Evidence
 
-Use for:
+Retain available source/version/file IDs, hashes, sample/job/artifact handles and artifact-specific CTY feedback. Identify historical reports and missing/currently unverified evidence. Do not infer model identity or acceptance from filenames.
 
-Prompt hints:
-
-### full-body
-
-Use for:
-
-Prompt hints:
-
-## Source Notes
-
-- Creator/source:
-- License/usage notes:
-- Download location:
-
-## Experiments
-
-- Works well:
-- Fails when:
-- Example image ids:
+This is an authoring template, not a preset.

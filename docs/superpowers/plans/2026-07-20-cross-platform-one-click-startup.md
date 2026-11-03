@@ -137,10 +137,10 @@ Cover Windows/Linux NVIDIA, Apple Silicon MPS, Intel macOS CPU, Linux CPU, `XDG_
 
 ```python
 def test_apple_silicon_uses_mps():
-    host = HostInfo("Darwin", "arm64", Path("/Users/test"))
+    host = HostInfo("Darwin", "arm64", Path("/Users/USER"))
     assert choose_device(host, nvidia_available=False) is DeviceMode.MPS
     assert default_comfyui_root(host) == Path(
-        "/Users/test/Library/Application Support/ai-drawing/ComfyUI"
+        "/Users/USER/Library/Application Support/ai-drawing/ComfyUI"
     )
 
 

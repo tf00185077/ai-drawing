@@ -1130,7 +1130,7 @@ def test_stop_only_stops_managed_process(harness):
 
 def test_connected_linux_flow_starts_relay_before_compose_and_rolls_it_back(harness):
     identity = ProcessIdentity("python", "1", "relay")
-    harness.relay_state = RelayState("172.17.0.1", 8188, 8188, 5151, identity)
+    harness.relay_state = RelayState("192.0.2.19", 8188, 8188, 5151, identity)
     harness.frontend_ready = False
     assert (
         main(
@@ -1160,8 +1160,8 @@ def test_relay_stop_failure_is_truthful_nonzero(harness):
 
 def test_relay_replacement_rollback_restores_exact_prior_relay(harness):
     identity = ProcessIdentity("python", "1", "relay")
-    prior = RelayState("172.17.0.1", 8188, 8188, 5001, identity)
-    replacement = RelayState("172.17.0.1", 8288, 8288, 5002, identity)
+    prior = RelayState("192.0.2.19", 8188, 8188, 5001, identity)
+    replacement = RelayState("192.0.2.19", 8288, 8288, 5002, identity)
     harness.relay_state = prior
     harness.relay_activation = RelayStartResult(True, "ready", replacement)
     harness.frontend_ready = False
@@ -1187,7 +1187,7 @@ def test_relay_replacement_rollback_restores_exact_prior_relay(harness):
 
 def test_default_relay_snapshot_excludes_unverified_ownership(tmp_path, monkeypatch):
     identity = ProcessIdentity("python", "1", "relay")
-    stale = RelayState("172.17.0.1", 8188, 8188, 5001, identity)
+    stale = RelayState("192.0.2.19", 8188, 8188, 5001, identity)
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
     service.host = HostInfo("Linux", "x86_64", tmp_path)
     monkeypatch.setattr(cli, "load_relay_state", lambda *_args: stale)
@@ -1197,7 +1197,7 @@ def test_default_relay_snapshot_excludes_unverified_ownership(tmp_path, monkeypa
 
 def test_successful_disabled_transition_stops_prior_relay_after_readiness(harness):
     identity = ProcessIdentity("python", "1", "relay")
-    prior = RelayState("172.17.0.1", 8188, 8188, 5001, identity)
+    prior = RelayState("192.0.2.19", 8188, 8188, 5001, identity)
     harness.relay_state = prior
     harness.loaded_state = state(ComfyMode.EXTERNAL)
 
@@ -1429,7 +1429,7 @@ def test_default_relay_cleanup_failure_has_stable_pid_error(
     service = DefaultServices(tmp_path, runner=object(), output_fn=lambda _message: None)
     service.host = HostInfo("Linux", "x86_64", tmp_path)
     monkeypatch.setattr(cli, "load_relay_state", lambda *_args: None)
-    monkeypatch.setattr(cli.docker, "docker_bridge_host", lambda _runner: "172.17.0.1")
+    monkeypatch.setattr(cli.docker, "docker_bridge_host", lambda _runner: "192.0.2.19")
     monkeypatch.setattr(
         cli,
         "start_relay",

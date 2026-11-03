@@ -1,140 +1,64 @@
-# AI 自動化出圖系統
+# AI Drawing
 
-整合 ComfyUI 生圖、Gallery、Prompt Library、資料夾監聽與 LoRA 訓練的本機工作流。Frontend 與 Backend 由 Docker Compose 管理；ComfyUI 是選用的主機服務，可以使用既有安裝、讓啟動器安裝，或完全停用。
+Agent-facing ComfyUI generation with Backend jobs, recorded Gallery artifacts, Prompt Library, style presets, MCP and a web frontend. Docker Compose runs Frontend/Backend; ComfyUI and Windows Worker run separately.
 
-## 三步啟動
+LoRA training code exists but is **not accepted as a complete working feature**. See [Training status](docs/training-status.md), not removed automation instructions.
 
-先準備 Git、正在執行的 Docker daemon（Docker Desktop 或 Docker Engine）、Docker Compose 2.24 以上與網路連線。macOS/Linux 的 cold cache 首次 bootstrap 另需 `curl` 或 `wget`。不需要先安裝 Python 或 Node.js。
+## Start here
+
+- Agent guidance: [AGENTS.md](AGENTS.md).
+- Purpose and company preparation: [Goal](docs/GOAL.md).
+- Current state and blockers: [Progress](docs/PROGRESS.md).
+- Topic authorities: [Document map](docs/INDEX.md).
+- Installation: [Setup guide](docs/setup-guide.md).
+- Agent connection/tools: [MCP setup](docs/mcp-setup.md).
+- Prompt Workbench, authored prompts and saved recipes/graphs: [Resource guide](docs/prompt-and-workflow-resources.md).
+- Remote execution/acceptance: [Windows worker](docs/windows-worker.md).
+
+Documentation describes capabilities; it does not authorize installation, generation, downloads, restart or deployment.
+
+## Product launcher
+
+Requirements: Git, running Docker, Docker Compose 2.24+, initial bootstrap/build network access and a compatible driver for GPU use. The launcher needs no global Python/Node installation.
 
 ```bash
-git clone https://github.com/tf00185077/ai-drawing.git
-cd ai-drawing
-```
-
-Windows PowerShell：
-
-```powershell
-.\setup.ps1
-```
-
-macOS / Linux：
-
-```bash
+# macOS / Linux
 ./setup.sh
 ```
 
-第一次執行會檢查 Docker、詢問是否設定 ComfyUI、尋找既有路徑，必要時再詢問是否自動安裝。macOS/Linux cold cache 的 uv installer 與 wrapper 使用同一個 direct-root cache layout（`.../0.11.29/uv`）。你可以在任何一個問題選擇不使用 ComfyUI；Frontend 與 Backend 仍會啟動，Dashboard 會顯示「ComfyUI 尚未設定」。
-
-啟動完成後：
-
-- Frontend：<http://127.0.0.1:5173>
-- Backend API：<http://127.0.0.1:8001>
-- API 文件：<http://127.0.0.1:8001/docs>
-- ComfyUI（若啟用）：<http://127.0.0.1:8188>
-
-> Backend 在容器內使用 port `8000`，主機固定預設映射為 `8001`。
-
-## ComfyUI 選項
-
-啟動器支援三種模式：
-
-- `disabled`：拒絕安裝或暫時不用；應用程式以降級模式正常啟動。
-- `external`：連接已由你啟動、且 `/system_stats` 可連線的 ComfyUI；啟動器不會停止它。
-- `managed`：使用可控制的既有目錄，或安裝到你確認的路徑；啟動器只會停止自己啟動且程序身分相符的實例。
-
-自動安裝只取得固定版本的 ComfyUI、Python runtime 與其必要依賴。它不會下載 checkpoint、LoRA、VAE、text encoder、模型或 custom nodes，也不會修改非空的既有目錄。external ComfyUI 沒有本機 model mounts 時，Backend 會以有時限的 `/object_info` 查詢確認 `CheckpointLoaderSimple`／`UNETLoader` 模型清單；查詢失敗仍保守顯示沒有模型，不會讓 status endpoint 失敗。
-
-若 child 已啟動但初始 process identity 無法取得，launcher 只使用仍持有的 exact `Popen` handle 執行 bounded terminate → wait → kill fallback，不會以未驗證 PID 操作其他程序。若仍無法確認退出，錯誤會包含本次 spawned PID，要求先執行 `status` 並人工檢查 log。
-
-裝置模式預設由 launcher 自動偵測並在計畫／狀態中顯示；需要時可用 `--device nvidia|mps|cpu` 明確覆寫：
-
-- Windows / Linux NVIDIA：CUDA 模式；主機需有相容 NVIDIA driver。
-- Apple Silicon：原生 arm64 Python 與 MPS；不要從 Rosetta 終端執行。
-- Intel macOS 或沒有可用 GPU：CPU 模式，速度會較慢。
-
-Apple Silicon 若從 Rosetta/x86_64 終端執行會以 `UNSUPPORTED_NATIVE_ARCHITECTURE` 中止，不會默默改用 CPU 或安裝 x86 runtime。
-
-## 常用指令
-
-Windows 將下列 `./setup.sh` 換成 `.\setup.ps1`：
-
-```bash
-./setup.sh setup             # 重新走完整設定並啟動
-./setup.sh start             # 使用既有設定啟動
-./setup.sh stop              # 停止 Compose 與 launcher-owned 程序
-./setup.sh status            # 顯示 Docker、Frontend、Backend、ComfyUI、relay 狀態
-./setup.sh reconfigure       # 重選 ComfyUI、路徑、裝置或 ports
-./setup.sh logs              # 顯示 Compose 與啟動相關 logs
-./setup.sh update-comfyui    # 只更新啟動器安裝的 ComfyUI
-./setup.sh dry-run --comfyui-mode disabled  # 不寫專案設定、不安裝 ComfyUI、不啟停服務
-./setup.sh --help
+```powershell
+# Windows PowerShell
+.\setup.ps1
 ```
 
-更新 launcher 安裝的 ComfyUI 時，必須依序停止、更新、再啟動；更新器不會修改仍在執行中的 Python 環境：
+Choose managed, external or disabled host ComfyUI. The launcher does not install models/custom nodes or configure/start MCP. Setup/reconfigure can install/start services and rewrite local settings; do not use them for inspection.
+
+Default URLs: Frontend `http://127.0.0.1:5173`, Backend `http://127.0.0.1:8001`, API docs `http://127.0.0.1:8001/docs`; optional ComfyUI uses port `8188`. Check deployment settings rather than assuming services are running.
+
+## Data and configuration
+
+| Location | Purpose |
+|---|---|
+| `data/` | Database, Gallery, output, logs and datasets |
+| `prompt_library/` | Versioned library, mounted at `/workspace/prompt_library` |
+| `.env` | Private runtime settings/secrets |
+| `.ai-drawing/compose.local.yaml` | Generated ComfyUI mounts |
+| `data/bootstrap/state.json` | Launcher settings/process identity |
+
+Backing up only `data/` misses prompts and custom model/preset paths. Follow [backup and reconfiguration guidance](docs/setup-guide.md#persistent-data-and-backups): setup/reconfigure rebuilds `.env` and can discard custom settings. Keep secrets and backups/logs private.
+
+## Company preparation
+
+Art production and platform engineering are the approved workstreams. All [seven hires](docs/team/README.md) are approved and available for native assignments. Under [CTY's continuous-operation mandate](http://127.0.0.1:3100/AID/issues/AID-4#comment-71655f19-384a-4aa9-af39-d2ba7bdcd9d7), Producer autonomously prioritizes, dispatches and follows completed work with the next useful action; ordinary work does not require repeated start confirmation. CTY owns aesthetics; independent Engineering QA owns technical verification. Hermes handles delegated ordinary follow-through while Producer retains independent priorities; [Goal](docs/GOAL.md#milestone-assessment) defines how journey evidence supports milestone assessment. Windows installation/reporting remains deferred. Follow [Goal](docs/GOAL.md) and [Progress](docs/PROGRESS.md) for current authority, work and genuine decision boundaries.
+
+## Development verification
+
+Use each component's dependency manifests and prepared environment; Backend and MCP may need different environments. Repository `pytest.ini` defines Python paths.
 
 ```bash
-./setup.sh stop
-./setup.sh update-comfyui
-./setup.sh start
+# Repository root, appropriate component environment
+python -m pytest -c pytest.ini backend/tests -q
+python -m pytest -c pytest.ini mcp-server/tests -q
 ```
 
-`setup`、`start`、`stop`、`reconfigure` 與 `update-comfyui` 共用同一個有時限的跨程序 lifecycle lock，避免兩個 launcher 同時變更 managed ComfyUI 或 ownership state。若命令 body 已失敗，unlock error 不會遮蔽原本的 typed error 與 recovery path；若 body 已成功才發生 unlock error，則以 `LAUNCHER_LIFECYCLE_UNLOCK_FAILED_AFTER_MUTATION` 提醒核心操作可能已完成，必須先執行 `status` 檢查，不能直接重跑命令。更新會先確認 ComfyUI 本身就是 Git repository root，再處理固定版 source 與 `.venv`。
-
-為避免 pathname 檢查與刪除／搬移之間的競態，launcher 不會自動刪除任何仍存在的 staging、backup 或 new-env 目錄，也不會在啟用新 `.venv` 後嘗試以 pathname 搬走它來宣稱 rollback 成功。精確保留路徑會透過 cleanup-pending warning/error 回報；若檔案更新成功但 state/provenance 無法保存，則回報 `COMFYUI_UPDATE_SUCCEEDED_STATE_SAVE_FAILED`。確認沒有安裝、更新或 rollback 正在執行後，再依提示人工檢查與移除。
-
-非互動、明確停用 ComfyUI：
-
-```bash
-./setup.sh setup --non-interactive --comfyui-mode disabled
-```
-
-完整 flags、資料保存、疑難排解與進階手動啟動請見 [docs/setup-guide.md](docs/setup-guide.md)。
-
-`dry-run` 的 launcher 階段不會安裝 ComfyUI、寫入專案設定或改變服務；但 wrapper 在 cold cache 尚無固定版 uv/Python 時，仍可能先把 bootstrap runtime 下載到使用者 cache，之後才進入 dry-run。
-
-## 資料與設定
-
-啟動器會產生三個不進 Git 的本機檔案：
-
-- `.env`：扁平的 runtime 值、ports、URL 與可能的 secrets。
-- `.ai-drawing/compose.local.yaml`：需要 YAML 結構才能表達的 ComfyUI bind mounts。
-- `data/bootstrap/state.json`：模式、路徑、裝置與 launcher-owned 程序身分。
-
-Docker Compose 的固定服務拓撲放在版控內的 `docker-compose.yml`。這就是本專案同時使用 `.env` 與 YAML 的原因：兩者負責不同層次，不會互相衝突。SQLite、Prompt Library、Gallery、輸出、LoRA 訓練資料與 logs 都 bind mount 到 `data/`，重建容器不會刪除。
-
-任何 API key 或 token 只放 `.env` 或外部 secrets 管理；不要寫進 YAML、程式碼或 commit。
-
-## 專案模組
-
-- 生圖：ComfyUI API、workflow 模板與批次佇列。
-- 圖庫：參數記錄、Gallery 與一鍵重現。
-- Prompt Library：可搜尋、組合與保存 prompt。
-- LoRA 文件與訓練：資料夾監聽、caption、Kohya sd-scripts 與結果管理。
-- MCP tools：供 agent 呼叫的獨立介面；本次一鍵啟動不安裝、不設定也不啟動 MCP Server。
-
-## Agent / 新成員入口
-
-| 你是誰 | 讀哪裡 |
-|--------|--------|
-| Claude Code | [CLAUDE.md](CLAUDE.md) → [AGENTS.md](AGENTS.md) |
-| OpenAI Codex / GPT agents | [AGENTS.md](AGENTS.md) |
-| Cursor | [.cursor/rules/](.cursor/rules/) |
-| 人類 / 新成員 | 本頁 → [AGENTS.md](AGENTS.md) |
-
-必讀順序：
-
-1. [AGENTS.md](AGENTS.md) — 架構、安全規則與編碼慣例。
-2. [docs/GOAL.md](docs/GOAL.md) — 系統目標與設計原則。
-3. [docs/PROGRESS.md](docs/PROGRESS.md) — 實際進度與驗證證據。
-
-## 開發測試
-
-下列是開發者指令，不是一般使用者的啟動流程：
-
-```bash
-uv run --python 3.12 --with pytest --with pyyaml pytest scripts/tests -q
-cd backend && pytest tests -q
-cd ../frontend && npm ci && npm test && npm run build
-```
-
-MCP 測試與設定仍獨立保留；一鍵啟動流程不依賴 MCP。
+Frontend commands: `frontend/package.json`. Launcher tests: `scripts/tests/`. Windows, GPU, network and live-generation checks require prerequisites and authorization. Offline tests do not establish deployment or end-to-end acceptance.

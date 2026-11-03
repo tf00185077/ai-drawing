@@ -6,6 +6,7 @@ import bot.views as views
 from bot.views import (
     DrawModal,
     FixedVideoModal,
+    MiniMaxH3I2VModal,
     PresetView,
     ProfileSelect,
     build_preset_options,
@@ -230,3 +231,31 @@ async def test_fixed_video_modal_rejects_invalid_frame_count_before_reading_atta
     interaction.response.defer.assert_not_awaited()
     image.read.assert_not_awaited()
     api.submit_animegen_i2v.assert_not_awaited()
+
+
+async def test_minimax_h3_modal_submits_and_reports_aligned_runtime():
+    api = SimpleNamespace(submit_minimax_h3_i2v=AsyncMock(return_value="h3-job"))
+    image = SimpleNamespace(
+        filename="person.png", content_type="image/png",
+        read=AsyncMock(return_value=b"png-bytes"),
+    )
+    modal = MiniMaxH3I2VModal(api=api, image=image, width=768, height=512)
+    modal.prompt._value = "small wave"
+    modal.total_seconds._value = "5"
+    interaction = SimpleNamespace(
+        response=SimpleNamespace(defer=AsyncMock(), send_message=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock()),
+    )
+
+    await modal.on_submit(interaction)
+
+    kwargs = api.submit_minimax_h3_i2v.await_args.kwargs
+    assert kwargs["width"] == 768
+    assert kwargs["height"] == 512
+    assert kwargs["total_seconds"] == 5
+    assert "execution_target" not in kwargs
+    assert "negative_prompt" not in kwargs
+    assert "film_target_frames" not in kwargs
+    message = interaction.followup.send.await_args.args[0]
+    assert "124 frames" in message
+    assert "固定 Mac MLX" in message

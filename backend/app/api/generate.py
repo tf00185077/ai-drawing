@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import cast
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,8 @@ from app.core.fixed_video_workflows import (
     build_animegen_i2v_workflow,
     build_wan_animate_workflow,
     stage_upload,
+    validate_minimax_h3_dimensions,
+    validate_minimax_h3_timing,
     validate_video_timing,
 )
 from app.db.database import get_db
@@ -189,12 +191,16 @@ async def trigger_generate_video_custom(body: GenerateVideoCustomRequest):
         raise HTTPException(503, str(e))
 
 
-def _fixed_video_params(*, workflow: dict, contract: FixedVideoContract, staged_paths: list[Path], template: str) -> GenerateParams:
+def _fixed_video_params(
+    *, workflow: dict, contract: FixedVideoContract, staged_paths: list[Path],
+    template: str, input_bindings: list[dict[str, object]],
+) -> GenerateParams:
     return cast(GenerateParams, {
         "workflow": workflow,
         "server_owned_verbatim": True,
         "fixed_video_template": template,
         "staged_input_paths": [str(path) for path in staged_paths],
+        "fixed_video_input_bindings": input_bindings,
         "prompt": contract.prompt,
         "negative_prompt": contract.negative_prompt,
         "template": template,
@@ -270,9 +276,88 @@ async def trigger_animegen_i2v(
             negative_prompt=contract.negative_prompt, timing=timing,
             width=width, height=height,
         )
-        job_id = submit(_fixed_video_params(workflow=workflow, contract=contract, staged_paths=staged,
-                                            template="discord_animegen_i2v_fixed"))
+        job_id = submit(_fixed_video_params(
+            workflow=workflow, contract=contract, staged_paths=staged,
+            template="discord_animegen_i2v_fixed",
+            input_bindings=[{"staged_index": 0, "node_id": "97", "input_name": "image"}],
+        ))
         return GenerateResponse(job_id=job_id, status="queued", message="已加入 AnimeGen I2V + FILM 佇列")
+    except (ValueError, ValidationError) as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(422, str(exc))
+    except QueueFullError as exc:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise HTTPException(503, str(exc))
+    except Exception:
+        for path in staged:
+            path.unlink(missing_ok=True)
+        raise
+
+
+@router.post("/video/minimax-h3-i2v", response_model=GenerateResponse, status_code=201)
+async def trigger_minimax_h3_i2v(
+    request: Request,
+    image: UploadFile = File(...),
+    prompt: str = Form(...),
+    width: str = Form(...),
+    height: str = Form(...),
+    total_seconds: str = Form(...),
+):
+    """Queue fixed-Mac Argus MLX MiniMax H3 I2V (no fallback or FILM)."""
+    staged: list[Path] = []
+    try:
+        submitted_fields = set((await request.form()).keys())
+        allowed_fields = {"image", "prompt", "width", "height", "total_seconds"}
+        unexpected_fields = sorted(submitted_fields - allowed_fields)
+        if unexpected_fields:
+            raise ValueError(
+                "unsupported MiniMax H3 fields: " + ", ".join(unexpected_fields)
+            )
+        prompt = prompt.strip()
+        if not prompt:
+            raise ValueError("prompt must not be blank")
+        if len(prompt) > 4000:
+            raise ValueError("prompt must not exceed 4000 characters")
+        raw_numbers = {"width": width, "height": height, "total_seconds": total_seconds}
+        if any(not value.isdecimal() for value in raw_numbers.values()):
+            raise ValueError("width, height, and total_seconds must be decimal integers")
+        width_value, height_value = validate_minimax_h3_dimensions(
+            int(width), int(height)
+        )
+        seconds_value = int(total_seconds)
+        timing = validate_minimax_h3_timing(seconds_value)
+        settings = get_settings()
+        image_path = stage_upload(
+            image.file,
+            filename=image.filename or "",
+            content_type=image.content_type,
+            size=image.size,
+            kind="image",
+            staging_dir=settings.video_staging_dir,
+        )
+        staged.append(image_path)
+        params = cast(GenerateParams, {
+            "execution_engine": "argus_mlx_i2v",
+            "staged_input_paths": [str(image_path)],
+            "prompt": prompt,
+            "argus_mlx_i2v": {
+                "staged_image": str(image_path), "width": width_value, "height": height_value,
+                "total_seconds": seconds_value, "native_frames": timing.source_frames,
+            },
+        })
+        job_id = submit(params)
+        return GenerateResponse(
+            job_id=job_id,
+            status="queued",
+            message=(
+                "已加入 MiniMax H3 I2V 佇列（固定 Mac MLX）；"
+                f"{timing.source_frames} frames @ 24 FPS，"
+                f"首末幀跨度 {timing.timeline_span_seconds:.3f} 秒；"
+                f"容器長度 {timing.container_duration_seconds:.3f} 秒"
+            ),
+        )
     except (ValueError, ValidationError) as exc:
         for path in staged:
             path.unlink(missing_ok=True)
@@ -310,8 +395,14 @@ async def trigger_wan22_animate(
         workflow = build_wan_animate_workflow(reference_path=reference_path, driver_path=driver_path,
                                               prompt=contract.prompt, negative_prompt=contract.negative_prompt,
                                               timing=timing)
-        job_id = submit(_fixed_video_params(workflow=workflow, contract=contract, staged_paths=staged,
-                                            template="discord_wan22_animate_fixed"))
+        job_id = submit(_fixed_video_params(
+            workflow=workflow, contract=contract, staged_paths=staged,
+            template="discord_wan22_animate_fixed",
+            input_bindings=[
+                {"staged_index": 0, "node_id": "5", "input_name": "image"},
+                {"staged_index": 1, "node_id": "1", "input_name": "file"},
+            ],
+        ))
         return GenerateResponse(job_id=job_id, status="queued", message="已加入 Wan2.2 Animate 動作轉移 + FILM 佇列")
     except (ValueError, ValidationError) as exc:
         for path in staged:
@@ -485,6 +576,8 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
             resp["error"] = queue_status.get("error")
             resp["node_errors"] = queue_status.get("node_errors", [])
             resp["recording_error"] = queue_status.get("recording_error")
+            resp["failure_code"] = queue_status.get("failure_code")
+            resp["diagnostic_tail"] = queue_status.get("diagnostic_tail", "")
         return resp
 
     # 2. Durable independent parent/member state wins over artifact inference.

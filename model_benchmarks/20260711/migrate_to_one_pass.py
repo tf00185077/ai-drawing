@@ -14,9 +14,9 @@ d['rules']={
  'review_required':False,
  'visual_analysis_forbidden':True,
  'seed_policy':'random, recorded',
- 'output_root':'/Users/tf00185088/Desktop/ai-drawing/outputs/review/mio-10-model-benchmark-20260711',
+ 'output_root':'/Users/USER/Desktop/ai-drawing/outputs/review/mio-10-model-benchmark-20260711',
  'finished_root':'/Volumes/AI-Drawing-16T/finished-works/images/starfall-night/model-benchmark-20260711',
- 'complete_marker':'/Users/tf00185088/Desktop/ai-drawing/model_benchmarks/20260711/benchmark_complete.json'
+ 'complete_marker':'/Users/USER/Desktop/ai-drawing/model_benchmarks/20260711/benchmark_complete.json'
 }
 for m in d['models']:
     gens=m.setdefault('generations',{})

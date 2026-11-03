@@ -3,14 +3,14 @@ import json, urllib.request, time, uuid, subprocess, copy, shutil
 from pathlib import Path
 
 HOST='http://127.0.0.1:8188'
-EXP=Path('/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run')
-ROOT=Path('/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows')
-INPUT=Path('/Users/tf00185088/comfyui/input')
+EXP=Path('/Users/USER/Desktop/ai-drawing/experiments/multiframe_workflows/5kf_flf_run')
+ROOT=Path('/Users/USER/Desktop/ai-drawing/experiments/multiframe_workflows')
+INPUT=Path('/Users/USER/comfyui/input')
 APPROVED=INPUT/'asuka_approved_5kf_v1'
-OUT=Path('/Users/tf00185088/comfyui/output')
-TEMP=Path('/Users/tf00185088/comfyui/temp')
+OUT=Path('/Users/USER/comfyui/output')
+TEMP=Path('/Users/USER/comfyui/temp')
 BASE=json.loads((ROOT/'flf_mac_gguf_2kf_test_api.json').read_text())
-FILM=Path('/Users/tf00185088/Desktop/ai-drawing/experiments/frame_interpolation_tests/film_interpolate_multi.py')
+FILM=Path('/Users/USER/Desktop/ai-drawing/experiments/frame_interpolation_tests/film_interpolate_multi.py')
 EXP.mkdir(parents=True, exist_ok=True)
 RESULT_JSON=EXP/'5kf_flf_results.json'
 REPORT=EXP/'README_RESULTS.md'

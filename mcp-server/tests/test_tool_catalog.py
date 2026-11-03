@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import importlib
-import json
 from pathlib import Path
-import re
 
 import pytest
 
@@ -14,9 +12,16 @@ from mcp_server.tool_catalog import INTENDED_TOOLS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DOCS = (
-    PROJECT_ROOT / "mcp-server" / "README.md",
     PROJECT_ROOT / "docs" / "mcp-setup.md",
 )
+
+
+def test_package_readme_routes_to_current_tool_and_acceptance_authorities() -> None:
+    text = (PROJECT_ROOT / "mcp-server" / "README.md").read_text(encoding="utf-8")
+    assert "../docs/mcp-setup.md" in text
+    assert "../docs/training-status.md" in text
+    assert "MCP-CATALOG:START" not in text
+
 
 
 @pytest.mark.asyncio
@@ -133,59 +138,26 @@ def test_catalog_docs_list_active_tools() -> None:
             assert f"`{name}`" in active, f"{name} missing from {path}"
 
 
-def test_lora_recipe_docs_describe_broad_input_and_exact_start_handoff() -> None:
-    text = (PROJECT_ROOT / "docs" / "mcp-setup.md").read_text(
-        encoding="utf-8"
-    )
-    match = re.search(
-        r"```json lora-recipe-contract\n(.*?)\n```",
-        text,
-        flags=re.S,
-    )
-    assert match, "docs must include a machine-readable LoRA recipe contract"
-    contract = json.loads(match.group(1))
+def test_training_docs_expose_acceptance_limits_not_automation_handoff() -> None:
+    docs = PROJECT_ROOT / "docs"
+    text = (docs / "mcp-setup.md").read_text(encoding="utf-8")
+    assert "training-status.md" in text
+    assert "not completed end-to-end acceptance" in text
+    assert "```json lora-recipe-contract" not in text
+    assert not (docs / "lora-training-agent-handoff-runbook.md").exists()
+    assert not (docs / "lora-methods").exists()
+    status = (docs / "training-status.md").read_text(encoding="utf-8")
+    assert "artifact=None" in status
+    assert "submitted" in status
+    assert "not a training runbook" in status
 
-    assert contract["schema_version"] == "lora-training-recipe/v1"
-    assert set(contract["start_required_top_level"]) == {
-        "folder",
-        "expected_dataset_hash",
-        "expected_profile_hash",
-        "recipe",
-    }
-    assert set(contract["recipe_input_forms"]) == {
-        "object",
-        "JSON-object string",
-    }
-    assert {
-        "schema_version",
-        "expected_recipe_hash",
-        "model",
-        "scope",
-        "dataset",
-        "optimization",
-        "caching",
-        "execution",
-    } == set(contract["canonical_recipe_fields"])
 
-    envelope = contract["strict_error_envelope"]
-    assert envelope["ok"] is False
-    assert envelope["tool"] == "lora_train_start"
-    assert set(envelope["error_fields"]) == {
-        "code",
-        "message",
-        "hint",
-        "details",
-    }
-
-    migration = contract["migration_error"]
-    assert migration["code"] == "legacy_training_fields_removed"
-    assert migration["invokes_start"] is False
-    assert migration["returns_field_names_only"] is True
-
-    handoff = contract["handoff"]
-    assert handoff["source"] == "preflight.start_payload"
-    assert handoff["submit_exact"] is True
-    assert handoff["allow_rebuild_or_override"] is False
+def test_mcp_docs_do_not_advertise_removed_workflow_tools() -> None:
+    text = (PROJECT_ROOT / "docs" / "mcp-setup.md").read_text(encoding="utf-8")
+    for name in (
+        "search_nodes", "get_node_schema", "list_workflow_templates", "get_workflow_template",
+    ):
+        assert f"`{name}`" not in text
 
 
 def test_saved_workflow_intents_are_in_the_audited_catalog() -> None:

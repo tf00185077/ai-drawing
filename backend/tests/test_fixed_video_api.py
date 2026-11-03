@@ -75,6 +75,86 @@ def test_wan_multipart_stages_reference_and_driver_and_rejects_spoofed_content(c
     assert bad.status_code == 422
 
 
+def test_minimax_h3_multipart_queues_argus_mlx_contract(client, tmp_path: Path) -> None:
+    settings = SimpleNamespace(video_staging_dir=str(tmp_path))
+    with patch("app.api.generate.get_settings", return_value=settings), patch(
+        "app.api.generate.submit", return_value="h3-job"
+    ) as submit:
+        response = client.post(
+            "/api/generate/video/minimax-h3-i2v",
+            data={
+                "prompt": "wave gently",
+                "width": "768",
+                "height": "512",
+                "total_seconds": "5",
+            },
+            files={"image": ("person.png", _png(), "image/png")},
+        )
+    assert response.status_code == 201
+    params = submit.call_args.args[0]
+    assert params["execution_engine"] == "argus_mlx_i2v"
+    assert params["prompt"] == "wave gently"
+    assert params["argus_mlx_i2v"] == {
+        "staged_image": params["staged_input_paths"][0],
+        "width": 768,
+        "height": 512,
+        "total_seconds": 5,
+        "native_frames": 124,
+    }
+    assert "execution_target" not in params
+    assert "negative_prompt" not in params
+    assert "film_postprocess" not in params
+    assert "124 frames" in response.json()["message"]
+
+
+def test_minimax_h3_rejects_removed_legacy_fields_before_staging(client, tmp_path: Path) -> None:
+    settings = SimpleNamespace(video_staging_dir=str(tmp_path))
+    with patch("app.api.generate.get_settings", return_value=settings), patch(
+        "app.api.generate.submit"
+    ) as submit:
+        response = client.post(
+            "/api/generate/video/minimax-h3-i2v",
+            data={
+                "prompt": "wave gently",
+                "width": "768",
+                "height": "512",
+                "total_seconds": "5",
+                "negative_prompt": "camera shake",
+                "film_target_frames": "321",
+                "execution_target": "worker",
+            },
+            files={"image": ("person.png", _png(), "image/png")},
+        )
+    assert response.status_code == 422
+    assert "unsupported MiniMax H3 fields" in response.json()["detail"]
+    assert not submit.called
+    assert not list(tmp_path.glob("*"))
+
+
+def test_minimax_h3_rejects_dimensions_not_divisible_by_32_before_staging(client, tmp_path: Path) -> None:
+    with patch("app.api.generate.get_settings", return_value=SimpleNamespace(video_staging_dir=str(tmp_path))):
+        response = client.post(
+            "/api/generate/video/minimax-h3-i2v",
+            data={"prompt": "wave", "width": "752", "height": "512", "total_seconds": "5"},
+            files={"image": ("person.png", _png(), "image/png")},
+        )
+    assert response.status_code == 422
+    assert "32" in response.json()["detail"]
+    assert not list(tmp_path.glob("*"))
+
+
+def test_minimax_h3_rejects_decimal_coercion_before_staging(client, tmp_path: Path) -> None:
+    with patch("app.api.generate.get_settings", return_value=SimpleNamespace(video_staging_dir=str(tmp_path))):
+        response = client.post(
+            "/api/generate/video/minimax-h3-i2v",
+            data={"prompt": "wave", "width": "256.0", "height": "256", "total_seconds": "1.0"},
+            files={"image": ("person.png", _png(), "image/png")},
+        )
+    assert response.status_code == 422
+    assert "decimal integers" in response.json()["detail"]
+    assert not list(tmp_path.glob("*"))
+
+
 def test_fixed_video_multipart_rejects_invalid_4n_plus_1_before_staging(client, tmp_path: Path) -> None:
     with patch("app.api.generate.get_settings", return_value=SimpleNamespace(video_staging_dir=str(tmp_path))):
         response = client.post(

@@ -7,73 +7,22 @@ source_url: https://civitai.com/images/136374992
 source_alias: 光影日式動畫
 ---
 
-# 光影日式動畫
+# [Illustrious] Light and Shadow Japanese Anime
 
-從 Civitai 來源圖抽取的**風格型** preset。它只保存可跨角色與場景複用的色彩、材質、光影、線條與渲染語彙；角色、服裝、姿勢、背景與鏡位留給每次生成的 content prompt。
+**Status: Needs re-verification.**
 
-## 來源與稽核限制
+Intended style: hand-drawn Japanese anime, vibrant gradients, low-key chiaroscuro, soft overhead light, subtle impasto and controlled glossy accents. The 2D medium/negative guards are agent normalization of the alias, not verbatim source metadata.
 
-- 使用者指定來源圖：Civitai image `136374992`。
-- 該圖片頁面與官方 CDN 原圖可取得，但 Civitai REST v1 未索引該 image/post。
-- Source Alias registry 因此以同作者、同模型版本且 REST 可解析的 image `136378559` 作代理稽核 Parent，並結合指定原圖的 embedded metadata；不可宣稱 registry identity 就是 `136374992`。
-- Checkpoint：`oneObsession_v23.safetensors`
-- Civitai model/version/file：`1318945` / `3118448` / `2998810`
-- SHA-256：`71b1a14c2e4dbf3d43d5a8226a6bfe6a8a6f6a2bce97920b2e15a5f0203f06f2`
-- Template：`default`
-- Structured preservation manifest：`style_presets/agent/preservation_manifests/light-shadow-japanese-anime.json`
+[Recipe](../agent/presets/light-shadow-japanese-anime.json) · [Shared operations and evidence rules](../README.md)
 
-## Prompt 抽取結果
+## Profile and limits
 
-### 保留並正規化
+[`portrait`](../agent/workflows/light-shadow-japanese-anime/portrait.api.json): base style with no profile prompt additions, using `oneObsession_v23.safetensors` and checkpoint CLIP/VAE, without LoRA. Canonical Parent size 1536×2304 was normalized to 1360×2040 for 8-alignment and the 2048 limit. Exact prompts and parameters remain in the JSON.
 
-- 品質／媒材：`masterpiece`, `best quality`, `very aesthetic`, `high detail`, `digital art`。
-- 色彩：`vibrant colors`, `smooth gradients`, `colorful depth`。
-- 光影：`cinematic lighting`, `soft shadow`, `soft lighting`, `lighting from above`, `light and shadow gradients`, `high contrast`, `chiaroscuro`, `low key`。
-- 質感／渲染：`impasto`, `smooth shading`, `glossy surfaces`；正規化成較不會污染皮膚的 `subtle impasto texture`, `controlled glossy accents`。
-- 氛圍：`mystical aura` 正規化為 `mystical atmosphere`。
+Do not reintroduce source camera, character or artist tokens as alias defaults.
 
-### 依別名語意新增
+## Historical source and sample evidence
 
-別名是「光影日式動畫」，因此加入媒材鎖：
+Requested source [image `136374992`](https://civitai.com/images/136374992) and proxy Parent [image `136378559`](https://civitai.com/images/136378559) are distinct. The prior note reports that REST v1 did not index the requested image/post. The proxy audit combined same-author/model-version REST data with the requested image's embedded metadata. See the [preservation manifest](../agent/preservation_manifests/light-shadow-japanese-anime.json) for retained provenance/classifications.
 
-- `pure hand-drawn 2D Japanese TV anime style`
-- `crisp anime lineart`
-- `refined cel shading with controlled gradients`
-
-這些不是冒充原 Parent prompt，而是由別名意圖導出的明示正規化層。
-
-### 移除
-
-- 原角色／作品：`hina (dress) (blue archive)` 與其他角色身份 token。
-- 人物外觀：原髮色、眼睛、身形、表情、服裝與飾品。
-- 動作／姿勢：`dynamic pose` 等主體動作。
-- 場景／背景：原圖特定環境與背景內容。
-- 構圖／鏡位：`high angle`, `dutch angle`, `foreshortening`, `depth of field`, `shallow depth of field`, `dynamic angle`；風格 preset 不應鎖死下一張圖的鏡頭。
-- 作者 token：`artist:dino`, `artist:mika pikazo`；避免把作者身份當成泛用風格控制。
-- Parser／模板雜訊：`lnewest`, `lazypos`, `lazyup`, `dak depth`, `low kye`、拼字錯誤與重複詞。
-
-### Negative prompt 處理
-
-- 保留並合併：解剖、手足、多指、低品質、壓縮、浮水印、文字、簽名等一般失敗模式。
-- 移除：`simple background`（不應強迫每次都做複雜背景）、重複或低資訊詞。
-- 新增日式 2D 媒材防護：`photorealistic`, `realistic skin`, `3d`, `cgi`, `semi-realistic`, `western comic style`, `plastic skin`, `glossy skin`。
-
-## 預設生成參數
-
-- Steps：20
-- CFG：5.0
-- Sampler：`euler`
-- Scheduler：`karras`
-- Size：1360×2040（保留 Parent 2:3 比例並正規化到 Backend 最大邊 2048 內的 8 倍數）
-
-Parent canonical sampling仍保存原始1536×2304；preset僅把尺寸正規化成可執行預設。其餘參數沿用Parent，生成時可由明確需求覆寫。
-
-## 首次黑長髮變體稽核
-
-- 使用者明確要求：女生、黑色長髮。
-- 必要中性限制：`original adult woman`, `solo`, `long straight black hair`。
-- 本次agent額外加入：`dark brown eyes`, `refined anime face`, `natural relaxed pose`, `elegant simple dark dress`, `detailed hair strands`, `clean silhouette`。
-- 判定：這些agent額外內容不應回寫成別名或preset預設；依更新後的最小差異規則，未來只在使用者要求時加入，否則必須列為`agent_added`並明確揭露。
-- Child seed：`4011193838`。
-- Gallery image ID：`2426`。
-- Artifact：`2026-07-14/ComfyUI_00006_6b1bafc7_0.png`。
+Historical variant: gallery `2426`, seed `4011193838`, artifact `2026-07-14/ComfyUI_00006_6b1bafc7_0.png`. The request specified a black long-haired girl. Adult/solo, eye color, relaxed pose, a simple dark dress and detailed hair/silhouette were variant-only agent additions, not alias defaults or current acceptance.

@@ -55,7 +55,7 @@ def test_relay_rejects_non_private_docker_bridge_addresses(address):
         validate_relay_bind(address)
 
 
-@pytest.mark.parametrize("address", ["10.0.0.1", "172.17.0.1", "192.168.65.1"])
+@pytest.mark.parametrize("address", ["192.0.2.20", "192.0.2.19", "192.0.2.21"])
 def test_relay_accepts_rfc1918_docker_bridge_addresses(address):
     assert validate_relay_bind(address) == address
 
@@ -64,7 +64,7 @@ def test_relay_command_uses_argument_list_and_loopback_target(tmp_path):
     command = build_relay_command(
         project_root=tmp_path,
         python=tmp_path / ".runtime" / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
     )
@@ -73,7 +73,7 @@ def test_relay_command_uses_argument_list_and_loopback_target(tmp_path):
         str(tmp_path / ".runtime" / "python"),
         str(tmp_path / "scripts" / "comfyui_relay.py"),
         "--bind-host",
-        "172.17.0.1",
+        "192.0.2.19",
         "--bind-port",
         "18188",
         "--target-host",
@@ -95,9 +95,9 @@ def test_relay_uses_separate_state_and_log_files(tmp_path):
     [
         "not-json",
         "[]",
-        '{"bind_host":"172.17.0.1"}',
+        '{"bind_host":"192.0.2.19"}',
         (
-            '{"bind_host":"172.17.0.1","bind_port":18188,'
+            '{"bind_host":"192.0.2.19","bind_port":18188,'
             '"target_port":8188,"managed_pid":"7331",'
             '"managed_identity":"python relay.py"}'
         ),
@@ -186,7 +186,7 @@ def test_relay_starts_only_on_validated_bind_and_loopback_target():
 
     asyncio.run(
         run_relay(
-            "172.17.0.1",
+            "192.0.2.19",
             18188,
             "127.0.0.1",
             8188,
@@ -194,7 +194,7 @@ def test_relay_starts_only_on_validated_bind_and_loopback_target():
         )
     )
 
-    assert captured["host"] == "172.17.0.1"
+    assert captured["host"] == "192.0.2.19"
     assert captured["port"] == 18188
     assert captured["entered"] is True
     assert captured["served"] is True
@@ -204,9 +204,9 @@ def test_relay_refuses_non_loopback_target():
     with pytest.raises(RelayAddressError, match="target"):
         asyncio.run(
             run_relay(
-                "172.17.0.1",
+                "192.0.2.19",
                 18188,
-                "192.168.1.20",
+                "192.0.2.22",
                 8188,
             )
         )
@@ -293,11 +293,11 @@ def test_target_eof_cancels_client_pump_and_finishes_handler():
 
 
 def test_relay_lifecycle_is_linux_only(tmp_path):
-    host = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
+    host = HostInfo("Windows", "AMD64", Path("C:/Users/USER"))
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=host,
@@ -415,7 +415,7 @@ def _identity(
 def test_ready_relay_records_separate_owned_state(tmp_path):
     popen = FakeRelayPopen()
     identity = _identity(
-        "python scripts/comfyui_relay.py --bind-host 172.17.0.1"
+        "python scripts/comfyui_relay.py --bind-host 192.0.2.19"
     )
     runner = FakeRelayRunner(identity)
     probes: list[tuple[str, int]] = []
@@ -427,7 +427,7 @@ def test_ready_relay_records_separate_owned_state(tmp_path):
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -443,7 +443,7 @@ def test_ready_relay_records_separate_owned_state(tmp_path):
     assert result.started is True
     assert result.reason == "ready"
     assert result.state == RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -460,7 +460,7 @@ def test_relay_timeout_does_not_record_state_and_terminates_child(tmp_path):
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -506,7 +506,7 @@ def test_ready_relay_persistence_failure_cleans_owned_process(
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -536,7 +536,7 @@ def test_ready_relay_lock_failure_does_not_kill_replaced_process(
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -556,7 +556,7 @@ def test_ready_relay_lock_failure_does_not_kill_replaced_process(
 
 def test_relay_pid_identity_mismatch_is_not_terminated(tmp_path):
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -582,7 +582,7 @@ def test_relay_pid_identity_mismatch_is_not_terminated(tmp_path):
 def test_relay_stop_terminates_only_exact_identity_and_clears_state(tmp_path):
     identity = _identity()
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -650,7 +650,7 @@ def test_stop_retains_state_when_clear_lock_fails_after_termination(
 ):
     identity = _identity()
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -681,7 +681,7 @@ def test_stop_retains_state_when_clear_lock_fails_after_termination(
 def test_relay_stop_rechecks_identity_immediately_before_signal(tmp_path):
     identity = _identity()
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -708,14 +708,14 @@ def test_stopping_old_relay_does_not_delete_atomically_replaced_new_state(
     monkeypatch,
 ):
     old = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
         managed_identity=_identity(started_at="old"),
     )
     new = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=8442,
@@ -748,14 +748,14 @@ def test_compare_delete_serializes_writer_after_comparison_before_unlink(
     monkeypatch,
 ):
     old = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
         managed_identity=_identity(started_at="old"),
     )
     new = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=8442,
@@ -797,7 +797,7 @@ def test_malformed_quarantine_serializes_writer_and_load_retries_new_state(
 ):
     raw = b"not-json"
     new = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=8442,
@@ -871,7 +871,7 @@ def test_relay_state_lock_is_interprocess_bounded_and_stale_file_is_harmless(
 
 def test_relay_state_lock_is_same_thread_reentrant(tmp_path):
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -922,7 +922,7 @@ def test_relay_state_lock_rejects_unbounded_timeout_values(tmp_path, timeout):
 
 def test_stop_does_not_delete_or_raise_for_non_utf8_replacement(tmp_path):
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -955,7 +955,7 @@ def test_relay_identical_command_line_different_instance_is_not_terminated(
     replacement,
 ):
     state = RelayState(
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         managed_pid=7331,
@@ -984,7 +984,7 @@ def test_relay_initial_identity_failure_terminates_exact_handle_without_state(tm
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -1031,7 +1031,7 @@ def test_relay_initial_identity_cleanup_outcome_is_structured_and_never_saved(
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -1062,7 +1062,7 @@ def test_relay_readiness_uses_real_monotonic_deadline(tmp_path):
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),
@@ -1089,7 +1089,7 @@ def test_relay_rejects_private_address_not_bound_on_local_host(tmp_path):
     result = start_relay(
         project_root=tmp_path,
         python=tmp_path / "python",
-        bind_host="172.17.0.1",
+        bind_host="192.0.2.19",
         bind_port=18188,
         target_port=8188,
         host=HostInfo("Linux", "x86_64", Path("/home/test")),

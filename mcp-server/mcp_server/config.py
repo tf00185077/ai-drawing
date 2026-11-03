@@ -28,7 +28,7 @@ class McpSettings(BaseSettings):
     comfyui_api_url: str = "http://127.0.0.1:8188"
 
     # Backend gallery 實體檔案根目錄（用於 agent 交付本機圖片檔案）
-    gallery_dir: str = "/Users/tf00185088/Desktop/ai-drawing/outputs/gallery"
+    gallery_dir: str = "/Users/USER/Desktop/ai-drawing/outputs/gallery"
 
     # Loopback Discord bot operator endpoint. Token is server-side only and redacted.
     discord_operator_url: str = "http://127.0.0.1:8765"

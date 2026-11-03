@@ -4,7 +4,13 @@ import asyncio
 import discord
 
 from .api_client import BackendError
-from .validation import ValidationError, parse_count, parse_dimension, parse_video_contract
+from .validation import (
+    ValidationError,
+    parse_count,
+    parse_dimension,
+    parse_minimax_h3_contract,
+    parse_video_contract,
+)
 
 MODAL_DEFAULTS_TIMEOUT_SECONDS = 2.0
 
@@ -222,6 +228,71 @@ class FixedVideoModal(discord.ui.Modal):
         await interaction.followup.send(
             f"✅ {label} 已排入佇列\njob id：`{job_id}`\n"
             f"用 `/result id:{job_id}` 查詢結果",
+            ephemeral=True,
+        )
+
+
+class MiniMaxH3I2VModal(discord.ui.Modal, title="MiniMax H3 I2V 設定"):
+    """Collect the fixed-Mac MLX prompt and requested duration."""
+
+    def __init__(self, api, image: discord.Attachment, width: int, height: int):
+        super().__init__()
+        self._api = api
+        self.image = image
+        self.width = width
+        self.height = height
+        self.prompt = discord.ui.TextInput(
+            label="正向／動作 Prompt",
+            style=discord.TextStyle.paragraph,
+            placeholder="描述人物動作、場景聲音、幅度與鏡頭穩定要求",
+            required=True,
+            max_length=4000,
+        )
+        self.total_seconds = discord.ui.TextInput(
+            label="要求影片秒數 (整數 1-5；會向上對齊)",
+            default="5",
+            required=True,
+            max_length=1,
+        )
+        self.add_item(self.prompt)
+        self.add_item(self.total_seconds)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        prompt = self.prompt.value.strip()
+        try:
+            if not prompt:
+                raise ValidationError("正向／動作 Prompt 不可空白")
+            seconds, source_frames, actual_span, container_duration = parse_minimax_h3_contract(
+                self.total_seconds.value
+            )
+        except ValidationError as exc:
+            await interaction.response.send_message(
+                f"⚠️ {exc}，請重跑 /minimax_h3_i2v", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        try:
+            image_data = await self.image.read()
+            job_id = await self._api.submit_minimax_h3_i2v(
+                image=(self.image.filename, image_data, self.image.content_type or ""),
+                prompt=prompt, width=self.width, height=self.height,
+                total_seconds=seconds,
+            )
+        except BackendError as exc:
+            await interaction.followup.send(f"❌ 後端拒絕：{exc}", ephemeral=True)
+            return
+        except Exception:
+            await interaction.followup.send(
+                "❌ 後端連不上或附件讀取失敗", ephemeral=True
+            )
+            return
+
+        await interaction.followup.send(
+            "✅ MiniMax H3 I2V 已排入佇列（固定 Mac MLX）\n"
+            f"要求 {seconds} 秒 → H3 {source_frames} frames @ 24 FPS "
+            f"（首末幀跨度 {actual_span:.3f} 秒；容器長度 {container_duration:.3f} 秒）\n"
+            f"job id：`{job_id}`\n用 `/result id:{job_id}` 查詢結果",
             ephemeral=True,
         )
 

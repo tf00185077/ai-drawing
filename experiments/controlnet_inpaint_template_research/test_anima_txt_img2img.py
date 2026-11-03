@@ -7,10 +7,10 @@ import urllib.request
 from pathlib import Path
 
 HOST = "http://127.0.0.1:8188"
-ROOT = Path("/Users/tf00185088/Desktop/ai-drawing")
+ROOT = Path("/Users/USER/Desktop/ai-drawing")
 EXP = ROOT / "experiments/controlnet_inpaint_template_research/anima_smoke"
-COMFY_INPUT = Path("/Users/tf00185088/comfyui/input")
-COMFY_OUTPUT = Path("/Users/tf00185088/comfyui/output")
+COMFY_INPUT = Path("/Users/USER/comfyui/input")
+COMFY_OUTPUT = Path("/Users/USER/comfyui/output")
 SRC_IMAGE = ROOT / "outputs/gallery/2026-06-23/asuka_ruins_eva02_angle_b_side_profile_00001_93842c40_6.png"
 BASE = json.loads((ROOT / "backend/workflows/gen_txt2img_anima_lora_model_only.json").read_text())
 EXP.mkdir(parents=True, exist_ok=True)
@@ -52,7 +52,7 @@ def collect_images(item, prefix):
         for img in out.get("images") or []:
             if not isinstance(img, dict) or "filename" not in img:
                 continue
-            base = COMFY_OUTPUT if (img.get("type") or "output") == "output" else Path("/Users/tf00185088/comfyui/temp")
+            base = COMFY_OUTPUT if (img.get("type") or "output") == "output" else Path("/Users/USER/comfyui/temp")
             p = base / str(img.get("subfolder") or "") / str(img["filename"])
             if p.exists():
                 images.append(p)

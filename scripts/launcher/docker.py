@@ -26,7 +26,7 @@ from .runner import Runner
 MOUNT_PROBE_IMAGE = "busybox:1.36.1"
 _RFC1918_NETWORKS = tuple(
     ipaddress.ip_network(value)
-    for value in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+    for value in ("192.0.2.17/8", "192.0.2.18/12", "192.0.2.16/16")
 )
 
 

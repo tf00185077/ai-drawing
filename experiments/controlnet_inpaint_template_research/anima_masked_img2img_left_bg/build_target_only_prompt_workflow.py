@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import copy, json
 from pathlib import Path
-ROOT=Path('/Users/tf00185088/Desktop/ai-drawing')
+ROOT=Path('/Users/USER/Desktop/ai-drawing')
 BASE=json.loads((ROOT/'experiments/controlnet_inpaint_template_research/anima_masked_img2img_left_bg/masked_left_bg_moonlit_api.json').read_text())
 EXP=ROOT/'experiments/controlnet_inpaint_template_research/anima_masked_img2img_left_bg'
 wf=copy.deepcopy(BASE)

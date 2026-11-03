@@ -147,7 +147,7 @@ def test_open_control_protocol_version_matches_example_default_status_and_discov
     )
     settings_version = Settings(_env_file=None).nvidia_worker_protocol_version
     status = worker_module.status()
-    candidate = "http://192.168.1.120:8791"
+    candidate = "http://192.0.2.12:8791"
     monkeypatch.setattr(
         nvidia_worker, "_open_worker_candidates", lambda **_kwargs: [candidate]
     )
@@ -156,10 +156,10 @@ def test_open_control_protocol_version_matches_example_default_status_and_discov
     )
 
     discovered = nvidia_worker.discover_worker_url(
-        failed_url="http://192.168.1.106:8791",
+        failed_url="http://192.0.2.10:8791",
         expected_hostname="OPEN-CONTROL-WORKER",
         expected_protocol_version=settings_version,
-        discovery_cidr="192.168.1.0/24",
+        discovery_cidr="192.0.2.11/24",
         discovery_timeout=0.1,
     )
 

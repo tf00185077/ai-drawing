@@ -28,7 +28,7 @@ from launcher.models import ComfyMode, DeviceMode, HostInfo
 from launcher.runner import CommandResult
 
 
-WINDOWS = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
+WINDOWS = HostInfo("Windows", "AMD64", Path("C:/Users/USER"))
 LINUX = HostInfo("Linux", "x86_64", Path("/home/test"))
 
 
@@ -390,7 +390,7 @@ def test_invalid_uv_precedes_macos_architecture_and_git_runner_boundaries(
 ):
     invalid_uv = (tmp_path / "missing/uv").resolve()
     runner = FakeRunner()
-    macos = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+    macos = HostInfo("Darwin", "x86_64", Path("/Users/USER"))
 
     with pytest.raises(ComfyInstallError, match="UV_BINARY_INVALID"):
         if operation == "install":
@@ -1246,7 +1246,7 @@ def test_rosetta_install_boundary_never_clones_or_writes(tmp_path, uv_bin):
             target,
             DeviceMode.CPU,
             runner,
-            host=HostInfo("Darwin", "x86_64", Path("/Users/test")),
+            host=HostInfo("Darwin", "x86_64", Path("/Users/USER")),
             project_root=project,
             uv_bin=uv_bin,
         )

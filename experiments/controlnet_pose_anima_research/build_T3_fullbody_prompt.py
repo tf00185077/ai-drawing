@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json, copy
 from pathlib import Path
-EXP=Path('/Users/tf00185088/Desktop/ai-drawing/experiments/controlnet_pose_anima_research')
+EXP=Path('/Users/USER/Desktop/ai-drawing/experiments/controlnet_pose_anima_research')
 base=json.loads((EXP/'T2_pose_s14.json').read_text())
 wf=copy.deepcopy(base)
 wf['5']['inputs']['text'] = (

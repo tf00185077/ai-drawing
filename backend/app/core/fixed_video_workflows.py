@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import secrets
 import shutil
 import uuid
 from dataclasses import dataclass
@@ -40,6 +41,31 @@ class VideoTiming:
     output_fps: float
 
 
+@dataclass(frozen=True)
+class MiniMaxH3Timing:
+    requested_seconds: int
+    source_frames: int
+    source_fps: float
+    timeline_span_seconds: float
+    container_duration_seconds: float
+
+
+def validate_minimax_h3_timing(seconds: int) -> MiniMaxH3Timing:
+    """Align a requested duration to H3's 17k+5 frame contract at fixed 24 FPS."""
+    if type(seconds) is not int or not 1 <= seconds <= 5:
+        raise ValueError("total_seconds must be an integer between 1 and 5")
+    requested_frames = round(seconds * 24)
+    source_frames = requested_frames + ((5 - requested_frames) % 17)
+    timeline_span = (source_frames - 1) / 24.0
+    return MiniMaxH3Timing(
+        requested_seconds=seconds,
+        source_frames=source_frames,
+        source_fps=24.0,
+        timeline_span_seconds=timeline_span,
+        container_duration_seconds=source_frames / 24.0,
+    )
+
+
 def validate_video_timing(seconds: float, source_frames: int, film_frames: int) -> VideoTiming:
     """Validate first-frame-to-last-frame timing; FPS is (frames - 1) / seconds."""
     if not VIDEO_SECONDS_MIN <= seconds <= VIDEO_SECONDS_MAX:
@@ -64,6 +90,18 @@ def validate_video_dimensions(width: int, height: int) -> tuple[int, int]:
         raise ValueError("width and height must be between 256 and 2048")
     if width % 16 or height % 16:
         raise ValueError("width and height must be multiples of 16")
+    return width, height
+
+
+def validate_minimax_h3_dimensions(width: int, height: int) -> tuple[int, int]:
+    if type(width) is not int or type(height) is not int:
+        raise ValueError("width and height must be integers")
+    if not 256 <= width <= 1024 or not 256 <= height <= 1024:
+        raise ValueError("width and height must be between 256 and 1024")
+    if width % 32 or height % 32:
+        raise ValueError("MiniMax H3 width and height must be multiples of 32")
+    if width * height > 786432:
+        raise ValueError("MiniMax H3 output must not exceed 786432 pixels")
     return width, height
 
 
@@ -156,6 +194,39 @@ def build_animegen_i2v_workflow(
     workflow["98"]["inputs"]["length"] = timing.source_frames
     workflow["94"]["inputs"]["fps"] = timing.source_fps
     workflow["108"]["inputs"]["filename_prefix"] = _safe_prefix(filename_prefix)
+    return workflow
+
+
+def build_minimax_h3_i2v_workflow(
+    *,
+    image_path: Path,
+    prompt: str,
+    negative_prompt: str | None,
+    timing: MiniMaxH3Timing,
+    width: int,
+    height: int,
+    seed: int | None = None,
+    filename_prefix: str = "discord_minimax_h3_i2v",
+) -> dict[str, Any]:
+    width, height = validate_minimax_h3_dimensions(width, height)
+    workflow = copy.deepcopy(_load("discord_minimax_h3_i2v_fixed.json"))
+    combined_prompt = prompt.strip()
+    if negative_prompt and negative_prompt.strip():
+        combined_prompt = f"{combined_prompt}\nAvoid: {negative_prompt.strip()}"
+    workflow["114"]["inputs"]["image"] = str(image_path)
+    workflow["105:104"]["inputs"]["prompt"] = combined_prompt
+    workflow["105:104"]["inputs"]["width"] = width
+    workflow["105:104"]["inputs"]["height"] = height
+    workflow["105:104"]["inputs"]["length"] = timing.source_frames
+    workflow["105:126"]["inputs"]["value"] = True
+    workflow["105:124"]["inputs"]["value"] = 8
+    workflow["105:15"]["inputs"]["noise_seed"] = (
+        seed if seed is not None else secrets.randbelow(2**63)
+    )
+    workflow["92"]["inputs"]["filename_prefix"] = _safe_prefix(filename_prefix)
+    workflow["92"]["inputs"]["format"] = "mp4"
+    workflow["92"]["inputs"]["format.codec"] = "h264"
+    workflow["92"]["inputs"]["codec"] = "h264"
     return workflow
 
 

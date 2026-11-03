@@ -23,7 +23,7 @@ from launcher.processes import (
 )
 
 
-WINDOWS = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
+WINDOWS = HostInfo("Windows", "AMD64", Path("C:/Users/USER"))
 LINUX = HostInfo("Linux", "x86_64", Path("/home/test"))
 
 

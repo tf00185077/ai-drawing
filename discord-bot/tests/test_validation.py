@@ -6,6 +6,8 @@ from bot.validation import (
     build_gallery_download_url,
     parse_count,
     parse_dimension,
+    parse_minimax_h3_contract,
+    parse_minimax_h3_dimensions,
     parse_video_contract,
     parse_video_dimensions,
     validate_discord_attachment,
@@ -27,6 +29,23 @@ def test_parse_video_dimensions_require_multiples_of_16():
     assert parse_video_dimensions(1024, 1024) == (1024, 1024)
     with pytest.raises(ValidationError, match="16"):
         parse_video_dimensions(1000, 1024)
+
+
+def test_parse_minimax_h3_dimensions_require_multiples_of_32():
+    assert parse_minimax_h3_dimensions(768, 512) == (768, 512)
+    with pytest.raises(ValidationError, match="32"):
+        parse_minimax_h3_dimensions(752, 512)
+
+
+def test_parse_minimax_h3_contract_aligns_duration_to_17k_plus_5():
+    seconds, source, actual_span, container = parse_minimax_h3_contract(5)
+    assert seconds == 5
+    assert source == 124
+    assert actual_span == 123 / 24
+    assert container == 124 / 24
+    for bad in ("1.0", "1.5", "0", "6", True):
+        with pytest.raises(ValidationError):
+            parse_minimax_h3_contract(bad)
 
 
 def test_parse_count_empty_returns_default():

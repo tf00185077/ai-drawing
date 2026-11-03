@@ -3,9 +3,9 @@ import json, urllib.request, urllib.error, time, uuid, subprocess, copy
 from pathlib import Path
 
 HOST='http://127.0.0.1:8188'
-EXP=Path('/Users/tf00185088/Desktop/ai-drawing/experiments/multiframe_workflows')
-OUT=Path('/Users/tf00185088/comfyui/output')
-TEMP=Path('/Users/tf00185088/comfyui/temp')
+EXP=Path('/Users/USER/Desktop/ai-drawing/experiments/multiframe_workflows')
+OUT=Path('/Users/USER/comfyui/output')
+TEMP=Path('/Users/USER/comfyui/temp')
 BASE_PROMPT=json.loads((EXP/'flf_mac_gguf_2kf_test_api.json').read_text())
 BASE_PID='ac6d2ba6-a32a-4e39-ad39-fe391edbdedf'
 RESULT_JSON=EXP/'flf_mac_gguf_ablation_results.json'

@@ -29,7 +29,7 @@ for name,p in pts.items():
 # simple face/hand keypoint hints
 for p in [(392,160),(440,160),(416,185),(402,198),(430,198), pts['l_wrist'], pts['r_wrist']]:
     d.ellipse([p[0]-5,p[1]-5,p[0]+5,p[1]+5], fill=(255,255,0))
-out=Path('/Users/tf00185088/Desktop/ai-drawing/outputs/gallery/2026-06-26/anima_lllite_pose_ref_asym_832x1216.png')
+out=Path('/Users/USER/Desktop/ai-drawing/outputs/gallery/2026-06-26/anima_lllite_pose_ref_asym_832x1216.png')
 out.parent.mkdir(parents=True, exist_ok=True)
 img.save(out)
 print(out)

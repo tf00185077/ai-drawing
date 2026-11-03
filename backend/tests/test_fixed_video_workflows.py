@@ -7,8 +7,10 @@ import pytest
 
 from app.core.fixed_video_workflows import (
     build_animegen_i2v_workflow,
+    build_minimax_h3_i2v_workflow,
     build_wan_animate_workflow,
     stage_upload,
+    validate_minimax_h3_timing,
     validate_video_timing,
 )
 from app.services.film_postprocess import output_fps, source_position
@@ -63,6 +65,57 @@ def test_wan_animate_builder_wires_reference_driver_face_body_and_nonzero_batch(
     assert workflow["19"]["inputs"]["length"] == 65
     assert workflow["19"]["inputs"]["length"] != 0
     assert workflow["20"]["inputs"]["fps"] == 16.0
+
+
+def test_minimax_h3_builder_aligns_17k_plus_5_and_uses_exact_stack(tmp_path: Path) -> None:
+    timing = validate_minimax_h3_timing(5)
+    assert timing.source_frames == 124
+    assert timing.timeline_span_seconds == 123 / 24
+    assert timing.container_duration_seconds == 124 / 24
+
+    workflow = build_minimax_h3_i2v_workflow(
+        image_path=tmp_path / "input.png",
+        prompt="wave gently",
+        negative_prompt="camera shake, distorted fingers",
+        timing=timing,
+        width=768,
+        height=512,
+        seed=123,
+    )
+    assert workflow["114"]["inputs"]["image"] == str(tmp_path / "input.png")
+    assert workflow["105:104"]["inputs"]["prompt"] == (
+        "wave gently\nAvoid: camera shake, distorted fingers"
+    )
+    assert workflow["105:104"]["inputs"]["width"] == 768
+    assert workflow["105:104"]["inputs"]["height"] == 512
+    assert workflow["105:104"]["inputs"]["length"] == 124
+    assert workflow["105:126"]["inputs"]["value"] is True
+    assert workflow["105:124"]["inputs"]["value"] == 8
+    assert workflow["105:121"]["inputs"]["lora_name"] == (
+        "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+    )
+    assert workflow["105:6"]["inputs"]["unet_name"] == (
+        "minimax_h3_fl2va_pruned_int8_convrot.safetensors"
+    )
+    assert workflow["105:13"]["inputs"]["clip_name"] == (
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
+    )
+    assert workflow["105:11"]["inputs"]["vae_name"] == "minimax_h3_video_vae_fp16.safetensors"
+    assert workflow["105:24"]["inputs"]["vae_name"] == "minimax_h3_audio_vae_fp32.safetensors"
+
+
+@pytest.mark.parametrize("seconds,frames", [(1, 39), (2, 56), (3, 73), (4, 107), (5, 124)])
+def test_minimax_h3_timing_contract(seconds: int, frames: int) -> None:
+    timing = validate_minimax_h3_timing(seconds)
+    assert timing.source_frames == frames
+    assert timing.timeline_span_seconds == (frames - 1) / 24
+    assert timing.container_duration_seconds == frames / 24
+
+
+@pytest.mark.parametrize("seconds", [True, 0, 6, 1.5])
+def test_minimax_h3_timing_rejects_non_integer_or_out_of_range(seconds) -> None:
+    with pytest.raises(ValueError):
+        validate_minimax_h3_timing(seconds)
 
 
 def test_stage_upload_is_opaque_bounded_signature_checked_and_traversal_safe(tmp_path: Path) -> None:

@@ -32,7 +32,7 @@ def test_detect_host_uses_injected_values():
 
 
 def test_windows_nvidia_uses_nvidia_device():
-    host = HostInfo("Windows", "AMD64", Path("C:/Users/Test User"))
+    host = HostInfo("Windows", "AMD64", Path("C:/Users/USER User"))
 
     assert choose_device(host, nvidia_available=True) is DeviceMode.NVIDIA
 
@@ -44,16 +44,16 @@ def test_linux_nvidia_uses_nvidia_device():
 
 
 def test_apple_silicon_uses_mps():
-    host = HostInfo("Darwin", "arm64", Path("/Users/test"))
+    host = HostInfo("Darwin", "arm64", Path("/Users/USER"))
 
     assert choose_device(host, nvidia_available=False) is DeviceMode.MPS
     assert default_comfyui_root(host) == Path(
-        "/Users/test/Library/Application Support/ai-drawing/ComfyUI"
+        "/Users/USER/Library/Application Support/ai-drawing/ComfyUI"
     )
 
 
 def test_intel_macos_uses_cpu():
-    host = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+    host = HostInfo("Darwin", "x86_64", Path("/Users/USER"))
 
     assert choose_device(host, nvidia_available=True) is DeviceMode.CPU
 
@@ -66,7 +66,7 @@ def test_rosetta_translation_is_rejected_with_stable_diagnostic(tmp_path):
     )
     runner = FakeRunner(result)
     services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
-    services.host = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+    services.host = HostInfo("Darwin", "x86_64", Path("/Users/USER"))
 
     with pytest.raises(LauncherError) as caught:
         services.detect_device()
@@ -86,7 +86,7 @@ def test_native_or_unqueryable_intel_macos_remains_cpu(tmp_path, returncode, std
     command = ("sysctl", "-in", "sysctl.proc_translated")
     runner = FakeRunner(CommandResult(command, returncode, stdout, ""))
     services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
-    services.host = HostInfo("Darwin", "x86_64", Path("/Users/test"))
+    services.host = HostInfo("Darwin", "x86_64", Path("/Users/USER"))
 
     assert services.detect_device() is DeviceMode.CPU
     assert runner.calls == [command]
@@ -97,7 +97,7 @@ def test_native_apple_silicon_does_not_query_rosetta(tmp_path):
 
     runner = FakeRunner(CommandResult(("unused",), 1, "", ""))
     services = DefaultServices(tmp_path, runner=runner, output_fn=lambda _message: None)
-    services.host = HostInfo("Darwin", "arm64", Path("/Users/test"))
+    services.host = HostInfo("Darwin", "arm64", Path("/Users/USER"))
 
     assert services.detect_device() is DeviceMode.MPS
     assert runner.calls == []
@@ -126,10 +126,10 @@ def test_linux_default_root_falls_back_to_local_share():
 
 
 def test_windows_default_root_uses_local_app_data():
-    host = HostInfo("Windows", "AMD64", Path("C:/Users/Test User"))
+    host = HostInfo("Windows", "AMD64", Path("C:/Users/USER User"))
 
     assert default_comfyui_root(host) == Path(
-        "C:/Users/Test User/AppData/Local/ai-drawing/ComfyUI"
+        "C:/Users/USER User/AppData/Local/ai-drawing/ComfyUI"
     )
 
 
@@ -145,7 +145,7 @@ def test_unix_python_candidates_include_dot_venv_and_venv_in_order():
 
 def test_windows_python_candidates_include_virtualenvs_and_portable_python():
     root = Path("C:/Comfy UI")
-    host = HostInfo("Windows", "AMD64", Path("C:/Users/test"))
+    host = HostInfo("Windows", "AMD64", Path("C:/Users/USER"))
 
     assert comfyui_python_candidates(root, host) == (
         root / ".venv/Scripts/python.exe",

@@ -3,11 +3,11 @@ import copy, json, shutil, time, urllib.request
 from pathlib import Path
 
 HOST='http://127.0.0.1:8188'
-ROOT=Path('/Users/tf00185088/Desktop/ai-drawing')
+ROOT=Path('/Users/USER/Desktop/ai-drawing')
 EXP=ROOT/'experiments/controlnet_inpaint_template_research/anima_img2img_fourth_ablation'
-COMFY_INPUT=Path('/Users/tf00185088/comfyui/input')
-COMFY_OUTPUT=Path('/Users/tf00185088/comfyui/output')
-COMFY_TEMP=Path('/Users/tf00185088/comfyui/temp')
+COMFY_INPUT=Path('/Users/USER/comfyui/input')
+COMFY_OUTPUT=Path('/Users/USER/comfyui/output')
+COMFY_TEMP=Path('/Users/USER/comfyui/temp')
 SRC=ROOT/'outputs/gallery/2026-06-26/anima_lora_test_00036_e86e7595_9.png'
 BASE=json.loads((ROOT/'backend/workflows/gen_txt2img_anima_lora_model_only.json').read_text())
 EXP.mkdir(parents=True, exist_ok=True)

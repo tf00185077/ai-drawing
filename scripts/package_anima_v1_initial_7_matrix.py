@@ -16,7 +16,7 @@ OUTROOT=ROOT/'training/lora/output'
 JOBS=OUTROOT/'style_shampoohatslime-first50-anima-v1-matrix-jobs.json'
 MASTER=OUTROOT/'style_shampoohatslime-first50-anima-v1-matrix-manifest.json'
 ZIPDIR=OUTROOT/'shampoohatslime-anima-v1-comparison-by-condition'
-GALLERY=Path('/Users/tf00185088/Desktop/ai-drawing/outputs/gallery').resolve()
+GALLERY=Path('/Users/USER/Desktop/ai-drawing/outputs/gallery').resolve()
 BASE='http://127.0.0.1:8001'
 opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
 

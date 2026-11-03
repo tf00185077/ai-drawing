@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-MANIFEST = Path('/Users/tf00185088/Desktop/ai-drawing/model_benchmarks/20260711/sd35_download_manifest.json')
+MANIFEST = Path('/Users/USER/Desktop/ai-drawing/model_benchmarks/20260711/sd35_download_manifest.json')
 STATE = MANIFEST.with_name('sd35_download_state.json')
 CIVITAI_TOKEN_PATH = Path.home()/'.config/civitai/token.txt'
 HF_TOKEN_PATH = Path.home()/'.cache/huggingface/token'
