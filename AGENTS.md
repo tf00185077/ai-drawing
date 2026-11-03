@@ -1,5 +1,8 @@
 # Agent Context: AI 自動化出圖系統
 
+[Role-scoped reading and deployed skill bindings](docs/agent-reading.md) govern planning/history reads and repository-branch handling; existing product and role authorities remain in force.
+
+
 > 修改前請先閱讀。本文件是所有 agent 的單一資訊來源（Single Source of Truth）。
 
 ---
@@ -24,13 +27,14 @@
 | 問題 | 去哪找 |
 |------|--------|
 | 我們在造什麼？ | [docs/GOAL.md](docs/GOAL.md) |
-| 現在做到哪裡？下一步是什麼？ | [docs/PROGRESS.md](docs/PROGRESS.md) |
+| Producer planning / current state | `docs/roadmap/ROADMAP.md` / `docs/CURRENT.md`; follow missing-document rules below |
+| Historical evidence (on demand) | [docs/PROGRESS.md](docs/PROGRESS.md) |
 | MCP 工具有哪些？ | [mcp-server/mcp_server/tool_catalog.py](mcp-server/mcp_server/tool_catalog.py)（單一來源）＋ [docs/mcp-setup.md](docs/mcp-setup.md) |
 | 如何啟動系統？ | [docs/setup-guide.md](docs/setup-guide.md) |
 | LoRA 訓練交接流程？ | [docs/lora-training-agent-handoff-runbook.md](docs/lora-training-agent-handoff-runbook.md) |
 | 歷史文件（舊 spec、稽核日誌、API contract） | [docs/archive/](docs/archive/) |
 
-**執行規則**：完成的任務要同步修改 [docs/PROGRESS.md](docs/PROGRESS.md)。
+Producer owns planning/history maintenance under `project-roadmap-steering`; workers report results in their assigned task rather than independently editing PROGRESS. PROGRESS is on-demand history, not a universal startup read.
 
 ---
 

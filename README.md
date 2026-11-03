@@ -1,5 +1,8 @@
 # AI 自動化出圖系統
 
+[Role-scoped reading and deployed skill bindings](docs/agent-reading.md) govern planning/history reads and repository-branch handling; existing product and role authorities remain in force.
+
+
 整合 ComfyUI 生圖、Gallery、Prompt Library、資料夾監聽與 LoRA 訓練的本機工作流。Frontend 與 Backend 由 Docker Compose 管理；ComfyUI 是選用的主機服務，可以使用既有安裝、讓啟動器安裝，或完全停用。
 
 ## 三步啟動
@@ -125,7 +128,7 @@ Docker Compose 的固定服務拓撲放在版控內的 `docker-compose.yml`。�
 
 1. [AGENTS.md](AGENTS.md) — 架構、安全規則與編碼慣例。
 2. [docs/GOAL.md](docs/GOAL.md) — 系統目標與設計原則。
-3. [docs/PROGRESS.md](docs/PROGRESS.md) — 實際進度與驗證證據。
+3. Producer reads ROADMAP/CURRENT for planning and consults [PROGRESS](docs/PROGRESS.md) only for relevant history. Workers read the task contract and its named inputs; see [role-scoped reading](docs/agent-reading.md).
 
 ## 開發測試
 
