@@ -1,22 +1,20 @@
 # Current state — 2026-11-05
 
-**Latest accepted delivery:** CTY accepted the [finite source/offline delivery and maintenance-control feasibility account](http://127.0.0.1:3100/AID/issues/AID-97#document-stage-closeout-account). Inspect its linked fixed source, independent verdicts, kits and alternatives. D0 retains the original adoption/full-start operation as unavailable and deferred; no new running build or real image/model delivery is accepted.
+**Latest accepted delivery:** the [fixed source composition has independent source/offline PASS](http://127.0.0.1:3100/AID/issues/AID-98#document-qa-report). Its download and exact limits are linked there. CTY's [finite investigation closeout](http://127.0.0.1:3100/AID/issues/AID-4#document-stage-closeout-owner-adoption) retains D0: original data/source/full-start adoption is unavailable and deferred. No real image/model/UI journey or aesthetic acceptance is established.
 
-**Active milestone:** [M1: obtain and revise an image through MCP and the existing UI](roadmap/ROADMAP.md), approved on 2026-11-03. Remaining: independently checked composition and safe integration, exact runtime/resource authority, then real request/artifact/UI/revision evidence. LoRA is next; CTY aesthetics stays separate.
+**Active milestone:** [M1: obtain and revise an image through MCP and the existing UI](roadmap/ROADMAP.md), approved on 2026-11-03. Remaining: safe canonical Git integration, exact runtime/resource authority, then real request/artifact/UI/revision evidence. LoRA remains next.
 
-**Active tasks**
-- [Checkpoint coordinator](http://127.0.0.1:3100/AID/issues/AID-93): approved planning/history is being committed on local main by the existing Producer continuation. Source integration awaits the independent composition verdict and a safe procedure. Serves M1's source-integration prerequisite.
-- [Independent composition QA](http://127.0.0.1:3100/AID/issues/AID-98): actual Engineering QA run started for the fixed source checkpoint. Serves the same prerequisite; its verdict remains pending. No canonical application or runtime action is included.
+**Active task:** [the existing checkpoint coordinator](http://127.0.0.1:3100/AID/issues/AID-93) has committed approved planning/history locally and accepted the separate QA verdict. The reached three-task threshold now awaits Hermes's delegated Board judgment; no further integration task has been assigned. This serves M1's source-integration prerequisite.
 
-**Blockers:** composition QA is pending with Engineering QA since 2026-11-05; Producer will evaluate its verdict before main/source integration. The legacy operational adoption barrier dates from 2026-10-29 (7 calendar days), was reviewed in today's owner acceptance and remains deferred under D0. Real-journey execution still needs its actual target/resources, authority and data-safe integration; no speculative readiness cycle is opened.
+**Blockers:** safe canonical Git integration has remained unproved since 2026-11-03; the next procedure must preserve existing working files/index intentions and newer channel authority. The legacy operational barrier dates from 2026-10-29 (7 calendar days), was reviewed/deferred under D0 today and is not reopened by source PASS.
 
 **Next candidates**
-1. Consume the fixed-composition QA verdict and address only evidenced defects or a precise integration obligation.
-2. Complete the existing main/planning checkpoint under its authority, preserving dirty work and actual local/remote publication limits; then deliver its required CTY-mention report.
-3. Select the cheapest authorized real image/MCP/current-UI evidence step when those prerequisites are satisfied.
+1. Consume the [exact delegated threshold review](http://127.0.0.1:3100/AID/issues/AID-93#document-post-qa-threshold-review).
+2. Follow its chosen finite Git-only checkpoint package with specialist/independent-QA boundaries, or freeze the precise integration blocker and deliver the actual bounded result.
+3. After genuine checkpoint disposition, send the required CTY-mention report and continue approved-roadmap selection toward the cheapest authorized real M1 evidence.
 
-**Pending owner decisions:** none on the adopted roadmap or finite closeout. Both original cards are resolved. Supported recovery is also saved; the actual native continuation and independent QA remain separate from that decision. Escalate a concrete new architecture/permission choice only if the evidence requires it.
+**Pending delegated decision:** question `4a1b3101-42da-40d9-8557-a0f09329f138`, human_only/wake_assignee, asks Hermes to continue the reviewable finite Git-only package (recommended) or freeze its exact barrier. [One fresh intake](http://127.0.0.1:3100/AID/issues/AID-93#document-liaison-request-post-qa-threshold) handles this question. Original roadmap/closeout cards are resolved; no general start or personal CTY vote is requested.
 
-**Counters:** 2 completed tasks since roadmap adoption without new real-journey evidence (the source composition and the owner-requested account); QA is in progress. Review the 3-task trigger when its result arrives before starting further prerequisite work. Longest retained operational barrier: 7 days, reviewed/deferred today without resetting history. No active task is waiting for a repeat owner start command.
+**Counters:** 3 consecutive completed tasks since adoption without real-journey evidence; this exact mandatory review is pending, with the count preserved. Longest retained operational barrier: 7 days, reviewed/deferred today. Complete only authorized record preservation while waiting; no new readiness loop or task-count reset.
 
-**Repository:** approved planning/history is recorded on local main; the new source composition is isolated and unaccepted pending QA. Exact SHAs, run IDs, preservation and publication limits belong in [native checkpoint evidence](http://127.0.0.1:3100/AID/issues/AID-93) and the [original snapshot](checkpoints/2026-11-03-source-design.md). No product source is applied here.
+**Repository:** approved planning/history is on local main; source composition remains isolated, without working-file/runtime adoption. [Native checkpoint evidence](http://127.0.0.1:3100/AID/issues/AID-93#document-post-qa-threshold-review) records exact commits, fresh remote observation, downloads and publication limits. No push or source/private-state/service/compute operation occurred.

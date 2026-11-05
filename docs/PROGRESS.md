@@ -16,6 +16,8 @@ Turning points: [original history and linked decisions](progress/before-roadmap.
 - 2026-11-05 — Hermes saved the exact supported Board execution reconciliation; the existing Producer continuation is queued, with old action outcomes retained as not performed. [Native recovery/readback and actual Discord receipt](http://127.0.0.1:3100/AID/issues/AID-4#document-checkpoint-reconciliation-hermes-receipt).
 - 2026-11-05 — Separate independent QA started on the fixed source composition; accepted roadmap/history writeback preserves the full old history. Verdict and safe main integration remain outstanding. [Actual QA and coordinator handoff](http://127.0.0.1:3100/AID/issues/AID-4#document-checkpoint-composition-actual-dispatch).
 
+- 2026-11-05 — Approved planning/history committed locally with the complete original history unchanged; Producer accepted independent source/offline composition PASS and opened the reached three-task threshold review before further integration dispatch. [Commit, QA acceptance and exact pending decision](http://127.0.0.1:3100/AID/issues/AID-93#document-post-qa-threshold-review).
+
 ## Product acceptance
 
 [Historical product evidence](progress/before-roadmap.md#product-acceptance); current authority: [Goal](GOAL.md), [Roadmap](roadmap/ROADMAP.md) and [Current](CURRENT.md). Source, runtime, actual retrieval/delivery and CTY aesthetics remain separate.
