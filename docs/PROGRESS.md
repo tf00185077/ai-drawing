@@ -20,6 +20,9 @@ Turning points: [original history and linked decisions](progress/before-roadmap.
 
 - 2026-11-05 — Hermes under Board delegation selected the finite Git-only checkpoint continuation after the three-task trigger; original counters, QA and operation/publication limits remain, with package-result review before more prerequisites. [Exact answer and receipt](http://127.0.0.1:3100/AID/issues/AID-93#document-hermes-post-qa-threshold-receipt).
 
+- 2026-11-05 — The finite engineering package delivered an isolated current-authority composition and Git procedure; source history and working/runtime adoption remain separate. [Frozen engineering delivery](http://127.0.0.1:3100/AID/issues/AID-99#document-engineering-handoff).
+- 2026-11-05 — Producer accepted independent composition PASS / procedure FAIL, rejected canonical use of the helper, and opened the specific failed-package choice with the historical count now five and the prior count-three exception unchanged. [Exact assessment, evidence and next options](http://127.0.0.1:3100/AID/issues/AID-93#document-post-failed-procedure-review).
+
 ## Product acceptance
 
 [Historical product evidence](progress/before-roadmap.md#product-acceptance); current authority: [Goal](GOAL.md), [Roadmap](roadmap/ROADMAP.md) and [Current](CURRENT.md). Source, runtime, actual retrieval/delivery and CTY aesthetics remain separate.
