@@ -18,6 +18,8 @@ Turning points: [original history and linked decisions](progress/before-roadmap.
 
 - 2026-11-05 — Approved planning/history committed locally with the complete original history unchanged; Producer accepted independent source/offline composition PASS and opened the reached three-task threshold review before further integration dispatch. [Commit, QA acceptance and exact pending decision](http://127.0.0.1:3100/AID/issues/AID-93#document-post-qa-threshold-review).
 
+- 2026-11-05 — Hermes under Board delegation selected the finite Git-only checkpoint continuation after the three-task trigger; original counters, QA and operation/publication limits remain, with package-result review before more prerequisites. [Exact answer and receipt](http://127.0.0.1:3100/AID/issues/AID-93#document-hermes-post-qa-threshold-receipt).
+
 ## Product acceptance
 
 [Historical product evidence](progress/before-roadmap.md#product-acceptance); current authority: [Goal](GOAL.md), [Roadmap](roadmap/ROADMAP.md) and [Current](CURRENT.md). Source, runtime, actual retrieval/delivery and CTY aesthetics remain separate.
