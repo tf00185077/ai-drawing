@@ -1,22 +1,22 @@
-# Current state — 2026-11-03
+# Current state — 2026-11-05
 
-**Latest accepted delivery:** the [control-options design and independent document QA](checkpoints/2026-11-03-source-design.md) are complete within source/design scope. Inspect the linked native reports and original downloads there. No new running build, real image/model delivery or CTY aesthetic acceptance is established.
+**Latest accepted delivery:** CTY accepted the [finite source/offline delivery and maintenance-control feasibility account](http://127.0.0.1:3100/AID/issues/AID-97#document-stage-closeout-account). Inspect its linked fixed source, independent verdicts, kits and alternatives. D0 retains the original adoption/full-start operation as unavailable and deferred; no new running build or real image/model delivery is accepted.
 
-**Milestone:** [M1 image request/revision through MCP and the current UI](roadmap/ROADMAP.md) is proposed, not approved or started. It still needs safe integration, an independently checked runtime version and separately authorized real job/artifact/UI evidence. Until adoption, perform only this owner-requested checkpoint and already-approved work.
+**Active milestone:** [M1: obtain and revise an image through MCP and the existing UI](roadmap/ROADMAP.md), approved on 2026-11-03. Remaining: independently checked composition and safe integration, exact runtime/resource authority, then real request/artifact/UI/revision evidence. LoRA is next; CTY aesthetics stays separate.
 
-**Active work**
-- Producer: checkpoint records, main reconciliation and roadmap review; preserves the existing results and decision lineage.
-- [Engineering integration checkpoint](http://127.0.0.1:3100/AID/issues/AID-94): determine whether Git-only source integration is safe; return a frozen candidate or precise blocker. Any new composition needs independent QA before integration. This serves M1's source-integration prerequisite.
+**Active tasks**
+- [Checkpoint coordinator](http://127.0.0.1:3100/AID/issues/AID-93): approved planning/history is being committed on local main by the existing Producer continuation. Source integration awaits the independent composition verdict and a safe procedure. Serves M1's source-integration prerequisite.
+- [Independent composition QA](http://127.0.0.1:3100/AID/issues/AID-98): actual Engineering QA run started for the fixed source checkpoint. Serves the same prerequisite; its verdict remains pending. No canonical application or runtime action is included.
 
-**Blockers:** operational data/source adoption remains unavailable, confirmed since 2026-10-29 (at least 5 calendar days). Full native/SQLite/startup coverage and actual protection/restore are unproved; two stopped maintenance attempts stay stopped. Roadmap adoption is pending since 2026-11-03. Neither blocks saving the planning draft.
+**Blockers:** composition QA is pending with Engineering QA since 2026-11-05; Producer will evaluate its verdict before main/source integration. The legacy operational adoption barrier dates from 2026-10-29 (7 calendar days), was reviewed in today's owner acceptance and remains deferred under D0. Real-journey execution still needs its actual target/resources, authority and data-safe integration; no speculative readiness cycle is opened.
 
-**Next candidates, in order**
-1. Consume the engineering checkpoint; arrange independent QA only if it yields a new source composition, then integrate only what is safe.
-2. Obtain the exact roadmap disposition; on adoption preserve old history unchanged and initialize milestone counters.
-3. After those decisions, select the cheapest authorized M1 evidence step; do not repeat the unavailable-operation audit without new evidence.
+**Next candidates**
+1. Consume the fixed-composition QA verdict and address only evidenced defects or a precise integration obligation.
+2. Complete the existing main/planning checkpoint under its authority, preserving dirty work and actual local/remote publication limits; then deliver its required CTY-mention report.
+3. Select the cheapest authorized real image/MCP/current-UI evidence step when those prerequisites are satisfied.
 
-**Pending decisions:** proposed milestone order/exits, Not-now/selection rules and 3-task/2-day review triggers in the [native plan](http://127.0.0.1:3100/AID/issues/AID-93#document-plan). The earlier root source/design checkpoint question remains pending separately. Hermes is the delegated Board proxy; CTY retains reserved architecture/permission/aesthetic decisions.
+**Pending owner decisions:** none on the adopted roadmap or finite closeout. Both original cards are resolved. Supported recovery is also saved; the actual native continuation and independent QA remain separate from that decision. Escalate a concrete new architecture/permission choice only if the evidence requires it.
 
-**Counters:** non-advancing-task counter has no approved milestone/adoption baseline yet; source/design PASS is not real journey advancement. Longest confirmed integration block: at least 5 days. Proposed thresholds are not in force; adoption must address this existing block immediately.
+**Counters:** 2 completed tasks since roadmap adoption without new real-journey evidence (the source composition and the owner-requested account); QA is in progress. Review the 3-task trigger when its result arrives before starting further prerequisite work. Longest retained operational barrier: 7 days, reviewed/deferred today without resetting history. No active task is waiting for a repeat owner start command.
 
-**Repository:** the initial main/remote SHAs, dirty-work preservation, source-integration limits and verification are in the [checkpoint record](checkpoints/2026-11-03-source-design.md); native task records hold subsequent exact commit/publication receipts.
+**Repository:** approved planning/history is recorded on local main; the new source composition is isolated and unaccepted pending QA. Exact SHAs, run IDs, preservation and publication limits belong in [native checkpoint evidence](http://127.0.0.1:3100/AID/issues/AID-93) and the [original snapshot](checkpoints/2026-11-03-source-design.md). No product source is applied here.
