@@ -40,3 +40,11 @@ Turning points: [original history and linked decisions](progress/before-roadmap.
 ## Roadmap preparation checkpoint
 
 [Original preparation snapshot](progress/before-roadmap.md#roadmap-preparation-checkpoint); [approved direction](roadmap/ROADMAP.md). Approval was saved on 2026-11-03 and written back on 2026-11-05; this is not a new roadmap vote.
+
+## M1 — current checkpoint continuation
+
+- 2026-11-06 — The one bounded lock correction delivered its frozen candidate; the later independent review and original adverse evidence remain separate. [Engineering delivery](http://127.0.0.1:3100/AID/issues/AID-102#document-engineering-handoff).
+- 2026-11-06 — Producer accepted exact corrected composition/procedure PASS within isolated fixtures; seven source/fixture prerequisites had produced no real journey evidence. [Independent QA acceptance](http://127.0.0.1:3100/AID/issues/AID-93#document-q1-q2-qa-producer-acceptance).
+- 2026-11-06 — Hermes accepted one exact conditional canonical-Git operation under Board delegation; actual stage controls and all historical counters remained. [Saved decision and actual per-question report](http://127.0.0.1:3100/AID/issues/AID-93#document-exact-git-operation-hermes-receipt).
+- 2026-11-06 — The specialist stopped before mutation on newer-authority drift and missing independent-writer controls; Producer verified zero operation/closure, retained the archive-order deviation and accepted only bounded infeasibility, bringing completed non-journey prerequisites to eight. [Exact result and acceptance](http://127.0.0.1:3100/AID/issues/AID-93#document-canonical-git-stop-producer-acceptance).
+- 2026-11-06 — Producer safely wrote truthful planning/history after the closed preflight, preserved current authority and the complete old history, and prepared the specific partial-freeze/result review before further affected work. [Scoped maintenance and verification](http://127.0.0.1:3100/AID/issues/AID-93#document-planning-after-preflight-stop).
