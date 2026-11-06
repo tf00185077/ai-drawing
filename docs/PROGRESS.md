@@ -23,6 +23,8 @@ Turning points: [original history and linked decisions](progress/before-roadmap.
 - 2026-11-05 — The finite engineering package delivered an isolated current-authority composition and Git procedure; source history and working/runtime adoption remain separate. [Frozen engineering delivery](http://127.0.0.1:3100/AID/issues/AID-99#document-engineering-handoff).
 - 2026-11-05 — Producer accepted independent composition PASS / procedure FAIL, rejected canonical use of the helper, and opened the specific failed-package choice with the historical count now five and the prior count-three exception unchanged. [Exact assessment, evidence and next options](http://127.0.0.1:3100/AID/issues/AID-93#document-post-failed-procedure-review).
 
+- 2026-11-06 — CTY chose one bounded Q1/Q2 correction and independent QA, relayed by Hermes; Producer verified the saved answer and actual answer-triggered run, retaining count five, original FAIL evidence and all gates before new recipient-owned dispatch. [Exact owner adoption and continuation](http://127.0.0.1:3100/AID/issues/AID-93#document-q1-q2-owner-adoption).
+
 ## Product acceptance
 
 [Historical product evidence](progress/before-roadmap.md#product-acceptance); current authority: [Goal](GOAL.md), [Roadmap](roadmap/ROADMAP.md) and [Current](CURRENT.md). Source, runtime, actual retrieval/delivery and CTY aesthetics remain separate.
