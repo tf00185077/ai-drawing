@@ -10,8 +10,8 @@ Constraints: keep the FastAPI Backend, React/Vite UI, Python MCP server and host
 
 ### Phase 0 — Clean foundation (active)
 
-Scope: integrated `main`; documentation rebuilt in English; specs and history consolidated; a known, documented test result for every suite.
-Unknowns, riskiest first: which of the 26 Backend and 3 Windows-only MCP failures hide real defects; whether anything in `openspec/`, `SPEC.md`, `engineering/` or `tools/` is still needed by running code or tests.
+Scope: integrated `main`; documentation rebuilt in English; history removed; `openspec/specs/` rewritten to match the code; a progress table based on the current code; a known, documented test result for every suite.
+Unknowns, riskiest first: which of the 26 Backend and 3 Windows-only MCP failures hide real defects; how far the July `openspec/specs/` have drifted from the current code.
 Exit: a new agent understands the system, its state and its rules from README → AGENTS → INDEX; every failing test is fixed or explicitly quarantined with a reason.
 Demo: CTY reads README, CURRENT and ROADMAP and finds them accurate; one command per suite runs with the documented result.
 

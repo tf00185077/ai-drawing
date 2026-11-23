@@ -78,7 +78,7 @@ docs/
 | 6 | Five topic docs | Done |
 | 7 | Team/governance | Done; aligned with project-roadmap-steering |
 | 8 | Memory pruning | Done (Paperclip card entry waits for item 7) |
-| 9 | Specs and history consolidation | Pending |
+| 9 | Specs and history consolidation | History removed; openspec specs rewrite and PROGRESS table pending |
 
 ## Item 9 proposal — specs and history
 
