@@ -10,4 +10,4 @@ Durable facts for future agents. No logs or incident history.
 - [Gallery routing](gallery-document-asset-routing.md) — Vite proxy must not catch the /gallery page
 - [Frontend cache isolation](frontend-shared-cache-isolation.md) — Vitest cache leaks via shared node_modules
 - [Worker offline tests](windows-worker-offline-test-limits.md) — CREATE_NO_WINDOW missing off Windows
-- [Paperclip card lineage](native-interaction-card-lineage.md) — pending team/governance review
+- [Paperclip card lineage](native-interaction-card-lineage.md) — a new question card expires older pending ones

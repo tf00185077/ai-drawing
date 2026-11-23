@@ -73,7 +73,7 @@ docs/
 | 3 | ARCHITECTURE | Done |
 | 4 | STATUS | Done (Mac pushed candidates to main as 32b59fd) |
 | 5 | ROADMAP | Done |
-| 6 | Five topic docs | Draft written, under review |
-| 7 | Team/governance | Pending |
+| 6 | Five topic docs | Done |
+| 7 | Team/governance | Draft written, under review |
 | 8 | Memory pruning | Done (Paperclip card entry waits for item 7) |
 | 9 | Specs and history consolidation | Pending |

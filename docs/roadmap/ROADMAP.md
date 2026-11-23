@@ -19,7 +19,7 @@ Current state per goal: [STATUS.md](../STATUS.md).
 - [x] Integrate retained work into `main` (`32b59fd`).
 - [x] Rebuild entry docs, operating policy, architecture, status and memory.
 - [x] Rebuild this roadmap.
-- [ ] Rebuild the five topic docs (setup, MCP, prompt dashboard, Windows worker, LoRA training).
+- [x] Rebuild the five topic docs (setup, MCP, prompt dashboard, Windows worker, LoRA training).
 - [ ] Extract the useful parts of team/governance docs.
 - [ ] Consolidate specs and history (`SPEC.md`, `openspec/`, `docs/superpowers/`, `engineering/`, `tools/`, checkpoints, root `tmp_*` files).
 - [ ] Fix or explicitly quarantine the 26 known Backend test failures.

@@ -26,7 +26,7 @@ Source code and live API schemas (`/docs`, `/openapi.json` on a running Backend)
 
 ## Team
 
-- [Team](team/README.md), [agent reading rules](agent-reading.md) — legacy, rebuild pending discussion
+- [Team guide](team/README.md) — roster, workflow, rules; [roles](team/roles/), [channel routing](team/channel-routing.md), [skill bindings](team/skill-bindings.md)
 
 ## History
 

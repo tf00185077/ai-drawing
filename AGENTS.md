@@ -43,6 +43,10 @@ cd frontend && npm test && npm run build
 
 When reporting, separate what you verified: offline tests, a running service, a real generation, artifact retrieval.
 
-## Team roles
+## Team
 
-Paperclip role agents also follow [docs/team/README.md](docs/team/README.md) and [docs/agent-reading.md](docs/agent-reading.md). These are scheduled for rebuild.
+Paperclip role agents also follow the [team guide](docs/team/README.md) and their role page in `docs/team/roles/`.
+
+## Memory
+
+Any agent may add or fix entries in [docs/memory/](docs/memory/MEMORY.md) when it learns a durable fact that will help future agents. Keep entries short (fact, how to apply, source path) and never store logs or incident history.
