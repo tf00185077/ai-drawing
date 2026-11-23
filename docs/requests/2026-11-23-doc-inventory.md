@@ -72,8 +72,8 @@ docs/
 | 2 | OPERATING-POLICY | Adopted |
 | 3 | ARCHITECTURE | Done |
 | 4 | STATUS | Done (Mac pushed candidates to main as 32b59fd) |
-| 5 | ROADMAP | Pending |
-| 6 | Five topic docs | Pending |
+| 5 | ROADMAP | Done |
+| 6 | Five topic docs | In progress |
 | 7 | Team/governance | Pending |
 | 8 | Memory pruning | Done (Paperclip card entry waits for item 7) |
 | 9 | Specs and history consolidation | Pending |

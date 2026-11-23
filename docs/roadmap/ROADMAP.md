@@ -1,91 +1,71 @@
 # Roadmap
 
-Approved direction — adopted 2026-11-03; decision writeback reconciled through 2026-11-10. The image-first milestone order, exits, Not-now list, selection order and thresholds were accepted on the exact [native plan](http://127.0.0.1:3100/AID/issues/AID-93#document-plan). Existing [Goal](../GOAL.md) and exact operation grants remain authoritative; roadmap adoption supplies no product operation grant.
+> Status: **draft.** Phase order is set by the owner. Phase 1–4 details are discussed after Phase 0 is complete.
 
-## Destination and constraints
+Current state per goal: [STATUS.md](../STATUS.md).
 
-A user requests an image in the project channel, obtains a retrievable result from their local ComfyUI through MCP, and can request a specified style and a traceable revision. The existing simple UI supports generation and training progress, errors and results. An authorized LoRA request produces a valid, clearly named model in its own run folder, readable effective parameters, supported selection and a retrievable smoke image. Native feature requests reach reviewed, integrated delivery.
+## Phase order
 
-Success requires evidence from these actual journeys. Source tests, a listed tool, a healthy listener and an unmerged candidate do not establish running capability. Independent technical QA and CTY's aesthetic acceptance remain separate. See [Goal and milestone assessment](../GOAL.md#milestone-assessment).
+| Phase | Goal | State |
+|---|---|---|
+| 0 | Clean foundation: integrated code, rebuilt docs, known test baseline | In progress |
+| 1 | MCP server that agents use smoothly | Not started |
+| 2 | Prompt-combination dashboard | Not started |
+| 3 | Same-LAN Windows workers | Not started |
+| 4 | LoRA training | Not started |
 
-Constraints: retain the Backend/FastAPI, React/Vite, MCP and ComfyUI architecture; canonical job/artifact/provenance records; existing data and frozen evidence; role separation and independent QA. Windows installation/reporting remains deferred. No deadline or new compute campaign is approved here. Preserve finite attempts, exact data/source operation grants, caller holds, backup/restore, resource, spending and deployment gates. Do not restart ComfyUI, substitute compute or reopen stopped maintenance from a planning decision.
+## Phase 0 — Clean foundation
 
-## Unknowns, ranked by cost of being wrong
+- [x] Integrate retained work into `main` (`32b59fd`).
+- [x] Rebuild entry docs, operating policy, architecture, status and memory.
+- [x] Rebuild this roadmap.
+- [ ] Rebuild the five topic docs (setup, MCP, prompt dashboard, Windows worker, LoRA training).
+- [ ] Extract the useful parts of team/governance docs.
+- [ ] Consolidate specs and history (`SPEC.md`, `openspec/`, `docs/superpowers/`, `engineering/`, `tools/`, checkpoints, root `tmp_*` files).
+- [ ] Fix or explicitly quarantine the 26 known Backend test failures.
 
-| Rank | Unknown and consequence | Cheapest real evidence |
-| --- | --- | --- |
-| 1 | Can the reviewed application run with the user's existing state and carry a request to a retrievable result? Incorrect source/state adoption affects every journey and risks existing records. | Resolve the specific integration barrier, then one separately authorized real image request and revision through MCP and the existing UI, retaining jobs and artifacts. |
-| 2 | Can the supported trainer produce a usable new model with correct naming, isolation and effective parameters? A wrong assumption wastes dataset preparation and GPU work. | One explicitly scoped dataset/base-model training run, followed by selection and one smoke image, with real artifact retrieval. |
-| 3 | Can the team repeat the requested style/revision and feature-delivery journey without losing lineage? Technical completion alone may not meet the user's purpose. | CTY reviews the first delivered images; one real feedback revision and one real feature intake are traced through delivery. |
+**Exit:** a new agent can read README → AGENTS → INDEX and understand the system, its status and the rules; all test suites have a known, documented result.
 
-The source and design checkpoint is complete within its stated limits; it does not answer these product questions. [Checkpoint and exact evidence](../checkpoints/2026-11-03-source-design.md).
+## Phase 1 — MCP server that agents use smoothly
 
-## Milestones
+Candidate work:
+1. Uniform structured responses: `{ok, data, error: {code, hint}}`.
+2. `wait_for_job(job_id, timeout)` and a result tool returning artifact paths/URLs.
+3. Risk labels (read / mutate / admin) on tools, for documentation only.
+4. A short common flow: `list_resources → compose → generate → wait/result`; consolidate overlapping tools.
+5. `list_workers` / `worker_status`.
+6. A real end-to-end smoke script: generate on local ComfyUI, retrieve, revise with revision context.
 
-### M1 — Can a user obtain and revise an image through the existing MCP/UI? (status: active)
+**Exit:** an agent goes from nothing to a retrieved image and one traceable revision without human help.
 
-Evidence path: reuse accepted source and QA → resolve a safe source/state integration path → verify the identified integrated version independently → obtain an exact authorized request, target and caller arrangement → submit one real image request through MCP → retrieve its canonical artifact → inspect status, errors and results in the current UI → deliver one feedback-bound revision.
+## Phase 2 — Prompt-combination dashboard
 
-Exit: the intended ComfyUI target, canonical IDs and artifact lineage are demonstrated; results can be retrieved without a duplicate submission; the existing UI shows useful progress/errors/results; independent QA confirms the integrated journey. Hermes confirms the functional milestone within delegation. CTY separately judges image/style aesthetics; no missing aesthetic decision is inferred as acceptance.
+Candidate work:
+1. A recipe = prompt combination + workflow template + models/LoRAs + sampler parameters, unified with style presets.
+2. Template selection in the Workbench renders adjustable parameters from `.meta.json`.
+3. Progress, errors and result thumbnails on the Workbench page; save a result as a recipe.
+4. MCP `generate_from_recipe`.
 
-Remaining: eligible source integration, runtime/data readiness and actual request/artifact/UI/revision evidence. The original protected maintenance/full-start route remains unavailable and deferred under D0; no replacement architecture is selected. The finite Git prerequisite retains [old independent composition PASS / procedure FAIL](http://127.0.0.1:3100/AID/issues/AID-100#document-qa-report), followed by [exact corrected composition/procedure PASS](http://127.0.0.1:3100/AID/issues/AID-103#document-qa-report) within isolated cooperative fixtures. [Hermes approved one exact conditional canonical-Git operation](http://127.0.0.1:3100/AID/issues/AID-93#document-exact-git-operation-hermes-receipt) under Board delegation. Its [actual bounded preflight stopped before mutation](http://127.0.0.1:3100/AID/issues/AID-104#document-engineering-handoff): two newer authority documents differ from the frozen profile and independent-writer controls are absent. Main/ref/index were not integrated. [Producer accepted the precise stop and verified closure](http://127.0.0.1:3100/AID/issues/AID-93#document-canonical-git-stop-producer-acceptance); no actual-result QA or automatic rebind/repair follows. [Hermes accepted the truthful partial checkpoint/freeze](http://127.0.0.1:3100/AID/issues/AID-93#document-partial-freeze-owner-adoption) under Board delegation. This closes the finite organization package; actual source integration remains incomplete/frozen with its real control owners. The consumed exact grant supplies no rebind, repair, readiness, repeat preflight or new apply allowance. Preserve current authority, original evidence and all operation gates; repeating unavailable readiness produces no new journey evidence.
+**Exit:** a combination built in the UI is used by an agent through MCP to generate an image.
 
-### M2 — Can an authorized training request yield a usable named LoRA and smoke result? (status: not started; next)
+## Phase 3 — Same-LAN Windows workers
 
-Question: can the intended supported base model and versioned dataset reach an attributed valid final model, readable actual parameters, supported selection and a retrievable smoke image through the existing Backend/MCP/UI?
+Candidate work:
+1. Authentication between Backend and worker; secure the PowerShell control routes.
+2. Same-project check: worker reports git commit, workflow hashes, custom nodes and models; mismatches are refused with a clear hint.
+3. Durable, concurrent queue: persist jobs at submission, survive restarts, run one job per available target in parallel.
+4. Worker registry with heartbeat, capabilities and queue length.
+5. Scheduler: `execution_target=auto` chooses by capability and load.
+6. Results return to the Gallery with the worker recorded.
+7. Replace the updater with `git pull` + restart; remove retired code.
 
-Exit: real training and smoke job/artifact records demonstrate that sequence without overwriting another run; independent QA confirms technical behavior; Hermes confirms the functional milestone, with CTY's model/image-effect judgment recorded separately. Dataset, base model, resource and execution approvals must be specific to that run.
+**Exit:** a second Windows machine on the LAN produces an image that is traceable in the Gallery, while local ComfyUI runs another job.
 
-### Later direction — repeatable requested styles, revisions and feature delivery
+## Phase 4 — LoRA training
 
-Use actual channel requests and CTY feedback to establish repeatability and close concrete journey gaps. Define the milestone exit after M1/M2 evidence; do not invent a speculative feature backlog.
+Candidate work:
+1. First real training run on a small dataset with one base model (SDXL or Anima).
+2. Verify the full chain: train → register → select in a recipe → smoke image retrieved.
+3. Dispatch training to a worker, reusing the Phase 3 registry and same-project check.
 
-## Not now
-
-- A new VM/storage/control architecture or relaxed protection policy: revisit only through an exact architecture/policy decision supported by the accepted comparison.
-- More generic maintenance hardening or repeated unavailable-operation reviews: revisit only when new evidence identifies a finite mechanism or defect on M1's path.
-- Windows installation/reporting: revisit when CTY lifts the current deferral; no alternate compute is implied.
-- New generation/training campaigns, model acquisition, supplemental datasets or unrelated UI redesign: revisit with the relevant milestone and actual authority.
-- Watchdogs, recurring decision polling or replacement monitoring: the withdrawal remains in force; fresh approval is required.
-
-## Task selection and escalation
-
-Approved priority: (1) an explicit owner request, including this checkpoint; (2) a concrete blocker preventing the active milestone's cheapest real evidence; (3) the next step producing that evidence. A prerequisite qualifies only if that path cannot proceed without it. Keep source-only and real-journey advancement distinct.
-
-Approved thresholds: ask after **3 consecutive completed tasks without advancing the active milestone's real evidence**, or **2 calendar days blocked**. These are review triggers, not operational retry allowances or new schedules. The adoption baseline is 2026-11-03. Preserve the dated legacy integration block; the 2026-11-05 owner disposition reviewed it and retained D0 with the named checkpoint continuation. Count source-only prerequisites separately from real user-journey evidence.
-
-Stop starting work in an affected direction and request an owner/delegated decision when an exit is claimed, a task falls outside the evidence path, milestone order/Not-now changes, a threshold is reached, a constraint changes, or an unresolved roadmap choice blocks selection. Finish authorized in-flight work while waiting. Producer keeps task selection and technical judgment; Hermes handles delegated routine decisions, while CTY-reserved architecture, permission and aesthetic choices remain reserved.
-
-## Review history
-
-- 2026-11-03 — The exact first [native roadmap plan](http://127.0.0.1:3100/AID/issues/AID-93#document-plan), revision `22ce984d-34c5-4f05-88bb-252f9e26b949`, was accepted by actual resolver `local-board` at `09:09:20.030Z`, confirmation `f0170918-8817-4c47-aae3-38a5832d871f`. This adopts recommended A: image/MCP/existing UI first, LoRA next, the specified exits, Not-now/selection rules and three-task/two-day triggers. Decision custody is Board/operator acceptance under the recorded delegation; no personal CTY vote is invented.
-- 2026-11-05 — CTY explicitly accepted [Producer's finite stage account](http://127.0.0.1:3100/AID/issues/AID-97#document-stage-closeout-account), revision `0de67e91-5cf3-4d0c-802c-96680e1e0a7e`, through original question `9479f6c2-4a89-4425-ac66-84baaefcf5df`, actual resolver `local-board`, `06:22:52.030Z`, relayed by Hermes. The finite source/offline feasibility stage closes; D0 retains the original adoption/full-start path as VERIFIED UNAVAILABLE and deferred. This confirms the existing image-first continuation, not a product milestone exit, new architecture or operation grant. [Verified adoption and next owners](http://127.0.0.1:3100/AID/issues/AID-4#document-stage-closeout-owner-adoption).
-- 2026-11-05 — Write back the already accepted direction and archive the complete prior PROGRESS bytes at [before-roadmap](../progress/before-roadmap.md). No second approval is requested. The supported Board execution reconciliation restored the existing checkpoint's native continuation; independent QA of the fixed composition is separately owned. Details and original outcomes remain in the native records.
-
-- 2026-11-05 — Producer accepted the [independent composition PASS](http://127.0.0.1:3100/AID/issues/AID-98#document-qa-report) within source/offline limits. The three-task threshold was reached and [Hermes answered the exact delegated review](http://127.0.0.1:3100/AID/issues/AID-93#document-hermes-post-qa-threshold-receipt): one finite Git-only checkpoint package may proceed with separate QA; retain the count of three and review its result before more source-only prerequisites. The existing thresholds remain unchanged. No milestone exit, direction change or operation grant is inferred.
-
-- 2026-11-05 — Producer accepted the [finite package's independent review](http://127.0.0.1:3100/AID/issues/AID-100#document-qa-report): composition PASS / procedure FAIL; the helper is rejected for canonical use. Five source-only tasks are complete with no real-journey evidence. The earlier count-three exception and thresholds are retained; [a specific delegated failed-package choice](http://127.0.0.1:3100/AID/issues/AID-93#document-post-failed-procedure-review) is pending before further helper work. No new milestone, task allowance or operation grant has been approved.
-
-- 2026-11-06 — CTY explicitly selected A on the [failed-package question and exact proposal](http://127.0.0.1:3100/AID/issues/AID-93#document-q1-q2-owner-adoption), relayed by Hermes; actual resolver local-board, interaction `c2550da3-f488-4fe0-a9d2-de9256bfed22`, resolved 03:50:38.432Z. Approve one Q1/Q2-only isolated correction plus independent QA, current-input rebinding after legitimate planning changes, and a renewed-FAIL stop. Preserve count five, the prior count-three exception and existing thresholds. CTY reaffirms Hermes ordinary follow-through; Producer retains technical judgment/native dispatch, with genuine boundaries and project-direction choices reserved. No milestone exit, architecture or canonical/runtime/publication grant follows.
-
-- 2026-11-06 — Producer accepted [independent corrected composition/procedure PASS](http://127.0.0.1:3100/AID/issues/AID-93#document-q1-q2-qa-producer-acceptance) for the exact isolated candidate; the old FAIL remains. Seven source/fixture prerequisites were complete without a real user journey; no canonical grant or writer hold followed from QA.
-- 2026-11-06 — Hermes, under CTY's existing Board delegation and explicit channel instruction to return its recommendation, accepted the exact conditional Git-only operation against native plan revision ten. [Saved decision, actual resolver and per-question Discord receipt](http://127.0.0.1:3100/AID/issues/AID-93#document-exact-git-operation-hermes-receipt). This named finite continuation reviewed the reached thresholds without changing them or resetting counts.
-- 2026-11-06 — Producer accepted the [completed pre-mutation infeasibility and safe closure](http://127.0.0.1:3100/AID/issues/AID-93#document-canonical-git-stop-producer-acceptance): current-authority drift and missing real writer controls prevented apply. Eight completed non-journey prerequisites now include the prior seven source/fixture results and this actual preflight. [A precise partial-freeze/result review](http://127.0.0.1:3100/AID/issues/AID-93#document-post-preflight-freeze-review) is required before any additional affected prerequisite; no new allowance, milestone exit or direction change is adopted.
-
-- 2026-11-06 — Hermes under CTY Board delegation selected A on the [exact result/threshold review](http://127.0.0.1:3100/AID/issues/AID-93#document-partial-freeze-owner-adoption), actual resolver local-board at 08:03:05.580Z, interaction e34c62f4-9c89-4115-b386-d507eb27af22. Accept the finite checkpoint/planning organization as PARTIAL and freeze actual canonical integration; preserve count eight/historical counts and all thresholds, grants and barriers. Return Producer through the existing root to the next permitted M1 step after actual report verification, without generic start. No new source-only allowance, product milestone exit, runtime or aesthetic acceptance.
-
-- 2026-11-06 - Hermes under CTY Board delegation accepted the [exact existing-image access experiment](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-existing-result-producer-grant-adoption), confirmation df5ce222-d9ac-4945-a85d-f46e0ca3c6f8, actual resolver local-board at 08:36:44.271Z. It permits one bounded direct artifact-access step and conditional artifact-only QA while integration remains frozen; no source-only allowance, counter reset, milestone exit, new compute or architecture is accepted. [Actual specialist handoff](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-existing-result-actual-dispatch).
-
-- 2026-11-10 — Hermes under CTY delegated Board authority accepted the exact [same-image supplement](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-same-image-supplement-producer-adoption), confirmation `9c55d55c-f81b-4a67-9d1a-9323d960978e`, actual resolverlocal-board at08:07:09.496Z, target v72 revision `de7b7907-7873-4964-83d4-16dadd54d746`. Producer resumed the same Generation task once and verified its actual new run. This reviews the four-day exact-access wait without changing milestones/Not-now/thresholds or resetting rawcount9/prior8; review the result before further affected attempts. Original four-read PARTIAL, integration freeze/D0 and all source/data/service/compute gates remain; no image, milestone exit or aesthetic acceptance follows from the grant.
-
-- 2026-11-10 — The same-image supplement completed PARTIAL at HEAD silence with no file. [Producer accepted the exact stop](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-same-image-supplement-partial-acceptance) and opened the specific new bounded Environment diagnosis/result review before further affected work; rawcompleted10/prior9/historical8 and thresholds remain. This pending proposal supplies no new access/task grant or milestone change.
-
-- 2026-11-10 — Hermes under CTY delegated Board authority accepted fixed v73 diagnostic scope, confirmation3a1a8a19-8909-4535-9328-08c967168156/resolved08:31:24.632Z/actualresolverlocal-board. [Verified grant and minimal graph](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-resource-diagnosis-grant-adoption): one bounded Environment diagnosis with zeroHTTP/content/service/source/compute, no further image retries. Producer created the one recipient-owned task with complete creation-time plan/readback and a real dependency; actual run/result are separate. Review this result before further affected work; no milestone/threshold/counter/Not-now/architecture change.
-
-- 2026-11-10 — Exact diagnosis completed PARTIAL on a permitted-method limitation, not a product defect. [Producer result review](http://127.0.0.1:3100/AID/issues/AID-4#document-m1-diagnosis-partial-producer-acceptance) opens one precise method-amendment decision before any same-task resume; rawcompleted11 and thresholds remain. No new scope is approved by this pending review.
-
-- 2026-11-10 — CTY directly corrected the work method: [deliver the correct existing file through a complete Coding assignment](http://127.0.0.1:3100/AID/issues/AID-4#comment-eaeab88b-64ba-4ae7-947e-4c09ad336bc6). The v74 per-primitive approval path is superseded; necessary investigation, local repair and focused retrieval verification belong to the existing Platform Engineer. This owner-directed continuation preserves M1/LoRA order, exits, Not-now, thresholds, rawcompleted11 and historical evidence. Old D0/full-start and canonical integration remain deferred/frozen for their actual operations, not blanket barriers to this newly authorized delivery work. No file, root cause or milestone exit is claimed at dispatch.
-
-- 2026-11-12 — Hermes under CTY human/Board delegation accepted [one exact Mac/MPS feedback-revision operation](http://127.0.0.1:3100/AID/issues/AID-4#document-gallery-4445-mps-grant-producer-adoption), confirmationc5b53014-0d86-4035-a170-41601807897d, actual resolverlocal-board at03:55:19.329Z. This is a fixed one-image target-specific grant with actual admission and stop conditions, not a new campaign, Windows installation/acceptance, architecture change or M1 exit. The original/reference and real CTY feedback remain bound; milestone order/exits/Not-now/thresholds, raw18/prior17 and historical attempts remain unchanged.
-
-- 2026-11-23 — Hermes under existing Board delegation accepted the [exact same-candidate independent QA supplement](http://127.0.0.1:3100/AID/issues/AID-136#document-review-method-hermes-receipt), confirmation `cab425fa-6d3c-42f2-94fe-e8feddf75fd6`, actual resolver local-board at03:34:21.465Z, target plan revision `8c9a7180-7987-47d5-a809-16a49d088584`. Round1 AMBIGUITY leaves D3 unverified; one same-card round2 may use a bounded foreground synthetic harness with a15-minute total preview-process deadline and proven cleanup when native preview is absent. This records the reached three-task review at raw26/prior25/non-journey4of3 without changing/resetting milestones, exits, Not-now, thresholds or operation allowances. No new source repair/package, canonical adoption, installed-journey/M1 or aesthetic acceptance follows; Producer consumes the actual supplement before further affected work.
+**Exit:** one real training produces a clearly named model that is used in a recipe and yields a retrievable smoke image.

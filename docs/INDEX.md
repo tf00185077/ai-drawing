@@ -15,7 +15,7 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) | current |
 | Operating policy | [OPERATING-POLICY.md](OPERATING-POLICY.md) | current |
 | Status per goal | [STATUS.md](STATUS.md) | current |
-| Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | legacy; draft Phase 0–4 in the assessment |
+| Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup-guide.md](setup-guide.md) | legacy |
 | MCP server | [mcp-setup.md](mcp-setup.md) | legacy |
 | Prompt dashboard | [prompt-and-workflow-resources.md](prompt-and-workflow-resources.md) | legacy |
