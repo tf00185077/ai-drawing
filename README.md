@@ -5,8 +5,8 @@ AI Drawing lets AI agents and people generate images through a local ComfyUI. A 
 ## Goals
 
 1. **Agent-ready MCP server**: an agent can request, track, retrieve and revise images without human help.
-2. **Prompt dashboard**: users build reusable prompt combinations for ComfyUI workflows.
-3. **LAN workers**: ComfyUI jobs can run on other Windows machines on the same network that run the same project.
+2. **LAN workers**: ComfyUI jobs can run on other Windows machines on the same network that run the same project.
+3. **Prompt dashboard**: users build reusable prompt combinations for ComfyUI workflows.
 4. **LoRA training**: train, register and use LoRA models from owner datasets.
 
 Current state: [docs/CURRENT.md](docs/CURRENT.md).

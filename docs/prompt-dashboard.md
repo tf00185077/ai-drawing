@@ -92,4 +92,4 @@ Rules:
 
 API: `backend/app/api/style_presets.py`. `GET /api/style-presets/{id}/workflow?profile=<p>` reads a saved graph. MCP: `list_style_presets`, `get_style_preset`, `compose_style_preset`, `save_successful_workflow_as_style_preset`, `test_saved_style_preset_workflow`.
 
-A combination holds prompt text only; a style preset also holds the template and models. Unifying them into one recipe is planned for Phase 2 ([roadmap](roadmap/ROADMAP.md)).
+A combination holds prompt text only; a style preset also holds the template and models. Unifying them into one recipe is planned for Phase 3 ([roadmap](roadmap/ROADMAP.md)).

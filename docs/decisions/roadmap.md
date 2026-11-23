@@ -1,17 +1,24 @@
 # Decisions · roadmap
 
 ## Settled
-- Four goals in order: MCP for agents → prompt dashboard → LAN Windows workers → LoRA training · why: owner's product priorities · owner-confirmed
+- Four goals in order: MCP for agents → LAN Windows workers → prompt dashboard → LoRA training · why: owner's product priorities · owner-confirmed
 - Phase 0 (clean foundation) comes first · why: integration was frozen and docs were unusable · owner-confirmed
 - Docs are English only and rebuilt from scratch · why: owner preference; AI translates on demand · owner-confirmed
 - Nearly all operations are allowed by default · why: owner removed approval gates · owner-confirmed · [policy](../OPERATING-POLICY.md)
 - The repo adapts to the `project-roadmap-steering` skill (ROADMAP, CURRENT, PROGRESS, requests, decisions), not the other way round · why: the skill is fixed · owner-confirmed
 - Escalation thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
-- Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond Phase 2 · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
+- Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond Phase 3 · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
 - No OpenSpec: task specs in `docs/tasks/<task>/task.md` are the only spec format; durable behavior rules live in the topic docs · owner-confirmed
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-23 · Workers before dashboard
+- Decision: phase order is MCP (1) → LAN Windows workers (2) → prompt dashboard (3) → LoRA (4).
+- Why: owner reprioritized.
+- Supersedes: MCP → dashboard → workers → LoRA.
+- Provenance: owner-confirmed@"1->3->2->4，修改一下順序。"
+- Link: [ROADMAP](../roadmap/ROADMAP.md)
 
 ### 2026-11-23 · OpenSpec removed
 - Decision: delete `openspec/` and its skills; keep verified behavior rules in ARCHITECTURE, mcp, prompt-dashboard and lora-training docs.
@@ -41,8 +48,8 @@
 - Provenance: owner-confirmed@"可以，進第 6 項"
 - Link: [ROADMAP](../roadmap/ROADMAP.md)
 
-### 2026-11-23 · Queue limitations scheduled for Phase 3
-- Decision: in-memory queue, one job at a time and persist-on-completion are marked "to optimize" and planned in Phase 3.
+### 2026-11-23 · Queue limitations scheduled for the workers phase
+- Decision: in-memory queue, one job at a time and persist-on-completion are marked "to optimize" and planned in the workers phase (now Phase 2).
 - Why: they block parallel workers.
 - Supersedes: —
 - Provenance: owner-confirmed@"以上要標記成待優化"

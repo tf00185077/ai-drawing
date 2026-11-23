@@ -31,7 +31,21 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
-## Goal 2 — Prompt dashboard
+## Goal 2 — LAN Windows workers
+
+| Capability | Status | Code | Tests | Real run |
+|---|---|---|---|---|
+| Worker service: ComfyUI proxy and PowerShell routes | Done | `worker/windows/worker.py`, `powershell_control.py` | `test_worker_runtime.py`, `test_worker_powershell_control.py` | No |
+| Backend client, `execution_target=worker`, no local fallback | Done | `services/nvidia_worker.py`, `core/queue.py` | `test_worker_routing.py` | No |
+| LAN discovery with hostname/protocol check | Done | `services/nvidia_worker.py` | `test_worker_pairing.py` | No |
+| Install, start and packaging scripts | Partial (never installed successfully) | `worker/windows/*.ps1`, `scripts/build-windows-worker.py` | `test_worker_all_entrypoints.py` | No |
+| Backend–worker authentication | Not started (token exists only in legacy updater) | — | — | — |
+| Same-project check (commit, workflows, nodes, models) | Not started | — | — | — |
+| Durable, concurrent queue | Not started (in-memory, one job at a time) | `core/queue.py` | — | — |
+| Worker registry, heartbeat, `execution_target=auto` | Not started | — | — | — |
+| Replace legacy updater | Not started | `worker/windows/updater/` | `test_worker_updater_*` | — |
+
+## Goal 3 — Prompt dashboard
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -46,20 +60,6 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Recipe = combination + template + models + parameters | Partial (style presets only) | — | — | — |
 | Progress, errors and thumbnails on the Workbench | Not started | — | — | — |
 | MCP `generate_from_recipe` | Not started | — | — | — |
-
-## Goal 3 — LAN Windows workers
-
-| Capability | Status | Code | Tests | Real run |
-|---|---|---|---|---|
-| Worker service: ComfyUI proxy and PowerShell routes | Done | `worker/windows/worker.py`, `powershell_control.py` | `test_worker_runtime.py`, `test_worker_powershell_control.py` | No |
-| Backend client, `execution_target=worker`, no local fallback | Done | `services/nvidia_worker.py`, `core/queue.py` | `test_worker_routing.py` | No |
-| LAN discovery with hostname/protocol check | Done | `services/nvidia_worker.py` | `test_worker_pairing.py` | No |
-| Install, start and packaging scripts | Partial (never installed successfully) | `worker/windows/*.ps1`, `scripts/build-windows-worker.py` | `test_worker_all_entrypoints.py` | No |
-| Backend–worker authentication | Not started (token exists only in legacy updater) | — | — | — |
-| Same-project check (commit, workflows, nodes, models) | Not started | — | — | — |
-| Durable, concurrent queue | Not started (in-memory, one job at a time) | `core/queue.py` | — | — |
-| Worker registry, heartbeat, `execution_target=auto` | Not started | — | — | — |
-| Replace legacy updater | Not started | `worker/windows/updater/` | `test_worker_updater_*` | — |
 
 ## Goal 4 — LoRA training
 
@@ -89,7 +89,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 ## Log
 
 ### 2026-11-23 — Four goals set; Phase 0 started
-- CTY set the four goals and their order: MCP for agents → prompt dashboard → LAN Windows workers → LoRA training.
+- CTY set the four goals and their order: MCP for agents → LAN Windows workers → prompt dashboard → LoRA training (workers moved ahead of the dashboard the same day).
 - Retained LoRA, Gallery and maintenance work from 29 local branches integrated into `main` as `32b59fd`.
 - Documentation rebuilt in English; operating policy made default-open; memory pruned ([decisions](decisions/roadmap.md)).
 - History, research data, OpenSpec and scratch files removed; verified behavior rules moved into the topic docs.
