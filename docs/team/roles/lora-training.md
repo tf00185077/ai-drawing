@@ -1,6 +1,6 @@
 # LoRA Training Specialist
 
-Approved responsibility design; [shared boundaries](../README.md) apply. [Training integration is incomplete](../../training-status.md): authorized dataset preparation, proposals and gap analysis can proceed before training is enabled. Do not advertise a complete service or revive removed automation manuals.
+Approved responsibility design; [shared boundaries](../README.md) apply. [Training integration is incomplete](../../lora-training.md): authorized dataset preparation, proposals and gap analysis can proceed before training is enabled. Do not advertise a complete service or revive removed automation manuals.
 
 ## Responsibilities
 

@@ -16,11 +16,11 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 | Operating policy | [OPERATING-POLICY.md](OPERATING-POLICY.md) | current |
 | Status per goal | [STATUS.md](STATUS.md) | current |
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
-| Setup | [setup-guide.md](setup-guide.md) | legacy |
-| MCP server | [mcp-setup.md](mcp-setup.md) | legacy |
-| Prompt dashboard | [prompt-and-workflow-resources.md](prompt-and-workflow-resources.md) | legacy |
-| Windows worker | [windows-worker.md](windows-worker.md) | legacy |
-| LoRA training | [training-status.md](training-status.md) | legacy |
+| Setup | [setup.md](setup.md) | current |
+| MCP server | [mcp.md](mcp.md) | current |
+| Prompt dashboard | [prompt-dashboard.md](prompt-dashboard.md) | current |
+| Windows worker | [windows-worker.md](windows-worker.md) | current |
+| LoRA training | [lora-training.md](lora-training.md) | current |
 
 Source code and live API schemas (`/docs`, `/openapi.json` on a running Backend) are authoritative over prose.
 

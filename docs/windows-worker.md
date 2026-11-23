@@ -1,48 +1,72 @@
-# Windows worker: source and acceptance gaps
+# Windows worker
 
-This page describes source, not an installation/update SOP or installed-host verification. Remote execution requires compute requirements and operating policy. Product repairs do not block company onboarding; see [Goal](GOAL.md).
+A worker lets the Backend run ComfyUI jobs on another Windows machine on the same LAN. The worker is a small FastAPI service next to that machine's ComfyUI.
 
-## Owner report
+Status and gaps: [STATUS.md](STATUS.md#3-lan-windows-workers). No worker has been installed successfully yet; the design is planned for rework in Phase 3 ([roadmap](roadmap/ROADMAP.md)).
 
-The owner last reported the Windows Worker as not installed and has now deferred installation and result reporting. The reviewed installation handoff remains available, but user installation is no longer the prerequisite for advancing the company agenda. This is not installation success or permanent cancellation of the Windows direction. The former installation-result card was superseded; retain the completed guide, source package and independent QA. See the [latest owner direction](http://127.0.0.1:3100/AID/issues/AID-4#comment-bf46ca77-46f4-4938-91c2-d4d6c4116f18). Any future resumption must reconcile actual installed state before proposing host checks. No agent installation, host connection, download, remote command, service or deployment permission follows from deferral.
+## How it works
 
-Previous failed Worker/updater attempts are historical. Broad terminal access followed failed narrower API attempts to get generation working. A LAN address change remains a hypothesis: contemporaneous logs, configuration and installed-version records are insufficient to establish the cause. Earlier progress reports do not prove installation or deployment success.
+```
+Backend ──HTTP :8791──► worker.py ──loopback──► ComfyUI :8188 (on the worker host)
+```
 
-## Source paths and security
+- The Backend sends a job with `execution_target=worker` to the worker instead of local ComfyUI.
+- The worker forwards `/prompt`, `/queue`, `/history/{prompt_id}`, `/view` and `/upload/image` to its local ComfyUI.
+- Results are fetched back by the Backend and stored in its Gallery.
+- A failed worker job is reported, not retried on local ComfyUI.
 
-- `backend/app/services/nvidia_worker.py`: configured URL, discovery, runtime URL cache and Worker client.
-- `backend/app/api/workers.py`: Backend status and PowerShell proxy API.
-- `worker/windows/worker.py`: Worker status, PowerShell commands and ComfyUI proxies.
-- `worker/windows/Install-Worker.ps1` and `Start-Worker.ps1`: installation/startup and retained updater/recovery logic.
+## Worker endpoints
 
-The Worker exposes status, PowerShell submit/status/cancel and ComfyUI `/prompt`, `/queue`, `/history/{prompt_id}`, `/view` and `/upload/image` proxies. PowerShell routes lack authentication: reachable clients can execute commands under the Worker account. Hostname/protocol filtering is not authentication. Keep this interface private; tool availability does not authorize remote administration.
+Source: `worker/windows/worker.py`.
 
-## Retired API versus retained updater
+| Endpoint | Purpose |
+|---|---|
+| `GET /v1/worker/status` | Status, hostname, protocol version |
+| `POST /prompt`, `GET /queue`, `GET /history/{id}`, `GET /view`, `POST /upload/image` | ComfyUI proxy |
+| `POST /v1/powershell/commands` | Run a PowerShell script |
+| `GET /v1/powershell/commands/{id}` | Command status and output |
+| `POST /v1/powershell/commands/{id}/cancel` | Cancel a command |
 
-Managed-update/restart HTTP, resource-plan/content and workflow-preflight routes are retired. Token/pairing does not authorize open-control requests. Backend startup no longer launches the managed-update coordinator; old update state does not gate generation.
+**The PowerShell routes have no authentication.** Anyone who can reach port 8791 can run commands as the worker's Windows account. Keep the port reachable only from the Backend host on the private LAN.
 
-Legacy updater modules/tests remain. Installation can create updater components/tasks; `Start-Worker.ps1` can invoke recovery when files exist. Retired routes can return 404 without an IP change. Inspect installed versions and recovery state before changing startup recovery; old updater plans are not current instructions.
+Worker settings: `AI_DRAWING_COMFYUI_URL` (default `http://127.0.0.1:8188`, must be loopback). The worker listens on `0.0.0.0:8791`.
 
-## Configuration and discovery
+## Backend settings
 
-Backend settings: `NVIDIA_WORKER_URL`, `NVIDIA_WORKER_DISCOVERY_ENABLED`, `NVIDIA_WORKER_HOSTNAME`, `NVIDIA_WORKER_PROTOCOL_VERSION`, `NVIDIA_WORKER_DISCOVERY_CIDR`. See `backend/app/config.py` for defaults; use deployment-owned values.
+In `.env` / `backend/app/config.py`:
 
-- Discovery defaults off. It scans IPv4 `/24` on the worker port, not DNS/mDNS; the configured CIDR must contain the failed IPv4 address.
-- Only connection errors/connect timeouts trigger discovery. Read timeouts/HTTP failures do not resubmit side-effecting requests.
-- Discovery requires one matching hostname/protocol candidate. The process-local URL cache has no TTL; settings and discovered-URL caches are separate.
-- The worktree fix ignores discovered-URL cache when discovery is disabled. Enabled cache/rediscovery behavior is unchanged. A mocked regression covers the fix; Windows deployment is unverified.
-- Integrated health validates a JSON object and an actual positive integer protocol equal to configuration. When a hostname is configured it must be a nonempty string with casefold equality; URL-only mode still checks protocol. Malformed or mismatched status raises fixed WorkerConfigurationError diagnostics, and Backend reports unavailable without discovery/retry. The response body is not echoed. Discovery scans still compare hostname case-sensitively; normalization and authentication remain separate gaps. This source integration does not establish the owner's failure cause or installed-host acceptance.
+| Setting | Purpose |
+|---|---|
+| `NVIDIA_WORKER_URL` | Worker base URL, e.g. `http://192.168.1.20:8791` |
+| `NVIDIA_WORKER_TIMEOUT` | Request timeout (seconds) |
+| `NVIDIA_WORKER_HOSTNAME` | Expected worker hostname; checked against `/v1/worker/status` |
+| `NVIDIA_WORKER_PROTOCOL_VERSION` | Expected protocol version (default 2) |
+| `NVIDIA_WORKER_DISCOVERY_ENABLED` | Scan the LAN when the worker URL stops answering (default off) |
+| `NVIDIA_WORKER_DISCOVERY_CIDR` | `/24` range to scan |
 
-Supported generation interfaces accept `local`/`worker`, defaulting to `local` when omitted. This is a source default, not company routing policy. MCP direct ComfyUI operations use a separate URL, unaffected by `execution_target`. Status or PowerShell success does not establish CUDA/model/node readiness or artifact recovery.
+Discovery runs only on connection errors, scans the CIDR on port 8791 and accepts exactly one host whose hostname and protocol match. The found URL is cached in memory until the Backend restarts.
 
-## Installation handoff and next evidence
+`setup`/`reconfigure` drop these keys from `.env`; re-add them afterwards.
 
-The [frozen first-installation guide](http://127.0.0.1:3100/AID/issues/AID-10#document-installation-guide) and its downloadable source snapshot have [independent static QA](http://127.0.0.1:3100/AID/issues/AID-11#document-qa-report) for a standalone venv and normal-user foreground Worker on `127.0.0.1:8791`. They prepare the control layer only; Windows execution and installation success still require the user's result. Keep the reviewed guide unchanged and use its exact source hashes. The full installer at the reviewed commit omits a required module from its copy/migration chain; Setup and Enable helpers exist, but neither is the selected first-install route. See the guide and QA for version-specific evidence rather than substituting legacy commands.
+Backend source: `backend/app/services/nvidia_worker.py`, `backend/app/api/workers.py`.
 
-1. Inspect the current installation entry points and their transitive files. Distinguish first installation from upgrade, migration, cleanup and enablement of an existing scheduled task. A legacy README or missing helper is not a usable initial-installation route.
-2. Deliver an independently reviewed guide and identifiable file/source references. State which commands download dependencies, change firewall or scheduled tasks, start services or alter existing paths. Preserve existing ComfyUI, models, datasets, outputs and unrelated services. Mark Windows checks not actually executed.
-3. Wait for the user's installation result and identifiable version/log evidence. Do not substitute historical attempts or the presence of source files for installation completion.
-4. Only then propose the applicable bounded connection, resource and functional checks. Validate hostname/protocol, target resources, artifact retrieval and failure recovery within their separate authority.
-5. Keep management authentication, training routing and deployment acceptance separate. Open PowerShell control remains unresolved security exposure; source defaults do not constitute an approved operating policy.
+## Install (current scripts)
 
-The cache fix does not establish recovery from the original incident, secure the Worker or complete acceptance. These are product tasks for the company after activation, not prerequisites to creating it.
+Scripts in `worker/windows/`:
+
+| Script | Purpose |
+|---|---|
+| `Setup.cmd`, `Install-Worker.ps1`, `WorkerInstall.ps1` | Install the worker runtime and scheduled task |
+| `Start-Worker.ps1` | Start ComfyUI on loopback and the worker on port 8791 |
+| `Restart-Worker.ps1`, `Uninstall-Worker.cmd` | Restart, uninstall |
+| `Enable-Open-PowerShell-Control.ps1` | Deploy the PowerShell control files to an installed worker |
+| `Migrate-Worker.ps1`, `Deploy-UpdaterBootstrap.ps1`, `updater/` | Legacy updater and migration (to be removed) |
+
+`scripts/build-windows-worker.py` builds the `dist/AI-Drawing-NVIDIA-Worker` package. Worker Python dependencies: `worker/windows/requirements.txt`.
+
+## Known limits
+
+- One worker URL only; no registry or load balancing.
+- No check that the worker runs the same project commit, custom nodes and models.
+- Worker command records live in memory and are lost on restart.
+- Tests that create processes use `subprocess.CREATE_NO_WINDOW`, which exists only on Windows.

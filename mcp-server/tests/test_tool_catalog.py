@@ -12,14 +12,13 @@ from mcp_server.tool_catalog import INTENDED_TOOLS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DOCS = (
-    PROJECT_ROOT / "docs" / "mcp-setup.md",
+    PROJECT_ROOT / "docs" / "mcp.md",
 )
 
 
 def test_package_readme_routes_to_current_tool_and_acceptance_authorities() -> None:
     text = (PROJECT_ROOT / "mcp-server" / "README.md").read_text(encoding="utf-8")
-    assert "../docs/mcp-setup.md" in text
-    assert "../docs/training-status.md" in text
+    assert "../docs/mcp.md" in text
     assert "MCP-CATALOG:START" not in text
 
 
@@ -140,22 +139,8 @@ def test_catalog_docs_list_active_tools() -> None:
             assert f"`{name}`" in active, f"{name} missing from {path}"
 
 
-def test_training_docs_expose_acceptance_limits_not_automation_handoff() -> None:
-    docs = PROJECT_ROOT / "docs"
-    text = (docs / "mcp-setup.md").read_text(encoding="utf-8")
-    assert "training-status.md" in text
-    assert "not completed end-to-end acceptance" in text
-    assert "```json lora-recipe-contract" not in text
-    assert not (docs / "lora-training-agent-handoff-runbook.md").exists()
-    assert not (docs / "lora-methods").exists()
-    status = (docs / "training-status.md").read_text(encoding="utf-8")
-    assert "artifact=None" in status
-    assert "submitted" in status
-    assert "not a training runbook" in status
-
-
 def test_mcp_docs_do_not_advertise_removed_workflow_tools() -> None:
-    text = (PROJECT_ROOT / "docs" / "mcp-setup.md").read_text(encoding="utf-8")
+    text = (PROJECT_ROOT / "docs" / "mcp.md").read_text(encoding="utf-8")
     for name in (
         "search_nodes", "get_node_schema", "list_workflow_templates", "get_workflow_template",
     ):

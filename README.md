@@ -47,7 +47,7 @@ The launcher asks whether ComfyUI is `managed`, `external` or `disabled`, then s
 | Backend | http://127.0.0.1:8001 (`/docs` for the API) |
 | ComfyUI | http://127.0.0.1:8188 |
 
-Connect an agent: see [MCP setup](docs/mcp-setup.md).
+Full setup: [docs/setup.md](docs/setup.md). Connect an agent: [docs/mcp.md](docs/mcp.md).
 
 ## Data
 

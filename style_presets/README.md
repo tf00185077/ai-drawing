@@ -1,6 +1,6 @@
 # Style presets
 
-Recipes describe reusable style intent. Saved ComfyUI graphs define exact replay inputs. Human notes retain profile purposes, exceptions and provenance. None establishes current image quality or CTY acceptance. See the [resource guide](../docs/prompt-and-workflow-resources.md) and [MCP setup](../docs/mcp-setup.md).
+Recipes describe reusable style intent. Saved ComfyUI graphs define exact replay inputs. Human notes retain profile purposes, exceptions and provenance. None establishes current image quality or CTY acceptance. See [Prompt dashboard](../docs/prompt-dashboard.md) and [MCP](../docs/mcp.md).
 
 ## Files and authority
 
