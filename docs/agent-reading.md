@@ -22,14 +22,6 @@ This rollout installs reading/skill bindings; it does not claim that a running c
 
 ## Approved shared skill source
 
-- [Roadmap steering](https://github.com/tf00185077/skills/tree/46f05033b9d051df023ead2d580623dcd7579ffb/project-roadmap-steering)
-- [Project memory curation](https://github.com/tf00185077/skills/tree/46f05033b9d051df023ead2d580623dcd7579ffb/project-memory-curation)
+The [live role bindings](team/skill-bindings.md) record the current native keys and paths under `/Users/tf00185088/Desktop/tim-project/my-skills/roles/`. Producer uses the producer methods; coding agent uses the coding methods and shared core; QA agent uses the review method and shared core; Auto Dreamer uses the memory method. Applicable Paperclip handoff and notification methods come from `roles/platforms/paperclip/`.
 
-The GitHub links above identify the approval baseline. Current Paperclip selections use shared local source directories, not per-company package copies:
-
-- `/Users/tf00185088/Desktop/tim-project/my-skills/project-roadmap-steering`
-- `/Users/tf00185088/Desktop/tim-project/my-skills/project-memory-curation`
-- `/Users/tf00185088/Desktop/tim-project/my-skills/paperclip-hermes-notify`
-- `/Users/tf00185088/Desktop/skills/.superpowers/skills/using-superpowers`
-
-Only the individual used skill directories are registered as non-primary source workspaces; product workspace selection is unchanged. Local source edits apply on the next actual read; a GitHub push alone does not update the checkout or an already-running conversation. Older company packages remain unselected history, not the current source. This binding grants no worker activation or skill-content editing authority.
+These are unpinned `local_path` selections, mounted as direct symlinks to the maintained source. Local updates apply on the next applicable read or invocation. All four retain native `paperclip` and the live `using-superpowers` package at `my-skills/cross-agent/.superpowers/skills/using-superpowers`. Registered non-primary source roots cover only the selected role folders, platform packages and common bootstrap; the primary product workspace stays unchanged. Historical company packages and old source keys remain unselected history.

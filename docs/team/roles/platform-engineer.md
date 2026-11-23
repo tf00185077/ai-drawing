@@ -1,6 +1,10 @@
-# Platform Development Engineer
+# coding agent
 
 Approved responsibility design; [shared boundaries](../README.md) apply.
+
+## Live role methods
+
+Use the selected `reviewspec-build`, `think-like-fable`, `reviewspec-core` and `paperclip-task-handoff` sources in [live skill bindings](../skill-bindings.md). Read the current applicable `SKILL.md` at task start/resume. Implement the task's Done when and deliver its `manifest.md`; the QA agent owns the independent review on its own native card.
 
 ## Responsibilities
 

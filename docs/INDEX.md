@@ -17,6 +17,7 @@ Planning reads are role-scoped: [Producer](team/roles/producer.md#required-roadm
 - [Windows worker source behavior and unresolved recovery](windows-worker.md)
 - [Training implementation status — not an automation runbook](training-status.md)
 - [Approved team responsibilities and lifecycle](team/README.md)
+- [Live role skill sources and native selections](team/skill-bindings.md)
 - [AI Drawing channel binding, handoff and native decision writeback](team/channel-routing.md)
 
 Source/API schemas define behavior, role contracts define ownership and owner approval grants execution authority. Documentation does not verify the installed Windows host or authorize deployment.

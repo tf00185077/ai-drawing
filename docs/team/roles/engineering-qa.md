@@ -1,6 +1,10 @@
-# Engineering QA
+# QA agent
 
 Approved responsibility design; [shared boundaries](../README.md) apply.
+
+## Live role methods
+
+Use the selected `reviewspec-review`, `reviewspec-core` and `paperclip-task-handoff` sources in [live skill bindings](../skill-bindings.md). Read the current applicable `SKILL.md` at task start/resume. This agent is the methods' independent Review role: perform kickoff and delivery review on separately owned native cards and write the corresponding task review files.
 
 ## Responsibilities
 

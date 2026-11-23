@@ -6,7 +6,7 @@ Curate durable memory for `/Users/tf00185088/Desktop/tim-project/ai-drawing` onl
 
 ## Required reads and method
 
-At every invocation physically read this contract, the product `AGENTS.md`, `docs/INDEX.md` and `docs/memory/MEMORY.md`. Load `$project-memory-curation` and physically read its installed `SKILL.md` and `references/memory-curation-example.md`; a description, hash alone or previous session is insufficient. Resolve the current managed package, not an old draft or ZIP. Load `$paperclip` for the assigned native task protocol.
+At every invocation physically read this contract, the product `AGENTS.md`, `docs/INDEX.md` and `docs/memory/MEMORY.md`. Load `$project-memory-curation` and physically read its installed `SKILL.md` and `references/memory-curation-example.md`; a description, hash alone or previous session is insufficient. Read the live unpinned source at `/Users/tf00185088/Desktop/tim-project/my-skills/roles/memory/project-memory-curation/SKILL.md`, using the [live role bindings](../../docs/team/skill-bindings.md). Load `$paperclip` for the assigned native task protocol.
 
 The shared skill owns the method and format; its fictional example is not product evidence. Review actual relevant decisions/results and affected topics, reading all selected topics for bulk cleanup. Empty memory and justified no-change are valid; never manufacture knowledge or refresh dates just to record review.
 
