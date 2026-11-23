@@ -99,6 +99,24 @@ class ApiClient:
             execution_target=execution_target,
         )
 
+    async def submit_minimax_h3_i2v(
+        self, *, image: tuple[str, bytes, str], prompt: str,
+        width: int, height: int, total_seconds: int,
+    ) -> str:
+        data = {
+            "prompt": prompt,
+            "width": str(width),
+            "height": str(height),
+            "total_seconds": str(total_seconds),
+        }
+        response = self._check(await self._client.post(
+            "/api/generate/video/minimax-h3-i2v",
+            data=data,
+            files={"image": image},
+            timeout=120.0,
+        ))
+        return response.json()["job_id"]
+
     async def submit_wan22_animate(self, *, reference_image: tuple[str, bytes, str],
                                    driver_video: tuple[str, bytes, str], prompt: str,
                                    negative_prompt: str | None, total_seconds: float,

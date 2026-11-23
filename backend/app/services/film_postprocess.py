@@ -40,7 +40,34 @@ def probe_video(path: Path, *, ffprobe: str | None = None) -> dict[str, Any]:
     return stream
 
 
-def interpolate_video_exact(*, input_path: Path, output_path: Path, target_frames: int, total_seconds: float, model_path: Path, work_root: Path, ffmpeg: str | None = None, ffprobe: str | None = None) -> dict[str, Any]:
+def build_audio_preserving_mux_command(
+    *, ffmpeg: str, video_path: Path, audio_source_path: Path,
+    output_path: Path, duration_seconds: float,
+) -> list[str]:
+    """Build a bounded mux command that copies FILM video and retains optional H3 audio."""
+    return [
+        ffmpeg,
+        "-y",
+        "-i",
+        str(video_path),
+        "-i",
+        str(audio_source_path),
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0?",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-shortest",
+        "-t",
+        f"{duration_seconds:.12g}",
+        str(output_path),
+    ]
+
+
+def interpolate_video_exact(*, input_path: Path, output_path: Path, target_frames: int, total_seconds: float, model_path: Path, work_root: Path, preserve_audio: bool = False, ffmpeg: str | None = None, ffprobe: str | None = None) -> dict[str, Any]:
     """Create exactly target_frames while preserving source frame 0/last and their span."""
     ffmpeg_exe = ffmpeg or shutil.which("ffmpeg")
     if not ffmpeg_exe:
@@ -93,11 +120,24 @@ def interpolate_video_exact(*, input_path: Path, output_path: Path, target_frame
 
         fps = output_fps(target_frames=target_frames, total_seconds=total_seconds)
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        video_only_path = temp / "film_video_only.mp4" if preserve_audio else output_path
         subprocess.run(
-            [ffmpeg_exe, "-y", "-framerate", f"{fps:.12g}", "-i", str(output_dir / "%06d.png"), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", str(output_path)],
+            [ffmpeg_exe, "-y", "-framerate", f"{fps:.12g}", "-i", str(output_dir / "%06d.png"), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", str(video_only_path)],
             check=True,
             capture_output=True,
         )
+        if preserve_audio:
+            subprocess.run(
+                build_audio_preserving_mux_command(
+                    ffmpeg=ffmpeg_exe,
+                    video_path=video_only_path,
+                    audio_source_path=input_path,
+                    output_path=output_path,
+                    duration_seconds=target_frames / fps,
+                ),
+                check=True,
+                capture_output=True,
+            )
         info = probe_video(output_path, ffprobe=ffprobe)
         try:
             actual_frames = int(info["nb_frames"])

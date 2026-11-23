@@ -33,7 +33,6 @@ None.
 
 - `lora-training-mcp-tools`: Make MCP Start faithfully expose the backend-supported start contract and preserve field-level backend validation failures.
 - `lora-training-workflow`: Make Start fail closed on unknown fields, approved dataset/profile versions, model-family conflicts, unsafe dataset paths, and validation races.
-- `lora-training-agent-handoff-runbook`: Require agents to submit the exact dataset and profile hashes shown in the user-approved pre-start report.
 
 ## Impact
 
@@ -41,5 +40,4 @@ None.
 - MCP LoRA tool signature and backend-error normalization under `mcp-server/mcp_server/tools/lora_train.py`.
 - Backend and MCP contract, workflow, path-safety, and handoff tests.
 - The existing LoRA training page and its TypeScript request/decision types; broader frontend feature parity remains out of scope.
-- `docs/lora-training-agent-handoff-runbook.md` and `docs/PROGRESS.md`.
 - Existing callers that start training without both approval hashes or that send unknown fields will receive structured validation failures and must run preflight first.

@@ -4,39 +4,27 @@ alias: 日系a
 alias_type: style
 source_image_id: 82973952
 registry_version: 3
+catalog_path: style_presets/agent/presets/japanese-a.json
 ---
 
-# 日系a
+# [Illustrious] Japanese A
 
-## Source layers
+**Status: Needs re-verification.**
 
-- Exact Civitai Parent: image `82973952`, post `18428032`.
-- Parent recipe SHA-256: `3d4b0b059deab7d9aba34b8ade337a399d528cb94dec8fb116df8926bfad8a08`.
-- Checkpoint: `aMixIllustrious_aMix.safetensors`, exact file `1692152/1915059/1813499`.
-- This is a style alias. Source character, clothing, pose, room, and camera are not preset defaults.
+Intended style: polished Japanese anime illustration, thin lineart, cel shading with controlled gradients, warm daylight and soft backgrounds. Manifest visual-evidence classifications are historical, not a fresh inspection.
 
-## Preserved style identity
+[Recipe](../agent/presets/japanese-a.json) · [Shared operations and evidence rules](../README.md)
 
-The reusable identity combines Parent quality tags with visual evidence from the exact official source image: polished Japanese 2D anime illustration, clean thin lineart, hybrid cel shading and soft gradients, high-detail hair/eyes/fabric, warm natural light, soft luminous highlights, harmonious warm colors, crisp character rendering, shallow depth of field, and a softly rendered background.
+## Profile and processing limits
 
-## Removed source content
+[`portrait`](../agent/workflows/japanese-a/portrait.api.json): base style at 1072×1608, with no additional profile prompt. Uses `aMixIllustrious_aMix.safetensors` and its checkpoint CLIP/VAE, without LoRA.
 
-Removed character appearance (freckles, orange hair/eyes, ponytail, wink, body descriptors), outfit (sweater, pants, boots, choker), action/pose (blowing kiss, on stomach, lying, feet up), room elements (window, curtains), and dynamic-angle composition. These may only re-enter a variant when explicitly requested.
+Source API final size was 1072×1608. Embedded A1111 metadata recorded a 768×1152 base, 1.4× hires, 10 hires steps and denoise 0.1. The saved graph uses **one pass** at final size, not that hires chain. Recipe seed is unspecified and the manifest describes randomization; exact replay fixes seed `2667468589`. Other exact settings remain in the JSON.
 
-## Sampling evidence
+Character, clothing, room, camera and source pose are not alias defaults. Keep school-age characters age-appropriate and non-suggestive; identify variant-only agent additions separately.
 
-Civitai API records the final image as `1072×1608`; embedded A1111 metadata records a `768×1152` base pass with 1.4× hires. Both are retained. The executable single-pass default is `1072×1608`, 20 steps, CFG 6, `euler_ancestral`, `normal`, random seed.
+## Historical source and sample evidence
 
-## Variant safety
+The [preservation manifest](../agent/preservation_manifests/japanese-a.json) retains the source/resource locks, acquisition/prompt/media hashes and classifications. Source: [Civitai image `82973952`](https://civitai.com/images/82973952), post `18428032`. Checkpoint lock: model `1692152`, version `1915059`, file `1813499`, size `7105348060` bytes, SHA-256 `b199b92ee9fadbd84b926e8f2592a8ea04503ec0953b50d62d40169264fb69d4`.
 
-Known school-age characters must remain age-appropriate, fully clothed, and non-suggestive unless a clearly adult alternate portrayal is explicitly requested. Any neutral safety/detail additions are reported as `agent_added`; they are not folded into the alias.
-
-## First variant audit — Kousaka Honoka in a room, lying pose
-
-- User-requested: `Kousaka Honoka (Love Live!)`, a room scene, and a lying pose.
-- Necessary character anchors: orange hair, side ponytail, blue eyes.
-- Agent-added neutral constraints: solo, bed as a support surface, fully clothed, modest casual clothes, wholesome non-suggestive pose.
-- Removed rather than inherited from Parent: freckles, blowing kiss, wink, Parent ponytail identity, source orange/brown eyes conflict, sweater/black pants/boots/choker, breasts/body-size tags, on-stomach/feet-up pose details, window/curtains, and dynamic angle.
-- Variant-only negative additions: `nsfw, nude, naked, cleavage, lingerie, underwear, suggestive pose, fetish clothing`.
-- Job: `f2d70359-310d-4769-83f0-be5a46818422`; Gallery image `2427`; seed `5245869681136200769`.
-- Result: recognizable orange-haired, blue-eyed side-ponytail Honoka, alone in a room and lying on a bed. The model concretized unspecified clothing as a top and short plaid skirt; this is output-specific and is not added to the alias or preset.
+Historical variant: gallery `2427`, job `f2d70359-310d-4769-83f0-be5a46818422`, seed `5245869681136200769`. The request specified Honoka, a room and a lying pose; the agent added modest clothing and bed support. The original note described recognizable Honoka on a bed, with a top and short plaid skirt. That is a historical description, not current validation; those clothes are not alias defaults.

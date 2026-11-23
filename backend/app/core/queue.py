@@ -11,6 +11,8 @@ import hashlib
 import json
 import logging
 import random
+import secrets
+import shutil
 import threading
 import time
 import uuid
@@ -33,6 +35,12 @@ from app.core.comfyui import (
     structure_node_errors,
 )
 from app.services.nvidia_worker import get_generation_client
+from app.services.argus_mlx_i2v import (
+    ArgusMlxI2VError,
+    ArgusMlxI2VRequest,
+    ArgusMlxI2VResult,
+    ArgusMlxI2VRunner,
+)
 from app.core.generation_batches import (
     cancel_queued_batch,
     create_batch,
@@ -106,6 +114,8 @@ class AuditedWorkflowHashMismatchError(RuntimeError):
 
 
 class GenerateParams(TypedDict, total=False):
+    execution_engine: str  # comfyui (default) | argus_mlx_i2v
+    argus_mlx_i2v: dict[str, Any]
     workflow: dict[str, Any]  # 自訂 workflow，若有則跳過 template 載入
     template: str  # 指定 workflow 模板名稱（如 "anima"），優先於依 lora 推斷的預設
     checkpoint: str
@@ -137,6 +147,7 @@ class GenerateParams(TypedDict, total=False):
     server_owned_verbatim: bool  # internal saved-style-workflow submission marker
     fixed_video_template: str  # backend-owned Discord fixed graph marker
     staged_input_paths: list[str]  # opaque backend staging files; never caller paths
+    fixed_video_input_bindings: list[dict[str, Any]]  # staged index -> node/input upload binding
     workflow_input_files: list[dict[str, str]]  # selected-client node/input/path uploads
     film_postprocess: dict[str, Any]  # exact target_frames + first-to-last total_seconds
     execution_target: str  # local | worker; worker failures never fall back
@@ -226,6 +237,89 @@ _failed: "OrderedDict[str, dict[str, Any]]" = OrderedDict()
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
 _our_prompt_ids: set[str] = set()  # 本系統提交的 prompt_id，history watcher 略過
+_argus_runner: ArgusMlxI2VRunner | None = None
+
+
+def get_argus_mlx_i2v_runner() -> ArgusMlxI2VRunner:
+    global _argus_runner
+    if _argus_runner is None:
+        _argus_runner = ArgusMlxI2VRunner(get_settings())
+    return _argus_runner
+
+
+def _record_argus_mlx_artifact(job: "_Job", result: ArgusMlxI2VResult) -> None:
+    settings = get_settings()
+    gallery_root = Path(settings.gallery_dir).resolve()
+    directory = gallery_root / datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    directory.mkdir(parents=True, exist_ok=True)
+    destination = directory / f"{job.job_id}_argus_mlx_i2v.mp4"
+    temporary = directory / f".{job.job_id}.tmp"
+    payload = job.params["argus_mlx_i2v"]
+    try:
+        shutil.copyfile(result.output_path, temporary)
+        temporary.replace(destination)
+        db = SessionLocal()
+        try:
+            recording_save_artifact(
+                gallery_path=str(destination.relative_to(gallery_root)),
+                artifact_type="video", mime_type="video/mp4", job_id=job.job_id,
+                source_node_id="argus_mlx_i2v", source_node_type="SaveVideo",
+                file_size=destination.stat().st_size, workflow_json=None,
+                prompt=job.params.get("prompt"), negative_prompt=None,
+                metadata={
+                    "execution_engine": "argus_mlx_i2v", "seed": job.params["seed"],
+                    "requested_seconds": payload["total_seconds"],
+                    "native_frames": payload["native_frames"],
+                    "timeline_span_seconds": (payload["native_frames"] - 1) / 24,
+                    "container_duration_seconds": payload["native_frames"] / 24,
+                    "steps": 9, "nfe": 8, "profile": "quality", "low_memory": True,
+                    "stream_blocks": True, "no_block_cache": True,
+                    "memory_pressure_guard": True,
+                    "runtime": Path(settings.argus_mlx_runtime_root).name,
+                    "checkpoint": Path(settings.argus_mlx_checkpoint).name,
+                    "transformer": Path(settings.argus_mlx_transformer).name,
+                    "turbo_lora": Path(settings.argus_mlx_turbo_lora).name,
+                }, fps=result.fps, frame_count=result.frame_count,
+                duration=result.duration, width=result.width, height=result.height, db=db,
+            )
+        finally:
+            db.close()
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        destination.unlink(missing_ok=True)
+        raise
+
+
+def _process_argus_mlx_job(job: "_Job") -> None:
+    payload = job.params.get("argus_mlx_i2v")
+    if not isinstance(payload, dict):
+        raise ValueError("argus_mlx_i2v payload is missing")
+    seed = job.params.get("seed")
+    if seed is None:
+        seed = secrets.randbelow(2**63)
+        job.params["seed"] = seed
+    settings = get_settings()
+    staged_image = Path(payload["staged_image"]).resolve()
+    staging_root = Path(settings.video_staging_dir).resolve()
+    if not staged_image.is_relative_to(staging_root) or not staged_image.is_file():
+        raise ArgusMlxI2VError(
+            "staged_input_invalid",
+            "Argus staged image is outside the backend staging root",
+        )
+    request = ArgusMlxI2VRequest(
+        job_id=job.job_id, staged_image=staged_image,
+        prompt=str(job.params.get("prompt") or ""), width=int(payload["width"]),
+        height=int(payload["height"]), total_seconds=int(payload["total_seconds"]),
+        native_frames=int(payload["native_frames"]), seed=int(seed),
+    )
+    expected = Path(settings.argus_mlx_work_root).resolve() / job.job_id
+    try:
+        result = get_argus_mlx_i2v_runner().run(request)
+        if not result.output_path.resolve().is_relative_to(expected):
+            raise ArgusMlxI2VError("output_path_invalid", "Argus output escaped its job directory")
+        _record_argus_mlx_artifact(job, result)
+    finally:
+        shutil.rmtree(expected, ignore_errors=True)
 
 
 def _batch_status_item(
@@ -345,6 +439,12 @@ def _record_failure(
             "error": safe_error,
             "node_errors": node_errors or [],
             "recording_error": recording_error,
+            "failure_code": failure_code or (
+                str(recording_error.get("code")) if recording_error else "submission_failed"
+            ),
+            "diagnostic_tail": (
+                error.log_tail if isinstance(error, ArgusMlxI2VError) else ""
+            ),
             "is_custom": bool(job.params.get("workflow")),
         }
         while len(_failed) > MAX_FAILED:
@@ -644,7 +744,8 @@ def cancel(job_id: str) -> bool:
             return True
         for i, j in enumerate(_pending):
             if j.public_job_id == job_id:
-                _pending.pop(i)
+                cancelled = _pending.pop(i)
+                _cleanup_staged_inputs(cancelled)
                 return True
     return False
 
@@ -688,6 +789,31 @@ def _process_pending(comfy: ComfyUIClient | None = None) -> None:
                 progress.current_batch_index = job.batch_index
 
     try:
+        execution_engine = job.params.get("execution_engine", "comfyui")
+        if execution_engine == "argus_mlx_i2v":
+            try:
+                _process_argus_mlx_job(job)
+                _cleanup_staged_inputs(job)
+            except Exception as error:
+                _record_failure(
+                    job, error,
+                    failure_code=getattr(error, "code", "argus_mlx_i2v_failed"),
+                    recording_error=(
+                        {"code": "recording_failed", "message": str(error)}
+                        if not isinstance(error, ArgusMlxI2VError) else None
+                    ),
+                )
+            finally:
+                _release_running(job)
+            return
+        if execution_engine != "comfyui":
+            _record_failure(
+                job,
+                ValueError(f"unknown execution engine: {execution_engine}"),
+                failure_code="unknown_execution_engine",
+            )
+            _release_running(job)
+            return
         if comfy is None:
             comfy = get_generation_client(
                 job.params.get("execution_target", "local")
@@ -723,18 +849,29 @@ def _process_pending(comfy: ComfyUIClient | None = None) -> None:
                         raise FileNotFoundError("fixed video input escaped staging root") from exc
                     if not path.is_file():
                         raise FileNotFoundError(f"fixed video staged input missing: {path.name}")
-                image_node = "97" if fixed_template == "discord_animegen_i2v_fixed" else "5"
-                uploaded = comfy.upload_image(staged[0], subfolder="discord-video")
-                uploaded_name = uploaded["name"]
-                if uploaded.get("subfolder"):
-                    uploaded_name = f"{uploaded['subfolder']}/{uploaded_name}"
-                prompt[image_node]["inputs"]["image"] = uploaded_name
-                if fixed_template == "discord_wan22_animate_fixed":
-                    uploaded_video = comfy.upload_image(staged[1], subfolder="discord-video")
-                    video_name = uploaded_video["name"]
-                    if uploaded_video.get("subfolder"):
-                        video_name = f"{uploaded_video['subfolder']}/{video_name}"
-                    prompt["1"]["inputs"]["file"] = video_name
+                bindings = job.params.get("fixed_video_input_bindings")
+                if not isinstance(bindings, list) or not bindings:
+                    raise ValueError("fixed video input bindings are missing")
+                for binding in bindings:
+                    if not isinstance(binding, dict):
+                        raise ValueError("fixed video input binding must be an object")
+                    staged_index = binding.get("staged_index")
+                    node_id = str(binding.get("node_id", ""))
+                    input_name = str(binding.get("input_name", ""))
+                    if type(staged_index) is not int or not 0 <= staged_index < len(staged):
+                        raise ValueError("fixed video staged input index is invalid")
+                    node = prompt.get(node_id)
+                    if not isinstance(node, dict) or not isinstance(node.get("inputs"), dict):
+                        raise ValueError("fixed video input binding references a missing node")
+                    if input_name not in {"image", "file"}:
+                        raise ValueError("fixed video input binding name is invalid")
+                    uploaded = comfy.upload_image(
+                        staged[staged_index], subfolder="discord-video"
+                    )
+                    uploaded_name = uploaded["name"]
+                    if uploaded.get("subfolder"):
+                        uploaded_name = f"{uploaded['subfolder']}/{uploaded_name}"
+                    node["inputs"][input_name] = uploaded_name
             job.params["workflow_json"] = copy.deepcopy(prompt)
             try:
                 prompt_id = comfy.submit_prompt(prompt)
@@ -1131,6 +1268,7 @@ def _save_job_outputs(
                 created_paths.append(final_path)
                 target_frames = int(film["target_frames"])
                 total_seconds = float(film["total_seconds"])
+                preserve_audio = bool(film.get("preserve_audio", False))
                 film_info = _run_recording_stage(
                     "film_interpolation",
                     lambda: interpolate_video_exact(
@@ -1138,6 +1276,7 @@ def _save_job_outputs(
                         output_path=final_path,
                         target_frames=target_frames,
                         total_seconds=total_seconds,
+                        preserve_audio=preserve_audio,
                         model_path=Path(settings.film_model_path),
                         work_root=Path(settings.film_work_dir),
                     ),
@@ -1463,6 +1602,8 @@ def start_worker() -> None:
 def stop_worker() -> None:
     """停止佇列背景 worker（應用關閉時呼叫）"""
     _stop_event.set()
+    if _argus_runner is not None:
+        _argus_runner.shutdown()
     if _worker_thread:
         _worker_thread.join(timeout=5.0)
     logger.info("Queue worker stopped")

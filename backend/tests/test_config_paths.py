@@ -94,6 +94,21 @@ def test_prompt_library_dir_is_project_root_relative(monkeypatch) -> None:
     assert Path(settings.prompt_library_dir).name == "prompt_library-test"
 
 
+def test_argus_python_keeps_runtime_venv_symlink_path(tmp_path: Path) -> None:
+    runtime_root = tmp_path / "runtime"
+    python_path = runtime_root / ".venv" / "bin" / "python"
+    python_path.parent.mkdir(parents=True)
+    python_path.symlink_to(Path(__file__).resolve())
+
+    settings = config_module.Settings(
+        _env_file=None,
+        argus_mlx_runtime_root=str(runtime_root),
+        argus_mlx_python=str(python_path),
+    )
+
+    assert settings.argus_mlx_python == str(python_path)
+
+
 @pytest.mark.parametrize("timeout", ["0", "-0.1"])
 def test_prompt_library_lock_timeout_must_be_positive(monkeypatch, timeout: str) -> None:
     monkeypatch.setenv("PROMPT_LIBRARY_LOCK_TIMEOUT", timeout)

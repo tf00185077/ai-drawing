@@ -9,9 +9,10 @@ from .config import Config, load_config
 from .delivery import DeliveryError, DeliveryLedger, ResultDeliveryService, mixed_batch_warning
 from .main_types import normalize_job_id
 from .operator_api import OperatorConfig, OperatorDeliveryServer
-from .views import FixedVideoModal, PresetView
+from .views import FixedVideoModal, MiniMaxH3I2VModal, PresetView
 from .validation import (
     ValidationError,
+    parse_minimax_h3_dimensions,
     parse_video_dimensions,
     validate_discord_attachment,
 )
@@ -99,6 +100,28 @@ def build_bot(config: Config):
                 api, mode="animegen", image=image, width=width, height=height,
                 execution_target=_execution_target_value(execution_target),
             )
+        )
+
+    @tree.command(name="minimax_h3_i2v", description="固定 Mac MLX 的 MiniMax H3 I2V", guild=guild)
+    @app_commands.describe(
+        image="起始圖片；Prompt 與 1–5 秒會在下一步輸入",
+        width="輸出寬度（256–1024，須為 32 的倍數）",
+        height="輸出高度（256–1024，須為 32 的倍數）",
+    )
+    async def minimax_h3_i2v(
+        interaction: discord.Interaction,
+        image: discord.Attachment,
+        width: app_commands.Range[int, 256, 1024],
+        height: app_commands.Range[int, 256, 1024],
+    ):
+        try:
+            validate_discord_attachment(image, kind="image")
+            width, height = parse_minimax_h3_dimensions(width, height)
+        except ValidationError as exc:
+            await interaction.response.send_message(f"❌ {exc}", ephemeral=True)
+            return
+        await interaction.response.send_modal(
+            MiniMaxH3I2VModal(api, image=image, width=width, height=height)
         )
 
     @tree.command(name="wan22_animate", description="選參考圖與driver後開啟互動設定", guild=guild)

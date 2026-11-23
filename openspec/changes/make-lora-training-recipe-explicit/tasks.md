@@ -57,7 +57,6 @@
 ## 9. Operator and agent documentation
 
 - [x] 9.1 Update `docs/mcp-setup.md` with the canonical LoRA recipe container, accepted broad forms/aliases, strict output/error envelope, migration error, and a preflight-to-Start example.
-- [x] 9.2 Update `docs/lora-training-agent-handoff-runbook.md` with recipe version/hash, field sources, requested/effective scope, exact Start payload use, monitoring evidence, and explicit repair branches.
 - [x] 9.3 Update `docs/setup-guide.md` with runtime-capability and execution-evidence meanings, clearly labeling unavailable source/runtime proof and deferring the real bounded trainer probe.
 
 ## 10. Verification and project record

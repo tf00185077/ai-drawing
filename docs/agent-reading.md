@@ -25,4 +25,11 @@ This rollout installs reading/skill bindings; it does not claim that a running c
 - [Roadmap steering](https://github.com/tf00185077/skills/tree/46f05033b9d051df023ead2d580623dcd7579ffb/project-roadmap-steering)
 - [Project memory curation](https://github.com/tf00185077/skills/tree/46f05033b9d051df023ead2d580623dcd7579ffb/project-memory-curation)
 
-Managed Paperclip packages are separate deployments, not live GitHub links. A later source merge requires an authorized deployment refresh and readback; it does not update those snapshots by itself.
+The GitHub links above identify the approval baseline. Current Paperclip selections use shared local source directories, not per-company package copies:
+
+- `/Users/tf00185088/Desktop/tim-project/my-skills/project-roadmap-steering`
+- `/Users/tf00185088/Desktop/tim-project/my-skills/project-memory-curation`
+- `/Users/tf00185088/Desktop/tim-project/my-skills/paperclip-hermes-notify`
+- `/Users/tf00185088/Desktop/skills/.superpowers/skills/using-superpowers`
+
+Only the individual used skill directories are registered as non-primary source workspaces; product workspace selection is unchanged. Local source edits apply on the next actual read; a GitHub push alone does not update the checkout or an already-running conversation. Older company packages remain unselected history, not the current source. This binding grants no worker activation or skill-content editing authority.

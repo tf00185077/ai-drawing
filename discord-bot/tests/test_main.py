@@ -27,11 +27,11 @@ def test_build_bot_registers_commands():
     client, tree, api = build_bot(config)
     guild = discord.Object(id=123)
     names = {c.name for c in tree.get_commands(guild=guild)}
-    assert names == {"draw", "animegen_i2v", "wan22_animate", "result"}
+    assert names == {"draw", "animegen_i2v", "minimax_h3_i2v", "wan22_animate", "result"}
     assert api._base_url == "http://test"
 
 
-def test_all_generation_commands_offer_human_readable_execution_target_choices():
+def test_only_worker_capable_generation_commands_offer_execution_target_choices():
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test")
     _client, tree, _api = build_bot(config)
     guild = discord.Object(id=123)
@@ -44,6 +44,9 @@ def test_all_generation_commands_offer_human_readable_execution_target_choices()
             ("Mac（本機）", "local"),
             ("Windows（Worker）", "worker"),
         ]
+
+    h3 = tree.get_command("minimax_h3_i2v", guild=guild)
+    assert {parameter.name for parameter in h3.parameters} == {"image", "width", "height"}
 
 
 async def test_result_command_sends_successful_files_before_mixed_warning(tmp_path):

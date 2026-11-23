@@ -6,5 +6,5 @@
   "io": [
     "text"
   ],
-  "description": "Basic text-to-image with a checkpoint. Works with any checkpoint family."
+  "description": "Basic checkpoint-based SDXL-style text-to-image graph with checkpoint CLIP/VAE and EmptyLatentImage. Use only compatible model families/resources; split diffusion-model families require their own loader graphs. Current output effect needs re-verification."
 }

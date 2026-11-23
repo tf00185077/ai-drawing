@@ -56,8 +56,6 @@ training to include Text Encoder modules when the intended scope was DiT-only.
   and sd-scripts execution use the canonical effective recipe.
 - `lora-training-mcp-tools`: MCP Start and preflight accept broad recipe input
   and return strict canonical recipe/error envelopes.
-- `lora-training-agent-handoff-runbook`: Pre-start, Start, monitoring, and
-  terminal reports carry recipe version/hash and requested/effective scope.
 
 ## Impact
 

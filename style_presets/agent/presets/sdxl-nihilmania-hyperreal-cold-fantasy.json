@@ -11,7 +11,7 @@
   "loras": [],
   "diffusion_model": null,
   "text_encoder": null,
-  "vae": "sdxl_vae.safetensors",
+  "vae": null,
   "default_params": {
     "steps": 50,
     "cfg": 9.0,

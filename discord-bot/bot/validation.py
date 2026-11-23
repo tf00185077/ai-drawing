@@ -36,6 +36,39 @@ def parse_video_dimensions(width: int | str, height: int | str) -> tuple[int, in
     return parsed_width, parsed_height
 
 
+def parse_minimax_h3_dimensions(width: int | str, height: int | str) -> tuple[int, int]:
+    if isinstance(width, bool) or isinstance(height, bool):
+        raise ValidationError("MiniMax H3 影片寬高必須是整數")
+    try:
+        parsed_width, parsed_height = int(str(width).strip()), int(str(height).strip())
+    except (TypeError, ValueError):
+        raise ValidationError("MiniMax H3 影片寬高必須是整數")
+    if not 256 <= parsed_width <= 1024 or not 256 <= parsed_height <= 1024:
+        raise ValidationError("MiniMax H3 影片寬高必須介於 256–1024")
+    if parsed_width % 32 or parsed_height % 32:
+        raise ValidationError("MiniMax H3 影片寬高必須是 32 的倍數")
+    if parsed_width * parsed_height > 786432:
+        raise ValidationError("MiniMax H3 影片總像素不可超過 786432")
+    return parsed_width, parsed_height
+
+
+def parse_minimax_h3_contract(
+    total_seconds: int | str,
+) -> tuple[int, int, float, float]:
+    try:
+        text = str(total_seconds).strip()
+        if not text or not text.isdecimal() or isinstance(total_seconds, bool):
+            raise ValueError
+        seconds = int(text)
+    except (TypeError, ValueError):
+        raise ValidationError("總秒數必須是整數")
+    if not 1 <= seconds <= 5:
+        raise ValidationError("總秒數必須介於 1–5")
+    requested_frames = round(seconds * 24)
+    source = requested_frames + ((5 - requested_frames) % 17)
+    return seconds, source, (source - 1) / 24.0, source / 24.0
+
+
 def parse_video_contract(
     total_seconds: float | str,
     source_frames: int | str,

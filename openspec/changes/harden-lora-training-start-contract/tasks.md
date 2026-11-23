@@ -40,7 +40,6 @@
 - [x] 6.1 Extend frontend LoRA request/decision TypeScript types with required approval hashes and the structured preflight response used by the page.
 - [x] 6.2 Add frontend tests for ready, needs-review, do-not-train, and failed preflight paths, including preservation of the selected `batch_size`.
 - [x] 6.3 Update the LoRA training page to preflight every selected folder, call Start only for `decision=train`, submit both hashes, and display actionable decision/error text for skipped folders.
-- [x] 6.4 Update `docs/lora-training-agent-handoff-runbook.md` and its machine-readable contract so Start submits both hashes directly and no longer describes profile hash as preflight-only verification.
 - [x] 6.5 Update runbook contract tests for the exact submitted fields and stale/missing-hash recovery behavior.
 
 ## 7. Verification and Project Record

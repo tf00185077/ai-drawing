@@ -157,6 +157,39 @@ def test_worker_retry_scans_cidr_and_adopts_protocol_2_worker_without_auth(
     assert nvidia_worker.get_worker_client().base_url == reachable_url
 
 
+def test_get_worker_client_ignores_runtime_discovered_url_when_discovery_disabled(
+    monkeypatch,
+) -> None:
+    settings = _worker_settings(nvidia_worker_discovery_enabled=False)
+    nvidia_worker.remember_runtime_worker_url(
+        settings.nvidia_worker_url,
+        settings.nvidia_worker_hostname,
+        settings.nvidia_worker_protocol_version,
+        "http://192.168.1.120:8791",
+    )
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+    discover = MagicMock()
+    monkeypatch.setattr(nvidia_worker, "discover_worker_url", discover)
+    requests = _install_recording_transport(
+        monkeypatch,
+        lambda request: httpx.Response(
+            200,
+            json={"hostname": settings.nvidia_worker_hostname, "protocol_version": 2},
+            request=request,
+        ),
+    )
+
+    client = nvidia_worker.get_worker_client()
+
+    assert client.health() == {
+        "hostname": settings.nvidia_worker_hostname, "protocol_version": 2,
+    }
+    assert [str(request.url) for request in requests] == [
+        "http://192.168.1.106:8791/v1/worker/status"
+    ]
+    discover.assert_not_called()
+
+
 def test_get_worker_client_requires_only_configured_url(monkeypatch) -> None:
     monkeypatch.delenv("NVIDIA_WORKER_TOKEN", raising=False)
     settings = Settings(

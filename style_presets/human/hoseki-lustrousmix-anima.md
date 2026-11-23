@@ -7,157 +7,28 @@ lora:
 source_url: https://civitai.com/images/132048670
 ---
 
-# Hoseki LustrousMix Anima / Abstract Gem Illustration
+# [Anima] Hoseki LustrousMix / Abstract Gem Illustration
 
-## 中文名稱
+**Status: Needs re-verification.**
 
-寶石抽象插畫 Anima
+Intended style: polished anime linework, abstract multicolored backgrounds and a calm illustrative mood. Gem props and uniforms are source-profile content.
 
-從 Civitai 單張圖片頁 `132048670` 建立的 Anima checkpoint / diffusion-model style preset。
-
-## Source
-
-- Image URL: https://civitai.com/images/132048670
-- Civitai image id: `132048670`
-- Creator shown on image API: `Hoseki`
-- Base model shown by image API: `Anima`
-- Image dimensions on Civitai: `832x1216`
-
-## Resources Used on Civitai
-
-頁面 `Generation data → Resources used` 顯示：
-
-- `Hoseki - LustrousMix [Anima v1.0]`
-  - Resource type on Civitai: `Checkpoint`
-  - Version: `Anima v1.0`
-  - Model id: `941345`
-  - Model version id: `2982979`
-  - File id: `2862545`
-  - File: `hosekiLustrousmixAnima_animaV10.safetensors`
-
-## Local Resource Pairing
-
-雖然 Civitai 顯示 resource type 為 `Checkpoint`，但 base model 是 `Anima`，在本機 ai-drawing / ComfyUI 中用 split-model workflow 處理，不放傳統 checkpoints 目錄。
-
-- Template: `anima`
-- Diffusion model / UNET: `hosekiLustrousmixAnima_animaV10.safetensors`
-- Text encoder: `qwen_3_06b_base.safetensors`
-- VAE: `qwen_image_vae.safetensors`
-- LoRA: none
-
-Installed file:
-
-```text
-/Volumes/AI-Drawing-16T/ai-drawing/models/diffusion_models/hosekiLustrousmixAnima_animaV10.safetensors
-```
-
-Verification:
-
-```text
-size_bytes=4182230672
-sha256=19147601CFC165D8851222505B5CD2B99C11874F6B2BEE0CF00612E77D7CBCAB
-```
-
-## Extracted Source Prompt
-
-```text
-masterpiece, best quality, 1other, diamond \(houseki no kuni\), pale skin, elbow gloves, from side, pensive, holding gem, holding diamond, text "To be or not to be?", abstract background, hand on own chin, looking at object, gem uniform \(houseki no kuni\), abstract, multicolored background
-```
-
-## Extracted Negative Prompt
-
-```text
-worst quality, low quality, bad anatomy, jpeg artifacts, signature, sepia, fewer digits, extra digits, bad hands, bad anatomy, watermark, score_1, score_2, score_3, censored
-```
-
-## Extracted Generation Params
-
-```text
-cfgScale: 4
-steps: 24
-sampler: Euler a
-seed: 2374630006
-```
-
-Mapped local sampler name:
-
-```text
-sampler_name: euler_ancestral
-```
-
-## Reusable Style Signals
-
-通用 profile 只保留這些可重用風格元素：
-
-- `masterpiece`, `best quality`
-- Anima-based polished anime illustration
-- abstract / multicolored background
-- refined character linework
-- clean polished digital rendering
-- contemplative / calm atmosphere
-- sharp silhouette
-- soft dramatic lighting
-
-## Source-Specific Elements
-
-以下屬於來源圖題材或服裝/道具/角色，不應放進通用 profile：
-
-- `diamond \(houseki no kuni\)`
-- `gem uniform \(houseki no kuni\)`
-- `elbow gloves`
-- `holding gem`
-- `holding diamond`
-- `hand on own chin`
-- `looking at object`
-- text: `"To be or not to be?"`
-- gem / diamond / crystal motif
+[Recipe](../agent/presets/hoseki-lustrousmix-anima.json) · [Shared operations and evidence rules](../README.md)
 
 ## Profiles
 
-### `neutral-anime`
+- [`neutral-anime`](../agent/workflows/hoseki-lustrousmix-anima/neutral-anime.api.json): general characters without gem/Houseki props; still adds an abstract multicolored background and calm mood.
+- [`source-image-132048670`](../agent/workflows/hoseki-lustrousmix-anima/source-image-132048670.api.json): approximate side-view, gem-holding figure with pale skin and uniform styling; not an exact source prompt/image match.
+- [`anime-2d-default`](../agent/workflows/hoseki-lustrousmix-anima/anime-2d-default.api.json): hand-drawn 2D intent with abstract multicolor, translucent highlights and sharp silhouette; negatives suppress dark backgrounds and gemstone/jewelry focus.
 
-通用風格 profile。用於一般角色圖，例如 Love Live 穗乃果、逛街、休閒服、回眸。這個 profile 已移除：
+## Resource and processing limits
 
-- gem / diamond / crystal / holding gem
-- Houseki no Kuni 題材
-- gem uniform / elbow gloves 等來源服裝
-- looking at object / hand on chin 等來源姿勢
+Civitai labels LustrousMix a checkpoint; the local graphs use split `UNETLoader`, text encoder and VAE, not `CheckpointLoaderSimple`. Recipe size/scheduler are unspecified. Saved graphs use 1024×1024 and `simple`, unlike the reported source 832×1216. Full prompts and parameters remain in the JSON.
 
-並在 profile negative 中排除：
+## Historical source and resource evidence
 
-```text
-gem, diamond, crystal, holding gem, holding diamond, gemstone, jewelry focus, houseki no kuni
-```
-
-Recommended use:
-
-```text
-compose_style_preset(
-  preset_id="hoseki-lustrousmix-anima",
-  profile="neutral-anime",
-  content_prompt="<角色、服裝、姿勢、場景>"
-)
-```
-
-### `source-image-132048670`
-
-來源圖復刻 profile。只有在 CTY 明確要接近原 Civitai 圖、寶石/鑽石/Houseki 題材時使用。
-
-這個 profile 會保留：
-
-- jewel-like color accents
-- gem motif
-- holding gem
-- from side / looking at object
-- elegant uniform styling
-
-不適合一般角色圖；如果用它畫休閒服角色，模型會傾向產生寶石、制服感或同源服裝。
-
-## Preset-Memory Rule Learned
-
-從 Civitai image 建 style preset 時必須拆分：
-
-1. `source-image-*` profile：保留來源圖的角色、服裝、道具、姿勢、構圖，用於復刻來源圖。
-2. `neutral-*` profile：只保留可重用畫風；移除角色/作品/服裝/道具/姿勢，並把會污染一般生成的元素加入 negative。
-
-一般 Discord 選單若使用者只選 style 而沒有指定 profile，應優先使用 neutral profile；source-image profile 只能在使用者明確要「照來源圖感」時使用。
+- [Civitai image `132048670`](https://civitai.com/images/132048670), creator `Hoseki`, API base model `Anima`, dimensions `832x1216`.
+- Page resource: `Hoseki - LustrousMix [Anima v1.0]`, Civitai type `Checkpoint`, version `Anima v1.0`, model `941345`, version ID `2982979`, file `2862545`, filename `hosekiLustrousmixAnima_animaV10.safetensors`.
+- Historical path: `/Volumes/AI-Drawing-16T/ai-drawing/models/diffusion_models/hosekiLustrousmixAnima_animaV10.safetensors`.
+- Recorded size: `4182230672` bytes; SHA-256: `19147601CFC165D8851222505B5CD2B99C11874F6B2BEE0CF00612E77D7CBCAB`.
+- Text-encoder/VAE source hashes are missing.
