@@ -57,3 +57,11 @@ Fresh dependency environments were used with the integrated manifests/lockfile; 
 The 26 unchanged Backend failures cover existing Prompt Library inventory/migration snapshots, Worker distribution/source-package checks and macOS execution of Windows PowerShell fixtures. They remain recorded in the JSON inventory; assertions and source data were not weakened or rewritten to force green. This publication is not a claim of an entirely green global suite, installed integration, GPU/training execution or aesthetic acceptance.
 
 No generation, training, job replay, product service restart or native worker resumption was performed. Existing compile/test deprecations and generated-evidence formatting warnings remain distinguishable from verification failures.
+
+## Verified local cleanup
+
+Source/evidence publication `30cac84a7f3c33d0a28751cdc088a405e9418329` was read back from GitHub before deletion; the cumulative remote tree matched all 222 changed blobs. Five original aid58 logs that matched the retained-source manifest were explicitly tracked despite the runtime-log ignore rule before cleanup.
+
+Cleanup removed 25 existing linked worktrees, pruned 6 missing-path registry records, deleted the 33 classified original local branches and removed the temporary integration branch. Readback leaves only local `main` and its one primary worktree, with clean Git status. Rebuildable dependency/build/Python/pytest caches were checked separately from source and evidence; four original aid56 logs were verified against their published copies before deletion.
+
+The four ordinary evidence/input/delivery packages (`aid-2-evidence`, `aid-26-delivery`, `aid-12-candidate-v1`, `aid-12-input-v1`) were preserved because they are actual data packages rather than redundant Git worktrees. Existing remote-only historical branch records were unchanged. Producer remains paused; no product process was started or restarted.

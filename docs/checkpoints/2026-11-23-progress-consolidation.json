@@ -763,5 +763,23 @@
       "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/test_contract.py",
       "sha256": "a34e9c0b2cff795a035a2bad32419c5e3b845974034783f027e20a23904183cb"
     }
-  ]
+  ],
+  "verifiedCleanup": {
+    "publishedCommit": "30cac84a7f3c33d0a28751cdc088a405e9418329",
+    "removedExistingWorktrees": 25,
+    "prunedMissingWorktreeRecords": 6,
+    "deletedOriginalLocalBranches": 33,
+    "deletedTemporaryIntegrationBranches": 1,
+    "remainingLocalBranches": [
+      "main"
+    ],
+    "remainingRegisteredWorktrees": 1,
+    "canonicalWorktreeClean": true,
+    "preservedNonWorktreePackages": [
+      "aid-2-evidence",
+      "aid-26-delivery",
+      "aid-12-candidate-v1",
+      "aid-12-input-v1"
+    ]
+  }
 }
