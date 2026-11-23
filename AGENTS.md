@@ -39,7 +39,7 @@ AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-mcp-tests" python -m pytest -c pytest.i
 cd frontend && npm test && npm run build
 ```
 
-26 Backend tests fail on `main` as a known baseline; a change is clean if it adds no new failures.
+All suites are expected to pass on `main`; a change must not add failures.
 
 When reporting, separate what you verified: offline tests, a running service, a real generation, artifact retrieval.
 

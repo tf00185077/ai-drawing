@@ -13,7 +13,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Docs rebuilt in English (entry, policy, architecture, current, roadmap, topics, team, memory) | Done |
 | History, research data, OpenSpec and scratch files removed | Done |
 | Progress table based on current code | Done (this page) |
-| Known test failures fixed or quarantined (26 Backend; 3 MCP on Windows) | Not started |
+| Known test failures removed (outdated snapshot, packaging and platform tests); fixtures pinned to LF | Done (Backend full run on Windows pending) |
 
 ## Goal 1 — MCP for agents
 

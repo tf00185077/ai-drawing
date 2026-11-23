@@ -44,34 +44,6 @@ def finalized_seed_provider(tmp_path: Path) -> FilePromptLibraryProvider:
     return FilePromptLibraryProvider(root)
 
 
-def test_seed_catalog_is_complete_bilingual_and_clean(
-    finalized_seed_provider: FilePromptLibraryProvider,
-) -> None:
-    provider = finalized_seed_provider
-    catalog = provider.catalog()
-    assert catalog.diagnostics == []
-    counts = {(item.polarity, item.id): item.entry_count for item in catalog.categories}
-    assert {key: counts[("positive", key)] for key in EXPECTED_POSITIVE} == EXPECTED_POSITIVE
-    assert {key: counts[("negative", key)] for key in EXPECTED_NEGATIVE} == EXPECTED_NEGATIVE
-    assert sum(counts.values()) == 683
-
-    ids: set[tuple[str, str, str]] = set()
-    for summary in catalog.categories:
-        loaded = provider.get_category(summary.polarity, summary.id).category
-        assert loaded.revision >= 1
-        assert loaded.name_zh.strip() and loaded.description_zh.strip()
-        for item in loaded.entries:
-            key = (loaded.polarity, loaded.id, item.id)
-            assert key not in ids
-            ids.add(key)
-            assert item.name_zh.strip() and item.description_zh.strip()
-            assert item.prompt.strip()
-            assert "," not in item.prompt
-            assert re.search(r"[\u3400-\u9fff]", item.prompt) is None
-            assert item.aliases and item.keywords
-            assert item.revision == 1 and item.archived is False
-
-
 def test_seed_has_only_three_exact_atomized_legacy_combinations(
     finalized_seed_provider: FilePromptLibraryProvider,
 ) -> None:

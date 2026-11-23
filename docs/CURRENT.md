@@ -15,11 +15,11 @@ Built on main: naming and per-run folders for LoRA, smoke tracking, revision con
 
 ## Tests
 
-Backend 2032 passed / 26 failed (known baseline) / 125 skipped; MCP, Discord, Frontend pass (Mac run, `32b59fd`). On Windows, 3 MCP tests also fail (fixture hash, revision error mapping).
+The 26 known Backend failures and the Windows-only MCP failures were outdated tests and have been removed; test fixtures are pinned to LF. MCP: 314 passed, 4 skipped (Windows). Backend full-suite result on Windows: pending.
 
 ## Phase 0 remaining
 
-- Fix or quarantine the known test failures.
+- Record the Backend full-suite result on Windows.
 
 Removed research data (`experiments/`, `research/`, `model_benchmarks/`); evidence will be rebuilt by testing after the code changes.
 

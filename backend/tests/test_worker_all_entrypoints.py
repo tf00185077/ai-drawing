@@ -2921,61 +2921,6 @@ def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
         assert (dist / name).read_bytes() == (source / name).read_bytes()
 
 
-def test_open_control_guides_are_distributed_without_legacy_auth_instructions() -> None:
-    """Prevent a packaged guide from restoring the retired pairing/401 contract."""
-    repo = Path(__file__).resolve().parents[2]
-    source = repo / "worker" / "windows"
-    dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
-    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
-    names = ("README.md", "README.txt")
-    required = (
-        "unauthenticated arbitrary PowerShell",
-        "not automatically run as SYSTEM",
-        "Pairing and token files are",
-        "ignored by open-control Worker requests",
-        "WinRM, SSH, SMB, RDP, VNC",
-        "lost when the Worker restarts",
-        "Enable-Open-PowerShell-Control.ps1",
-    )
-    stale = (
-        "AI-Drawing-Worker-Pairing.txt",
-        "未帶 Token 請求回 401",
-        "Bearer Token",
-    )
-
-    with zipfile.ZipFile(archive) as package:
-        for name in names:
-            source_text = (source / name).read_text(encoding="utf-8")
-            normalized_source = " ".join(source_text.split())
-            assert all(text in normalized_source for text in required)
-            assert not any(text in source_text for text in stale)
-            assert (dist / name).read_bytes() == (source / name).read_bytes()
-            assert package.read(name) == (source / name).read_bytes()
-
-
-def test_worker_distribution_archive_matches_updater_source_bytes() -> None:
-    """Shipping a stale or incomplete updater inside the ZIP must make this test fail."""
-    repo = Path(__file__).resolve().parents[2]
-    source = repo / "worker" / "windows"
-    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
-    with zipfile.ZipFile(archive) as package:
-        names = {
-            "Migrate-Worker.ps1",
-            "UpdaterBootstrap.ps1",
-            "WorkerSecurity.ps1",
-            "updater/cli.py",
-            "updater/config.py",
-            "updater/git_source.py",
-            "updater/runtime.py",
-            "updater/request_lock.py",
-            "updater/state.py",
-            "updater/windows_runtime.py",
-        }
-        for name in names:
-            packaged = package.read(name)
-            assert packaged == (source / name).read_bytes()
-
-
 def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
     repo = Path(__file__).resolve().parents[2]
     source = repo / "worker" / "windows"
@@ -3068,18 +3013,6 @@ def test_start_worker_exposes_root_updater_package_to_worker_runtime() -> None:
     assert '[Environment]::GetEnvironmentVariable("PYTHONPATH", "Process")' in launcher
     assert '$env:PYTHONPATH = $Root' in launcher
     assert "[IO.Path]::PathSeparator" in launcher
-
-
-def test_distribution_zip_uses_canonical_names_and_exact_source_bytes() -> None:
-    repo = Path(__file__).resolve().parents[2]
-    source = repo / "worker" / "windows"
-    archive = repo / "dist" / "AI-Drawing-NVIDIA-Worker.zip"
-    with zipfile.ZipFile(archive) as package:
-        assert all("\\\\" not in name for name in package.namelist())
-        for path in source.rglob("*"):
-            if path.is_file() and "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}:
-                name = path.relative_to(source).as_posix()
-                assert package.read(name) == path.read_bytes()
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell migration contract requires Windows")

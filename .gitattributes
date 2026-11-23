@@ -1,0 +1,4 @@
+# Test fixtures are compared byte-for-byte (hashes); keep LF on every platform.
+backend/tests/fixtures/**/*.json text eol=lf
+backend/tests/fixtures/**/*.base64 text eol=lf
+mcp-server/tests/fixtures/**/*.json text eol=lf

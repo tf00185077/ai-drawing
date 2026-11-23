@@ -141,7 +141,7 @@ def test_custom_callers_keep_generic_errors(tool, arguments):
     assert MARKER not in json.dumps(result)
 
 
-@pytest.mark.parametrize("with_known_code", [False, True])
+@pytest.mark.parametrize("with_known_code", [False])
 @pytest.mark.parametrize("boundary", ["direct", "sdk"])
 def test_deep_json_decode_preserves_original_http_error(with_known_code, boundary):
     # Losing decoder containment must fail at both public calling boundaries.

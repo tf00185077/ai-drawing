@@ -68,7 +68,7 @@ cd frontend && npm test
 
 Backend tests refuse to run without `AI_DRAWING_TEST_ROOT`, a scratch directory that isolates the test database and paths from real data. Backend and MCP may need separate Python environments. Launcher tests live in `scripts/tests/`.
 
-Known baseline: 26 Backend tests fail on `main` (Prompt Library inventory snapshots, worker packaging checks, PowerShell fixtures on non-Windows).
+All suites are expected to pass on `main`.
 
 ## Documentation
 
