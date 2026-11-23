@@ -8,9 +8,17 @@
 - The repo adapts to the `project-roadmap-steering` skill (ROADMAP, CURRENT, PROGRESS, requests, decisions), not the other way round · why: the skill is fixed · owner-confirmed
 - Escalation thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
 - Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond Phase 2 · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
+- No OpenSpec: task specs in `docs/tasks/<task>/task.md` are the only spec format; durable behavior rules live in the topic docs · owner-confirmed
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-23 · OpenSpec removed
+- Decision: delete `openspec/` and its skills; keep verified behavior rules in ARCHITECTURE, mcp, prompt-dashboard and lora-training docs.
+- Why: two spec systems overlapped and the July specs had drifted from the code.
+- Supersedes: —
+- Provenance: owner-confirmed@"不用openspec，把相關內容中有用的事實留下並移動到正確位置，剩下內容都刪掉"
+- Link: [INDEX](../INDEX.md)
 
 ### 2026-11-23 · Thresholds and Not now approved
 - Decision: adopt the proposed thresholds and Not now list.

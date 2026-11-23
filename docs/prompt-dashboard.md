@@ -45,6 +45,12 @@ Stored as versioned JSON in `prompt_library/` (mounted at `/workspace/prompt_lib
 
 Every file has a `revision` that increments on write. Archived items stay on disk with `archived: true` and can be restored.
 
+Composition rules (`backend/app/core/prompt_atomic.py`):
+- The ASCII comma is the only fragment boundary. Each library entry and each combination item holds exactly one fragment.
+- Blank fragments are rejected everywhere; the Workbench blocks saving and generation until they are removed.
+- Text that contains commas is split into atomic fragments deterministically when saved.
+- Generation submits exactly the composition shown in the Workbench.
+
 ## API
 
 Router: `backend/app/api/prompt_library.py`, prefix `/api/prompt-library`.
@@ -63,6 +69,10 @@ MCP equivalents: `prompt_library_search`, `prompt_library_compose`, `prompt_libr
 
 `backend/workflows/` holds ComfyUI API graphs. Each `<name>.json` has a `<name>.meta.json` describing its form fields and capabilities; these drive the generation forms. Example: `anima.json` + `anima.meta.json`.
 
+Template catalog API (`/api/workflow-catalog`): `GET /generation-forms`, `GET /` (capability index, without loading full graphs), `GET /match` (a template matches when its capabilities are a superset of the request, field by field), `GET /validate`, `POST /backfill` (save a verified successful graph as a new template), `POST /consolidate`. Templates are versioned, never edited in place, and store a reusable shape rather than one-off prompts.
+
+Node lookup API (`/api/comfyui`): `GET /nodes` (search, bounded results), `GET /node-categories`, `GET /nodes/{node_type}` (inputs/outputs from the live ComfyUI, cached).
+
 ## Style presets
 
 A style preset is a reusable recipe: prompts, template, models/LoRAs and defaults. Some also have saved graphs.
@@ -73,6 +83,12 @@ A style preset is a reusable recipe: prompts, template, models/LoRAs and default
 | `style_presets/agent/presets/<id>.json` | Recipes |
 | `style_presets/agent/workflows/<id>/__base__.api.json` or `<profile>.api.json` | Saved graphs |
 | `style_presets/human/<id>.md` | Notes on intended use |
+
+Rules:
+- The catalog is a small index plus one detail file per preset; `reindex` rebuilds the index and reads repair it automatically.
+- Creating a preset whose ID exists returns 409 unless `overwrite=true`. Missing referenced resources are reported but do not block creation.
+- Presets can hold an ordered list of LoRAs.
+- Saving a successful result stores the raw ComfyUI API graph unchanged; the saved prompt text holds only the keywords the caller supplied.
 
 API: `backend/app/api/style_presets.py`. `GET /api/style-presets/{id}/workflow?profile=<p>` reads a saved graph. MCP: `list_style_presets`, `get_style_preset`, `compose_style_preset`, `save_successful_workflow_as_style_preset`, `test_saved_style_preset_workflow`.
 

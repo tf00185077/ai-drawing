@@ -19,7 +19,6 @@ Backend 2032 passed / 26 failed (known baseline) / 125 skipped; MCP, Discord, Fr
 
 ## Phase 0 remaining
 
-- Rewrite the 14 `openspec/specs/` against current code; finish and archive the two open LoRA changes.
 - Rebuild PROGRESS as a progress table based on current code.
 - Fix or quarantine the known test failures.
 

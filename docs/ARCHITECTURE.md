@@ -47,6 +47,16 @@ Storage:
 - Each job has an `execution_target`: `local` uses `core/comfyui.py`; `worker` uses `services/nvidia_worker.py`. A failed worker job is not retried locally.
 - The queue tracks its own ComfyUI prompt IDs so the history watcher skips them.
 
+Completion rules (`_check_running_complete`):
+- A prompt still in ComfyUI's running or pending queue is in progress.
+- Completion comes from the history `status_str`, not from whether images exist. `error` → failed with the structured execution error; success with outputs → saved and completed; success without outputs → failed.
+- If the prompt has left the queue but history has not appeared yet, the queue waits a bounded number of polls before failing.
+- A failure while saving outputs marks the job failed with a reason. Every finished job ends either completed (in SQLite) or failed (in the failed cache, with a reason).
+
+Records:
+- Each generated image stores the full submitted workflow (`workflow_json`). Gallery rerun resubmits that workflow verbatim (re-uploading source images); older records without it fall back to rebuilding from stored columns.
+- Outputs of any kind (images, videos) are stored in `generated_artifacts`; job status returns `artifacts[]`, readable with `get_gallery_artifact`.
+
 ### Workflows
 
 - Templates: `backend/workflows/*.json` (ComfyUI API format) with `*.meta.json` describing form fields and capabilities. Served by `GET /api/workflow-catalog/generation-forms`.

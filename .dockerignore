@@ -45,7 +45,6 @@ experiments/
 mcp-server/
 research/
 model_benchmarks/
-openspec/
 pipeline/
 .agents/
 .claude/

@@ -98,6 +98,11 @@ Direct ComfyUI tools use `MCP_COMFYUI_API_URL`, not the Backend, and always targ
 **Reproduce a Civitai image** — `civitai_source_info` → `civitai_resource_acquire` if resources are missing (poll `civitai_resource_status`) → `civitai_generate_like`.
 
 **Custom workflows** — pass a full ComfyUI API graph, starting from `backend/workflows/*.json` or a recorded successful graph.
+- Optional channels: prompts, seed, sampler settings, `batch_size` (1–8), model components, a subject image for img2img and a `mask` for inpainting. Only values the caller provides are injected; everything else in the graph is left as is.
+- `loras` fill the graph's LoRA loader nodes in order; an explicit list (even empty) is the complete set.
+- ComfyUI validation errors come back per node (`node_errors`) so the agent can fix the graph and retry.
+- Video graphs go through `generate_video_custom_workflow`; results are in `artifacts[]`.
+- A style preset's saved graph is submitted verbatim, with no injection (`test_saved_style_preset_workflow`).
 
 **Remote execution** — where a tool accepts `execution_target`, use `local` or `worker`. A failed worker job is not retried locally.
 

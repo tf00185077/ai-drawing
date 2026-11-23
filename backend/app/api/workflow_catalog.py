@@ -8,7 +8,6 @@ Workflow 模板能力目錄 API
 - GET  /api/workflow-catalog/validate  逐模板詞彙/檔案驗證（invalid 以資料回報）
 - POST /api/workflow-catalog/backfill  把已成功 job 的 workflow 晉升為模板（DB 成功閘門）
 
-契約：openspec/specs/workflow-template-catalog/spec.md
 """
 import json
 from pathlib import Path

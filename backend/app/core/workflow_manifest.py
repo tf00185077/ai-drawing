@@ -10,7 +10,6 @@ Workflow 模板能力 manifest
   「同義不同名」造成的標籤腐化（如 controlnet_pose vs pose_control）。
 - modality / model_family 單值；conditioning / io 為集合。
 - description 僅供人閱讀，不參與匹配決策。
-契約：openspec/specs/workflow-template-catalog/spec.md
 """
 from __future__ import annotations
 

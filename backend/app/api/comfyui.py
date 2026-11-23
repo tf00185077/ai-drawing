@@ -7,7 +7,6 @@ ComfyUI 節點 schema API
 - GET /api/comfyui/nodes/{node_type}       取單一 node 的 input/output 規格
 
 供 agent 自組 workflow 時 grounding 用，避免整包 dump /object_info。
-契約：openspec/specs/comfyui-node-schema/spec.md
 """
 from fastapi import APIRouter, Depends, HTTPException
 

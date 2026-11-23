@@ -34,6 +34,22 @@ Training runs as a subprocess of the Backend's own environment, on the Backend h
 6. **Result** — each run has its own folder with the model and a record of the effective parameters. Registration status is reported separately from training status.
 7. **Smoke test** — `lora_train_smoke_test` submits a generation with the new LoRA; the result is tracked and the image is validated.
 
+## Rules
+
+Datasets:
+- A dataset folder is locked while it is prepared, curated or trained, so the caption watcher and training never touch it at the same time.
+- Preparation and curation preview their changes first (dry run), back up before applying, and can be restored. Manually edited captions are kept.
+- Dataset profiles and folder size never start training on their own; training always needs an explicit start.
+
+Preflight and recipe:
+- Preflight is deterministic and runs nothing. It suggests parameters; the caller decides what to submit.
+- A training recipe is a versioned object. Every effective parameter is filled in before the job is queued, and the full recipe is stored with the job.
+- A random seed is drawn once and stored, so the run can be repeated.
+- Text-encoder training is off unless requested.
+- The recipe has a hash of its semantic content, used to match approvals and detect changes.
+- The base checkpoint must exist before a job is created; model paths are searched across the configured model folders.
+- MCP passes the Backend's field-level validation errors back unchanged.
+
 ## UI
 
 | Route | Purpose |
