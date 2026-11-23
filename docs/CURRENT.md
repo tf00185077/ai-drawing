@@ -1,31 +1,31 @@
-# Current state — 2026-11-23
+# Current
 
-## Current source consolidation
+2026-11-23 · `main` · Active: **Phase 0 — Clean foundation** ([roadmap](roadmap/ROADMAP.md))
 
-CTY's latest direction is to consolidate real local progress into main, push it and remove branches without unique retained work. The [consolidation record](checkpoints/2026-11-23-progress-consolidation.md) identifies the source composition and every branch disposition. It integrates LoRA delivery/public reporting/smoke reconciliation, revision lineage, maintenance/durable Discord delivery and the earlier accepted Gallery repairs while retaining newer Argus/fixed-video code and current role authority. Retained offline methods/controls remain source artifacts, not active operations.
+## Goals at a glance
 
-Verification completed with fresh dependency environments: Backend 2032 passed with the same 26 failures reproduced on the original main; MCP 317 passed, Discord 142 passed, Frontend 226 passed with typecheck/build exit0, and retained component controls passed. See the record for skips, unchanged failures and exact boundaries. Producer stays paused and the native task hold remains active; no service restart or agent work is triggered by source publication. Native-task deletion still awaits its separate scope decision.
+| Goal | Built | Verified in a real run | Biggest gap |
+|---|---|---|---|
+| 1. MCP for agents | Mostly | Gallery retrieval only | Mixed response formats; no wait tool; no end-to-end run |
+| 2. Prompt dashboard | Mostly | Not end-to-end | Combinations hold prompt text only, not template/models |
+| 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
+| 4. LoRA training | Mostly | No | No real training run yet; cannot run on a worker |
 
-## Earlier owner pause and session reset
+Built on main: naming and per-run folders for LoRA, smoke tracking, revision context on generation, Gallery seed precision and routing fixes (integrated in `32b59fd`). Details per goal: [mcp](mcp.md), [prompt dashboard](prompt-dashboard.md), [Windows worker](windows-worker.md), [LoRA training](lora-training.md), [architecture limits](ARCHITECTURE.md#known-limitations-to-optimize).
 
-CTY stopped this Producer round and requested its code rollback. Producer and QA runs were cancelled; the AID-4 task tree has an active manual-release pause hold. No work is running. The isolated AID-138 branch now ends at rollback `aa7bd009bc8e5363b8632422e3baae78c55d8c54`, whose tree exactly matches pre-round `cd92ad4d8b0ef74e8d8ce62b1d4770217fc4dc27`. The candidate never entered main. Original commits and historical QA evidence remain preserved.
+## Tests
 
-CTY subsequently requested fresh agent sessions, removal of residual Paperclip tasks and publication of local main. Producer, coding agent, QA agent and Auto Dreamer have had all saved task-session continuations cleared through the native reset API; readback shows zero saved task sessions and null runtime session IDs for each. Fresh provider conversations will be created when new assigned work actually starts. Existing role identities, configurations and readiness states were retained; Producer remains paused.
+Backend 2032 passed / 26 failed (known baseline) / 125 skipped; MCP, Discord, Frontend pass (Mac run, `32b59fd`). On Windows, 3 MCP tests also fail (fixture hash, revision error mapping).
 
-Task deletion is awaiting scope selection: AI Drawing has 139 tasks, including 17 unfinished tasks and 122 completed records. Native deletion also removes task attachments, so the historical AID-4 record is not treated as disposable residue. No tasks or attachments have been deleted. See the [owner reset and cleanup request](requests/2026-11-23-session-reset-and-task-cleanup.md). Earlier continuation descriptions below are historical, not current assignments.
+## Phase 0 remaining
 
-## Prior round snapshot (historical)
+- Consolidate specs and history (`SPEC.md`, `openspec/`, `docs/superpowers/`, `engineering/`, `tools/`, checkpoints, root `tmp_*`, `GOAL.md`).
+- Fix or quarantine the known test failures.
 
-**Accepted:** the [Gallery readability repair passed independent QA](http://127.0.0.1:3100/AID/issues/AID-4#document-gallery-u1-independent-qa-producer-acceptance). The [initial real App view](http://127.0.0.1:3100/api/attachments/db156ab8-87f1-42b4-b03c-f72ed1e2d42a/content) shows the full seed without horizontal scrolling. Parent-red/candidate-green,10 layouts,focused22/typecheck/build and same-original retrieval support the scoped PASS. A disclosed first-run shared Vitest cache write remains preserved; final checks isolated the cache. Candidate acceptance does not deploy it.
+## Waiting on the owner
 
-**Actual artwork:** [unmodified Gallery4446 PNG](http://127.0.0.1:3100/api/attachments/3ccf4aea-785a-495d-92e5-2075e764b39b/content?download=1),1536×1024, retains independent MCP/file/lineage verification. The dark torso rectangle is disclosed; CTY aesthetics is still open.
+Nothing.
 
-**Active milestone / source gap:** [M1](roadmap/ROADMAP.md) remains active; installed integration and complete journey acceptance remain open, LoRA next. Today's canonical checkpoint `cd92ad4` retains the exact pre-repair Gallery/Vite blobs and lacks the accepted seed parser. The old full candidate would also remove newer Backend work. [Producer's first assessment](http://127.0.0.1:3100/AID/issues/AID-135#document-first-work-assessment) selects a limited forward-port of the already accepted Gallery fixes onto this new base, without canonical adoption or replay of frozen maintenance.
+## Team
 
-**Actual next work:** [Review round1](http://127.0.0.1:3100/AID/issues/AID-139#document-qa-report) is done with **AMBIGUITY**, preserving fixed package `ca3884200e7e280940842ec03986ba3cad7d4646`. Independent focused22/baseline14fail8pass, D1/D2 mutations, restored22, typecheck/build and source custody are recorded; D3 four-size browser operation/new QA captures remain unperformed because `currentExecutionWorkspace=null`. Author screenshots are supplied evidence, not independent acceptance. Producer verified both native ZIP identities and read the pinned harness/fixture/close paths; no product P0/P1 defect was demonstrated and no source repair was dispatched.
-
-**Long-lived continuation:** Hermes under Board delegation accepted the exact [method/threshold plan](http://127.0.0.1:3100/AID/issues/AID-136#document-plan) revision `8c9a7180-7987-47d5-a809-16a49d088584`; [native decision/Discord receipt](http://127.0.0.1:3100/AID/issues/AID-136#document-review-method-hermes-receipt) records local-board acceptance and message1574267261911306264. Producer verified it, read back [QA139's same-card round2 plan](http://127.0.0.1:3100/AID/issues/AID-139#document-plan) revision `8ea83473-1ea5-4fe8-a973-d7a3583eef29`, used structured resume once, and verified new QA run `d4ef38f0-0ac3-4adb-a9f2-31a799d657ee` in_progress. Producer136 is blocked solely on139; root4 remains blocked on136. The one permitted supplement uses the same package and full D1/D3 assertions, preferring native preview or the bounded foreground synthetic harness with15-minute total preview-process deadline and proven cleanup. Round2 has no result yet. No new role card, source repair, monitor/patrol or candidate acceptance.
-
-**Parallel actual input:** existing [CTY aesthetic card](http://127.0.0.1:3100/AID/issues/AID-4#document-gallery-4446-cty-aesthetic-review)12b94f35-49bd-4e5a-89b9-1b826303a293 remains pending since2026-11-12. Its question and receipt already exist. CTY supplies real feedback or acceptance; Hermes relays it through native wake_assignee. No duplicate question/reminder or proxy preferences. Actual source/state adoption still needs concrete controls and its own applicable authority after the new candidate's QA.
-
-**Counters / limits:** rawcompleted26/prior25/non-journey4of3 retains Coding25/kickoff24/assessment23/historical22 and all attempts. The reached three-task threshold received an exact delegated A disposition permitting only this one independent same-candidate supplement; counts and thresholds were not reset. Source repairs0/rejections0, one round1 AMBIGUITY retained; round2 is running, not completed. Producer consumes its actual result before further affected work; no new source-only package follows automatically. The dated aesthetic/integration waits, Mac/MPS1/1, milestone/order/Not-now and canonical integration/D0 freezes remain. No generation/deployment/existing-service restart/training/acquisition/Windows/remote/spending/destructive effect. Auto Dreamer alone curates memory; Memory candidates: None.
+Producer paused; coding, QA and Auto Dreamer ready on demand. No work running.

@@ -2,7 +2,17 @@
 
 The Prompt Workbench lets users build prompts from reusable fragments, save them as combinations and submit them to a generation form. Style presets and workflow templates are the other reusable building blocks.
 
-Status and gaps: [STATUS.md](STATUS.md#2-prompt-dashboard).
+## Status
+
+**Built:** Prompt Workbench at `/prompt-library/workbench` — browse, order and weight positive/negative fragments, save combinations, manage categories and entries, submit to a generation form. Gallery keeps full seed precision, has a readable detail modal, and the dev proxy no longer intercepts `/gallery` page loads.
+
+**Verified in a real run:** used in the UI during development; no recorded end-to-end generation from the Workbench.
+
+**Gaps:**
+- A combination stores prompt text only, not the workflow template, models, LoRAs or sampler settings.
+- Little progress/error/result feedback on the Workbench page.
+
+Overall project state: [CURRENT.md](CURRENT.md).
 
 ## Pages
 

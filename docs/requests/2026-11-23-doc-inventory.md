@@ -55,7 +55,9 @@ docs/
   INDEX.md            document map
   ARCHITECTURE.md     components and data flow
   OPERATING-POLICY.md single permission/safety policy
-  STATUS.md           plain per-pillar status (replaces CURRENT.md)
+  CURRENT.md          one-screen current state (format set by project-roadmap-steering)
+  PROGRESS.md         history with links
+  decisions/, requests/ decisions log and owner words verbatim
   roadmap/ROADMAP.md  Phase 0–4 after discussion
   setup.md, mcp.md, prompt-dashboard.md, windows-worker.md, lora-training.md
                       fixed sections: Purpose → Usage → Status → Verified → Gaps
@@ -71,9 +73,9 @@ docs/
 | 1 | Entry: README / AGENTS / CLAUDE / INDEX | Done |
 | 2 | OPERATING-POLICY | Adopted |
 | 3 | ARCHITECTURE | Done |
-| 4 | STATUS | Done (Mac pushed candidates to main as 32b59fd) |
+| 4 | CURRENT (was STATUS) | Done; per-goal detail moved into topic docs |
 | 5 | ROADMAP | Done |
 | 6 | Five topic docs | Done |
-| 7 | Team/governance | Draft written, under review |
+| 7 | Team/governance | Done; aligned with project-roadmap-steering |
 | 8 | Memory pruning | Done (Paperclip card entry waits for item 7) |
 | 9 | Specs and history consolidation | Pending |

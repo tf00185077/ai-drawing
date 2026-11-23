@@ -14,7 +14,10 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 |---|---|---|
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) | current |
 | Operating policy | [OPERATING-POLICY.md](OPERATING-POLICY.md) | current |
-| Status per goal | [STATUS.md](STATUS.md) | current |
+| Current state | [CURRENT.md](CURRENT.md) | current |
+| Progress history | [PROGRESS.md](PROGRESS.md) | current |
+| Decisions | [decisions/](decisions/) | current |
+| Owner requests (verbatim) | [requests/](requests/) | current |
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup.md](setup.md) | current |
 | MCP server | [mcp.md](mcp.md) | current |
@@ -30,4 +33,4 @@ Source code and live API schemas (`/docs`, `/openapi.json` on a running Backend)
 
 ## History
 
-Not current instructions: [GOAL](GOAL.md), [CURRENT](CURRENT.md), [PROGRESS](PROGRESS.md), `progress/`, `checkpoints/`, `decisions/`, `tasks/`, `archive/`, `superpowers/`.
+Not current instructions: [GOAL](GOAL.md), `progress/`, `checkpoints/`, `tasks/`, `archive/`, `superpowers/`.

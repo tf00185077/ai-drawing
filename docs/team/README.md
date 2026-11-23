@@ -19,19 +19,20 @@ All roles report to Producer; Producer reports to CTY. Paused roles keep their i
 
 ## How work flows
 
-1. **Intake** — requests arrive in the project Discord channel (see [channel routing](channel-routing.md)). Producer turns them into Paperclip issues.
-2. **Plan** — Producer picks work from the [roadmap](../roadmap/ROADMAP.md) and [status](../STATUS.md), and writes a task spec in `docs/tasks/<task>/task.md` with a clear "Done when".
-3. **Build** — the coding agent implements it on its own branch/worktree, with tests, and delivers `docs/tasks/<task>/manifest.md`.
-4. **Review** — the QA agent reviews that exact commit independently and writes `docs/tasks/<task>/review.md`. Changes after review need a new review.
-5. **Merge** — after a passing review, the change is merged to `main` and pushed.
-6. **Report** — Producer posts the result in the project channel and moves to the next item without waiting for confirmation.
+1. **Intake** — requests arrive in the project Discord channel (see [channel routing](channel-routing.md)). Producer saves CTY's own words unedited to `docs/requests/<date>-<topic>.md` and opens Paperclip issues.
+2. **Plan** — Producer picks work from the active milestone in the [roadmap](../roadmap/ROADMAP.md) and the [current state](../CURRENT.md), and writes a task spec in `docs/tasks/<task>/task.md` with a clear "Done when".
+3. **Kickoff review** — the QA agent checks the task spec against the owner's request; Producer dispatches once it returns CLEAR.
+4. **Build** — the coding agent implements it on its own branch/worktree, with tests, and delivers `docs/tasks/<task>/manifest.md`.
+5. **Review** — the QA agent reviews that exact commit independently and writes `docs/tasks/<task>/review.md`. Changes after review need a new review.
+6. **Merge** — after a passing review, the change is merged to `main` and pushed.
+7. **Record and report** — Producer updates [CURRENT](../CURRENT.md) and [PROGRESS](../PROGRESS.md), saves decisions to `docs/decisions/` and lessons to memory, posts the result in the project channel and moves to the next item without waiting for confirmation.
 
 Art and LoRA work follow the same pattern with the matching specialist instead of the coding agent.
 
 ## Rules
 
 - [Operating policy](../OPERATING-POLICY.md) defines what any agent may do.
-- **Questions for CTY** go directly to the project channel. Ask only when a decision is CTY's (direction, aesthetics, architecture); otherwise decide and continue.
+- **Questions for CTY** go to the project channel through `paperclip-hermes-notify`, with options and a recommendation. Ask when a milestone looks done, when work falls outside the active milestone or would change the roadmap, when a roadmap threshold is reached, or when the approved scope, architecture or constraints would change. Otherwise decide and continue; finish in-flight work while waiting.
 - **Aesthetics** — CTY alone judges style, image selection and training results. Technical checks do not imply artistic acceptance.
 - **Workspaces** — the shared checkout stays on `main`. Engineering changes use a separate worktree. QA reviews a fixed commit, not a moving directory.
 - **Memory** — any agent may add or fix entries in [project memory](../memory/MEMORY.md) when it learns a durable fact useful to future agents. No logs or incident history.

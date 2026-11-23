@@ -2,7 +2,20 @@
 
 A worker lets the Backend run ComfyUI jobs on another Windows machine on the same LAN. The worker is a small FastAPI service next to that machine's ComfyUI.
 
-Status and gaps: [STATUS.md](STATUS.md#3-lan-windows-workers). No worker has been installed successfully yet; the design is planned for rework in Phase 3 ([roadmap](roadmap/ROADMAP.md)).
+## Status
+
+**Built:** a worker service that proxies a remote ComfyUI; Backend client with optional LAN discovery and hostname/protocol validation; `execution_target=worker` on generation.
+
+**Verified in a real run:** nothing. The worker has never been installed successfully on the owner's machine.
+
+**Gaps:**
+- One worker URL only; no registry, heartbeat or scheduling.
+- No check that the worker runs the same project version, nodes and models.
+- PowerShell control routes have no authentication.
+- Queue limits block parallel workers (see [Architecture → Known limitations](ARCHITECTURE.md#known-limitations-to-optimize)).
+- Large updater/migration code for retired APIs.
+
+Overall project state: [CURRENT.md](CURRENT.md).
 
 ## How it works
 

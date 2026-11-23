@@ -2,7 +2,17 @@
 
 The Backend prepares datasets and trains LoRA models with kohya sd-scripts, then registers the result and can run a smoke-test generation.
 
-Status and gaps: [STATUS.md](STATUS.md#4-lora-training). No real training run has completed yet.
+## Status
+
+**Built:** dataset inspection, curation and auto-captioning; preflight; recipe compiler; sd-scripts runner for SD1.5, SDXL and Anima; required readable `output_name` with automatic serial numbers; a separate folder per run with an effective-parameter record; registration status reported separately from training; smoke-test submission with reconciliation and image validation; status, logs, cancel; UI page and MCP tools.
+
+**Verified in a real run:** trainer Python imports on the Backend host. No real training run has completed.
+
+**Gaps:**
+- No real end-to-end run: train → register → select → smoke image.
+- Training cannot run on a worker.
+
+Overall project state: [CURRENT.md](CURRENT.md).
 
 ## Supported models
 

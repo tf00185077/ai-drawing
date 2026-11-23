@@ -2,7 +2,18 @@
 
 The MCP server (`mcp-server/`) gives agents intent-level tools for generation, the Gallery, prompts, style presets, Civitai, LoRA training and ComfyUI maintenance. It runs over stdio and calls the Backend.
 
-Status and gaps: [STATUS.md](STATUS.md#1-mcp-server).
+## Status
+
+**Built:** tools for generation (image, custom workflow, video), job status and cancel, resource listing, Gallery, Civitai, style presets, Prompt Library, LoRA training, Discord delivery, ComfyUI restart/node install/memory. Image generation accepts a revision context (`request_ref`, `parent_artifact_id`, feedback), so revisions are traceable. The tool list is in `mcp-server/mcp_server/tool_catalog.py`.
+
+**Verified in a real run:** retrieval of an existing Gallery image through MCP. A full request → generate → retrieve → revise journey has not been run.
+
+**Gaps:**
+- Responses mix plain text, JSON strings and objects.
+- No tool that waits for a job to finish.
+- No way to list workers or their capabilities.
+
+Overall project state: [CURRENT.md](CURRENT.md).
 
 ## Install
 
