@@ -11,16 +11,16 @@ Constraints: keep the FastAPI Backend, React/Vite UI, Python MCP server and host
 ### Phase 0 — Clean foundation (active)
 
 Scope: integrated `main`; documentation rebuilt in English; history removed; a progress table based on the current code; a known, documented test result for every suite.
-Unknowns, riskiest first: which of the 26 Backend and 3 Windows-only MCP failures hide real defects.
+Unknowns, riskiest first: whether the full Backend suite passes on Windows after the outdated tests were removed.
 Exit: a new agent understands the system, its state and its rules from README → AGENTS → INDEX; every failing test is fixed or explicitly quarantined with a reason.
 Demo: CTY reads README, CURRENT and ROADMAP and finds them accurate; one command per suite runs with the documented result.
 
 ### Phase 1 — MCP that agents use smoothly (next)
 
-Scope: uniform structured responses (`{ok, data, error: {code, hint}}`); `wait_for_job` and a result tool returning artifact paths/URLs; risk labels on tools; a short common flow `list_resources → compose → generate → wait/result`; `list_workers` / `worker_status`; a real end-to-end smoke script.
+Scope: one response envelope for every tool (`{ok, data}` / `{ok: false, error: {code, message, hint}}`); tools consolidated to about 20, one per intent, with risk labels; `wait_for_job` returning artifact paths/URLs; `health` and `list_workers`; a real end-to-end smoke script on the Mac ComfyUI (Windows worker follows in Phase 2). Tasks: [p1-01](../tasks/p1-01-mcp-response-envelope/task.md) → [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md) → [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md) → [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md) → [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md); decisions in [mcp](../decisions/mcp.md).
 Unknowns, riskiest first: whether a real generation and retrieval through MCP works end to end on the owner's ComfyUI; whether changing response formats breaks existing agent callers; how many tools can be merged without losing needed control.
 Exit: an agent goes from nothing to a retrieved image and one traceable revision with no human help.
-Demo: run the smoke script against local ComfyUI; show the image, its revision and their Gallery records.
+Demo: run the smoke script against the Mac ComfyUI; show the image, its revision and their Gallery records.
 
 ### Phase 2 — Same-LAN Windows workers
 

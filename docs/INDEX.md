@@ -17,6 +17,7 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 | Current state | [CURRENT.md](CURRENT.md) | current |
 | Progress history | [PROGRESS.md](PROGRESS.md) | current |
 | Decisions | [decisions/](decisions/) | current |
+| Task specs | [tasks/](tasks/) (Phase 1: `p1-*`) | current |
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup.md](setup.md) | current |
 | MCP server | [mcp.md](mcp.md) | current |
