@@ -55,4 +55,4 @@ Ask after 3 tasks in a row that do not advance the active milestone, a blocker l
 
 ## Review history
 
-- 2026-11-23 — Four goals and phase order set by CTY; Phase 0 activated; roadmap accepted; thresholds and Not now approved ([decisions](../decisions/roadmap.md), [request](../requests/2026-11-23-four-goals-and-doc-rebuild.md)).
+- 2026-11-23 — Four goals and phase order set by CTY; Phase 0 activated; roadmap accepted; thresholds and Not now approved ([decisions](../decisions/roadmap.md)).

@@ -17,7 +17,6 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 | Current state | [CURRENT.md](CURRENT.md) | current |
 | Progress history | [PROGRESS.md](PROGRESS.md) | current |
 | Decisions | [decisions/](decisions/) | current |
-| Owner requests (verbatim) | [requests/](requests/) | current |
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup.md](setup.md) | current |
 | MCP server | [mcp.md](mcp.md) | current |
@@ -33,4 +32,4 @@ Source code and live API schemas (`/docs`, `/openapi.json` on a running Backend)
 
 ## History
 
-Not current instructions: [GOAL](GOAL.md), `progress/`, `checkpoints/`, `tasks/`, `archive/`, `superpowers/`.
+Earlier history is in git. `tasks/` holds task specs and reviews written by the team.

@@ -1,9 +1,0 @@
-{
-  "scope": "accepted-source filename construction only; not live state",
-  "accepted_source": "discord-bot/bot/attempt_store.py:36",
-  "retained_collector": "supplement-capacity.py sibling startswith(base.name)",
-  "synthetic_name": ".result-deliveries.json.00000000000000000000000000000000.tmp",
-  "retained_prefix_rule_includes": false,
-  "live_companion_existence": "unknown",
-  "legacy_loaded_implementation": "unknown"
-}

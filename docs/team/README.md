@@ -19,9 +19,9 @@ All roles report to Producer; Producer reports to CTY. Paused roles keep their i
 
 ## How work flows
 
-1. **Intake** — requests arrive in the project Discord channel (see [channel routing](channel-routing.md)). Producer saves CTY's own words unedited to `docs/requests/<date>-<topic>.md` and opens Paperclip issues.
+1. **Intake** — requests arrive in the project Discord channel (see [channel routing](channel-routing.md)). Producer opens Paperclip issues.
 2. **Plan** — Producer picks work from the active milestone in the [roadmap](../roadmap/ROADMAP.md) and the [current state](../CURRENT.md), and writes a task spec in `docs/tasks/<task>/task.md` with a clear "Done when".
-3. **Kickoff review** — the QA agent checks the task spec against the owner's request; Producer dispatches once it returns CLEAR.
+3. **Kickoff review** — the QA agent checks the task spec against CTY's request in the Paperclip issue; Producer dispatches once it returns CLEAR.
 4. **Build** — the coding agent implements it on its own branch/worktree, with tests, and delivers `docs/tasks/<task>/manifest.md`.
 5. **Review** — the QA agent reviews that exact commit independently and writes `docs/tasks/<task>/review.md`. Changes after review need a new review.
 6. **Merge** — after a passing review, the change is merged to `main` and pushed.

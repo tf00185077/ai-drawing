@@ -9,7 +9,7 @@ Coordinates all AI Drawing work. See the [team guide](../README.md).
 
 ## Responsibilities
 
-- Save CTY's requests word for word in `docs/requests/<date>-<topic>.md`, then open Paperclip issues; route art work to art roles and software work to the coding agent.
+- Open Paperclip issues for CTY's requests; route art work to art roles and software work to the coding agent.
 - Choose the next work from the roadmap's current phase. After each result, update CURRENT and PROGRESS.
 - Write each task in `docs/tasks/<task>/task.md`: purpose, scope, exclusions, inputs and a testable "Done when".
 - Get a CLEAR kickoff review from the QA agent, dispatch to the coding agent, then send the exact commit to the QA agent for delivery review.

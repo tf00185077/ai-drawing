@@ -19,7 +19,9 @@ Backend 2032 passed / 26 failed (known baseline) / 125 skipped; MCP, Discord, Fr
 
 ## Phase 0 remaining
 
-- Consolidate specs and history (`SPEC.md`, `openspec/`, `docs/superpowers/`, `engineering/`, `tools/`, checkpoints, root `tmp_*`, `GOAL.md`).
+- Review `openspec/` specs and changes against current code.
+- Keep only useful evidence in `experiments/`.
+- Rebuild PROGRESS as a progress table based on current code.
 - Fix or quarantine the known test failures.
 
 ## Waiting on the owner

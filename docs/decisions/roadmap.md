@@ -1,8 +1,8 @@
 # Decisions · roadmap
 
 ## Settled
-- Four goals in order: MCP for agents → prompt dashboard → LAN Windows workers → LoRA training · why: owner's product priorities · owner-confirmed · [request](../requests/2026-11-23-four-goals-and-doc-rebuild.md)
-- Phase 0 (clean foundation) comes first · why: integration was frozen and docs were unusable · owner-confirmed · [request](../requests/2026-11-23-four-goals-and-doc-rebuild.md)
+- Four goals in order: MCP for agents → prompt dashboard → LAN Windows workers → LoRA training · why: owner's product priorities · owner-confirmed
+- Phase 0 (clean foundation) comes first · why: integration was frozen and docs were unusable · owner-confirmed
 - Docs are English only and rebuilt from scratch · why: owner preference; AI translates on demand · owner-confirmed
 - Nearly all operations are allowed by default · why: owner removed approval gates · owner-confirmed · [policy](../OPERATING-POLICY.md)
 - The repo adapts to the `project-roadmap-steering` skill (ROADMAP, CURRENT, PROGRESS, requests, decisions), not the other way round · why: the skill is fixed · owner-confirmed
@@ -20,7 +20,7 @@
 - Link: [ROADMAP](../roadmap/ROADMAP.md)
 
 ### 2026-11-23 · Repo follows the fixed roadmap-steering skill
-- Decision: keep `docs/CURRENT.md` (one screen) and `docs/PROGRESS.md`; STATUS.md removed; owner words saved verbatim in `docs/requests/`.
+- Decision: keep `docs/CURRENT.md` (one screen) and `docs/PROGRESS.md`; STATUS.md removed.
 - Why: the skill reads these paths and will not change.
 - Supersedes: the separate STATUS.md introduced earlier the same day.
 - Provenance: owner-confirmed@"project-roadmap-steering是不會動的，要改動的話以這邊改動為主。"
@@ -29,7 +29,7 @@
 ### 2026-11-23 · Phase 0–4 roadmap accepted
 - Decision: adopt the Phase 0–4 milestones; Phase 0 active.
 - Why: follows the owner's goal order.
-- Supersedes: the M1/M2 roadmap of 2026-11-03 (archived in git history and `progress/`).
+- Supersedes: the M1/M2 roadmap of 2026-11-03 (in git history).
 - Provenance: owner-confirmed@"可以，進第 6 項"
 - Link: [ROADMAP](../roadmap/ROADMAP.md)
 
