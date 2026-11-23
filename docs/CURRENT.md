@@ -1,6 +1,12 @@
 # Current state — 2026-11-23
 
-## Latest owner disposition
+## Current source consolidation
+
+CTY's latest direction is to consolidate real local progress into main, push it and remove branches without unique retained work. The [consolidation record](checkpoints/2026-11-23-progress-consolidation.md) identifies the source composition and every branch disposition. It integrates LoRA delivery/public reporting/smoke reconciliation, revision lineage, maintenance/durable Discord delivery and the earlier accepted Gallery repairs while retaining newer Argus/fixed-video code and current role authority. Retained offline methods/controls remain source artifacts, not active operations.
+
+Verification completed with fresh dependency environments: Backend 2032 passed with the same 26 failures reproduced on the original main; MCP 317 passed, Discord 142 passed, Frontend 226 passed with typecheck/build exit0, and retained component controls passed. See the record for skips, unchanged failures and exact boundaries. Producer stays paused and the native task hold remains active; no service restart or agent work is triggered by source publication. Native-task deletion still awaits its separate scope decision.
+
+## Earlier owner pause and session reset
 
 CTY stopped this Producer round and requested its code rollback. Producer and QA runs were cancelled; the AID-4 task tree has an active manual-release pause hold. No work is running. The isolated AID-138 branch now ends at rollback `aa7bd009bc8e5363b8632422e3baae78c55d8c54`, whose tree exactly matches pre-round `cd92ad4d8b0ef74e8d8ce62b1d4770217fc4dc27`. The candidate never entered main. Original commits and historical QA evidence remain preserved.
 

@@ -53,7 +53,7 @@ def test_lora_training_decision_preflight_returns_train_payload_without_starting
         "mcp_server.tools.lora_train.lora_train_start"
     ) as start:
         result = lora_training_decision_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             trigger_token="miku_token",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
@@ -69,7 +69,7 @@ def test_lora_training_decision_preflight_returns_train_payload_without_starting
     start.assert_not_called()
     mock_client.post.assert_called_once_with(
         "lora-train/datasets/training-decision-preflight",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "trigger_token": "miku_token",
             "expected_dataset_hash": "hash-a",
@@ -97,7 +97,7 @@ def test_lora_training_decision_preflight_keeps_do_not_train_as_success_payload(
     }
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
-        result = lora_training_decision_preflight("character/miku")
+        result = lora_training_decision_preflight("character/miku", output_name="test-product")
 
     assert result["ok"] is True
     assert result["tool"] == "lora_training_decision_preflight"
@@ -106,7 +106,7 @@ def test_lora_training_decision_preflight_keeps_do_not_train_as_success_payload(
     assert "error" not in result
     mock_client.post.assert_called_once_with(
         "lora-train/datasets/training-decision-preflight",
-        json={"folder": "character/miku"},
+        json={"folder": "character/miku", "output_name":"test-product"},
     )
 
 
@@ -119,7 +119,7 @@ def test_lora_training_decision_preflight_surfaces_backend_error() -> None:
     )
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
-        result = lora_training_decision_preflight("character/missing")
+        result = lora_training_decision_preflight("character/missing", output_name="test-product")
 
     assert result["ok"] is False
     assert result["tool"] == "lora_training_decision_preflight"
@@ -159,7 +159,7 @@ def test_lora_train_start_forwards_broad_recipe_and_returns_canonical_identity()
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         started = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe=recipe,
@@ -176,7 +176,7 @@ def test_lora_train_start_forwards_broad_recipe_and_returns_canonical_identity()
     assert "submitted" not in started
     mock_client.post.assert_called_once_with(
         "lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": "hash-a",
             "expected_profile_hash": "profile-hash-a",
@@ -197,7 +197,7 @@ def test_lora_train_start_forwards_json_object_string_without_normalizing_it() -
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe=recipe,
@@ -233,7 +233,7 @@ def test_lora_train_start_sanitizes_list_shaped_request_validation_errors() -> N
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={"batchSize": 0},
@@ -241,6 +241,8 @@ def test_lora_train_start_sanitizes_list_shaped_request_validation_errors() -> N
 
     assert result == {
         "ok": False,
+        "classification": "backend_failure",
+        "phase": "request",
         "tool": "lora_train_start",
         "status_code": 422,
         "error": {
@@ -282,7 +284,7 @@ def test_lora_train_start_preserves_dictionary_shaped_backend_error() -> None:
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={},
@@ -290,6 +292,8 @@ def test_lora_train_start_preserves_dictionary_shaped_backend_error() -> None:
 
     assert result == {
         "ok": False,
+        "classification": "backend_failure",
+        "phase": "request",
         "tool": "lora_train_start",
         "status_code": 409,
         "error": {
@@ -324,7 +328,7 @@ def test_lora_train_start_preserves_backend_recipe_repair_hint() -> None:
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={"precision": "bf16"},
@@ -363,7 +367,7 @@ def test_lora_train_start_preserves_redacted_alias_conflict_code() -> None:
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe=recipe,
@@ -473,7 +477,7 @@ def test_lora_train_start_redacts_untrusted_backend_error_context() -> None:
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={"batchSize": "super-secret-value"},
@@ -515,7 +519,7 @@ def test_lora_train_start_redacts_non_json_http_body_and_transport_exception() -
 
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         http_result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={},
@@ -526,7 +530,7 @@ def test_lora_train_start_redacts_non_json_http_body_and_transport_exception() -
     )
     with patch("mcp_server.tools.lora_train._get_client", return_value=mock_client):
         transport_result = lora_train_start(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="hash-a",
             expected_profile_hash="profile-hash-a",
             recipe={},
@@ -631,3 +635,28 @@ def test_lora_train_smoke_test_forwards_anima_component_overrides() -> None:
     assert result["ok"] is True
     assert result["tool"] == "lora_train_smoke_test"
     assert result["submitted"]["diffusion_model"] == "anima.safetensors"
+
+
+def test_allocated_names_and_full_lora_locators_survive_mcp_allowlists():
+    locator='AI-Drawing/水彩旅人_002__20261027T030000Z/水彩旅人_002.safetensors'
+    backend={'ok':True,'job_id':'job','status':'completed','stage':'completed','output_name':'水彩旅人','resolved_output_name':'水彩旅人_002','output_serial':2,'run_locator':'水彩旅人_002__20261027T030000Z','registered_lora_name':locator,'validation_status':'verified','registration_status':'registered'}
+    client=MagicMock();client.get.return_value=backend
+    with patch('mcp_server.tools.lora_train._get_client',return_value=client):
+        result=lora_train_job_status('job')
+    for key in backend: assert result[key]==backend[key]
+    client.post.return_value={**backend,'output_config_hash':'c'*64}
+    with patch('mcp_server.tools.lora_train._get_client',return_value=client):
+        started=lora_train_start('dataset',output_name='水彩旅人',expected_dataset_hash='d',expected_profile_hash='p',recipe={},expected_output_config_hash='c'*64)
+    assert started['resolved_output_name']=='水彩旅人_002' and started['output_serial']==2
+    assert client.post.call_args.kwargs['json']['expected_output_config_hash']=='c'*64
+
+
+def test_resource_catalog_keeps_full_locators_and_conflicts():
+    import json
+    from mcp_server.tools.generate import list_available_resources
+    locator='AI-Drawing/旅人_002__stamp/旅人_002.safetensors'
+    conflict={'locator':'ambiguous.safetensors','code':'lora_locator_conflict'}
+    client=MagicMock();client.get.side_effect=[{'loras':[locator],'lora_conflicts':[conflict]},{}]
+    with patch('mcp_server.tools.generate._get_client',return_value=client):
+        result=json.loads(list_available_resources())
+    assert result['loras']==[locator] and result['lora_conflicts']==[conflict]

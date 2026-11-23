@@ -1,0 +1,307 @@
+{
+  "workflow": {
+    "base": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "base.safetensors"
+      }
+    },
+    "z": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "base",
+          0
+        ],
+        "clip": [
+          "base",
+          1
+        ],
+        "lora_name": "old-z.safetensors",
+        "strength_model": 1.0,
+        "strength_clip": 1.0
+      }
+    },
+    "a": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "z",
+          0
+        ],
+        "clip": [
+          "z",
+          1
+        ],
+        "lora_name": "old-a.safetensors",
+        "strength_model": 1.0,
+        "strength_clip": 1.0
+      }
+    },
+    "m": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "a",
+          0
+        ],
+        "clip": [
+          "a",
+          1
+        ],
+        "lora_name": "old-m.safetensors",
+        "strength_model": 1.0,
+        "strength_clip": 1.0
+      }
+    },
+    "positive": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "m",
+          1
+        ],
+        "text": "positive"
+      }
+    },
+    "negative": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "m",
+          1
+        ],
+        "text": "negative"
+      }
+    },
+    "latent": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 512,
+        "height": 512,
+        "batch_size": 1
+      }
+    },
+    "k": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "m",
+          0
+        ],
+        "positive": [
+          "positive",
+          0
+        ],
+        "negative": [
+          "negative",
+          0
+        ],
+        "latent_image": [
+          "latent",
+          0
+        ],
+        "seed": 1,
+        "steps": 20,
+        "cfg": 7.0
+      }
+    },
+    "second": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "m",
+          0
+        ],
+        "positive": [
+          "positive",
+          0
+        ],
+        "negative": [
+          "negative",
+          0
+        ],
+        "latent_image": [
+          "latent",
+          0
+        ],
+        "seed": 2,
+        "steps": 20,
+        "cfg": 7.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "omitted",
+      "overrides": {},
+      "active": [
+        "z",
+        "a",
+        "m"
+      ],
+      "names": [
+        "old-z.safetensors",
+        "old-a.safetensors",
+        "old-m.safetensors"
+      ],
+      "model": [
+        "m",
+        0
+      ],
+      "clip": [
+        "m",
+        1
+      ]
+    },
+    {
+      "id": "null",
+      "overrides": {
+        "loras": null
+      },
+      "active": [
+        "z",
+        "a",
+        "m"
+      ],
+      "names": [
+        "old-z.safetensors",
+        "old-a.safetensors",
+        "old-m.safetensors"
+      ],
+      "model": [
+        "m",
+        0
+      ],
+      "clip": [
+        "m",
+        1
+      ]
+    },
+    {
+      "id": "legacy",
+      "overrides": {
+        "lora": "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "lora_strength": 0.7
+      },
+      "active": [
+        "z",
+        "a",
+        "m"
+      ],
+      "names": [
+        "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "AI-Drawing/run-004/Readable Name_002.safetensors"
+      ],
+      "model": [
+        "m",
+        0
+      ],
+      "clip": [
+        "m",
+        1
+      ]
+    },
+    {
+      "id": "empty",
+      "overrides": {
+        "lora": "ignored.safetensors",
+        "loras": []
+      },
+      "active": [],
+      "names": [],
+      "model": [
+        "base",
+        0
+      ],
+      "clip": [
+        "base",
+        1
+      ]
+    },
+    {
+      "id": "short",
+      "overrides": {
+        "lora": "ignored.safetensors",
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          }
+        ]
+      },
+      "active": [
+        "z"
+      ],
+      "names": [
+        "AI-Drawing/run-004/Readable Name_002.safetensors"
+      ],
+      "model": [
+        "z",
+        0
+      ],
+      "clip": [
+        "z",
+        1
+      ]
+    },
+    {
+      "id": "exact",
+      "overrides": {
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          },
+          {
+            "name": "second.safetensors"
+          },
+          {
+            "name": "third.safetensors",
+            "strength_model": 0.3,
+            "strength_clip": 0.2
+          }
+        ]
+      },
+      "active": [
+        "z",
+        "a",
+        "m"
+      ],
+      "names": [
+        "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "second.safetensors",
+        "third.safetensors"
+      ],
+      "model": [
+        "m",
+        0
+      ],
+      "clip": [
+        "m",
+        1
+      ]
+    },
+    {
+      "id": "excess",
+      "overrides": {
+        "loras": [
+          {
+            "name": "0.safetensors"
+          },
+          {
+            "name": "1.safetensors"
+          },
+          {
+            "name": "2.safetensors"
+          },
+          {
+            "name": "3.safetensors"
+          }
+        ]
+      },
+      "error": true
+    }
+  ]
+}

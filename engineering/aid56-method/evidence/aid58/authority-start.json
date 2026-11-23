@@ -1,0 +1,62 @@
+{
+  "AGENTS.md": {
+    "bytes": 5983,
+    "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714",
+    "numeric_mode": "0644"
+  },
+  "docs/GOAL.md": {
+    "bytes": 8989,
+    "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8",
+    "numeric_mode": "0644"
+  },
+  "docs/PROGRESS.md": {
+    "bytes": 17321,
+    "sha256": "1bf07344a5736b76f5b23912446c1b4f904324876d5929eda6cd845b33e9fc36",
+    "numeric_mode": "0644"
+  },
+  "docs/INDEX.md": {
+    "bytes": 1785,
+    "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034",
+    "numeric_mode": "0644"
+  },
+  "docs/team/README.md": {
+    "bytes": 8740,
+    "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877",
+    "numeric_mode": "0600"
+  },
+  "docs/team/roles/platform-engineer.md": {
+    "bytes": 2841,
+    "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3",
+    "numeric_mode": "0600"
+  },
+  "docs/team/channel-routing.md": {
+    "bytes": 11904,
+    "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4",
+    "numeric_mode": "0600"
+  },
+  "docs/memory/MEMORY.md": {
+    "bytes": 2242,
+    "sha256": "36817ad7b0ada0ff985ceb35ddeb4ac769ce0708b0691343f683e095201ab18b",
+    "numeric_mode": "0600"
+  },
+  "docs/memory/producer-continuous-operation.md": {
+    "bytes": 10672,
+    "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d",
+    "numeric_mode": "0644"
+  },
+  "docs/memory/runtime-source-and-state-binding.md": {
+    "bytes": 19264,
+    "sha256": "911e3bfcb88d3ffd0c9b3b73fdc067304a0b695a147c6457fe8b67150296deb6",
+    "numeric_mode": "0644"
+  },
+  "docs/memory/source-snapshot-file-permissions.md": {
+    "bytes": 6098,
+    "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708",
+    "numeric_mode": "0644"
+  },
+  "docs/memory/generation-and-training-compute-targets.md": {
+    "bytes": 1811,
+    "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6",
+    "numeric_mode": "0644"
+  }
+}

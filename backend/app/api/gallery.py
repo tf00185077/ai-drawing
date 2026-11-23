@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.core.queue import QueueFullError, submit, submit_custom
 from app.db.database import get_db
+from app.core.revision_context import project_context
 from app.db.models import GeneratedArtifact, GeneratedImage
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, bundle_from_record, rerun_input_params
 from app.schemas.gallery import (
@@ -65,6 +66,7 @@ def _artifact_to_detail(row: GeneratedArtifact) -> ArtifactDetail:
     return ArtifactDetail(
         id=row.id,
         job_id=row.job_id,
+        **project_context(row.metadata_json, artifact=True),
         artifact_type=row.artifact_type,
         mime_type=row.mime_type,
         gallery_path=row.gallery_path,
@@ -91,6 +93,7 @@ def _image_to_item(row: GeneratedImage) -> GalleryItem:
     return GalleryItem(
         id=row.id,
         job_id=row.job_id,
+        **project_context(row.revision_context_json),
         image_path=row.image_path,
         image_url=_to_image_url(row.image_path) or None,
         checkpoint=row.checkpoint,
@@ -210,11 +213,12 @@ async def rerun_image(
             "prompt": row.prompt or "",
             "execution_target": body.execution_target,
             **verified_inputs,
+            "revision_context": project_context(row.revision_context_json)["revision_context"],
         }
         # Do not pass seed: stored workflow is the only recipe authority.
         try:
             job_id = submit_custom(params)
-            return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列（recipe 稽核重現）")
+            return RerunResponse(**project_context(row.revision_context_json), job_id=job_id, status="queued", message="已加入生圖佇列（recipe 稽核重現）")
         except QueueFullError as e:
             raise HTTPException(503, str(e))
 
@@ -232,6 +236,7 @@ async def rerun_image(
                     raise HTTPException(409, f"無法重現：{label} 來源檔已不存在（{rel}）")
 
             params: dict = {"workflow": wf, "prompt": row.prompt or "", "execution_target": body.execution_target}
+            params["revision_context"] = project_context(row.revision_context_json)["revision_context"]
             if row.source_image:
                 _require_source(row.source_image, "image")
                 params["image"] = row.source_image
@@ -240,13 +245,14 @@ async def rerun_image(
                 params["mask"] = row.source_mask
             try:
                 job_id = submit_custom(params)
-                return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列（忠實重現）")
+                return RerunResponse(**project_context(row.revision_context_json), job_id=job_id, status="queued", message="已加入生圖佇列（忠實重現）")
             except QueueFullError as e:
                 raise HTTPException(503, str(e))
 
     # Legacy 路徑：依欄位重建、走 template
     params = {
         "checkpoint": row.checkpoint,
+        "revision_context": project_context(row.revision_context_json)["revision_context"],
         "lora": row.lora,
         "prompt": row.prompt or "",
         "negative_prompt": row.negative_prompt,
@@ -266,7 +272,7 @@ async def rerun_image(
         params["vae"] = row.vae
     try:
         job_id = submit(params)
-        return RerunResponse(job_id=job_id, status="queued", message="已加入生圖佇列")
+        return RerunResponse(**project_context(row.revision_context_json), job_id=job_id, status="queued", message="已加入生圖佇列")
     except QueueFullError as e:
         raise HTTPException(503, str(e))
 

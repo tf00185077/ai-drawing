@@ -1626,7 +1626,7 @@ def compile_training_recipe(
     cache_to_disk = choose(
         "caching.cache_to_disk",
         requested_caching.cache_to_disk if requested_caching is not None else None,
-        True,
+        False,
     )
     if train_text_encoder and cache_text_encoder_outputs:
         raise _cross_field_error(

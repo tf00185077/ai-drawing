@@ -9,7 +9,7 @@ import time
 from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
-from threading import Lock, Timer
+from threading import Lock, Timer, current_thread
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -36,6 +36,8 @@ NON_RETRYABLE_ERROR_CODES = {"empty_image", "invalid_image", "unreadable_image"}
 
 _observer: Observer | None = None
 _debounce_timers: dict[Path, Timer] = {}
+_caption_threads: set[Timer] = set()
+_closing = False
 _debounce_lock = Lock()
 
 
@@ -332,16 +334,24 @@ def on_new_image(image_path: Path, *, _lock_retry_attempt: int = 0) -> None:
     def _do_tag() -> None:
         retry_locked = False
         try:
+            with _debounce_lock:
+                if _closing:
+                    return
             retry_locked = _process_caption_folder(parent_dir)
         except Exception:
             logger.exception("watchdog caption generation failed for %s", parent_dir)
         finally:
             with _debounce_lock:
-                _debounce_timers.pop(parent_dir, None)
+                if _debounce_timers.get(parent_dir) is current_thread():
+                    _debounce_timers.pop(parent_dir, None)
         if retry_locked and _lock_retry_attempt < LOCK_RETRY_ATTEMPTS:
             on_new_image(path, _lock_retry_attempt=_lock_retry_attempt + 1)
 
     with _debounce_lock:
+        if _closing:
+            return
+        # Retain all live timers, even one superseded while already executing.
+        _caption_threads.difference_update(t for t in tuple(_caption_threads) if not t.is_alive())
         if old := _debounce_timers.get(parent_dir):
             old.cancel()
         delay = (
@@ -352,6 +362,7 @@ def on_new_image(image_path: Path, *, _lock_retry_attempt: int = 0) -> None:
         t = Timer(delay, _do_tag)
         t.daemon = True
         _debounce_timers[parent_dir] = t
+        _caption_threads.add(t)
         t.start()
 
 
@@ -383,7 +394,11 @@ def start_watching() -> None:
     啟動 watchdog 監聽 config.watch_dirs。
     新圖寫入時觸發 on_new_image。
     """
-    global _observer
+    global _observer, _closing
+    with _debounce_lock:
+        if any(t.is_alive() for t in _caption_threads):
+            raise RuntimeError("caption drain incomplete")
+        _closing = False
     settings = get_settings()
     dirs_str = settings.watch_dirs
     watch_paths = [p.strip() for p in dirs_str.split(",") if p.strip()]
@@ -405,10 +420,32 @@ def start_watching() -> None:
     _observer.start()
 
 
-def stop_watching() -> None:
-    """停止監聽（用於測試或優雅關閉）"""
-    global _observer
+def request_stop() -> None:
+    global _closing
+    with _debounce_lock:
+        _closing = True
+        for timer in _caption_threads:
+            timer.cancel()
+
+
+def stop_watching(timeout: float = 5.0) -> bool:
+    """Fence callbacks and verify observer plus all queued/active timers exit."""
+    global _observer, _closing
+    deadline = time.monotonic() + max(0, timeout)
+    with _debounce_lock:
+        _closing = True
+        timers = tuple(_caption_threads)
+        for timer in timers:
+            timer.cancel()  # pending timers only; active callbacks are joined
     if _observer:
         _observer.stop()
-        _observer.join(timeout=5)
-        _observer = None
+        _observer.join(timeout=max(0, deadline-time.monotonic()))
+        if not _observer.is_alive():
+            _observer = None
+    for timer in timers:
+        timer.join(timeout=max(0, deadline-time.monotonic()))
+    with _debounce_lock:
+        _caption_threads.difference_update(t for t in timers if not t.is_alive())
+        for path, timer in tuple(_debounce_timers.items()):
+            if not timer.is_alive(): del _debounce_timers[path]
+        return _observer is None and not _caption_threads

@@ -20,6 +20,7 @@ from app.services import (
     lora_dataset_assessment,
     lora_dataset_curation,
     lora_trainer,
+    lora_public,
 )
 from app.services.lora_training_recipe import (
     NormalizedRecipeInput,
@@ -288,13 +289,14 @@ def build_recipe_compilation_context(
 
 
 def _recipe_issue(error: RecipeError) -> ValidationIssue:
+    safe = lora_public.failure(error.code, phase='request', details=error.details)
     return _issue(
-        error.code,
-        error.message,
+        safe['code'],
+        safe['message'],
         path="recipe",
         details={
-            "hint": error.hint,
-            **error.details,
+            **safe['details'],
+            "hint": "apply the suggested field correction and retry",
         },
     )
 
@@ -363,15 +365,21 @@ def _resolve_trigger_token(inspected: Any, requested: str | None) -> str | None:
     return lora_dataset.normalize_trigger_token(raw) if raw else None
 
 
+from app.services.lora_delivery import validate_output_name, output_config_hash
+
+
 def decide_training_preflight(
     folder: str,
     *,
+    output_name: str,
+    expected_output_config_hash: str | None = None,
     trigger_token: str | None = None,
     expected_dataset_hash: str | None = None,
     expected_profile_hash: str | None = None,
     recipe: object | None = None,
 ) -> TrainingDecisionPreflightResponse:
     """Return a deterministic train/review/do-not-train assessment without writes or queues."""
+    output_name = validate_output_name(output_name)
     inspected = lora_dataset.inspect_dataset(folder)
     normalized_trigger = _resolve_trigger_token(inspected, trigger_token)
     reasons: list[str] = []
@@ -545,6 +553,12 @@ def decide_training_preflight(
                 context=context,
                 policy_source="preflight_policy",
             )
+            from app.services.lora_parameters import validate_reportable
+            from app.services.lora_delivery import DeliveryError
+            try:
+                validate_reportable(compiled.effective)
+            except DeliveryError as exc:
+                _add_issue(blocking, _issue(exc.code, exc.message))
             policy_rationale = [
                 (
                     f"approved profile family={compiled.effective.model.family} "
@@ -610,6 +624,8 @@ def decide_training_preflight(
         )
         start_payload = TrainingStartPayload(
             folder=inspected.folder,
+            output_name=output_name,
+            expected_output_config_hash=output_config_hash(output_name, compiled.recipe_hash),
             expected_dataset_hash=inspected.dataset_hash,
             expected_profile_hash=inspected.profile_hash,
             recipe=payload_recipe,
@@ -620,6 +636,9 @@ def decide_training_preflight(
         )
 
     return TrainingDecisionPreflightResponse(
+        output_name=output_name,
+        output_name_preview=output_name+"[_002, _003, …]",
+        output_config_hash=output_config_hash(output_name, compiled.recipe_hash) if compiled else None,
         folder=inspected.folder,
         decision=decision,
         reasons=reasons,

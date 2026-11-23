@@ -1,0 +1,79 @@
+[
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "/var/folders/3y/22v9l19d1t11l9vxxxvhf_v40000gn/T/paperclip-run-aid-58-7c83ebd6-310-b5SXFs/qa/aid57-independent-method-qa-v1/independent_checks.py",
+      "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 1,
+    "log": "original-qa-red.log",
+    "candidate": "200345773e20e60cd0fc455bb09f0f4a45708b32"
+  },
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "run_regressions.py"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 1,
+    "log": "subtotal-red.log",
+    "candidate": "unchanged parent method"
+  },
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "run_regressions.py"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 0,
+    "log": "subtotal-green.log",
+    "method_sha256": "b24750ca5cc6f9e0f9247d33e7b615d59b413f0fa55ba5d08ee44e833b2e721e"
+  },
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "/var/folders/3y/22v9l19d1t11l9vxxxvhf_v40000gn/T/paperclip-run-aid-58-7c83ebd6-310-b5SXFs/qa/aid57-independent-method-qa-v1/independent_checks.py",
+      "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 0,
+    "log": "original-qa-green.log",
+    "method_sha256": "b24750ca5cc6f9e0f9247d33e7b615d59b413f0fa55ba5d08ee44e833b2e721e"
+  },
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "run_controls.py"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 0,
+    "log": "method-green.log",
+    "method_sha256": "b24750ca5cc6f9e0f9247d33e7b615d59b413f0fa55ba5d08ee44e833b2e721e"
+  },
+  {
+    "command": [
+      "python3",
+      "-I",
+      "-S",
+      "-c",
+      "import sys,pathlib\nqa=pathlib.Path(sys.argv[1]);source=qa.read_bytes().decode('utf-8')\n__file__=str(qa)\nsys.argv=[str(qa),sys.argv[2]]\nexec(compile(source.split('suite=unittest.defaultTestLoader.loadTestsFromTestCase(Independent)')[0],str(qa),'exec'))\nt=terms(p=100);t['D_B']=None\na=alloc(b=100,h=0,u=0);a['H']=None\nprint(json.dumps(dict(logical=m.capacity(t,[alloc(b=0,h=0,u=0)],{'one':0},cap=199),physical=m.capacity(terms(),[a],{'one':119},cap=69)),sort_keys=True))\n",
+      "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method/controls/aid57_independent_checks.py",
+      "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method"
+    ],
+    "cwd": "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-58-partial-overflow/engineering/aid56-method",
+    "exit": 0,
+    "log": "counterexamples.json",
+    "guard": "unchanged independent pre-import guard; seven synthetic denials"
+  }
+]

@@ -561,7 +561,7 @@ def test_worker_client_caps_coordinator_timeout_at_configured_timeout(
     class Response:
         @staticmethod
         def json() -> dict[str, Any]:
-            return {"state": "queued"}
+            return {"state": "queued", "protocol_version": 2}
 
         @staticmethod
         def raise_for_status() -> None:

@@ -1,0 +1,2792 @@
+{
+  "version": 1,
+  "fixture_sha256": "5181d3d5c2002dc4b0d3ff7580dc1e4111473ec0d2fd9ff2330fed726e1c5553",
+  "producer": "backend/tests/test_multi_lora_boundaries.py::test_http_queue_compilation_and_export",
+  "no_lifespan": true,
+  "execution": "intercepted; no compute",
+  "exchanges": [
+    {
+      "case": "omitted",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "cd194fb4-9b6e-4665-a116-a34bae207584",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "cd194fb4-9b6e-4665-a116-a34bae207584",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.561416Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "old-z.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "old-a.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "old-m.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "null",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": null,
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "77b670d8-3965-443f-95ec-60b717932610",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "77b670d8-3965-443f-95ec-60b717932610",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.564321Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "old-z.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "old-a.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "old-m.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "legacy",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "lora_strength": 0.7,
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "490eec4a-170b-4f2b-b635-f459060eed3e",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "490eec4a-170b-4f2b-b635-f459060eed3e",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.566168Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "empty",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract, mapped style",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "ignored.safetensors",
+        "loras": [],
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "f04a0a34-2dc8-418e-b15c-f0f8605f8fb9",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "f04a0a34-2dc8-418e-b15c-f0f8605f8fb9",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.567733Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "base",
+              1
+            ],
+            "text": "contract, mapped style"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "base",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "short",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract, mapped style",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "ignored.safetensors",
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          }
+        ],
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "37e2fa4b-b129-44f7-9e45-c02591cdf0a8",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "37e2fa4b-b129-44f7-9e45-c02591cdf0a8",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.569348Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6,
+            "strength_clip": 0.6
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "z",
+              1
+            ],
+            "text": "contract, mapped style"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "z",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "exact",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          },
+          {
+            "name": "second.safetensors"
+          },
+          {
+            "name": "third.safetensors",
+            "strength_model": 0.3,
+            "strength_clip": 0.2
+          }
+        ],
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "6b63f9b1-446d-4a90-9cd6-8298217352b0",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "6b63f9b1-446d-4a90-9cd6-8298217352b0",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.570893Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6,
+            "strength_clip": 0.6
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "second.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "third.safetensors",
+            "strength_model": 0.3,
+            "strength_clip": 0.2
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "excess",
+      "path": "/api/generate/",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": [
+          {
+            "name": "0.safetensors"
+          },
+          {
+            "name": "1.safetensors"
+          },
+          {
+            "name": "2.safetensors"
+          },
+          {
+            "name": "3.safetensors"
+          }
+        ],
+        "template": "offline-contract"
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "a7d931a2-cbcd-4a79-9c42-4768499b3ddd",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "failed",
+        "job_id": "a7d931a2-cbcd-4a79-9c42-4768499b3ddd",
+        "prompt_id": null,
+        "submitted_at": "2026-10-27T10:13:46.572686Z",
+        "error": "Explicit payload defines 4 LoRAs but workflow has 3 loader(s)",
+        "node_errors": [],
+        "recording_error": null,
+        "failure_code": "submission_failed",
+        "diagnostic_tail": ""
+      },
+      "compiled": null
+    },
+    {
+      "case": "omitted",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "69268887-7a1c-48a1-ac08-0bbe2ff75c17",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "69268887-7a1c-48a1-ac08-0bbe2ff75c17",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.575233Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "old-z.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "old-a.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "old-m.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "null",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": null,
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "be9c159e-a07a-49a3-9f96-570478791f71",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "be9c159e-a07a-49a3-9f96-570478791f71",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.576905Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "old-z.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "old-a.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "old-m.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "legacy",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "AI-Drawing/run-004/Readable Name_002.safetensors",
+        "lora_strength": 0.7,
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "8e398ceb-fd0b-4d8b-a82f-a92b8f47ef24",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "8e398ceb-fd0b-4d8b-a82f-a92b8f47ef24",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.578605Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.7,
+            "strength_clip": 0.7
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "empty",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract, mapped style",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "ignored.safetensors",
+        "loras": [],
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "5e2e0421-9fc7-4234-89fd-ba128c62f0ce",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "5e2e0421-9fc7-4234-89fd-ba128c62f0ce",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.580236Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "base",
+              1
+            ],
+            "text": "contract, mapped style"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "base",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "short",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract, mapped style",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "lora": "ignored.safetensors",
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          }
+        ],
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "45547277-180a-4c85-9f59-992766e3bce5",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "45547277-180a-4c85-9f59-992766e3bce5",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.581905Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6,
+            "strength_clip": 0.6
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "z",
+              1
+            ],
+            "text": "contract, mapped style"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "z",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "exact",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": [
+          {
+            "name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6
+          },
+          {
+            "name": "second.safetensors"
+          },
+          {
+            "name": "third.safetensors",
+            "strength_model": 0.3,
+            "strength_clip": 0.2
+          }
+        ],
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "d6f587ce-1e06-4dc8-aba1-1c097e94bc1e",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "running",
+        "job_id": "d6f587ce-1e06-4dc8-aba1-1c097e94bc1e",
+        "prompt_id": "offline-intercepted-prompt",
+        "submitted_at": "2026-10-27T10:13:46.583677Z"
+      },
+      "compiled": {
+        "base": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "base.safetensors"
+          }
+        },
+        "z": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "base",
+              0
+            ],
+            "clip": [
+              "base",
+              1
+            ],
+            "lora_name": "AI-Drawing/run-004/Readable Name_002.safetensors",
+            "strength_model": 0.6,
+            "strength_clip": 0.6
+          }
+        },
+        "a": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "z",
+              0
+            ],
+            "clip": [
+              "z",
+              1
+            ],
+            "lora_name": "second.safetensors",
+            "strength_model": 1.0,
+            "strength_clip": 1.0
+          }
+        },
+        "m": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "a",
+              0
+            ],
+            "clip": [
+              "a",
+              1
+            ],
+            "lora_name": "third.safetensors",
+            "strength_model": 0.3,
+            "strength_clip": 0.2
+          }
+        },
+        "positive": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "contract"
+          }
+        },
+        "negative": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "m",
+              1
+            ],
+            "text": "negative"
+          }
+        },
+        "latent": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 512,
+            "batch_size": 1
+          }
+        },
+        "k": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        },
+        "second": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "m",
+              0
+            ],
+            "positive": [
+              "positive",
+              0
+            ],
+            "negative": [
+              "negative",
+              0
+            ],
+            "latent_image": [
+              "latent",
+              0
+            ],
+            "seed": 42,
+            "steps": 20,
+            "cfg": 7.0
+          }
+        }
+      }
+    },
+    {
+      "case": "excess",
+      "path": "/api/generate/custom",
+      "request": {
+        "prompt": "contract",
+        "checkpoint": "base.safetensors",
+        "seed": 42,
+        "batch_size": 1,
+        "execution_target": "worker",
+        "loras": [
+          {
+            "name": "0.safetensors"
+          },
+          {
+            "name": "1.safetensors"
+          },
+          {
+            "name": "2.safetensors"
+          },
+          {
+            "name": "3.safetensors"
+          }
+        ],
+        "workflow": {
+          "base": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+              "ckpt_name": "base.safetensors"
+            }
+          },
+          "z": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "base",
+                0
+              ],
+              "clip": [
+                "base",
+                1
+              ],
+              "lora_name": "old-z.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "a": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "z",
+                0
+              ],
+              "clip": [
+                "z",
+                1
+              ],
+              "lora_name": "old-a.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "m": {
+            "class_type": "LoraLoader",
+            "inputs": {
+              "model": [
+                "a",
+                0
+              ],
+              "clip": [
+                "a",
+                1
+              ],
+              "lora_name": "old-m.safetensors",
+              "strength_model": 1.0,
+              "strength_clip": 1.0
+            }
+          },
+          "positive": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "positive"
+            }
+          },
+          "negative": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+              "clip": [
+                "m",
+                1
+              ],
+              "text": "negative"
+            }
+          },
+          "latent": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+              "width": 512,
+              "height": 512,
+              "batch_size": 1
+            }
+          },
+          "k": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 1,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          },
+          "second": {
+            "class_type": "KSampler",
+            "inputs": {
+              "model": [
+                "m",
+                0
+              ],
+              "positive": [
+                "positive",
+                0
+              ],
+              "negative": [
+                "negative",
+                0
+              ],
+              "latent_image": [
+                "latent",
+                0
+              ],
+              "seed": 2,
+              "steps": 20,
+              "cfg": 7.0
+            }
+          }
+        }
+      },
+      "post_status": 201,
+      "post": {
+        "job_id": "e87deddc-53cb-41be-9210-000cd771d979",
+        "status": "queued",
+        "message": "\u5df2\u52a0\u5165\u751f\u5716\u4f47\u5217\uff08\u81ea\u8a02 workflow\uff09"
+      },
+      "get_status": 200,
+      "get": {
+        "status": "failed",
+        "job_id": "e87deddc-53cb-41be-9210-000cd771d979",
+        "prompt_id": null,
+        "submitted_at": "2026-10-27T10:13:46.585370Z",
+        "error": "Explicit payload defines 4 LoRAs but workflow has 3 loader(s)",
+        "node_errors": [],
+        "recording_error": null,
+        "failure_code": "submission_failed",
+        "diagnostic_tail": ""
+      },
+      "compiled": null
+    }
+  ]
+}

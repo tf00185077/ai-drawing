@@ -66,7 +66,7 @@ def resolve_dataset_dir(folder: str) -> Path:
     if raw.startswith(("/", "\\")):
         raise DatasetServiceError("invalid_dataset_folder", "invalid dataset folder")
     cleaned = raw.replace("\\", "/").strip("/")
-    if not cleaned or ".." in cleaned:
+    if not cleaned or ".." in cleaned or cleaned.split("/")[0] in {"output", "logs", ".lora_prep_backups"}:
         raise DatasetServiceError("invalid_dataset_folder", "invalid dataset folder")
     if not re.fullmatch(r"[\w\-/]+", cleaned):
         raise DatasetServiceError("invalid_dataset_folder", "invalid dataset folder")
@@ -549,7 +549,7 @@ def _load_dataset_profile(dataset_dir: Path, trigger_token_candidates: list[str]
                     "invalid_profile_json",
                     "metadata profile is not valid JSON",
                     profile_rel_path,
-                    {"error": str(exc)},
+                    {"classification": "dataset", "hint": "repair the metadata JSON and rerun dataset inspection"},
                 )
             ],
         )
@@ -588,7 +588,7 @@ def list_datasets() -> list[DatasetItem]:
         return []
     result: list[DatasetItem] = []
     for directory in sorted((p for p in base.rglob("*") if p.is_dir()), key=lambda p: p.as_posix()):
-        if directory.name in {"output", "logs", ".lora_prep_backups"}:
+        if directory.relative_to(base).parts[0] in {"output", "logs", ".lora_prep_backups"}:
             continue
         files = _collect_files(directory)
         if files:

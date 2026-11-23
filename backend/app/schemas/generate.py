@@ -4,8 +4,50 @@
 """
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from pydantic_core import PydanticCustomError
+
+
+class RevisionContextRequest(BaseModel):
+    """Opaque caller annotations; never interpreted as execution or acceptance."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0"] = "1.0"
+    request_ref: StrictStr = Field(min_length=1, max_length=256)
+    brief_revision: StrictStr = Field(min_length=1, max_length=64)
+    parent_artifact_id: StrictInt | None = Field(default=None, gt=0)
+    feedback_ref: StrictStr | None = Field(default=None, max_length=512)
+    feedback_summary: StrictStr | None = Field(default=None, max_length=2000)
+
+    @field_validator("request_ref", "brief_revision", "feedback_ref", mode="before")
+    @classmethod
+    def trim_reference(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class RevisionContext(RevisionContextRequest):
+    """Canonical snapshot. Derived fields are required in storage, forbidden on input."""
+
+    schema_version: Literal["1.0"]
+    parent_job_id: StrictStr | None
+    parent_request_ref: StrictStr | None = Field(max_length=256)
+    parent_brief_revision: StrictStr | None = Field(max_length=64)
+    parent_context_status: Literal["root", "available", "legacy"]
+
+    @model_validator(mode="after")
+    def validate_parent_snapshot(self):
+        if self.parent_artifact_id is None:
+            if self.parent_context_status != "root" or any(value is not None for value in (
+                self.parent_job_id, self.parent_request_ref, self.parent_brief_revision,
+            )):
+                raise ValueError("root context cannot claim parent identity")
+        elif self.parent_context_status == "available":
+            if self.parent_request_ref != self.request_ref or not self.parent_brief_revision or not self.parent_brief_revision.strip():
+                raise ValueError("parent request/brief snapshot is inconsistent")
+        elif self.parent_context_status != "legacy" or self.parent_request_ref is not None or self.parent_brief_revision is not None:
+            raise ValueError("legacy parent request/brief must remain unknown")
+        return self
 
 
 class LoraSpec(BaseModel):
@@ -20,6 +62,7 @@ class GenerateRequest(BaseModel):
     """POST /api/generate/ 的 Request Body"""
 
     checkpoint: str | None = None
+    revision_context: RevisionContextRequest | None = None
     lora: str | None = None
     loras: list[LoraSpec] | None = Field(
         default=None,
@@ -90,6 +133,7 @@ class GenerateResponse(BaseModel):
     job_id: str
     status: str = "queued"
     message: str | None = None
+    revision_context: RevisionContext | None = None
 
 
 class QueueItem(BaseModel):

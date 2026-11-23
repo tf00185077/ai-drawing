@@ -1,0 +1,276 @@
+"""
+專案配置
+"""
+import math
+import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from dotenv import load_dotenv
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings
+
+# 專案根目錄（backend 的上層），.env 在此
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_ENV_PATH = _PROJECT_ROOT / ".env"
+
+
+def _project_root_path(*parts: str) -> str:
+    """回傳以專案根目錄為基準的絕對路徑字串。"""
+    return str((_PROJECT_ROOT.joinpath(*parts)).resolve())
+
+
+def _resolve_project_path(path_str: str) -> str:
+    """將相對路徑轉成以專案根目錄為基準的絕對路徑。"""
+    p = Path(path_str).expanduser()
+    if p.is_absolute():
+        return str(p.resolve())
+    return str((_PROJECT_ROOT / p).resolve())
+
+
+def _resolve_project_path_preserving_final_symlink(path_str: str) -> str:
+    """Resolve a project-relative path without dereferencing its final component."""
+    p = Path(path_str).expanduser()
+    candidate = p if p.is_absolute() else _PROJECT_ROOT / p
+    return os.path.abspath(candidate)
+
+
+def _resolve_sqlite_url(url: str) -> str:
+    """將 sqlite 相對路徑 URL 轉為 project-root 基準的絕對路徑 URL。"""
+    if not url.startswith("sqlite:///"):
+        return url
+    raw_path = url.removeprefix("sqlite:///")
+    if not raw_path:
+        return url
+    resolved = _resolve_project_path(raw_path)
+    return f"sqlite:///{resolved}"
+
+
+def _resolve_path_list(paths: str) -> str:
+    """Resolve a comma-separated list of filesystem paths."""
+    return ",".join(
+        _resolve_project_path(part.strip())
+        for part in paths.split(",")
+        if part.strip()
+    )
+
+
+# Test mode requires an explicit bootstrap before any Settings/default-path evaluation.
+if os.environ.get("AI_DRAWING_TEST_ROOT") and os.environ.get("AI_DRAWING_TEST_CONFIGURED") != os.environ["AI_DRAWING_TEST_ROOT"]:
+    raise RuntimeError("test Settings imported before test bootstrap")
+
+# 最早載入 .env 至 os.environ，確保不論從何處啟動都能讀到
+if not os.environ.get("AI_DRAWING_TEST_ROOT"):
+    load_dotenv(_ENV_PATH)
+
+
+class Settings(BaseSettings):
+    # 資料庫
+    database_url: str = f"sqlite:///{_project_root_path('backend', 'auto_draw.db')}"
+
+    # ComfyUI
+    comfyui_mode: Literal["disabled", "external", "managed"] = "external"
+    comfyui_base_url: str = "http://127.0.0.1:8188"
+    # ComfyUI 模型目錄，用於列出可用 checkpoint / lora（!查可用資源 指令）
+    comfyui_checkpoints_dir: str = "D:/AI/ComfyUI/models/checkpoints"
+    comfyui_loras_dir: str = "D:/AI/ComfyUI/models/loras"
+    # LoRA 訓練完成後註冊到 ComfyUI 的目標目錄；未設定時使用 comfyui_loras_dir 第一個路徑。
+    comfyui_lora_dir: str = ""
+    # diffusion-model 家族（如 Anima）的元件目錄：UNET / text encoder / VAE 分開存放
+    comfyui_diffusion_models_dir: str = "D:/AI/ComfyUI/models/diffusion_models"
+    comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
+    comfyui_vae_dir: str = "D:/AI/ComfyUI/models/vae"
+    # CIV-V-D backend-only resource installation settings. Never accepted from MCP.
+    civitai_authorization: str | None = None
+    comfyui_embeddings_dir: str = "D:/AI/ComfyUI/models/embeddings"
+    comfyui_controlnet_dir: str = "D:/AI/ComfyUI/models/controlnet"
+    comfyui_upscale_models_dir: str = "D:/AI/ComfyUI/models/upscale_models"
+    comfyui_clip_vision_dir: str = "D:/AI/ComfyUI/models/clip_vision"
+    comfyui_audio_models_dir: str = "D:/AI/ComfyUI/models/audio_encoders"
+    # ComfyUI LoadImage/LoadAudio input directory. Wan multi-keyframe video
+    # workflows stage gallery images and generated silent wavs here.
+    comfyui_input_dir: str = "~/comfyui/input"
+    comfyui_ws_url: str = "ws://127.0.0.1:8188/ws"
+    # Optional open-control Windows NVIDIA Worker. Local generation remains the
+    # default; these values are used only when a request explicitly selects it.
+    nvidia_worker_url: str = ""
+    # Retained so existing .env files load; open-control mode ignores this value.
+    nvidia_worker_token: str = ""
+    nvidia_worker_timeout: float = 60.0
+    # Connect failures may discover the configured Worker at its new DHCP address.
+    # Discovery is intentionally constrained to one IPv4 /24 and matches the
+    # configured hostname/protocol before changing only runtime state.
+    nvidia_worker_discovery_enabled: bool = False
+    nvidia_worker_discovery_cidr: str = ""
+    nvidia_worker_discovery_timeout: float = Field(default=0.25, gt=0, le=5)
+    nvidia_worker_hostname: str = ""
+    nvidia_worker_protocol_version: int = Field(default=2, ge=1)
+    nvidia_worker_cache_gb: int = Field(default=70, ge=10, le=1000)
+    # Retained so existing .env files load; managed updater coordination is retired.
+    nvidia_worker_auto_update: bool = False
+    nvidia_worker_update_timeout: float = 1800.0
+    comfyui_timeout_submit: float = 60.0
+    comfyui_timeout_fetch: float = 30.0
+    comfyui_timeout_queue: float = 10.0
+    # 節點 schema 查詢：/object_info 快取存活秒數（TTL 內視為同一實例，逾時重抓以反映重啟/新增 custom node）
+    comfyui_object_info_ttl: float = 60.0
+    # 監聽 ComfyUI 直接生成：從 UI 產圖時自動記錄至圖庫
+    comfyui_record_external: bool = True
+    comfyui_history_poll_interval: float = 10.0  # 秒
+
+    # 輸出目錄
+    output_dir: str = _project_root_path("backend", "outputs")
+    gallery_dir: str = _project_root_path("backend", "outputs", "gallery")
+    # Fixed Discord video uploads/work data are intentionally external-volume defaults.
+    # Deployments may override these with another absolute non-system-volume path.
+    video_staging_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/discord-video"
+    film_work_dir: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/film-work"
+    film_model_path: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/frame_interpolation/film_net_fp16.pt"
+    # MiniMax H3 Argus/MLX runtime (fail closed; no download/fallback).
+    argus_mlx_runtime_root: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4"
+    argus_mlx_python: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4/.venv/bin/python"
+    argus_mlx_generate_script: str = "/Volumes/AI-Drawing-16T/ai-drawing/runtimes/minimax-h3-mac-pr4/scripts/generate.py"
+    argus_mlx_checkpoint: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3/FL2VA"
+    argus_mlx_transformer: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3-MLX-Argus-Calibrated-INT8"
+    argus_mlx_turbo_lora: str = "/Volumes/AI-Drawing-16T/ai-drawing/models/minimax_h3_mlx/MiniMax-H3-Turbo-v4-step600-EMA-MLX"
+    argus_mlx_work_root: str = "/Volumes/AI-Drawing-16T/ai-drawing/staging/argus-minimax-h3"
+    argus_mlx_hf_cache: str = "/Volumes/AI-Drawing-16T/ai-drawing/cache/huggingface"
+    # Operator must explicitly accept the upstream MiniMax-H3 model license.
+    argus_mlx_accept_license: bool = False
+    argus_mlx_max_concurrency: Literal[1] = 1
+    argus_mlx_timeout_seconds: float = 3600.0
+    argus_mlx_ffmpeg: str = "/opt/homebrew/bin/ffmpeg"
+    argus_mlx_ffprobe: str = "/opt/homebrew/bin/ffprobe"
+    prompt_library_dir: str = _project_root_path("prompt_library")
+    prompt_library_lock_timeout: float = Field(default=5.0, gt=0)
+
+    # 大檔 SHA-256 快取（size/mtime/inode 未變即信任快取，避免每次重算多 GB 雜湊）
+    file_digest_cache_path: str = _project_root_path("backend", ".file_sha256_cache.json")
+
+    # Civitai 自動下載後 best-effort 生圖的預設 batch 張數
+    civitai_generate_default_batch: int = 4
+
+    # LoRA 訓練
+    lora_train_dir: str = _project_root_path("backend", "lora_train")
+    lora_train_logs_dir: str = _project_root_path("backend", "lora_train", "logs")
+    # 建議資料夾結構（WD Tagger 依路徑選用不同 blacklist）：
+    #   lora_train/character/10_角色名/  → 人物訓練
+    #   lora_train/style/10_畫師名/      → 畫風訓練
+    #   lora_train/costume/10_服裝名/    → 服裝訓練
+    #   lora_train/background/10_場景/   → 背景訓練
+    lora_train_threshold: int = 10  # 自動觸發門檻（圖片數）
+    lora_default_checkpoint: str = ""  # 未指定時的預設 checkpoint
+    lora_checkpoint_dirs: str = ""  # 逗號分隔，純檔名 checkpoint 在此搜尋
+    lora_model_family: str = ""  # sd15 | sdxl | anima；未設定時沿用 lora_sdxl
+    lora_anima_qwen3: str = ""  # Anima/Qwen3 text encoder path；model_family=anima 時必填
+    lora_anima_vae: str = ""  # Anima/Qwen-Image VAE path；可由 API 覆寫
+    lora_anima_t5_tokenizer_path: str = ""  # Anima T5 tokenizer path；空值使用 sd-scripts bundled configs/t5_old
+    lora_sdxl: bool = False  # True 時使用 sdxl_train_network.py（SDXL/PDXL 模型）
+    lora_auto_prompt: str = "1girl, solo, high quality"  # 訓練完成後自動產圖的 prompt
+    sd_scripts_path: str = _project_root_path("sd-scripts")
+    sd_scripts_python: str = ""  # WD Tagger 用的 Python，需含 cv2/torch 等。未填則用 python
+    # WD Tagger 後處理
+    wd_tag_limit: int = 20  # caption 最多保留 tag 數
+    wd_trigger_word: str = ""  # 若設，會前綴至 caption（如 class token ohwx）
+    # LoRA 訓練參數預設值（API 未帶入時使用）
+    lora_resolution: int = 1024
+    lora_batch_size: int = 4
+    lora_learning_rate: str = "1e-4"
+    lora_class_tokens: str = "sks"
+    lora_keep_tokens: int = 1
+    lora_num_repeats: int = 10
+    lora_mixed_precision: str = "fp16"
+    lora_network_dim: int = 32
+    lora_network_alpha: int = 16
+    lora_save_every_n_epochs: int = 1  # 每 N epoch 存檔，0=僅最後
+
+    # watchdog
+    watch_dirs: str = _project_root_path("backend", "lora_train")  # 逗號分隔
+
+    # ControlNet 預設姿態圖（路徑相對於專案根目錄）
+    controlnet_default_pose_image: str = "backend/lora_train/lovelive/__asaka_karin_love_live_and_1_more_drawn_by_nasuno_nasuno42__sample-363e09661ab550cd5a85bbc226caf34e.jpg"
+
+    # LLM Caption
+    llm_caption_url: str | None = None  # 外部 LLM caption API URL（如 BLIP2 service）
+
+    @field_validator(
+        "nvidia_worker_timeout",
+        "nvidia_worker_update_timeout",
+        "argus_mlx_timeout_seconds",
+        mode="before",
+    )
+    @classmethod
+    def _reject_boolean_worker_timeout(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("worker timeout must not be boolean")
+        return value
+
+    @field_validator(
+        "nvidia_worker_timeout",
+        "nvidia_worker_update_timeout",
+        "argus_mlx_timeout_seconds",
+        mode="after",
+    )
+    @classmethod
+    def _require_positive_finite_worker_timeout(cls, value: float) -> float:
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError("worker timeout must be positive and finite")
+        return value
+
+    @model_validator(mode="after")
+    def _normalize_project_relative_paths(self):
+        self.database_url = _resolve_sqlite_url(self.database_url)
+        self.output_dir = _resolve_project_path(self.output_dir)
+        self.gallery_dir = _resolve_project_path(self.gallery_dir)
+        self.video_staging_dir = _resolve_project_path(self.video_staging_dir)
+        self.film_work_dir = _resolve_project_path(self.film_work_dir)
+        self.film_model_path = _resolve_project_path(self.film_model_path)
+        for key in (
+            "argus_mlx_runtime_root",
+            "argus_mlx_generate_script", "argus_mlx_checkpoint",
+            "argus_mlx_transformer", "argus_mlx_turbo_lora",
+            "argus_mlx_work_root", "argus_mlx_hf_cache",
+            "argus_mlx_ffmpeg", "argus_mlx_ffprobe",
+        ):
+            setattr(self, key, _resolve_project_path(getattr(self, key)))
+        self.argus_mlx_python = _resolve_project_path_preserving_final_symlink(
+            self.argus_mlx_python
+        )
+        self.prompt_library_dir = _resolve_project_path(self.prompt_library_dir)
+        self.comfyui_checkpoints_dir = _resolve_path_list(self.comfyui_checkpoints_dir)
+        self.comfyui_loras_dir = _resolve_path_list(self.comfyui_loras_dir)
+        if self.comfyui_lora_dir:
+            self.comfyui_lora_dir = _resolve_project_path(self.comfyui_lora_dir)
+        else:
+            self.comfyui_lora_dir = self.comfyui_loras_dir.split(",")[0] if self.comfyui_loras_dir else ""
+        self.comfyui_diffusion_models_dir = _resolve_path_list(self.comfyui_diffusion_models_dir)
+        self.comfyui_text_encoders_dir = _resolve_path_list(self.comfyui_text_encoders_dir)
+        self.comfyui_vae_dir = _resolve_path_list(self.comfyui_vae_dir)
+        self.comfyui_embeddings_dir = _resolve_path_list(self.comfyui_embeddings_dir)
+        self.comfyui_controlnet_dir = _resolve_path_list(self.comfyui_controlnet_dir)
+        self.comfyui_upscale_models_dir = _resolve_path_list(self.comfyui_upscale_models_dir)
+        self.comfyui_clip_vision_dir = _resolve_path_list(self.comfyui_clip_vision_dir)
+        self.comfyui_audio_models_dir = _resolve_path_list(self.comfyui_audio_models_dir)
+        self.comfyui_input_dir = _resolve_project_path(self.comfyui_input_dir)
+        self.lora_train_dir = _resolve_project_path(self.lora_train_dir)
+        self.lora_train_logs_dir = _resolve_project_path(self.lora_train_logs_dir)
+        self.sd_scripts_path = _resolve_project_path(self.sd_scripts_path)
+        if self.lora_anima_qwen3:
+            self.lora_anima_qwen3 = _resolve_project_path(self.lora_anima_qwen3)
+        if self.lora_anima_vae:
+            self.lora_anima_vae = _resolve_project_path(self.lora_anima_vae)
+        if self.lora_anima_t5_tokenizer_path:
+            self.lora_anima_t5_tokenizer_path = _resolve_project_path(self.lora_anima_t5_tokenizer_path)
+        self.watch_dirs = _resolve_path_list(self.watch_dirs)
+        return self
+
+    class Config:
+        env_file = None if os.environ.get("AI_DRAWING_TEST_ROOT") else str(_ENV_PATH)
+        env_file_encoding = "utf-8"
+        extra = "ignore"  # 允許 .env 有未對應欄位（如 MCP_BACKEND_API_URL）
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

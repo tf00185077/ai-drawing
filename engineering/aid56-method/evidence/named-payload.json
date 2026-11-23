@@ -1,0 +1,10 @@
+{
+  "scope": "retained named payload accounting only; effective P unknown",
+  "regular_bytes": 37500797650,
+  "symlink_entries": 10,
+  "symlink_literal_bytes": 1100,
+  "named_payload_bytes": 37500798750,
+  "two_named_payload_copies": 75001597500,
+  "metadata_payload_basis": "14-payload retained manifest hashes verified",
+  "allocation_bound": null
+}

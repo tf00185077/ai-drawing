@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import GeneratedArtifact, GeneratedImage
 from app.services.civitai_recipe_gallery import persistable_bundle
+from app.core.revision_context import canonical_snapshot
 
 
 def _json_or_none(value: dict[str, Any] | str | None) -> str | None:
@@ -87,6 +88,7 @@ def save(
     artifact_source_node_type: str | None = None,
     artifact_file_size: int | None = None,
     artifact_metadata: dict[str, Any] | str | None = None,
+    revision_context: dict[str, Any] | None = None,
     db: Session,
 ) -> GeneratedImage:
     """
@@ -100,6 +102,19 @@ def save(
     workflow_json = _json_or_none(workflow_json)
     # Validate/canonicalize before adding either image or artifact: invalid bundles leave no partial provenance.
     provenance_columns = persistable_bundle(recipe_provenance) if recipe_provenance is not None else {}
+    context = canonical_snapshot(revision_context)
+    # The reserved key comes only from validated canonical context. Preserve all
+    # unrelated metadata; legacy callers without context retain their exact value.
+    if context is not None:
+        metadata = json.loads(artifact_metadata) if isinstance(artifact_metadata, str) else dict(artifact_metadata or {})
+        if not isinstance(metadata, dict):
+            raise ValueError("artifact metadata must be an object")
+        metadata["revision_context"] = context
+        artifact_metadata = metadata
+    elif artifact_metadata:
+        metadata = json.loads(artifact_metadata) if isinstance(artifact_metadata, str) else artifact_metadata
+        if isinstance(metadata, dict) and "revision_context" in metadata:
+            raise ValueError("revision_context is a reserved artifact metadata key")
     record = GeneratedImage(
         image_path=image_path,
         job_id=job_id,
@@ -117,25 +132,30 @@ def save(
         workflow_json=workflow_json,
         source_image=source_image,
         source_mask=source_mask,
+        revision_context_json=_json_or_none(context),
         **provenance_columns,
     )
-    db.add(record)
-    db.flush()
-    db.add(
-        GeneratedArtifact(
-            job_id=job_id,
-            artifact_type="image",
-            gallery_path=image_path,
-            mime_type=artifact_mime_type,
-            source_node_id=artifact_source_node_id,
-            source_node_type=artifact_source_node_type,
-            file_size=artifact_file_size,
-            workflow_json=workflow_json,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            metadata_json=_json_or_none(artifact_metadata),
+    try:
+        db.add(record)
+        db.flush()
+        db.add(
+            GeneratedArtifact(
+                job_id=job_id,
+                artifact_type="image",
+                gallery_path=image_path,
+                mime_type=artifact_mime_type,
+                source_node_id=artifact_source_node_id,
+                source_node_type=artifact_source_node_type,
+                file_size=artifact_file_size,
+                workflow_json=workflow_json,
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                metadata_json=_json_or_none(artifact_metadata),
+            )
         )
-    )
-    db.commit()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(record)
     return record

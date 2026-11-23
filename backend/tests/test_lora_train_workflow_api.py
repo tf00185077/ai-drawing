@@ -368,7 +368,7 @@ def test_start_status_logs_cancel_and_aggregate_status(tmp_path: Path, monkeypat
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -441,7 +441,7 @@ def test_start_rejects_missing_sd_scripts_before_persisting_job(tmp_path: Path, 
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -458,7 +458,10 @@ def test_start_rejects_missing_sd_scripts_before_persisting_job(tmp_path: Path, 
 
     assert started.status_code == 400
     assert started.json()["detail"]["code"] == "sd_scripts_path_missing"
-    assert started.json()["detail"]["details"]["sd_scripts_path"] == settings.sd_scripts_path
+    # Public errors identify the configuration fault without returning its private path.
+    assert "sd_scripts_path" not in started.json()["detail"]["details"]
+    assert started.json()["detail"]["details"]["classification"] == "preparation"
+    assert started.json()["detail"]["hint"]
     db = session_local()
     try:
         assert db.query(LoraTrainingJob).count() == 0
@@ -493,7 +496,7 @@ def test_start_anima_records_model_family_and_trainer_script(tmp_path: Path, mon
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -523,8 +526,12 @@ def test_start_anima_records_model_family_and_trainer_script(tmp_path: Path, mon
     assert status.json()["params"]["network_module"] == "networks.lora_anima"
     assert status.json()["params"]["sdxl"] is False
     assert status.json()["params"]["kohya_mixed_precision"] == "no"
-    assert status.json()["params"]["anima_qwen3"] == str(qwen3.resolve())
-    assert status.json()["params"]["anima_vae"] == str(vae.resolve())
+    assert "redacted" in status.json()["params"]["anima_qwen3"]
+    assert "redacted" in status.json()["params"]["anima_vae"]
+    # Redaction must not alter the actual component paths used for execution.
+    internal = lora_trainer.get_job_status(job_id)
+    assert internal["params"]["anima_qwen3"] == str(qwen3.resolve())
+    assert internal["params"]["anima_vae"] == str(vae.resolve())
     assert status.json()["params"]["anima_t5_tokenizer_path"] is None
     lora_trainer._reset_for_test()
 
@@ -556,7 +563,7 @@ def test_start_untrusted_network_module_is_rejected_without_job(
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -603,7 +610,7 @@ def test_start_anima_rejects_missing_qwen3_before_persisting_job(tmp_path: Path,
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -647,7 +654,7 @@ def test_start_rejects_unsupported_model_family_before_persisting_job(tmp_path: 
     client = _client()
     started = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -714,25 +721,21 @@ def test_terminal_job_status_and_log_errors_are_durable(tmp_path: Path, monkeypa
     assert missing.json()["detail"]["code"] == "job_not_found"
 
 
-def test_register_output_lora_success_and_not_configured(tmp_path: Path, monkeypatch) -> None:
-    """Registration copies safetensors atomically and reports missing config clearly."""
-    source = tmp_path / "output" / "miku.safetensors"
-    source.parent.mkdir()
-    source.write_bytes(b"model")
-    settings = _settings(tmp_path, tmp_path / "lora_train")
-    monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
-
-    name, target = lora_trainer._register_output_lora(source, "job-1")
-    assert name == "miku.safetensors"
-    assert Path(target).read_bytes() == b"model"
-
-    settings.comfyui_lora_dir = ""
-    try:
-        lora_trainer._register_output_lora(source, "job-2")
-    except lora_trainer.TrainerServiceError as exc:
-        assert exc.code == "lora_registration_not_configured"
-    else:
-        raise AssertionError("expected TrainerServiceError")
+def test_register_output_lora_rejects_legacy_unknown_and_missing_configuration(tmp_path: Path, monkeypatch) -> None:
+    """Legacy files stay readable but must never be silently claimed by a new job."""
+    import pytest
+    source=tmp_path/'legacy.safetensors';source.write_bytes(b'legacy')
+    settings=_settings(tmp_path,tmp_path/'lora_train')
+    monkeypatch.setattr(lora_trainer,'get_settings',lambda:settings)
+    monkeypatch.setattr(lora_trainer,'get_job_status',lambda _: {'job_id':'legacy','run_locator':None})
+    with pytest.raises(lora_trainer.TrainerServiceError) as error:
+        lora_trainer._register_output_lora(source,'legacy')
+    assert error.value.code=='legacy_output_unknown'
+    assert source.read_bytes()==b'legacy'
+    settings.comfyui_lora_dir=''
+    with pytest.raises(lora_trainer.TrainerServiceError) as error:
+        lora_trainer._register_output_lora(source,'legacy')
+    assert error.value.code=='lora_registration_not_configured'
 
 
 def test_smoke_test_endpoint_success_and_precondition_failure(tmp_path: Path, monkeypatch) -> None:

@@ -1,0 +1,767 @@
+{
+  "baselineCommit": "f67edee035a83deae7a8d6474c031807c03fade9",
+  "integrationMethod": "three-way squash plus targeted accepted patches; no unpublished private-author ancestry",
+  "scope": "all original local branches; existing remote-only historical branches and non-worktree data bundles unchanged",
+  "ownerDirection": "Consolidate real progress into main, push, then remove local branches/worktrees without unique retained progress.",
+  "branchCount": 33,
+  "integratedSourceBranches": 29,
+  "discardedNonProgressBranches": 4,
+  "branches": [
+    {
+      "branch": "aid-102-lock-correction",
+      "commit": "c991ddf4524e2f5bc78d7c1cb24f224ed3dcb040",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-115-gallery-correctness",
+      "commit": "0dfd958df04703791dc3415cf5f0e522ef7961cc",
+      "disposition": "integrate-accepted-gallery-patches",
+      "retainedAtOrReason": "frontend Gallery/parser/Vite/regressions and setup-guide",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-12-lora-delivery",
+      "commit": "6f6e1e9c319c57062cc2e5a5e872d124f520145d",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-122-gallery-readability",
+      "commit": "d232bc7dd0dfe9815ffb96e883ed216dc526be96",
+      "disposition": "integrate-accepted-gallery-patches",
+      "retainedAtOrReason": "frontend Gallery/parser/Vite/regressions and setup-guide",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-138-gallery-checkpoint",
+      "commit": "aa7bd009bc8e5363b8632422e3baae78c55d8c54",
+      "disposition": "discard-withdrawn-net-zero",
+      "retainedAtOrReason": "Earlier accepted Gallery source is integrated separately; withdrawn package is not revived.",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-14-public-results",
+      "commit": "d778232fe89ea5fce8b589ad1a27c7acbe0d4c4c",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-16-projection-contract",
+      "commit": "ab95a2a30ce9ded746119cfe1836ccc36c741201",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-18-integrated-baseline",
+      "commit": "76f3d6c5175af2035766552eaef91325abd2bfc0",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-2-worker-health-identity",
+      "commit": "9a9ead1a4d48cb9024aa93fabe796442239d6945",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-20-frontend-node-types",
+      "commit": "e7101d8692292c430664e9b09377a7ba78c6c39d",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-22-smoke-reconciliation",
+      "commit": "e491648dfdde76168ab4cee7cdf0302ec9d45a20",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-24-smoke-image-validation",
+      "commit": "7314a8c01ed2ef9e0dbb8a9ded37500422087494",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-26-explicit-lora-contract",
+      "commit": "3e95cb7481aaf30886426fb3aa5872bffb6c5e45",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-28-revision-lineage",
+      "commit": "b64ad4b31ff615bafb705286259e58a19d43604c",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-30-mcp-parent-recovery",
+      "commit": "d0ae1efee41567993e96050bcfacb0e2d9976fd6",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-32-json-decoder-containment",
+      "commit": "ba04a81a96b587f1486bdb8cc261164bffa4671e",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-34-canonical-integration",
+      "commit": "92e96e9fa73dbfad28f0fa36108d60f4a1cacf40",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-36-posix-kit",
+      "commit": "92e96e9fa73dbfad28f0fa36108d60f4a1cacf40",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-43-lora-lifecycle",
+      "commit": "bf3f1ee249be8719b42d67d69371534c5291a6fb",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-48-maintenance",
+      "commit": "ae5f7383cba7d8011ecdd976ce8f2c32ac886125",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-50-close-receipt",
+      "commit": "9b96655ea4994932854ea6028f25a58fe4a6302e",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-52-source-kit",
+      "commit": "9b96655ea4994932854ea6028f25a58fe4a6302e",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-56-offline-method",
+      "commit": "200345773e20e60cd0fc455bb09f0f4a45708b32",
+      "disposition": "integrate-offline-method-and-evidence",
+      "retainedAtOrReason": "engineering/aid56-method plus docs/archive/progress-consolidation/aid56-original-logs",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-58-partial-overflow",
+      "commit": "cc716557f92ec8f70667c73e9a05b5032a8b1a5a",
+      "disposition": "integrate-offline-method-and-evidence",
+      "retainedAtOrReason": "engineering/aid56-method plus docs/archive/progress-consolidation/aid56-original-logs",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-62-g09-isolated",
+      "commit": "3e6612794de2b0959314b5da7338201874790acc",
+      "disposition": "integrate-later-retained-component-source",
+      "retainedAtOrReason": "tools/g09_isolated, tools/m1_bounded, tools/m2_sqlite and original aid89 checkpoint ZIP",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-64-g09-failure-contract",
+      "commit": "dbba499c777238bc0c08e3d68bf33d6c85aa1005",
+      "disposition": "integrate-later-retained-component-source",
+      "retainedAtOrReason": "tools/g09_isolated, tools/m1_bounded, tools/m2_sqlite and original aid89 checkpoint ZIP",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-70-m1-four-boundaries",
+      "commit": "4ba42857162f1e751673f288701af6caa74430bc",
+      "disposition": "integrate-later-retained-component-source",
+      "retainedAtOrReason": "tools/g09_isolated, tools/m1_bounded, tools/m2_sqlite and original aid89 checkpoint ZIP",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-72-m2-sqlite-contract",
+      "commit": "caa1027cc67e52575b184e312f10f3850e8727c4",
+      "disposition": "integrate-later-retained-component-source",
+      "retainedAtOrReason": "tools/g09_isolated, tools/m1_bounded, tools/m2_sqlite and original aid89 checkpoint ZIP",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-94-source-checkpoint",
+      "commit": "6affe75cbc3c4f1eb8f2d634e5ea93f53c122b9d",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "aid-99-bounded-git-checkpoint",
+      "commit": "5f5b3d6a8e912680d88ce08df5ed7d37571d324d",
+      "disposition": "integrate-cumulative-product-composition",
+      "retainedAtOrReason": "Three-way cumulative c991ddf composition, preserving newer baseline source and authority",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "feat/add-agent-workflow-authoring",
+      "commit": "6f405f73ae611459ba4b1b523597eb1d399c9e95",
+      "disposition": "discard-already-contained",
+      "retainedAtOrReason": "Already an ancestor of baseline main.",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "local-backup/main-before-author-privacy-d0c65a4c",
+      "commit": "d0c65a4cbd4093a6f0157f14eb22afc77dccb67f",
+      "disposition": "discard-tree-equivalent-private-author-backup",
+      "retainedAtOrReason": "Tree equals published ancestor 7c0da65; no additional product source.",
+      "cleanupEligibleAfterVerifiedPublication": true
+    },
+    {
+      "branch": "review/project-state-20261103",
+      "commit": "edc35289b572d1aead9921440a680614bfbc2cc0",
+      "disposition": "discard-superseded-review-snapshot",
+      "retainedAtOrReason": "Product progress is already in main; remaining redaction/deletion snapshot is not product progress.",
+      "cleanupEligibleAfterVerifiedPublication": true
+    }
+  ],
+  "verification": {
+    "baselineCommit": "f67edee035a83deae7a8d6474c031807c03fade9",
+    "existingFailureIds": [
+      "backend/tests/test_comma_atomic_inventory.py::test_derived_entries_match_reviewed_curation_and_source_invariants",
+      "backend/tests/test_comma_atomic_inventory.py::test_migrated_combinations_preserve_metadata_and_exact_rendered_text",
+      "backend/tests/test_comma_atomic_inventory.py::test_retained_entries_are_byte_equivalent_metadata_records",
+      "backend/tests/test_comma_atomic_inventory.py::test_reviewed_combination_projection_is_exact",
+      "backend/tests/test_comma_atomic_inventory.py::test_reviewed_repository_inventory_is_exact",
+      "backend/tests/test_comma_atomic_migration.py::test_activate_finalize_and_rollback_guards",
+      "backend/tests/test_comma_atomic_migration.py::test_apply_keeps_marker_and_second_dry_run_is_zero_change",
+      "backend/tests/test_comma_atomic_migration.py::test_apply_refuses_reviewed_plan_after_source_hash_drift",
+      "backend/tests/test_comma_atomic_migration.py::test_dry_run_is_locked_complete_and_byte_stable",
+      "backend/tests/test_comma_atomic_migration.py::test_finalize_refuses_until_atomic_enforcement_is_active",
+      "backend/tests/test_comma_atomic_migration.py::test_immediate_rollback_restores_preimages_and_stays_closed",
+      "backend/tests/test_comma_atomic_migration.py::test_interrupted_apply_resumes_same_locked_plan",
+      "backend/tests/test_comma_atomic_migration.py::test_post_finalize_divergence_refuses_rollback_and_restores_ready_state",
+      "backend/tests/test_comma_atomic_migration.py::test_rollback_refuses_diverged_post_image",
+      "backend/tests/test_prompt_library_seed.py::test_seed_catalog_is_complete_bilingual_and_clean",
+      "backend/tests/test_worker_all_entrypoints.py::test_distribution_zip_uses_canonical_names_and_exact_source_bytes",
+      "backend/tests/test_worker_all_entrypoints.py::test_open_control_guides_are_distributed_without_legacy_auth_instructions",
+      "backend/tests/test_worker_all_entrypoints.py::test_worker_distribution_archive_matches_updater_source_bytes",
+      "backend/tests/test_worker_powershell_control.py::test_cancel_after_process_registration_returns_before_delayed_capture",
+      "backend/tests/test_worker_powershell_control.py::test_cancel_before_process_registration_returns_one_terminal_cancelled_state",
+      "backend/tests/test_worker_powershell_control.py::test_cancel_kills_process_after_terminate_wait_times_out",
+      "backend/tests/test_worker_powershell_control.py::test_cancel_terminates_running_command_and_preserves_cancelled_state",
+      "backend/tests/test_worker_powershell_control.py::test_nonzero_exit_marks_command_failed",
+      "backend/tests/test_worker_powershell_control.py::test_submit_returns_running_snapshot_when_worker_finishes_inline",
+      "backend/tests/test_worker_powershell_control.py::test_submit_runs_script_with_fixed_powershell_contract",
+      "backend/tests/test_worker_powershell_control.py::test_terminal_retention_evicts_oldest_terminal_but_keeps_running_command"
+    ],
+    "newFailures": 0,
+    "backend": {
+      "passed": 2032,
+      "failed": 26,
+      "skipped": 125
+    },
+    "baselineSelectedFiles": {
+      "passed": 38,
+      "failed": 26,
+      "skipped": 102
+    },
+    "mcp": {
+      "passed": 317,
+      "skipped": 4
+    },
+    "discord": {
+      "passed": 142
+    },
+    "frontend": {
+      "passed": 226,
+      "skipped": 1,
+      "typecheckExit": 0,
+      "buildExit": 0
+    },
+    "retainedTools": {
+      "g09": 23,
+      "g09Failure": 5,
+      "m1": 40,
+      "m2": 15
+    }
+  },
+  "preservedIgnoredLogs": [
+    {
+      "path": "docs/archive/progress-consolidation/aid56-original-logs/green.log",
+      "bytes": 3184,
+      "sha256": "5a6e99f97228eeb0fd78dda8c54f5dc2c70a838088447cca16cbdb9ed23e8be1"
+    },
+    {
+      "path": "docs/archive/progress-consolidation/aid56-original-logs/guard-lazy-import-red.log",
+      "bytes": 3824,
+      "sha256": "99cd5ec993e04568bbaf1078fdbfdfc14c1969201db77f912765c38461cb1c5e"
+    },
+    {
+      "path": "docs/archive/progress-consolidation/aid56-original-logs/post-bound-red.log",
+      "bytes": 4747,
+      "sha256": "07aa7e416daeb5404e9d37b2cb54942420b3827060b1ec3424c2775e7a0bdbe5"
+    },
+    {
+      "path": "docs/archive/progress-consolidation/aid56-original-logs/red.log",
+      "bytes": 13769,
+      "sha256": "422939886473ce24a483b05957562bff554e1e7115d3de582a920922bd6a141a"
+    }
+  ],
+  "retainedAuxiliarySource": [
+    {
+      "path": "engineering/aid56-method/REPORT.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "347c36ea6c2c902627e0c4f45f08d5226bf921762e823079c601434715a8c25f"
+    },
+    {
+      "path": "engineering/aid56-method/artifact-manifest.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "7b0ac6b74cff3453df11f62ae87659532779592669f16bbe23a150cbface8c3a"
+    },
+    {
+      "path": "engineering/aid56-method/controls/aid57_independent_checks.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "e6948cef4ad1e2aadf1adb0bc7719b443546c833d5444da8fa5da2cc11f76c0d"
+    },
+    {
+      "path": "engineering/aid56-method/controls/checks.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "60d371c64c11ed444e0e91939f626f32b7136931024f6aa288f381834590a5bd"
+    },
+    {
+      "path": "engineering/aid56-method/controls/red_checks.py.txt",
+      "source": "aid-58-partial-overflow",
+      "sha256": "ec48604cecf7c884035e15bb34307c785fc6492a7b60787ba56306f7484c915e"
+    },
+    {
+      "path": "engineering/aid56-method/controls/red_method.py.txt",
+      "source": "aid-58-partial-overflow",
+      "sha256": "0889e10cfa33a94faf6a4b11463d8f0fe64e340561ee95dc59824d3788ec4b00"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/authority-overlay.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "f61cd334e46969d14d1ee4159fbb9a86b2fee9cd9140452e6aa89b92ae7ea206"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/authority-start.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "9051b99b2e5621ec85d06808fffa502f87713361e2d5fe187c6b43f5c3ae7d48"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/commands.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "7bf8711f0596019d02e33f8f7f27dbc4246026d14431c526b54fd533df22537d"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/counterexamples.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "42285d9712a4d567deaf160b8c701984346a72c7cc9045e14e89c9cc3d7824af"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/input-verification.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "4e2966557ca872caf717015a425c820e3ae0da9c003ec425b75e3b65a22390df"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/method-green.log",
+      "source": "aid-58-partial-overflow",
+      "sha256": "023c52d25c146489bbb9fa8b87879c8a84b91836666febf5ad62fbae64996531"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/original-qa-green.log",
+      "source": "aid-58-partial-overflow",
+      "sha256": "018647e075f2c8a04c4997cfa120e17555ef2c2a50c28b2c9d653e1ad46b70ce"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/original-qa-red.log",
+      "source": "aid-58-partial-overflow",
+      "sha256": "dc604539f65d906d179258af7f65280584e0d9c8ec20e2565a68df0ebab8442d"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/preservation.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "184655841568cdddb54b2933bf5e46366f934fa92456fd1fcd94f3bdc78fced2"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/subtotal-green.log",
+      "source": "aid-58-partial-overflow",
+      "sha256": "2a2141f06cac5ec88604ffe9e4dc7f08bfedc1b464689b5fce2768ced59e8854"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/aid58/subtotal-red.log",
+      "source": "aid-58-partial-overflow",
+      "sha256": "8590e0ea06d9fda7a129746cf6f01c2ff7b17abbb5f5af61b959dba6c950d81e"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/canonical-preservation.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "66731354b473972b4779c2061e247582d0d1bfff69a82a9ff8c8953cec12b0c9"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/check-summary.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "16f9e1622b9e9d6d1a58398bb53171c220bc00d4d1dcc23a9e10d66f7062f521"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/companion-counterexample.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "bd29268111a7ec69fbd948451a270fec3680a93c5538f5ab7733d0cd06a52f10"
+    },
+    {
+      "path": "engineering/aid56-method/evidence/named-payload.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "99bbdc1abf9bf64a60efc8ca3016302fe67878e9371cd34cf6348d10df303dff"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/backend/app/config.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d7b3d162bba6d5e65b6328bd7e33ebf15289691dc1abc9bb3266990786fbcd8b"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/backend/app/db/database.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "517f8d0cf11b1476f884466437bdfdf00e79eac9fa33c2ffa19393ef8aa86db4"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/backend/app/db/models.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "612a21a4d0cf489ca0723ea8399a376e51957636d49dc6092aa86badbd1dba9a"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/backend/app/main.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "9a206eeee17b91885b0dbbba493536366cb96e73fcd1bf86ac34ede6a943a1bc"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/backend/app/maintenance.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "831b70516e08fec2e62edc33586e52a2dc68c6e77ead22213b5a05f7869baa9b"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/discord-bot/bot/attempt_store.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "c0976ede532f2ba22bb1d7dac5567fe6b5edc98d70bd70af76ce0592b3552fc5"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/discord-bot/bot/config.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "4fd5efc7ba91571627946134e80345011702abcb7a4fabd38abda58314c17615"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/discord-bot/bot/main.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "9ade8a5c3359907d1b938564877d9e386b585718677167f2b8ea7cd737d33b61"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/discord-bot/bot/maintenance.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "bac8d90e6b8515562f4c96bbc21dd2939c1df5835d8aa28a7a47bcf0847de3a9"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/discord-bot/bot/operator_api.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "71826df1e6f8e2192d1afc80fcb664751c34a0d251aa1c8d9b182b44557f82c5"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/mcp-server/mcp_server/client.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "695aae42c6cda0fc6f28583e692797a032bc4b82f3515e43015c0bf958bec236"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/mcp-server/mcp_server/config.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "f02b013cfbee44836fc79e65548a63c670bfbcf04ef8b038c46b3e35c1c028f9"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/mcp-server/mcp_server/tools/comfyui.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "675c5734d4ebe76d7a8b0ee4299eae125fd4a742446f5ee72a876fe90f92859a"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/mcp-server/mcp_server/tools/comfyui_nodes.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "806eeda87f20eda34d068a8148a9a8376d4c2d423801fa23e309569c52bff3c8"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/accepted-source/mcp-server/mcp_server/tools/discord_delivery.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "3e4daa00c60bfd059cfd5b5650a04a8f4e15705f21442ded0b96718ed663d09d"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/AGENTS.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/GOAL.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/INDEX.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/PROGRESS.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "a6ed7f48e6499fc1b20303582ba67e45de59ed5b5e94f2276fb8ad4345e5e3af"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/memory/MEMORY.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "36817ad7b0ada0ff985ceb35ddeb4ac769ce0708b0691343f683e095201ab18b"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/memory/generation-and-training-compute-targets.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/memory/producer-continuous-operation.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/memory/runtime-source-and-state-binding.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "911e3bfcb88d3ffd0c9b3b73fdc067304a0b695a147c6457fe8b67150296deb6"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/memory/source-snapshot-file-permissions.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/team/README.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/team/channel-routing.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-authority/docs/team/roles/platform-engineer.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-engineering.zip",
+      "source": "aid-58-partial-overflow",
+      "sha256": "4b6490ce395b1e468afa0f34940f7346a3b7c65e2b05883d7ad9a95895764c3b"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-inputs.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "6984f86c78e5f47037bf86e9d3df4d10d3f37c8a19d084fab2f64381939c5cde"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-plan.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "6bc13ce4e1cf3152e7c0737563e610c10f689ba2b5c935b6a13d55a00247e6c6"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/aid58-qa.zip",
+      "source": "aid-58-partial-overflow",
+      "sha256": "ad3c10b3b194a003557038aaae1ae02873025924e31910212ffa2d1297a244ca"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/AGENTS.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/GOAL.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/INDEX.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/PROGRESS.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "1bf07344a5736b76f5b23912446c1b4f904324876d5929eda6cd845b33e9fc36"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/memory/MEMORY.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "b45334c426d928fef4edeb53310eb127c492a27fea86038d9847746913435bb2"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/memory/generation-and-training-compute-targets.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/memory/producer-continuous-operation.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/memory/runtime-source-and-state-binding.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "8a518980b30b7473b6851ed83676e6b43f17b445c3d137af85109cdb91303328"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/memory/source-snapshot-file-permissions.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/team/README.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/team/channel-routing.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/current-authority/docs/team/roles/platform-engineer.md",
+      "source": "aid-58-partial-overflow",
+      "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/input-manifest.json",
+      "source": "aid-58-partial-overflow",
+      "sha256": "3f9fa39e2ebdee072bc2314ba3d7a636edb4ceb1b44146434c8218e3e1bf0da0"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/pgrep.1.txt",
+      "source": "aid-58-partial-overflow",
+      "sha256": "50e660d4db62a14d53a05cd80fb3ae93ad2a3251fd1adba387abf7ef68645ef8"
+    },
+    {
+      "path": "engineering/aid56-method/inputs/retained-second.zip",
+      "source": "aid-58-partial-overflow",
+      "sha256": "3a04b1a0f9e97b2cd813af47732cafa27a18fbc4940b336bb72f010b5601bf4b"
+    },
+    {
+      "path": "engineering/aid56-method/method.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "b24750ca5cc6f9e0f9247d33e7b615d59b413f0fa55ba5d08ee44e833b2e721e"
+    },
+    {
+      "path": "engineering/aid56-method/run_controls.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "d9c4886c0e56381c65e2e6fc6274bedf717b530e942516eb6f0fcb709f2d498d"
+    },
+    {
+      "path": "engineering/aid56-method/run_regressions.py",
+      "source": "aid-58-partial-overflow",
+      "sha256": "e127fb407d6a793570f3ac081632c9179efd9f85fb1a7b843220f58ed07ac86a"
+    },
+    {
+      "path": "tools/g09_isolated/README.md",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/g09_isolated/README.md",
+      "sha256": "97ce86a62075c327eac532ca0cd37ca8d7ec592e9cc903c54a006687e61f549c"
+    },
+    {
+      "path": "tools/g09_isolated/guard.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/g09_isolated/guard.py",
+      "sha256": "649bc41118e489e9f7a94534b711e14a860e725433c5bf4807130d65ae42fac6"
+    },
+    {
+      "path": "tools/g09_isolated/probe_fixed.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/g09_isolated/probe_fixed.py",
+      "sha256": "0b5066fe5ed5ae1c3123d1edb26959ac4b30d888a85c1bfe3f14094af2c637ea"
+    },
+    {
+      "path": "tools/g09_isolated/test_failure_contract.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/g09_isolated/test_failure_contract.py",
+      "sha256": "9a6e1d15087c53157e9e5992278cd547dae69c394baeb5ce34897d28cd3462b2"
+    },
+    {
+      "path": "tools/g09_isolated/test_guard.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/g09_isolated/test_guard.py",
+      "sha256": "c3af5637479b5d8f4e8445a6e4abc2a4763a1276af48099fdb38bc7ddc48e4f6"
+    },
+    {
+      "path": "tools/m1_bounded/README.md",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/README.md",
+      "sha256": "1617f05a5da5557e476afda9d86d4824bd690ce9fc7b56fa211ff35645df8e37"
+    },
+    {
+      "path": "tools/m1_bounded/darwin_metadata.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/darwin_metadata.py",
+      "sha256": "724d0261ae1b48249fb4e989387bdab089e693dd6771810f30b6fa6f8e5bbdba"
+    },
+    {
+      "path": "tools/m1_bounded/hierarchy.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/hierarchy.py",
+      "sha256": "c6de9670a73ca6d133d9266dfb54ceebefac629cd1c32d69753057def242a5a0"
+    },
+    {
+      "path": "tools/m1_bounded/ledger.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/ledger.py",
+      "sha256": "408ccc500b78688c7d0914192cc6c6158be9f955d17e55d9df0fcb7466f937c8"
+    },
+    {
+      "path": "tools/m1_bounded/observe.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/observe.py",
+      "sha256": "7f64783785647be55c2d0312d686892cb5cba136659922652a9813f2baf84788"
+    },
+    {
+      "path": "tools/m1_bounded/reservation.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/reservation.py",
+      "sha256": "beb5430621d6cd03dc15b0d3995cb52dc91bca41ae7cadf53c2caae0411dfa66"
+    },
+    {
+      "path": "tools/m1_bounded/run_tests.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/run_tests.py",
+      "sha256": "83b5eae72221d891af61bf0c2e5565f63659d4b8746d7121b16c1417e8c2d252"
+    },
+    {
+      "path": "tools/m1_bounded/test_m1.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m1_bounded/test_m1.py",
+      "sha256": "7086000d4f764214333091f74edaaddc4e5e704951e9b320ee893a2a3dddd3a9"
+    },
+    {
+      "path": "tools/m2_sqlite/README.md",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/README.md",
+      "sha256": "58931a8e3c05b3fcca51d2853ad01c4449b54c8722cbc41deaab696276f349e5"
+    },
+    {
+      "path": "tools/m2_sqlite/contract.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/contract.py",
+      "sha256": "13c3669a43243961073164fb6c676f20d6269a938ed7f4d0c2a9dbc80ef27b0d"
+    },
+    {
+      "path": "tools/m2_sqlite/exact408.txt",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/exact408.txt",
+      "sha256": "2a87d402ef171ba200b68b6db79c4656cfefb12449141742b891e7a429bec9a4"
+    },
+    {
+      "path": "tools/m2_sqlite/run_tests.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/run_tests.py",
+      "sha256": "91e014038f791fbde5cca29e2e2c02bc2e742d551393487dd0bbc0d19f536b31"
+    },
+    {
+      "path": "tools/m2_sqlite/test_contract.py",
+      "source": "docs/checkpoints/aid89-parent-reservation-v1.zip:source/tools/m2_sqlite/test_contract.py",
+      "sha256": "a34e9c0b2cff795a035a2bad32419c5e3b845974034783f027e20a23904183cb"
+    }
+  ]
+}

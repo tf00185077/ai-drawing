@@ -277,6 +277,19 @@ def test_get_pending_generate_nonexistent_returns_none() -> None:
 
 
 @pytest.fixture(autouse=True)
+def isolated_training_db(tmp_path, monkeypatch):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.db import database
+    engine=create_engine('sqlite:///'+str(tmp_path/'trainer.db'),connect_args={'check_same_thread':False})
+    database.Base.metadata.create_all(engine)
+    monkeypatch.setattr(database,'engine',engine)
+    monkeypatch.setattr(database,'SessionLocal',sessionmaker(bind=engine))
+    yield
+    engine.dispose()
+
+
+@pytest.fixture(autouse=True)
 def reset_trainer():
     """每個測試前清空佇列"""
     lora_trainer._reset_for_test()
@@ -358,7 +371,7 @@ def _enqueue_approved(
 ) -> str:
     dataset_hash, profile_hash = _approval_hashes(train_root / folder)
     return lora_trainer.enqueue(
-        folder,
+        folder, output_name="test-product",
         expected_dataset_hash=dataset_hash,
         expected_profile_hash=profile_hash,
         recipe=recipe or _canonical_recipe(),
@@ -389,6 +402,9 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     st = lora_trainer.get_status()
     assert st["status"] == "queued"
     assert len(st["queue"]) == 1
+    job=lora_trainer._queue[0]
+    root=lora_trainer.delivery.run_path(valid_train_dir/"lora_train",job.run_locator)
+    assert json.loads((root/"training-parameters.json").read_text())["trainer_process"]=="not started"
     assert st["queue"][0]["job_id"] == job_id
     assert st["queue"][0]["folder"] == "my_lora"
 
@@ -408,7 +424,7 @@ def test_enqueue_recipe_conflict_has_zero_durable_or_queue_side_effects(
     ) as create_job:
         with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
             lora_trainer.enqueue(
-                "my_lora",
+                "my_lora", output_name="test-product",
                 expected_dataset_hash=dataset_hash,
                 expected_profile_hash=profile_hash,
                 recipe={"batch": 1, "batch_size": 2},
@@ -427,7 +443,7 @@ def test_duplicate_folder_is_rejected_before_a_second_durable_row(
     _set_common_enqueue_settings(mock_settings, valid_train_dir)
 
     with patch(
-        "app.services.lora_trainer._create_persistent_job"
+        "app.services.lora_trainer._create_persistent_job", wraps=lora_trainer._create_persistent_job
     ) as create_job:
         _enqueue_approved(valid_train_dir / "lora_train")
         with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
@@ -476,7 +492,7 @@ def legacy_enqueue_nonexistent_folder_raises_value_error(
     mock_settings.return_value.lora_network_alpha = 16
 
     with pytest.raises(ValueError, match="資料夾不存在"):
-        lora_trainer.enqueue("not_exists")
+        lora_trainer.enqueue("not_exists", output_name="test-product")
 
 
 @patch("app.services.lora_trainer.get_settings")
@@ -502,7 +518,7 @@ def legacy_enqueue_folder_without_caption_txt_raises(
     mock_settings.return_value.lora_network_alpha = 16
 
     with pytest.raises(ValueError, match="圖片數不足"):
-        lora_trainer.enqueue("no_txt")
+        lora_trainer.enqueue("no_txt", output_name="test-product")
 
 
 @patch("app.services.lora_trainer.get_settings")
@@ -517,7 +533,7 @@ def test_enqueue_nonexistent_folder_fails_before_persistence(
     ) as create_job:
         with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
             lora_trainer.enqueue(
-                "not_exists",
+                "not_exists", output_name="test-product",
                 expected_dataset_hash="dataset-hash",
                 expected_profile_hash="profile-hash",
                 recipe={},
@@ -555,7 +571,7 @@ def test_enqueue_missing_caption_fails_before_persistence(
     ) as create_job:
         with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
             lora_trainer.enqueue(
-                "no_txt",
+                "no_txt", output_name="test-product",
                 expected_dataset_hash=dataset_hash,
                 expected_profile_hash=profile_hash,
                 recipe=_canonical_recipe(),
@@ -589,7 +605,7 @@ def test_api_start_returns_202_and_job_id(
     dataset_hash, profile_hash = _approval_hashes(valid_train_dir / "lora_train" / "my_lora")
     res = client.post(
         "/api/lora-train/start",
-        json={
+        json={"output_name": "test-product",
             "folder": "my_lora",
             "expected_dataset_hash": dataset_hash,
             "expected_profile_hash": profile_hash,
@@ -612,7 +628,7 @@ def test_api_start_does_not_reference_removed_generate_after() -> None:
     with patch("app.api.lora_train.lora_trainer.enqueue", return_value="job-123") as mock_enqueue:
         res = client.post(
             "/api/lora-train/start",
-            json={
+            json={"output_name": "test-product",
                 "folder": "my_lora",
                 "expected_dataset_hash": "dataset-sha256",
                 "expected_profile_hash": "profile-sha256",
@@ -903,7 +919,7 @@ def legacy_enqueue_missing_anima_checkpoint_raises_checkpoint_not_found(
     with patch("app.services.lora_trainer._create_persistent_job") as mock_create:
         with pytest.raises(lora_trainer.TrainerServiceError) as exc:
             lora_trainer.enqueue(
-                "my_lora", checkpoint="anima.safetensors", model_family="anima", epochs=1
+                "my_lora", output_name="test-product", checkpoint="anima.safetensors", model_family="anima", epochs=1
             )
 
     assert exc.value.code == "checkpoint_not_found"
@@ -928,7 +944,7 @@ def legacy_enqueue_missing_checkpoint_bypassed_by_allow_unverified(
     mock_settings.return_value.lora_anima_t5_tokenizer_path = ""
 
     job_id = lora_trainer.enqueue(
-        "my_lora",
+        "my_lora", output_name="test-product",
         checkpoint="anima.safetensors",
         model_family="anima",
         anima_qwen3=str(qwen3),
@@ -946,7 +962,7 @@ def legacy_enqueue_remote_checkpoint_skips_existence_check(
     _set_common_enqueue_settings(mock_settings, valid_train_dir)
     mock_settings.return_value.comfyui_checkpoints_dir = ""
     job_id = lora_trainer.enqueue(
-        "my_lora",
+        "my_lora", output_name="test-product",
         checkpoint="stabilityai/stable-diffusion-xl-base-1.0",
         model_family="sdxl",
         epochs=1,
@@ -974,7 +990,7 @@ def legacy_enqueue_anima_bare_checkpoint_resolves_from_diffusion_dir(
     mock_settings.return_value.lora_anima_t5_tokenizer_path = ""
 
     job_id = lora_trainer.enqueue(
-        "my_lora",
+        "my_lora", output_name="test-product",
         checkpoint="anima.safetensors",
         model_family="anima",
         anima_qwen3="qwen3.safetensors",

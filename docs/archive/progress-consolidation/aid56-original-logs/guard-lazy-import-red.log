@@ -1,0 +1,44 @@
+GUARD: 4 denied controls; no excluded read/write reached
+RETAINED: ZIP SHA/CRC and all 14 payloads verified; exit2 remains error
+ACTUAL_RETAINED_PROJECTION={"logical_bytes": null, "missing": ["P", "D_B", "D_S", "M", "retained-R-C:B", "retained-R-C:H", "retained-R-C:U"], "pools": {"retained-R-C": {"allocation": null, "fits": null, "threshold": null}}, "runtime_acceptance": false, "scope": "conditional_offline_arithmetic", "state": "unknown"}
+test_conflicting_alias_and_numeric_values_rejected (offline_checks.suite.<locals>.Controls) ... ok
+test_conflicting_loaded_values_remain_unknown (offline_checks.suite.<locals>.Controls) ... ok
+test_control_cap_checked_before_release (offline_checks.suite.<locals>.Controls) ... ok
+test_cyclic_link_is_not_a_resolved_target (offline_checks.suite.<locals>.Controls) ... ok
+test_distinct_pools_cannot_borrow_free (offline_checks.suite.<locals>.Controls) ... ok
+test_distinct_regular_paths_receive_no_hardlink_credit (offline_checks.suite.<locals>.Controls) ... ok
+test_full_post_copy_not_delta_and_exact_20_percent_ceiling (offline_checks.suite.<locals>.Controls) ... ok
+test_large_integers_and_bad_bound_types (offline_checks.suite.<locals>.Controls) ... ok
+test_link_target_missing_and_incomplete_effective_roots (offline_checks.suite.<locals>.Controls) ... ok
+test_loaded_binding_requires_same_process_epoch_and_complete_coverage (offline_checks.suite.<locals>.Controls) ... ok
+test_locator_success (offline_checks.suite.<locals>.Controls) ... ok
+test_missing_physical_scope_never_fits (offline_checks.suite.<locals>.Controls) ... ok
+test_only_exit1_with_empty_output_is_no_match (offline_checks.suite.<locals>.Controls) ... ok
+test_retained_exit2_empty_is_error_not_absence (offline_checks.suite.<locals>.Controls) ... ok
+test_retained_guesses_and_missing_post_state_stay_unknown (offline_checks.suite.<locals>.Controls) ... ok
+test_root_overlap_and_symlink_target_count_once (offline_checks.suite.<locals>.Controls) ... ok
+test_same_pool_combines_allocations_not_free_space (offline_checks.suite.<locals>.Controls) ... ok
+test_source_cwd_fd_are_not_loaded_settings (offline_checks.suite.<locals>.Controls) ... ok
+test_sqlite_current_size_and_guess_do_not_certify_later_copy (offline_checks.suite.<locals>.Controls) ... ok
+test_sqlite_full_post_bound_uses_enforced_pages_plus_all_companions (offline_checks.suite.<locals>.Controls) ... ok
+test_sqlite_invalid_page_size_is_rejected (offline_checks.suite.<locals>.Controls) ... ok
+test_timeout_is_distinct (offline_checks.suite.<locals>.Controls) ... ok
+test_unknown_exit_and_signal_remain_errors (offline_checks.suite.<locals>.Controls) ... ok
+test_zero_exit_empty_and_bad_pid_are_not_absence (offline_checks.suite.<locals>.Controls) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.001s
+
+OK
+Traceback (most recent call last):
+  File "<string>", line 97, in <module>
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1256, in read_text
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1242, in open
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+  File "<string>", line 31, in guard
+PermissionError: only bundle reads permitted: /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/_bootlocale.py

@@ -1,5 +1,6 @@
 """backend HTTP 包裝——唯一知道 backend 契約的地方。"""
 import httpx
+from .maintenance import Admission, guarded
 
 from .validation import build_gallery_download_url
 
@@ -8,6 +9,14 @@ class BackendError(Exception):
     def __init__(self, message: str, status_code: int | None = None):
         super().__init__(message)
         self.status_code = status_code
+
+
+def _confirmed_backend_rejection(error: Exception) -> bool:
+    # Explicit validation/auth/routing refusals happen before job admission.
+    # Timeouts, conflict/unknown outcomes and server failures remain uncertain.
+    return isinstance(error, BackendError) and error.status_code in {
+        400, 401, 403, 404, 405, 413, 415, 422,
+    }
 
 
 def _error_message(response: httpx.Response) -> str:
@@ -25,8 +34,12 @@ def _error_message(response: httpx.Response) -> str:
 
 class ApiClient:
     def __init__(self, base_url: str, client: httpx.AsyncClient | None = None):
+        self.admission: Admission | None = None
         self._base_url = base_url.rstrip("/")
         self._client = client or httpx.AsyncClient(base_url=self._base_url, timeout=30.0)
+
+    async def close(self):
+        await self._client.aclose()
 
     def _check(self, response: httpx.Response) -> httpx.Response:
         if response.status_code >= 400:
@@ -60,10 +73,12 @@ class ApiClient:
             str(generation.get("negative_prompt") or ""),
         )
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def submit_generate(self, generation: dict) -> str:
         r = self._check(await self._client.post("/api/generate/", json=generation))
         return r.json()["job_id"]
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def submit_fixed_video(
         self, endpoint: str, *, files: dict[str, tuple[str, bytes, str]], prompt: str,
         negative_prompt: str | None, total_seconds: float, source_frames: int,
@@ -86,6 +101,7 @@ class ApiClient:
         response = self._check(await self._client.post(endpoint, data=data, files=files, timeout=120.0))
         return response.json()["job_id"]
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def submit_animegen_i2v(self, *, image: tuple[str, bytes, str], prompt: str,
                                   negative_prompt: str | None, width: int, height: int,
                                   total_seconds: float, source_frames: int,
@@ -99,6 +115,7 @@ class ApiClient:
             execution_target=execution_target,
         )
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def submit_minimax_h3_i2v(
         self, *, image: tuple[str, bytes, str], prompt: str,
         width: int, height: int, total_seconds: int,
@@ -117,6 +134,7 @@ class ApiClient:
         ))
         return response.json()["job_id"]
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def submit_wan22_animate(self, *, reference_image: tuple[str, bytes, str],
                                    driver_video: tuple[str, bytes, str], prompt: str,
                                    negative_prompt: str | None, total_seconds: float,
@@ -144,6 +162,7 @@ class ApiClient:
         r = self._check(await self._client.get(image_url))
         return r.content
 
+    @guarded('submit', reject=True, known_rejection=_confirmed_backend_rejection)
     async def compose_and_submit(self, preset_id: str, profile: str | None,
                                  positive_prompt: str, negative_prompt: str,
                                  width: int, height: int, count: int, *,

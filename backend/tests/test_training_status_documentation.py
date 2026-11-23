@@ -19,12 +19,14 @@ def test_training_status_distinguishes_submitted_smoke_from_completed_artifact()
     text = (PROJECT_ROOT / "docs" / "training-status.md").read_text(encoding="utf-8")
     assert "artifact=None" in text
     assert "submitted" in text
-    assert "registration error" in text
-    assert "Valid safetensors" in text
+    assert "registration_failed" in text
+    assert "structural LoRA validation" in text
+    assert "Real model compatibility and ComfyUI loading remain unverified" in text
 
 
-def test_training_role_and_execution_are_deferred():
+def test_approved_training_role_does_not_authorize_execution():
     text = (PROJECT_ROOT / "docs" / "training-status.md").read_text(encoding="utf-8")
     assert "team/roles/lora-training.md" in text
-    assert "The role is not yet created or activated" in text
+    assert "The role exists in the approved team" in text
+    assert "does not establish training execution or acceptance" in text
     assert "does not grant permission to train" in text

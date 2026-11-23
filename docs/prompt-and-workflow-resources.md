@@ -55,6 +55,31 @@ Source: [preset API](../backend/app/api/style_presets.py), [graph service](../ba
 
 The workbench reads `GET /api/workflow-catalog/generation-forms`, then submits the selected template ID and prompts. It does not list all saved preset graphs. MCP `list_available_resources` returns resource/form information; use local known-good graphs as starting points. For Backend read-only listing/matching, inspect the [catalog API](../backend/app/api/workflow_catalog.py) and schema; removed MCP lookup tools are not supported.
 
+## Feedback revisions and exact replay
+
+Ordinary image API/MCP generation accepts optional `revision_context` for the
+request reference, immutable brief label, feedback reference/summary and
+canonical image parent artifact ID. See [the typed contract](mcp-setup.md#ordinary-image-revisions).
+Compose a new prompt and parameters explicitly; annotation does not change
+graph inputs or confirm that feedback, style or output was accepted. Retain the
+Backend job and each output's image/artifact IDs with the brief and delivery
+record. Multiple generations may share one brief label.
+
+Gallery rerun still replays the saved workflow, or reconstructs legacy
+parameters, using the selected execution target. It preserves an available
+revision annotation exactly, including its original parent; it neither creates
+a feedback revision nor turns the replayed image into a new lineage parent.
+Its HTTP response reports the available context or unknown/unavailable state.
+Legacy context stays `null`; corrupt context is reported unavailable and its
+original row is retained. Submit a new ordinary generation request with a new
+brief label/feedback and `parent_artifact_id` when revising content.
+
+The separate Civitai recipe-variant lineage and audited replay contract remain
+unchanged. No revision editor was added to the UI, custom workflow or video
+forms. Persistence and synthetic HTTP checks establish source behavior;
+installed runtime, delivery and CTY aesthetic acceptance require their own
+evidence and authority.
+
 ## Responsibilities
 
 Inspect authored prompts/recipes before recreating them. Generation owns workflow applicability/adaptation; environment/resource management checks nodes/models; platform engineering owns integration changes. CTY evaluates style. Missing Windows acceptance or resources blocks execution, not asset retention, and does not authorize switching compute.

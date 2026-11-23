@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 const backendTarget = "http://127.0.0.1:8001";
 
 export default defineConfig({
+  cacheDir: process.env.AI_DRAWING_VITE_CACHE || "node_modules/.vite",
   plugins: [react()],
   test: {
     environment: "jsdom",
@@ -16,7 +17,8 @@ export default defineConfig({
         target: backendTarget,
         changeOrigin: true,
       },
-      "/gallery": {
+      // Leave /gallery and /gallery/ (including queries) to the SPA.
+      "^/gallery/(?![?]|$)": {
         target: backendTarget,
         changeOrigin: true,
       },

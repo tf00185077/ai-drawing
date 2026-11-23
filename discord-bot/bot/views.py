@@ -4,6 +4,7 @@ import asyncio
 import discord
 
 from .api_client import BackendError
+from .maintenance import guarded
 from .validation import (
     ValidationError,
     parse_count,
@@ -63,6 +64,7 @@ class DrawModal(discord.ui.Modal, title="生圖設定"):
         ):
             self.add_item(item)
 
+    @guarded('callback', resolve=lambda self,*a,**k:getattr(self._api,'admission',None))
     async def on_submit(self, interaction: discord.Interaction):
         try:
             width = parse_dimension(self.width.value, field="寬")
@@ -159,6 +161,7 @@ class FixedVideoModal(discord.ui.Modal):
         ):
             self.add_item(item)
 
+    @guarded('callback', resolve=lambda self,*a,**k:getattr(self._api,'admission',None))
     async def on_submit(self, interaction: discord.Interaction):
         prompt = self.prompt.value.strip()
         try:
@@ -257,6 +260,7 @@ class MiniMaxH3I2VModal(discord.ui.Modal, title="MiniMax H3 I2V 設定"):
         self.add_item(self.prompt)
         self.add_item(self.total_seconds)
 
+    @guarded('callback', resolve=lambda self,*a,**k:getattr(self._api,'admission',None))
     async def on_submit(self, interaction: discord.Interaction):
         prompt = self.prompt.value.strip()
         try:
@@ -297,6 +301,7 @@ class MiniMaxH3I2VModal(discord.ui.Modal, title="MiniMax H3 I2V 設定"):
         )
 
 
+@guarded('callback', resolve=lambda interaction,api,*a,**k:getattr(api,'admission',None))
 async def send_draw_modal(interaction: discord.Interaction, api, preset_id: str,
                           profile: str | None,
                           execution_target: str = "local") -> None:
@@ -347,6 +352,7 @@ class ProfileSelect(discord.ui.Select):
         self._preset_id = preset_id
         self._execution_target = execution_target
 
+    @guarded('callback', resolve=lambda self,*a,**k:getattr(self._api,'admission',None))
     async def callback(self, interaction: discord.Interaction):
         await send_draw_modal(
             interaction, self._api, self._preset_id, self.values[0],
@@ -361,6 +367,7 @@ class PresetSelect(discord.ui.Select):
         self._presets = {p["id"]: p for p in presets}
         self._execution_target = execution_target
 
+    @guarded('callback', resolve=lambda self,*a,**k:getattr(self._api,'admission',None))
     async def callback(self, interaction: discord.Interaction):
         preset = self._presets[self.values[0]]
         profiles = preset.get("profiles") or []

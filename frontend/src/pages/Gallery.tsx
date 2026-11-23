@@ -4,16 +4,17 @@
  */
 import { useEffect, useState } from "react";
 import ExecutionTargetSelect from "../components/ExecutionTargetSelect";
-import type { ExecutionTarget, GalleryItem, GalleryListResponse } from "../types/api";
+import type { ExecutionTarget } from "../types/api";
+import { parseGalleryList, type GalleryDisplayItem } from "../api/gallery";
 
 const API = "/api";
 
 export default function Gallery() {
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [items, setItems] = useState<GalleryDisplayItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<GalleryItem | null>(null);
+  const [selected, setSelected] = useState<GalleryDisplayItem | null>(null);
   const [filters, setFilters] = useState({
     checkpoint: "",
     lora: "",
@@ -37,9 +38,10 @@ export default function Gallery() {
     fetch(`${API}/gallery/?${params}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
+        return res.text();
       })
-      .then((data: GalleryListResponse) => {
+      .then((text) => {
+        const data = parseGalleryList(text);
         if (!cancelled) {
           setItems(data.items);
           setTotal(data.total);
@@ -65,7 +67,7 @@ export default function Gallery() {
     setPage(0);
   };
 
-  const imageUrl = (item: GalleryItem) =>
+  const imageUrl = (item: GalleryDisplayItem) =>
     item.image_url || `/gallery/${encodeURIComponent(item.image_path)}`;
 
   const totalPages = Math.ceil(total / limit) || 1;
@@ -185,7 +187,7 @@ function DetailModal({
   onClose,
   imageUrl,
 }: {
-  item: GalleryItem;
+  item: GalleryDisplayItem;
   onClose: () => void;
   imageUrl: string;
 }) {
@@ -237,18 +239,18 @@ function DetailModal({
         className="max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto rounded-lg bg-slate-900 border border-slate-700 p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-start gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 items-start gap-4">
           <img
             src={imageUrl}
             alt=""
-            className="max-h-80 rounded object-contain bg-slate-800"
+            className="max-w-full max-h-80 rounded object-contain bg-slate-800"
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-white">#{item.id}</h3>
             <dl className="mt-3 space-y-1 text-sm">
               <ParamRow label="Checkpoint" value={item.checkpoint} />
               <ParamRow label="LoRA" value={item.lora} />
-              <ParamRow label="Seed" value={item.seed?.toString()} />
+              <ParamRow label="Seed" value={item.seed} />
               <ParamRow label="Steps" value={item.steps?.toString()} />
               <ParamRow label="CFG" value={item.cfg?.toString()} />
               <ParamRow label="建立時間" value={item.created_at?.slice(0, 19).replace("T", " ")} />
@@ -314,7 +316,7 @@ function DetailModal({
 function ParamRow({ label, value }: { label: string; value?: string | null }) {
   if (value == null || value === "") return null;
   return (
-    <div>
+    <div className="break-words">
       <dt className="text-slate-500 inline">{label}: </dt>
       <dd className="inline text-slate-200">{value}</dd>
     </div>

@@ -158,3 +158,49 @@ npm run dev
 ```
 
 Manual Uvicorn defaults to `8000`, Compose host to `8001`. Match MCP/frontend settings to the actual Backend. Manual development does not configure Windows Worker or establish training acceptance.
+
+## Maintenance startup and drain source contract
+
+`AI_DRAWING_MAINTENANCE=closed` is checked before Backend Settings, database,
+router imports, Gallery directory creation, migration/init or automatic workers.
+Only `GET /maintenance/status` returns a safe typed source/owner/epoch receipt;
+all other paths return 503. No state is loaded and no release/migration occurs.
+Invalid mode values refuse startup. A fresh separately authorized normal startup
+is required for release; there is no public reopen endpoint.
+
+Normal shutdown fences the history and caption producers, queue admission and
+trainer queue before joining. Accepted generation/trainer work may finish;
+shutdown does not terminate the Argus runner or request trainer cancellation.
+Pending jobs are left intact, never cleared or replayed by drain. Each stop
+helper returns a boolean, retains live handles after timeout and checks actual
+worker/timer/child exit. Lifespan records each result in
+`app.state.maintenance_drain` and logs incomplete shutdown. These receipts certify
+local checks only; remote ComfyUI acceptance and old processes remain unknown.
+An Environment operation must keep its verified external whole-listener/writer
+fence and verify actual process/children termination; an ASGI shutdown return or
+log alone does not authorize checkpoint/restore or establish zero remote work.
+
+The Bot uses the bound durable history and authenticated loopback controls in
+[its maintenance contract](../discord-bot/README.md#維護-admission-與交付歷史source-contract).
+Checkpoint/restore must preserve ledger and its checkpoint together under the
+single-owner lease and compare an external trusted checkpoint. A complete local
+rollback cannot certify absence of later remote effects. Never provision over
+legacy/missing history, adopt source/dependencies, start/stop services or replay
+jobs based solely on this source documentation. Those remain separately scoped
+Environment operations. Windows remains deferred.
+
+The Vite development server reserves `/gallery` and `/gallery/` (with optional
+query strings) for the React Gallery page. Only paths below `/gallery/` proxy to
+the Backend for original assets; `/api` remains the API proxy. This routing rule
+is specific to the development server, not evidence about managed deployments.
+Gallery reads the existing numeric API response as text and preserves integer
+seed tokens in an internal string display model before JSON parsing can round
+them. The public Backend/MCP numeric contract and ID-based rerun are unchanged.
+The Gallery detail modal uses two bounded image/metadata columns at widths of
+640px and above, and stacks them below that width. Long metadata values wrap;
+the image keeps its aspect ratio and prompts remain complete with vertical
+scrolling when needed. To check initial visibility against the existing test
+result and a long-content fixture, use `sh scripts/check-gallery-modal-layout.sh`
+from `frontend/` with a task-owned Vite preview on loopback port 5175 and the
+existing Backend on 8001. This read-only browser check requires `ego-browser`;
+it does not submit generation or export requests.

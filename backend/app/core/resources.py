@@ -58,8 +58,53 @@ def list_checkpoints(settings: ResourceSettings) -> list[str]:
     return list_model_files_in_dirs(settings.comfyui_checkpoints_dir)
 
 
+def lora_catalog(settings: ResourceSettings) -> dict:
+    """Root legacy files and ONE controlled AI-Drawing run level, without links.
+
+    Ambiguous multi-root locators are excluded from selection and reported.
+    Other model scanners keep their established behavior.
+    """
+    import hashlib, json, unicodedata
+    found: dict[str, list[tuple[str, Path, dict | None]]] = {}
+    raw=getattr(settings,'comfyui_loras_dir','') or getattr(settings,'comfyui_lora_dir','') or ''
+    seen_roots=set()
+    for root in _split_dirs(raw):
+        if root.absolute() in seen_roots: continue
+        seen_roots.add(root.absolute())
+        if not root.is_dir() or root.is_symlink(): continue
+        paths=[p for p in root.iterdir() if p.is_file() and not p.is_symlink() and p.suffix.lower() in MODEL_EXTENSIONS]
+        managed=root/'AI-Drawing'
+        if managed.is_dir() and not managed.is_symlink():
+            for run in managed.iterdir():
+                if not run.is_dir() or run.is_symlink(): continue
+                paths.extend(p for p in run.iterdir() if p.is_file() and not p.is_symlink() and p.suffix.lower()=='.safetensors')
+        for path in paths:
+            if any(getattr(p.stat(), 'st_file_attributes',0)&0x400 for p in [path,*path.parents] if p==root or p.is_relative_to(root)): continue
+            locator=path.relative_to(root).as_posix()
+            owner=None
+            if locator.startswith('AI-Drawing/'):
+                try: owner=json.loads((path.parent/'registration.json').read_text())
+                except (OSError,ValueError): pass
+            key=unicodedata.normalize('NFC',locator).casefold()
+            found.setdefault(key,[]).append((locator,path,owner))
+    available=[];conflicts=[]
+    def content_hash(path):
+        h=hashlib.sha256()
+        with path.open('rb') as f:
+            for part in iter(lambda:f.read(1024*1024),b''): h.update(part)
+        return h.hexdigest()
+    for entries in found.values():
+        if len(entries)>1:
+            owners=[e[2] for e in entries]
+            if any(not owner for owner in owners) or any(owner!=owners[0] for owner in owners) or len({content_hash(e[1]) for e in entries})>1:
+                conflicts.append({'locator':entries[0][0],'code':'lora_locator_conflict','reason':'multiple roots have differing content or unknown ownership'})
+                continue
+        available.append(entries[0][0])
+    return {'loras':sorted(available),'lora_conflicts':sorted(conflicts,key=lambda v:v['locator'])}
+
+
 def list_loras(settings: ResourceSettings) -> list[str]:
-    return list_model_files_in_dirs(settings.comfyui_loras_dir)
+    return lora_catalog(settings)['loras']
 
 
 def list_diffusion_models(settings: ResourceSettings) -> list[str]:

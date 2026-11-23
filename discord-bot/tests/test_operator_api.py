@@ -82,5 +82,5 @@ async def test_operator_endpoint_returns_verifiable_message_ids() -> None:
         "deduplicated": False,
     }
     delivery.deliver.assert_awaited_once()
-    assert delivery.deliver.await_args.args[:2] == (JOB_ID, "alias:results")
+    assert delivery.deliver.await_args.args[:2] == (JOB_ID, "channel:123:456")
     assert delivery.deliver.await_args.kwargs["force_resend"] is False

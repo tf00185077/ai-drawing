@@ -58,6 +58,8 @@ def get_gallery_image(image_id: int) -> str:
                 "image_path": image_path,
                 "image_url": image_url,
                 "local_path": local_path,
+                "revision_context": resp.get("revision_context"),
+                "revision_context_error": resp.get("revision_context_error"),
                 "metadata": {
                     "checkpoint": resp.get("checkpoint"),
                     "lora": resp.get("lora"),
@@ -98,6 +100,8 @@ def get_gallery_artifact(artifact_id: int) -> str:
                 "local_path": resp.get("local_path"),
                 "file_size": resp.get("file_size"),
                 "job_id": resp.get("job_id"),
+                "revision_context": resp.get("revision_context"),
+                "revision_context_error": resp.get("revision_context_error"),
                 "source_node_id": resp.get("source_node_id"),
                 "source_node_type": resp.get("source_node_type"),
                 "workflow_metadata": {

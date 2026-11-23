@@ -14,7 +14,7 @@ def _client() -> TestClient:
 
 
 def _approved_start_payload() -> dict[str, object]:
-    return {
+    return {"output_name": "test-product",
         "folder": "character/miku",
         "expected_dataset_hash": "dataset-sha256",
         "expected_profile_hash": "profile-sha256",
@@ -47,7 +47,7 @@ def test_start_requires_both_approval_hashes_and_recipe_without_calling_enqueue(
         )
         missing_profile = client.post(
             "/api/lora-train/start",
-            json={
+            json={"output_name": "test-product",
                 "folder": "character/miku",
                 "expected_dataset_hash": "dataset-sha256",
                 "recipe": {},
@@ -55,7 +55,7 @@ def test_start_requires_both_approval_hashes_and_recipe_without_calling_enqueue(
         )
         missing_recipe = client.post(
             "/api/lora-train/start",
-            json={
+            json={"output_name": "test-product",
                 "folder": "character/miku",
                 "expected_dataset_hash": "dataset-sha256",
                 "expected_profile_hash": "profile-sha256",

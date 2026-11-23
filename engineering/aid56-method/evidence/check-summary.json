@@ -1,0 +1,16 @@
+{
+  "prototype_imports": 0,
+  "controls": 24,
+  "mutations_killed": 3,
+  "retained_payloads_verified": 14,
+  "guard_denials": 4,
+  "product_operations": 0,
+  "live_process_queries": 0,
+  "private_config_reads": 0,
+  "actual_DB_opens": 0,
+  "generation_training_downloads": 0,
+  "service_starts_signals": 0,
+  "canonical_writes": 0,
+  "python": "Python 3.9.6",
+  "note": "Counts refer to this offline method execution, not retained Environment runs."
+}

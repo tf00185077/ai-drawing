@@ -7,6 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.execution import ExecutionTarget
+from app.schemas.generate import RevisionContext
 
 
 class GalleryItem(BaseModel):
@@ -16,6 +17,8 @@ class GalleryItem(BaseModel):
 
     id: int
     job_id: str | None = None
+    revision_context: RevisionContext | None = None
+    revision_context_error: str | None = None
     image_path: str
     image_url: str | None = None  # 前端顯示用，/gallery/ 開頭
     checkpoint: str | None = None
@@ -59,6 +62,8 @@ class RerunResponse(BaseModel):
     job_id: str
     status: str = "queued"
     message: str | None = None
+    revision_context: RevisionContext | None = None
+    revision_context_error: str | None = None
 
 
 class ArtifactSummary(BaseModel):
@@ -68,6 +73,8 @@ class ArtifactSummary(BaseModel):
 
     id: int
     job_id: str | None = None
+    revision_context: RevisionContext | None = None
+    revision_context_error: str | None = None
     artifact_type: str
     mime_type: str | None = None
     gallery_path: str

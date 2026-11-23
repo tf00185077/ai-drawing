@@ -20,6 +20,7 @@ from app.core.resources import (
     list_text_encoders,
     list_vaes,
 )
+from app.core.revision_context import RevisionParentError, project_context, resolve_context
 from app.core.generation_batches import (
     get_batch_status as get_persisted_batch_status,
 )
@@ -100,10 +101,13 @@ def _custom_request_params(body: GenerateCustomRequest) -> dict:
 
 
 @router.post("/", response_model=GenerateResponse, status_code=201)
-async def trigger_generate(body: GenerateRequest):
+async def trigger_generate(body: GenerateRequest, db: Session = Depends(get_db)):
     """觸發圖片生成"""
     try:
+        context = resolve_context(body.revision_context, db)
         params = {"prompt": body.prompt, "negative_prompt": body.negative_prompt}
+        if context is not None:
+            params["revision_context"] = context
         params["execution_target"] = body.execution_target
         for key in ("checkpoint", "lora", "seed", "steps", "cfg"):
             value = getattr(body, key)
@@ -144,7 +148,10 @@ async def trigger_generate(body: GenerateRequest):
             job_id=job_id,
             status="queued",
             message="已加入生圖佇列",
+            revision_context=context,
         )
+    except RevisionParentError as e:
+        raise HTTPException(e.status, e.detail) from None
     except QueueFullError as e:
         raise HTTPException(503, str(e))
 
@@ -482,7 +489,9 @@ async def get_available_resources():
     """列出可用的 checkpoint、lora、workflow 模板"""
     settings = get_settings()
     checkpoints = list_checkpoints(settings)
-    loras = list_loras(settings)
+    from app.core.resources import lora_catalog
+    lora_inventory = lora_catalog(settings)
+    loras = lora_inventory["loras"]
     diffusion_models = list_diffusion_models(settings)
     text_encoders = list_text_encoders(settings)
     vaes = list_vaes(settings)
@@ -495,6 +504,7 @@ async def get_available_resources():
     return {
         "checkpoints": checkpoints,
         "loras": loras,
+        "lora_conflicts": lora_inventory["lora_conflicts"],
         "diffusion_models": diffusion_models,
         "text_encoders": text_encoders,
         "vaes": vaes,
@@ -561,6 +571,8 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
             "job_id": job_id,
             "prompt_id": queue_status.get("prompt_id"),
             "submitted_at": queue_status.get("submitted_at"),
+            "revision_context": queue_status.get("revision_context"),
+            "revision_context_error": None,
         }
         for key in (
             "batch_total",
@@ -636,6 +648,7 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         artifact_items = [
             {
                 "id": artifact.id,
+                **project_context(artifact.metadata_json, artifact=True),
                 "artifact_type": artifact.artifact_type,
                 "mime_type": artifact.mime_type,
                 "gallery_path": artifact.gallery_path,
@@ -683,6 +696,11 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         if image_record and batch_status is None:
             resp["image_id"] = image_record.id
             resp["image_path"] = image_record.image_path
+        resp.update(
+            project_context(image_record.revision_context_json) if image_record
+            else project_context(artifacts[0].metadata_json, artifact=True) if artifacts
+            else {"revision_context": None, "revision_context_error": None}
+        )
         return resp
 
     # 4. 找不到

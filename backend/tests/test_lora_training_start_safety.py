@@ -132,7 +132,7 @@ def _assert_enqueue_rejects_escaped_folder(
 
     with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
         lora_trainer.enqueue(
-            folder,
+            folder, output_name="test-product",
             expected_dataset_hash=DATASET_HASH,
             expected_profile_hash=PROFILE_HASH,
             recipe={
@@ -240,7 +240,9 @@ def test_enqueue_canonicalizes_relative_backslash_folder_before_validation_and_p
     validate_dataset = Mock(
         side_effect=lambda folder, **_kwargs: _approved_validation(folder),
     )
-    create_persistent_job = Mock()
+    def assign(job):
+        job.resolved_output_name=job.output_name;job.output_serial=1;job.run_locator=job.output_name+'__20261027T030000Z'
+    create_persistent_job = Mock(side_effect=assign)
 
     monkeypatch.setattr(lora_trainer, "get_settings", lambda: settings)
     monkeypatch.setattr(lora_dataset, "get_settings", lambda: settings)
@@ -255,7 +257,7 @@ def test_enqueue_canonicalizes_relative_backslash_folder_before_validation_and_p
     monkeypatch.setattr(lora_trainer, "_running", None)
 
     lora_trainer.enqueue(
-        "character\\miku",
+        "character\\miku", output_name="test-product",
         expected_dataset_hash=DATASET_HASH,
         expected_profile_hash=PROFILE_HASH,
         recipe={
@@ -331,7 +333,7 @@ def test_enqueue_reports_missing_captions_through_structured_validation(
     inspected = lora_dataset.inspect_dataset("character/miku")
     with pytest.raises(lora_trainer.TrainerServiceError) as exc_info:
         lora_trainer.enqueue(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash=inspected.dataset_hash,
             expected_profile_hash=inspected.profile_hash,
             recipe={

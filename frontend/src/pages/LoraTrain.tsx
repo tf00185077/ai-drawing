@@ -3,7 +3,7 @@
  * 訓練狀態、佇列、手動觸發、trigger-check
  * 對應 docs/api-contract.md 模組 4
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   FolderItem,
   TrainingRecipeHints,
@@ -66,6 +66,8 @@ function isCanonicalStartPayload(
   datasetHash: string | null,
   profileHash: string | null,
   recipeHash: string | null,
+  outputName: string,
+  outputConfigHash: string | null | undefined,
 ): value is TrainingStartPayload {
   if (!isRecord(value) || !isRecord(value.recipe)) return false;
   if (
@@ -77,6 +79,8 @@ function isCanonicalStartPayload(
 
   const allowedKeys = new Set([
     "folder",
+    "output_name",
+    "expected_output_config_hash",
     "expected_dataset_hash",
     "expected_profile_hash",
     "recipe",
@@ -97,6 +101,9 @@ function isCanonicalStartPayload(
     typeof recipeHash === "string" && /^[0-9a-f]{64}$/.test(recipeHash);
   return (
     value.folder === folder &&
+    value.output_name === outputName &&
+    typeof outputConfigHash === "string" && /^[0-9a-f]{64}$/.test(outputConfigHash) &&
+    value.expected_output_config_hash === outputConfigHash &&
     typeof datasetHash === "string" &&
     datasetHash.length > 0 &&
     value.expected_dataset_hash === datasetHash &&
@@ -129,10 +136,15 @@ function formatBackendError(data: unknown, status: number): string {
   }
   if (detail && typeof detail === "object") {
     const item = detail as {
+      job_id?: unknown;
       code?: unknown;
       message?: unknown;
       details?: unknown;
     };
+    if (item.code === "admission_uncertain") {
+      const id = typeof item.job_id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(item.job_id) ? item.job_id : "ID 未知";
+      return `${id}：排程狀態未確認；先核對原任務，不要重新提交。`;
+    }
     const code = typeof item.code === "string" ? item.code : "";
     const message = typeof item.message === "string" ? item.message : "";
     const details = formatBackendErrorDetails(item.details);
@@ -205,6 +217,8 @@ export default function LoraTrain() {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [foldersLoading, setFoldersLoading] = useState(false);
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set());
+  const [outputNames, setOutputNames] = useState<Record<string, string>>({});
+  const outputNamesRef = useRef<Record<string, string>>({});
   const [checkpoint, setCheckpoint] = useState("");
   const [sdxl, setSdxl] = useState(true);
   const [epochs, setEpochs] = useState<string>(String(DEFAULT_EPOCHS));
@@ -222,7 +236,9 @@ export default function LoraTrain() {
   const [startError, setStartError] = useState<string | null>(null);
   const [lastStart, setLastStart] = useState<{
     queued: number;
+    resolvedNames: string[];
     skipped: string[];
+    uncertain: string[];
     failed: string[];
   } | null>(null);
 
@@ -403,13 +419,17 @@ export default function LoraTrain() {
     };
 
     const queued: number[] = [];
+    const resolvedNames: string[] = [];
     const skipped: string[] = [];
     const failed: string[] = [];
+    const uncertain: string[] = [];
 
     for (const folder of toProcess) {
       try {
+        const outputName = (outputNames[folder] || "").normalize("NFC");
+        if (!outputName) { failed.push(`${folder}: 請填寫成品名稱`); continue; }
         const recipe = buildRecipeHints();
-        const preflightBody: TrainingDecisionPreflightRequest = { folder };
+        const preflightBody: TrainingDecisionPreflightRequest = { folder, output_name: outputName };
         if (Object.keys(recipe).length > 0) {
           preflightBody.recipe = recipe;
         }
@@ -450,6 +470,8 @@ export default function LoraTrain() {
             preflight.dataset_hash,
             preflight.profile_hash,
             preflight.recipe_hash,
+            outputName,
+            preflight.output_config_hash,
           )
         ) {
           failed.push(
@@ -458,6 +480,9 @@ export default function LoraTrain() {
           continue;
         }
 
+        if ((outputNamesRef.current[folder] || "").normalize("NFC") !== outputName) {
+          failed.push(`${folder}: 成品名稱已改變，請重新預覽`); continue;
+        }
         const body: TrainingStartPayload = preflight.start_payload;
 
         const res = await fetch(`${API}/lora-train/start`, {
@@ -469,9 +494,14 @@ export default function LoraTrain() {
 
         if (res.ok) {
           queued.push(1);
+          resolvedNames.push(data.resolved_output_name || "名稱待 status 對帳");
         } else {
           const code = backendErrorCode(data);
           const formattedError = formatBackendError(data, res.status);
+          if (code === "admission_uncertain") {
+            uncertain.push(`${folder}: ${formattedError}`);
+            continue;
+          }
           const approvalInvalidated =
             code === "dataset_hash_mismatch" ||
             code === "profile_hash_mismatch";
@@ -494,7 +524,9 @@ export default function LoraTrain() {
 
     setLastStart({
       queued: queued.length,
+      resolvedNames,
       skipped,
+      uncertain,
       failed,
     });
     if (failed.length > 0) {
@@ -504,6 +536,7 @@ export default function LoraTrain() {
     setIsSubmitting(false);
   }, [
     selectedFolders,
+    outputNames,
     checkpoint,
     sdxl,
     epochs,
@@ -586,10 +619,17 @@ export default function LoraTrain() {
                   {statusLabel}
                 </span>
               </p>
+              {status?.durable?.availability === "available" ? (
+                <div className="text-sm text-amber-300">
+                  <p>持久未決：{status.durable.nonterminal_total}；記憶體追蹤：{status.durable.tracked_total}；未追蹤：{status.durable.untracked_total}。未追蹤不代表失敗，請先核對原任務。</p>
+                  {status.durable.jobs.map(job => <p key={job.job_id} className="break-all">{job.job_id} · {job.status} · {job.memory_tracked ? "已追蹤" : "未追蹤"}</p>)}
+                  {status.durable.truncated && <p>僅列前 {status.durable.limit} 筆，依 job_id 排序；總數如上。</p>}
+                </div>
+              ) : <p className="text-sm text-amber-300">持久狀態未知；記憶體閒置不能確認所有任務已結束。</p>}
               {status?.current_job && (
                 <div className="mt-2 p-2 rounded bg-slate-900/50 text-sm">
                   <p className="text-slate-300">
-                    目前：{status.current_job.folder}
+                    目前：{status.current_job.resolved_output_name || status.current_job.folder}
                     {status.current_job.progress != null && (
                       <span className="ml-2 text-cyan-400">
                         {Math.round(status.current_job.progress * 100)}%
@@ -611,7 +651,7 @@ export default function LoraTrain() {
                   <ul className="mt-1 space-y-0.5 text-sm text-slate-300">
                     {status.queue.map((q) => (
                       <li key={q.job_id}>
-                        {q.folder} <span className="text-slate-500">({q.job_id.slice(0, 8)})</span>
+                        {q.resolved_output_name || q.folder} <span className="text-slate-500">({q.job_id.slice(0, 8)})</span>
                       </li>
                     ))}
                   </ul>
@@ -624,7 +664,7 @@ export default function LoraTrain() {
                   }`}
                 >
                   <p className="font-medium">
-                    {status.last_result.success ? "✓ 上次完成" : "✗ 上次失敗"}：{status.last_result.folder}
+                    {status.last_result.success ? "✓ 上次完成" : "✗ 上次失敗"}：{status.last_result.resolved_output_name || status.last_result.folder}
                   </p>
                   {status.last_result.success && status.last_result.path && (
                     <p className="mt-0.5 text-xs break-all">輸出：{status.last_result.path}</p>
@@ -730,6 +770,14 @@ export default function LoraTrain() {
                 </div>
               )}
             </div>
+            {Array.from(selectedFolders).map((folder) => (
+              <Field key={folder} label={`成品名稱：${folder}`} value={outputNames[folder] || ""}
+                onChange={(value) => {
+                  const next = {...outputNamesRef.current, [folder]: value};
+                  outputNamesRef.current = next; setOutputNames(next);
+                }} placeholder="例如：水彩旅人（必填，不含副檔名）" />
+            ))}
+            <p className="text-sm text-slate-400">同名成品自動加 _002、_003；流水號於建立時確定。每次 run 保存實際訓練參數文件。</p>
             <Field
               label="Checkpoint（選填）"
               value={checkpoint}
@@ -850,9 +898,10 @@ export default function LoraTrain() {
               <div className="text-sm space-y-1">
                 {lastStart.queued > 0 && (
                   <p className="text-green-400">
-                    已加入佇列：{lastStart.queued} 個資料夾
+                    已加入佇列：{lastStart.queued} 個資料夾；成品：{lastStart.resolvedNames.join("、")}
                   </p>
                 )}
+                {lastStart.uncertain.length > 0 && <p className="text-amber-400">提交待核對：{lastStart.uncertain.join("；")}</p>}
                 {lastStart.skipped.length > 0 && (
                   <p className="text-amber-400">
                     未送出 Start：{lastStart.skipped.join(", ")}

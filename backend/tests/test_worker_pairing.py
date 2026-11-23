@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -383,3 +384,189 @@ def test_worker_discovery_settings_defaults(monkeypatch) -> None:
     assert settings.nvidia_worker_discovery_timeout > 0
     assert settings.nvidia_worker_hostname == ""
     assert settings.nvidia_worker_protocol_version == 2
+
+
+@pytest.mark.parametrize(
+    ("body", "diagnostic"),
+    [
+        ({"hostname": "OTHER-PC", "protocol_version": 2}, "hostname does not match"),
+        ({"hostname": "EXPECTED-PC", "protocol_version": 1}, "protocol_version does not match"),
+    ],
+    ids=["wrong-hostname", "wrong-protocol"],
+)
+def test_health_rejects_mismatched_identity_without_discovery(
+    monkeypatch, body, diagnostic
+) -> None:
+    def unexpected_discovery(**kwargs):
+        pytest.fail("A responding identity mismatch must not trigger discovery")
+
+    monkeypatch.setattr(nvidia_worker, "_open_worker_candidates", unexpected_discovery)
+    requests = _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json=body)
+    )
+    client = nvidia_worker.NvidiaWorkerClient(
+        "http://worker.invalid:8791", expected_hostname="EXPECTED-PC",
+        expected_protocol_version=2, discovery_enabled=True,
+    )
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match=diagnostic):
+        client.health()
+
+    assert [(request.method, request.url.path) for request in requests] == [
+        ("GET", "/v1/worker/status")
+    ]
+
+
+@pytest.mark.parametrize("hostname", ["EXPECTED-PC", "expected-pc", "ExPeCtEd-Pc"])
+@pytest.mark.parametrize("protocol", [1, 2])
+def test_health_accepts_configured_identity_case_insensitively(
+    monkeypatch, hostname, protocol
+) -> None:
+    body = {"hostname": hostname, "protocol_version": protocol, "worker_version": "0.3.0"}
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json=body)
+    )
+    client = nvidia_worker.NvidiaWorkerClient(
+        "http://worker.invalid:8791", expected_hostname="EXPECTED-PC",
+        expected_protocol_version=protocol,
+    )
+
+    assert client.health() == body
+
+
+@pytest.mark.parametrize("hostname", [..., None, "", 123, True, [], {}])
+def test_health_rejects_missing_or_invalid_expected_hostname(monkeypatch, hostname) -> None:
+    body = {"protocol_version": 2}
+    if hostname is not ...:
+        body["hostname"] = hostname
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json=body)
+    )
+    client = nvidia_worker.NvidiaWorkerClient(
+        "http://worker.invalid:8791", expected_hostname="EXPECTED-PC"
+    )
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="hostname must be a non-empty string"):
+        client.health()
+
+
+@pytest.mark.parametrize("protocol", [..., None, "2", 2.0, True, False, 0, -1, [], {}])
+def test_health_rejects_missing_or_invalid_protocol_in_url_only_mode(monkeypatch, protocol) -> None:
+    body = {}
+    if protocol is not ...:
+        body["protocol_version"] = protocol
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json=body)
+    )
+    # Protocol 1 ensures True cannot pass by comparing equal to integer 1.
+    client = nvidia_worker.NvidiaWorkerClient(
+        "http://worker.invalid:8791", expected_protocol_version=1
+    )
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="protocol_version must be a positive integer"):
+        client.health()
+
+
+@pytest.mark.parametrize("body", [None, [], "status", 2, True])
+def test_health_rejects_non_object_responses(monkeypatch, body) -> None:
+    # httpx's json=None denotes no JSON argument; explicitly encode JSON null.
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, content=json.dumps(body))
+    )
+    client = nvidia_worker.NvidiaWorkerClient("http://worker.invalid:8791")
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="status response must be an object"):
+        client.health()
+
+
+def test_health_rejects_malformed_json_with_stable_diagnostic(monkeypatch) -> None:
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, content=b"<html>not status</html>")
+    )
+    client = nvidia_worker.NvidiaWorkerClient("http://worker.invalid:8791")
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="status response must be valid JSON"):
+        client.health()
+
+
+@pytest.mark.parametrize("body", [{"protocol_version": 2}, {"hostname": "ANY-PC", "protocol_version": 2}])
+def test_health_preserves_url_only_configuration(monkeypatch, body) -> None:
+    settings = _worker_settings(nvidia_worker_hostname="", nvidia_worker_discovery_enabled=False)
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json=body)
+    )
+
+    assert nvidia_worker.get_worker_client().health() == body
+
+
+def test_health_url_only_configuration_still_requires_expected_protocol(monkeypatch) -> None:
+    _install_recording_transport(
+        monkeypatch, lambda request: httpx.Response(200, json={"protocol_version": 1})
+    )
+    client = nvidia_worker.NvidiaWorkerClient("http://worker.invalid:8791")
+
+    with pytest.raises(nvidia_worker.WorkerConfigurationError, match="protocol_version does not match"):
+        client.health()
+
+
+@pytest.mark.parametrize(
+    ("hostname", "protocol"), [("OTHER-PC", 2), ("EXPECTED-PC", 1)]
+)
+def test_backend_status_is_unavailable_on_identity_mismatch(monkeypatch, hostname, protocol) -> None:
+    settings = _worker_settings(nvidia_worker_hostname="EXPECTED-PC", nvidia_worker_discovery_enabled=False)
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+    monkeypatch.setattr(workers, "get_settings", lambda: settings)
+    _install_recording_transport(
+        monkeypatch,
+        lambda request: httpx.Response(200, json={"hostname": hostname, "protocol_version": protocol}),
+    )
+
+    assert workers.worker_status() == {
+        "configured": True, "reachable": False, "status": "unavailable",
+        "error_type": "WorkerConfigurationError",
+    }
+
+
+def test_backend_status_is_ready_on_matching_identity(monkeypatch) -> None:
+    settings = _worker_settings(nvidia_worker_hostname="EXPECTED-PC", nvidia_worker_discovery_enabled=False)
+    monkeypatch.setattr(nvidia_worker, "get_settings", lambda: settings)
+    monkeypatch.setattr(workers, "get_settings", lambda: settings)
+    _install_recording_transport(
+        monkeypatch,
+        lambda request: httpx.Response(200, json={"hostname": "expected-pc", "protocol_version": 2}),
+    )
+
+    assert workers.worker_status() == {
+        "configured": True, "reachable": True, "status": "ready",
+        "worker": {"hostname": "expected-pc", "protocol_version": 2},
+    }
+
+
+@pytest.mark.parametrize("operation", ["submit_prompt", "submit_powershell"])
+@pytest.mark.parametrize("failure", ["read-timeout", "http-error"])
+def test_side_effecting_request_failure_does_not_discover_or_resubmit(
+    monkeypatch, operation, failure
+) -> None:
+    def unexpected_discovery(**kwargs):
+        pytest.fail("A read timeout or HTTP error must not trigger discovery")
+
+    monkeypatch.setattr(nvidia_worker, "_open_worker_candidates", unexpected_discovery)
+    def respond(request):
+        if failure == "read-timeout":
+            raise httpx.ReadTimeout("uncertain submission", request=request)
+        return httpx.Response(503, json={"error": "unavailable"})
+
+    requests = _install_recording_transport(monkeypatch, respond)
+    client = nvidia_worker.NvidiaWorkerClient(
+        "http://worker.invalid:8791", expected_hostname="EXPECTED-PC", discovery_enabled=True
+    )
+    error = httpx.ReadTimeout if failure == "read-timeout" else (
+        nvidia_worker.ComfyUIError if operation == "submit_prompt" else httpx.HTTPStatusError
+    )
+
+    with pytest.raises(error):
+        getattr(client, operation)({"1": {}} if operation == "submit_prompt" else "Get-Date")
+
+    assert len(requests) == 1
+    assert requests[0].method == "POST"

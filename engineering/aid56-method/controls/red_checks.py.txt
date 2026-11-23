@@ -1,0 +1,124 @@
+"""Literal expectations: arithmetic and counterexamples, no product imports."""
+import unittest
+
+
+def suite(m):
+    class Controls(unittest.TestCase):
+        def test_retained_exit2_empty_is_error_not_absence(self):
+            self.assertEqual(m.discovery(2, '', stderr_present=None),
+                             {'state': 'error', 'pids': None, 'exit': 2,
+                              'stderr_present': None, 'cause': 'unknown'})
+
+        def test_locator_success(self):
+            self.assertEqual(m.discovery(0, '41\n42\n')['pids'], [41, 42])
+
+        def test_only_exit1_with_empty_output_is_no_match(self):
+            self.assertEqual(m.discovery(1, '')['state'], 'no_match')
+            self.assertEqual(m.discovery(1, '41')['state'], 'invalid_output')
+
+        def test_timeout_is_distinct(self):
+            self.assertEqual(m.discovery(None, '', timed_out=True)['state'], 'timeout')
+
+        def test_zero_exit_empty_and_bad_pid_are_not_absence(self):
+            for value in ['', 'abc', '0', '-2', '41 41']:
+                self.assertEqual(m.discovery(0, value)['state'], 'invalid_output')
+
+        def test_unknown_exit_and_signal_remain_errors(self):
+            for code in [3, -9, None]:
+                self.assertEqual(m.discovery(code, '')['state'], 'error')
+
+        def test_root_overlap_and_symlink_target_count_once(self):
+            rows = [dict(id='target', kind='file', bytes=100),
+                    dict(id='target', kind='file', bytes=100),
+                    dict(id='link', kind='link', bytes=7, target='target')]
+            self.assertEqual(m.protection(rows, complete=True),
+                             {'bytes': 107, 'missing': [], 'basis': 'complete_manifest'})
+
+        def test_link_target_missing_and_incomplete_effective_roots(self):
+            r = m.protection([dict(id='link', kind='link', bytes=7, target='outside')], complete=False)
+            self.assertIsNone(r['bytes'])
+            self.assertEqual(r['missing'], ['effective_roots', 'link_target:outside'])
+
+        def test_conflicting_alias_and_numeric_values_rejected(self):
+            with self.assertRaises(ValueError):
+                m.protection([dict(id='a', kind='file', bytes=1),
+                              dict(id='a', kind='file', bytes=2)], complete=True)
+            for value in [True, -1, 1.5]:
+                with self.assertRaises(ValueError):
+                    m.protection([dict(id='a', kind='file', bytes=value)], complete=True)
+
+        def test_distinct_regular_paths_receive_no_hardlink_credit(self):
+            self.assertEqual(m.protection([dict(id='a', kind='file', bytes=100),
+                                           dict(id='b', kind='file', bytes=100)], complete=True)['bytes'], 200)
+
+        def terms(self):
+            return {k: dict(bytes=v, basis='derived', evidence='synthetic-hand-proof')
+                    for k, v in [('P', 100), ('D_B', 30), ('D_S', 0), ('M', 10)]}
+
+        def alloc(self, b=100, h=5, u=5):
+            return dict(pool='shared', **{k: dict(bytes=v, basis='derived', evidence='synthetic-hand-proof')
+                                         for k, v in [('B', b), ('H', h), ('U', u)]})
+
+        def test_full_post_copy_not_delta_and_exact_20_percent_ceiling(self):
+            r = m.capacity(self.terms(), [self.alloc(101, 5, 5)], {'shared': 134}, cap=240)
+            self.assertEqual(r['logical_bytes'], 240)  # 2*100+30+0+10
+            self.assertEqual(r['pools']['shared']['threshold'], 134)  # ceil(111*6/5)
+            self.assertEqual(r['state'], 'conditional_fit')
+
+        def test_same_pool_combines_allocations_not_free_space(self):
+            r = m.capacity(self.terms(), [self.alloc(), self.alloc()], {'shared': 200}, cap=1000)
+            self.assertEqual(r['pools']['shared']['threshold'], 264)
+            self.assertEqual(r['state'], 'exceeds')
+
+        def test_distinct_pools_cannot_borrow_free(self):
+            a = self.alloc(); a['pool'] = 'other'
+            r = m.capacity(self.terms(), [self.alloc(), a], {'shared': 1000, 'other': 131}, cap=1000)
+            self.assertFalse(r['pools']['other']['fits'])
+
+        def test_retained_guesses_and_missing_post_state_stay_unknown(self):
+            t = self.terms(); t['P']['basis'] = 'named_only'; t['D_B'] = None; t['D_S'] = None
+            a = self.alloc(); a['H']['basis'] = 'estimate'; a['U']['basis'] = 'page_rounded'
+            r = m.capacity(t, [a], {'shared': 236750987264}, cap=128849018880)
+            self.assertEqual(r['state'], 'unknown')
+            self.assertIsNone(r['logical_bytes'])
+            self.assertIsNone(r['pools']['shared']['threshold'])
+            self.assertEqual(r['missing'], ['P', 'D_B', 'D_S', 'shared:H', 'shared:U'])
+
+        def test_missing_physical_scope_never_fits(self):
+            self.assertEqual(m.capacity(self.terms(), [], {}, cap=1000)['state'], 'unknown')
+            self.assertEqual(m.capacity(self.terms(), [self.alloc()], {}, cap=1000)['state'], 'unknown')
+
+        def test_large_integers_and_bad_bound_types(self):
+            t = self.terms(); t['P']['bytes'] = 9007199254740993
+            r = m.capacity(t, [self.alloc()], {'shared': 132}, cap=18014398509482026)
+            self.assertEqual(r['logical_bytes'], 18014398509482026)
+            for value in [True, -1, '100']:
+                t = self.terms(); t['P']['bytes'] = value
+                with self.assertRaises(ValueError):
+                    m.capacity(t, [self.alloc()], {'shared': 132}, cap=1000)
+
+        def test_source_cwd_fd_are_not_loaded_settings(self):
+            facts = [dict(field='root', value='a', kind=k, process='p', epoch='e', complete=True,
+                          evidence='synthetic') for k in ['source_default', 'cwd', 'open_fd']]
+            self.assertEqual(m.binding(['root'], facts, process='p', epoch='e')['state'], 'unknown')
+
+        def test_loaded_binding_requires_same_process_epoch_and_complete_coverage(self):
+            f = dict(field='root', value='a', kind='loaded_snapshot', process='p', epoch='e', complete=True,
+                     evidence='synthetic-in-process-contract')
+            self.assertEqual(m.binding(['root'], [f], process='p', epoch='e')['state'], 'conditional_complete')
+            for changes in [dict(epoch='old'), dict(process='reused-pid'), dict(complete=False), dict(evidence='')]:
+                bad = {**f, **changes}
+                self.assertEqual(m.binding(['root'], [bad], process='p', epoch='e')['state'], 'unknown')
+            self.assertEqual(m.binding(['root', 'companions'], [f], process='p', epoch='e')['missing'], ['companions'])
+
+        def test_conflicting_loaded_values_remain_unknown(self):
+            f = dict(field='root', value='a', kind='loaded_snapshot', process='p', epoch='e', complete=True,
+                     evidence='synthetic')
+            self.assertEqual(m.binding(['root'], [f, {**f, 'value': 'b'}], process='p', epoch='e')['state'], 'unknown')
+
+        def test_control_cap_checked_before_release(self):
+            self.assertEqual(m.bounded_control(b'1234', 4), b'1234')
+            with self.assertRaises(ValueError):
+                m.bounded_control(b'12345', 4)
+
+    return unittest.defaultTestLoader.loadTestsFromTestCase(Controls)

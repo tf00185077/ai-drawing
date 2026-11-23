@@ -56,8 +56,13 @@ def _resolve_path_list(paths: str) -> str:
     )
 
 
+# Test mode requires an explicit bootstrap before any Settings/default-path evaluation.
+if os.environ.get("AI_DRAWING_TEST_ROOT") and os.environ.get("AI_DRAWING_TEST_CONFIGURED") != os.environ["AI_DRAWING_TEST_ROOT"]:
+    raise RuntimeError("test Settings imported before test bootstrap")
+
 # 最早載入 .env 至 os.environ，確保不論從何處啟動都能讀到
-load_dotenv(_ENV_PATH)
+if not os.environ.get("AI_DRAWING_TEST_ROOT"):
+    load_dotenv(_ENV_PATH)
 
 
 class Settings(BaseSettings):
@@ -261,7 +266,7 @@ class Settings(BaseSettings):
         return self
 
     class Config:
-        env_file = str(_ENV_PATH)
+        env_file = None if os.environ.get("AI_DRAWING_TEST_ROOT") else str(_ENV_PATH)
         env_file_encoding = "utf-8"
         extra = "ignore"  # 允許 .env 有未對應欄位（如 MCP_BACKEND_API_URL）
 

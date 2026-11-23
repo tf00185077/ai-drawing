@@ -2,7 +2,11 @@
 
 History before first roadmap writeback: [complete unchanged archive](progress/before-roadmap.md). The original history's relative references retain their original `docs/` context; use the canonical topic routes below. Exact native records retain test, source and operation details.
 
-## Latest owner stop and session preparation — 2026-11-23
+## Latest source-progress consolidation — 2026-11-23
+
+CTY authorized consolidation/publication of substantive local branch progress and deletion of redundant local branches. The [consolidation record](checkpoints/2026-11-23-progress-consolidation.md) and pinned inventory preserve source selection, superseded/withdrawn branches, integration corrections and executed results. Current main authority and newer Argus/fixed-video source are retained; the earlier accepted Gallery patches and cumulative LoRA/revision/maintenance source are integrated without publishing private-author ancestry. Backend's 26 remaining failure IDs reproduced on the original main; source publication is not runtime activation. Producer and the native task tree remain paused.
+
+## Earlier owner stop and session preparation — 2026-11-23
 
 CTY stopped the current Producer round and requested code rollback. Hermes cancelled the active Producer/QA runs, retained a manual task-tree hold and reverted both isolated AID-138 commits with `aa7bd009bc8e5363b8632422e3baae78c55d8c54`; the restored tree equals pre-round `cd92ad4`. Canonical main retained its source and existing document changes. CTY then requested fresh sessions, residual-task deletion and main publication. Native resets cleared all saved task sessions for Producer, coding agent, QA agent and Auto Dreamer; fresh provider conversations await actual new assignments. Deletion is pending CTY's choice because native issue deletion also removes attachments; no tasks or attachments have been removed. [Exact request and disposition](requests/2026-11-23-session-reset-and-task-cleanup.md). Earlier entries below retain their original outcomes and historical context.
 

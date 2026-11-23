@@ -3,6 +3,10 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+import hashlib
+import uuid
+import sys
+from importlib.metadata import version, PackageNotFoundError
 
 
 class ConfigError(Exception):
@@ -18,16 +22,47 @@ class Config:
     operator_destinations: tuple[tuple[str, int], ...] = ()
     operator_port: int = 8765
     delivery_ledger_path: Path = Path(".state/result-deliveries.json")
+    maintenance_closed: bool = False
+    maintenance_owner: str = "discord-bot"
+    maintenance_epoch: str = ""
+
+
+def source_version() -> str:
+    digest=hashlib.sha256()
+    for p in sorted(Path(__file__).parent.glob('*.py')):
+        digest.update(p.name.encode());digest.update(p.read_bytes())
+    return digest.hexdigest()
+
+
+def ledger_binding(config: Config | None = None, path: Path | None = None) -> dict:
+    path=config.delivery_ledger_path if config else path
+    public = ({'guild':config.guild_id,'destinations':config.operator_destinations,
+               'backend':config.backend_base_url,'owner':config.maintenance_owner}
+              if config else {'standalone':True})
+    versions={}
+    for name in ('discord.py','aiohttp','httpx'):
+        try:versions[name]=version(name)
+        except PackageNotFoundError:versions[name]='unavailable'
+    public['runtime']={'python':sys.version,'dependencies':versions}
+    return {'cwd':str(Path.cwd().resolve()),'root':str(path.parent.resolve()),
+            'source':source_version(),
+            'config':hashlib.sha256(json.dumps(public,sort_keys=True).encode()).hexdigest()}
+
 
 
 def load_config(env: dict | None = None) -> Config:
     if env is None:
-        from dotenv import load_dotenv
-
-        repo_env = Path(__file__).resolve().parents[2] / ".env"
-        load_dotenv(repo_env)
-        load_dotenv()
-        env = dict(os.environ)
+        # Explicit file only; no repo/cwd discovery. Process env has precedence.
+        process=dict(os.environ)
+        config_file=process.get('DISCORD_CONFIG_FILE')
+        values={}
+        if config_file:
+            p=Path(config_file)
+            if not p.is_absolute() or p.is_symlink() or not p.is_file():
+                raise ConfigError('DISCORD_CONFIG_FILE must name an explicit absolute file')
+            from dotenv import dotenv_values
+            values=dict(dotenv_values(p,interpolate=False))
+        env={**values,**process}
 
     token = env.get("DISCORD_BOT_TOKEN") or env.get("DISCORD_TOKEN")
     guild = env.get("DISCORD_GUILD_ID") or env.get("GUILD_ID")
@@ -90,6 +125,12 @@ def load_config(env: dict | None = None) -> Config:
             "DISCORD_OPERATOR_TOKEN 與 DISCORD_DESTINATION_ALIASES 必須一起設定"
         )
 
+    mode=env.get("AI_DRAWING_MAINTENANCE","normal")
+    if mode not in {"normal","closed"}:
+        raise ConfigError("AI_DRAWING_MAINTENANCE must be normal or closed")
+    ledger_path=Path(env.get("DISCORD_DELIVERY_LEDGER_PATH", ".state/result-deliveries.json"))
+    if not ledger_path.is_absolute():
+        raise ConfigError("DISCORD_DELIVERY_LEDGER_PATH must be absolute and explicitly provisioned")
     return Config(
         discord_token=token,
         guild_id=guild_id,
@@ -97,7 +138,8 @@ def load_config(env: dict | None = None) -> Config:
         operator_token=operator_token,
         operator_destinations=destinations,
         operator_port=operator_port,
-        delivery_ledger_path=Path(
-            env.get("DISCORD_DELIVERY_LEDGER_PATH", ".state/result-deliveries.json")
-        ),
+        delivery_ledger_path=ledger_path,
+        maintenance_closed=mode=="closed",
+        maintenance_owner=env.get("AI_DRAWING_MAINTENANCE_OWNER","discord-bot"),
+        maintenance_epoch=env.get("AI_DRAWING_MAINTENANCE_EPOCH") or str(uuid.uuid4()),
     )

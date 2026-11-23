@@ -23,6 +23,8 @@ def test_artifact_summary_validates_from_attributes() -> None:
     data = ArtifactSummary.model_validate(row).model_dump()
 
     assert data == {
+        "revision_context": None,
+        "revision_context_error": None,
         "id": 7,
         "job_id": "job-video",
         "artifact_type": "video",

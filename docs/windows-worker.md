@@ -31,7 +31,7 @@ Backend settings: `NVIDIA_WORKER_URL`, `NVIDIA_WORKER_DISCOVERY_ENABLED`, `NVIDI
 - Only connection errors/connect timeouts trigger discovery. Read timeouts/HTTP failures do not resubmit side-effecting requests.
 - Discovery requires one matching hostname/protocol candidate. The process-local URL cache has no TTL; settings and discovered-URL caches are separate.
 - The worktree fix ignores discovered-URL cache when discovery is disabled. Enabled cache/rediscovery behavior is unchanged. A mocked regression covers the fix; Windows deployment is unverified.
-- Health can accept a responding host with the wrong hostname/protocol; cache and scan comparisons differ in casing. Neither finding establishes the owner's failure cause.
+- Integrated health validates a JSON object and an actual positive integer protocol equal to configuration. When a hostname is configured it must be a nonempty string with casefold equality; URL-only mode still checks protocol. Malformed or mismatched status raises fixed WorkerConfigurationError diagnostics, and Backend reports unavailable without discovery/retry. The response body is not echoed. Discovery scans still compare hostname case-sensitively; normalization and authentication remain separate gaps. This source integration does not establish the owner's failure cause or installed-host acceptance.
 
 Supported generation interfaces accept `local`/`worker`, defaulting to `local` when omitted. This is a source default, not company routing policy. MCP direct ComfyUI operations use a separate URL, unaffected by `execution_target`. Status or PowerShell success does not establish CUDA/model/node readiness or artifact recovery.
 

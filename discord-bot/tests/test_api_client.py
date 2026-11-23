@@ -10,6 +10,68 @@ def make_api(handler):
     return ApiClient("http://test", client=client)
 
 
+@pytest.mark.parametrize("mode", ["generate", "animegen", "minimax"])
+async def test_confirmed_submission_rejection_does_not_close_later_admission(mode):
+    from bot.maintenance import Admission
+
+    attempts = []
+    def handler(request):
+        attempts.append(request.url.path)
+        if len(attempts) == 1:
+            return httpx.Response(422, json={"detail": "invalid request"})
+        return httpx.Response(201, json={"job_id": "accepted-next", "status": "queued"})
+
+    api = make_api(handler)
+    api.admission = Admission(owner="test", epoch="e", version="v")
+    async def submit():
+        if mode == "animegen":
+            return await api.submit_animegen_i2v(
+                image=("input.png", b"synthetic", "image/png"), prompt="move",
+                negative_prompt=None, width=512, height=512, total_seconds=1,
+                source_frames=17, film_target_frames=17,
+            )
+        if mode == "minimax":
+            return await api.submit_minimax_h3_i2v(
+                image=("input.png", b"synthetic", "image/png"), prompt="move",
+                width=256, height=256, total_seconds=1,
+            )
+        return await api.submit_generate({"prompt": "synthetic"})
+    try:
+        with api.admission.enter("callback"):
+            with pytest.raises(BackendError) as error:
+                await submit()
+            assert error.value.status_code == 422
+        assert api.admission.status()["state"] == "open"
+        assert api.admission.status()["uncertain"] == {}
+        assert await submit() == "accepted-next"
+        assert len(attempts) == 2
+    finally:
+        await api.close()
+
+
+@pytest.mark.parametrize("failure", ["timeout", "server-error"])
+async def test_uncertain_submission_still_closes_admission_without_retry(failure):
+    from bot.maintenance import Admission, MaintenanceClosed
+
+    attempts = []
+    def handler(request):
+        attempts.append(request.url.path)
+        if failure == "timeout":
+            raise httpx.ReadTimeout("unknown acceptance", request=request)
+        return httpx.Response(500, json={"detail": "unknown acceptance"})
+    api = make_api(handler)
+    api.admission = Admission(owner="test", epoch="e", version="v")
+    try:
+        with pytest.raises((httpx.ReadTimeout, BackendError)):
+            await api.submit_generate({"prompt": "synthetic"})
+        assert api.admission.status()["state"] == "uncertain_closed"
+        with pytest.raises(MaintenanceClosed):
+            await api.submit_generate({"prompt": "not a retry"})
+        assert len(attempts) == 1
+    finally:
+        await api.close()
+
+
 async def test_list_presets():
     def handler(req):
         assert req.url.path == "/api/style-presets/"

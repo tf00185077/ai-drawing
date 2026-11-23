@@ -4,10 +4,11 @@
 
 ## 設定
 
-1. `cp .env.example .env`，填入：
+1. 在 process env 或明示的絕對 `DISCORD_CONFIG_FILE` 填入：
    - `DISCORD_TOKEN`：Discord Developer Portal → 你的 App → Bot → Token
    - `GUILD_ID`：你的伺服器 ID（開啟 Discord 開發者模式後右鍵伺服器 → 複製 ID）
    - `BACKEND_BASE_URL`：預設 `http://localhost:8000`
+   - `DISCORD_DELIVERY_LEDGER_PATH`：明示絕對路徑，必須有已核准且正確綁定的歷史；見下方維護契約。
 2. Bot 需勾選 `applications.commands` scope 邀進伺服器。
 3. 安裝依賴並啟動：
 
@@ -50,7 +51,7 @@ python -m bot.main
 `job_id`、allowlisted destination alias 與 explicit `force_resend`，不能傳任意訊息、檔案或
 channel ID。MCP 端另設定相同的 `MCP_DISCORD_OPERATOR_TOKEN`（以及需要時的
 `MCP_DISCORD_OPERATOR_URL`），即可呼叫 `deliver_generation_result_to_discord`。成功回傳
-Discord message IDs；相同 job/alias 預設去重，只有 `force_resend=true` 才重送。
+Discord message IDs；相同 job/實際 channel 預設去重；`force_resend=true` 只可重送完整 completed attempt，不能越過 uncertain hold。
 
 ## 測試
 
@@ -72,3 +73,42 @@ cd discord-bot && python -m pytest -v
 - preset 超過 25 個需改分頁（目前 12 個）。
 - `/result` 以 `job_id` 前 8 碼過濾 gallery，理論上相撞會誤撈（個人自用機率極低）。
 - 6–8 張且單張偏大、合計超過 ~24MB 時，改回貼 gallery 連結而非附件。
+
+## 維護 admission 與交付歷史（source contract）
+
+新版本須明示絕對 `DISCORD_DELIVERY_LEDGER_PATH`。設定僅讀 process env，或明示的絕對
+`DISCORD_CONFIG_FILE`；process env 優先，不再搜尋 repo/cwd `.env`，不展開 dotenv interpolation。
+這是設定遷移，舊啟動方式須由 Environment 在另案核准後調整。
+
+ledger 是 schema v1 的 attempt history，連同 `.checkpoint` 校驗檔及 `.owner` lock 綁定
+有效 cwd、state root、非秘密設定、source hash 與 Python/依賴版本。缺失、舊 completed-only
+格式、損壞、錯誤 binding 或第二 owner 均保持 closed，沒有自動初始化／遷移／restore。
+只有已授權的全新空歷史可離線呼叫
+`DeliveryLedger.provision(path, binding=ledger_binding(config))`；此方法拒絕覆寫，不能用來
+把既有或未知歷史當空。Production 不呼叫 provision。
+
+所有 slash、select、modal、submit、operator delivery 和 reconnect 先登記 admission。
+close 與登記在同一鎖內線性化；已進入者可完成，lock waiters 也在 active counts。
+closed callback 不另送拒絕回覆。一般回覆無確認時只保留 hold、不重播。
+每次 artifact send 前先 fsync intent，逐 chunk 保存 message receipt（含 batch warning），
+全部完成才 final。cancel／crash／I/O 失敗與缺 receipt 會留下 no-resend hold；force_resend
+只可重送已完整完成的結果，不能越過 hold。slash/operator 都綁實際 guild/channel，alias
+改名不能換掉目的地歷史。成功 response schema 和讀取已完成 Backend 結果的契約維持。
+
+同一 loopback bearer 認證提供 `GET /operator/v1/maintenance/status` 與
+`POST /operator/v1/maintenance/close`，close body 為 `{"timeout":0}`（0–30秒）。
+status 僅有 schema/version/owner/epoch/state 與分種類 counts，無 token、路徑、job 或目的地。
+close 在讀取 body 前先關閉入站，等待 active 後，以與 status 相同的持久歷史檢查產生回覆。
+缺失、損壞、不一致、已關閉或無法檢查的 ledger/checkpoint 均保留 `uncertain_closed` 與
+ledger hold，不能因 active 為空而回報 clean closure，也不依賴先呼叫 status。
+有 active 時回 HTTP 202，無 active 時回 HTTP 200；200 本身不代表沒有 uncertainty。
+重複 close/status 不清除 hold、不修復 history；`legacy_process_certified` 仍為 false。
+沒有公開控制面或 reopen endpoint。drain timeout 保持 closed，不取消 send 或清除 handles。
+ManagedClient shutdown 在 active 清零後才清 HTTP/client/ledger；partial 時 runner 保持存活，
+等待下一次明示 stop，沒有自動 retry/reopen。`AI_DRAWING_MAINTENANCE=closed` 啟動不登入
+Discord、不 sync，只可提供已設定的本機管理 API。release 需另案授權的新 normal startup。
+
+checkpoint 可偵測 ledger 單檔回滾及不一致 restore；整個 root 和 checkpoint 一起回滾無法由
+同一本機狀態自證，須外部可信 checkpoint、cutoff/hold 決策與恢復授權。舊 process 未採用
+此能力，不能回此能力的 receipt；remote acceptance 與 legacy uncertainty 均不保證清零。
+這些是待獨立 QA 的 source/offline 能力，不是部署、真 Discord exactly-once 或 runtime 驗收。

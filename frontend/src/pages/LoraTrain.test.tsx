@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import LoraTrain from "./LoraTrain";
@@ -11,6 +12,8 @@ const recipeHash = "a".repeat(64);
 
 const exactStartPayload = {
   folder: "dataset-a",
+  output_name: "水彩旅人",
+  expected_output_config_hash: "b".repeat(64),
   expected_dataset_hash: "dataset-hash-approved",
   expected_profile_hash: "profile-hash-approved",
   recipe: {
@@ -45,6 +48,8 @@ const exactStartPayload = {
 const readyPreflight = {
   ok: true,
   folder: "dataset-a",
+  output_name: "水彩旅人",
+  output_config_hash: "b".repeat(64),
   decision: "train",
   reasons: ["Dataset is ready for training."],
   blocking_issues: [],
@@ -240,6 +245,7 @@ async function selectDatasetAndStart(batchSize?: string) {
   fireEvent.click(
     await screen.findByRole("button", { name: /dataset-a/ }),
   );
+  fireEvent.change(screen.getByPlaceholderText("例如：水彩旅人（必填，不含副檔名）"), {target:{value:"水彩旅人"}});
   if (batchSize != null) {
     fireEvent.change(screen.getByPlaceholderText("4"), {
       target: { value: batchSize },
@@ -277,6 +283,7 @@ describe("LoraTrain preflight start flow", () => {
     );
     expect(JSON.parse(String(preflightCall?.init?.body))).toEqual({
       folder: "dataset-a",
+      output_name: "水彩旅人",
     });
 
     const startCall = calls.find(
@@ -284,6 +291,8 @@ describe("LoraTrain preflight start flow", () => {
     );
     expect(JSON.parse(String(startCall?.init?.body))).toEqual({
       folder: "dataset-a",
+      output_name: "水彩旅人",
+      expected_output_config_hash: "b".repeat(64),
       expected_dataset_hash: "dataset-hash-approved",
       expected_profile_hash: "profile-hash-approved",
       recipe: {
@@ -363,6 +372,7 @@ describe("LoraTrain preflight start flow", () => {
     );
     expect(JSON.parse(String(preflightCall?.init?.body))).toEqual({
       folder: "dataset-a",
+      output_name: "水彩旅人",
       recipe: {
         dataset: {
           batch_size: 2,
@@ -573,4 +583,79 @@ describe("LoraTrain preflight start flow", () => {
       calls.some((call) => call.url === "/api/lora-train/start"),
     ).toBe(false);
   });
+});
+
+it("keeps separate explicit product names for each dataset in a batch", async () => {
+  const starts: Record<string, unknown>[]=[];
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/folders")) return response({folders:[{folder:"dataset-a",image_count:12},{folder:"dataset-b",image_count:12}]});
+    if (url.endsWith("/status")) return response({status:"idle",queue:[]});
+    if (url.endsWith("/config")) return response({model_family:"sdxl",sdxl:true});
+    const body=JSON.parse(String(init?.body));
+    if (url.endsWith("training-decision-preflight")) return response({...readyPreflight,folder:body.folder,output_name:body.output_name,start_payload:{...exactStartPayload,folder:body.folder,output_name:body.output_name}});
+    starts.push(body);return response({job_id:body.folder,status:"queued",resolved_output_name:body.output_name+"_002"},202);
+  }));
+  render(<LoraTrain />);
+  fireEvent.click(await screen.findByRole("button",{name:/dataset-a/}));
+  fireEvent.click(screen.getByRole("button",{name:/dataset-b/}));
+  const fields=screen.getAllByPlaceholderText("例如：水彩旅人（必填，不含副檔名）");
+  fireEvent.change(fields[0],{target:{value:"水彩 A"}});
+  fireEvent.change(fields[1],{target:{value:"水彩 B"}});
+  fireEvent.click(screen.getByRole("button",{name:"開始訓練"}));
+  await waitFor(()=>expect(starts).toHaveLength(2));
+  expect(starts.map((body)=>body.output_name)).toEqual(["水彩 A","水彩 B"]);
+  await screen.findByText(/水彩 A_002、水彩 B_002/);
+});
+
+it("invalidates a pending preflight when the product name changes", async () => {
+  let resolvePreflight: (value: Response)=>void;
+  const preflight=new Promise<Response>((resolve)=>{resolvePreflight=resolve;});
+  const starts: unknown[]=[];
+  vi.stubGlobal("fetch",vi.fn(async (url: string,init?: RequestInit)=>{
+    if(url.endsWith("/folders"))return response({folders:[{folder:"dataset-a",image_count:12}]});
+    if(url.endsWith("/status"))return response({status:"idle",queue:[]});
+    if(url.endsWith("/config"))return response({model_family:"sdxl",sdxl:true});
+    if(url.endsWith("training-decision-preflight"))return preflight;
+    starts.push(init);return response({job_id:"unexpected"},202);
+  }));
+  await selectDatasetAndStart();
+  fireEvent.change(screen.getByPlaceholderText("例如：水彩旅人（必填，不含副檔名）"),{target:{value:"Changed"}});
+  resolvePreflight!(response(readyPreflight));
+  await screen.findByText(/成品名稱已改變/);
+  expect(starts).toHaveLength(0);
+});
+
+it("retains a postcommit job ID and tells the user to reconcile without resubmitting", async () => {
+  const calls = installFetch(response(readyPreflight), response({detail:{code:"admission_uncertain",job_id:"canonical-123",message:"acknowledgement uncertain",hint:"Check the recorded canonical job_id first; do not resubmit this training request automatically."}},503));
+  await selectDatasetAndStart();
+  expect(await screen.findByText(/canonical-123.*先核對原任務.*不要重新提交/)).toBeInTheDocument();
+  expect(calls.filter(c => c.url.endsWith("/start"))).toHaveLength(1);
+});
+
+it("shows durable unresolved jobs even when memory is idle", async () => {
+  installFetch(response(readyPreflight));
+  const originalFetch = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => String(input).endsWith("/status") ? response({status:"idle",queue:[],durable:{availability:"available",nonterminal_total:2,tracked_total:0,untracked_total:2,jobs:[{job_id:"durable-1",status:"queued",memory_tracked:false}],limit:50,truncated:true,order:"job_id_asc"}}) : originalFetch(input,init)));
+  render(<LoraTrain />);
+  expect(await screen.findByText(/持久未決：2/)).toBeInTheDocument();
+  expect(await screen.findByText(/durable-1/)).toBeInTheDocument();
+});
+
+it("keeps old Backend durable visibility unknown", async () => {
+  installFetch(response(readyPreflight));
+  render(<LoraTrain />);
+  expect(await screen.findByText(/持久狀態未知/)).toBeInTheDocument();
+});
+
+
+it.skipIf(!process.env.LORA_LIFECYCLE_HTTP_FIXTURE)("preserves the canonical ID from actual Backend HTTP serialization", async () => {
+  const path = process.env.LORA_LIFECYCLE_HTTP_FIXTURE;
+  if (!path) throw new Error("Supply the guarded Backend http-export.json for this boundary test");
+  const rows = JSON.parse(readFileSync(path,"utf8"));
+  const row = rows[0];
+  const calls = installFetch(response(readyPreflight), response(row.body,row.http_status));
+  await selectDatasetAndStart();
+  expect(await screen.findByText(new RegExp(`${row.body.detail.job_id}.*先核對原任務`))).toBeInTheDocument();
+  expect(calls.filter(c => c.url.endsWith("/start"))).toHaveLength(1);
+  expect(screen.queryByText(/1 個資料夾提交失敗/)).not.toBeInTheDocument();
 });

@@ -120,9 +120,117 @@ Authority: [source catalog](../mcp-server/mcp_server/tool_catalog.py), checked a
 | `lora_train_smoke_test` | `dict` | Backend: POST /api/lora-train/jobs/{job_id}/smoke-test |
 <!-- MCP-CATALOG:END -->
 
+New LoRA preflight and Start require a readable `output_name`. Forward the canonical `start_payload`, including `expected_output_config_hash`; preflight does not reserve a serial. Start/status expose requested and allocated names separately. Use the allocated name for selection labels and retain the complete `registered_lora_name` relative locator (including `AI-Drawing/<run>/`), without converting it to a basename. Resource inventory reports excluded ambiguous locators in `lora_conflicts`. See [the naming/run contract](training-status.md#candidate-naming-and-run-contract) for candidate behavior and limits.
+
 LoRA training has **not completed end-to-end acceptance**. See [Training status](training-status.md) for evidence and gaps; listed tools do not authorize automated training.
 
+## Explicit generation LoRA lists
+
+For `generate_image`, `generate_image_custom_workflow` and the corresponding
+Backend `POST /api/generate/` and `/api/generate/custom` requests, `loras` is the
+complete active set in workflow JSON loader order (not sorted node IDs):
+
+| Request | Effect |
+|---|---|
+| Omitted or `null` | Keep legacy single `lora` behavior and template defaults. |
+| `[]` | Disable every template LoRA, including a single or style-resolved LoRA. |
+| Nonempty list | Replace the entire active set; override single/style LoRA selection. Unused template loaders are removed and their model/CLIP consumers reconnect upstream. |
+| More entries than loaders | Reject compilation; never truncate, retain hidden LoRAs or add loaders automatically. Select a compatible template explicitly. |
+
+Each entry uses `name`, optional `strength_model` (default `1.0`) and optional
+`strength_clip` (defaults to model strength). Model-only loaders do not receive
+CLIP strength. Keep the complete registered relative locator, for example
+`AI-Drawing/run-004/Readable Name_002.safetensors`. Compilation copies the input
+graph; it does not mutate the supplied template/custom graph.
+
+The HTTP adapter queues requests before workflow compilation. A capacity error
+therefore currently returns `201`/`queued` first, then job status `failed` with
+an error describing requested and available loader counts. MCP submission is an
+acknowledgement, not generation success: call `get_generation_status`; this
+failure returns `ok: false` and `error.code: generation_failed`. No prompt is
+sent to the execution client for an over-capacity graph. These source/offline
+contracts do not establish installed behavior, model readiness or style quality.
+
+Sources: [request schemas](../backend/app/schemas/generate.py),
+[HTTP adapter](../backend/app/api/generate.py),
+[queue compiler](../backend/app/core/queue.py),
+[workflow transformation](../backend/app/core/workflow.py).
+
 ## Everyday usage
+
+### Ordinary image revisions
+
+`generate_image` forwards optional `revision_context` to ordinary
+`POST /api/generate/`. Omission or `null` keeps legacy behavior. The Backend
+validates a closed nested request schema; server-derived fields are rejected:
+
+| Field | Contract |
+|---|---|
+| `schema_version` | String `"1.0"`, default when omitted; other versions rejected. |
+| `request_ref` | Required text, trimmed, nonempty, at most 256 characters. |
+| `brief_revision` | Required text, trimmed, nonempty, at most 64 characters. |
+| `parent_artifact_id` | Optional positive integer; booleans, strings and fractional values rejected. |
+| `feedback_ref` | Optional text, trimmed, at most 512 characters. |
+| `feedback_summary` | Optional text, at most 2000 characters. |
+
+Submit explicit new prompt/parameters for each feedback revision. Context is an
+annotation: references are opaque, never fetched or executed; feedback does not
+rewrite the prompt, grant execution permission or establish owner acceptance.
+Request and brief labels are not unique job keys or exactly-once guarantees.
+
+Parent validation occurs before enqueue. Missing artifact returns `404` /
+`revision_parent_not_found`; non-image returns `409` /
+`revision_parent_not_image`; another request returns `409` /
+`revision_request_conflict`; malformed parent context returns `409` /
+`revision_parent_context_invalid`. Each supplies a recovery `hint` and enqueues
+zero jobs. Invalid nested fields/types/lengths return `422`. Legacy image
+parents remain usable anchors with unknown parent request/brief represented as
+`null`.
+
+For these four exact HTTP status/code pairs, MCP `generate_image` returns
+`ok: false`, `tool: "generate_image"`, the domain code in `error.code`, and
+`error.details.where: "backend"`. `error.details.hint` is fixed MCP text:
+
+| HTTP / `error.code` | Canonical `error.details.hint` |
+|---|---|
+| 404 / `revision_parent_not_found` | Choose an existing canonical artifact ID. |
+| 409 / `revision_parent_not_image` | Choose an image artifact as the revision parent. |
+| 409 / `revision_request_conflict` | Use the parent's request_ref or choose a parent from this request. |
+| 409 / `revision_parent_context_invalid` | Recover the parent's stored context before using this anchor. |
+
+These failures have no `job_id`. MCP never copies the Backend's hint, extra body
+fields or exception text into this domain response. Unknown codes, mismatched
+statuses, malformed JSON/shapes and other exceptions retain the existing generic
+error projection. JSON decoding failures, including excessive nesting, preserve
+the original `HTTPStatusError` envelope without inferring a code from body text.
+This mapping applies only to ordinary `generate_image`;
+custom/video tools and status/Gallery reads keep their existing contracts.
+Reconcile the indicated parent before making an explicit corrected request;
+the tool does not retry, fetch references or submit a replacement job.
+
+Submission and job status expose canonical `revision_context`; Gallery lists,
+image and artifact detail expose it too. MCP `generate_image`,
+`get_generation_status`, `gallery_list`, `get_gallery_image` and
+`get_gallery_artifact` preserve it. Canonical context adds server-resolved
+`parent_job_id`, `parent_request_ref`, `parent_brief_revision` and
+`parent_context_status` (`root`, `available`, `legacy`). These fields are
+forbidden in the client request. Enqueue takes a detached snapshot; subsequent
+caller or parent mutations cannot change it. Every image in shared or
+independent batches keeps that snapshot alongside its original job/image/artifact
+identity and seed metadata.
+
+Completed images retain context in `GeneratedImage.revision_context_json` and
+the artifact's reserved `metadata_json.revision_context` key, written in one
+transaction. Existing nullable-column upgrades add only the new nullable image
+column. Legacy records project `null`; corrupt nonempty stored context projects
+`null` with `revision_context_error: "revision_context_unavailable"`, preserving
+the original row/image. Durable outputs allow context reads after queue reset or
+process restart, with zero new submissions. Ordinary jobs with no durable
+output still have the existing restart limitation. This source contract has no
+new UI/custom/video revision form and is not deployment or GPU acceptance.
+
+For [exact replay versus feedback revisions](prompt-and-workflow-resources.md#feedback-revisions-and-exact-replay),
+keep Gallery rerun's execution semantics separate from an explicit new prompt.
 
 - Inspect local resources with `list_available_resources`, then call `generate_image` with compatible resources and the desired prompt.
 - For a Civitai image recipe, inspect `civitai_source_info` before `civitai_generate_like`. Resource acquisition can download files; use it only when authorized. Poll `civitai_resource_status` for acquisition progress and `get_generation_status` for the generation job.
@@ -144,3 +252,15 @@ Where exposed, `execution_target` accepts `local`/`worker`; check live schemas a
 - **Direct ComfyUI operation fails:** check its separately configured URL and, for Manager operations, the Manager API. Backend health is not a test of this connection.
 
 REST schemas: running Backend `/docs` or `/openapi.json` (Compose default: <http://127.0.0.1:8001/openapi.json>). Offline: `backend/app/api/`, request/response schemas and `backend/app/main.py` router registration. Use source/live contracts, not historical API notes.
+
+### Uncertain LoRA admission
+
+In the isolated lifecycle candidate, `lora_train_start` maps HTTP 503 /
+`admission_uncertain` to `ok: false`, `classification: "admission_uncertain"`,
+`status_code: 503`, and `error.code: "admission_uncertain"`. A valid opaque
+canonical ID appears as both `job_id` and `error.job_id`. MCP reconstructs the
+message/hint rather than trusting Backend exception text: check that ID first;
+do not automatically resubmit. Malformed IDs are omitted. Ordinary precommit
+rejections and normal queued acknowledgements retain their existing shapes.
+There is no automatic retry/recovery or new aggregate-status MCP tool.
+See [lifecycle limits](training-status.md#lifecycle-observation-and-admission-candidate).

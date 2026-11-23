@@ -4,6 +4,9 @@ from __future__ import annotations
 import inspect
 import json
 import sys
+import os
+import subprocess
+from functools import lru_cache
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -18,14 +21,24 @@ from app.services.lora_training_recipe import (
     normalize_recipe_input,
 )
 
-_REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-_MCP_SERVER_ROOT = str(_REPOSITORY_ROOT / "mcp-server")
-if _MCP_SERVER_ROOT not in sys.path:
-    sys.path.insert(0, _MCP_SERVER_ROOT)
+from app.api.lora_train import _REMOVED_START_FIELDS
 
-from mcp_server.server import REMOVED_LORA_START_FIELDS  # noqa: E402
-from mcp_server.tools.lora_train import lora_train_start  # noqa: E402
-from app.api.lora_train import _REMOVED_START_FIELDS  # noqa: E402
+
+@lru_cache
+def _mcp_contract():
+    # The Backend and MCP prepared environments have different Python ABIs.
+    # Inspect the real MCP function in its own interpreter, without network calls.
+    interpreter=os.environ.get('MCP_TEST_PYTHON')
+    if not interpreter:
+        pytest.skip('MCP_TEST_PYTHON must point to the existing MCP component environment for cross-layer parity')
+    root=Path(__file__).resolve().parents[2]
+    script="""import inspect,json
+from mcp_server.server import REMOVED_LORA_START_FIELDS
+from mcp_server.tools.lora_train import lora_train_start
+print(json.dumps({'parameters':{k:{'required':p.default is inspect.Parameter.empty,'kind':p.kind.name} for k,p in inspect.signature(lora_train_start).parameters.items()},'removed':sorted(REMOVED_LORA_START_FIELDS)}))
+"""
+    result=subprocess.run([interpreter,'-c',script],cwd=root/'mcp-server',capture_output=True,text=True,timeout=15,check=True)
+    return json.loads(result.stdout)
 
 
 _APPROVAL_HASH_FIELDS = frozenset(
@@ -92,6 +105,8 @@ def test_backend_start_fields_are_exactly_the_canonical_transport() -> None:
 
     assert set(backend_fields) == {
         "folder",
+        "output_name",
+        "expected_output_config_hash",
         "expected_dataset_hash",
         "expected_profile_hash",
         "recipe",
@@ -103,16 +118,17 @@ def test_backend_start_fields_are_exactly_the_canonical_transport() -> None:
 
 def test_backend_and_mcp_start_transport_requiredness_and_migration_fields_match() -> None:
     backend_fields = TrainStartRequest.model_fields
-    mcp_parameters = inspect.signature(lora_train_start).parameters
+    contract=_mcp_contract()
+    mcp_parameters={name:inspect.Parameter(name,getattr(inspect.Parameter,info["kind"]),default=inspect.Parameter.empty if info["required"] else None) for name,info in contract["parameters"].items()}
 
     assert set(mcp_parameters) == set(backend_fields)
     assert all(
         parameter.default is inspect.Parameter.empty
-        for parameter in mcp_parameters.values()
+        for name,parameter in mcp_parameters.items() if name != "expected_output_config_hash"
     )
-    assert REMOVED_LORA_START_FIELDS == _REMOVED_START_FIELDS
+    assert frozenset(contract["removed"]) == _REMOVED_START_FIELDS
     for recipe in ({}, '{"batchSize":"2"}'):
-        payload = {
+        payload = {"output_name": "test-product",
             "folder": "character/miku",
             "expected_dataset_hash": "dataset-hash",
             "expected_profile_hash": "profile-hash",
@@ -120,8 +136,8 @@ def test_backend_and_mcp_start_transport_requiredness_and_migration_fields_match
         }
         assert TrainStartRequest.model_validate(payload).model_dump(
             mode="json"
-        ) == payload
-        mcp_parameters_signature = inspect.signature(lora_train_start)
+        ) == {**payload, "expected_output_config_hash":None}
+        mcp_parameters_signature = inspect.Signature(mcp_parameters.values())
         mcp_parameters_signature.bind(**payload)
 
 
@@ -135,7 +151,7 @@ def test_train_preflight_payload_validates_through_start_unchanged(
     with patch("app.services.lora_dataset.get_settings", return_value=settings):
         inspected = lora_dataset.inspect_dataset("character/miku")
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash=inspected.dataset_hash,
             expected_profile_hash=inspected.profile_hash,
         )
@@ -160,7 +176,7 @@ def test_start_recompile_rejects_stale_recipe_evidence(
     with patch("app.services.lora_dataset.get_settings", return_value=settings):
         inspected = lora_dataset.inspect_dataset("character/miku")
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash=inspected.dataset_hash,
             expected_profile_hash=inspected.profile_hash,
         )

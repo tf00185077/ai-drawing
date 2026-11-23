@@ -1,0 +1,89 @@
+"""
+Backend API Client 抽象層
+
+透過 Protocol 定義介面，業務邏輯依賴抽象，具體實作可替換（測試 mock、不同 base URL）。
+"""
+from typing import Any, Protocol
+
+
+# Civitai import fetches remote metadata (with retries) before submitting.
+_CIVITAI_IMPORT_TIMEOUT_SECONDS = 300.0
+_CIVITAI_IMPORT_PATHS = frozenset({
+    "civitai/generate-like",
+    "civitai/source-info",
+})
+
+
+class BackendApiClient(Protocol):
+    """Backend API 呼叫介面"""
+
+    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """GET 請求"""
+        ...
+
+    def post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        """POST 請求"""
+        ...
+
+    def put(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        """PUT 請求"""
+        ...
+
+    def delete(self, path: str) -> dict[str, Any]:
+        """DELETE 請求"""
+        ...
+
+
+class HttpBackendClient:
+    """以 httpx 實作的 Backend API Client"""
+
+    def __init__(self, base_url: str, timeout: float = 60.0) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._timeout = timeout
+
+    def _url(self, path: str) -> str:
+        p = path if path.startswith("/") else f"/{path}"
+        return f"{self._base_url}{p}"
+
+    def _timeout_for(self, path: str) -> float:
+        """Give remote-metadata routes room; everything else stays snappy."""
+        normalized = path.lstrip("/")
+        if normalized in _CIVITAI_IMPORT_PATHS:
+            return max(self._timeout, _CIVITAI_IMPORT_TIMEOUT_SECONDS)
+        return self._timeout
+
+    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout_for(path)) as client:
+            resp = client.get(url, params=params or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
+    def post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout_for(path)) as client:
+            resp = client.post(url, json=json or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
+    def put(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout) as client:
+            resp = client.put(url, json=json or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
+    def delete(self, path: str) -> dict[str, Any]:
+        import httpx
+
+        url = self._url(path)
+        with httpx.Client(timeout=self._timeout) as client:
+            resp = client.delete(url)
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}

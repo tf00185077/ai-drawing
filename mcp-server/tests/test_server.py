@@ -91,6 +91,7 @@ async def test_stdio_start_legacy_flat_field_gets_redacted_migration_error() -> 
         "folder",
         "expected_dataset_hash",
         "expected_profile_hash",
+        "output_name",
         "recipe",
     } <= set(start_tool.inputSchema["required"])
     assert result.isError is False
@@ -115,6 +116,7 @@ async def test_protocol_start_missing_recipe_is_structured_and_redacted() -> Non
             "folder": "character/miku",
             "expected_dataset_hash": "dataset-hash",
             "expected_profile_hash": "profile-hash",
+            "output_name": "Protocol Test",
         },
     )
     payload = result[1]

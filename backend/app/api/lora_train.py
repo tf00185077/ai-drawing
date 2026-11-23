@@ -54,11 +54,10 @@ from app.services import (
     lora_training_decision,
 )
 from app.services.lora_dataset import DatasetServiceError
+from app.services import lora_parameters, lora_public
 
 router = APIRouter(prefix="/api/lora-train", tags=["LoRA 訓練"])
 
-
-_default_route_class = router.route_class
 
 _REMOVED_START_FIELDS = frozenset(
     {
@@ -88,17 +87,46 @@ _REMOVED_START_FIELDS = frozenset(
 def _safe_validation_errors(exc: RequestValidationError) -> list[dict[str, Any]]:
     """Keep field diagnostics without echoing rejected request values."""
     return [
-        {
-            key: value
-            for key, value in error.items()
-            if key not in {"input", "ctx", "url"}
-        }
+        {"loc": error.get("loc", ()), "type": error.get("type", "value_error"), "msg": "request field validation failed"}
         for error in exc.errors()
     ]
 
 
-class _LoraStartValidationRoute(APIRoute):
+class _LoraPublicRoute(APIRoute):
+    """Contain unexpected LoRA request failures without logging/returning exception text."""
+
+    start_validation_handler = False
+
+    def get_route_handler(self):
+        handler = super().get_route_handler()
+
+        async def public_handler(request: Request):
+            try:
+                return await handler(request)
+            except HTTPException:
+                raise
+            except RequestValidationError as exc:
+                if self.start_validation_handler:
+                    raise
+                return JSONResponse(status_code=422, content={"detail": _safe_validation_errors(exc)})
+            except DatasetServiceError as exc:
+                raise _dataset_error(exc) from None
+            except lora_trainer.TrainerServiceError as exc:
+                raise _trainer_error(exc) from None
+            except Exception:
+                raise HTTPException(400, detail=lora_public.failure(phase='request')) from None
+
+        return public_handler
+
+
+router.route_class = _LoraPublicRoute
+_default_route_class = _LoraPublicRoute
+
+
+class _LoraStartValidationRoute(_LoraPublicRoute):
     """Return a stable, redacted migration error for removed flat Start knobs."""
+
+    start_validation_handler = True
 
     def get_route_handler(self):  # type: ignore[override]
         handler = super().get_route_handler()
@@ -144,7 +172,7 @@ class _LoraStartValidationRoute(APIRoute):
 
 
 def _dataset_error(exc: DatasetServiceError) -> HTTPException:
-    detail = {"code": exc.code, "message": exc.message, "details": exc.details}
+    detail = lora_public.failure(exc.code, phase='request', details=exc.details)
     if exc.code in {"dataset_locked", "dataset_hash_mismatch", "profile_hash_mismatch"}:
         return HTTPException(409, detail=detail)
     if exc.code in {"dataset_not_found", "backup_not_found"}:
@@ -153,14 +181,17 @@ def _dataset_error(exc: DatasetServiceError) -> HTTPException:
 
 
 def _trainer_error(exc: lora_trainer.TrainerServiceError) -> HTTPException:
-    detail = {"code": exc.code, "message": exc.message, "details": exc.details}
-    if exc.hint:
-        detail["hint"] = exc.hint
+    detail = lora_public.failure(exc.code, phase='request', details=exc.details)
+    if isinstance(exc, lora_trainer.AdmissionUncertainError):
+        detail['job_id'] = exc.job_id
+        return HTTPException(503, detail=detail)
     if exc.code in {
         "dataset_locked",
         "dataset_hash_mismatch",
         "profile_hash_mismatch",
         "recipe_hash_mismatch",
+        "output_config_hash_mismatch",
+        "lora_registration_conflict",
         "trainer_capability_changed",
         "duplicate_folder",
         "job_not_cancellable",
@@ -311,13 +342,16 @@ async def curate_dataset(body: DatasetCurationRequest):
 async def training_decision_preflight(body: TrainingDecisionPreflightRequest):
     """Deterministic agent decision preflight; never starts or enqueues training."""
     try:
-        return lora_training_decision.decide_training_preflight(
+        result = lora_training_decision.decide_training_preflight(
             body.folder,
+            output_name=body.output_name,
             trigger_token=body.trigger_token,
             expected_dataset_hash=body.expected_dataset_hash,
             expected_profile_hash=body.expected_profile_hash,
             recipe=body.recipe,
         )
+        # Report metadata is public; the canonical caller-owned Start input is unchanged.
+        return TrainingDecisionPreflightResponse(**lora_parameters.public_job(result.model_dump(mode='json')))
     except DatasetServiceError as exc:
         raise _dataset_error(exc)
 
@@ -417,50 +451,59 @@ router.route_class = _LoraStartValidationRoute
 @router.post("/start", response_model=TrainStartResponse, status_code=202)
 async def start_training(body: TrainStartRequest):
     """手動觸發 LoRA 訓練。訓練完成後如需生圖，請另行呼叫生圖 API。"""
+    job_id = None
     try:
-        job_id = lora_trainer.enqueue(
-            body.folder,
-            expected_dataset_hash=body.expected_dataset_hash,
-            expected_profile_hash=body.expected_profile_hash,
-            recipe=body.recipe,
-        )
         try:
-            job_status = lora_trainer.get_job_status(job_id)
-        except lora_trainer.TrainerServiceError:
-            job_status = {
-                "status": "queued",
-                "stage": "queued",
-                "dataset_hash": body.expected_dataset_hash,
-                "profile_hash": body.expected_profile_hash,
-                "normalized_trigger_token": None,
-            }
-    except lora_trainer.TrainerServiceError as e:
-        raise _trainer_error(e)
-    except ValueError as e:
-        msg = str(e)
-        if "已在佇列" in msg or "訓練中" in msg:
-            raise HTTPException(409, msg)
-        raise HTTPException(400, msg)
-    return TrainStartResponse(
-        job_id=job_id,
-        status=job_status["status"] if job_status else "queued",
-        stage=job_status.get("stage") if job_status else "queued",
-        dataset_hash=job_status.get("dataset_hash") if job_status else None,
-        profile_hash=job_status.get("profile_hash") if job_status else None,
-        normalized_trigger_token=job_status.get("normalized_trigger_token") if job_status else None,
-        recipe_schema_version=job_status.get("recipe_schema_version") if job_status else None,
-        recipe_hash=job_status.get("recipe_hash") if job_status else None,
-        requested_recipe=job_status.get("requested_recipe") if job_status else None,
-        effective_recipe=job_status.get("effective_recipe") if job_status else None,
-        requested_scope=job_status.get("requested_scope") if job_status else None,
-        effective_scope=job_status.get("effective_scope") if job_status else None,
-        field_sources=job_status.get("field_sources") if job_status else None,
-        step_plan=job_status.get("step_plan") if job_status else None,
-        component_identities=job_status.get("component_identities") if job_status else None,
-        capability=job_status.get("capability") if job_status else None,
-        execution_evidence=job_status.get("execution_evidence") if job_status else None,
-        message="已加入訓練佇列",
-    )
+            job_id = lora_trainer.enqueue(
+                body.folder,
+                output_name=body.output_name,
+                expected_output_config_hash=body.expected_output_config_hash,
+                expected_dataset_hash=body.expected_dataset_hash,
+                expected_profile_hash=body.expected_profile_hash,
+                recipe=body.recipe,
+            )
+            try:
+                job_status = lora_trainer.get_job_status(job_id)
+            except lora_trainer.TrainerServiceError:
+                job_status = {
+                    "status": "queued",
+                    "stage": "queued",
+                    "dataset_hash": body.expected_dataset_hash,
+                    "profile_hash": body.expected_profile_hash,
+                    "normalized_trigger_token": None,
+                }
+        except lora_trainer.TrainerServiceError as e:
+            raise _trainer_error(e)
+        except DatasetServiceError as e:
+            raise _dataset_error(e)
+        except ValueError:
+            raise HTTPException(400, detail=lora_public.failure(phase='request')) from None
+        job_status=lora_parameters.public_job(job_status)
+        return TrainStartResponse(
+            job_id=job_id,
+            **{key:job_status.get(key) for key in ('output_name','resolved_output_name','output_serial','run_locator','output_config_hash')},
+            status=job_status["status"] if job_status else "queued",
+            stage=job_status.get("stage") if job_status else "queued",
+            dataset_hash=job_status.get("dataset_hash") if job_status else None,
+            profile_hash=job_status.get("profile_hash") if job_status else None,
+            normalized_trigger_token=job_status.get("normalized_trigger_token") if job_status else None,
+            recipe_schema_version=job_status.get("recipe_schema_version") if job_status else None,
+            recipe_hash=job_status.get("recipe_hash") if job_status else None,
+            requested_recipe=job_status.get("requested_recipe") if job_status else None,
+            effective_recipe=job_status.get("effective_recipe") if job_status else None,
+            requested_scope=job_status.get("requested_scope") if job_status else None,
+            effective_scope=job_status.get("effective_scope") if job_status else None,
+            field_sources=job_status.get("field_sources") if job_status else None,
+            step_plan=job_status.get("step_plan") if job_status else None,
+            component_identities=job_status.get("component_identities") if job_status else None,
+            capability=job_status.get("capability") if job_status else None,
+            execution_evidence=job_status.get("execution_evidence") if job_status else None,
+            message="已加入訓練佇列",
+        )
+    except Exception:
+        if job_id is not None:
+            raise _trainer_error(lora_trainer.AdmissionUncertainError(job_id)) from None
+        raise
 
 
 router.route_class = _default_route_class
@@ -480,24 +523,19 @@ async def get_training_status():
     current = st.get("current_job")
     current_job = None
     if current:
-        current_job = TrainJobInfo(
-            job_id=current["job_id"],
-            folder=current["folder"],
-            progress=current.get("progress"),
-            epoch=current.get("epoch"),
-            total_epochs=current.get("total_epochs"),
-        )
+        current_job = TrainJobInfo(**current)
     queue_list = [
-        TrainJobInfo(job_id=q["job_id"], folder=q["folder"])
+        TrainJobInfo(**q)
         for q in st.get("queue", [])
     ]
-    last = st.get("last_result")
+    last = lora_parameters.public_last_result(st.get("last_result"))
     last_result = TrainLastResult(**last) if last else None
     return TrainStatusResponse(
         status=st["status"],
         current_job=current_job,
         queue=queue_list,
         last_result=last_result,
+        durable=st.get("durable"),
     )
 
 
@@ -508,7 +546,7 @@ async def get_training_job(job_id: str):
         result = lora_trainer.get_job_status(job_id)
     except lora_trainer.TrainerServiceError as exc:
         raise _trainer_error(exc)
-    return LoraTrainJobStatusResponse(**result)
+    return LoraTrainJobStatusResponse(**lora_parameters.public_job(result))
 
 
 @router.get("/jobs/{job_id}/logs", response_model=LoraTrainLogsResponse)
@@ -518,7 +556,7 @@ async def get_training_job_logs(
 ):
     """取得 bounded per-job log tail。"""
     try:
-        return LoraTrainLogsResponse(**lora_trainer.get_job_logs(job_id, line_limit=lines))
+        return LoraTrainLogsResponse(**lora_parameters.public_logs(lora_trainer.get_job_logs(job_id, line_limit=lines)))
     except lora_trainer.TrainerServiceError as exc:
         raise _trainer_error(exc)
 

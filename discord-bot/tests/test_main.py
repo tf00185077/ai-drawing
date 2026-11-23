@@ -2,8 +2,15 @@ import discord
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from bot.config import Config
+from bot.config import Config, ledger_binding
+from bot.delivery import DeliveryLedger
 from bot.main import _mixed_batch_warning, build_bot, normalize_job_id
+
+
+def provisioned_bot(config):
+    if config.delivery_ledger_path.is_absolute():
+        DeliveryLedger.provision(config.delivery_ledger_path,binding=ledger_binding(config))
+    return build_bot(config)
 
 
 def test_normalize_job_id_accepts_discord_copy_forms():
@@ -24,7 +31,7 @@ def test_normalize_job_id_rejects_missing_or_ambiguous_uuid():
 
 def test_build_bot_registers_commands():
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test")
-    client, tree, api = build_bot(config)
+    client, tree, api = provisioned_bot(config)
     guild = discord.Object(id=123)
     names = {c.name for c in tree.get_commands(guild=guild)}
     assert names == {"draw", "animegen_i2v", "minimax_h3_i2v", "wan22_animate", "result"}
@@ -33,7 +40,7 @@ def test_build_bot_registers_commands():
 
 def test_only_worker_capable_generation_commands_offer_execution_target_choices():
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test")
-    _client, tree, _api = build_bot(config)
+    _client, tree, _api = provisioned_bot(config)
     guild = discord.Object(id=123)
 
     for command_name in ("draw", "animegen_i2v", "wan22_animate"):
@@ -56,7 +63,7 @@ async def test_result_command_sends_successful_files_before_mixed_warning(tmp_pa
         backend_base_url="http://test",
         delivery_ledger_path=tmp_path / "deliveries.json",
     )
-    _client, tree, api = build_bot(config)
+    _client, tree, api = provisioned_bot(config)
     guild = discord.Object(id=123)
     result_command = tree.get_command("result", guild=guild)
     job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
@@ -83,7 +90,7 @@ async def test_result_command_sends_successful_files_before_mixed_warning(tmp_pa
     )
     interaction = SimpleNamespace(
         response=SimpleNamespace(defer=AsyncMock()),
-        followup=SimpleNamespace(send=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=100))),
     )
 
     await result_command.callback(interaction, job_id)
@@ -105,7 +112,7 @@ async def test_result_command_explicitly_resends_a_completed_result(tmp_path) ->
         backend_base_url="http://test",
         delivery_ledger_path=tmp_path / "deliveries.json",
     )
-    _client, tree, api = build_bot(config)
+    _client, tree, api = provisioned_bot(config)
     result_command = tree.get_command("result", guild=discord.Object(id=123))
     job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
     api.collect_job_result = AsyncMock(
@@ -115,7 +122,7 @@ async def test_result_command_explicitly_resends_a_completed_result(tmp_path) ->
         guild_id=123,
         channel_id=456,
         response=SimpleNamespace(defer=AsyncMock()),
-        followup=SimpleNamespace(send=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=100))),
     )
 
     await result_command.callback(interaction, job_id)
@@ -133,7 +140,7 @@ async def test_result_command_reports_all_failed_batch_members(tmp_path) -> None
         backend_base_url="http://test",
         delivery_ledger_path=tmp_path / "deliveries.json",
     )
-    _client, tree, api = build_bot(config)
+    _client, tree, api = provisioned_bot(config)
     guild = discord.Object(id=123)
     result_command = tree.get_command("result", guild=guild)
     job_id = "9bbd2e57-5e7e-43db-99e1-06679b6f0e81"
@@ -165,7 +172,7 @@ async def test_result_command_reports_all_failed_batch_members(tmp_path) -> None
     )
     interaction = SimpleNamespace(
         response=SimpleNamespace(defer=AsyncMock()),
-        followup=SimpleNamespace(send=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock(return_value=SimpleNamespace(id=100))),
     )
 
     await result_command.callback(interaction, job_id)
@@ -210,7 +217,7 @@ def test_mixed_batch_warning_is_bounded_deterministic_and_aggregated() -> None:
 async def test_animegen_command_validates_attachment_then_opens_modal_without_downloading(tmp_path):
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
                     delivery_ledger_path=tmp_path / "deliveries.json")
-    _client, tree, _api = build_bot(config)
+    _client, tree, _api = provisioned_bot(config)
     command = tree.get_command("animegen_i2v", guild=discord.Object(id=123))
     response = SimpleNamespace(send_modal=AsyncMock(), send_message=AsyncMock())
     attachment = SimpleNamespace(
@@ -235,7 +242,7 @@ async def test_animegen_command_validates_attachment_then_opens_modal_without_do
 async def test_wan_command_rejects_oversize_driver_before_opening_modal(tmp_path):
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
                     delivery_ledger_path=tmp_path / "deliveries.json")
-    _client, tree, _api = build_bot(config)
+    _client, tree, _api = provisioned_bot(config)
     command = tree.get_command("wan22_animate", guild=discord.Object(id=123))
     reference = SimpleNamespace(filename="ref.png", content_type="image/png", size=10, read=AsyncMock())
     driver = SimpleNamespace(filename="driver.mp4", content_type="video/mp4",
@@ -255,7 +262,7 @@ async def test_wan_command_rejects_oversize_driver_before_opening_modal(tmp_path
 async def test_wan_command_defaults_execution_target_to_local(tmp_path):
     config = Config(discord_token="t", guild_id=123, backend_base_url="http://test",
                     delivery_ledger_path=tmp_path / "deliveries.json")
-    _client, tree, _api = build_bot(config)
+    _client, tree, _api = provisioned_bot(config)
     command = tree.get_command("wan22_animate", guild=discord.Object(id=123))
     reference = SimpleNamespace(filename="ref.png", content_type="image/png", size=10)
     driver = SimpleNamespace(filename="driver.mp4", content_type="video/mp4", size=10)

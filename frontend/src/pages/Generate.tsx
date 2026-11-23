@@ -15,6 +15,14 @@ const DEFAULT_CFG = 7.0;
 export default function Generate() {
   const [checkpoint, setCheckpoint] = useState("");
   const [lora, setLora] = useState("");
+  const [availableLoras, setAvailableLoras] = useState<string[]>([]);
+  const [loraConflicts, setLoraConflicts] = useState<string[]>([]);
+  useEffect(() => {
+    fetch(`${API}/generate/available-resources`).then((res) => res.json()).then((data) => {
+      setAvailableLoras(Array.isArray(data.loras) ? data.loras : []);
+      setLoraConflicts(Array.isArray(data.lora_conflicts) ? data.lora_conflicts.map((item: {locator:string}) => item.locator) : []);
+    }).catch(() => {});
+  }, []);
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [seed, setSeed] = useState<string>("");
@@ -114,6 +122,14 @@ export default function Generate() {
           onChange={setCheckpoint}
           placeholder="例如: v1-5-pruned-emaonly.safetensors"
         />
+        <label className="block text-sm text-slate-300">可用 LoRA
+          <select aria-label="可用 LoRA" value={availableLoras.includes(lora) ? lora : ""}
+            onChange={(event) => setLora(event.target.value)} className="block w-full rounded bg-slate-800 p-2">
+            <option value="">選擇模型或在下方輸入 locator</option>
+            {availableLoras.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+        {loraConflicts.length > 0 && <p className="text-amber-300 text-sm">LoRA 路徑衝突，暫不可選：{loraConflicts.join("、")}</p>}
         <Field
           label="LoRA"
           value={lora}

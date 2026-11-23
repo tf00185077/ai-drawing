@@ -1,6 +1,10 @@
 # Decisions · M1 source integration
 
-## Latest owner disposition
+## Latest owner source-consolidation direction
+
+CTY subsequently authorized merging real local progress into main, publishing it and deleting branches with no unique retained progress. The [consolidation record](../checkpoints/2026-11-23-progress-consolidation.md) identifies the actual source selection and checks. This supersedes the prior Git-integration hold for this source cleanup; the withdrawn AID-138 package is not revived, current roles/memory are retained, and Producer/native work remain paused.
+
+## Earlier owner pause and reset
 
 CTY stopped this round and requested rollback, then requested fresh sessions and residual-task cleanup. The isolated current-round source/package commits were reverted by `aa7bd009bc8e5363b8632422e3baae78c55d8c54`; its tree matches pre-round `cd92ad4`. Producer is paused and the task tree has a manual hold. All four selected roles' saved session continuations have been cleared. Task-deletion scope remains unresolved; no task or attachment has been deleted. See [CURRENT](../CURRENT.md) and the [exact later owner request](../requests/2026-11-23-session-reset-and-task-cleanup.md). The decisions below are retained history, not permission to resume the withdrawn candidate.
 

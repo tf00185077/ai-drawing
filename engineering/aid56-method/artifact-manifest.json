@@ -1,0 +1,354 @@
+{
+  "candidate": "aid58-partial-overflow-v1",
+  "parent_commit": "200345773e20e60cd0fc455bb09f0f4a45708b32",
+  "parent_tree": "19a4f967323e2e2c319b27692abe6f076d1f1d1f",
+  "manifest_excludes_itself": true,
+  "domain": "all committed files in engineering/aid56-method except this source manifest; archive-only records bound by delivery-manifest.json",
+  "files": {
+    "REPORT.md": {
+      "bytes": 13471,
+      "sha256": "347c36ea6c2c902627e0c4f45f08d5226bf921762e823079c601434715a8c25f",
+      "numeric_mode": "0644"
+    },
+    "controls/aid57_independent_checks.py": {
+      "bytes": 11317,
+      "sha256": "e6948cef4ad1e2aadf1adb0bc7719b443546c833d5444da8fa5da2cc11f76c0d",
+      "numeric_mode": "0644"
+    },
+    "controls/checks.py": {
+      "bytes": 8518,
+      "sha256": "60d371c64c11ed444e0e91939f626f32b7136931024f6aa288f381834590a5bd",
+      "numeric_mode": "0644"
+    },
+    "controls/red_checks.py.txt": {
+      "bytes": 7228,
+      "sha256": "ec48604cecf7c884035e15bb34307c785fc6492a7b60787ba56306f7484c915e",
+      "numeric_mode": "0644"
+    },
+    "controls/red_method.py.txt": {
+      "bytes": 424,
+      "sha256": "0889e10cfa33a94faf6a4b11463d8f0fe64e340561ee95dc59824d3788ec4b00",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/authority-overlay.json": {
+      "bytes": 2837,
+      "sha256": "f61cd334e46969d14d1ee4159fbb9a86b2fee9cd9140452e6aa89b92ae7ea206",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/authority-start.json": {
+      "bytes": 2045,
+      "sha256": "9051b99b2e5621ec85d06808fffa502f87713361e2d5fe187c6b43f5c3ae7d48",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/commands.json": {
+      "bytes": 3304,
+      "sha256": "7bf8711f0596019d02e33f8f7f27dbc4246026d14431c526b54fd533df22537d",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/counterexamples.json": {
+      "bytes": 619,
+      "sha256": "42285d9712a4d567deaf160b8c701984346a72c7cc9045e14e89c9cc3d7824af",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/input-verification.json": {
+      "bytes": 679,
+      "sha256": "4e2966557ca872caf717015a425c820e3ae0da9c003ec425b75e3b65a22390df",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/method-green.log": {
+      "bytes": 3271,
+      "sha256": "023c52d25c146489bbb9fa8b87879c8a84b91836666febf5ad62fbae64996531",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/original-qa-green.log": {
+      "bytes": 2654,
+      "sha256": "018647e075f2c8a04c4997cfa120e17555ef2c2a50c28b2c9d653e1ad46b70ce",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/original-qa-red.log": {
+      "bytes": 4535,
+      "sha256": "dc604539f65d906d179258af7f65280584e0d9c8ec20e2565a68df0ebab8442d",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/preservation.json": {
+      "bytes": 3295,
+      "sha256": "184655841568cdddb54b2933bf5e46366f934fa92456fd1fcd94f3bdc78fced2",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/subtotal-green.log": {
+      "bytes": 882,
+      "sha256": "2a2141f06cac5ec88604ffe9e4dc7f08bfedc1b464689b5fce2768ced59e8854",
+      "numeric_mode": "0644"
+    },
+    "evidence/aid58/subtotal-red.log": {
+      "bytes": 6175,
+      "sha256": "8590e0ea06d9fda7a129746cf6f01c2ff7b17abbb5f5af61b959dba6c950d81e",
+      "numeric_mode": "0644"
+    },
+    "evidence/canonical-preservation.json": {
+      "bytes": 911,
+      "sha256": "66731354b473972b4779c2061e247582d0d1bfff69a82a9ff8c8953cec12b0c9",
+      "numeric_mode": "0644"
+    },
+    "evidence/check-summary.json": {
+      "bytes": 452,
+      "sha256": "16f9e1622b9e9d6d1a58398bb53171c220bc00d4d1dcc23a9e10d66f7062f521",
+      "numeric_mode": "0644"
+    },
+    "evidence/companion-counterexample.json": {
+      "bytes": 428,
+      "sha256": "bd29268111a7ec69fbd948451a270fec3680a93c5538f5ab7733d0cd06a52f10",
+      "numeric_mode": "0644"
+    },
+    "evidence/named-payload.json": {
+      "bytes": 352,
+      "sha256": "99bbdc1abf9bf64a60efc8ca3016302fe67878e9371cd34cf6348d10df303dff",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/backend/app/config.py": {
+      "bytes": 14301,
+      "sha256": "d7b3d162bba6d5e65b6328bd7e33ebf15289691dc1abc9bb3266990786fbcd8b",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/backend/app/db/database.py": {
+      "bytes": 3011,
+      "sha256": "517f8d0cf11b1476f884466437bdfdf00e79eac9fa33c2ffa19393ef8aa86db4",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/backend/app/db/models.py": {
+      "bytes": 18950,
+      "sha256": "612a21a4d0cf489ca0723ea8399a376e51957636d49dc6092aa86badbd1dba9a",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/backend/app/main.py": {
+      "bytes": 4884,
+      "sha256": "9a206eeee17b91885b0dbbba493536366cb96e73fcd1bf86ac34ede6a943a1bc",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/backend/app/maintenance.py": {
+      "bytes": 1106,
+      "sha256": "831b70516e08fec2e62edc33586e52a2dc68c6e77ead22213b5a05f7869baa9b",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/discord-bot/bot/attempt_store.py": {
+      "bytes": 7891,
+      "sha256": "c0976ede532f2ba22bb1d7dac5567fe6b5edc98d70bd70af76ce0592b3552fc5",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/discord-bot/bot/config.py": {
+      "bytes": 5604,
+      "sha256": "4fd5efc7ba91571627946134e80345011702abcb7a4fabd38abda58314c17615",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/discord-bot/bot/main.py": {
+      "bytes": 11294,
+      "sha256": "9ade8a5c3359907d1b938564877d9e386b585718677167f2b8ea7cd737d33b61",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/discord-bot/bot/maintenance.py": {
+      "bytes": 3750,
+      "sha256": "bac8d90e6b8515562f4c96bbc21dd2939c1df5835d8aa28a7a47bcf0847de3a9",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/discord-bot/bot/operator_api.py": {
+      "bytes": 6815,
+      "sha256": "71826df1e6f8e2192d1afc80fcb664751c34a0d251aa1c8d9b182b44557f82c5",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/mcp-server/mcp_server/client.py": {
+      "bytes": 2947,
+      "sha256": "695aae42c6cda0fc6f28583e692797a032bc4b82f3515e43015c0bf958bec236",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/mcp-server/mcp_server/config.py": {
+      "bytes": 1398,
+      "sha256": "f02b013cfbee44836fc79e65548a63c670bfbcf04ef8b038c46b3e35c1c028f9",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/mcp-server/mcp_server/tools/comfyui.py": {
+      "bytes": 1492,
+      "sha256": "675c5734d4ebe76d7a8b0ee4299eae125fd4a742446f5ee72a876fe90f92859a",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/mcp-server/mcp_server/tools/comfyui_nodes.py": {
+      "bytes": 5488,
+      "sha256": "806eeda87f20eda34d068a8148a9a8376d4c2d423801fa23e309569c52bff3c8",
+      "numeric_mode": "0644"
+    },
+    "inputs/accepted-source/mcp-server/mcp_server/tools/discord_delivery.py": {
+      "bytes": 4223,
+      "sha256": "3e4daa00c60bfd059cfd5b5650a04a8f4e15705f21442ded0b96718ed663d09d",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/AGENTS.md": {
+      "bytes": 5983,
+      "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/GOAL.md": {
+      "bytes": 8989,
+      "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/INDEX.md": {
+      "bytes": 1785,
+      "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/PROGRESS.md": {
+      "bytes": 17764,
+      "sha256": "a6ed7f48e6499fc1b20303582ba67e45de59ed5b5e94f2276fb8ad4345e5e3af",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/memory/MEMORY.md": {
+      "bytes": 2242,
+      "sha256": "36817ad7b0ada0ff985ceb35ddeb4ac769ce0708b0691343f683e095201ab18b",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/memory/generation-and-training-compute-targets.md": {
+      "bytes": 1811,
+      "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/memory/producer-continuous-operation.md": {
+      "bytes": 10672,
+      "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/memory/runtime-source-and-state-binding.md": {
+      "bytes": 19264,
+      "sha256": "911e3bfcb88d3ffd0c9b3b73fdc067304a0b695a147c6457fe8b67150296deb6",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/memory/source-snapshot-file-permissions.md": {
+      "bytes": 6098,
+      "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/team/README.md": {
+      "bytes": 8740,
+      "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/team/channel-routing.md": {
+      "bytes": 11904,
+      "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-authority/docs/team/roles/platform-engineer.md": {
+      "bytes": 2841,
+      "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-engineering.zip": {
+      "bytes": 480239,
+      "sha256": "4b6490ce395b1e468afa0f34940f7346a3b7c65e2b05883d7ad9a95895764c3b",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-inputs.json": {
+      "bytes": 3539,
+      "sha256": "6984f86c78e5f47037bf86e9d3df4d10d3f37c8a19d084fab2f64381939c5cde",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-plan.json": {
+      "bytes": 42624,
+      "sha256": "6bc13ce4e1cf3152e7c0737563e610c10f689ba2b5c935b6a13d55a00247e6c6",
+      "numeric_mode": "0644"
+    },
+    "inputs/aid58-qa.zip": {
+      "bytes": 509987,
+      "sha256": "ad3c10b3b194a003557038aaae1ae02873025924e31910212ffa2d1297a244ca",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/AGENTS.md": {
+      "bytes": 5983,
+      "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/GOAL.md": {
+      "bytes": 8989,
+      "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/INDEX.md": {
+      "bytes": 1785,
+      "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/PROGRESS.md": {
+      "bytes": 17321,
+      "sha256": "1bf07344a5736b76f5b23912446c1b4f904324876d5929eda6cd845b33e9fc36",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/memory/MEMORY.md": {
+      "bytes": 2223,
+      "sha256": "b45334c426d928fef4edeb53310eb127c492a27fea86038d9847746913435bb2",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/memory/generation-and-training-compute-targets.md": {
+      "bytes": 1811,
+      "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/memory/producer-continuous-operation.md": {
+      "bytes": 10672,
+      "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/memory/runtime-source-and-state-binding.md": {
+      "bytes": 17917,
+      "sha256": "8a518980b30b7473b6851ed83676e6b43f17b445c3d137af85109cdb91303328",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/memory/source-snapshot-file-permissions.md": {
+      "bytes": 6098,
+      "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/team/README.md": {
+      "bytes": 8740,
+      "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/team/channel-routing.md": {
+      "bytes": 11904,
+      "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4",
+      "numeric_mode": "0644"
+    },
+    "inputs/current-authority/docs/team/roles/platform-engineer.md": {
+      "bytes": 2841,
+      "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3",
+      "numeric_mode": "0644"
+    },
+    "inputs/input-manifest.json": {
+      "bytes": 7259,
+      "sha256": "3f9fa39e2ebdee072bc2314ba3d7a636edb4ceb1b44146434c8218e3e1bf0da0",
+      "numeric_mode": "0644"
+    },
+    "inputs/pgrep.1.txt": {
+      "bytes": 10369,
+      "sha256": "50e660d4db62a14d53a05cd80fb3ae93ad2a3251fd1adba387abf7ef68645ef8",
+      "numeric_mode": "0644"
+    },
+    "inputs/retained-second.zip": {
+      "bytes": 368512,
+      "sha256": "3a04b1a0f9e97b2cd813af47732cafa27a18fbc4940b336bb72f010b5601bf4b",
+      "numeric_mode": "0644"
+    },
+    "method.py": {
+      "bytes": 9340,
+      "sha256": "b24750ca5cc6f9e0f9247d33e7b615d59b413f0fa55ba5d08ee44e833b2e721e",
+      "numeric_mode": "0644"
+    },
+    "run_controls.py": {
+      "bytes": 5488,
+      "sha256": "d9c4886c0e56381c65e2e6fc6274bedf717b530e942516eb6f0fcb709f2d498d",
+      "numeric_mode": "0644"
+    },
+    "run_regressions.py": {
+      "bytes": 9051,
+      "sha256": "e127fb407d6a793570f3ac081632c9179efd9f85fb1a7b843220f58ed07ac86a",
+      "numeric_mode": "0644"
+    }
+  }
+}

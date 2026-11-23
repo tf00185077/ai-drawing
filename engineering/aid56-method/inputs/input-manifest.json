@@ -1,0 +1,210 @@
+{
+  "product": "9b96655ea4994932854ea6028f25a58fe4a6302e",
+  "product_tree": "c85ed83a1ca941b964f3ecc04a81de41f8ff4cbc",
+  "kit": "aid52-source-kit-v1",
+  "kit_controls_sha256": "143e04fcd1c53a28ed9807cd1c512dd00f59a36634c96e3713a8750fdd1ba049",
+  "retained_zip": {
+    "bytes": 368512,
+    "sha256": "3a04b1a0f9e97b2cd813af47732cafa27a18fbc4940b336bb72f010b5601bf4b",
+    "all_14_payloads_verified": true
+  },
+  "authority_overlay": "read-only reference copy, never applied to product; current native scope supersedes historical instructions",
+  "files": [
+    {
+      "domain": "current_authority_read_only",
+      "path": "AGENTS.md",
+      "bytes": 5983,
+      "sha256": "d2ee59f3b30da7ac31a48a60e3190c9b34607de06c9cf135c291e0ecf7eff714",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/GOAL.md",
+      "bytes": 8989,
+      "sha256": "b899f639dc15eb96c65d8cee50edf99e9a21100a721d77497e19fde6552c5be8",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/PROGRESS.md",
+      "bytes": 17321,
+      "sha256": "1bf07344a5736b76f5b23912446c1b4f904324876d5929eda6cd845b33e9fc36",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/INDEX.md",
+      "bytes": 1785,
+      "sha256": "796e6e4157714b1eec7745c2b51196836a13e146cac32279dc5b3a3d9be23034",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/team/README.md",
+      "bytes": 8740,
+      "sha256": "4efacb9146a14977682eb966f35a8492b948d55dcf4c2776a2e734642b763877",
+      "numeric_mode": "0o600"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/team/roles/platform-engineer.md",
+      "bytes": 2841,
+      "sha256": "fde4a64e4fdd6dc90f0ac287e08e61c34902ce73958750fffaa73dcb65cdf2b3",
+      "numeric_mode": "0o600"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/team/channel-routing.md",
+      "bytes": 11904,
+      "sha256": "d28a39c3a2ede0969f57427844a54c5fcef017a599a73df6e67f7715376afdb4",
+      "numeric_mode": "0o600"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/memory/MEMORY.md",
+      "bytes": 2223,
+      "sha256": "b45334c426d928fef4edeb53310eb127c492a27fea86038d9847746913435bb2",
+      "numeric_mode": "0o600"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/memory/producer-continuous-operation.md",
+      "bytes": 10672,
+      "sha256": "c6a60360d8075fe5fb4ca3531352d331fc7e0114d054baf4c2435b6c08597b0d",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/memory/runtime-source-and-state-binding.md",
+      "bytes": 17917,
+      "sha256": "8a518980b30b7473b6851ed83676e6b43f17b445c3d137af85109cdb91303328",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/memory/source-snapshot-file-permissions.md",
+      "bytes": 6098,
+      "sha256": "fb4ed55d24e1484f71a4e96e9c83c3340eb5faebace2a4422448cb5615194708",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "current_authority_read_only",
+      "path": "docs/memory/generation-and-training-compute-targets.md",
+      "bytes": 1811,
+      "sha256": "c8fff71aba8a8db898a8051283c21868877766db4307df6d8dc351708c1375a6",
+      "numeric_mode": "0o644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "backend/app/main.py",
+      "bytes": 4884,
+      "sha256": "9a206eeee17b91885b0dbbba493536366cb96e73fcd1bf86ac34ede6a943a1bc",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "backend/app/maintenance.py",
+      "bytes": 1106,
+      "sha256": "831b70516e08fec2e62edc33586e52a2dc68c6e77ead22213b5a05f7869baa9b",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "backend/app/config.py",
+      "bytes": 14301,
+      "sha256": "d7b3d162bba6d5e65b6328bd7e33ebf15289691dc1abc9bb3266990786fbcd8b",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "backend/app/db/database.py",
+      "bytes": 3011,
+      "sha256": "517f8d0cf11b1476f884466437bdfdf00e79eac9fa33c2ffa19393ef8aa86db4",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "backend/app/db/models.py",
+      "bytes": 18950,
+      "sha256": "612a21a4d0cf489ca0723ea8399a376e51957636d49dc6092aa86badbd1dba9a",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "discord-bot/bot/config.py",
+      "bytes": 5604,
+      "sha256": "4fd5efc7ba91571627946134e80345011702abcb7a4fabd38abda58314c17615",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "discord-bot/bot/main.py",
+      "bytes": 11294,
+      "sha256": "9ade8a5c3359907d1b938564877d9e386b585718677167f2b8ea7cd737d33b61",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "discord-bot/bot/maintenance.py",
+      "bytes": 3750,
+      "sha256": "bac8d90e6b8515562f4c96bbc21dd2939c1df5835d8aa28a7a47bcf0847de3a9",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "discord-bot/bot/operator_api.py",
+      "bytes": 6815,
+      "sha256": "71826df1e6f8e2192d1afc80fcb664751c34a0d251aa1c8d9b182b44557f82c5",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "discord-bot/bot/attempt_store.py",
+      "bytes": 7891,
+      "sha256": "c0976ede532f2ba22bb1d7dac5567fe6b5edc98d70bd70af76ce0592b3552fc5",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "mcp-server/mcp_server/config.py",
+      "bytes": 1398,
+      "sha256": "f02b013cfbee44836fc79e65548a63c670bfbcf04ef8b038c46b3e35c1c028f9",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "mcp-server/mcp_server/client.py",
+      "bytes": 2947,
+      "sha256": "695aae42c6cda0fc6f28583e692797a032bc4b82f3515e43015c0bf958bec236",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "mcp-server/mcp_server/tools/comfyui.py",
+      "bytes": 1492,
+      "sha256": "675c5734d4ebe76d7a8b0ee4299eae125fd4a742446f5ee72a876fe90f92859a",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "mcp-server/mcp_server/tools/comfyui_nodes.py",
+      "bytes": 5488,
+      "sha256": "806eeda87f20eda34d068a8148a9a8376d4c2d423801fa23e309569c52bff3c8",
+      "git_mode": "100644"
+    },
+    {
+      "domain": "accepted_product_source",
+      "path": "mcp-server/mcp_server/tools/discord_delivery.py",
+      "bytes": 4223,
+      "sha256": "3e4daa00c60bfd059cfd5b5650a04a8f4e15705f21442ded0b96718ed663d09d",
+      "git_mode": "100644"
+    }
+  ],
+  "installed_public_manual": {
+    "file": "pgrep.1.txt",
+    "sha256": "50e660d4db62a14d53a05cd80fb3ae93ad2a3251fd1adba387abf7ef68645ef8",
+    "bytes": 10369,
+    "source": "/usr/share/man/man1/pgrep.1",
+    "binary_equivalence_proven": false
+  }
+}

@@ -351,6 +351,8 @@ export interface ExecutionEvidence {
 
 export interface TrainStartRequest {
   folder: string;
+  output_name: string;
+  expected_output_config_hash?: string | null;
   expected_dataset_hash: string;
   expected_profile_hash: string;
   recipe: TrainingRecipeTransport;
@@ -358,12 +360,19 @@ export interface TrainStartRequest {
 
 export interface TrainingStartPayload {
   folder: string;
+  output_name: string;
+  expected_output_config_hash?: string | null;
   expected_dataset_hash: string;
   expected_profile_hash: string;
   recipe: TrainingStartRecipeV1;
 }
 
 export interface TrainStartResponse {
+  output_name?: string | null;
+  resolved_output_name?: string | null;
+  output_serial?: number | null;
+  run_locator?: string | null;
+  output_config_hash?: string | null;
   job_id: string;
   status: string;
   stage?: string;
@@ -393,6 +402,8 @@ export interface TrainingDecisionIssue {
 
 export interface TrainingDecisionPreflightRequest {
   folder: string;
+  output_name: string;
+  expected_output_config_hash?: string | null;
   trigger_token?: string;
   expected_dataset_hash?: string;
   expected_profile_hash?: string;
@@ -405,6 +416,10 @@ export interface TrainingParameterSuggestion {
 }
 
 export interface TrainingDecisionPreflightResponse {
+  output_name?: string | null;
+  output_name_preview?: string | null;
+  output_allocation_notice?: string;
+  output_config_hash?: string | null;
   ok: boolean;
   folder: string;
   decision: "train" | "needs_review" | "do_not_train";
@@ -431,6 +446,11 @@ export interface TrainingDecisionPreflightResponse {
 }
 
 export interface TrainJobInfo {
+  output_name?: string | null;
+  resolved_output_name?: string | null;
+  output_serial?: number | null;
+  run_locator?: string | null;
+  output_config_hash?: string | null;
   job_id: string;
   folder: string;
   progress?: number;
@@ -439,13 +459,32 @@ export interface TrainJobInfo {
 }
 
 export interface TrainLastResult {
+  output_name?: string | null;
+  resolved_output_name?: string | null;
+  output_serial?: number | null;
+  run_locator?: string | null;
+  output_config_hash?: string | null;
   folder: string;
   success: boolean;
   path?: string | null;
   error?: string | null;
+  error_code?: string | null;
+  error_details?: { classification: string; phase: string; hint: string } | null;
+}
+
+export interface DurableObservation {
+  availability: "available" | "unavailable";
+  nonterminal_total: number | null;
+  tracked_total: number | null;
+  untracked_total: number | null;
+  jobs: { job_id: string; status: "queued" | "running" | "unknown"; memory_tracked: boolean }[];
+  limit: number;
+  truncated: boolean | null;
+  order: "job_id_asc";
 }
 
 export interface TrainStatusResponse {
+  durable?: DurableObservation | null;
   status: "idle" | "running" | "queued";
   current_job?: TrainJobInfo;
   queue: TrainJobInfo[];

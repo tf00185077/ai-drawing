@@ -106,7 +106,7 @@ def test_lora_workflow_schemas_serialize_expected_fields() -> None:
     )
     assert validate_request.expected_dataset_hash == "hash-a"
 
-    start_request = TrainStartRequest(
+    start_request = TrainStartRequest(output_name="test-product",
         folder="character/miku",
         expected_dataset_hash="hash-a",
         expected_profile_hash="profile-hash-a",

@@ -50,6 +50,7 @@ from app.core.generation_batches import (
     sanitize_failure_message,
 )
 from app.core.recording import save as recording_save, save_artifact as recording_save_artifact
+from app.core.revision_context import canonical_snapshot
 from app.core.resources import default_checkpoint
 from app.core.workflow import (
     apply_params,
@@ -114,6 +115,7 @@ class AuditedWorkflowHashMismatchError(RuntimeError):
 
 
 class GenerateParams(TypedDict, total=False):
+    revision_context: dict[str, Any] | None
     execution_engine: str  # comfyui (default) | argus_mlx_i2v
     argus_mlx_i2v: dict[str, Any]
     workflow: dict[str, Any]  # 自訂 workflow，若有則跳過 template 載入
@@ -222,6 +224,7 @@ class _BatchProgress:
     submitted_at: str
     current_batch_index: int | None = None
     failed_members: list[dict[str, Any]] = field(default_factory=list)
+    revision_context: dict[str, Any] | None = None
 
 
 MAX_FAILED = 100  # 失敗任務保留上限（含結構化錯誤，供 agent 查詢後自我修正）
@@ -338,6 +341,7 @@ def _batch_status_item(
         "batch_failed": progress.failed,
         "current_batch_index": progress.current_batch_index,
         "failed_members": [dict(item) for item in progress.failed_members],
+        "revision_context": canonical_snapshot(progress.revision_context),
     }
 
 
@@ -426,6 +430,7 @@ def _record_failure(
                     "node_errors": [],
                     "recording_error": None,
                     "is_custom": False,
+                    "revision_context": canonical_snapshot(job.params.get("revision_context")),
                 }
                 while len(_failed) > MAX_FAILED:
                     _failed.popitem(last=False)
@@ -446,6 +451,7 @@ def _record_failure(
                 error.log_tail if isinstance(error, ArgusMlxI2VError) else ""
             ),
             "is_custom": bool(job.params.get("workflow")),
+            "revision_context": canonical_snapshot(job.params.get("revision_context")),
         }
         while len(_failed) > MAX_FAILED:
             _failed.popitem(last=False)
@@ -506,6 +512,11 @@ def submit(params: GenerateParams) -> str:
     Raises:
         QueueFullError: 佇列已滿
     """
+    # Snapshot before publishing any job/batch: callers and siblings own no
+    # mutable references into the canonical annotation.
+    params = dict(params)
+    if params.get("revision_context") is not None:
+        params["revision_context"] = canonical_snapshot(params["revision_context"])
     with _lock:
         batch_seed_mode = str(params.get("batch_seed_mode") or "shared")
         batch_size = int(params.get("batch_size") or 1)
@@ -531,6 +542,8 @@ def submit(params: GenerateParams) -> str:
             jobs: list[_Job] = []
             for batch_index, seed in enumerate(seeds):
                 child_params = dict(params)
+                if params.get("revision_context") is not None:
+                    child_params["revision_context"] = canonical_snapshot(params["revision_context"])
                 child_params["batch_size"] = 1
                 child_params["seed"] = seed
                 jobs.append(
@@ -561,6 +574,7 @@ def submit(params: GenerateParams) -> str:
                 started=False,
                 seeds=seeds,
                 submitted_at=submitted_at,
+                revision_context=canonical_snapshot(params.get("revision_context")),
             )
             _pending.extend(jobs)
         else:
@@ -701,6 +715,7 @@ def get_job_status(job_id: str) -> dict[str, Any] | None:
                 "prompt_id": _running.prompt_id,
                 "status": "running",
                 "submitted_at": _running.submitted_at,
+                "revision_context": canonical_snapshot(_running.params.get("revision_context")),
             }
         for j in _pending:
             if j.public_job_id == job_id:
@@ -708,9 +723,10 @@ def get_job_status(job_id: str) -> dict[str, Any] | None:
                     "job_id": j.job_id,
                     "status": "queued",
                     "submitted_at": j.submitted_at,
+                    "revision_context": canonical_snapshot(j.params.get("revision_context")),
                 }
         if job_id in _failed:
-            return dict(_failed[job_id])
+            return {**_failed[job_id], "revision_context": canonical_snapshot(_failed[job_id].get("revision_context"))}
     return None
 
 
@@ -746,6 +762,11 @@ def cancel(job_id: str) -> bool:
             if j.public_job_id == job_id:
                 cancelled = _pending.pop(i)
                 _cleanup_staged_inputs(cancelled)
+                # Retain cancellation long enough for job consumers to reconcile;
+                # absence from the queue alone must never imply completion.
+                _failed[job_id] = {'job_id':job_id, 'status':'cancelled', 'submitted_at':cancelled.submitted_at}
+                while len(_failed) > MAX_FAILED:
+                    _failed.popitem(last=False)
                 return True
     return False
 
@@ -778,7 +799,7 @@ def _process_pending(comfy: ComfyUIClient | None = None) -> None:
     """從 pending 取一筆提交至 ComfyUI，移入 running"""
     global _running
     with _lock:
-        if _running or not _pending:
+        if _running or not _pending or _stop_event.is_set():
             return
         job = _pending.pop(0)
         _running = job
@@ -1337,6 +1358,7 @@ def _save_job_outputs(
                         else None
                     ),
                     recipe_provenance=job.params.get("recipe_provenance"),
+                    revision_context=job.params.get("revision_context"),
                     db=db,
                 )
             else:
@@ -1578,13 +1600,16 @@ def _check_running_complete(comfy: ComfyUIClient | None = None) -> None:
 
 def _worker_loop() -> None:
     """背景 worker 迴圈"""
-    while not _stop_event.is_set():
+    while not _stop_event.is_set() or _running is not None:
         try:
             _process_pending()
             _check_running_complete()
         except Exception as e:
             logger.exception("Queue worker error: %s", e)
-        _stop_event.wait(2.0)
+        if _stop_event.is_set():
+            time.sleep(0.05)
+        else:
+            _stop_event.wait(2.0)
 
 
 def start_worker() -> None:
@@ -1599,11 +1624,27 @@ def start_worker() -> None:
     logger.info("Queue worker started")
 
 
-def stop_worker() -> None:
-    """停止佇列背景 worker（應用關閉時呼叫）"""
+def request_stop() -> None:
+    """Fence new background work before any worker joins."""
     _stop_event.set()
-    if _argus_runner is not None:
-        _argus_runner.shutdown()
+
+
+def stop_worker(timeout: float = 5.0) -> bool:
+    """Stop intake of pending work; finish accepted work without cancelling it.
+
+    Caller must keep the external listener fence on partial return. This checks
+    local exit only, never remote ComfyUI outcome certainty.
+    """
+    global _worker_thread
+    _stop_event.set()
+    # A drain fences new queue work; the accepted Argus child finishes under its
+    # existing owner. Terminating its process group here would be cancellation.
     if _worker_thread:
-        _worker_thread.join(timeout=5.0)
-    logger.info("Queue worker stopped")
+        _worker_thread.join(timeout=max(0, timeout))
+        if _worker_thread.is_alive():
+            logger.warning("Queue drain incomplete; worker handle retained")
+            return False
+        _worker_thread = None
+    if _running is not None:
+        return False
+    return True

@@ -10,6 +10,7 @@ from aiohttp import web
 
 from .delivery import DeliveryError, ResultDeliveryService, SendMessage
 from .main_types import normalize_job_id
+from .maintenance import Admission, MaintenanceClosed
 
 
 @dataclass(frozen=True)
@@ -34,23 +35,57 @@ class OperatorDeliveryServer:
         self._config = config
         self._guild_id = guild_id
         self._runner: web.AppRunner | None = None
+        self.admission=getattr(delivery,'admission',None) or Admission(owner='operator',epoch='standalone',version='maintenance-v1')
 
     async def start(self) -> None:
         if self._runner is not None:
             return
         app = web.Application(client_max_size=4096)
         app.router.add_post("/operator/v1/deliver-result", self._handle_delivery)
-        self._runner = web.AppRunner(app, access_log=None)
+        app.router.add_get('/operator/v1/maintenance/status', self._handle_status)
+        app.router.add_post('/operator/v1/maintenance/close', self._handle_close)
+        self._runner = web.AppRunner(app, access_log=None, handler_cancellation=False)
         await self._runner.setup()
         site = web.TCPSite(self._runner, "127.0.0.1", self._config.port)
         await site.start()
 
-    async def close(self) -> None:
+    async def close(self, timeout: float = 30.0) -> bool:
+        status=await self.admission.drain(timeout)
+        if status['active']:return False
         if self._runner is not None:
             await self._runner.cleanup()
             self._runner = None
+        return True
+
+    def _authorized(self, request):
+        return hmac.compare_digest(request.headers.get('Authorization',''),f'Bearer {self._config.token}')
+
+    async def _handle_status(self, request):
+        if not self._authorized(request):return self._error('unauthorized','operator authentication failed',401)
+        return web.json_response(self._delivery.status() if callable(getattr(self._delivery,'status',None)) else self.admission.status())
+
+    async def _handle_close(self, request):
+        if not self._authorized(request):return self._error('unauthorized','operator authentication failed',401)
+        self.admission.close()  # close immediately, including while body is being read
+        try:
+            payload=await request.json()
+            timeout=payload.get('timeout',0)
+            if set(payload)-{'timeout'} or type(timeout) not in (int,float) or not 0<=timeout<=30:raise ValueError()
+        except Exception:return self._error('invalid_request','timeout must be 0..30 seconds',400)
+        await self.admission.drain(timeout)
+        # Drain tracks process-local work; the receipt must also validate history.
+        status = self._delivery.status()
+        return web.json_response(status,status=202 if status['active'] else 200)
 
     async def _handle_delivery(self, request: web.Request) -> web.Response:
+        if not self._authorized(request):return self._error('unauthorized','operator authentication failed',401)
+        try:
+            with self.admission.enter('operator'):
+                return await self._admitted_delivery(request)
+        except MaintenanceClosed:
+            return self._error('maintenance_closed','maintenance admission is closed',503)
+
+    async def _admitted_delivery(self, request: web.Request) -> web.Response:
         supplied = request.headers.get("Authorization", "")
         expected = f"Bearer {self._config.token}"
         if not hmac.compare_digest(supplied, expected):
@@ -87,7 +122,7 @@ class OperatorDeliveryServer:
         try:
             receipt = await self._delivery.deliver(
                 job_id,
-                f"alias:{alias}",
+                f"channel:{self._guild_id}:{channel_id}",
                 cast(SendMessage, send),
                 force_resend=force_resend,
             )

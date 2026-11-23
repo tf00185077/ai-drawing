@@ -1,0 +1,61 @@
+test_conflicting_alias_and_numeric_values_rejected (offline_checks.suite.<locals>.Controls) ... ok
+test_conflicting_loaded_values_remain_unknown (offline_checks.suite.<locals>.Controls) ... ok
+test_control_cap_checked_before_release (offline_checks.suite.<locals>.Controls) ... ok
+test_cyclic_link_is_not_a_resolved_target (offline_checks.suite.<locals>.Controls) ... FAIL
+test_distinct_pools_cannot_borrow_free (offline_checks.suite.<locals>.Controls) ... ok
+test_distinct_regular_paths_receive_no_hardlink_credit (offline_checks.suite.<locals>.Controls) ... ok
+test_full_post_copy_not_delta_and_exact_20_percent_ceiling (offline_checks.suite.<locals>.Controls) ... ok
+test_large_integers_and_bad_bound_types (offline_checks.suite.<locals>.Controls) ... ok
+test_link_target_missing_and_incomplete_effective_roots (offline_checks.suite.<locals>.Controls) ... ok
+test_loaded_binding_requires_same_process_epoch_and_complete_coverage (offline_checks.suite.<locals>.Controls) ... ok
+test_locator_success (offline_checks.suite.<locals>.Controls) ... ok
+test_missing_physical_scope_never_fits (offline_checks.suite.<locals>.Controls) ... ok
+test_only_exit1_with_empty_output_is_no_match (offline_checks.suite.<locals>.Controls) ... ok
+test_retained_exit2_empty_is_error_not_absence (offline_checks.suite.<locals>.Controls) ... ok
+test_retained_guesses_and_missing_post_state_stay_unknown (offline_checks.suite.<locals>.Controls) ... ok
+test_root_overlap_and_symlink_target_count_once (offline_checks.suite.<locals>.Controls) ... ok
+test_same_pool_combines_allocations_not_free_space (offline_checks.suite.<locals>.Controls) ... ok
+test_source_cwd_fd_are_not_loaded_settings (offline_checks.suite.<locals>.Controls) ... ok
+test_sqlite_current_size_and_guess_do_not_certify_later_copy (offline_checks.suite.<locals>.Controls) ... FAIL
+test_sqlite_full_post_bound_uses_enforced_pages_plus_all_companions (offline_checks.suite.<locals>.Controls) ... FAIL
+test_sqlite_invalid_page_size_is_rejected (offline_checks.suite.<locals>.Controls) ... FAIL
+test_timeout_is_distinct (offline_checks.suite.<locals>.Controls) ... ok
+test_unknown_exit_and_signal_remain_errors (offline_checks.suite.<locals>.Controls) ... ok
+test_zero_exit_empty_and_bad_pid_are_not_absence (offline_checks.suite.<locals>.Controls) ... ok
+
+======================================================================
+FAIL: test_cyclic_link_is_not_a_resolved_target (offline_checks.suite.<locals>.Controls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-56-offline-method/engineering/aid56-method/controls/checks.py", line 57, in test_cyclic_link_is_not_a_resolved_target
+    self.assertIsNone(m.protection(rows, complete=True)['bytes'])
+AssertionError: 2 is not None
+
+======================================================================
+FAIL: test_sqlite_current_size_and_guess_do_not_certify_later_copy (offline_checks.suite.<locals>.Controls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-56-offline-method/engineering/aid56-method/controls/checks.py", line 68, in test_sqlite_current_size_and_guess_do_not_certify_later_copy
+    m.sqlite_post_bound(4096, 8, dict(bytes=7, basis='enforced_limit', evidence='cap'), None)
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_sqlite_full_post_bound_uses_enforced_pages_plus_all_companions (offline_checks.suite.<locals>.Controls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-56-offline-method/engineering/aid56-method/controls/checks.py", line 62, in test_sqlite_full_post_bound_uses_enforced_pages_plus_all_companions
+    self.assertEqual(m.sqlite_post_bound(4096, 8, limit, companions), 41160)
+AssertionError: None != 41160
+
+======================================================================
+FAIL: test_sqlite_invalid_page_size_is_rejected (offline_checks.suite.<locals>.Controls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-56-offline-method/engineering/aid56-method/controls/checks.py", line 73, in test_sqlite_invalid_page_size_is_rejected
+    m.sqlite_post_bound(size, 8, None, None)
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.001s
+
+FAILED (failures=4)

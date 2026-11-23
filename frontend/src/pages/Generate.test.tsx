@@ -49,3 +49,22 @@ describe("Generate execution target", () => {
     expect(JSON.parse(String(call[1].body)).execution_target).toBe("worker");
   });
 });
+
+it("selects a managed readable LoRA and preserves its complete locator", async () => {
+  const locator = "AI-Drawing/水彩旅人_002__20261027T030000Z/水彩旅人_002.safetensors";
+  const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+    if (url.endsWith("available-resources")) return response({loras:[locator],lora_conflicts:[{locator:"conflict.safetensors",code:"lora_locator_conflict"}]});
+    if (url.endsWith("/queue")) return response({queue_running:[],queue_pending:[]});
+    return response({job_id:"mock-generation",status:"queued"},202);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<Generate />);
+  await screen.findByRole("option", {name:locator});
+  fireEvent.change(screen.getByLabelText("可用 LoRA"),{target:{value:locator}});
+  fireEvent.change(screen.getByPlaceholderText("必填，例如: 1girl, solo, ..."),{target:{value:"offline mock"}});
+  fireEvent.click(screen.getByRole("button",{name:"生成"}));
+  await waitFor(()=>expect(fetchMock.mock.calls.some(([url])=>url==="/api/generate/")).toBe(true));
+  const call=fetchMock.mock.calls.find(([url])=>url==="/api/generate/") as [string,RequestInit];
+  expect(JSON.parse(String(call[1].body)).lora).toBe(locator);
+  expect(screen.getByText(/conflict.safetensors/)).toBeInTheDocument();
+});

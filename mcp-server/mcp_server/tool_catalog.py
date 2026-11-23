@@ -38,11 +38,11 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("civitai_resource_acquire", "mcp_server.tools.civitai", "civitai_resource_acquire", "dict", ("POST /api/civitai/resources/acquire",)),
     ToolCatalogEntry("civitai_resource_status", "mcp_server.tools.civitai", "civitai_resource_status", "dict", ("GET /api/civitai/resources/status",)),
     # Generation
-    ToolCatalogEntry("generate_image", "mcp_server.tools.generate", "generate_image", "json_string", ("POST /api/generate/",)),
+    ToolCatalogEntry("generate_image", "mcp_server.tools.generate", "generate_image", "json_string", ("POST /api/generate/",), notes="optional revision_context: brief/feedback annotations, canonical image parent; no automatic prompt rewrite"),
     ToolCatalogEntry("generate_image_custom_workflow", "mcp_server.tools.generate", "generate_image_custom_workflow", "json_string", ("POST /api/generate/custom",), notes="escape hatch for img2img/ControlNet/inpaint; start from backend/workflows/*.json"),
     ToolCatalogEntry("generate_video_wan_keyframes", "mcp_server.tools.generate", "generate_video_wan_keyframes", "json_string", ("POST /api/generate/video/wan-keyframes",)),
     ToolCatalogEntry("generate_video_custom_workflow", "mcp_server.tools.generate", "generate_video_custom_workflow", "json_string", ("POST /api/generate/video/custom",), notes="submit a known-good video workflow JSON"),
-    ToolCatalogEntry("get_generation_status", "mcp_server.tools.generate", "get_generation_status", "json_string", ("GET /api/generate/job/{job_id}",)),
+    ToolCatalogEntry("get_generation_status", "mcp_server.tools.generate", "get_generation_status", "json_string", ("GET /api/generate/job/{job_id}",), notes="includes durable revision_context for recorded ordinary images"),
     ToolCatalogEntry("cancel_job", "mcp_server.tools.generate", "cancel_job", "json_string", ("DELETE /api/generate/queue/{job_id}",)),
     ToolCatalogEntry("list_available_resources", "mcp_server.tools.generate", "list_available_resources", "json_string", ("GET /api/generate/available-resources", "GET /api/workflow-catalog/generation-forms")),
     # Constrained Discord result delivery (bot-local operator endpoint)
@@ -70,8 +70,8 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry("prompt_library_restore", "mcp_server.tools.prompt_library", "prompt_library_restore", "dict", ("POST /api/prompt-library/restore",)),
     # LoRA training
     ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
-    ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",), notes="accepts optional recipe object or JSON object string; Backend owns alias normalization and returns canonical preview"),
-    ToolCatalogEntry("lora_train_start", "mcp_server.tools.lora_train", "lora_train_start", "dict", ("POST /api/lora-train/start",), notes="requires folder, both approval hashes, and broad recipe object/string; returns canonical recipe identity"),
+    ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",), notes="requires readable output_name; serial is reserved only at start; accepts optional recipe object/string; Backend returns canonical preview"),
+    ToolCatalogEntry("lora_train_start", "mcp_server.tools.lora_train", "lora_train_start", "dict", ("POST /api/lora-train/start",), notes="requires folder, readable output_name, both approval hashes and recipe object/string; preserve expected_output_config_hash from preview; returns allocated product name, serial and run locator"),
     ToolCatalogEntry("lora_train_job_status", "mcp_server.tools.lora_train", "lora_train_job_status", "dict", ("GET /api/lora-train/jobs/{job_id}",)),
     ToolCatalogEntry("lora_train_logs", "mcp_server.tools.lora_train", "lora_train_logs", "dict", ("GET /api/lora-train/jobs/{job_id}/logs",)),
     ToolCatalogEntry("lora_train_cancel", "mcp_server.tools.lora_train", "lora_train_cancel", "dict", ("POST /api/lora-train/jobs/{job_id}/cancel",)),

@@ -32,6 +32,7 @@ class GeneratedImage(Base):
     workflow_json = Column(Text, nullable=True)
     source_image = Column(String(512), nullable=True)
     source_mask = Column(String(512), nullable=True)
+    revision_context_json = Column(Text, nullable=True)
     # CIV-E immutable recipe-provenance bundle. All fields remain nullable for legacy rows.
     recipe_json = Column(Text, nullable=True)
     recipe_sha256 = Column(String(64), nullable=True)
@@ -331,6 +332,14 @@ class LoraTrainingJob(Base):
     recipe_hash = Column(String(64), nullable=True, index=True)
     recipe_json = Column(Text, nullable=True)
     execution_evidence_json = Column(Text, nullable=True)
+    output_name = Column(String(256), nullable=True)
+    resolved_output_name = Column(String(256), nullable=True)
+    output_serial = Column(Integer, nullable=True)
+    run_locator = Column(String(512), nullable=True)
+    output_config_hash = Column(String(64), nullable=True)
+    validation_status = Column(String(32), nullable=True)
+    output_sha256 = Column(String(64), nullable=True)
+    registration_status = Column(String(32), nullable=True)
     smoke_test_status = Column(String(64), nullable=True)
     smoke_test_job_id = Column(String(64), nullable=True)
     smoke_test_artifact = Column(String(512), nullable=True)
@@ -370,3 +379,16 @@ class DownloadedResource(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     downloaded_at = Column(DateTime, nullable=True)
+
+
+class LoraOutputReservation(Base):
+    """Append-only consumed names; failure/cancellation never returns a serial."""
+    __tablename__ = "lora_output_reservations"
+    __table_args__ = (UniqueConstraint("request_key", "serial", name="uq_lora_request_serial"),)
+    job_id = Column(String(64), primary_key=True)
+    requested_name = Column(String(256), nullable=False)
+    request_key = Column(String(256), nullable=False, index=True)
+    resolved_name = Column(String(256), nullable=False)
+    resolved_key = Column(String(256), nullable=False, unique=True)
+    serial = Column(Integer, nullable=False)
+    run_locator = Column(String(512), nullable=False, unique=True)

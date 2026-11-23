@@ -1,4 +1,8 @@
 """add-multi-lora-support：apply_params 逐節點套用 + preset compose 帶 loras"""
+from copy import deepcopy
+
+import pytest
+
 from app.core.workflow import apply_params
 from app.core.style_presets import _parse_preset, compose_preset
 
@@ -6,9 +10,11 @@ from app.core.style_presets import _parse_preset, compose_preset
 def _wf_two_loras():
     # 兩個 LoraLoader 節點，JSON 順序 a → b
     return {
-        "a": {"class_type": "LoraLoader", "inputs": {"lora_name": "old1.safetensors", "strength_model": 1.0, "strength_clip": 1.0}},
-        "b": {"class_type": "LoraLoader", "inputs": {"lora_name": "old2.safetensors", "strength_model": 1.0, "strength_clip": 1.0}},
-        "k": {"class_type": "KSampler", "inputs": {}},
+        "base": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "base.safetensors"}},
+        "a": {"class_type": "LoraLoader", "inputs": {"model": ["base", 0], "clip": ["base", 1], "lora_name": "old1.safetensors", "strength_model": 1.0, "strength_clip": 1.0}},
+        "b": {"class_type": "LoraLoader", "inputs": {"model": ["a", 0], "clip": ["a", 1], "lora_name": "old2.safetensors", "strength_model": 1.0, "strength_clip": 1.0}},
+        "k": {"class_type": "KSampler", "inputs": {"model": ["b", 0]}},
+        "text": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["b", 1], "text": "test"}},
     }
 
 
@@ -36,27 +42,27 @@ def test_single_lora_still_applies_when_loras_omitted() -> None:
 
 
 def test_loras_takes_precedence_over_single_lora() -> None:
+    original = _wf_two_loras()
+    before = deepcopy(original)
     wf = apply_params(
-        _wf_two_loras(),
+        original,
         lora="ignored.safetensors",
         loras=[{"name": "win.safetensors", "strength_model": 0.5}],
     )
     assert wf["a"]["inputs"]["lora_name"] == "win.safetensors"
-    # 第二個 loader 無對應 loras 條目 → 維持模板原值（未被單一 lora 覆寫）
-    assert wf["b"]["inputs"]["lora_name"] == "old2.safetensors"
+    # Explicit list replaces the entire set: no hidden template LoRA survives.
+    assert "b" not in wf
+    assert wf["k"]["inputs"]["model"] == ["a", 0]
+    assert wf["text"]["inputs"]["clip"] == ["a", 1]
+    assert original == before
 
 
-def test_extra_loras_ignored_without_error() -> None:
-    wf = apply_params(
-        _wf_two_loras(),
-        loras=[
-            {"name": "1.safetensors"},
-            {"name": "2.safetensors"},
-            {"name": "3.safetensors"},  # 第三個無對應節點 → 忽略
-        ],
-    )
-    assert wf["a"]["inputs"]["lora_name"] == "1.safetensors"
-    assert wf["b"]["inputs"]["lora_name"] == "2.safetensors"
+def test_extra_loras_rejected_without_mutating_input() -> None:
+    original = _wf_two_loras()
+    before = deepcopy(original)
+    with pytest.raises(ValueError, match="defines 3 LoRAs but workflow has 2 loader"):
+        apply_params(original, loras=[{"name": f"{i}.safetensors"} for i in (1, 2, 3)])
+    assert original == before
 
 
 def test_model_only_loader_skips_clip() -> None:

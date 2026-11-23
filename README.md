@@ -58,12 +58,12 @@ Art production and platform engineering are the approved workstreams. The [team]
 
 ## Development verification
 
-Use each component's dependency manifests and prepared environment; Backend and MCP may need different environments. Repository `pytest.ini` defines Python paths.
+Use each component's dependency manifests and prepared environment; Backend and MCP may need different environments. Repository `pytest.ini` defines Python paths. Before Backend collection, set `AI_DRAWING_TEST_ROOT` to a dedicated directory below the system temporary directory. The pre-import test bootstrap binds private paths and database state to that scratch root and refuses collection without it. MCP/Frontend cross-component fixture checks also need their explicit component Python settings.
 
 ```bash
-# Repository root, appropriate component environment
-python -m pytest -c pytest.ini backend/tests -q
-python -m pytest -c pytest.ini mcp-server/tests -q
+# Repository root, appropriate component environment and real owned scratch paths
+AI_DRAWING_TEST_ROOT="<system-temp>/backend-tests" python -m pytest -c pytest.ini backend/tests -q
+AI_DRAWING_TEST_ROOT="<system-temp>/mcp-tests" python -m pytest -c pytest.ini mcp-server/tests -q
 ```
 
 Frontend commands: `frontend/package.json`. Launcher tests: `scripts/tests/`. Windows, GPU, network and live-generation checks require prerequisites and authorization. Offline tests do not establish deployment or end-to-end acceptance.

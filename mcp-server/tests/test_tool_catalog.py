@@ -82,11 +82,13 @@ async def test_lora_start_exposes_only_broad_recipe_transport() -> None:
 
     assert set(schema["properties"]) == {
         "folder",
+        "output_name",
+        "expected_output_config_hash",
         "expected_dataset_hash",
         "expected_profile_hash",
         "recipe",
     }
-    assert set(schema["required"]) == set(schema["properties"])
+    assert set(schema["required"]) == set(schema["properties"]) - {"expected_output_config_hash"}
     recipe_schema = schema["properties"]["recipe"]
     accepted_types = {
         branch.get("type")

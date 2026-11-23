@@ -5,6 +5,12 @@ from unittest.mock import AsyncMock
 import pytest
 
 from bot.delivery import DeliveryError, DeliveryLedger, ResultDeliveryService
+import json
+
+
+def fresh_ledger(path):
+    DeliveryLedger.provision(path)  # explicit new synthetic history, never runtime fallback
+    return DeliveryLedger(path)
 
 
 @pytest.mark.asyncio
@@ -27,7 +33,7 @@ async def test_batch_delivery_sends_every_artifact_and_deduplicates(tmp_path: Pa
         sent_files.extend(file.filename for file in (files or []))
         return SimpleNamespace(id=counter)
 
-    ledger = DeliveryLedger(tmp_path / "ledger.json")
+    ledger = fresh_ledger(tmp_path / "ledger.json")
     service = ResultDeliveryService(api, ledger)
     first = await service.deliver("job", "alias:results", send)
     second = await service.deliver("job", "alias:results", send)
@@ -50,7 +56,7 @@ async def test_force_resend_bypasses_completed_delivery_ledger(tmp_path: Path) -
         )
     )
     send = AsyncMock(side_effect=[SimpleNamespace(id=1), SimpleNamespace(id=2)])
-    service = ResultDeliveryService(api, DeliveryLedger(tmp_path / "ledger.json"))
+    service = ResultDeliveryService(api, fresh_ledger(tmp_path / "ledger.json"))
 
     await service.deliver("job", "alias:results", send)
     receipt = await service.deliver("job", "alias:results", send, force_resend=True)
@@ -67,13 +73,13 @@ async def test_non_completed_jobs_are_never_sent_or_recorded(tmp_path: Path, sta
     outcome = {"status": status, "error": "safe failure"}
     api = SimpleNamespace(collect_job_result=AsyncMock(return_value=outcome))
     send = AsyncMock()
-    service = ResultDeliveryService(api, DeliveryLedger(tmp_path / "ledger.json"))
+    service = ResultDeliveryService(api, fresh_ledger(tmp_path / "ledger.json"))
 
     with pytest.raises(DeliveryError):
         await service.deliver("job", "alias:results", send)
 
     send.assert_not_awaited()
-    assert not (tmp_path / "ledger.json").exists()
+    assert json.loads((tmp_path / "ledger.json").read_text())["attempts"] == {}
 
 
 @pytest.mark.asyncio
@@ -83,7 +89,7 @@ async def test_video_result_is_delivered_as_discord_attachment(tmp_path: Path) -
         "urls": ["http://gallery/motion_film.mp4"],
     }))
     send = AsyncMock(return_value=SimpleNamespace(id=7))
-    service = ResultDeliveryService(api, DeliveryLedger(tmp_path / "ledger.json"))
+    service = ResultDeliveryService(api, fresh_ledger(tmp_path / "ledger.json"))
 
     receipt = await service.deliver("video-job", "alias:results", send)
 

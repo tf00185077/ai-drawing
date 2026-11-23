@@ -94,7 +94,7 @@ def test_training_decision_returns_exact_canonical_start_payload_without_hints(
     with patch("app.services.lora_dataset.get_settings", return_value=_settings(base)):
         inspected = lora_dataset.inspect_dataset("character/miku")
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash=inspected.dataset_hash,
             expected_profile_hash=inspected.profile_hash,
         )
@@ -157,7 +157,7 @@ def test_training_decision_requires_review_when_configured_family_conflicts_with
     settings.lora_default_checkpoint = "sdxl-default.safetensors"
 
     with patch("app.services.lora_dataset.get_settings", return_value=settings):
-        result = lora_training_decision.decide_training_preflight("character/miku")
+        result = lora_training_decision.decide_training_preflight("character/miku", output_name="test-product")
 
     assert result.decision == "needs_review"
     assert result.blocking_issues == []
@@ -191,7 +191,7 @@ def test_explicit_recipe_family_takes_precedence_over_conflicting_global_default
 
     with patch("app.services.lora_dataset.get_settings", return_value=settings):
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             recipe={"model": {"family": "sd15"}},
         )
 
@@ -221,7 +221,7 @@ def test_training_decision_returns_needs_review_for_caption_and_curation_warning
     )
 
     with patch("app.services.lora_dataset.get_settings", return_value=_settings(base)):
-        result = lora_training_decision.decide_training_preflight("character/miku")
+        result = lora_training_decision.decide_training_preflight("character/miku", output_name="test-product")
 
     assert result.decision == "needs_review"
     assert result.blocking_issues == []
@@ -249,7 +249,7 @@ def test_training_decision_returns_do_not_train_for_blocking_issues_and_stale_ha
 
     with patch("app.services.lora_dataset.get_settings", return_value=_settings(base)):
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             expected_dataset_hash="old-dataset-hash",
             expected_profile_hash="old-profile-hash",
         )
@@ -286,7 +286,7 @@ def test_training_decision_api_does_not_enqueue_training(tmp_path: Path, monkeyp
     with patch("app.api.lora_train.lora_trainer.enqueue") as enqueue:
         response = client.post(
             "/api/lora-train/datasets/training-decision-preflight",
-            json={"folder": "character/miku"},
+            json={"folder": "character/miku", "output_name":"test-product"},
         )
 
     assert response.status_code == 200
@@ -318,7 +318,7 @@ def test_training_decision_normalizes_partial_aliased_recipe_hints(
 
     with patch("app.services.lora_dataset.get_settings", return_value=_settings(base)):
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             recipe={
                 "batchSize": "2",
                 "gradientAccumulation": "3",
@@ -364,7 +364,7 @@ def test_invalid_recipe_hint_is_structured_and_never_enqueues(
         patch("app.services.lora_trainer.enqueue") as enqueue,
     ):
         result = lora_training_decision.decide_training_preflight(
-            "character/miku",
+            "character/miku", output_name="test-product",
             recipe={"dataset": {"batch_szie": "SECRET_DO_NOT_ECHO"}},
         )
 
@@ -387,7 +387,7 @@ def test_training_decision_api_reports_invalid_folder_structurally() -> None:
 
     response = client.post(
         "/api/lora-train/datasets/training-decision-preflight",
-        json={"folder": "../outside"},
+        json={"folder": "../outside", "output_name":"test-product"},
     )
 
     assert response.status_code == 400

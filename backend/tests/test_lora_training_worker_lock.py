@@ -20,8 +20,8 @@ from app.services import lora_trainer
 from app.services.lora_training_recipe import compile_training_recipe
 
 
-APPROVED_DATASET_HASH = "dataset-v1"
-APPROVED_PROFILE_HASH = "profile-v1"
+APPROVED_DATASET_HASH = "d" * 64
+APPROVED_PROFILE_HASH = "e" * 64
 APPROVED_MODEL_FAMILY = "sdxl"
 
 
@@ -97,6 +97,7 @@ def _make_job(tmp_path: Path) -> lora_trainer._TrainJob:
     )
     return lora_trainer._TrainJob(
         job_id="job-locked-validation",
+        output_name="Alice", resolved_output_name="Alice", output_serial=1, run_locator="Alice__20261027T030000Z",
         folder="characters/alice",
         checkpoint="checkpoint.safetensors",
         model_family=APPROVED_MODEL_FAMILY,
@@ -136,16 +137,17 @@ def _run_one_worker_job(
     dataset_dir.mkdir(parents=True)
     sd_scripts_dir.mkdir()
 
-    if outcome == "completed":
-        output_path = lora_root / "output" / "characters_alice.safetensors"
-        output_path.parent.mkdir(parents=True)
-        output_path.write_bytes(b"trained")
-
     events: list[dict[str, Any]] = []
     updates: list[dict[str, Any]] = []
     lock_state = {"held": False}
     stop_event = _ControlledStopEvent()
     job = _make_job(tmp_path)
+    from app.services import lora_delivery
+    from tests.test_lora_delivery import write_lora
+    run=lora_delivery.run_path(lora_root,job.run_locator)
+    lora_delivery.create_run(run,job_id=job.job_id)
+    job.log_path=str(run/'logs/training.log')
+    if outcome=='completed': write_lora(run/'artifacts/Alice.safetensors')
 
     def record(name: str, **details: Any) -> None:
         events.append({"name": name, "lock_held": lock_state["held"], **details})
@@ -240,7 +242,7 @@ def _run_one_worker_job(
 
     def is_cancel_requested(_job_id: str) -> bool:
         record("cancel_check")
-        return outcome == "cancelled"
+        return outcome == "cancelled" and any(e["name"]=="launch" for e in events)
 
     def update_job(_job_id: str, **fields: Any) -> None:
         updates.append(fields)
@@ -267,6 +269,7 @@ def _run_one_worker_job(
     monkeypatch.setattr(lora_trainer.lora_dataset, "validate_dataset", validate_dataset)
     monkeypatch.setattr(lora_trainer.lora_dataset, "compute_dataset_hash", compute_dataset_hash)
     monkeypatch.setattr(lora_trainer, "_run_training_subprocess", launch)
+    monkeypatch.setattr(lora_trainer,"inspect_trainer_capability",lambda _:job.recipe.capability)
     monkeypatch.setattr(
         lora_trainer,
         "select_accelerate_launcher",
@@ -285,6 +288,7 @@ def _run_one_worker_job(
     )
     monkeypatch.setattr(lora_trainer, "_is_cancel_requested", is_cancel_requested)
     monkeypatch.setattr(lora_trainer, "_update_persistent_job", update_job)
+    monkeypatch.setattr(lora_trainer, "_read_persistent_job", lambda _:None)
     monkeypatch.setattr(lora_trainer, "_append_log", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(lora_trainer, "get_and_clear_pending_generate", lambda _folder: None)
     def register_output(source: Path, _job_id: str) -> tuple[str, str]:
@@ -368,8 +372,8 @@ def test_worker_revalidates_approved_identity_and_family_after_lock_before_launc
 @pytest.mark.parametrize(
     ("current_dataset_hash", "current_profile_hash", "expected_error_code"),
     [
-        ("dataset-v2", APPROVED_PROFILE_HASH, "dataset_hash_mismatch"),
-        (APPROVED_DATASET_HASH, "profile-v2", "profile_hash_mismatch"),
+        ("a" * 64, APPROVED_PROFILE_HASH, "dataset_hash_mismatch"),
+        (APPROVED_DATASET_HASH, "b" * 64, "profile_hash_mismatch"),
     ],
     ids=["dataset-hash-stale", "profile-hash-stale"],
 )

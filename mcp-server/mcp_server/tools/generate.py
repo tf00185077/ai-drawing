@@ -8,10 +8,40 @@ import json
 from typing import Literal
 from urllib.parse import quote
 
+import httpx
+
 from mcp_server.character_style import resolve_to_prompt
 from mcp_server.config import get_mcp_settings
 from mcp_server.server import _get_client, mcp
 from mcp_server.tools.responses import error_json, exception_error_json
+
+
+_REVISION_PARENT_HINTS = {
+    (404, "revision_parent_not_found"): "Choose an existing canonical artifact ID.",
+    (409, "revision_parent_not_image"): "Choose an image artifact as the revision parent.",
+    (409, "revision_request_conflict"): "Use the parent's request_ref or choose a parent from this request.",
+    (409, "revision_parent_context_invalid"): "Recover the parent's stored context before using this anchor.",
+}
+
+
+def _generate_image_error_json(exc: Exception) -> str:
+    """Project only known parent failures; never trust Backend recovery text."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        try:
+            body = exc.response.json()
+        except (ValueError, RecursionError):
+            # Undecodable recovery metadata must preserve the original HTTP error.
+            body = None
+        detail = body.get("detail") if isinstance(body, dict) else None
+        code = detail.get("error") if isinstance(detail, dict) else None
+        if isinstance(code, str):
+            hint = _REVISION_PARENT_HINTS.get((exc.response.status_code, code))
+            if hint is not None:
+                return error_json(
+                    "generate_image", code, "Revision parent validation failed.",
+                    details={"where": "backend", "hint": hint},
+                )
+    return exception_error_json("generate_image", exc, where="backend")
 
 
 def _resource_list(resp: dict, key: str) -> list:
@@ -45,8 +75,11 @@ def generate_image(
     use_workflow_defaults: bool | None = None,
     seed_mode: Literal["workflow_default", "random", "fixed"] | None = None,
     execution_target: Literal["local", "worker"] = "local",
+    revision_context: dict | None = None,
 ) -> str:
-    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. Returns job_id or an error message. To generate based on a Civitai image, use civitai_generate_like instead."""
+    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. revision_context optionally annotates ordinary images with request_ref, brief_revision, parent_artifact_id, feedback_ref and feedback_summary (schema_version defaults to string 1.0). Feedback never changes prompt or authorizes execution; parent identity is resolved by Backend. Returns job_id and canonical revision_context or an error message. To generate based on a Civitai image, use civitai_generate_like instead."""
+    # Optional ordinary-image annotation: Backend validates closed request shape
+    # and resolves canonical parent identity before enqueue. Feedback stays data.
     try:
         client = _get_client()
         final_prompt = prompt
@@ -107,6 +140,8 @@ def generate_image(
             body["text_encoder"] = text_encoder
         if vae is not None:
             body["vae"] = vae
+        if revision_context is not None:
+            body["revision_context"] = revision_context
         resp = client.post("generate/", json=body)
         job_id = resp.get("job_id", "unknown")
         status = resp.get("status", "queued")
@@ -117,12 +152,14 @@ def generate_image(
                 "job_id": job_id,
                 "status": status,
                 "submitted": body,
+                "revision_context": resp.get("revision_context"),
+                "revision_context_error": resp.get("revision_context_error"),
                 "next": "call get_generation_status with this job_id",
             },
             ensure_ascii=False,
         )
     except Exception as e:
-        return exception_error_json("generate_image", e, where="backend")
+        return _generate_image_error_json(e)
 
 
 @mcp.tool()
@@ -436,6 +473,8 @@ def get_generation_status(job_id: str) -> str:
                     "image_id": resp.get("image_id"),
                     "image_path": resp.get("image_path", ""),
                     "artifacts": artifacts,
+                    "revision_context": resp.get("revision_context"),
+                    "revision_context_error": resp.get("revision_context_error"),
                     "next": next_step,
                 },
                 ensure_ascii=False,
@@ -455,6 +494,8 @@ def get_generation_status(job_id: str) -> str:
                     },
                     "node_errors": node_errors,
                     "recording_error": resp.get("recording_error"),
+                    "revision_context": resp.get("revision_context"),
+                    "revision_context_error": resp.get("revision_context_error"),
                     "next": "generation failed; inspect the error, adjust parameters, and resubmit",
                 },
                 ensure_ascii=False,
@@ -467,6 +508,8 @@ def get_generation_status(job_id: str) -> str:
                     "job_id": job_id,
                     "status": status,
                     "prompt_id": resp.get("prompt_id"),
+                    "revision_context": resp.get("revision_context"),
+                    "revision_context_error": resp.get("revision_context_error"),
                     "next": "wait, then call get_generation_status again",
                 },
                 ensure_ascii=False,
@@ -532,6 +575,7 @@ def list_available_resources() -> str:
                 "backend_base_url": get_mcp_settings().backend_api_url,
                 "checkpoints": checkpoints,
                 "loras": loras,
+                "lora_conflicts": resp.get("lora_conflicts", []),
                 "diffusion_models": diffusion_models,
                 "text_encoders": text_encoders,
                 "vaes": vaes,

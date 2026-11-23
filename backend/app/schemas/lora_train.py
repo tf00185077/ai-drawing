@@ -7,6 +7,10 @@ from typing import Annotated, Any, Literal
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 
+from app.services.lora_delivery import validate_output_name
+
+OutputName = Annotated[str, AfterValidator(validate_output_name)]
+
 RecipeSchemaVersion = Literal["lora-training-recipe/v1"]
 RecipeFieldSource = Literal["caller", "preflight_policy", "server_policy", "derived"]
 ModelFamily = Literal["sd15", "sdxl", "anima"]
@@ -332,6 +336,8 @@ class TrainStartRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     folder: str = Field(..., min_length=1)
+    output_name: OutputName
+    expected_output_config_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     expected_dataset_hash: str = Field(..., min_length=1)
     expected_profile_hash: str = Field(..., min_length=1)
     recipe: dict[str, Any] | str
@@ -340,6 +346,14 @@ class TrainStartRequest(BaseModel):
 class TrainStartResponse(BaseModel):
     """POST /api/lora-train/start 的 Response"""
 
+    output_name: str | None = None
+    resolved_output_name: str | None = None
+    output_serial: int | None = None
+    run_locator: str | None = None
+    output_config_hash: str | None = None
+    validation_status: str | None = None
+    registration_status: str | None = None
+    output_sha256: str | None = None
     job_id: str
     status: str = "queued"
     stage: str | None = None
@@ -363,6 +377,14 @@ class TrainStartResponse(BaseModel):
 class TrainJobInfo(BaseModel):
     """訓練任務資訊"""
 
+    output_name: str | None = None
+    resolved_output_name: str | None = None
+    output_serial: int | None = None
+    run_locator: str | None = None
+    output_config_hash: str | None = None
+    validation_status: str | None = None
+    registration_status: str | None = None
+    output_sha256: str | None = None
     job_id: str
     folder: str
     progress: float | None = None
@@ -373,10 +395,37 @@ class TrainJobInfo(BaseModel):
 class TrainLastResult(BaseModel):
     """最近一次訓練結果"""
 
+    output_name: str | None = None
+    resolved_output_name: str | None = None
+    output_serial: int | None = None
+    run_locator: str | None = None
+    output_config_hash: str | None = None
+    validation_status: str | None = None
+    registration_status: str | None = None
+    output_sha256: str | None = None
     folder: str
     success: bool
     path: str | None = None
     error: str | None = None
+    error_code: str | None = None
+    error_details: dict[str, Any] | None = None
+
+
+class DurableJobObservation(BaseModel):
+    job_id: str
+    status: Literal['queued', 'running', 'unknown']
+    memory_tracked: bool
+
+
+class DurableObservation(BaseModel):
+    availability: Literal['available', 'unavailable']
+    nonterminal_total: int | None = None
+    tracked_total: int | None = None
+    untracked_total: int | None = None
+    jobs: list[DurableJobObservation] = Field(default_factory=list)
+    limit: int = 50
+    truncated: bool | None = None
+    order: Literal['job_id_asc'] = 'job_id_asc'
 
 
 class TrainStatusResponse(BaseModel):
@@ -386,6 +435,7 @@ class TrainStatusResponse(BaseModel):
     current_job: TrainJobInfo | None = None
     queue: list[TrainJobInfo] = Field(default_factory=list)
     last_result: TrainLastResult | None = None
+    durable: DurableObservation | None = None
 
 
 class FolderItem(BaseModel):
@@ -710,6 +760,8 @@ class TrainingDecisionPreflightRequest(BaseModel):
     """Side-effect-free training decision preflight request."""
 
     folder: str = Field(..., min_length=1)
+    output_name: OutputName
+    expected_output_config_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     trigger_token: str | None = None
     expected_dataset_hash: str | None = None
     expected_profile_hash: str | None = None
@@ -718,6 +770,8 @@ class TrainingDecisionPreflightRequest(BaseModel):
 
 class TrainingStartPayload(FrozenRecipeModel):
     folder: str = Field(min_length=1)
+    output_name: OutputName
+    expected_output_config_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     expected_dataset_hash: str = Field(min_length=1)
     expected_profile_hash: str = Field(min_length=1)
     recipe: RequestedTrainingRecipeV1
@@ -726,6 +780,10 @@ class TrainingStartPayload(FrozenRecipeModel):
 class TrainingDecisionPreflightResponse(BaseModel):
     """Agent-readable deterministic LoRA training decision."""
 
+    output_name: str | None = None
+    output_name_preview: str | None = None
+    output_allocation_notice: str = "流水號於建立時確定；preflight 不保留名稱"
+    output_config_hash: str | None = None
     ok: bool = True
     folder: str
     decision: Literal["train", "needs_review", "do_not_train"]
@@ -790,6 +848,14 @@ class LoraTrainJobStatusResponse(BaseModel):
     """Durable LoRA training job status."""
 
     ok: bool = True
+    output_name: str | None = None
+    resolved_output_name: str | None = None
+    output_serial: int | None = None
+    run_locator: str | None = None
+    output_config_hash: str | None = None
+    validation_status: str | None = None
+    registration_status: str | None = None
+    output_sha256: str | None = None
     job_id: str
     folder: str
     status: str
@@ -825,6 +891,11 @@ class LoraTrainJobStatusResponse(BaseModel):
     smoke_test_job_id: str | None = None
     smoke_test_artifact: str | None = None
     smoke_test_error: str | None = None
+    smoke_test_error_code: str | None = None
+    smoke_test_hint: str | None = None
+    smoke_test_artifact_id: int | None = None
+    smoke_test_image_id: int | None = None
+    smoke_test_artifact_url: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
     started_at: str | None = None
@@ -842,6 +913,7 @@ class LoraTrainLogsResponse(BaseModel):
     log_path: str | None = None
     error_code: str | None = None
     error_message: str | None = None
+    error_details: dict[str, Any] | None = None
 
 
 class LoraTrainCancelResponse(BaseModel):
@@ -889,3 +961,8 @@ class LoraSmokeTestResponse(BaseModel):
     generation_job_id: str | None = None
     artifact: str | None = None
     error: str | None = None
+    error_code: str | None = None
+    hint: str | None = None
+    artifact_id: int | None = None
+    image_id: int | None = None
+    artifact_url: str | None = None

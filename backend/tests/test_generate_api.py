@@ -419,10 +419,14 @@ def test_get_job_status_returns_completed_video_artifacts() -> None:
     assert r.status_code == 200
     assert r.json() == {
         "status": "completed",
+        "revision_context": None,
+        "revision_context_error": None,
         "job_id": "job-video",
         "artifacts": [
             {
                 "id": 1,
+                "revision_context": None,
+                "revision_context_error": None,
                 "artifact_type": "video",
                 "mime_type": "video/mp4",
                 "gallery_path": "2026-06-22/video.mp4",
@@ -474,6 +478,8 @@ def test_get_job_status_preserves_legacy_image_fields() -> None:
     assert data["artifacts"] == [
         {
             "id": 1,
+            "revision_context": None,
+            "revision_context_error": None,
             "artifact_type": "image",
             "mime_type": "image/png",
             "gallery_path": "2026-06-22/image.png",

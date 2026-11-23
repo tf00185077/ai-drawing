@@ -145,7 +145,16 @@ def test_argus_queue_cancel_removes_staged_upload(tmp_path, monkeypatch):
 
     assert q.cancel(job.job_id) is True
     assert not staged.exists()
-    assert q.get_job_status(job.job_id) is None
+    # Accepted queue consumers reconcile a retained cancellation; staged inputs
+    # are still removed and cancellation never schedules a replacement job.
+    assert q.get_job_status(job.job_id) == {
+        "job_id": job.job_id,
+        "status": "cancelled",
+        "submitted_at": job.submitted_at,
+        "revision_context": None,
+    }
+    assert not q._pending and q._running is None
+    assert q.cancel(job.job_id) is False
 
 
 def test_unknown_execution_engine_fails_closed_without_comfy(tmp_path: Path, monkeypatch) -> None:
@@ -178,3 +187,27 @@ def test_stop_worker_does_not_construct_unused_argus_runner(monkeypatch) -> None
     q.stop_worker()
 
     constructor.assert_not_called()
+
+
+def test_stop_worker_retains_active_argus_job_without_terminating_child(monkeypatch):
+    """A drain timeout keeps accepted compute alive instead of turning stop into cancel."""
+    from app.services import argus_mlx_i2v
+
+    child = SimpleNamespace(alive=True)
+    runner = argus_mlx_i2v.ArgusMlxI2VRunner(q.get_settings())
+    monkeypatch.setattr(runner, "_process", child)
+    monkeypatch.setattr(
+        argus_mlx_i2v, "_terminate_process_group",
+        lambda process: setattr(process, "alive", False),
+    )
+    job = q._Job(job_id="accepted-argus", params={"execution_engine": "argus_mlx_i2v"})
+    monkeypatch.setattr(q, "_argus_runner", runner)
+    monkeypatch.setattr(q, "_running", job)
+    monkeypatch.setattr(q, "_worker_thread", None)
+    q._stop_event.clear()
+
+    assert q.stop_worker(timeout=0) is False
+    assert child.alive is True
+    assert q._running is job
+    assert runner._process is child
+    assert q._stop_event.is_set()

@@ -24,7 +24,9 @@ from typing import Any, Callable
 from app.config import get_settings
 from app.core.queue import QueueFullError, submit as submit_generation
 from app.db import database as db_database
-from app.db.models import LoraTrainingJob
+from app.db.models import LoraTrainingJob, LoraOutputReservation
+from app.services import lora_delivery as delivery, lora_parameters, lora_public, lora_smoke
+from sqlalchemy import text
 from app.schemas.lora_train import (
     ComponentIdentity,
     EffectiveTrainingRecipeV1,
@@ -91,6 +93,13 @@ class TrainerServiceError(ValueError):
         self.hint = hint
 
 
+class AdmissionUncertainError(TrainerServiceError):
+    """A canonical durable ID exists; scheduling/acknowledgement is uncertain."""
+    def __init__(self, job_id):
+        super().__init__('admission_uncertain', 'reconcile the canonical job before another submission')
+        self.job_id = job_id
+
+
 @dataclass
 class _TrainJob:
     """單一訓練任務"""
@@ -120,6 +129,11 @@ class _TrainJob:
     normalized_trigger_token: str | None = None
     log_path: str | None = None
     recipe: RecipeCompilationResult | None = None
+    output_name: str | None = None
+    resolved_output_name: str | None = None
+    output_serial: int | None = None
+    run_locator: str | None = None
+    output_config_hash: str | None = None
 
 
 @dataclass
@@ -140,6 +154,7 @@ _last_result: dict | None = None  # {"folder": str, "success": bool, "path": str
 _on_complete_callbacks: list[OnCompleteCallback] = []
 _worker_thread: threading.Thread | None = None
 _stop_event = threading.Event()
+_children: list = []
 # 訓練完成後待執行的生圖參數，key 為 folder
 _pending_generate: dict[str, dict] = {}  # {"prompt": str, "count": int, "batch_size": int?, ...}
 
@@ -158,6 +173,7 @@ def _iso(value: datetime | None) -> str | None:
 
 def _ensure_lora_job_table() -> None:
     LoraTrainingJob.__table__.create(bind=db_database.engine, checkfirst=True)
+    LoraOutputReservation.__table__.create(bind=db_database.engine, checkfirst=True)
 
 
 def _with_db(operation: Callable[[Any], Any]) -> Any:
@@ -177,6 +193,7 @@ def _with_db(operation: Callable[[Any], Any]) -> Any:
         if any(
             column in error_text
             for column in (
+                "output_name", "run_locator", "validation_status", "output_sha256", "registration_status", "output_config_hash",
                 "profile_hash",
                 "error_details_json",
                 "recipe_schema_version",
@@ -379,6 +396,7 @@ def _serialize_job(row: LoraTrainingJob, *, log_tail_lines: int | None = None, l
     return {
         "ok": True,
         "job_id": row.job_id,
+        **{key:getattr(row,key,None) for key in ("output_name","resolved_output_name","output_serial","run_locator","output_config_hash","validation_status","output_sha256","registration_status")},
         "folder": row.folder,
         "status": row.status,
         "stage": row.stage,
@@ -420,13 +438,39 @@ def _get_job_row(db: Any, job_id: str) -> LoraTrainingJob | None:
     return db.query(LoraTrainingJob).filter(LoraTrainingJob.job_id == job_id).first()
 
 
+def _occupied_output_names() -> set[str]:
+    from app.core.resources import lora_catalog
+    settings=get_settings()
+    catalog=lora_catalog(settings)
+    occupied=[*catalog["loras"],*(item["locator"] for item in catalog["lora_conflicts"])]
+    names={delivery.name_key(Path(name).stem) for name in occupied}
+    output=Path(settings.lora_train_dir).resolve()/"output"
+    if output.is_dir():
+        names.update(delivery.name_key(p.stem) for p in output.iterdir() if p.suffix.lower()==".safetensors")
+    return names
+
+
 def _create_persistent_job(job: _TrainJob) -> None:
     def op(db: Any) -> None:
         compiled = job.recipe
+        if job.output_name is not None:
+            # Allocation and job insert share one durable write transaction.
+            assigned = delivery.reserve_name(db, job_id=job.job_id, requested=job.output_name,
+                                             occupied=_occupied_output_names(), created_utc=job.submitted_at)
+            active = db.query(LoraTrainingJob).filter(LoraTrainingJob.folder==job.folder, LoraTrainingJob.status.in_(["queued","running"])).first()
+            if active and active.job_id != job.job_id:
+                raise TrainerServiceError("duplicate_folder", "dataset already has an active durable job")
+            for key in ('resolved_output_name','output_serial','run_locator'): setattr(job,key,assigned[key])
+            settings=get_settings()
+            publish_raw=getattr(settings,'comfyui_lora_dir','')
+            delivery.check_run_paths(Path(settings.lora_train_dir).resolve(), job.run_locator, job.resolved_output_name, Path(publish_raw).expanduser().absolute() if publish_raw else None)
         db.add(
             LoraTrainingJob(
                 job_id=job.job_id,
                 folder=job.folder,
+                output_name=job.output_name, resolved_output_name=job.resolved_output_name,
+                output_serial=job.output_serial, run_locator=job.run_locator,
+                output_config_hash=job.output_config_hash,
                 status="queued",
                 stage="queued",
                 progress=0.0,
@@ -475,6 +519,12 @@ def _update_persistent_job(job_id: str, **fields: Any) -> None:
             else:
                 setattr(row, key, value)
         row.updated_at = _utcnow()
+        if row.run_locator and fields.get('status') in TERMINAL_STATUSES:
+            try:
+                lora_parameters.update_phase(delivery.run_path(Path(get_settings().lora_train_dir).resolve(),row.run_locator),job_id=row.job_id,status=fields.get('stage',fields['status']))
+            except (OSError,ValueError):
+                if fields['status']=='completed': raise
+                logger.error('Terminal parameter phase update failed for %s',job_id)
 
     _with_db(op)
 
@@ -500,12 +550,10 @@ def _is_cancel_requested(job_id: str) -> bool:
 def _append_log(log_path: str | None, text: str) -> None:
     if not log_path:
         return
-    path = Path(log_path)
+    path = delivery.confined(Path(log_path),Path(log_path).parent)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
-        f.write(text)
-        if not text.endswith("\n"):
-            f.write("\n")
+        f.write(lora_public.public_log_line(text) + '\n')
 
 
 def _reset_for_test() -> None:
@@ -558,7 +606,7 @@ def clear_queue() -> int:
             proc_to_terminate.terminate()
             proc_to_terminate.wait(timeout=5)
         except Exception as e:
-            logger.warning("終止訓練 subprocess 時發生錯誤: %s", e)
+            logger.warning("LoRA job_cancel_failed; check job state before retrying")
     if count > 0:
         logger.info("已清除訓練佇列，共 %d 個任務", count)
     return count
@@ -746,7 +794,7 @@ def _validate_checkpoint_exists(
         # Remote / HuggingFace id — nothing to check on the local filesystem.
         return
     if _is_bare_filename(s) and not _is_local_path(s) and not search_dirs:
-        logger.warning("checkpoint existence unverifiable (no search dirs configured): %s", s)
+        logger.warning("LoRA checkpoint existence unverifiable; no search dirs configured")
         return
     if Path(resolved).exists():
         return
@@ -1350,6 +1398,7 @@ def _run_training_subprocess(
     *,
     argv: tuple[str, ...],
     sd_scripts_path: Path,
+    run_root: Path | None = None,
 ) -> subprocess.Popen[str]:
     """Launch exactly the persisted argv without resolving training defaults."""
     env = os.environ.copy()
@@ -1359,7 +1408,16 @@ def _run_training_subprocess(
         + env.get("PYTHONPATH", "")
     )
     env["PYTHONUNBUFFERED"] = "1"
-    return subprocess.Popen(
+    if run_root is not None:
+        for key in ('HF_HOME','XDG_CACHE_HOME','TORCH_HOME','TRITON_CACHE_DIR','MPLCONFIGDIR'):
+            directory=run_root/'cache'/key.lower();directory.mkdir(exist_ok=True)
+            env[key]=str(directory)
+        temporary=run_root/'state'/'tmp';temporary.mkdir(exist_ok=True)
+        for key in ('TMPDIR','TMP','TEMP'): env[key]=str(temporary)
+        env['WANDB_DISABLED']='true'
+        env['HF_HUB_OFFLINE']='1'
+        env['TRANSFORMERS_OFFLINE']='1'
+    process = subprocess.Popen(
         argv,
         cwd=str(sd_scripts_path),
         env=env,
@@ -1367,6 +1425,9 @@ def _run_training_subprocess(
         stderr=subprocess.STDOUT,
         text=True,
     )
+    with _lock:
+        _children.append(process)
+    return process
 
 
 def _get_output_lora_path(output_dir: Path, output_name: str) -> Path:
@@ -1375,27 +1436,77 @@ def _get_output_lora_path(output_dir: Path, output_name: str) -> Path:
 
 
 def _register_output_lora(source_path: Path, job_id: str) -> tuple[str, str]:
-    """Copy trained LoRA into ComfyUI LoRA directory with temp-file then rename."""
-    settings = get_settings()
-    target_dir_raw = (settings.comfyui_lora_dir or "").strip()
-    if not target_dir_raw:
-        raise TrainerServiceError("lora_registration_not_configured", "comfyui_lora_dir is not configured")
-
-    source = source_path.resolve()
-    target_dir = Path(target_dir_raw).expanduser().resolve()
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / source.name
-    if source == target.resolve():
-        return source.name, str(target)
-
-    temp_target = target_dir / f".{source.name}.{job_id}.tmp"
+    """Publish only the exact final declared and validated for this durable job."""
+    job=get_job_status(job_id)
+    settings=get_settings()
+    raw=getattr(settings,'comfyui_lora_dir','')
+    if not raw: raise TrainerServiceError('lora_registration_not_configured','LoRA publication root is not configured')
     try:
-        shutil.copy2(source, temp_target)
-        os.replace(temp_target, target)
-    finally:
-        if temp_target.exists():
-            temp_target.unlink(missing_ok=True)
-    return source.name, str(target.resolve())
+        if not job.get('run_locator') or not job.get('resolved_output_name'):
+            raise delivery.DeliveryError('legacy_output_unknown','legacy job has no owned run; automatic registration is unavailable')
+        root=delivery.run_path(Path(settings.lora_train_dir).resolve(),job['run_locator'])
+        expected=root/'artifacts'/(job['resolved_output_name']+'.safetensors')
+        if source_path.absolute() != expected.absolute():
+            raise delivery.DeliveryError('output_ownership_mismatch','source is not this job’s exact final path')
+        manifest=json.loads(delivery.confined(root/'manifest.json',root).read_text())
+        if manifest.get('job_id') != job_id or manifest.get('run_locator') != job['run_locator']:
+            raise delivery.DeliveryError('output_ownership_mismatch','run manifest does not belong to this job')
+        content_hash=delivery.validate_final(expected,root/'artifacts')
+        if job.get('output_sha256') and content_hash != job['output_sha256']:
+            raise delivery.DeliveryError('output_hash_changed','previously validated source changed')
+        identity={key:job.get(key) for key in ('job_id','folder','dataset_hash','profile_hash','recipe_hash','output_config_hash','output_name','resolved_output_name','output_serial','run_locator')}
+        identity.update(sha256=content_hash,source='artifacts/'+expected.name)
+        manifest.update(final=identity,validation_status='verified')
+        delivery.write_json(root/'manifest.json',manifest)
+        _update_persistent_job(job_id,output_sha256=content_hash,validation_status='verified',registration_status='pending')
+        result=delivery.publish_final(expected,artifacts=root/'artifacts',publish_root=Path(raw).expanduser().absolute(),locator=job['run_locator'],identity=identity)
+        manifest.update(registered_lora_name=result[0],registration_status='registered')
+        delivery.write_json(root/'manifest.json',manifest)
+        _update_persistent_job(job_id,registered_lora_name=result[0],registration_status='registered',registration_error=None)
+        return result
+    except (OSError,ValueError) as exc:
+        raise TrainerServiceError(getattr(exc,'code','lora_registration_failed'),getattr(exc,'message','LoRA publication failed')) from exc
+
+
+def _revalidate_launch_components(job: _TrainJob, settings: Any) -> TrainerCapabilitySnapshot:
+    """Keep frozen effective options; reject changed inputs instead of re-defaulting."""
+    for identity in job.recipe.component_identities.values():
+        if identity.sha256 and identity.resolved_locator:
+            try:
+                if delivery.digest(Path(identity.resolved_locator)) != identity.sha256:
+                    raise ValueError('component changed')
+            except (OSError,ValueError) as exc:
+                raise TrainerServiceError('training_component_changed','a verified model component changed after job creation; no trainer started') from exc
+    observed=inspect_trainer_capability(getattr(settings,'sd_scripts_python',''))
+    previous=job.recipe.capability
+    if previous.status=='verified' and observed != previous:
+        raise TrainerServiceError('trainer_capability_changed','trainer capability/version changed after job creation; no trainer started')
+    if job.recipe.effective.optimization.mixed_precision != 'no' and job.recipe.effective.optimization.mixed_precision not in observed.supported_mixed_precision:
+        raise TrainerServiceError('trainer_capability_changed','selected precision is no longer verified for this trainer')
+    return observed
+
+
+def _record_failure(job, log_path, *, code=None, phase='unknown', details=None, stage='failed', fallback='unexpected_error', path=None):
+    """One safe failure representation for persistence, aggregate status and both logs."""
+    global _last_result, _running
+    safe = lora_public.failure(code, phase=phase, details=details, fallback=fallback)
+    get_and_clear_pending_generate(job.folder)
+    # A log write failure must not turn a failed/not-started job into an unhandled error.
+    try:
+        _append_log(log_path, lora_public.event_line('failed', code=safe['code'], phase=phase))
+    except (OSError, ValueError):
+        logger.error('LoRA log_write_failed; failure still recorded on the job')
+    _update_persistent_job(job.job_id, status='failed', stage=stage, error_code=safe['code'], error_message=safe['message'], error_details=safe['details'], completed_at=_utcnow())
+    with _lock:
+        if _running and _running.job.job_id == job.job_id:
+            _running = None
+        _last_result = {
+            'folder': job.folder, 'output_name': job.output_name, 'resolved_output_name': job.resolved_output_name,
+            'output_serial': job.output_serial, 'run_locator': job.run_locator, 'output_config_hash': job.output_config_hash,
+            'success': False, 'path': path, 'error': safe['message'], 'error_code': safe['code'], 'error_details': safe['details'], 'stage': phase,
+        }
+    logger.error('LoRA %s phase=%s classification=%s', safe['code'], safe['details']['phase'], safe['details']['classification'])
+    return safe
 
 
 def _worker_loop() -> None:
@@ -1406,14 +1517,14 @@ def _worker_loop() -> None:
         sd_scripts = Path(settings.sd_scripts_path).resolve()
         lora_base = Path(settings.lora_train_dir).resolve()
         output_base = lora_base / "output"
-    except Exception as e:
-        logger.exception("Worker 初始化失敗: %s", e)
+    except Exception:
+        logger.error("LoRA worker_initialization_failed; check trainer configuration")
         return
 
     _wait_count = 0
     while not _stop_event.is_set():
         with _lock:
-            if _running or not _queue:
+            if _running or not _queue or _stop_event.is_set():
                 job = None
             else:
                 job = _queue.pop(0)
@@ -1423,15 +1534,23 @@ def _worker_loop() -> None:
             _stop_event.wait(1.0)
             continue
         _wait_count = 0
-        log_path = job.log_path or _log_path(job.job_id)
+        log_path = None
         dataset_lock_context: Any | None = None
         dataset_lock_entered = False
+        proc = None
+        failure_phase = 'preflight'
 
         try:
-            _append_log(log_path, f"Job {job.job_id} dequeued")
             _update_persistent_job(job.job_id, stage="preflight")
-            output_dir = output_base
-            output_dir.mkdir(parents=True, exist_ok=True)
+            if not job.run_locator or not job.resolved_output_name:
+                raise TrainerServiceError('legacy_output_unknown','job lacks an allocated run; cannot launch')
+            run_root=delivery.run_path(lora_base,job.run_locator)
+            manifest=json.loads(delivery.confined(run_root/'manifest.json',run_root).read_text())
+            if manifest.get('job_id') != job.job_id:
+                raise TrainerServiceError('output_ownership_mismatch','run belongs to another job')
+            output_dir = delivery.confined(run_root/'artifacts',run_root)
+            log_path = str(delivery.confined(run_root/'logs'/'training.log',run_root))
+            _append_log(log_path, lora_public.event_line('dequeued'))
 
             dataset_lock_context = lora_dataset.dataset_lock(
                 job.folder,
@@ -1468,16 +1587,16 @@ def _worker_loop() -> None:
                         {"job_id": job.job_id},
                     )
                 compiled = job.recipe
+                launch_capability=_revalidate_launch_components(job,settings)
                 effective = compiled.effective
-                output_name = job.folder.replace("/", "_")
+                lora_parameters.validate_reportable(effective)
+                output_name = job.resolved_output_name
                 output_lora = _get_output_lora_path(output_dir, output_name)
                 dataset_config_content = build_dataset_toml(
                     effective,
                     image_dir=image_dir,
                 )
-                dataset_config_path = image_dir.parent / (
-                    f"{output_name}_dataset.toml"
-                )
+                dataset_config_path = delivery.confined(run_root/"configs"/"dataset.toml",run_root)
                 launcher_argv, launcher_evidence = select_accelerate_launcher(
                     getattr(settings, "sd_scripts_python", "")
                 )
@@ -1495,7 +1614,7 @@ def _worker_loop() -> None:
                     argv=launch_argv,
                     dataset_config_content=dataset_config_content,
                     launcher=launcher_evidence,
-                    capability=compiled.capability,
+                    capability=launch_capability,
                     sd_scripts_revision=collect_sd_scripts_revision(sd_scripts),
                 )
                 job.recipe = compiled.model_copy(
@@ -1505,23 +1624,35 @@ def _worker_loop() -> None:
                     job.job_id,
                     execution_evidence_json=_execution_evidence_json(job.recipe),
                 )
-                dataset_config_path.write_text(
-                    dataset_config_content,
-                    encoding="utf-8",
-                )
+                try:
+                    delivery.atomic_write(dataset_config_path,dataset_config_content.encode('utf-8'))
+                    if dataset_config_path.read_text(encoding='utf-8') != dataset_config_content:
+                        raise ValueError('dataset configuration changed')
+                    lora_parameters.prepare_parameters(run_root,job=job,argv=launch_argv,dataset_toml=dataset_config_content,evidence=execution_evidence)
+                except (OSError,ValueError) as exc:
+                    raise TrainerServiceError('training_parameters_write_failed','could not prepare verified config and parameter files; no trainer started') from exc
+                if _is_cancel_requested(job.job_id):
+                    _update_persistent_job(job.job_id,status='cancelled',stage='cancelled',completed_at=_utcnow())
+                    lora_parameters.update_phase(run_root,job_id=job.job_id,status='cancelled')
+                    continue
                 _update_persistent_job(
                     job.job_id,
                     status="running",
-                    stage="training",
+                    stage="prepared",
                     progress=0.0,
                     total_epochs=effective.optimization.epochs,
-                    started_at=_utcnow(),
                     log_path=log_path,
                 )
+                failure_phase = 'prepared'
                 proc = _run_training_subprocess(
                     argv=launch_argv,
                     sd_scripts_path=sd_scripts,
+                    run_root=run_root,
                 )
+                started=_utcnow()
+                _update_persistent_job(job.job_id,stage='training',started_at=started)
+                failure_phase = 'training'
+                lora_parameters.update_phase(run_root,job_id=job.job_id,status='started',started_utc=_iso(started))
 
                 running_job = _RunningJob(
                     job=job,
@@ -1534,25 +1665,20 @@ def _worker_loop() -> None:
                     _running = running_job
 
                 logger.info("Job %s 開始訓練: folder=%s（載入模型需數分鐘，請稍候）", job.job_id, job.folder)
-                _append_log(log_path, f"Job {job.job_id} started")
+                _append_log(log_path, lora_public.event_line('started'))
 
-                output_lines: list[str] = []
                 cancelled = False
                 if proc.stdout:
                     for line in proc.stdout:
-                        if _stop_event.is_set() or _is_cancel_requested(job.job_id):
+                        if _is_cancel_requested(job.job_id):
                             cancelled = True
                             proc.terminate()
-                            _append_log(log_path, "Cancellation requested; terminating subprocess")
+                            _append_log(log_path, lora_public.event_line('cancellation_requested'))
                             break
-                        stripped = line.rstrip()
-                        output_lines.append(stripped)
-                        _append_log(log_path, stripped)
-                        if stripped:
-                            print(f"[LoRA] {stripped}", flush=True)
                         parsed = _parse_progress(line)
                         if parsed:
                             prog, ep, tot = parsed
+                            _append_log(log_path, lora_public.event_line('progress', progress=prog, epoch=ep, total_epochs=tot))
                             with _lock:
                                 if _running and _running.job.job_id == job.job_id:
                                     _running.progress = prog
@@ -1583,59 +1709,22 @@ def _worker_loop() -> None:
                     completed_at=_utcnow(),
                 )
                 with _lock:
-                    _last_result = {"folder": job.folder, "success": False, "path": None, "error": "cancelled"}
+                    _last_result = {"folder": job.folder, "resolved_output_name":job.resolved_output_name, "output_name":job.output_name, "output_serial":job.output_serial, "run_locator":job.run_locator, "output_config_hash":job.output_config_hash, "success": False, "path": None, "error": "cancelled", "error_code":"cancelled", "stage":"cancelled"}
                 logger.info("Job %s 已取消", job.job_id)
                 continue
 
             if proc.returncode != 0:
                 get_and_clear_pending_generate(job.folder)
-                tail = "\n".join(output_lines[-50:]) if output_lines else "(無輸出)"
-                err_preview = tail.split("\n")[-3:] if tail else []
-                err_msg = "訓練失敗，請查看 job log" + (
-                    f"\n最後幾行: {' '.join(err_preview)[:200]}" if err_preview else ""
-                )
-                _update_persistent_job(
-                    job.job_id,
-                    status="failed",
-                    stage="failed",
-                    error_code="kohya_failed",
-                    error_message=err_msg,
-                    completed_at=_utcnow(),
-                )
-                with _lock:
-                    _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
-                logger.error(
-                    "Job %s 訓練失敗, returncode=%s\n--- 最後輸出 ---\n%s",
-                    job.job_id,
-                    proc.returncode,
-                    tail,
-                )
+                _record_failure(job, log_path, code='kohya_failed', phase=failure_phase)
                 continue
 
-            found_path: Path | None = None
-            prefix = job.folder.replace("/", "_")
-            if output_lora.exists():
-                found_path = output_lora
-            else:
-                for f in output_dir.glob(f"{prefix}*.safetensors"):
-                    found_path = f
-                    break
-
-            if not found_path:
-                get_and_clear_pending_generate(job.folder)
-                err_msg = "訓練結束但找不到輸出檔案（請檢查 job log）"
-                _update_persistent_job(
-                    job.job_id,
-                    status="failed",
-                    stage="failed",
-                    error_code="output_missing",
-                    error_message=err_msg,
-                    completed_at=_utcnow(),
-                )
-                with _lock:
-                    _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
-                logger.warning("Job %s 完成但找不到輸出檔案: %s", job.job_id, output_dir)
-                continue
+            try:
+                output_hash=delivery.validate_final(output_lora,output_dir)
+            except delivery.DeliveryError as exc:
+                _update_persistent_job(job.job_id,validation_status='failed',registration_status='not_registered')
+                raise TrainerServiceError(exc.code,exc.message) from exc
+            found_path=output_lora
+            _update_persistent_job(job.job_id,validation_status='verified',output_sha256=output_hash)
 
             output_lora_str = str(found_path.resolve())
             registered_name: str | None = None
@@ -1649,13 +1738,15 @@ def _worker_loop() -> None:
                 total_epochs=job.epochs,
                 output_path=output_lora_str,
             )
+            failure_phase = 'registering'
             try:
                 registered_name, registered_path = _register_output_lora(found_path, job.job_id)
-                _append_log(log_path, f"Registered LoRA: {registered_name} -> {registered_path}")
+                _append_log(log_path, lora_public.event_line('registered'))
             except Exception as exc:
-                registration_error = str(exc)
-                _append_log(log_path, f"Registration failed: {registration_error}")
-                logger.warning("Job %s LoRA registration failed: %s", job.job_id, exc)
+                safe = _record_failure(job, log_path, code=getattr(exc, 'code', None), phase=failure_phase, details=getattr(exc, 'details', None), stage='registration_failed', fallback='lora_registration_failed', path=output_lora_str)
+                _update_persistent_job(job.job_id, registration_status='failed', registration_error=safe['message'])
+                lora_parameters.update_phase(run_root,job_id=job.job_id,status='registration_failed',training_status='completed',validation_status='verified',registration_status='failed')
+                continue
 
             _update_persistent_job(
                 job.job_id,
@@ -1668,83 +1759,44 @@ def _worker_loop() -> None:
                 completed_at=_utcnow(),
             )
             with _lock:
-                _last_result = {"folder": job.folder, "success": True, "path": output_lora_str, "error": None}
+                _last_result = {"folder": job.folder, "resolved_output_name":job.resolved_output_name, "output_name":job.output_name, "output_serial":job.output_serial, "run_locator":job.run_locator, "output_config_hash":job.output_config_hash, "success": True, "path": output_lora_str, "error": None}
+            lora_parameters.update_phase(run_root,job_id=job.job_id,status="completed",training_status="completed",validation_status="verified",registration_status="registered")
             for cb in _on_complete_callbacks:
                 try:
                     cb(output_lora_str, job.folder)
-                except Exception as e:
-                    logger.exception("on_complete callback 錯誤: %s", e)
-            logger.info("Job %s 完成: %s", job.job_id, output_lora_str)
-        except DatasetServiceError as exc:
-            err_msg = exc.message
-            get_and_clear_pending_generate(job.folder)
-            _append_log(log_path, f"Job failed: {exc.code}: {err_msg}")
-            if exc.details:
-                _append_log(
-                    log_path,
-                    "Error details: "
-                    + json.dumps(exc.details, ensure_ascii=False, sort_keys=True),
-                )
-            _update_persistent_job(
-                job.job_id,
-                status="failed",
-                stage="failed",
-                error_code=exc.code,
-                error_message=err_msg,
-                error_details=exc.details,
-                completed_at=_utcnow(),
-            )
-            with _lock:
-                if _running and _running.job.job_id == job.job_id:
-                    _running = None
-                _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
-            logger.error("Job %s dataset error: %s", job.job_id, exc)
-        except TrainerServiceError as exc:
-            err_msg = exc.message
-            get_and_clear_pending_generate(job.folder)
-            _append_log(log_path, f"Job failed: {exc.code}: {err_msg}")
-            if exc.details:
-                _append_log(
-                    log_path,
-                    "Error details: "
-                    + json.dumps(exc.details, ensure_ascii=False, sort_keys=True),
-                )
-            _update_persistent_job(
-                job.job_id,
-                status="failed",
-                stage="failed",
-                error_code=exc.code,
-                error_message=err_msg,
-                error_details=exc.details,
-                completed_at=_utcnow(),
-            )
-            with _lock:
-                if _running and _running.job.job_id == job.job_id:
-                    _running = None
-                _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
-            logger.error("Job %s trainer error: %s", job.job_id, exc)
-        except Exception as exc:
-            err_msg = str(exc)
-            get_and_clear_pending_generate(job.folder)
-            _append_log(log_path, f"Job failed: unexpected_error: {err_msg}")
-            _update_persistent_job(
-                job.job_id,
-                status="failed",
-                stage="failed",
-                error_code="unexpected_error",
-                error_message=err_msg,
-                completed_at=_utcnow(),
-            )
-            with _lock:
-                if _running and _running.job.job_id == job.job_id:
-                    _running = None
-                _last_result = {"folder": job.folder, "success": False, "path": None, "error": err_msg}
-            logger.exception("Job %s 前置或訓練流程失敗: %s", job.job_id, exc)
+                except Exception:
+                    _append_log(log_path, lora_public.event_line('callback_failed', code='completion_callback_failed', phase='completed'))
+                    logger.warning("LoRA completion_callback_failed; registered artifact remains completed")
+            _append_log(log_path, lora_public.event_line('completed'))
+            logger.info("Job %s completed", job.job_id)
+        except (DatasetServiceError, TrainerServiceError, delivery.DeliveryError) as exc:
+            _record_failure(job, log_path, code=exc.code, phase=failure_phase, details=exc.details)
+        except Exception:
+            _record_failure(job, log_path, phase=failure_phase)
 
 
         finally:
+            # Do not leave a trainer running if post-spawn persistence/reporting fails.
+            try:
+                if proc is not None and hasattr(proc,'poll') and proc.poll() is None:
+                    proc.terminate()
+                    try: proc.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        proc.kill(); proc.wait(timeout=10)
+            except Exception:
+                logger.error('LoRA trainer_cleanup_failed; reconcile the trainer process before retrying')
+            try:
+                if job.run_locator:
+                    current=_read_persistent_job(job.job_id)
+                    if current and current['status'] in TERMINAL_STATUSES:
+                        lora_parameters.update_phase(delivery.run_path(lora_base,job.run_locator),job_id=job.job_id,status=current['stage'])
+            except (OSError,ValueError):
+                logger.error('Unable to update terminal parameter phase for %s',job.job_id)
             if dataset_lock_entered and dataset_lock_context is not None:
-                dataset_lock_context.__exit__(None, None, None)
+                try:
+                    dataset_lock_context.__exit__(None, None, None)
+                except Exception:
+                    logger.error('LoRA dataset_unlock_failed; reconcile the dataset lock before retrying')
 
 
 def _ensure_worker() -> None:
@@ -1756,6 +1808,27 @@ def _ensure_worker() -> None:
     _worker_thread = threading.Thread(target=_worker_loop, daemon=True)
     _worker_thread.start()
     logger.info("LoRA 訓練 worker 已啟動")
+
+
+def request_stop() -> None:
+    """Fence new background work before any worker joins."""
+    _stop_event.set()
+
+
+def stop_worker(timeout: float = 5.0) -> bool:
+    """No new queue work; never terminate a running trainer during drain."""
+    global _worker_thread
+    _stop_event.set()
+    if _worker_thread:
+        _worker_thread.join(timeout=max(0, timeout))
+        if _worker_thread.is_alive():
+            return False
+        _worker_thread = None
+    with _lock:
+        _children[:] = [p for p in _children if p.poll() is None]
+        if _running is not None and _running.proc is not None and _running.proc.poll() is None:
+            return False
+        return not _children
 
 
 def ensure_worker() -> None:
@@ -1775,11 +1848,15 @@ def _trainer_recipe_error(exc: RecipeError) -> TrainerServiceError:
 def enqueue(
     folder: str,
     *,
+    output_name: str,
+    expected_output_config_hash: str | None = None,
     expected_dataset_hash: str,
     expected_profile_hash: str,
     recipe: object,
 ) -> str:
     """Validate and compile one immutable recipe before creating a queued job."""
+    try: output_name=delivery.validate_output_name(output_name)
+    except delivery.DeliveryError as exc: raise TrainerServiceError(exc.code,exc.message) from exc
     settings = get_settings()
     image_dir = _resolve_image_dir(folder)
     train_root = Path(settings.lora_train_dir).resolve()
@@ -1893,6 +1970,11 @@ def enqueue(
         raise _trainer_recipe_error(exc) from exc
 
     effective = compiled.effective
+    try: lora_parameters.validate_reportable(effective)
+    except delivery.DeliveryError as exc: raise TrainerServiceError(exc.code,exc.message) from exc
+    output_identity=delivery.output_config_hash(output_name,compiled.recipe_hash)
+    if (expected_output_config_hash is not None or compiled.requested.expected_recipe_hash is not None) and expected_output_config_hash != output_identity:
+        raise TrainerServiceError("output_config_hash_mismatch","output name changed since preflight; rerun preflight")
     _verify_profile_family(
         inspected,
         expected_profile_hash=expected_profile_hash,
@@ -1929,9 +2011,10 @@ def enqueue(
 
     job_id = str(uuid.uuid4())
     submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    log_path = _log_path(job_id)
+    log_path = None
     job = _TrainJob(
         job_id=job_id,
+        output_name=output_name, output_config_hash=output_identity,
         folder=canonical_folder,
         checkpoint=resolved_checkpoint,
         model_family=effective.model.family,
@@ -1973,12 +2056,37 @@ def enqueue(
                 {"folder": canonical_folder},
                 hint="monitor the existing job instead of starting a duplicate",
             )
-        _create_persistent_job(job)
-        _queue.append(job)
+        _ensure_lora_job_table()
+        try:
+            _create_persistent_job(job)
+        except Exception:
+            from app.services.lora_observation import contains
+            if contains(job_id) is not False:
+                raise AdmissionUncertainError(job_id) from None
+            raise
+        try:
+            root=delivery.run_path(train_root,job.run_locator)
+            delivery.create_run(root,job_id=job.job_id)
+            lora_parameters.queued_parameters(root,job)
+            job.log_path=str(root/'logs'/'training.log')
+            _update_persistent_job(job.job_id,log_path=job.log_path)
+            _queue.append(job)
+        except Exception:
+            raise AdmissionUncertainError(job_id) from None
 
-    _append_log(log_path, f"Job {job_id} queued for folder={canonical_folder}")
-    _ensure_worker()
-    logger.info("Job %s queued: folder=%s", job_id, canonical_folder)
+    # Diagnostic writes must not prevent scheduling or erase an acknowledgement.
+    try:
+        _append_log(job.log_path, lora_public.event_line('queued'))
+    except Exception:
+        pass
+    try:
+        _ensure_worker()
+    except Exception:
+        raise AdmissionUncertainError(job_id) from None
+    try:
+        logger.info("Job %s queued", job_id)
+    except Exception:
+        pass
     return job_id
 
 
@@ -1998,19 +2106,21 @@ def get_status() -> dict:
             current_job = {
                 "job_id": rj.job.job_id,
                 "folder": rj.job.folder,
+                "resolved_output_name":rj.job.resolved_output_name, "output_name":rj.job.output_name, "output_serial":rj.job.output_serial, "run_locator":rj.job.run_locator,
+                "output_config_hash":rj.job.output_config_hash,
                 "progress": rj.progress,
                 "epoch": rj.epoch,
                 "total_epochs": rj.total_epochs,
             }
             queue_list = [
-                {"job_id": j.job_id, "folder": j.folder}
+                {"job_id": j.job_id, "folder": j.folder, "output_name":j.output_name,"resolved_output_name":j.resolved_output_name,"output_serial":j.output_serial,"run_locator":j.run_locator,"output_config_hash":j.output_config_hash}
                 for j in _queue
             ]
         elif _queue:
             status = "queued"
             current_job = None
             queue_list = [
-                {"job_id": j.job_id, "folder": j.folder}
+                {"job_id": j.job_id, "folder": j.folder, "output_name":j.output_name,"resolved_output_name":j.resolved_output_name,"output_serial":j.output_serial,"run_locator":j.run_locator,"output_config_hash":j.output_config_hash}
                 for j in _queue
             ]
         else:
@@ -2018,24 +2128,43 @@ def get_status() -> dict:
             current_job = None
             queue_list = []
 
-    last = _last_result
+    from app.services.lora_observation import observe
+    memory_ids = [j["job_id"] for j in queue_list]
+    if current_job:
+        memory_ids.append(current_job["job_id"])
+    durable = observe(memory_ids)
+    last = lora_parameters.public_last_result(_last_result)
     return {
         "status": status,
         "current_job": current_job,
         "queue": queue_list,
         "last_result": last,
+        "durable": durable,
     }
 
 
 def get_job_status(job_id: str) -> dict:
-    """Return durable status for one LoRA training job."""
+    """Read training status and reconcile its bound smoke without submitting."""
     result = _read_persistent_job(job_id)
     if result is None:
         raise TrainerServiceError("job_not_found", f"LoRA training job not found: {job_id}")
-    return result
+    gallery_dir = getattr(get_settings(), 'gallery_dir', None)
+    if result.get('smoke_test_job_id'):
+        fields = lora_smoke.observe(result, gallery_dir)
+        if any(result.get(key) != value for key, value in fields.items()):
+            def reconcile(db):
+                # A late queue read may not clobber a newer binding or outcome.
+                query = db.query(LoraTrainingJob).filter_by(job_id=job_id)
+                for key in ('smoke_test_job_id','smoke_test_status','smoke_test_artifact','smoke_test_error'):
+                    query = query.filter(getattr(LoraTrainingJob, key) == result[key])
+                query.update({**fields, 'updated_at':_utcnow()}, synchronize_session=False)
+            _with_db(reconcile)
+            result = _read_persistent_job(job_id)
+    return lora_smoke.decorate(result, gallery_dir)
 
 
 def _tail_lines(path: Path, line_limit: int) -> tuple[list[str], bool]:
+    delivery.confined(path,path.parent)
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     if len(lines) <= line_limit:
         return lines, False
@@ -2077,7 +2206,7 @@ def get_job_logs(job_id: str, *, line_limit: int = 100) -> dict:
             "truncated": False,
             "log_path": log_path,
             "error_code": "log_read_failed",
-            "error_message": str(exc),
+            "error_message": lora_public.failure('log_read_failed')['message'],
         }
     return {
         "ok": True,
@@ -2113,7 +2242,7 @@ def cancel_job(job_id: str) -> dict:
             cancel_requested_at=_utcnow(),
             completed_at=_utcnow(),
         )
-        _append_log(job.get("log_path"), "Queued job cancelled")
+        _append_log(job.get("log_path"), lora_public.event_line('cancelled'))
         return {"ok": True, "job_id": job_id, "status": "cancelled"}
 
     if proc_to_terminate:
@@ -2122,14 +2251,13 @@ def cancel_job(job_id: str) -> dict:
             stage="cancelling",
             cancel_requested_at=_utcnow(),
         )
-        _append_log(job.get("log_path"), "Cancellation requested")
+        _append_log(job.get("log_path"), lora_public.event_line('cancellation_requested'))
         try:
             proc_to_terminate.terminate()
         except Exception as exc:
             raise TrainerServiceError(
                 "job_cancel_failed",
                 "failed to terminate training subprocess",
-                {"error": str(exc)},
             ) from exc
         return {"ok": True, "job_id": job_id, "status": "running"}
 
@@ -2141,7 +2269,7 @@ def cancel_job(job_id: str) -> dict:
             cancel_requested_at=_utcnow(),
             completed_at=_utcnow(),
         )
-        _append_log(job.get("log_path"), "Queued job cancelled before worker picked it up")
+        _append_log(job.get("log_path"), lora_public.event_line('cancelled'))
         return {"ok": True, "job_id": job_id, "status": "cancelled"}
 
     raise TrainerServiceError("job_not_cancellable", f"job is not cancellable in status {job['status']}")
@@ -2163,6 +2291,41 @@ def smoke_test_job(job_id: str, body: LoraSmokeTestRequest) -> dict:
             "LoRA job has no registered_lora_name",
             {"registration_error": job.get("registration_error")},
         )
+
+    def response(current):
+        public = lora_parameters.public_job(current)
+        return {
+            'ok':True, 'job_id':job_id, 'registered_lora_name':public.get('registered_lora_name'),
+            'smoke_test_status':public.get('smoke_test_status'),
+            'generation_job_id':public.get('smoke_test_job_id'),
+            'artifact':public.get('smoke_test_artifact'),
+            'artifact_id':public.get('smoke_test_artifact_id'), 'image_id':public.get('smoke_test_image_id'),
+            'artifact_url':public.get('smoke_test_artifact_url'),
+            'error':public.get('smoke_test_error'), 'error_code':public.get('smoke_test_error_code'),
+            'hint':public.get('smoke_test_hint'),
+        }
+
+    if job.get('smoke_test_job_id') or job.get('smoke_test_status') not in {None, 'failed'}:
+        return response(job)
+
+    def claim(db):
+        from sqlalchemy import or_, and_
+        return db.query(LoraTrainingJob).filter(
+            LoraTrainingJob.job_id == job_id, LoraTrainingJob.smoke_test_job_id.is_(None),
+            or_(LoraTrainingJob.smoke_test_status.is_(None),
+                and_(LoraTrainingJob.smoke_test_status == 'failed',
+                     LoraTrainingJob.smoke_test_error == 'generation_queue_full')),
+        ).update({'smoke_test_status':'submitting','smoke_test_error':None,
+                  'smoke_test_artifact':None,'updated_at':_utcnow()}, synchronize_session=False)
+    if not _with_db(claim):
+        return response(get_job_status(job_id))
+
+    def finish_claim(**fields):
+        def finish(db):
+            return db.query(LoraTrainingJob).filter_by(
+                job_id=job_id, smoke_test_status='submitting', smoke_test_job_id=None,
+            ).update({**fields,'updated_at':_utcnow()}, synchronize_session=False)
+        return _with_db(finish)
 
     prompt_parts = [
         part for part in [job.get("normalized_trigger_token"), body.prompt or "high quality, 1girl, solo"] if part
@@ -2190,36 +2353,30 @@ def smoke_test_job(job_id: str, body: LoraSmokeTestRequest) -> dict:
         params["checkpoint"] = body.checkpoint or job_params.get("checkpoint")
     try:
         generation_job_id = submit_generation(params)
+        if not isinstance(generation_job_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', generation_job_id):
+            raise ValueError('invalid generation receipt')
     except QueueFullError as exc:
-        _update_persistent_job(
-            job_id,
+        saved = finish_claim(
             smoke_test_status="failed",
-            smoke_test_error=str(exc),
+            smoke_test_error='generation_queue_full',
         )
-        raise TrainerServiceError("generation_queue_full", str(exc)) from exc
+        if not saved:
+            return response(get_job_status(job_id))
+        raise TrainerServiceError("generation_queue_full", lora_public.failure('generation_queue_full')['message']) from None
     except Exception as exc:
-        _update_persistent_job(
-            job_id,
-            smoke_test_status="failed",
-            smoke_test_error=str(exc),
+        finish_claim(
+            smoke_test_status="submission_unknown",
+            smoke_test_error='smoke_submission_unknown',
         )
-        raise TrainerServiceError("smoke_test_submit_failed", str(exc)) from exc
+        return response(get_job_status(job_id))
 
-    _update_persistent_job(
-        job_id,
+    finish_claim(
         smoke_test_status="submitted",
         smoke_test_job_id=generation_job_id,
         smoke_test_error=None,
     )
-    return {
-        "ok": True,
-        "job_id": job_id,
-        "registered_lora_name": registered_lora,
-        "smoke_test_status": "submitted",
-        "generation_job_id": generation_job_id,
-        "artifact": None,
-        "error": None,
-    }
+    # Preserve submission semantics; the next explicit status read reconciles.
+    return response(lora_smoke.decorate(_read_persistent_job(job_id), getattr(get_settings(), 'gallery_dir', None)))
 
 
 def register_on_complete(callback: OnCompleteCallback) -> None:
@@ -2244,7 +2401,7 @@ def _iter_training_folders(base: Path) -> list[tuple[Path, str]]:
             folder = rel.as_posix()
         except ValueError:
             continue
-        if not folder or folder == ".":
+        if not folder or folder == "." or rel.parts[0] in {"output","logs",".lora_prep_backups"}:
             continue
         result.append((p, folder))
     return result

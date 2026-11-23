@@ -250,11 +250,39 @@ class NvidiaWorkerClient(ComfyUIClient):
         return response
 
     def health(self, *, timeout: float | None = None) -> dict[str, Any]:
-        return self._request(
+        response = self._request(
             "GET",
             "/v1/worker/status",
             **({} if timeout is None else {"timeout": timeout}),
-        ).json()
+        )
+        try:
+            status = response.json()
+        except ValueError as exc:
+            raise WorkerConfigurationError(
+                "NVIDIA Worker status response must be valid JSON"
+            ) from exc
+        if not isinstance(status, dict):
+            raise WorkerConfigurationError("NVIDIA Worker status response must be an object")
+        protocol_version = status.get("protocol_version")
+        if type(protocol_version) is not int or protocol_version < 1:
+            raise WorkerConfigurationError(
+                "NVIDIA Worker status protocol_version must be a positive integer"
+            )
+        if protocol_version != self._expected_protocol_version:
+            raise WorkerConfigurationError(
+                "NVIDIA Worker status protocol_version does not match configured version"
+            )
+        if self._expected_hostname:
+            hostname = status.get("hostname")
+            if not isinstance(hostname, str) or not hostname:
+                raise WorkerConfigurationError(
+                    "NVIDIA Worker status hostname must be a non-empty string"
+                )
+            if hostname.casefold() != self._expected_hostname.casefold():
+                raise WorkerConfigurationError(
+                    "NVIDIA Worker status hostname does not match configured hostname"
+                )
+        return status
 
     def submit_powershell(
         self,

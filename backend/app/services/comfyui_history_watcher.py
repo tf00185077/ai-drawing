@@ -167,11 +167,19 @@ def start_watcher() -> None:
     logger.info("ComfyUI history watcher 已啟動（外部生成自動記錄）")
 
 
-def stop_watcher() -> None:
-    """停止監聽"""
+def request_stop() -> None:
+    """Fence new background work before any worker joins."""
+    _stop_event.set()
+
+
+def stop_watcher(timeout: float = 5.0) -> bool:
+    """Close polling and verify exit; retain the handle on timeout."""
     global _worker_thread
     _stop_event.set()
     if _worker_thread:
-        _worker_thread.join(timeout=5.0)
+        _worker_thread.join(timeout=max(0, timeout))
+        if _worker_thread.is_alive():
+            logger.warning("History drain incomplete; worker retained")
+            return False
         _worker_thread = None
-    logger.info("ComfyUI history watcher 已停止")
+    return True

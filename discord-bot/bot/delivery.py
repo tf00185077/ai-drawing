@@ -12,6 +12,9 @@ from typing import Any, Awaitable, Callable
 import discord
 
 from .api_client import ApiClient, BackendError
+from .attempt_store import AttemptStore, StoreError
+from .config import ledger_binding
+from .maintenance import Admission, MaintenanceClosed
 
 DISCORD_UPLOAD_LIMIT_BYTES = 24 * 1024 * 1024
 DISCORD_MAX_FILES_PER_MESSAGE = 10
@@ -74,57 +77,44 @@ def mixed_batch_warning(outcome: dict) -> str | None:
     )[:DISCORD_MESSAGE_LIMIT]
 
 
-class DeliveryLedger:
-    """Small atomic ledger used only to suppress completed duplicate sends."""
+class DeliveryLedger(AttemptStore):
+    """Required bound history; explicit provisioning never occurs during load."""
+    def __init__(self, path: Path, *, binding=None):
+        super().__init__(path, binding=binding or ledger_binding(path=path))
 
-    def __init__(self, path: Path):
-        self._path = path
-
-    def get(self, key: str) -> tuple[tuple[str, ...], int] | None:
-        data = self._read()
-        value = data.get(key)
-        # Backward-compatible read of the original list-only ledger format.
-        if isinstance(value, list) and all(isinstance(item, str) for item in value):
-            return tuple(value), 0
-        if not isinstance(value, dict):
-            return None
-        message_ids = value.get("message_ids")
-        artifact_count = value.get("artifact_count")
-        if (
-            not isinstance(message_ids, list)
-            or not all(isinstance(item, str) for item in message_ids)
-            or type(artifact_count) is not int
-            or artifact_count < 0
-        ):
-            return None
-        return tuple(message_ids), artifact_count
-
-    def put(self, key: str, message_ids: tuple[str, ...], artifact_count: int) -> None:
-        data = self._read()
-        data[key] = {
-            "message_ids": list(message_ids),
-            "artifact_count": artifact_count,
-        }
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self._path.with_suffix(self._path.suffix + ".tmp")
-        temporary.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
-        os.replace(temporary, self._path)
-
-    def _read(self) -> dict:
-        try:
-            data = json.loads(self._path.read_text(encoding="utf-8"))
-        except (FileNotFoundError, OSError, json.JSONDecodeError):
-            return {}
-        return data if isinstance(data, dict) else {}
+    @classmethod
+    def provision(cls, path, *, binding=None):
+        return super().provision(path, binding=binding or ledger_binding(path=path))
 
 
 class ResultDeliveryService:
     """The sole implementation used by both ``/result`` and operator delivery."""
 
-    def __init__(self, api: ApiClient, ledger: DeliveryLedger):
+    def __init__(self, api: ApiClient, ledger: DeliveryLedger | None, admission: Admission | None = None):
         self._api = api
         self._ledger = ledger
         self._lock = asyncio.Lock()
+        self.admission = admission or Admission(owner='delivery',epoch=str(__import__('uuid').uuid4()),version='maintenance-v1')
+        if ledger is None:
+            self.admission.hold('ledger')
+        else:
+            try:
+                count=ledger.uncertain_count
+                if count:self.admission.set_hold('delivery_attempt',count)
+            except StoreError:self.admission.hold('ledger')
+
+    def status(self):
+        # Integrity failures become visible without waiting for another send.
+        try:
+            if self._ledger is None:raise StoreError('ledger unavailable')
+            count=self._ledger.uncertain_count
+            if count and not self.admission.status()['active']:
+                self.admission.set_hold('delivery_attempt',count)
+        except Exception:
+            # An unavailable inspection is unknown, including unexpected I/O errors.
+            # Keep the safe projection free of exception text and private paths.
+            self.admission.set_hold('ledger',1)
+        return self.admission.status()
 
     async def deliver(
         self,
@@ -134,27 +124,54 @@ class ResultDeliveryService:
         *,
         force_resend: bool = False,
     ) -> DeliveryReceipt:
+        # Registration includes collection, lock waiters and every chunk send.
+        try:
+            with self.admission.enter('delivery'):
+                async with self._lock:
+                    try:
+                        return await self._deliver(job_id, destination, send, force_resend)
+                    except DeliveryError as exc:
+                        known_error = exc  # pre-send status/validation is a known rejection
+            raise known_error
+        except MaintenanceClosed as exc:
+            raise DeliveryError('maintenance_closed','交付維護暫停；請保留 job id，勿盲重送',status_code=503) from exc
+        except StoreError as exc:
+            self.admission.hold('ledger')
+            raise DeliveryError('delivery_uncertain','交付回執不完整；需由 owner 核對，勿重送',status_code=409) from exc
+
+    async def _deliver(self, job_id, destination, send, force_resend):
+        if self._ledger is None:raise StoreError('ledger unavailable')
         key = f"{destination}:{job_id}"
-        async with self._lock:
-            prior = self._ledger.get(key)
-            if prior is not None and not force_resend:
-                return DeliveryReceipt(job_id, destination, prior[0], prior[1], True)
+        prior = self._ledger.get(key)
+        if prior is not None and not force_resend:
+            return DeliveryReceipt(job_id, destination, prior[0], prior[1], True)
+        try:
+            outcome = await self._api.collect_job_result(job_id)
+        except BackendError as exc:
+            if exc.status_code == 404:
+                raise DeliveryError("job_not_found", "找不到這個 job id", status_code=404) from exc
+            raise DeliveryError("backend_error", f"後端錯誤：{exc}", status_code=502) from exc
+        except Exception as exc:
+            raise DeliveryError("backend_unavailable", "後端連不上，請確認 backend 有啟動", status_code=502) from exc
 
-            try:
-                outcome = await self._api.collect_job_result(job_id)
-            except BackendError as exc:
-                if exc.status_code == 404:
-                    raise DeliveryError("job_not_found", "找不到這個 job id", status_code=404) from exc
-                raise DeliveryError("backend_error", f"後端錯誤：{exc}", status_code=502) from exc
-            except Exception as exc:
-                raise DeliveryError("backend_unavailable", "後端連不上，請確認 backend 有啟動", status_code=502) from exc
-
-            messages, artifact_count = await self._deliver_outcome(outcome, send)
-            message_ids = tuple(str(message.id) for message in messages)
-            self._ledger.put(key, message_ids, artifact_count)
-            return DeliveryReceipt(
-                job_id, destination, message_ids, artifact_count, False
-            )
+        attempt = None
+        async def recorded_send(*args, **kwargs):
+            nonlocal attempt
+            if attempt is None:
+                attempt = self._ledger.begin(key,job_id=job_id,destination=destination,
+                                             epoch=self.admission.epoch,force=force_resend)
+            # Durable intent exists BEFORE the external await, including no-return.
+            message = await send(*args, **kwargs)
+            mid=getattr(message,'id',None)
+            if not isinstance(mid,(str,int)) or isinstance(mid,bool):
+                raise StoreError('missing external receipt; hold')
+            self._ledger.receipt(attempt,str(mid))
+            return message
+        messages, artifact_count = await self._deliver_outcome(outcome, recorded_send)
+        message_ids = tuple(str(message.id) for message in messages)
+        if attempt is None:raise StoreError('missing attempt; hold')
+        self._ledger.complete(attempt,artifact_count)
+        return DeliveryReceipt(job_id,destination,message_ids,artifact_count,False)
 
     async def _deliver_outcome(
         self, outcome: dict, send: SendMessage
