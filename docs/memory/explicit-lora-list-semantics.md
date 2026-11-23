@@ -1,24 +1,12 @@
 ---
 name: explicit-lora-list-semantics
-description: "Preserve explicit LoRA-list meaning through connected graph rewrites and asynchronous job outcomes."
+description: LoRA list in generation requests — omitted vs explicit empty list, loader bypass, late capacity check.
 metadata:
   type: project
-  curated_on: "2026-10-31"
 ---
 
-## Context
+- Omitting `loras` keeps the template's LoRA loaders as-is. An explicit list (including `[]`) is the complete active set.
+- Entries map to LoRA loaders in workflow JSON order; unused template loaders are bypassed by reconnecting their model (and CLIP, if present) inputs.
+- Too many LoRAs for the template is detected during queued compilation, after the request was already acknowledged. Follow the job ID to see that failure.
 
-The compiler distinguishes omitted LoRAs from an explicit complete active set, including an empty list. It maps entries in workflow JSON loader order and bypasses unused template loaders by reconnecting their model and, where present, CLIP inputs. Capacity validation occurs during queued compilation, after the public acknowledgement.
-
-## Why
-
-List contents alone cannot prove the resulting graph uses only the requested models; a queued acknowledgement cannot prove that graph fits the workflow.
-
-## How to apply
-
-Preserve omission and an explicit empty list through every caller. Check connected model/CLIP paths, model-only loaders, legacy single-LoRA behavior and full registered relative locators. Follow the acknowledged job ID through compilation before reporting capacity acceptance. Reconcile contradictory legacy tests with the adopted contract and connected-graph/public-boundary evidence; avoid changing conforming product code or silently truncating entries to satisfy an obsolete expectation. These are source-contract checks, separate from runtime and image acceptance.
-
-## Evidence
-
-- [Workflow compiler](../../backend/app/core/workflow.py), [workflow checks](../../backend/tests/test_workflow.py) and [legacy multi-LoRA checks](../../backend/tests/test_multi_lora.py).
-- [Generation schema](../../backend/app/schemas/generate.py) and [current contract record](../PROGRESS.md#company-preparation-and-next-step) — adopted semantics and retained independent boundary evidence.
+**How to apply:** preserve the omitted/empty distinction in every caller (MCP, UI, presets). Don't truncate lists silently.

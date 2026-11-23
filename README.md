@@ -1,69 +1,75 @@
 # AI Drawing
 
-[Role-scoped reading and deployed skill bindings](docs/agent-reading.md) govern planning/history reads and repository-branch handling; existing product and role authorities remain in force.
+AI Drawing lets AI agents and people generate images through a local ComfyUI. A FastAPI Backend owns jobs, artifacts and provenance; an MCP server gives agents intent-level tools; a React UI covers prompt composition, generation, the Gallery and LoRA training.
 
-Agent-facing ComfyUI generation with Backend jobs, recorded Gallery artifacts, Prompt Library, style presets, MCP and a web frontend. Docker Compose runs Frontend/Backend; ComfyUI and Windows Worker run separately.
+## Goals
 
-LoRA training code exists but is **not accepted as a complete working feature**. See [Training status](docs/training-status.md), not removed automation instructions.
+1. **Agent-ready MCP server**: an agent can request, track, retrieve and revise images without human help.
+2. **Prompt dashboard**: users build reusable prompt combinations for ComfyUI workflows.
+3. **LAN workers**: ComfyUI jobs can run on other Windows machines on the same network that run the same project.
+4. **LoRA training**: train, register and use LoRA models from owner datasets.
 
-## Start here
+Per-goal status: [docs/STATUS.md](docs/STATUS.md).
 
-- Agent guidance: [AGENTS.md](AGENTS.md).
-- Purpose and company preparation: [Goal](docs/GOAL.md).
-- Producer planning direction: `docs/roadmap/ROADMAP.md`; present state and blockers: `docs/CURRENT.md` (see [missing-document handling](docs/team/roles/producer.md#required-roadmap-steering-skill)).
-- Relevant history, not a universal startup read: [Progress](docs/PROGRESS.md).
-- Topic authorities: [Document map](docs/INDEX.md).
-- Installation: [Setup guide](docs/setup-guide.md).
-- Agent connection/tools: [MCP setup](docs/mcp-setup.md).
-- Prompt Workbench, authored prompts and saved recipes/graphs: [Resource guide](docs/prompt-and-workflow-resources.md).
-- Remote execution/acceptance: [Windows worker](docs/windows-worker.md).
+## Components
 
-At every planning turn and task start/resume, Producer must load `project-roadmap-steering` and read `docs/roadmap/ROADMAP.md` and `docs/CURRENT.md`, consulting PROGRESS only for relevant history. Producer also reads this README at task start/resume. Other workers use their assigned task contract and its named specifications/evidence, plus shared startup and role authorities, not a mandatory planning/history-file read. Every agent still reads the memory index at task start/resume; Auto Dreamer may consult relevant planning/history evidence without taking planning ownership.
+| Component | Path | Role |
+|---|---|---|
+| Backend | `backend/` | FastAPI + SQLAlchemy. Job queue, ComfyUI REST/WebSocket client, Gallery, Prompt Library, style presets, Civitai, LoRA training, worker routing |
+| Frontend | `frontend/` | React + Vite + Tailwind. Dashboard, Generate, Gallery, Prompt Workbench, LoRA pages |
+| MCP server | `mcp-server/` | Python MCP SDK, stdio. Calls the Backend; a few tools call ComfyUI directly |
+| Windows worker | `worker/windows/` | Runs on a remote Windows host and proxies its ComfyUI to the Backend |
+| Discord bot | `discord-bot/` | Slash commands that call the Backend; result delivery for MCP |
+| Workflow templates | `backend/workflows/` | ComfyUI API graphs with `.meta.json` form metadata |
+| Prompt library | `prompt_library/` | Versioned prompt fragments and combinations |
+| Style presets | `style_presets/` | Reusable recipes and saved graphs |
+| Launcher | `setup.sh`, `setup.ps1`, `scripts/launcher/` | Bootstrap, start and stop the stack |
 
-Documentation describes capabilities; it does not authorize installation, generation, downloads, restart or deployment. Naming planning paths here does not create those documents or establish owner approval.
+ComfyUI itself runs on the host, outside Docker.
 
-## Product launcher
+## Quick start
 
-Requirements: Git, running Docker, Docker Compose 2.24+, initial bootstrap/build network access and a compatible driver for GPU use. The launcher needs no global Python/Node installation.
+Requirements: Git, Docker with Compose 2.24+, and a GPU driver if you generate on GPU.
 
 ```bash
-# macOS / Linux
-./setup.sh
+./setup.sh        # macOS / Linux
 ```
 
 ```powershell
-# Windows PowerShell
-.\setup.ps1
+.\setup.ps1       # Windows
 ```
 
-Choose managed, external or disabled host ComfyUI. The launcher does not install models/custom nodes or configure/start MCP. Setup/reconfigure can install/start services and rewrite local settings; do not use them for inspection.
+The launcher asks whether ComfyUI is `managed`, `external` or `disabled`, then starts the stack. It does not install models or custom nodes.
 
-Default URLs: Frontend `http://127.0.0.1:5173`, Backend `http://127.0.0.1:8001`, API docs `http://127.0.0.1:8001/docs`; optional ComfyUI uses port `8188`. Check deployment settings rather than assuming services are running.
-
-## Data and configuration
-
-| Location | Purpose |
+| Service | Default URL |
 |---|---|
-| `data/` | Database, Gallery, output, logs and datasets |
-| `prompt_library/` | Versioned library, mounted at `/workspace/prompt_library` |
-| `.env` | Private runtime settings/secrets |
+| Frontend | http://127.0.0.1:5173 |
+| Backend | http://127.0.0.1:8001 (`/docs` for the API) |
+| ComfyUI | http://127.0.0.1:8188 |
+
+Connect an agent: see [MCP setup](docs/mcp-setup.md).
+
+## Data
+
+| Location | Contents |
+|---|---|
+| `data/` | Database, Gallery, outputs, logs, datasets |
+| `prompt_library/` | Prompt library (back it up together with `data/`) |
+| `.env` | Private settings and secrets — never commit |
 | `.ai-drawing/compose.local.yaml` | Generated ComfyUI mounts |
-| `data/bootstrap/state.json` | Launcher settings/process identity |
 
-Backing up only `data/` misses prompts and custom model/preset paths. Follow [backup and reconfiguration guidance](docs/setup-guide.md#persistent-data-and-backups): setup/reconfigure rebuilds `.env` and can discard custom settings. Keep secrets and backups/logs private.
-
-## Company preparation
-
-Art production and platform engineering are the approved workstreams. The [team](docs/team/README.md) retains eight agents; CTY's current operating roster is Producer, coding agent, QA agent and Auto Dreamer, using the [live role skill sources](docs/team/skill-bindings.md). Under [CTY's continuous-operation mandate](http://127.0.0.1:3100/AID/issues/AID-4#comment-71655f19-384a-4aa9-af39-d2ba7bdcd9d7), Producer autonomously prioritizes, dispatches and follows completed work with the next useful action; ordinary work does not require repeated start confirmation. CTY owns aesthetics; the independent QA agent owns technical verification. Hermes handles delegated ordinary follow-through while Producer retains independent priorities; [Goal](docs/GOAL.md#milestone-assessment) defines how journey evidence supports milestone assessment. Windows installation/reporting remains deferred. Follow [Goal](docs/GOAL.md) and current native owner/task records for authority and genuine decision boundaries; use the role-scoped reading route above for planning, assignments and historical context.
-
-## Development verification
-
-Use each component's dependency manifests and prepared environment; Backend and MCP may need different environments. Repository `pytest.ini` defines Python paths. Before Backend collection, set `AI_DRAWING_TEST_ROOT` to a dedicated directory below the system temporary directory. The pre-import test bootstrap binds private paths and database state to that scratch root and refuses collection without it. MCP/Frontend cross-component fixture checks also need their explicit component Python settings.
+## Development
 
 ```bash
-# Repository root, appropriate component environment and real owned scratch paths
-AI_DRAWING_TEST_ROOT="<system-temp>/backend-tests" python -m pytest -c pytest.ini backend/tests -q
-AI_DRAWING_TEST_ROOT="<system-temp>/mcp-tests" python -m pytest -c pytest.ini mcp-server/tests -q
+AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-backend-tests" python -m pytest -c pytest.ini backend/tests -q
+AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-mcp-tests" python -m pytest -c pytest.ini mcp-server/tests -q
+cd frontend && npm test
 ```
 
-Frontend commands: `frontend/package.json`. Launcher tests: `scripts/tests/`. Windows, GPU, network and live-generation checks require prerequisites and authorization. Offline tests do not establish deployment or end-to-end acceptance.
+Backend tests refuse to run without `AI_DRAWING_TEST_ROOT`, a scratch directory that isolates the test database and paths from real data. Backend and MCP may need separate Python environments. Launcher tests live in `scripts/tests/`.
+
+Known baseline: 26 Backend tests fail on `main` (Prompt Library inventory snapshots, worker packaging checks, PowerShell fixtures on non-Windows). See [checkpoint](docs/checkpoints/2026-11-23-progress-consolidation.md).
+
+## Documentation
+
+Start at the [document map](docs/INDEX.md). Agents start at [AGENTS.md](AGENTS.md).

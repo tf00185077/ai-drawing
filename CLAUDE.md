@@ -1,3 +1,3 @@
-# Claude Code entry
+# Claude Code
 
-Read [AGENTS.md](AGENTS.md) for shared project guidance, then use its topic navigation. This file adds no separate operating rules, training automation or execution authority.
+Read [AGENTS.md](AGENTS.md). This file adds no rules of its own.

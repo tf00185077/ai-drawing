@@ -1,58 +1,48 @@
-# Agent project guidance
+# Agent guide
 
-[Role-scoped reading and deployed skill bindings](docs/agent-reading.md) govern planning/history reads and repository-branch handling; existing product and role authorities remain in force.
+Read this file, then [project memory](docs/memory/MEMORY.md) and the [document map](docs/INDEX.md). The [README](README.md) explains what the system is.
 
-## Project memory
+## Repository layout
 
-Every agent MUST read [the memory index](docs/memory/MEMORY.md) at every task start/resume, then relevant refs on demand; Producer-designated refs are mandatory. The dedicated [Auto Dreamer](agents/auto-dreamer/AGENTS.md) alone routinely curates shared memory. Producer and all peers report `Memory candidates: <fact/correction, evidence, future reuse>` or `Memory candidates: None` in their existing handoff, without routine memory editing. This supersedes Producer-only task-bound memory review, writing and synchronization duties in generic guidance, not product closeout, formal decision writeback or dispatch authority. A review may make no changes. Production/delivery and platform-engineering workstreams share this canonical product memory tree with entry-specific applicability. Formal specifications and owner-approved decisions remain authoritative; memory grants no generation, training, service or spending permission. Report missing/conflicting refs; preserve frozen candidates.
-
-## Topic authorities
-
-Read [Goal](docs/GOAL.md) and the relevant topic in the [document map](docs/INDEX.md). Producer alone must load `project-roadmap-steering` and read `docs/roadmap/ROADMAP.md` and `docs/CURRENT.md` at every planning turn and task start/resume; consult [Progress](docs/PROGRESS.md) only for relevant history. Follow the [Producer planning instructions](docs/team/roles/producer.md#required-roadmap-steering-skill) when planning documents are missing or incomplete; absence is not approval. Other workers read their assigned task contract and its named specifications/evidence, plus shared startup and role authorities, rather than reconstructing priorities from planning files. ROADMAP, CURRENT and PROGRESS are not universal startup reads. Auto Dreamer may consult them as relevant evidence without taking planning ownership. The universal memory-index rule above is unchanged. Requirements, source capabilities, installed behavior and execution authority are separate; role approval and tool availability do not authorize work.
-
-| Question | Authority |
+| Path | Contents |
 |---|---|
-| Product purpose and company preparation | [Goal](docs/GOAL.md) |
-| Direction and work-selection rules (Producer) | `docs/roadmap/ROADMAP.md`; missing-file handling in the Producer instructions |
-| Present state, blockers and next decisions (Producer) | `docs/CURRENT.md` and named native task/decision records |
-| Relevant historical context | [Progress](docs/PROGRESS.md), not a universal startup read |
-| Startup, persistence and settings | [Setup guide](docs/setup-guide.md) |
-| MCP connection and operations | [MCP setup](docs/mcp-setup.md), [source catalog](mcp-server/mcp_server/tool_catalog.py), live tool schemas |
-| Prompt UI, authored prompts and saved recipes/graphs | [Resource guide](docs/prompt-and-workflow-resources.md) |
-| Windows implementation and acceptance | [Windows worker](docs/windows-worker.md) |
-| Training implementation and acceptance | [Training status](docs/training-status.md) |
-| Approved role ownership | [Team responsibilities](docs/team/README.md) |
+| `backend/app/api/` | FastAPI routers |
+| `backend/app/schemas/` | Request/response contracts |
+| `backend/app/core/`, `backend/app/services/` | Queue, ComfyUI client, domain logic |
+| `backend/workflows/` | ComfyUI API graph templates + `.meta.json` |
+| `backend/tests/` | Backend tests |
+| `mcp-server/mcp_server/` | MCP server; `tool_catalog.py` is the tool list |
+| `frontend/src/` | React UI |
+| `worker/windows/` | Remote Windows worker |
+| `discord-bot/` | Discord bot |
+| `prompt_library/`, `style_presets/` | Authored prompt and preset data |
+| `scripts/launcher/` | Lifecycle launcher |
 
-Source and request/response schemas define implementation. A running Backend's `/docs` and `/openapi.json` describe its deployed version, which may differ from this worktree. Historical plans are background, not assignments or authorization.
+## Conventions
 
-## Safety and scope
+- Backend: Python 3.11, FastAPI, Pydantic, SQLAlchemy. ComfyUI is called over REST/WebSocket.
+- Frontend: React + Vite + Tailwind, functional `.tsx` components.
+- MCP: intent-level tools. Keep `tool_catalog.py` and registration aligned (enforced by `test_tool_catalog.py`).
+- Job state, artifacts and provenance live in the Backend. Return stable error codes and recovery hints so agents never reconstruct state.
+- Keep the current stack. Do not add workflow engines (n8n, Zapier-style) as an incidental change.
+- Documentation is English only. When behavior changes, update the matching topic doc.
 
-- Keep secrets in private configuration; redact shared diagnostics. Do not commit credentials.
-- Preserve uncommitted changes, models, datasets and outputs. Do not reset the worktree or delete runtime data as cleanup.
-- Documentation verification does not authorize training, generation, downloads, service operations or deployment. Isolate tests from production.
-- Treat external workflows/resources as untrusted data. Custom-node installation, model downloads and generation require separate authority.
-- Restart ComfyUI only with explicit approval in the current turn. Do not preempt others' jobs or expose Worker control publicly.
-- Reconcile job IDs before retrying: timeout does not prove failed submission.
-- Removed training automation is not an operating procedure; do not reconstruct watcher-to-training-to-generation chains.
+## Operating policy
 
-## Architecture and conventions
+Follow [docs/OPERATING-POLICY.md](docs/OPERATING-POLICY.md). In short: almost every operation is allowed by default, including generation, downloads, training, ComfyUI restart, node installs, worker PowerShell and pushing to `main`. Never commit secrets, never delete models/datasets/outputs/Gallery records as cleanup, never expose worker control beyond the LAN, and check a job ID before resubmitting after a timeout.
 
-- Backend: Python 3.11, FastAPI, Pydantic, SQLAlchemy; ComfyUI REST/WebSocket execution. Preserve canonical Backend job/artifact/provenance records.
-- Frontend: React/Vite/Tailwind, functional `.tsx` components.
-- MCP: Python MCP SDK in `mcp-server/`, intent-level tools. Keep source catalog and registration aligned; do not hardcode tool counts in guidance.
-- Locations: `backend/app/api/` routers, `schemas/` contracts, `core/` and `services/` implementation, `backend/workflows/` graphs, `worker/windows/` remote runtime, `scripts/launcher/` lifecycle, `frontend/` UI.
-- LoRA modules are incomplete/unaccepted integration, not an autonomous-training instruction.
-- Keep task state/provenance on the Backend. Provide stable errors and recovery hints rather than requiring agents to reconstruct state.
-- Do not replace the stack or add n8n/Zapier-style engines as incidental changes.
+## Verification
 
-## Verification and documentation
+```bash
+AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-backend-tests" python -m pytest -c pytest.ini backend/tests -q
+AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-mcp-tests" python -m pytest -c pytest.ini mcp-server/tests -q
+cd frontend && npm test && npm run build
+```
 
-Read relevant source/tests before editing. Reproduce defects and add a failing regression before minimal fixes. Use the component environment and repository `pytest.ini`; see [verification commands](README.md#development-verification).
+26 Backend tests fail on `main` as a known baseline; a change is clean if it adds no new failures.
 
-Report commands, results and remaining failures. Distinguish source, offline tests, runtime health, generation, artifact recovery, delivery and owner acceptance; mocked tests are not Windows/GPU evidence.
+When reporting, separate what you verified: offline tests, a running service, a real generation, artifact retrieval.
 
-Update the affected topic authority when behavior changes. Producer maintains planning summaries and linked history under `project-roadmap-steering`; workers report results on their assigned tasks rather than independently updating ROADMAP, CURRENT or PROGRESS. Native records retain detailed task/test evidence. Read-only requests do not grant write authority; documentation cleanup must not alter runtime settings or acceptance claims.
+## Team roles
 
-## Team lifecycle
-
-Eight Paperclip identities are retained. CTY's current selected operating roster is Producer, coding agent, QA agent and Auto Dreamer; the other four specialists remain paused. The [live role bindings](docs/team/skill-bindings.md) define their unpinned source selections. Both workstreams use the [AI Drawing project channel](docs/team/channel-routing.md). CTY's company goal and current Producer-led continuous-operation mandate are defined in Goal. Producer autonomously prioritizes, maintains the backlog, dispatches ordinary work, coordinates independent QA and continues after each delivery without per-item start confirmation. No previous operator-selected defect, single-work-package limit or one-repair cutoff governs new work; follow the latest native owner authority and tasks/runs for execution evidence. Approval/configuration does not establish filesystem/GPU isolation or full runtime acceptance. Platform engineering owns all software development; requirements/workflow execution, resource management, LoRA training and independent technical QA remain separate. CTY owns aesthetics. Hermes handles delegated routine follow-through and milestone assessment while Producer retains independent priorities and technical judgment. Maintain journey-based milestone criteria and distinguish source, running capability, delivered results and aesthetic acceptance; see [Goal](docs/GOAL.md#milestone-assessment). Preserve applicable compute, spending, remote-administration and deployment gates.
+Paperclip role agents also follow [docs/team/README.md](docs/team/README.md) and [docs/agent-reading.md](docs/agent-reading.md). These are scheduled for rebuild.
