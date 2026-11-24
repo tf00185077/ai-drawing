@@ -6,7 +6,7 @@ The MCP server (`mcp-server/`) gives agents intent-level tools for generation, t
 
 **Built:** tools for generation (image, custom workflow, video), job status and cancel, resource listing, Gallery, Civitai, style presets, Prompt Library, LoRA training, Discord delivery, ComfyUI restart/node install/memory. Image generation accepts a revision context (`request_ref`, `parent_artifact_id`, feedback), so revisions are traceable. The tool list is in `mcp-server/mcp_server/tool_catalog.py`.
 
-**Verified in a real run:** retrieval of an existing Gallery image through MCP. A full request → generate → retrieve → revise journey has not been run.
+**Verified in a real run:** the [Mac baseline](tasks/p1-00-mcp-friction-run-mac/manifest.md), independently [reviewed](tasks/p1-00-mcp-friction-run-mac/review.md), completed one local original with Illustrious/default and retrieved Gallery metadata. It stopped before image-byte retrieval and revision: the relative locator failed locally before HTTP, and the live Backend lacks the source's revision contract. The exact loaded Backend commit is unknown. [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/task.md) repairs these blockers before later Phase 1 release; no end-to-end success is claimed.
 
 **Gaps:**
 - Responses mix plain text, JSON strings and objects.

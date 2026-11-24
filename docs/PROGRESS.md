@@ -16,16 +16,16 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Known test failures removed (outdated snapshot, packaging and platform tests); fixtures pinned to LF | Done |
 | Backend suite on Windows: no failures or hangs (2018 passed, 6 skipped); MCP 314 passed | Done 2026-11-24 |
 | LoRA run files read as UTF-8 on Windows ([p0-01](tasks/p0-01-windows-utf8-lora-files/task.md)) | Done 2026-11-24 |
-| Backend suite on macOS after the cleanup | Moved to [p1-00](tasks/p1-00-mcp-friction-run-mac/task.md) |
+| Backend suite on macOS after the cleanup | Done in [p1-00](tasks/p1-00-mcp-friction-run-mac/review.md): Coding and QA each 1900 passed, 124 Windows-only skips, `--timeout=60` |
 
 ## Phase 1 — MCP for agents
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
 | 40 intent-level tools, catalog kept in sync with registration | Done | `mcp-server/mcp_server/tool_catalog.py`, `server.py` | `test_tool_catalog.py`, `test_server.py` | — |
-| Image, custom-workflow and video generation; status; cancel | Done | `tools/generate.py` | `test_generate_tools.py`, `test_tools.py` | No |
+| Image, custom-workflow and video generation; status; cancel | Done | `tools/generate.py` | `test_generate_tools.py`, `test_tools.py` | One local image + status only (p1-00) |
 | Revision context and parent lookup on generation | Done | `schemas/generate.py`, `tools/generate.py` | `test_revision_context.py` (Backend + MCP), `test_revision_parent_errors.py` | No |
-| Gallery read, artifact read, rerun | Done | `tools/gallery.py` | `test_tools.py` | Yes (read of an existing image) |
+| Gallery read, artifact read, rerun | Done | `tools/gallery.py` | `test_tools.py` | Metadata of generated original (p1-00); image bytes blocked |
 | Prompt Library, style presets, Civitai tools | Done | `tools/prompt_library.py`, `style_presets.py`, `civitai.py` | matching `test_*` files | No |
 | ComfyUI restart, node install, free memory | Done | `tools/comfyui_nodes.py`, `comfyui.py` | `test_comfyui_nodes.py` | No |
 | Discord delivery of results | Done | `tools/discord_delivery.py` | `test_discord_delivery.py` | No |
@@ -127,3 +127,11 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 - Read QA's independent [CLEAR kickoff](tasks/p1-00-mcp-friction-run-mac/kickoff-review.md) on [AID-147](/AID/issues/AID-147), pinned to `e443f2e`. Its repository mirror matches the official attachment; no specification or software changed in kickoff.
 - [AID-142](/AID/issues/AID-142) created [Coding AID-148](/AID/issues/AID-148) and separate [QA evidence review AID-149](/AID/issues/AID-149), each with the approved specification and delegated-choice authority in its native plan. Coding has a live execution run; QA waits natively on Coding, AID-142 waits on QA, and AID-141 continues to wait on AID-142.
 - The first delivery still measures the full Mac Backend suite and current-tool original/revision flow without repairs. No routine CTY question was created. Producer verified documents, kickoff and handoff only; baseline test, generation and generated-artifact outcomes remain unaccepted until delivery review.
+
+### 2026-11-24 — p1-00 evidence accepted; bounded repair required
+- Producer read [Coding AID-148](/AID/issues/AID-148)'s exact evidence `3081952` and [QA AID-149](/AID/issues/AID-149)'s [evidence-only PASS](tasks/p1-00-mcp-friction-run-mac/review.md); official attachments, archive files and patches match Git. The unchanged evidence and QA report/registry `c377a02` are integrated. This accepts D1-D4, including D2's documented-blocker option.
+- Offline: Coding full Mac Backend `1900 passed, 124 skipped, 77 warnings in 43.84s`; QA independent rerun `1900 passed, 124 skipped, 77 warnings in 44.13s`; both exit 0 with `--timeout=60`. All skips require Windows. No new full MCP/Frontend/Windows result.
+- Live service: ping/resources and existing-job/Gallery reads work; identical live OpenAPI snapshots omit revision context while current source defines it. The loaded Backend commit remains unknown. Real generation: one original completed. Artifact retrieval: metadata only; relative URL interpretation failed locally before HTTP; no image bytes, revision or lineage success.
+- Raw stdio confirms one submission, 12 same-job polls, no timeout/resubmission. The preserved baseline is **23 intervention units across eight incidents**, with complete mappings and no hidden product repairs.
+- [AID-142](/AID/issues/AID-142) keeps AID-141/AID-143 gated and scopes [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/task.md) for runtime alignment and usable locator/byte retrieval, followed by a fresh original/revision pair. Independent kickoff CLEAR precedes Coding; exact-commit PASS precedes merge and release. The original baseline is not rewritten, and no routine CTY question is needed inside delegated boundaries.
+- Producer's acceptance round verifies docs, attachment integrity and raw evidence only; it does not rerun suites, probe services, generate or retrieve image bytes. Captured the durable [loaded-runtime verification rule](memory/runtime-source-contract-verification.md); job receipts/counts stay in task evidence.

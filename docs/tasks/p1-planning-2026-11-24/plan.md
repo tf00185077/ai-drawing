@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 kickoff CLEAR at `e443f2e`; Coding baseline dispatched**.
+Status: **p1-00 evidence accepted at `3081952`; p1-00a repair kickoff next; p1-01/02 remain gated**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -57,9 +57,10 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | Native card / order | Work and execution owner | Native prerequisite | Observable delivery |
 |---|---|---|---|
 | [AID-147](/AID/issues/AID-147), completed | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit `e443f2e` | [CLEAR](../p1-00-mcp-friction-run-mac/kickoff-review.md); independent reading and comparison; no execution acceptance |
-| [AID-148](/AID/issues/AID-148), executing | Coding runs p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | Exact evidence commit, Mac Backend suite with `--timeout=60`, raw ordered stdio transcript, friction log and baseline count |
-| [AID-149](/AID/issues/AID-149), waiting | QA independently reviews p1-00 evidence | AID-148 native prerequisite; read the actual delivery | PASS / FAIL / AMBIGUITY at the exact evidence commit, D1-D4 outcomes and truthful verification limits |
-| [AID-142](/AID/issues/AID-142), 1 | Producer coordinates p1-00 and accepts or repairs the reviewed result | AID-149; read actual verdict, not only completed status | Accepted usable baseline after any necessary bounded repairs; CURRENT/PROGRESS updated before later release |
+| [AID-148](/AID/issues/AID-148), completed | Coding ran p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | [Evidence](../p1-00-mcp-friction-run-mac/manifest.md) `3081952`: passing Mac suite, completed original, byte retrieval/revision blocked; 23 intervention units/eight incidents |
+| [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `3081952` for D1-D4 including the documented-blocker route; report/registry `c377a02` |
+| p1-00a kickoff, next | QA independently reviews [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification and accepted baseline evidence | CLEAR / ASK OWNER / BLOCK on QA's own card before Coding dispatch; fresh exact-commit QA after execution |
+| [AID-142](/AID/issues/AID-142), 1 | Producer accepted the evidence-only baseline and coordinates necessary repairs | p1-00a kickoff, then separate Coding and delivery-QA cards | Accepted repair with identified running source, usable artifact bytes and a fresh traceable original/revision pair before later release |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -106,13 +107,28 @@ For p1-01/02, deliver a manifest in each task folder and review their combined
 final commit. Merge/push together only after PASS; every later software delivery
 also needs PASS. Update CURRENT/PROGRESS and continue without per-item starts.
 
-AID-147 returned CLEAR for `e443f2e`; Producer read its independent comparison and
-verified the repository mirror against the official review attachment. AID-148
-is now executing against that fixed baseline. AID-149 has AID-148 as its native
-prerequisite and reviews the exact delivered evidence commit. AID-142 waits on
-AID-149; AID-141 remains blocked by AID-142. Each new recipient has a saved native
-plan carrying the specification and CTY's delegated-choice authority. No routine
-owner interaction was created.
+AID-147 returned CLEAR for `e443f2e`. AID-148 delivered `3081952` without repairs;
+AID-149 returned evidence-only PASS, and Producer inspected the actual manifest,
+review, full bounded suite receipts, raw transcript and friction accounting. The
+official attachments and exact patches match Git. The original evidence and QA
+report/registry `c377a02` are integrated without changing their bytes.
+
+The full Mac Backend suite passed twice independently: 1900 passed, 124 existing
+Windows-only skips, 77 warnings; Coding 43.84s, QA 44.13s, both exit 0 with
+`--timeout=60`. One original completed, with Gallery metadata only. The relative
+URL failed locally before an HTTP image request; no bytes or revision were
+retrieved. The live Backend omits revision context and its loaded commit is
+unknown. This is an accepted baseline record, not a usable end-to-end journey.
+
+Producer now sends p1-00a to independent fixed-commit kickoff. Its bounded scope
+aligns the existing Backend runtime and resolves the locator/client boundary,
+then proves a fresh original/revision pair with actual bytes and persisted
+lineage. No envelope/consolidation/wait/health redesign is pulled forward. The
+original 23-unit/eight-incident no-repair baseline remains unchanged; repair
+interventions are recorded separately. AID-142 stays open through acceptance,
+and AID-141/AID-143 remain natively blocked by it. After actual CLEAR, create
+separate Coding and exact-commit QA cards with saved native plans and native
+prerequisite edges. No ordinary owner confirmation is pending.
 
 Later coordination cards depend on their predecessor. This is an event-driven
 continuation, not polling or a prose-only promise to resume. A completed review
@@ -121,21 +137,23 @@ returning ASK OWNER/BLOCK is likewise triaged before implementation starts.
 
 ## Verification and reporting
 
-The planning round verified source/docs, native plans and prerequisite edges,
-publication and kickoff release. Read-only Backend/ComfyUI health/resource probes
-succeeded. The follow-through round verified the independent kickoff, its exact
-attachment mirror, both recipient plans and Coding's live execution path. Producer
-changed status documents only and did not run a suite, probe services, generate an
-image or retrieve a generated artifact in follow-through. Baseline runtime results
-remain subject to delivery review. Prior Windows counts stay prior evidence; Mac
-Backend verification is p1-00's first execution action.
+The planning and initial dispatch rounds verified source/docs, native handoffs,
+read-only health/resources and publication. The acceptance round verified the
+actual completed deliveries, official attachments/archives/patches and raw call
+accounting. It integrated reviewed task evidence and QA metadata and wrote the
+bounded repair specification/status documents. Producer did not rerun software
+suites, probe services, generate or retrieve image bytes in this acceptance
+round. Accepted Coding/QA results remain attributed to those runs; prior Windows
+counts remain prior evidence. No new full MCP/Frontend/Windows result or phase
+exit is implied.
 
 Report the adopted pair, first work, native task links and actual next actor in
 Traditional Chinese in Discord `1562710701280202813`. No owner response is
 requested for these ordinary choices. Later delivery reports must distinguish
 offline tests, running services, real generation and artifact retrieval.
 
-Knowledge capture: the delegated-choice rule and its reason are recorded in
-roadmap/MCP decisions with source provenance. Existing memory already covers
-compute targets, model loaders and revision lineage; transient receipts do not
-become memory topics.
+Knowledge capture: the delegated-choice rule remains in roadmap/MCP decisions;
+the new [runtime source-contract topic](../../memory/runtime-source-contract-verification.md)
+explains why a current checkout and healthy process cannot certify loaded
+revision behavior. Compute/model/lineage topics remain in place. Receipts and
+incident accounting stay in task evidence.
