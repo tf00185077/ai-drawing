@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 evidence accepted at `3081952`; p1-00a corrected delivery `b6d5846` accepted after round-2 PASS; p1-01/02 are next for independent kickoff**.
+Status: **p1-00 evidence accepted at `3081952`; p1-00a corrected delivery `b6d5846` accepted after round-2 PASS; p1-01/02 baseline/specifications reconciled for fresh independent kickoff; Coding not released**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -97,6 +97,14 @@ inactive until Phase 1 exits and CTY reviews the roadmap at phase close.
 QA independently reviews these points. A demonstrated spec defect is repaired or
 escalated according to its actual effect on boundaries, not automatically sent
 back to CTY as a routine technical option.
+
+AID-143's [baseline-informed kickoff context](../p1-01-mcp-response-envelope/kickoff-context.md)
+maps all eight original incidents without changing the 23-unit baseline or
+overstating the accepted Mac repair. It clarifies MCP-path validation/error
+coverage, all 40 old-tool dispositions and the staged `mcp_ping` → `health`
+transition. QA must give a fresh explicit verdict for each fixed specification;
+no earlier baseline/repair clearance releases Coding for p1-01/02. The recipient
+card and current gate are linked in AID-143's native plan.
 
 ## Handoff, delivery and continuation
 

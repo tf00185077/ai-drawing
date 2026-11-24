@@ -13,10 +13,10 @@ An agent parses every tool result the same way: `{"ok": true, "data": ...}` or `
 Included: all tools registered in `mcp-server/mcp_server/server.py`; a shared envelope helper; a documented list of error codes with hints; the catalog's `response_category` replaced by the single envelope.
 Excluded: renaming or merging tools (p1-02); new tools (p1-03, p1-04); Backend API changes.
 Open questions: none.
-Read first: the [p1-00](../p1-00-mcp-friction-run-mac/task.md) friction log, [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
+Read first: the [accepted baseline and complete friction mapping](kickoff-context.md), the original [p1-00 friction log](../p1-00-mcp-friction-run-mac/manifest.md#friction-log-and-phase-1-baseline-count), [p1-00a acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
 
 ## Done when
-- [ ] Every registered tool returns the envelope on success and on failure, including Backend HTTP errors, validation errors and connection errors. Check: test — one parametrized test calls every catalog tool with a mocked success and a mocked failure. Evidence: test name and output.
+- [ ] Every registered tool returns the envelope on success and on failure, including Backend HTTP errors, validation errors and connection errors. Check: test — one parametrized test calls every catalog tool through the MCP call path with a mocked success and a mocked failure; separate cases cover MCP argument validation before the tool body, including a non-LoRA tool. Evidence: test names and output.
 - [ ] Backend error details are kept: known Backend error codes (e.g. `revision_request_conflict`) appear as `error.code` with a `hint`; unknown errors use a generic code and keep the HTTP status in `error.message`. Check: test. Evidence: test output.
 - [ ] `docs/mcp.md` documents the envelope and the error-code list. Check: manual (QA reads it against the code). Evidence: link to the doc section.
 - [ ] MCP suite passes with no new failures. Check: test — `AI_DRAWING_TEST_ROOT=... python -m pytest -c pytest.ini mcp-server/tests -q`. Evidence: command and summary line.

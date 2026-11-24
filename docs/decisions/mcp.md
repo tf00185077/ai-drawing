@@ -39,6 +39,11 @@
 
 Status: target for [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md); the coding agent may adjust names with QA agreement, but each intent keeps one tool and one risk label.
 
+Delivery is staged in the existing order: p1-01/02 retain `mcp_ping` temporarily
+(common envelope, `read`), p1-03 adds `wait_for_job`, and p1-04 replaces the ping
+with `health` and adds `list_workers`. Documentation must distinguish the
+executable tool list at each delivery from the final Phase 1 flow.
+
 | New tool | Replaces | Risk |
 |---|---|---|
 | `health` | `mcp_ping` (adds ComfyUI and worker reachability, p1-04) | read |
