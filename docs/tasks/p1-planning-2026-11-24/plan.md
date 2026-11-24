@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 evidence accepted at `3081952`; p1-00a corrected delivery `b6d5846` accepted after round-2 PASS; p1-01/02 baseline/specifications reconciled for fresh independent kickoff; Coding not released**.
+Status: **p1-00 and p1-00a accepted; p1-01 kickoff CLEAR and p1-02 AMBIGUITY at `d1ffb8d`; bounded compose/save clarification prepared for fresh round-2 verdicts; Coding not released**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -65,6 +65,7 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | [AID-153](/AID/issues/AID-153), completed | Coding corrected inventory/schema evidence under original D5 | Actual QA finding and [bounded correction](../p1-00a-mac-runtime-and-retrieval/repair-round-1.md) at `c41815c`; original CLEAR/task unchanged | [Corrected manifest](../p1-00a-mac-runtime-and-retrieval/manifest.md), exact candidate `b6d5846`; complete schema/preservation receipts; no product change/restart/new generation |
 | [AID-154](/AID/issues/AID-154), completed | QA independently reviewed exact corrected candidate `b6d5846`, round 2 | AID-153 actual delivery | [D1-D5 PASS](../p1-00a-mac-runtime-and-retrieval/review.md), report/evidence/registry `3d5d890`; applicable D1-D4 evidence reused with equivalence checks; one prior rejection retained |
 | [AID-142](/AID/issues/AID-142), 1 | Producer accepted baseline and corrected repair | Actual AID-154 PASS read and official packets checked | [Acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), unchanged reviewed delivery integrated; publication/completion releases AID-143 |
+| [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `d1ffb8d` | AID-143 complete baseline/friction handoff | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review-round-1.md); [p1-02 AMBIGUITY K2-1](../p1-02-mcp-tool-consolidation/kickoff-review-round-1.md), report `b32ac4f`; Producer's compose/save clarification needs fresh round-2 kickoff |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -105,6 +106,15 @@ coverage, all 40 old-tool dispositions and the staged `mcp_ping` → `health`
 transition. QA must give a fresh explicit verdict for each fixed specification;
 no earlier baseline/repair clearance releases Coding for p1-01/02. The recipient
 card and current gate are linked in AID-143's native plan.
+
+AID-155 returned p1-01 CLEAR and p1-02 AMBIGUITY at `d1ffb8d`. Its actual
+reports/package were checked and preserved. [Clarification 1](../p1-02-mcp-tool-consolidation/kickoff-clarification-1.md)
+settles K2-1 under the approved read/write map: composition rejects legacy
+`save_as`; returned fragments are saved through `prompt_write(save)` with
+existing concurrency/provenance semantics. Backend APIs and p1-01 task bytes
+stay unchanged. Fresh independent round-2 verdicts for both fixed specs precede
+Coding. This is one kickoff ambiguity/clarification round 1, not an
+implementation delivery rejection; p1-00a accounting remains separate.
 
 ## Handoff, delivery and continuation
 

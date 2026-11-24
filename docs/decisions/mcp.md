@@ -14,6 +14,13 @@
 
 ## Log (newest first)
 
+### 2026-11-24 · Keep prompt composition read-only; save through the write intent
+- Decision: `prompt_compose` accepts composition inputs only and rejects the legacy MCP `save_as` argument with the common validation-error envelope and a hint to use `prompt_write(action=save)`. Saving composed positive/negative fragment arrays, metadata and existing concurrency/provenance fields goes through that `mutate` intent. Backend APIs remain unchanged.
+- Why: the existing MCP compose wrapper forwards `save_as` to a persistent writer. Carrying that option into a tool labeled `read` would contradict the approved read/write intent map; silently ignoring it would conceal an unsaved request.
+- Supersedes: the unresolved optional-capability disposition in the original p1-02 map, not its approved risk labels. The single compose-and-save MCP convenience becomes an explicit compose then save sequence, with no cross-call atomicity guarantee.
+- Provenance: Producer adopts [QA's bounded recommendation](/AID/issues/AID-155#comment-7ef7f3c8-631a-4a9b-b532-fcb12ef6b8ec) under the [delegated routine-choice authority](../requests/2026-11-24-proceed-within-project-boundaries.md), after checking the wrapper, provider, schemas and existing API tests. No new phase, Backend behavior or owner-boundary decision is introduced.
+- Link: [contract](#prompt-composition-and-saving), [clarification 1](../tasks/p1-02-mcp-tool-consolidation/kickoff-clarification-1.md). Fresh independent kickoff must clear the clarified specification before Coding.
+
 ### 2026-11-24 · Apply delegated choices and reconcile Phase 1 specifications
 - Decision: use the installed Illustrious/default pair for p1-00 and p1-05; preserve all LoRA names, including job status/cancel, as the existing exclusion says; regroup p1-02/p1-03 checks to at most five without dropping requirements; state training outputs and unknown timeout limits honestly.
 - Why: these are technical consistency and baseline choices inside the existing Phase 1, with no change to project boundaries. The tool map had contradicted its own LoRA exclusion.
@@ -57,8 +64,8 @@ executable tool list at each delivery from the final Phase 1 flow.
 | `gallery_get` | `get_gallery_image`, `get_gallery_artifact` | read |
 | `gallery_rerun` | `gallery_rerun` | mutate |
 | `prompt_search` | `prompt_library_search` | read |
-| `prompt_compose` | `prompt_library_compose` | read |
-| `prompt_write` (`action`: `save`, `archive`, `restore`) | `prompt_library_save`, `prompt_library_archive`, `prompt_library_restore` | mutate |
+| `prompt_compose` | Pure composition from `prompt_library_compose`; legacy `save_as` rejected (see below) | read |
+| `prompt_write` (`action`: `save`, `archive`, `restore`) | `prompt_library_save`, `prompt_library_archive`, `prompt_library_restore`; saving composed fragments also uses `save` | mutate |
 | `style_preset_get` (no id = list) | `list_style_presets`, `get_style_preset` | read |
 | `style_preset_compose` | `compose_style_preset` | read |
 | `style_preset_save` (`from`: fields or successful job) | `create_style_preset`, `save_successful_workflow_as_style_preset` | mutate |
@@ -69,6 +76,33 @@ executable tool list at each delivery from the final Phase 1 flow.
 **Kept as they are in Phase 1** (envelope only; redesigned later): Civitai — `civitai_source_info`, `civitai_resource_acquire`, `civitai_resource_status` (Phase 2); LoRA — `lora_dataset_list`, `lora_dataset_inspect`, `caption_image`, `lora_training_decision_preflight`, `lora_train_start`, `lora_train_job_status`, `lora_train_logs`, `lora_train_cancel`, `lora_train_smoke_test` (Phase 5). Their risk labels follow the one-label rule (`caption_image` is `mutate`, the dataset reads are `read`).
 
 **Removed from MCP** (Backend code frozen): `generate_video_wan_keyframes`, `generate_video_custom_workflow`, `civitai_generate_like`.
+
+## Prompt composition and saving
+
+`prompt_compose` is a read intent. It takes the existing `combination_id`,
+`positive` and `negative` composition inputs and sends no `save_as` to the
+Backend. The legacy argument is absent from the advertised MCP schema. An MCP
+call containing `save_as`, including an empty or null value, must fail before
+any Backend request with `error.code=request_validation_failed` in the common
+envelope and a hint to compose then use `prompt_write(action=save)`. Do not
+silently ignore that argument or route it to a writer.
+
+To save, pass the composed response's **positive and negative fragment arrays**
+to `prompt_write(action=save, resource_type=combination, resource_id=...)`, with
+the existing save metadata and revision/ETag fields. Preserve references,
+snapshots, weights, order and any applicable source/provenance/context fields;
+rendered prompt strings are not substitutes for the arrays. The write intent
+uses the existing combination-save API. Creation and update retain the existing
+concurrency rules and error codes; a conflict must not trigger an automatic
+overwrite or retry. This is two MCP calls, with no atomic transaction across
+them. The Backend's direct compose-with-save API remains available unchanged.
+
+The p1-02 mapping must name this optional-capability migration as well as all
+40 old tool names. Registered MCP tests must prove ordinary composition sends
+no save intent, a legacy `save_as` call is rejected before Backend access, and
+the replacement save path carries returned fragments plus concurrency fields
+and preserves the existing conflict result. A correct label alone is not this
+proof.
 
 ## Open questions
 - None for resource selection: Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target under [delegated routine-choice authority](../requests/2026-11-24-proceed-within-project-boundaries.md); p1-00 verifies runtime compatibility, p1-05 reuses the pair.
