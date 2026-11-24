@@ -29,9 +29,11 @@ Preserve the Backend's actual identities and nullable references. Keep legacy
 images separate from canonical artifacts. Construct host paths/URLs only from
 supported Gallery mappings; keep missing/unsafe mappings explicit. A completed
 Backend job does not establish retrievability, host-filesystem access or decoded
-bytes. Training model output is not Gallery image/video media. For the proposed
-wait tool, follow the [target result/error contract](../decisions/mcp.md#wait-results-and-media-locators);
-its independent kickoff/delivery gates still determine when it is available.
+bytes. Training model output is not Gallery image/video media. For
+wait results, follow the [delivered MCP result/error contract](../mcp.md#bounded-wait-and-results)
+and the [identity/locator decision](../decisions/mcp.md#wait-results-and-media-locators).
+An unavailable-locator error can retain completed Backend status; inspect the
+same job and supported Gallery mapping before another read.
 
 ## Evidence
 

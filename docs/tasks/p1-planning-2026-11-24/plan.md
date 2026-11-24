@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/p1-00a and combined p1-01/02 accepted/published; p1-03 clarified specification independently CLEAR at `522c2f1` after kickoff round 2; implementation and exact-commit delivery review next, with feature publication gated by PASS**.
+Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 fresh kickoff is next**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -231,6 +231,34 @@ QA's fresh selected Backend 3/one warning, MCP 19 and extended isolated fixture
 checks establish existing source shapes only. Producer's handoff adds no software
 suite, runtime probe/deployment/restart, real generation/training or live Gallery
 retrieval. Historical full suites/live proof and all retained-data boundaries stay.
+
+## Accepted p1-03 delivery and p1-04 release
+
+[Coding AID-163](/AID/issues/AID-163) delivered exact candidate
+`77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`; [QA AID-164](/AID/issues/AID-164)
+returned independent all-D1-D5 PASS, report/evidence/registry
+`d088c3258ab782623631d60daaaccc8ce6fcb6dc`. Producer read both actual
+manifest/report, verified ten official uploads, exact patches/bundles and all
+203/262 indexed payloads against Git/hashes. Reviewed source/tests/manifests/
+evidence and QA registry are integrated unchanged; [acceptance](../p1-03-mcp-wait-and-result/acceptance.md)
+records behavior, tests, client-limit uncertainty and live proof limits.
+
+Fresh QA Backend 1900/124 Windows skips, restored MCP 540/two unchanged optional
+skips, wait 77 and independent extra cases 28 pass. Seven faults fail and restore
+before final GREEN; 13 registry rows preserve the prior nine. Actual client limit
+remains unverified, with explicit approved 50-second total fallback; short
+mocked elapsed checks disclose SDK/setup overhead and are not live measurement.
+No extra Producer suite, runtime deployment, real generation/training or live
+Gallery-byte retrieval is claimed. Preserve all runtime/private config/venvs/data.
+
+One p1-03 kickoff ambiguity/clarification 1/kickoff 2 CLEAR and delivery review 1
+PASS, zero delivery rejections, remains separate from p1-02/p1-00a history.
+Completion/publication of [AID-144](/AID/issues/AID-144) releases [AID-145](/AID/issues/AID-145)
+for its existing health/configured-worker specification's own fresh CLEAR before
+Coding and exact-commit PASS before publication. Read current 30-intent envelopes;
+use existing endpoints and empty/one configured worker, not Phase 3 registry/
+heartbeat/scheduling. Real Mac smoke/demo/three-run/phase-close gates remain later.
+No routine owner/start/resource confirmation remains.
 
 ## Handoff, delivery and continuation
 

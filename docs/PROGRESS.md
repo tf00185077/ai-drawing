@@ -22,7 +22,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
-| 29 consolidated intent tools, one risk each; catalog/discovery aligned | Done, p1-01/02 accepted | `mcp-server/mcp_server/tool_catalog.py`, `server.py`, `tools/intents.py` | Independent literal risk/discovery guards; full MCP 460 passed/2 optional skips | Software verified offline; new surface not deployed here |
+| 30 intent tools including bounded wait, one risk each; catalog/discovery aligned | Done, p1-01/02 and p1-03 accepted | `mcp-server/mcp_server/tool_catalog.py`, `server.py`, `tools/intents.py` | Independent literal risk/discovery guards; full MCP 540 passed/2 optional skips | Software verified offline; new surface not deployed here |
 | Image template/custom-workflow generation; generation status/cancel; video submission removed from MCP | Done, p1-02 accepted | `tools/intents.py`, `tools/generate.py` | Registered mode/request preservation and full MCP | Prior Mac original/revision + status (p1-00a); consolidated surface offline |
 | Revision context and parent lookup on generation | Done | `schemas/generate.py`, `tools/generate.py` | `test_revision_context.py` (Backend + MCP), `test_revision_parent_errors.py` | Yes, Mac original/revision canonical lineage (p1-00a) |
 | Gallery read, artifact read, rerun | Done | `tools/gallery.py` | `test_tools.py` | Both readers' returned host paths consumed/decoded on Mac (p1-00a) |
@@ -30,7 +30,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | ComfyUI restart, node install, free memory | Done | `tools/comfyui_nodes.py`, `comfyui.py` | `test_comfyui_nodes.py` | No |
 | Discord delivery of results | Done | `tools/discord_delivery.py` | `test_discord_delivery.py` | No |
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
-| `wait_for_job` and truthful result locators | Not started; p1-03 kickoff round 2 CLEAR, implementation next | [task/contract](tasks/p1-03-mcp-wait-and-result/task.md) | Kickoff source/fixture checks only; no wait tests yet | No |
+| `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
@@ -254,3 +254,46 @@ product-service probe/restart/deployment, real generation/training or live Galle
 retrieval. Active runtime/private configuration, canonical venvs and all retained
 data stay intact. Prior full suites/live proof, 23-unit/eight-incident baseline,
 separate p1-02/p1-00a histories, remote/aesthetic/three-run/phase-close limits remain.
+
+## 2026-11-24 — p1-03 bounded wait accepted; health/workers next
+
+[Coding AID-163](/AID/issues/AID-163) delivered `77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`
+from `a88b84a`. [QA AID-164](/AID/issues/AID-164) independently returned
+[D1-D5 PASS](tasks/p1-03-mcp-wait-and-result/review.md) at that same final candidate,
+exact report/evidence/registry `d088c3258ab782623631d60daaaccc8ce6fcb6dc`.
+Producer read the actual manifest/report and verified all ten official uploads,
+exact patches/bundles and all 203 Coding/262 QA indexed payloads against hashes,
+blob IDs and immutable Git (205/264 archive members). [Acceptance](tasks/p1-03-mcp-wait-and-result/acceptance.md)
+records the behavior/proof limits; reviewed product/tests/manifests/evidence and
+QA registry are integrated unchanged. Final published main equality is in
+[the native ledger](/AID/issues/AID-144#document-plan).
+
+The 30th intent, wait_for_job=read, provides bounded existing generation/training
+state/results with all canonical identities, separate legacy images, truthful
+locator-unavailable/completed state, safe failures/cancellation and independent
+training/smoke projection. One deadline covers lookup/status/body/enrichment/
+sleep/preparation; timeout uses the same ID and sends no cancel/submission.
+Actual client limit is **unverified**; 50 seconds remains approved overall
+fallback policy. QA's 70 ms stages measured 71.5-73.7 ms and a 45 ms partial
+enrichment measured 47.4 ms with SDK/setup overhead, aborting 300-400 ms reads;
+these are short mocked-control checks, not a measured live client deadline.
+
+Fresh independent Backend **1900 passed/124 Windows skips/76 warnings**, final
+restored MCP **540 passed/two unchanged optional smoke-export skips**, wait
+**77 passed** and additional QA **28 passed**. Isolated roots, pinned sources,
+fresh Backend exports and per-test timeout 60 are retained. All seven meaningful
+faults fail, then restore before final GREEN. QA preserves nine old registry rows
+and certifies four new automated items (13 active), no supersession. Setup/helper
+failures are preserved separately; no product failure remains. Frontend/build/
+native Windows and other unchanged component scopes remain unrun.
+
+Producer acceptance runs identity/document/integration/publication checks only;
+no extra software suite on unchanged reviewed inputs, product-service probe/
+restart/deployment, real generation/training or live Gallery-byte retrieval.
+Retain active runtime/private configuration, canonical venvs and all data.
+One p1-03 kickoff ambiguity/clarification 1/kickoff 2 CLEAR and delivery review 1
+PASS with zero implementation rejections remains separate from p1-02/p1-00a
+history. Original baseline/live proof and remote/aesthetic/three-run/phase limits
+are unchanged. Completion/publication of [AID-144](/AID/issues/AID-144) releases
+[AID-145](/AID/issues/AID-145) for its own p1-04 fresh kickoff/build/exact-review
+cycle, using current envelopes and 30 intents. No routine owner confirmation.
