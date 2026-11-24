@@ -19,15 +19,15 @@ Recipe `id`, filename, note frontmatter `preset_id` and index summary must agree
 
 ### Compose new content
 
-`compose_style_preset(preset_id, content_prompt, profile?, overrides?)` returns a `generation` payload without submitting a job: base prompt + profile prefix + content + suffix, merged negatives, and defaults → profile parameters → explicit overrides. Pass it to `generate_image`. Choose the profile explicitly.
+`style_preset_compose(preset_id, content_prompt, profile?, overrides?)` returns a `data.generation` payload in the MCP envelope without submitting a job: base prompt + profile prefix + content + suffix, merged negatives, and defaults → profile parameters → explicit overrides. Pass it to `generate`. Choose the profile explicitly.
 
 ### Replay a saved graph
 
-`test_saved_style_preset_workflow(preset_id, profile?, execution_target?)` queues the saved graph unchanged and accepts no overrides. An omitted profile means `__base__.api.json`.
+`style_preset_test(preset_id, profile?, execution_target?)` queues the saved graph unchanged and accepts no overrides. An omitted profile means `__base__.api.json`.
 
 ### Create or save
 
-`create_style_preset` writes a recipe and initial note, then reindexes; complete the note from the template. `save_successful_workflow_as_style_preset(source, preset_id, prompt_keywords, negative_prompt_keywords?, profile?)` stores a recorded successful result's graph when the user asks to save it.
+`style_preset_save(from_source=fields)` writes a recipe and initial note, then reindexes; complete the note from the template. `style_preset_save(from_source=successful_job, source=..., preset_id=..., prompt_keywords=..., negative_prompt_keywords=..., profile=...)` stores a recorded successful result's graph when the user asks to save it.
 
 ## Resource rules
 

@@ -92,5 +92,5 @@ def test_backend_http_error_is_structured_failure():
          patch("httpx.Client", side_effect=lambda **kw: real_client(transport=httpx.MockTransport(reject), **kw)):
         result = json.loads(generate.generate_image(prompt="contract", loras=[]))
     assert result["ok"] is False
-    assert result["error"]["code"] == "HTTPStatusError"
+    assert result["error"]["code"] == "backend_http_error"
     assert "job_id" not in result

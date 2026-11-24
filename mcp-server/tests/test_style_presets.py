@@ -30,7 +30,7 @@ def test_list_style_presets_returns_agent_friendly_json() -> None:
     assert data["tool"] == "list_style_presets"
     assert data["presets"][0]["id"] == "creator-a"
     assert data["presets"][0]["loras"] == loras
-    assert "compose_style_preset" in data["next"]
+    assert "style_preset_compose" in data["next"]
     mock_client.get.assert_called_once_with("style-presets/")
 
 
@@ -45,7 +45,7 @@ def test_list_style_presets_empty_tells_agent_alternative() -> None:
     data = json.loads(result)
     assert data["ok"] is True
     assert data["presets"] == []
-    assert "generate_image" in data["next"]
+    assert "generate" in data["next"]
 
 
 def test_get_style_preset_returns_full_recipe() -> None:
@@ -69,7 +69,7 @@ def test_get_style_preset_returns_full_recipe() -> None:
     assert data["tool"] == "get_style_preset"
     assert data["preset"]["checkpoint"] == "model.safetensors"
     assert data["preset"]["loras"] == loras
-    assert "compose_style_preset" in data["next"]
+    assert "style_preset_compose" in data["next"]
     mock_client.get.assert_called_once_with("style-presets/creator-a")
 
 
@@ -84,7 +84,7 @@ def test_get_style_preset_backend_error_returns_structured_json() -> None:
     assert data["ok"] is False
     assert data["tool"] == "get_style_preset"
     assert data["preset_id"] == "nope"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "not found"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -116,7 +116,7 @@ def test_compose_style_preset_returns_next_action() -> None:
     assert data["profile"] == "portrait"
     assert data["generation"]["prompt"].startswith("creator_a_style")
     assert data["generation"]["loras"] == loras
-    assert "generate_image" in data["next"]
+    assert "generate" in data["next"]
     mock_client.post.assert_called_once_with(
         "style-presets/creator-a/compose",
         json={"content_prompt": "a girl in a raincoat", "profile": "portrait"},
@@ -152,7 +152,7 @@ def test_compose_style_preset_backend_error_returns_structured_json() -> None:
     assert data["ok"] is False
     assert data["tool"] == "compose_style_preset"
     assert data["preset_id"] == "creator-a"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "unknown profile"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -183,7 +183,8 @@ def test_create_style_preset_duplicate_409() -> None:
     with patch("mcp_server.tools.style_presets._get_client", return_value=mock_client):
         result = json.loads(create_style_preset("dup", "Y"))
     assert result["ok"] is False
-    assert result["error"]["code"] == "already_exists"
+    assert result["error"]["code"] == "backend_http_error"
+    assert "409" in result["error"]["message"]
 
 
 def test_save_successful_workflow_forwards_loose_inputs_without_graph() -> None:
@@ -226,7 +227,7 @@ def test_save_successful_workflow_forwards_loose_inputs_without_graph() -> None:
         "negative_prompt_keywords": ["watermark"],
         "retest_required": True,
         "next": (
-            "call test_saved_style_preset_workflow for this preset/profile"
+            "call style_preset_test for this preset/profile"
         ),
     }
     mock_client.post.assert_called_once_with(
@@ -314,7 +315,9 @@ def test_save_successful_workflow_returns_backend_repair_hint() -> None:
             "code": "source_not_found",
             "message": "Gallery image 404 was not found.",
             "hint": "Use an id returned by get_gallery_image.",
+            "details": {},
         },
+        "status_code": 404,
     }
 
 
@@ -343,7 +346,7 @@ def test_saved_workflow_retest_returns_job_and_polling_instruction() -> None:
         "profile": "portrait",
         "job_id": "job-saved-1",
         "status": "queued",
-        "next": "poll get_generation_status with job_id job-saved-1",
+        "next": "poll job_status with job_id job-saved-1",
     }
     mock_client.post.assert_called_once_with(
         "style-presets/creator-a/workflow/test",
@@ -385,4 +388,5 @@ def test_saved_workflow_retest_error_is_stable() -> None:
         "code": "saved_workflow_not_found",
         "message": "No saved workflow exists.",
         "hint": "Explicitly save a successful workflow first.",
+        "details": {},
     }

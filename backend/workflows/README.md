@@ -4,8 +4,8 @@ Each JSON stores ComfyUI nodes, connections and inputs. Resource filenames, dime
 
 ## Select and execute
 
-- Discover exposed templates with `list_available_resources` or Backend `GET /api/workflow-catalog/generation-forms`.
-- `generate_image(template=<id>, ...)` applies parameters to a template. Custom-workflow interfaces accept a full graph. Both queue generation.
+- Discover exposed templates with `list_resources` or Backend `GET /api/workflow-catalog/generation-forms`.
+- `generate(template=<id>, ...)` applies parameters to a template. Custom-workflow interfaces accept a full graph. Both queue generation.
 - Loader and input rules per model family: [model family loaders](../../docs/memory/model-family-loader-compatibility.md). Stored input filenames may be placeholders.
 
 ## Image workflows

@@ -10,11 +10,9 @@ import json
 import httpx
 
 from mcp_server.config import get_mcp_settings
-from mcp_server.server import mcp
 from mcp_server.tools.responses import exception_error_json
 
 
-@mcp.tool()
 def free_comfyui_memory(
     unload_models: bool = True,
     free_memory: bool = True,

@@ -5,21 +5,23 @@ Uses FastMCP, communicates with Cursor and other MCP clients via stdio.
 Tools are defined in the mcp_server.tools module.
 """
 import sys
+import inspect
+from functools import wraps
+from importlib import import_module
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
-# ``python -m mcp_server.server`` executes this file as ``__main__``.  Tool
-# modules import ``mcp_server.server`` to obtain the shared FastMCP instance;
-# without this alias Python loads a second copy and registers every non-ping
-# tool on an instance that is never served.
+# Catalog lookup of the ping callable must reuse the served module when this
+# file runs as ``python -m mcp_server.server``, rather than loading a second copy.
 if __name__ == "__main__":
     sys.modules["mcp_server.server"] = sys.modules[__name__]
 
 from mcp_server.client import HttpBackendClient
 from mcp_server.config import get_mcp_settings
+from mcp_server.tools.responses import backend_error_payload, envelope
 
 
 _SAFE_VALIDATION_CONTEXT_KEYS = frozenset(
@@ -89,7 +91,7 @@ def _safe_validation_errors(exc: ValidationError) -> list[dict[str, Any]]:
 
 
 class ContractFastMCP(FastMCP):
-    """Return redacted structured results for LoRA Start argument failures."""
+    """Return one envelope, including failures before a tool body executes."""
 
     def _convert_contract_result(
         self,
@@ -99,9 +101,16 @@ class ContractFastMCP(FastMCP):
         tool = self._tool_manager.get_tool(name)
         if tool is None:  # pragma: no cover - registration changed mid-call
             raise RuntimeError(f"tool disappeared during validation: {name}")
-        return tool.fn_metadata.convert_result(result)
+        return tool.fn_metadata.convert_result(envelope(result))
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
+        tool = self._tool_manager.get_tool(name)
+        if tool is not None:
+            unknown = sorted(set(arguments) - set(tool.parameters.get("properties", {})))
+            # The presence check is deliberate: null/empty save requests must
+            # never disappear into Pydantic's default extra-field handling.
+            if name == "prompt_compose" and "save_as" in arguments:
+                return self._validation_result(name, "Legacy save_as is not a composition input", "Compose then use prompt_write(action=save) with the returned positive/negative fragment arrays.", {"fields": ["save_as"]})
         if name == "lora_train_start":
             removed = sorted(
                 set(arguments).intersection(REMOVED_LORA_START_FIELDS)
@@ -127,12 +136,14 @@ class ContractFastMCP(FastMCP):
                         },
                     },
                 )
+        if tool is not None and unknown:
+            return self._validation_result(name, "Unknown MCP tool arguments", "Remove unsupported fields and use the advertised tool schema.", {"fields": unknown})
         try:
             return await super().call_tool(name, arguments)
         except ToolError as exc:
             cause = exc.__cause__
-            if name != "lora_train_start" or not isinstance(cause, ValidationError):
-                raise
+            if not isinstance(cause, ValidationError):
+                return self._convert_contract_result(name, backend_error_payload(name, exc, where="mcp"))
 
             result = {
                 "ok": False,
@@ -150,43 +161,52 @@ class ContractFastMCP(FastMCP):
             return self._convert_contract_result(name, result)
 
 
+    def _validation_result(self, name: str, message: str, hint: str, details: dict[str, Any]) -> Any:
+        return self._convert_contract_result(name, {"ok": False, "error": {"code": "request_validation_failed", "message": message, "hint": hint, "details": details}})
+
+
 mcp = ContractFastMCP(
     "AI Drawing",
     json_response=True,
 )
 
 
-def _get_client() -> HttpBackendClient:
-    """Get the Backend API Client (injectable for testing)"""
-    settings = get_mcp_settings()
-    return HttpBackendClient(base_url=f"{settings.backend_api_url}/api")
-
-
-@mcp.tool()
-def mcp_ping() -> str:
+def mcp_ping() -> dict[str, Any]:
     """Check MCP Server and Backend connection status. Returns an error if the Backend is not running."""
     try:
         # Use the /health endpoint, independent of DB or gallery
         settings = get_mcp_settings()
         client = HttpBackendClient(base_url=settings.backend_api_url, timeout=5.0)
         client.get("health")
-        return "ok: Backend 連線正常"
+        return {"ok": True, "data": {"backend_reachable": True}}
     except Exception as e:
-        return f"error: {e}"
+        return backend_error_payload("mcp_ping", e)
 
 
-# Register tools modules (importing triggers @mcp.tool() decorators)
-from mcp_server.tools import (  # noqa: E402, F401
-    civitai,
-    comfyui,
-    comfyui_nodes,
-    discord_delivery,
-    gallery,
-    generate,
-    lora_train,
-    prompt_library,
-    style_presets,
-)
+# Catalog-driven registration keeps risk, schemas and names at the public
+# boundary. Returning the original adapter from decorators is unnecessary:
+# Python callers and tests can still exercise adapters directly.
+def _register_catalog() -> None:
+    from mcp_server.tool_catalog import INTENDED_TOOLS
+
+    for entry in INTENDED_TOOLS:
+        fn = getattr(import_module(entry.module), entry.function)
+        def wrap(fn):
+            @wraps(fn)
+            async def invoke(**kwargs) -> dict[str, Any]:
+                try:
+                    result = fn(**kwargs)
+                    if inspect.isawaitable(result):
+                        result = await result
+                    return envelope(result)
+                except Exception as exc:
+                    return envelope(backend_error_payload(fn.__name__, exc))
+            invoke.__signature__ = inspect.signature(fn, eval_str=True).replace(return_annotation=dict[str, Any])
+            return invoke
+        mcp.add_tool(wrap(fn), name=entry.name, description=f"Risk: {entry.risk}. {inspect.getdoc(fn) or entry.name}")
+
+
+_register_catalog()
 
 
 def main() -> None:

@@ -41,3 +41,11 @@ Art and LoRA work follow the same pattern with the matching specialist instead o
 ## Skills
 
 Each active role loads shared skills from the owner's skill library; see [skill bindings](skill-bindings.md).
+
+## MCP calls
+
+Use the current [MCP intent catalog and flow](../mcp.md). Every tool returns
+`{ok, data}` on success or `{ok: false, error: {code, message, hint}}` on failure.
+Read successful fields under `data`, and preserve job IDs for status checks
+after timeouts. Temporary `mcp_ping` and `job_status` polling are executable now;
+health/worker discovery and bounded wait remain staged.

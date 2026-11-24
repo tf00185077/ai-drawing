@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 
-ResponseCategory = Literal["dict", "json_string", "plain_text"]
+Risk = Literal["read", "mutate", "admin"]
 
 
 @dataclass(frozen=True)
@@ -22,62 +22,44 @@ class ToolCatalogEntry:
     name: str
     module: str
     function: str
-    response_category: ResponseCategory
+    risk: Risk
     backend_endpoints: tuple[str, ...] = ()
+    response_category: Literal["envelope"] = "envelope"
     external: bool = True
     docs_required: bool = True
     notes: str = ""
 
 
 INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
-    # Health
-    ToolCatalogEntry("mcp_ping", "mcp_server.server", "mcp_ping", "plain_text", ("GET /health",)),
-    # Civitai best-effort flow
-    ToolCatalogEntry("civitai_source_info", "mcp_server.tools.civitai", "civitai_source_info", "dict", ("GET /api/civitai/source-info",)),
-    ToolCatalogEntry("civitai_generate_like", "mcp_server.tools.civitai", "civitai_generate_like", "dict", ("POST /api/civitai/generate-like",)),
-    ToolCatalogEntry("civitai_resource_acquire", "mcp_server.tools.civitai", "civitai_resource_acquire", "dict", ("POST /api/civitai/resources/acquire",)),
-    ToolCatalogEntry("civitai_resource_status", "mcp_server.tools.civitai", "civitai_resource_status", "dict", ("GET /api/civitai/resources/status",)),
-    # Generation
-    ToolCatalogEntry("generate_image", "mcp_server.tools.generate", "generate_image", "json_string", ("POST /api/generate/",), notes="optional revision_context: brief/feedback annotations, canonical image parent; no automatic prompt rewrite"),
-    ToolCatalogEntry("generate_image_custom_workflow", "mcp_server.tools.generate", "generate_image_custom_workflow", "json_string", ("POST /api/generate/custom",), notes="escape hatch for img2img/ControlNet/inpaint; start from backend/workflows/*.json"),
-    ToolCatalogEntry("generate_video_wan_keyframes", "mcp_server.tools.generate", "generate_video_wan_keyframes", "json_string", ("POST /api/generate/video/wan-keyframes",)),
-    ToolCatalogEntry("generate_video_custom_workflow", "mcp_server.tools.generate", "generate_video_custom_workflow", "json_string", ("POST /api/generate/video/custom",), notes="submit a known-good video workflow JSON"),
-    ToolCatalogEntry("get_generation_status", "mcp_server.tools.generate", "get_generation_status", "json_string", ("GET /api/generate/job/{job_id}",), notes="includes durable revision_context for recorded ordinary images"),
-    ToolCatalogEntry("cancel_job", "mcp_server.tools.generate", "cancel_job", "json_string", ("DELETE /api/generate/queue/{job_id}",)),
-    ToolCatalogEntry("list_available_resources", "mcp_server.tools.generate", "list_available_resources", "json_string", ("GET /api/generate/available-resources", "GET /api/workflow-catalog/generation-forms")),
-    # Constrained Discord result delivery (bot-local operator endpoint)
-    ToolCatalogEntry("deliver_generation_result_to_discord", "mcp_server.tools.discord_delivery", "deliver_generation_result_to_discord", "dict", ("POST <DiscordBot>/operator/v1/deliver-result",), notes="completed jobs only; allowlisted destination aliases; deduplicated unless force_resend"),
-    # Gallery
-    ToolCatalogEntry("gallery_list", "mcp_server.tools.gallery", "gallery_list", "plain_text", ("GET /api/gallery/",)),
-    ToolCatalogEntry("get_gallery_image", "mcp_server.tools.gallery", "get_gallery_image", "json_string", ("GET /api/gallery/{image_id}",)),
-    ToolCatalogEntry("get_gallery_artifact", "mcp_server.tools.gallery", "get_gallery_artifact", "json_string", ("GET /api/gallery/artifacts/{artifact_id}",)),
-    ToolCatalogEntry("gallery_rerun", "mcp_server.tools.gallery", "gallery_rerun", "plain_text", ("POST /api/gallery/{image_id}/rerun",)),
-    # ComfyUI ops
-    ToolCatalogEntry("free_comfyui_memory", "mcp_server.tools.comfyui", "free_comfyui_memory", "json_string", ("POST <ComfyUI>/free",)),
-    ToolCatalogEntry("comfyui_node_provision", "mcp_server.tools.comfyui_nodes", "comfyui_node_provision", "json_string", ("GET <ComfyUI>/customnode/getmappings", "POST <ComfyUI>/manager/queue/install", "POST <ComfyUI>/manager/queue/start", "GET <ComfyUI>/manager/queue/status"), notes="resolves a missing node class name to its ComfyUI-Manager package and installs it; does not restart"),
-    ToolCatalogEntry("comfyui_restart", "mcp_server.tools.comfyui_nodes", "comfyui_restart", "json_string", ("POST <ComfyUI>/manager/reboot",), notes="explicit-approval-only; restarts ComfyUI so an installed node takes effect"),
-    # Style presets (daily path incl. create; reindex/validate stays on backend HTTP)
-    ToolCatalogEntry("create_style_preset", "mcp_server.tools.style_presets", "create_style_preset", "json_string", ("POST /api/style-presets/",), notes="users save styles in conversation; backend auto-reindexes"),
-    ToolCatalogEntry("list_style_presets", "mcp_server.tools.style_presets", "list_style_presets", "json_string", ("GET /api/style-presets/",)),
-    ToolCatalogEntry("get_style_preset", "mcp_server.tools.style_presets", "get_style_preset", "json_string", ("GET /api/style-presets/{preset_id}",)),
-    ToolCatalogEntry("compose_style_preset", "mcp_server.tools.style_presets", "compose_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/compose",)),
-    ToolCatalogEntry("save_successful_workflow_as_style_preset", "mcp_server.tools.style_presets", "save_successful_workflow_as_style_preset", "json_string", ("POST /api/style-presets/{preset_id}/workflow/save",), notes="explicit user save request only; backend owns the graph"),
-    ToolCatalogEntry("test_saved_style_preset_workflow", "mcp_server.tools.style_presets", "test_saved_style_preset_workflow", "json_string", ("POST /api/style-presets/{preset_id}/workflow/test",), notes="queues the saved server-owned graph verbatim"),
-    ToolCatalogEntry("prompt_library_search", "mcp_server.tools.prompt_library", "prompt_library_search", "dict", ("GET /api/prompt-library/catalog", "GET /api/prompt-library/categories/{polarity}/{category_id}", "GET /api/prompt-library/search")),
-    ToolCatalogEntry("prompt_library_save", "mcp_server.tools.prompt_library", "prompt_library_save", "dict", ("PUT /api/prompt-library/categories/{polarity}/{category_id}", "PUT /api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}", "PUT /api/prompt-library/combinations/{combination_id}")),
-    ToolCatalogEntry("prompt_library_compose", "mcp_server.tools.prompt_library", "prompt_library_compose", "dict", ("POST /api/prompt-library/compose",)),
-    ToolCatalogEntry("prompt_library_archive", "mcp_server.tools.prompt_library", "prompt_library_archive", "dict", ("POST /api/prompt-library/archive",)),
-    ToolCatalogEntry("prompt_library_restore", "mcp_server.tools.prompt_library", "prompt_library_restore", "dict", ("POST /api/prompt-library/restore",)),
-    # LoRA training
-    ToolCatalogEntry("caption_image", "mcp_server.tools.lora_train", "caption_image", "dict", ("POST /api/lora-docs/caption-llm/{image_path}",)),
-    ToolCatalogEntry("lora_training_decision_preflight", "mcp_server.tools.lora_train", "lora_training_decision_preflight", "dict", ("POST /api/lora-train/datasets/training-decision-preflight",), notes="requires readable output_name; serial is reserved only at start; accepts optional recipe object/string; Backend returns canonical preview"),
-    ToolCatalogEntry("lora_train_start", "mcp_server.tools.lora_train", "lora_train_start", "dict", ("POST /api/lora-train/start",), notes="requires folder, readable output_name, both approval hashes and recipe object/string; preserve expected_output_config_hash from preview; returns allocated product name, serial and run locator"),
-    ToolCatalogEntry("lora_train_job_status", "mcp_server.tools.lora_train", "lora_train_job_status", "dict", ("GET /api/lora-train/jobs/{job_id}",)),
-    ToolCatalogEntry("lora_train_logs", "mcp_server.tools.lora_train", "lora_train_logs", "dict", ("GET /api/lora-train/jobs/{job_id}/logs",)),
-    ToolCatalogEntry("lora_train_cancel", "mcp_server.tools.lora_train", "lora_train_cancel", "dict", ("POST /api/lora-train/jobs/{job_id}/cancel",)),
-    ToolCatalogEntry("lora_dataset_list", "mcp_server.tools.lora_train", "lora_dataset_list", "dict", ("GET /api/lora-train/datasets",)),
-    ToolCatalogEntry("lora_dataset_inspect", "mcp_server.tools.lora_train", "lora_dataset_inspect", "dict", ("GET /api/lora-train/datasets/{folder}/agent-inspect",)),
-    ToolCatalogEntry("lora_train_smoke_test", "mcp_server.tools.lora_train", "lora_train_smoke_test", "dict", ("POST /api/lora-train/jobs/{job_id}/smoke-test",)),
+    ToolCatalogEntry('mcp_ping', 'mcp_server.server', 'mcp_ping', 'read', ('GET /health',)),
+    ToolCatalogEntry('civitai_source_info', 'mcp_server.tools.civitai', 'civitai_source_info', 'read', ('GET /api/civitai/source-info',)),
+    ToolCatalogEntry('civitai_resource_acquire', 'mcp_server.tools.civitai', 'civitai_resource_acquire', 'mutate', ('POST /api/civitai/resources/acquire',)),
+    ToolCatalogEntry('civitai_resource_status', 'mcp_server.tools.civitai', 'civitai_resource_status', 'read', ('GET /api/civitai/resources/status',)),
+    ToolCatalogEntry('generate', 'mcp_server.tools.intents', 'generate', 'mutate', ('POST /api/generate/', 'POST /api/generate/custom')),
+    ToolCatalogEntry('job_status', 'mcp_server.tools.generate', 'get_generation_status', 'read', ('GET /api/generate/job/{job_id}',)),
+    ToolCatalogEntry('cancel_job', 'mcp_server.tools.generate', 'cancel_job', 'mutate', ('DELETE /api/generate/queue/{job_id}',)),
+    ToolCatalogEntry('list_resources', 'mcp_server.tools.generate', 'list_available_resources', 'read', ('GET /api/generate/available-resources', 'GET /api/workflow-catalog/generation-forms')),
+    ToolCatalogEntry('deliver_to_discord', 'mcp_server.tools.discord_delivery', 'deliver_generation_result_to_discord', 'mutate', ('POST <DiscordBot>/operator/v1/deliver-result',)),
+    ToolCatalogEntry('gallery_search', 'mcp_server.tools.gallery', 'gallery_list', 'read', ('GET /api/gallery/',)),
+    ToolCatalogEntry('gallery_get', 'mcp_server.tools.intents', 'gallery_get', 'read', ('GET /api/gallery/{image_id}', 'GET /api/gallery/artifacts/{artifact_id}')),
+    ToolCatalogEntry('gallery_rerun', 'mcp_server.tools.gallery', 'gallery_rerun', 'mutate', ('POST /api/gallery/{image_id}/rerun',)),
+    ToolCatalogEntry('comfyui_admin', 'mcp_server.tools.intents', 'comfyui_admin', 'admin', ('POST <ComfyUI>/free', 'GET <ComfyUI>/customnode/getmappings', 'POST <ComfyUI>/manager/queue/install', 'POST <ComfyUI>/manager/queue/start', 'GET <ComfyUI>/manager/queue/status', 'POST <ComfyUI>/manager/reboot')),
+    ToolCatalogEntry('style_preset_save', 'mcp_server.tools.intents', 'style_preset_save', 'mutate', ('POST /api/style-presets/', 'POST /api/style-presets/{preset_id}/workflow/save')),
+    ToolCatalogEntry('style_preset_get', 'mcp_server.tools.intents', 'style_preset_get', 'read', ('GET /api/style-presets/', 'GET /api/style-presets/{preset_id}')),
+    ToolCatalogEntry('style_preset_compose', 'mcp_server.tools.style_presets', 'compose_style_preset', 'read', ('POST /api/style-presets/{preset_id}/compose',)),
+    ToolCatalogEntry('style_preset_test', 'mcp_server.tools.style_presets', 'test_saved_style_preset_workflow', 'mutate', ('POST /api/style-presets/{preset_id}/workflow/test',)),
+    ToolCatalogEntry('prompt_search', 'mcp_server.tools.prompt_library', 'prompt_library_search', 'read', ('GET /api/prompt-library/catalog', 'GET /api/prompt-library/categories/{polarity}/{category_id}', 'GET /api/prompt-library/search')),
+    ToolCatalogEntry('prompt_write', 'mcp_server.tools.intents', 'prompt_write', 'mutate', ('PUT /api/prompt-library/categories/{polarity}/{category_id}', 'PUT /api/prompt-library/categories/{polarity}/{category_id}/entries/{entry_id}', 'PUT /api/prompt-library/combinations/{combination_id}', 'POST /api/prompt-library/archive', 'POST /api/prompt-library/restore')),
+    ToolCatalogEntry('prompt_compose', 'mcp_server.tools.intents', 'prompt_compose', 'read', ('POST /api/prompt-library/compose',)),
+    ToolCatalogEntry('caption_image', 'mcp_server.tools.lora_train', 'caption_image', 'mutate', ('POST /api/lora-docs/caption-llm/{image_path}',)),
+    ToolCatalogEntry('lora_training_decision_preflight', 'mcp_server.tools.lora_train', 'lora_training_decision_preflight', 'read', ('POST /api/lora-train/datasets/training-decision-preflight',)),
+    ToolCatalogEntry('lora_train_start', 'mcp_server.tools.lora_train', 'lora_train_start', 'mutate', ('POST /api/lora-train/start',)),
+    ToolCatalogEntry('lora_train_job_status', 'mcp_server.tools.lora_train', 'lora_train_job_status', 'read', ('GET /api/lora-train/jobs/{job_id}',)),
+    ToolCatalogEntry('lora_train_logs', 'mcp_server.tools.lora_train', 'lora_train_logs', 'read', ('GET /api/lora-train/jobs/{job_id}/logs',)),
+    ToolCatalogEntry('lora_train_cancel', 'mcp_server.tools.lora_train', 'lora_train_cancel', 'mutate', ('POST /api/lora-train/jobs/{job_id}/cancel',)),
+    ToolCatalogEntry('lora_dataset_list', 'mcp_server.tools.lora_train', 'lora_dataset_list', 'read', ('GET /api/lora-train/datasets',)),
+    ToolCatalogEntry('lora_dataset_inspect', 'mcp_server.tools.lora_train', 'lora_dataset_inspect', 'read', ('GET /api/lora-train/datasets/{folder}/agent-inspect',)),
+    ToolCatalogEntry('lora_train_smoke_test', 'mcp_server.tools.lora_train', 'lora_train_smoke_test', 'mutate', ('POST /api/lora-train/jobs/{job_id}/smoke-test',)),
 )
 
 

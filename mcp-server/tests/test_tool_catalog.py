@@ -45,33 +45,31 @@ def test_catalog_points_to_existing_tool_functions() -> None:
 async def test_generate_image_exposes_multi_lora_schema() -> None:
     """generate_image keeps ordered multi-LoRA fields visible to agents."""
     registered = {tool.name: tool for tool in await mcp.list_tools()}
-    properties = registered["generate_image"].inputSchema["properties"]
+    properties = registered["generate"].inputSchema["properties"]
     assert properties["execution_target"]["enum"] == ["local", "worker"]
     for field in ("lora", "lora_strength", "loras"):
         assert field in properties
 
 
 @pytest.mark.asyncio
-async def test_civitai_generate_like_exposes_intent_level_schema() -> None:
-    """The one-call Civitai tool keeps its forgiving, prompt-first schema."""
-    registered = {tool.name: tool for tool in await mcp.list_tools()}
-    properties = registered["civitai_generate_like"].inputSchema["properties"]
-    for field in ("source", "prompt", "batch_size", "download_missing", "checkpoint"):
-        assert field in properties
+async def test_removed_tools_and_staged_tools_are_not_registered() -> None:
+    registered = {tool.name for tool in await mcp.list_tools()}
+    assert len(registered) == 29
+    assert not registered & {
+        "generate_image", "generate_image_custom_workflow", "get_generation_status",
+        "generate_video_wan_keyframes", "generate_video_custom_workflow", "civitai_generate_like",
+        "health", "list_workers", "wait_for_job", "prompt_library_restore",
+    }
 
 
 @pytest.mark.asyncio
-async def test_prompt_library_restore_exposes_exact_locator_schema() -> None:
+async def test_prompt_write_exposes_locator_and_concurrency_schema() -> None:
     registered = {tool.name: tool for tool in await mcp.list_tools()}
-    schema = registered["prompt_library_restore"].inputSchema
-
-    assert set(schema["required"]) == {
-        "resource_type",
-        "resource_id",
-        "expected_revision",
-        "expected_etag",
-    }
-    assert {"polarity", "category_id"} <= set(schema["properties"])
+    schema = registered["prompt_write"].inputSchema
+    assert set(schema["required"]) == {"action", "resource_type", "resource_id"}
+    assert {"polarity", "category_id", "payload", "expected_revision", "expected_etag"} <= set(schema["properties"])
+    assert schema["properties"]["action"]["enum"] == ["save", "archive", "restore"]
+    assert "save_as" not in registered["prompt_compose"].inputSchema["properties"]
 
 
 @pytest.mark.asyncio
@@ -113,16 +111,18 @@ async def test_lora_preflight_advertises_optional_broad_recipe_hints() -> None:
 
 
 @pytest.mark.asyncio
-async def test_response_categories_match_fastmcp_output_schema() -> None:
-    """Structured dict tools expose object output; transitional string tools expose result strings."""
+async def test_envelope_schema_and_one_truthful_risk_per_tool() -> None:
     registered = {tool.name: tool for tool in await mcp.list_tools()}
     for entry in INTENDED_TOOLS:
         schema = registered[entry.name].outputSchema
-        if entry.response_category == "dict":
-            assert schema.get("type") == "object", entry.name
-            assert "result" not in schema.get("properties", {}), entry.name
-        else:
-            assert schema["properties"]["result"]["type"] == "string", entry.name
+        assert entry.response_category == "envelope"
+        assert schema.get("type") == "object", entry.name
+        assert "result" not in schema.get("properties", {}), entry.name
+        assert entry.risk in {"read", "mutate", "admin"}
+        assert registered[entry.name].description.count("Risk:") == 1
+        assert registered[entry.name].description.startswith(f"Risk: {entry.risk}.")
+    assert {entry.name: entry.risk for entry in INTENDED_TOOLS}["caption_image"] == "mutate"
+
 
 
 def test_catalog_docs_list_active_tools() -> None:
@@ -150,10 +150,11 @@ def test_mcp_docs_do_not_advertise_removed_workflow_tools() -> None:
 def test_saved_workflow_intents_are_in_the_audited_catalog() -> None:
     entries = {entry.name: entry for entry in INTENDED_TOOLS}
     assert entries[
-        "save_successful_workflow_as_style_preset"
+        "style_preset_save"
     ].backend_endpoints == (
+        "POST /api/style-presets/",
         "POST /api/style-presets/{preset_id}/workflow/save",
     )
-    assert entries["test_saved_style_preset_workflow"].backend_endpoints == (
+    assert entries["style_preset_test"].backend_endpoints == (
         "POST /api/style-presets/{preset_id}/workflow/test",
     )

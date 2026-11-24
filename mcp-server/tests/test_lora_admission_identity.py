@@ -6,6 +6,8 @@ import httpx
 import pytest
 from mcp_server.client import HttpBackendClient
 from mcp_server.tools import lora_train
+from mcp_server.server import mcp
+import asyncio
 
 @pytest.mark.parametrize('malformed',[False,True])
 def test_uncertain_admission_has_safe_identity_and_no_retry_hint(malformed):
@@ -30,7 +32,7 @@ def test_real_backend_http_export_survives_independent_client():
         def handle(req):
             calls.append(str(req.url));return httpx.Response(row['http_status'],json=row['body'])
         with patch.object(lora_train,'_get_client',return_value=HttpBackendClient('http://fixture.invalid/api')),patch('httpx.Client',side_effect=lambda **kw:original(transport=httpx.MockTransport(handle),**kw)):
-            result=lora_train.lora_train_start('x','x',expected_dataset_hash='d',expected_profile_hash='p',recipe={})
-        assert len(calls)==1 and result['job_id']==row['body']['detail']['job_id']
+            result=asyncio.run(mcp.call_tool('lora_train_start', {'folder': 'x', 'output_name': 'x', 'expected_dataset_hash': 'd', 'expected_profile_hash': 'p', 'recipe': {}}))[1]
+        assert len(calls)==1 and result['error']['details']['job_id']==row['body']['detail']['job_id']
         assert result['error']['code']=='admission_uncertain' and 'SECRET_SENTINEL' not in json.dumps(result)
     assert not any(k.startswith('app.') for k in sys.modules)

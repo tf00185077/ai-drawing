@@ -83,7 +83,7 @@ def test_provision_getmappings_failure_returns_structured_error() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "comfyui_node_provision"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["details"]["where"] == "comfyui_manager_getmappings"
 
 
@@ -98,7 +98,7 @@ def test_provision_install_failure_returns_structured_error_with_cnr_id() -> Non
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "comfyui_node_provision"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["details"]["where"] == "comfyui_manager_install"
     assert data["error"]["details"]["cnr_id"] == "my-nodes-pack"
 

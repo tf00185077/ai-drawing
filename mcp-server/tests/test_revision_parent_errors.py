@@ -102,7 +102,7 @@ def test_unrecognized_shape_or_status_preserves_generic_fallback(status, body):
     response = httpx.Response(status, content=json.dumps(body).encode(), headers={"X-Synthetic": MARKER})
     result, _, errors = invoke(response)
     assert result == json.loads(exception_error_json("generate_image", errors[0], where="backend"))
-    assert result["error"]["code"] == "HTTPStatusError"
+    assert result["error"]["code"] == "backend_http_error"
     assert "job_id" not in result and MARKER not in json.dumps(result)
 
 
@@ -150,7 +150,7 @@ def test_deep_json_decode_preserves_original_http_error(with_known_code, boundar
                + nested + b"}") if with_known_code else nested
 
     def registered_tool(**arguments):
-        result = asyncio.run(mcp.call_tool("generate_image", arguments))
+        result = asyncio.run(mcp.call_tool("generate", arguments))
         blocks = result[0] if isinstance(result, tuple) else result
         return next(block.text for block in blocks if hasattr(block, "text"))
 
@@ -160,6 +160,10 @@ def test_deep_json_decode_preserves_original_http_error(with_known_code, boundar
     )
     assert request == {"method": "POST", "path": "/api/generate/", "body": REQUEST}
     assert len(errors) == 1
-    assert result == json.loads(exception_error_json("generate_image", errors[0], where="backend"))
-    assert result["ok"] is False and result["error"]["code"] == "HTTPStatusError"
+    expected = json.loads(exception_error_json("generate_image", errors[0], where="backend"))
+    if boundary == "sdk":
+        from mcp_server.tools.responses import envelope
+        expected = envelope(expected)
+    assert result == expected
+    assert result["ok"] is False and result["error"]["code"] == "backend_http_error"
     assert "job_id" not in result and "revision_request_conflict" not in json.dumps(result)

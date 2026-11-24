@@ -55,7 +55,7 @@ Completion rules (`_check_running_complete`):
 
 Records:
 - Each generated image stores the full submitted workflow (`workflow_json`). Gallery rerun resubmits that workflow verbatim (re-uploading source images); older records without it fall back to rebuilding from stored columns.
-- Outputs of any kind (images, videos) are stored in `generated_artifacts`; job status returns `artifacts[]`, readable with `get_gallery_artifact`.
+- Outputs of any kind (images, videos) are stored in `generated_artifacts`; job status returns `artifacts[]`, readable with `gallery_get(artifact_id=...)`.
 
 ### Workflows
 
@@ -66,7 +66,7 @@ Records:
 
 ### MCP server — `mcp-server/`
 
-Python MCP SDK over stdio. Tools are listed in `mcp_server/tool_catalog.py`. Most tools call the Backend (`MCP_BACKEND_API_URL`). Three call ComfyUI directly (`MCP_COMFYUI_API_URL`): `free_comfyui_memory`, `comfyui_node_provision`, `comfyui_restart`. Discord delivery calls the bot's operator endpoint (`MCP_DISCORD_OPERATOR_URL`).
+Python MCP SDK over stdio. Tools are listed in `mcp_server/tool_catalog.py`. Most tools call the Backend (`MCP_BACKEND_API_URL`). The `comfyui_admin` tool calls the configured local ComfyUI directly (`MCP_COMFYUI_API_URL`) for `free_memory`, `install_node` and `restart`. Every registered tool returns `{ok, data}` or `{ok: false, error: {code, message, hint}}`, with one catalog risk label. Discord delivery calls the bot's operator endpoint (`MCP_DISCORD_OPERATOR_URL`).
 
 ### Frontend — `frontend/`
 
@@ -95,11 +95,11 @@ Slash commands that call the Backend directly, plus an operator HTTP endpoint (`
 ## Main flows
 
 **Agent generates an image**
-1. Agent calls `list_available_resources`, then `generate_image`.
+1. Agent calls `list_resources`, then `generate`.
 2. Backend validates, builds the graph and enqueues; returns a job ID.
 3. Queue submits to local ComfyUI or the worker, then polls for completion.
 4. Outputs are saved to `data/gallery` and recorded in SQLite.
-5. Agent polls `get_generation_status`, then reads the result with `get_gallery_image` / `get_gallery_artifact`.
+5. Agent polls `job_status`, then reads the result with `gallery_get(image_id=...)` / `gallery_get(artifact_id=...)`.
 
 **User composes prompts in the dashboard**
 1. Workbench reads fragments and combinations from the Prompt Library API.

@@ -4,15 +4,14 @@ ComfyUI-Manager node resolve/install MCP tools.
 Resolves a missing ComfyUI node class name (from a validation error) to
 the ComfyUI-Manager package that provides it, and installs that package —
 without restarting ComfyUI. Calls ComfyUI-Manager's REST API directly
-(it runs on the same ComfyUI server free_comfyui_memory already talks
-to), bypassing the ai-drawing backend, same as free_comfyui_memory.
+(it runs on the same ComfyUI server comfyui_admin(action=free_memory) already talks
+to), bypassing the ai-drawing backend, same as comfyui_admin(action=free_memory).
 """
 import json
 import time
 
 from mcp_server.client import HttpBackendClient
 from mcp_server.config import get_mcp_settings
-from mcp_server.server import mcp
 from mcp_server.tools.responses import exception_error_json
 
 _INSTALL_POLL_TIMEOUT_SECONDS = 60.0
@@ -29,14 +28,13 @@ def _looks_like_cnr_id(key: str) -> bool:
     return "://" not in key
 
 
-@mcp.tool()
 def comfyui_node_provision(node_class_names: list[str]) -> str:
     """Resolve one or more missing ComfyUI node class names (as they appear in a ComfyUI
     validation error) to the ComfyUI-Manager package that provides them, and install that
     package if it is in ComfyUI-Manager's curated registry. Never installs from an
     arbitrary/uncurated git URL. Installing does NOT restart ComfyUI — the response's
-    needs_restart flag means a restart is required before the node loads. Drawing Shasha
-    must never call comfyui_restart without CTY's explicit approval in the current turn.
+    needs_restart flag means a restart is required before the node loads.
+    Authority is defined by docs/OPERATING-POLICY.md.
     Returns agent-friendly JSON."""
     client = _get_comfyui_client()
 
@@ -118,20 +116,18 @@ def comfyui_node_provision(node_class_names: list[str]) -> str:
             "install_status": status,
             "needs_restart": True,
             "next": (
-                "Package installed but ComfyUI must be restarted to load it. Ask CTY for "
-                "explicit approval before calling comfyui_restart."
+                "Package installed; restart is needed to load it. Use "
+                "comfyui_admin(action=restart) under docs/OPERATING-POLICY.md; installation never restarts automatically."
             ),
         },
         ensure_ascii=False,
     )
 
 
-@mcp.tool()
 def comfyui_restart() -> str:
-    """Restart ComfyUI so a newly-installed custom node package takes effect. Drawing Shasha
-    must NEVER call this tool without CTY's explicit approval in the current turn — restarting
-    interrupts any other job currently running on this ComfyUI instance. This is the only MCP
-    path to an action CTY otherwise performs by hand. Returns agent-friendly JSON."""
+    """Restart configured local ComfyUI under docs/OPERATING-POLICY.md.
+    Restart can interrupt active work. Returns agent-friendly JSON.
+    """
     client = _get_comfyui_client()
     try:
         client.post("/manager/reboot", json={})
@@ -143,7 +139,7 @@ def comfyui_restart() -> str:
         {
             "ok": True,
             "tool": "comfyui_restart",
-            "next": "ComfyUI is restarting. Poll mcp_ping until it responds before resubmitting any job.",
+            "next": "ComfyUI restart requested. Check configured ComfyUI before using it; mcp_ping checks only Backend availability.",
         },
         ensure_ascii=False,
     )

@@ -3,7 +3,7 @@
 Four intent-level tools backed by /api/civitai/*:
 
 - civitai_source_info:     preview a Civitai image's prompt/params/resources
-- civitai_generate_like:   generate with that image's parameters and your prompt
+- Backend Civitai generate-like endpoint (MCP submission removed):   generate with that image's parameters and your prompt
 - civitai_resource_acquire: download a model/LoRA to the local model library
 - civitai_resource_status:  poll download progress / list recent resources
 
@@ -15,43 +15,26 @@ from typing import Any, Literal
 
 import httpx
 
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
+from mcp_server.tools.responses import backend_error_payload
 
 
 def _error(tool: str, exc: Exception) -> dict[str, Any]:
-    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
-        try:
-            payload = exc.response.json()
-        except ValueError:
-            payload = {"detail": exc.response.text}
-        detail = payload.get("detail", payload) if isinstance(payload, dict) else payload
-        if isinstance(detail, dict):
-            return {
-                "ok": False,
-                "tool": tool,
-                "error": {
-                    "code": str(detail.get("code") or f"http_{exc.response.status_code}"),
-                    "message": str(detail.get("message") or detail),
-                    "hint": detail.get("hint"),
-                },
-            }
-        return {"ok": False, "tool": tool, "error": {"code": f"http_{exc.response.status_code}", "message": str(detail)}}
-    return {"ok": False, "tool": tool, "error": {"code": exc.__class__.__name__, "message": str(exc)}}
+    return backend_error_payload(tool, exc)
 
 
 def _result(tool: str, payload: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "tool": tool, **payload}
 
 
-@mcp.tool()
 def civitai_source_info(source: str) -> dict[str, Any]:
     """Preview a Civitai image's generation parameters and local availability.
 
     source: a civitai.com/images/<id> URL or a bare image ID. Returns the
     original prompt/negative prompt/sampling settings, the resources it used,
     and a local plan (which checkpoint/LoRAs are available locally, what would
-    be substituted, what could be downloaded). Read-only — call this first to
-    discuss options with the user, then call civitai_generate_like.
+    be substituted, what could be downloaded). Read-only: inspect the parameters, acquire needed resources,
+    then submit the selected image parameters through generate.
     """
     tool = "civitai_source_info"
     try:
@@ -60,7 +43,6 @@ def civitai_source_info(source: str) -> dict[str, Any]:
         return _error(tool, exc)
 
 
-@mcp.tool()
 def civitai_generate_like(
     source: str,
     prompt: str | None = None,
@@ -84,7 +66,7 @@ def civitai_generate_like(
     with next_step instructions); pass download_missing=false to substitute the
     closest local model immediately. Generates a batch (default 4) because the
     source image is usually one hand-picked result out of many seeds — expect
-    to pick a favourite and iterate. Returns job_id; poll get_generation_status.
+    to pick a favourite and iterate. Returns job_id; poll job_status.
     """
     tool = "civitai_generate_like"
     body: dict[str, Any] = {
@@ -110,7 +92,6 @@ def civitai_generate_like(
         return _error(tool, exc)
 
 
-@mcp.tool()
 def civitai_resource_acquire(source: str) -> dict[str, Any]:
     """Download a Civitai model/LoRA to the local model library (external disk).
 
@@ -130,7 +111,6 @@ def civitai_resource_acquire(source: str) -> dict[str, Any]:
         return _error(tool, exc)
 
 
-@mcp.tool()
 def civitai_resource_status(acquisition_id: int | None = None, limit: int = 10) -> dict[str, Any]:
     """Check Civitai download progress, or list recent local resources.
 

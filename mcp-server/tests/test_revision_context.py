@@ -15,7 +15,7 @@ from mcp_server.tools import generate, gallery
 
 def test_registered_generate_schema_exposes_optional_revision_context():
     tools = asyncio.run(mcp.list_tools())
-    tool = next(t for t in tools if t.name == 'generate_image')
+    tool = next(t for t in tools if t.name == 'generate')
     assert 'revision_context' in tool.inputSchema['properties']
     assert 'revision_context' not in tool.inputSchema.get('required', [])
 
@@ -40,20 +40,22 @@ def test_actual_backend_http_serialization_survives_mcp_projection():
         with patch.object(generate, '_get_client', return_value=client), patch.object(gallery, '_get_client', return_value=client), \
              patch('httpx.Client', side_effect=lambda **kw: original(transport=httpx.MockTransport(respond), **kw)):
             if kind == 'generate':
-                result = json.loads(generate.generate_image(**record['request']))
+                name, arguments = 'generate', record['request']
             elif kind in ('status', 'queued'):
-                result = json.loads(generate.get_generation_status(payload['job_id']))
+                name, arguments = 'job_status', {'job_id': payload['job_id']}
             elif kind == 'image':
-                result = json.loads(gallery.get_gallery_image(payload['id']))
+                name, arguments = 'gallery_get', {'image_id': payload['id']}
             elif kind == 'artifact':
-                result = json.loads(gallery.get_gallery_artifact(payload['id']))
+                name, arguments = 'gallery_get', {'artifact_id': payload['id']}
             else:
-                result = json.loads(gallery.gallery_list())
+                name, arguments = 'gallery_search', {}
+            result = asyncio.run(mcp.call_tool(name, arguments))[1]
         assert result['ok'] is True
         assert len(requests) == 1  # All reads cause zero POSTs.
         if kind == 'list':
             assert result['data'] == payload
         else:
+            result = result['data']
             assert result['revision_context'] == payload['revision_context']
             assert result['revision_context_error'] == payload.get('revision_context_error')
             if result['revision_context'] is not None:
