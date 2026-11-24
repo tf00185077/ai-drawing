@@ -88,9 +88,9 @@ Slash commands that call the Backend directly, plus an operator HTTP endpoint (`
 
 | Limitation | Effect | Planned in |
 |---|---|---|
-| The generation queue lives only in memory | No durable record of pending/running jobs | Phase 2 |
-| Only one job runs at a time | Multiple workers cannot run in parallel | Phase 2 |
-| Jobs are persisted only on completion | A Backend restart loses pending and running jobs | Phase 2 |
+| The generation queue lives only in memory | No durable record of pending/running jobs | Phase 3 |
+| Only one job runs at a time | Multiple workers cannot run in parallel | Phase 3 |
+| Jobs are persisted only on completion | A Backend restart loses pending and running jobs | Phase 3 |
 
 ## Main flows
 

@@ -1,6 +1,6 @@
 # Agent guide
 
-Read this file, then [project memory](docs/memory/MEMORY.md) and the [document map](docs/INDEX.md). The [README](README.md) explains what the system is.
+Read this file, then [project memory](docs/memory/MEMORY.md) and the [document map](docs/INDEX.md). The [README](README.md) explains what the system is. Goals and phases are in the [roadmap](docs/roadmap/ROADMAP.md); the active phase and current state are in [CURRENT](docs/CURRENT.md).
 
 ## Repository layout
 

@@ -1,15 +1,16 @@
 # Current
 
-2026-11-23 · `main` · Active: **Phase 0 — Clean foundation** ([roadmap](roadmap/ROADMAP.md))
+2026-11-24 · `main` · Active: **Phase 0 — Clean foundation** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
 | 1. MCP for agents | Mostly | Gallery retrieval only | Mixed response formats; no wait tool; no end-to-end run |
-| 2. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
-| 3. Prompt dashboard | Mostly | Not end-to-end | Combinations hold prompt text only, not template/models |
+| 2. One-sentence flow | Partly | No | No Civitai search tool; no agent-facing resource record; no single image-to-video + interpolation tool |
+| 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. LoRA training | Mostly | No | No real training run yet; cannot run on a worker |
+| 5. Prompt dashboard | Mostly | Not end-to-end | Combinations hold prompt text only, not template/models |
 
 Built on main: naming and per-run folders for LoRA, smoke tracking, revision context on generation, Gallery seed precision and routing fixes (integrated in `32b59fd`). Details per goal: [mcp](mcp.md), [prompt dashboard](prompt-dashboard.md), [Windows worker](windows-worker.md), [LoRA training](lora-training.md), [architecture limits](ARCHITECTURE.md#known-limitations-to-optimize).
 

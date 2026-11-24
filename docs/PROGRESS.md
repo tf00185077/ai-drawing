@@ -31,7 +31,21 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
-## Goal 2 — LAN Windows workers
+## Goal 2 — One-sentence flow (resources → workflow → image or clip)
+
+| Capability | Status | Code | Tests | Real run |
+|---|---|---|---|---|
+| Civitai resource acquire/status, source info, generate-like (MCP) | Done | `tools/civitai.py`, `services/civitai_resource_*` | `test_civitai_*` | No |
+| Civitai recipe import, resource resolution, safe download, source aliases, local identity ledger | Done | `services/civitai_*`, `api/civitai_*` | `test_civitai_*` | No |
+| Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
+| Resource record agents can list and filter; hash lookup of unknown local files | Partial (ledger and aliases exist; no agent-facing record) | `services/civitai_local_identity_ledger.py`, `civitai_source_alias_registry.py` | `test_civitai_*` | — |
+| Workflow selection from chosen resources | Partial (manifest match exists) | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_match.py` | No |
+| Image-to-video workflows (Wan first frame, first+last frame) | Done | `backend/workflows/gen_img2video_wan_*`, `api/generate.py` | `test_wan_keyframes.py` | No |
+| FILM frame interpolation | Done | `services/film_postprocess.py` | `test_film_audio_mux.py` | No |
+| One fixed image-to-video + interpolation MCP tool | Not started | — | — | — |
+| End-to-end one-sentence run | Not started | — | — | — |
+
+## Goal 3 — LAN Windows workers
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -44,22 +58,6 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Durable, concurrent queue | Not started (in-memory, one job at a time) | `core/queue.py` | — | — |
 | Worker registry, heartbeat, `execution_target=auto` | Not started | — | — | — |
 | Replace legacy updater | Not started | `worker/windows/updater/` | `test_worker_updater_*` | — |
-
-## Goal 3 — Prompt dashboard
-
-| Capability | Status | Code | Tests | Real run |
-|---|---|---|---|---|
-| Prompt Library storage, hierarchy, search, archive/restore | Done | `core/prompt_library*.py`, `api/prompt_library.py` | `test_prompt_library_*`, `test_prompt_search.py` | — |
-| Comma-atomic fragments and migration | Done | `core/prompt_atomic.py`, `comma_atomic_migration.py` | `test_prompt_atomic.py`, `test_comma_atomic_*` | — |
-| Workbench: compose, weight, order, save combinations | Done | `components/prompt-library/` | `PromptWorkbench.test.tsx`, `compositionState.test.ts` and others | No |
-| Category and entry management pages | Done | `pages/PromptCategory*.tsx` | matching tests | No |
-| Submit to a generation form | Done | `GenerationPanel.tsx`, `api/workflow_catalog.py` | `GenerationPanel.test.tsx`, `test_workflow_generation_form.py` | No |
-| Workflow templates with capability manifests, match, backfill | Done | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_manifest.py`, `test_workflow_match.py`, `test_template_backfill.py` | No |
-| Style presets: catalog, compose, author, save and retest graphs | Done | `core/style_presets.py`, `services/style_preset_workflows.py` | `test_style_preset*` | No |
-| Gallery: seed precision, readable modal, dev routing | Done | `pages/Gallery.tsx`, `vite.config.js` | `Gallery.test.tsx` | Yes (Mac, existing image) |
-| Recipe = combination + template + models + parameters | Partial (style presets only) | — | — | — |
-| Progress, errors and thumbnails on the Workbench | Not started | — | — | — |
-| MCP `generate_from_recipe` | Not started | — | — | — |
 
 ## Goal 4 — LoRA training
 
@@ -76,17 +74,35 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | First real training run | Not started | — | — | — |
 | Training on a worker | Not started | — | — | — |
 
+## Goal 5 — Prompt dashboard
+
+| Capability | Status | Code | Tests | Real run |
+|---|---|---|---|---|
+| Prompt Library storage, hierarchy, search, archive/restore | Done | `core/prompt_library*.py`, `api/prompt_library.py` | `test_prompt_library_*`, `test_prompt_search.py` | — |
+| Comma-atomic fragments and migration | Done | `core/prompt_atomic.py`, `comma_atomic_migration.py` | `test_prompt_atomic.py`, `test_comma_atomic_*` | — |
+| Workbench: compose, weight, order, save combinations | Done | `components/prompt-library/` | `PromptWorkbench.test.tsx`, `compositionState.test.ts` and others | No |
+| Category and entry management pages | Done | `pages/PromptCategory*.tsx` | matching tests | No |
+| Submit to a generation form | Done | `GenerationPanel.tsx`, `api/workflow_catalog.py` | `GenerationPanel.test.tsx`, `test_workflow_generation_form.py` | No |
+| Workflow templates with capability manifests, match, backfill | Done | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_manifest.py`, `test_workflow_match.py`, `test_template_backfill.py` | No |
+| Style presets: catalog, compose, author, save and retest graphs | Done | `core/style_presets.py`, `services/style_preset_workflows.py` | `test_style_preset*` | No |
+| Gallery: seed precision, readable modal, dev routing | Done | `pages/Gallery.tsx`, `vite.config.js` | `Gallery.test.tsx` | Yes (Mac, existing image) |
+| Recipe = combination + template + models + parameters | Partial (style presets only) | — | — | — |
+| Progress, errors and thumbnails on the Workbench | Not started | — | — | — |
+| MCP `generate_from_recipe` | Not started | — | — | — |
+
 ## Other capabilities on main
 
 | Capability | Code | Tests |
 |---|---|---|
-| Civitai recipe import, resource resolution, safe download, source aliases | `services/civitai_*`, `api/civitai_*` | `test_civitai_*` |
-| Video: Wan keyframes, fixed Discord video workflows, FILM interpolation, Argus MLX (Mac) | `core/wan_keyframes.py`, `fixed_video_workflows.py`, `services/film_postprocess.py`, `argus_mlx_i2v.py` | `test_wan_keyframes.py`, `test_fixed_video_*`, `test_film_audio_mux.py`, `test_argus_mlx_*` |
+| Video beyond the fixed image-to-video flow (frozen): Wan keyframes, fixed Discord video workflows, Argus MLX (Mac) | `core/wan_keyframes.py`, `fixed_video_workflows.py`, `services/film_postprocess.py`, `argus_mlx_i2v.py` | `test_wan_keyframes.py`, `test_fixed_video_*`, `test_film_audio_mux.py`, `test_argus_mlx_*` |
 | ComfyUI history import of UI-made images | `services/comfyui_history_watcher.py` | `test_comfyui_history_watcher.py` |
 | Discord bot: slash commands, operator delivery endpoint | `discord-bot/bot/` | `discord-bot/tests/` |
 | Launcher (setup, start, stop, status) | `setup.sh`, `setup.ps1`, `scripts/launcher/` | `scripts/tests/` |
 
 ## Log
+
+### 2026-11-24 — Roadmap rebuilt around the one-sentence flow
+- New Goal 2 (Civitai tools, resource record, workflow selection, fixed image-to-video with interpolation); LoRA is core and moves ahead of the dashboard. Goals renumbered: MCP → one-sentence flow → workers → LoRA → dashboard ([decisions](decisions/roadmap.md)).
 
 ### 2026-11-23 — Four goals set; Phase 0 started
 - CTY set the four goals and their order: MCP for agents → LAN Windows workers → prompt dashboard → LoRA training (workers moved ahead of the dashboard the same day).
