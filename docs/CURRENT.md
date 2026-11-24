@@ -67,10 +67,40 @@ The identified Backend and configured Mac client completed a fresh original/revi
 
 [Coding AID-167](/AID/issues/AID-167) delivered exact **72f483418524a613fb104b92ab483e39f7432bfc**; [QA AID-168](/AID/issues/AID-168) returned independent **D1-D4 PASS**, report/evidence/registry **3422ccda7a66514fe7dadf7d3c8785a5718ba472**. Producer read both actual deliverables and verified ten official uploads, both binary patches/bundles and all 455 indexed payloads against immutable Git. Reviewed product/tests/manifest/evidence and QA registry are integrated unchanged; [acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md) records behavior, tests and limits, and [AID-145's publication ledger](/AID/issues/AID-145#document-plan) pins final main. One kickoff ambiguity/clarification 1/round-2 CLEAR and delivery review 1 PASS with zero rejections remain.
 
-Next: [Producer AID-145](/AID/issues/AID-145) is done. [Producer AID-146](/AID/issues/AID-146) read the actual accepted baseline/repair and p1-01–04 manifests, independent PASS reports and acceptances, then dispatched [QA AID-169](/AID/issues/AID-169) for the existing [p1-05 Mac smoke task](tasks/p1-05-mcp-e2e-smoke-mac/task.md)'s fresh independent kickoff at fixed published `d95f1a3607709285d45ac25f6d87a3be53a7ba41`. The [handoff](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-handoff.md) records the unchanged task hash, accepted inputs and review boundaries. QA owns the next action; AID-146 depends natively on its actual verdict. No Coding or delivery-QA card is dispatched before CLEAR.
+[QA AID-169](/AID/issues/AID-169) completed p1-05 kickoff **AMBIGUITY** for fixed
+`d95f1a3`, actual [report/evidence](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review-round-1.md)
+`039c0aee181b2a78588f7b02cb89b575157c581f`. K5-1 identifies missing actual MCP
+bytes; K5-2 identifies wait/preparation/zero-retry accounting. Producer read the
+full report, verified five official uploads and all 83 indexed payloads/84 members,
+and adopts [clarification 1](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
+under delegated technical authority: bounded canonical static-PNG content on the
+existing Gallery read intent, strict one submit/one bounded wait per image,
+reset on every timeout/retry, and complete preparation/recovery/audit ledgers.
+No owner rule or phase boundary is relaxed. Original task/report/evidence and
+16 registry rows are preserved. One kickoff ambiguity event/two P1 findings,
+clarification 1/next kickoff round 2; zero implementation delivery rejections.
 
-Source publication is not deployment: retain active runtime/private configuration and verify loaded contracts/client setup before real execution. The adopted Illustrious/default, no-LoRA, local pair remains. Three consecutive real zero-intervention original/revision runs, retrieved bytes/lineage, CTY demo reply and phase-close review remain unaccepted. QA checks retrieval/MCP-only accounting, bounded same-ID waits, runtime preparation and real/cache/demo evidence against the existing task; this dispatch adopts no exception to the phase rules. Registry/heartbeat/scheduling stay Phase 3. No ordinary start/resource confirmation remains.
+Next: [Producer AID-146](/AID/issues/AID-146)'s native plan pins the clarified
+published source and recipient for fresh independent round-2 kickoff of the
+[refreshed p1-05 task](tasks/p1-05-mcp-e2e-smoke-mac/task.md). Actual CLEAR precedes
+Coding and exact-final-commit delivery-QA dispatch. Gallery content remains a
+specified target, not delivered or deployed. Source publication does not identify
+loaded runtime/client contracts. Retain active runtime/private configuration and
+canonical venvs. Illustrious/default, explicit local and no LoRA remain; four-step
+512×512 smoke parameters are predeclared technical choices, not aesthetics or a
+performance guarantee. Three real zero-intervention original/revision pairs,
+actual MCP bytes/lineage, CTY's explicit demo reply and later phase-close roadmap
+review remain unaccepted. Phase 2 is inactive; no routine owner confirmation.
 
 ## Team
 
-QA owns AID-169's fixed-source p1-05 kickoff; Producer owns AID-146 and handles the actual verdict before Coding dispatch. Completed earlier Coding/QA cards retain exact delivery and review ownership. Retain the active AID-151 worktree/private configuration and canonical Backend venv until reviewed deployment replaces that runtime. Publishing source does not relabel the recorded loaded services or prove the new MCP surface is deployed. Auto Dreamer is idle; other production specialists remain paused. This coordination round reads existing source/reports and verifies native handoff/document/Git identity only; no new software suite, live product probe/restart, generation or live image-byte read.
+Producer owns AID-146 and the bounded K5-1/K5-2 resolution; QA owns its completed
+AID-169 report and the next independent fixed-source kickoff on a separate card.
+Coding waits for actual CLEAR. Preserve AID-151's active runtime/worktree/private
+configuration and canonical environments until a controlled reviewed replacement.
+Auto Dreamer is idle; other specialists stay paused. This round integrates QA
+report/evidence and specification/status documents only. QA's 32 selected MCP
+passes and one Backend persisted-lineage fixture pass/one existing warning are
+offline implementability checks. Producer performs document/source/evidence/Git
+verification, without a new suite, live service probe/restart/deployment, generation
+or live Gallery-byte retrieval.

@@ -1,6 +1,7 @@
 # Decisions · mcp
 
 ## Settled
+- p1-05 actual retrieval uses a bounded static-PNG content option on the existing Gallery read intent; qualification keeps one submit/one bounded wait per image and resets on any client retry/timeout, with complete preparation/recovery/audit accounting · Producer adopts K5-1/K5-2 recommendations under delegated authority; target specification only, fresh kickoff CLEAR required · [contract](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
 - Mac baseline/smoke pair: `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, explicit local target · why: listed by Backend and Mac ComfyUI, matching checkpoint-loader family and no new resource dependency · Producer-selected under the owner's delegated routine-choice instruction; runtime compatibility still checked by p1-00 · [request](../requests/2026-11-24-proceed-within-project-boundaries.md)
 - Every MCP tool returns one envelope: `{ok, data}` on success, `{ok: false, error: {code, message, hint}}` on failure · why: agents learn one shape · owner-confirmed
 - Tools are consolidated to one tool per intent, each with exactly one risk label · why: a smaller surface is easier for agents to choose from · owner-confirmed · [tool map](#tool-map)
@@ -14,6 +15,13 @@
 - Phase 1 is implemented by the Paperclip team from `docs/tasks/p1-*`; the earlier planning-only session restriction is superseded for this round by the [follow-through instruction](../requests/2026-11-24-proceed-within-project-boundaries.md) · owner-confirmed
 
 ## Log (newest first)
+
+### 2026-11-24 · Retrieve actual MCP bytes and retain strict zero-retry qualification
+- Decision: scope `gallery_get(artifact_id=..., include_content=true)` as a bounded canonical static-PNG read, retaining metadata default, Backend identity/root authority, read risk and 31 intents. Adopt the exact byte/pixel/payload/error limits and strict finite attempt/recovery/preparation/audit policy in [p1-05 clarification 1](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md).
+- Why: metadata and host paths cannot satisfy actual retrieval through MCP. A client file/HTTP fetch would violate the existing gate; hidden repeats after a 50-second wait would misstate zero retries. Deliver the missing read within MCP and honestly reset qualification on a timeout without declaring the job failed.
+- Supersedes: p1-05's incomplete script-only means and unspecified attempt/accounting contract, not the owner retrieval/three-real-run/no-fix rule, accepted wait behavior or historical 23-unit/eight-incident baseline. Default Gallery metadata remains the currently delivered behavior until implementation is reviewed.
+- Provenance: Producer read actual [QA AID-169](/AID/issues/AID-169) AMBIGUITY at `039c0aee181b2a78588f7b02cb89b575157c581f`, verified five official uploads and all 83 indexed payloads/84 archive members against hashes/Git, and adopts its bounded recommendations under [CTY's delegated instruction](../requests/2026-11-24-proceed-within-project-boundaries.md). This preserves the current stack, phase boundaries, CTY aesthetics/demo and phase-close authority. No new routine owner confirmation.
+- Link: [refreshed task](../tasks/p1-05-mcp-e2e-smoke-mac/task.md), [original task](../tasks/p1-05-mcp-e2e-smoke-mac/task-kickoff-round-1.md), [original report](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review-round-1.md). One kickoff ambiguity event/two P1 findings, clarification 1 and next round 2; no implementation rejection. Fresh independent CLEAR precedes Coding; later exact-commit technical PASS and actual CTY demo reply precede whole-task acceptance/publication.
 
 ### 2026-11-24 · Keep configured worker identity distinct from probe observations
 - Decision: adopt the [configured-worker contract](#configured-worker-health-and-identity) for p1-04. Extend the existing read-only worker-status response additively; keep its existing flags/nested worker response. Expose configured URL/expected identity independently of nullable current observations and the validated resolved endpoint. Preserve one configured entry after probe failure; report an unavailable/unknown Backend read through the common error envelope.

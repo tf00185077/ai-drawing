@@ -454,3 +454,49 @@ private configuration, canonical venvs and all models/datasets/outputs/Gallery
 records are preserved. Phase 1 stays active; CTY's explicit demo reply and
 phase-close roadmap review remain later gates. Existing memory covers these
 pitfalls; no duplicate topic or new accepted behavior is recorded.
+
+## 2026-11-24 — p1-05 kickoff ambiguity; bounded byte and qualification contract
+
+[QA AID-169](/AID/issues/AID-169) completed independent **AMBIGUITY** for
+`d95f1a3607709285d45ac25f6d87a3be53a7ba41`, task SHA-256
+`5ff74c8794101ed1dc1c1346096444d184ca0b6f999271e820ae6829fcc8ea8b`, exact
+report/evidence `039c0aee181b2a78588f7b02cb89b575157c581f`. Producer read the full
+report and actual receipts, verified all five official uploads, exact patch/
+bundle and all 83 indexed payloads/84 archive members against sizes, hashes,
+Git blobs and immutable source. [Integrity audit](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-acceptance-evidence/producer-round-1-integrity.json).
+The original task/report/evidence and all 16 registry rows remain unchanged in
+historical mirrors. One kickoff ambiguity event with two P1 findings, clarification
+1 and next kickoff round 2; this is not an implementation delivery rejection.
+
+K5-1: current Gallery returns metadata rather than bytes, so script-only work
+cannot meet actual MCP-only retrieval. K5-2: bounded timeout recovery and baseline
+setup/poll accounting need strict qualification. Producer adopts QA's in-scope
+recommendations in [clarification 1](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
+and the [refreshed task](tasks/p1-05-mcp-e2e-smoke-mac/task.md): bounded canonical
+static-PNG content on the existing Gallery read intent (2 MiB/2048 per dimension,
+common envelope/digest), strict one submit/one bounded wait per image, timeout/
+retry resets, finite six-attempt/recovery budgets and complete preparation/
+recovery/post-result accounting. No client file/HTTP fetch is silently exempted,
+no printed locator substitutes for bytes and no retry counts as zero. Original
+23-unit/eight-incident F1–F8 stays immutable. Illustrious/default/no-LoRA/local
+stays; four-step 512×512 parameters reduce workload without promising performance
+or aesthetic acceptance. CTY demo reply and later roadmap phase close remain.
+
+Next is fresh independent round-2 kickoff at the published clarified source,
+pinned with its recipient in [AID-146's native plan](/AID/issues/AID-146#document-plan).
+No Coding dispatch before actual CLEAR. Exact-final-commit technical QA covers
+D1–D3 and leaves D4 owner-demo unchecked for Producer/CTY; no whole-task or phase
+acceptance on technical PASS alone. Feature publication follows required PASS
+and actual owner-demo acceptance. No routine owner/start/resource confirmation.
+
+One affected existing MCP catalog/documentation guard passes after the topic edit;
+Producer does not repeat the full software suites.
+QA actually ran 32 selected MCP cases (2.10s) and one Backend real-route/SQLite
+persisted-lineage case (0.50s, one existing warning), pinned worktree imports,
+isolated roots and --timeout=60. Its registered probe demonstrates current
+metadata-only behavior and rejects the proposed content argument; it certifies
+no new feature. Producer adds no software suite, running-product probe/restart,
+real generation/training/worker dispatch or live Gallery-byte retrieval. Keep
+runtime/private configuration, venvs and all retained data. Source publication
+is not deployment; Phase 2 stays inactive. The new decisions record the durable
+contract; no duplicate memory topic is added.

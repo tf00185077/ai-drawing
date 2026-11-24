@@ -503,3 +503,40 @@ product probe/restart, generation or live Gallery bytes. Preserve active runtime
 private configuration, canonical venvs and all retained data. Three real
 zero-intervention runs, CTY's explicit demo reply and phase-close roadmap review
 remain unaccepted; Phase 2 stays inactive. No new memory topic is needed.
+
+## p1-05 kickoff result and clarification 1
+
+[QA AID-169](/AID/issues/AID-169) completed **AMBIGUITY**, exact report/evidence
+`039c0aee181b2a78588f7b02cb89b575157c581f`. Producer read its actual report and
+verified all five official uploads, exact patch/bundle and 83 indexed payloads/
+84 members against immutable Git/hashes. K5-1 is missing actual MCP bytes;
+K5-2 is wait/preparation/no-retry accounting. Original task/report/evidence and
+all 16 registry rows remain unchanged in historical mirrors. Preserve one kickoff
+ambiguity event/two P1 findings, clarification 1/next round 2, zero delivery
+rejections; earlier histories stay separate.
+
+Adopt [clarification 1](../p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md) under
+delegated in-boundary technical authority. The [refreshed task](../p1-05-mcp-e2e-smoke-mac/task.md)
+includes the bounded canonical PNG content option on existing Gallery read
+(2 MiB, dimensions up to 2048, common envelope/digest, authoritative safe Gallery
+root), plus the repeatable driver. Retain strict one submit/one bounded wait per
+image and reset on timeout/retry. Six-attempt and per-job six-call recovery
+budgets are finite; all preparation, attempts, recovery and post-result audit
+operations stay visible with original F1–F8 accounting. No external artifact
+fetch exemption or relaxed owner gate. Retain Illustrious/default/no-LoRA/local;
+predeclared four-step 512×512 parameters imply no aesthetics/performance promise.
+
+Fresh independent round-2 CLEAR at the published clarified source precedes
+Coding/exact-commit delivery-QA cards. [AID-146's native plan](/AID/issues/AID-146#document-plan)
+pins the actual source/recipient and prerequisite. Later exact-commit technical
+QA reviews D1–D3, D4 stays pending CTY's explicit demo reply for Producer to
+record; technical PASS alone is not whole-task/phase acceptance. Feature merge/
+push follows required PASS and owner-demo acceptance. Phase-close roadmap review
+remains a separate later gate before Phase 2. No routine owner confirmation.
+
+QA's 32 selected MCP and one Backend lineage fixture pass are offline source
+checks, not content implementation or real generation. Producer integrates
+report/spec/status only, with document/source/evidence/Git verification and no
+new suite/product probe/restart/generation/live Gallery bytes. Runtime/private
+configuration, canonical venvs and all data stay. New durable choices are in MCP
+decisions; no duplicate memory topic.
