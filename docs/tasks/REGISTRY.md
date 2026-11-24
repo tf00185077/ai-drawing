@@ -8,6 +8,7 @@
 | key | level | guarding_test | review |
 |-----|------|---------------|--------|
 | p1-00-mcp-friction-run-mac/D1 | P1 | backend/tests (full suite with --timeout=60) | docs/tasks/p1-00-mcp-friction-run-mac/review.md |
+| p1-00a-mac-runtime-and-retrieval/D4 | P1 | backend/tests and mcp-server/tests (full suites with --timeout=60; unchanged-source evidence reused) | docs/tasks/p1-00a-mac-runtime-and-retrieval/review.md |
 
-**Active items: 1.** Review confirms each still has a passing test; a lost or failing guarding test is a regression, unless the owner changed that behavior (superseded).
+**Active items: 2.** Review confirms each still has a passing test; a lost or failing guarding test is a regression, unless the owner changed that behavior (superseded).
 
