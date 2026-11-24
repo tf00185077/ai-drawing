@@ -1,6 +1,6 @@
 # Progress
 
-Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-23). Current state in one screen: [CURRENT](CURRENT.md).
+Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-24). Current state in one screen: [CURRENT](CURRENT.md).
 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
@@ -22,7 +22,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
-| 30 intent tools including bounded wait, one risk each; catalog/discovery aligned | Done, p1-01/02 and p1-03 accepted | `mcp-server/mcp_server/tool_catalog.py`, `server.py`, `tools/intents.py` | Independent literal risk/discovery guards; full MCP 540 passed/2 optional skips | Software verified offline; new surface not deployed here |
+| 31 intents including health, configured workers and bounded wait, one risk each; catalog/discovery aligned | Done, p1-01 through p1-04 accepted | `mcp-server/mcp_server/tool_catalog.py`, `server.py`, `tools/intents.py`, `tools/health.py` | Independent literal risk/discovery guards; full MCP 606 passed/2 optional skips | Software verified offline; new surface not deployed here |
 | Image template/custom-workflow generation; generation status/cancel; video submission removed from MCP | Done, p1-02 accepted | `tools/intents.py`, `tools/generate.py` | Registered mode/request preservation and full MCP | Prior Mac original/revision + status (p1-00a); consolidated surface offline |
 | Revision context and parent lookup on generation | Done | `schemas/generate.py`, `tools/generate.py` | `test_revision_context.py` (Backend + MCP), `test_revision_parent_errors.py` | Yes, Mac original/revision canonical lineage (p1-00a) |
 | Gallery read, artifact read, rerun | Done | `tools/gallery.py` | `test_tools.py` | Both readers' returned host paths consumed/decoded on Mac (p1-00a) |
@@ -31,7 +31,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Discord delivery of results | Done | `tools/discord_delivery.py` | `test_discord_delivery.py` | No |
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
 | `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
-| `list_workers` / `worker_status` | Not started | — | — | — |
+| `health` / `list_workers`, additive configured-worker status | Done, p1-04 accepted | `tools/health.py`, `api/workers.py` | Real route/client and registered mocked-HTTP checks; independent 51 calls/107 GETs, ten detected faults; Backend 1916/124 Windows skips, MCP 606/2 | Offline only; no real worker readiness claim |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
@@ -374,3 +374,50 @@ active runtime/private configuration, canonical venvs and all retained data.
 No new memory topic is needed; the normative technical choice is already in
 MCP decisions. Original 23-unit/eight-incident baseline, colocated cached-pair
 proof, client-limit uncertainty and phase/aesthetic/three-run gates remain.
+
+
+## 2026-11-24 — p1-04 health/configured worker accepted; real Mac smoke next
+
+[Coding AID-167](/AID/issues/AID-167) delivered feature
+`72f483418524a613fb104b92ab483e39f7432bfc`; [QA AID-168](/AID/issues/AID-168)
+independently returned D1-D4 PASS at that same candidate, report/evidence/registry
+`3422ccda7a66514fe7dadf7d3c8785a5718ba472`. Producer read actual manifest/PASS
+and verified ten official uploads, both exact binary patches/bundles and all
+159 Coding/296 QA indexed payloads against sizes, hashes, blob IDs and Git.
+Reviewed product/tests/manifest/evidence and QA registry are integrated unchanged;
+[acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md) records the result.
+
+Health replaces ping and list_workers is added, both read; exactly 31 intents
+preserve other 29 risks/capabilities and bounded wait. Existing Backend status
+is additive, configuration is authoritative, failed observations stay null,
+configured-down stays one worker and failed Backend reads never imply empty
+configuration. Health retains all three components and truthful not-observed
+reasons. Existing LAN discovery/cache remains; no registry/heartbeat/scheduling,
+persistent history or control path is added. Topic acceptance/status text is
+updated after PASS; normative specifications and all historical evidence stay.
+
+Fresh independent final Backend **1916 passed, 124 Windows-only skips, 76 warnings
+in 42.21s** and MCP **606 passed, two unchanged optional export skips in 3.27s**
+use isolated roots, --timeout=60, pinned imports and fresh Backend exports.
+The separate probe records 51 calls/107 GETs; 28 fresh wait cases pass. Ten
+meaningful faults fail and restore before full GREEN. All 13 prior registry rows
+survive; three additions yield 16 active, no supersession. Setup failures and
+corrections stay in raw evidence. No final failure/hang remains. Unchanged
+Frontend/build/native Windows/worker/launcher/bot execution was not performed.
+
+Producer performs identity/document/integration/publication checks, reusing
+applicable QA results on unchanged reviewed inputs. Two affected documentation/
+catalog guards pass after topic status edits; no full product suite is repeated. No product-service probe/
+restart/deployment, real generation/training/worker dispatch or live Gallery
+bytes. Keep runtime/private configuration, venvs and all retained data. Source
+publication is not deployment. Health reads are sequential with five-second
+HTTP timeouts, not an atomic snapshot/overall deadline. Actual client limit
+remains unverified; 50-second wait fallback and locator/access limits stay.
+
+One p1-04 kickoff ambiguity/clarification 1/round-2 CLEAR and delivery review 1
+PASS with zero delivery rejections remain separate from earlier histories.
+[AID-145](/AID/issues/AID-145) publication/completion releases [AID-146](/AID/issues/AID-146)
+for fresh p1-05 kickoff and the existing real Mac smoke/demo task. Original
+baseline, cached colocated pair and remote/aesthetic/three-run/phase-close limits
+remain. No ordinary owner confirmation is needed. The existing decisions and
+runtime-source memory cover the durable lesson; no duplicate memory topic.

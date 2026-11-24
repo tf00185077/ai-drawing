@@ -65,7 +65,7 @@ Backend source: `backend/app/services/nvidia_worker.py`, `backend/app/api/worker
 
 ## Read-only status visibility
 
-The candidate `GET /api/workers/status` response extends the existing
+The accepted `GET /api/workers/status` response extends the existing
 `configured`, `reachable`, `status`, failed `error_type` and successful nested
 `worker` fields. It adds normalized configured `url`, `expected_hostname`
 (null when unset), `expected_protocol_version`, current `hostname`,
@@ -89,7 +89,8 @@ perform its existing private-LAN probes; it sends no generation or control.
 Reachability proves neither remote ComfyUI nor model/node parity, generation
 readiness, source version or artifact access. This source change has offline
 route/client/registered-tool checks; deployment and real worker operation
-remain unverified, with independent QA and Producer integration pending.
+remain unverified. The [p1-04 acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md)
+records the independent exact-commit PASS and source integration.
 
 ## Install (current scripts)
 

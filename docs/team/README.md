@@ -47,7 +47,7 @@ Each active role loads shared skills from the owner's skill library; see [skill 
 Use the current [MCP intent catalog and flow](../mcp.md). Every tool returns
 `{ok, data}` on success or `{ok: false, error: {code, message, hint}}` on failure.
 Read successful fields under `data`, and preserve job IDs for status checks
-after timeouts. The candidate source replaces `mcp_ping` with `health` and adds
+after timeouts. The accepted source replaces `mcp_ping` with `health` and adds
 `list_workers` as read intents (31 total). Health retains all three component
 entries on failed/partial reads; an unknown worker configuration returns an
 error rather than an empty list. Configured identity and current accepted
@@ -55,5 +55,6 @@ observations remain distinct. Discovery controls/submits nothing and certifies
 no worker model parity or generation readiness. Bounded `wait_for_job` retains
 its existing result locators and 50-second overall fallback; the actual client
 limit remains unverified. `job_status` and LoRA status remain separate reads.
-Independent exact-commit QA and Producer integration are pending for this
-candidate. Source availability does not establish deployment or real-run proof.
+The [p1-04 acceptance](../tasks/p1-04-mcp-health-and-workers/acceptance.md) records
+independent exact-commit PASS and integration. Source availability does not
+establish deployment or real-run proof.

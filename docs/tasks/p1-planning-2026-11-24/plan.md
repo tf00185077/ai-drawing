@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 kickoff round-2 CLEAR accepted; implementation and exact-commit delivery review next**.
+Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 accepted after exact-commit PASS; p1-05 fresh kickoff and real Mac smoke/demo next**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -316,6 +316,49 @@ checks. No feature implementation is certified. Producer verifies documents,
 official evidence/Git and publication only, with no new software suite, live
 product probe/restart, generation/training/worker dispatch or Gallery-byte read.
 Runtime/private configuration, canonical venvs and all retained data stay intact.
+
+## Accepted p1-04 delivery and p1-05 release
+
+[Coding AID-167](/AID/issues/AID-167) delivered exact
+`72f483418524a613fb104b92ab483e39f7432bfc`; [QA AID-168](/AID/issues/AID-168)
+returned independent all-D1-D4 PASS, report/evidence/registry
+`3422ccda7a66514fe7dadf7d3c8785a5718ba472`. Producer read actual manifest/
+report and verified ten official uploads, exact binary patches/bundles and all
+159 Coding/296 QA indexed payloads against sizes, hashes, blob IDs and Git.
+Reviewed product/tests/manifest/evidence and QA registry are integrated unchanged;
+[acceptance](../p1-04-mcp-health-and-workers/acceptance.md) records the result.
+Cleared task/decision/clarification, original history and prior guards remain.
+
+Current software exposes 31 intents: health replaces ping, list_workers is read,
+other 29 names/risks and bounded wait are preserved. Existing worker status is
+extended additively; configured/expected identity stays separate from nullable
+accepted observations, including cached discovery followed by failed validation.
+Three-component health retains truthful unknowns on failed reads. No registry,
+heartbeat, scheduling, persistent history or new control path is added.
+
+Fresh independent final Backend **1916 passed/124 Windows-only skips/76 warnings**,
+MCP **606 passed/two unchanged optional smoke-export skips**, registered probe
+**51 calls/107 GETs** and fresh wait consumer **28 passed** are recorded. Ten
+production faults fail and restore before full GREEN. All 13 earlier registry
+rows remain; three additions yield **16 active**, no supersession. Producer checks
+documents/source/official package/Git/publication identity, without another full
+suite on unchanged reviewed product/test/dependency inputs. No service probe/
+restart/deployment, real generation/training/worker dispatch or live Gallery
+bytes. Preserve active runtime/private configuration, canonical venvs and data.
+
+p1-04 accounting is one kickoff ambiguity/clarification 1/round-2 CLEAR and
+implementation delivery review 1 PASS, zero delivery rejections. Earlier task
+histories remain separate. Health uses sequential five-second status reads,
+not an atomic snapshot/overall deadline; client limit stays unverified with
+50-second total wait fallback. Reachability/locators prove neither readiness
+nor bytes/access. Source publication does not deploy the running product.
+
+Publication/completion of [AID-145](/AID/issues/AID-145) releases [AID-146](/AID/issues/AID-146)
+for p1-05's own fresh kickoff using the accepted 31-intent surface and actual
+prior results. Retain the adopted Illustrious/default/no-LoRA/local pair and
+verify loaded contracts/client setup for real execution. Three zero-intervention
+real original/revision runs, retrieval/lineage, CTY demo and phase-close review
+remain later gates. No ordinary start/resource confirmation is pending.
 
 ## Handoff, delivery and continuation
 

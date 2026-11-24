@@ -4,9 +4,10 @@ The stdio MCP server gives agents 31 tools with one response envelope and one
 risk label per intent. It calls the existing Backend APIs; direct ComfyUI admin
 operations and Discord delivery use their configured service endpoints.
 
-This candidate includes p1-04 health/configured-worker visibility, replacing temporary
-`mcp_ping` with `health` and adding `list_workers`. It awaits exact-commit
-independent QA and Producer integration; the running product is unchanged.
+The accepted [p1-04 delivery](tasks/p1-04-mcp-health-and-workers/acceptance.md)
+replaces temporary `mcp_ping` with `health` and adds `list_workers`, after
+independent exact-commit PASS. This source publication does not deploy the
+running product.
 The earlier combined p1-01/02 delivery was a breaking change. Reload client tool discovery and
 migrate old calls using the [complete capability map](tasks/p1-02-mcp-tool-consolidation/manifest.md#old-to-new-capability-map).
 The catalog in `mcp-server/mcp_server/tool_catalog.py` drives registration.
@@ -145,7 +146,7 @@ and a nullable `reason`. False reachability has a safe nonempty reason:
   code, safe message and same-read recovery hint. It does not establish a
   failed dependency probe.
 
-Full recorded envelopes and GET requests are in the candidate
+Full recorded envelopes and GET requests are in the accepted delivery
 [offline samples](tasks/p1-04-mcp-health-and-workers/delivery-1-evidence/recorded-mcp-samples.output.txt).
 
 The tool reads `/health` first. If that read fails or is invalid, Backend is
@@ -305,7 +306,7 @@ resubmission or failed-worker local fallback occurs. cancel_job remains for
 queued generation; LoRA status and cancel use their own named tools.
 
 Use `list_workers` when selecting the configured worker; inspect health reasons
-before generation. This candidate flow is executable in source and verified
+before generation. This accepted flow is executable in source and verified
 offline. Deployment, real-run wait and the Phase 1 exit remain unverified here.
 
 **Retrieve:** gallery_get(image_id=...) constructs local_path from
