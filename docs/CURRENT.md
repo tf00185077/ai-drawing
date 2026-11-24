@@ -1,12 +1,12 @@
 # Current
 
-2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, Mac baseline repairs ([roadmap](roadmap/ROADMAP.md))
+2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, response envelopes and tool consolidation next ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | Fresh original/revision bytes + lineage verified on unaccepted repair | Runtime inventory incomplete (D5); mixed responses; no wait tool |
+| 1. MCP for agents | Mostly | Original/revision bytes + lineage; colocated Mac host paths | Mixed responses; no wait tool; zero-intervention exit proof pending |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
@@ -21,7 +21,7 @@ Windows, 2026-11-24: Backend 2018 passed, 6 skipped, no failures or hangs (about
 
 macOS, 2026-11-24: [p1-00](tasks/p1-00-mcp-friction-run-mac/manifest.md) full Backend suite `1900 passed, 124 skipped, 77 warnings in 43.84s`; independent [QA rerun](tasks/p1-00-mcp-friction-run-mac/review.md) `1900 passed, 124 skipped, 77 warnings in 44.13s`. Both exited 0 with `--timeout=60`; QA confirmed every skip requires Windows. Tests/skips were unchanged. That baseline ran no full MCP, Frontend or Windows suite.
 
-Unmerged repair candidate `00ebb4d`, [QA AID-152](/AID/issues/AID-152): independent full Backend `1900 passed, 124 skipped, 76 warnings in 42.40s` and MCP `314 passed, 4 skipped in 1.10s`, both exit 0 with isolated roots and `--timeout=60`. Backend skips require Windows; MCP skips require separately exported HTTP fixtures. Product/test source is unchanged. D4 passes, but the delivery fails D5; no new Frontend/Windows result is implied.
+Accepted repair `b6d5846`, [QA round 2 AID-154](/AID/issues/AID-154): reused independent [round-1](tasks/p1-00a-mac-runtime-and-retrieval/review-round-1.md) full Backend `1900 passed, 124 skipped, 76 warnings in 42.40s` and MCP `314 passed, 4 skipped in 1.10s`, exit 0 with isolated roots and `--timeout=60`. Round 2 verified source/test/root-input/package/platform equivalence and repeated the read-only schema audit; no extra suite/generation. Backend skips require Windows; MCP skips require exported HTTP fixtures. No new Frontend/Windows result.
 
 ## Phase 0
 
@@ -37,14 +37,12 @@ Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local t
 
 [Coding AID-148](/AID/issues/AID-148) delivered no-repair evidence commit `3081952`; [QA AID-149](/AID/issues/AID-149) independently returned [PASS for that evidence-only record](tasks/p1-00-mcp-friction-run-mac/review.md). Producer accepted that unchanged record plus QA's report/registry `c377a02`. Baseline remains **23 intervention units across eight incidents**, one completed original and Gallery metadata only. At measurement time the relative URL failed locally before HTTP and the old Backend lacked the revision contract; its loaded commit remains unknown. Later repair evidence does not rewrite that no-repair result.
 
-[AID-142](/AID/issues/AID-142) coordinates bounded [p1-00a runtime/retrieval repair](tasks/p1-00a-mac-runtime-and-retrieval/task.md). [QA kickoff AID-150](/AID/issues/AID-150) returned [CLEAR](tasks/p1-00a-mac-runtime-and-retrieval/kickoff-review.md) for fixed specification `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`; Producer read the actual verdict and verified its official report/archive/patch against `9bd0029`. No specification change or owner answer is needed.
+[AID-142](/AID/issues/AID-142) accepts the bounded [p1-00a repair](tasks/p1-00a-mac-runtime-and-retrieval/acceptance.md) at **`b6d5846`** after [QA AID-154](/AID/issues/AID-154)'s independent [D1-D5 PASS](tasks/p1-00a-mac-runtime-and-retrieval/review.md). [Kickoff AID-150](/AID/issues/AID-150) cleared fixed spec `4ac3d56`; one [round-1 rejection](tasks/p1-00a-mac-runtime-and-retrieval/review-round-1.md) remains recorded. [Coding AID-153](/AID/issues/AID-153) corrected the complete startup-schema inventory, and QA repeated its read-only audit: all old values preserved, added training fields NULL, reservation table empty. Corrected delivery and QA report/evidence/registry `3d5d890` are integrated unchanged. No product/test source changed.
 
-[Coding AID-151](/AID/issues/AID-151) delivered runtime/client-configuration/docs-only candidate `00ebb4d`; it remains **unmerged**. [QA delivery AID-152](/AID/issues/AID-152#comment-c64c55d7-ac7c-4849-94cf-8447f62d3e2b) returned **FAIL: D1-D4 PASS, D5 FAIL**. QA independently verified the identified Backend, unmodified returned host-path consumption/decoded bytes, fresh pair and persisted canonical lineage. The cached original and colocated-client limit remain disclosed.
+The identified Backend and configured Mac client completed a fresh original/revision pair with persisted canonical lineage and decoded bytes from unchanged returned host paths. The original used ComfyUI cache; proof is one colocated-client pair, with byte reads outside MCP disclosed. F4/F5/F8 are resolved for that boundary. F1/F2 environment binding, F3 response parsing, F6 polling and F7 visibility remain mapped to later Phase 1 work. No three-run exit or aesthetic/demo acceptance.
 
-D5's inventory omits eight nullable training columns and the empty `lora_output_reservations` table added by existing startup code. QA found all old values preserved; Producer verified the official report/audit against startup source. [Delivery correction 1](tasks/p1-00a-mac-runtime-and-retrieval/repair-round-1.md), fixed at `c41815c`, stays under unchanged original D5; no product change, restart or extra generation is indicated. [Coding AID-153](/AID/issues/AID-153) owns that correction; [QA round 2 AID-154](/AID/issues/AID-154) waits natively on Coding and reviews its exact final candidate. Both saved native plans and the QA prerequisite were read back. This is one delivery rejection, below the owner escalation threshold. AID-142 now waits on AID-154; AID-141/AID-143 remain gated until actual repair acceptance.
-
-The existing sequence continues only after repair PASS: AID-143 (p1-01/02 ship together), AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs and demo). Exact-commit independent review precedes each software merge. Phase boundaries and exit rules are unchanged.
+AID-142's completion releases [AID-143](/AID/issues/AID-143) for baseline-informed p1-01/02 kickoff; those changes ship together after their own CLEAR and exact-commit PASS. The native sequence then continues AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs/demo). Phase scope, order and exit rules are unchanged; no routine start confirmation is needed.
 
 ## Team
 
-Coding and QA completed delivery/review round 1; Coding owns AID-153 and QA next owns AID-154. Retain the active AID-151 worktree and canonical Backend venv until reviewed deployment replaces that runtime; correction uses a separate worktree. Auto Dreamer is idle; other production specialists remain paused. Producer inspected delivered documents/audits and verified correction dispatch only this round, with no new software suite, live probe, generation or live image-byte read. Repair acceptance remains pending.
+Coding/QA completed p1-00a; Producer next coordinates AID-143. Retain the active AID-151 worktree/private configuration and canonical Backend venv until reviewed deployment replaces that runtime; publishing docs does not relabel the recorded launch source. Auto Dreamer is idle; other production specialists remain paused. Producer verified actual review/delivery/Git/package evidence and acceptance publication only this round; no software suite, live probe, restart, generation or live image-byte read.

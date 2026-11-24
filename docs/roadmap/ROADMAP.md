@@ -28,11 +28,11 @@ Unknowns, riskiest first: whether the full Backend suite passes on Windows after
 Exit: a new agent understands the system, its state and its rules from README → AGENTS → INDEX; every failing test is fixed or explicitly quarantined with a reason.
 Demo: CTY reads README, CURRENT and ROADMAP and finds them accurate; one command per suite runs with the documented result.
 
-### Phase 1 — MCP that agents use smoothly (active: Mac friction baseline)
+### Phase 1 — MCP that agents use smoothly (active: response envelopes and tool consolidation)
 
 Role: core. Depends on: Phase 0.
 Scope: a friction run on today's tools that records every manual fix; one response envelope for every tool (`{ok, data}` / `{ok: false, error: {code, message, hint}}`); generation, job, Gallery, prompt, style-preset and ComfyUI tools consolidated to one per intent with one risk label each (Civitai and LoRA tools keep their names until Phase 2 and Phase 5; video and Civitai generate-like leave MCP); `wait_for_job` returning artifact paths/URLs within the client's call limit; `health` and `list_workers`; a real end-to-end smoke script on the Mac ComfyUI. Tasks: [p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md) → [p1-01](../tasks/p1-01-mcp-response-envelope/task.md) + [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md) (shipped together) → [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md) → [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md) → [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md); decisions in [mcp](../decisions/mcp.md).
-Execution status: [2026-11-24 plan and native backlog](../tasks/p1-planning-2026-11-24/plan.md). CTY authorized executable work inside the existing boundaries and delegated routine choices; Producer adopted the recommended Mac pair and proceeds through CLEAR kickoff. No phase-exit result is claimed.
+Execution status: [2026-11-24 plan and native backlog](../tasks/p1-planning-2026-11-24/plan.md). The no-repair baseline and prerequisite [Mac runtime/retrieval repair](../tasks/p1-00a-mac-runtime-and-retrieval/acceptance.md) are accepted after independent review; p1-01/02 next proceed together through their own CLEAR kickoff. CTY's delegated-choice authority remains in effect. No phase-exit result is claimed.
 
 Remove: Wan keyframe video, custom video and Civitai generate-like tools from MCP (Backend code frozen); every old tool name replaced by the consolidation.
 Unknowns, riskiest first: which manual fixes a run needs today and whether they are MCP problems or Backend/ComfyUI problems; the MCP client's tool-call time limit; how many tools can be merged without losing needed control.
