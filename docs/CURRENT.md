@@ -80,27 +80,38 @@ No owner rule or phase boundary is relaxed. Original task/report/evidence and
 16 registry rows are preserved. One kickoff ambiguity event/two P1 findings,
 clarification 1/next kickoff round 2; zero implementation delivery rejections.
 
-Next: [Producer AID-146](/AID/issues/AID-146)'s native plan pins the clarified
-published source and recipient for fresh independent round-2 kickoff of the
-[refreshed p1-05 task](tasks/p1-05-mcp-e2e-smoke-mac/task.md). Actual CLEAR precedes
-Coding and exact-final-commit delivery-QA dispatch. Gallery content remains a
-specified target, not delivered or deployed. Source publication does not identify
-loaded runtime/client contracts. Retain active runtime/private configuration and
-canonical venvs. Illustrious/default, explicit local and no LoRA remain; four-step
-512×512 smoke parameters are predeclared technical choices, not aesthetics or a
-performance guarantee. Three real zero-intervention original/revision pairs,
-actual MCP bytes/lineage, CTY's explicit demo reply and later phase-close roadmap
-review remain unaccepted. Phase 2 is inactive; no routine owner confirmation.
+[QA AID-170](/AID/issues/AID-170) returned independent **kickoff round-2 CLEAR**
+for fixed `4fc3ff25eb95e191ec45432c11f82055b914dae5`, actual [report/evidence](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review.md)
+`a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the full report and
+verified five official uploads, all 93 indexed payloads/94 members, exact patch/
+tree and independently fetched bundle. [Kickoff acceptance](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-acceptance.md)
+records K5-1/K5-2 resolved at specification level. Cleared task/clarification/
+decision and original task/report/evidence stay unchanged; 16 registry rows and
+23-unit/eight-incident baseline stay. One ambiguity event/two findings,
+clarification 1/round-2 CLEAR and zero implementation rejections remain.
+
+Next: Coding implements the [cleared p1-05 task](tasks/p1-05-mcp-e2e-smoke-mac/task.md)
+in a persistent isolated worktree, followed by independent exact-final-commit
+delivery QA. [AID-146's native plan](/AID/issues/AID-146#document-plan) pins the
+published base, separate recipients and Coding → Review → Producer prerequisites.
+Gallery content is specified, not yet delivered or deployed. Retain runtime/
+private configuration, canonical venvs and all data; loaded runtime/client
+contracts need actual preparation/verification. Illustrious/default/no-LoRA/local
+and fixed four-step 512×512 technical parameters remain, without speed/aesthetic
+promise. Three real zero-intervention original/revision pairs, actual MCP bytes/
+lineage, CTY's explicit demo reply and later phase-close review remain unaccepted.
+Delivery QA leaves D4 pending owner-demo for Producer/CTY; technical PASS alone
+does not close the task. Phase 2 stays inactive; no routine owner confirmation.
 
 ## Team
 
-Producer owns AID-146 and the bounded K5-1/K5-2 resolution; QA owns its completed
-AID-169 report and the next independent fixed-source kickoff on a separate card.
-Coding waits for actual CLEAR. Preserve AID-151's active runtime/worktree/private
-configuration and canonical environments until a controlled reviewed replacement.
-Auto Dreamer is idle; other specialists stay paused. This round integrates QA
-report/evidence and specification/status documents only. QA's 32 selected MCP
-passes and one Backend persisted-lineage fixture pass/one existing warning are
-offline implementability checks. Producer performs document/source/evidence/Git
-verification, without a new suite, live service probe/restart/deployment, generation
-or live Gallery-byte retrieval.
+Coding owns the cleared implementation/real evidence; QA owns the separate
+exact-final-commit delivery review after Coding; Producer owns AID-146, reads
+actual results and handles repairs, CTY demo and phase close. Native recipients/
+prerequisites are pinned in AID-146's plan. Preserve active runtime and all data;
+long-lived services use persistent source worktrees, never run-owned scratch.
+Auto Dreamer is idle; other specialists stay paused. This handoff integrates
+unchanged QA report/evidence and status documents, with no feature or phase
+acceptance. QA's new round is source/Git/AST/document checks only; prior offline
+results retain attribution. No product probe/restart/deployment, generation or
+live Gallery-byte retrieval by Producer.

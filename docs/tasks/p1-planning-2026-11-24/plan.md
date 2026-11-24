@@ -540,3 +540,27 @@ report/spec/status only, with document/source/evidence/Git verification and no
 new suite/product probe/restart/generation/live Gallery bytes. Runtime/private
 configuration, canonical venvs and all data stay. New durable choices are in MCP
 decisions; no duplicate memory topic.
+
+## p1-05 round-2 CLEAR and implementation handoff
+
+[QA AID-170](/AID/issues/AID-170) independently cleared fixed `4fc3ff2`, exact
+report/evidence `a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the actual
+report and verified five official uploads, all 93 indexed payloads/94 members,
+exact patch/tree and independently fetched bundle. [Kickoff acceptance](../p1-05-mcp-e2e-smoke-mac/kickoff-acceptance.md)
+records unchanged cleared task/clarification/decision hashes and limits. K5-1/K5-2
+are resolved at specification level; one ambiguity event/two findings,
+clarification 1/round-2 CLEAR and zero implementation rejections are preserved.
+Original history/evidence and 16 registry rows stay unchanged.
+
+Coding implements the cleared bounded PNG Gallery read/SDK driver and supplies
+meaningful tests plus all real attempts/bytes/lineage/sampling and complete
+preparation/recovery/audit/F1–F8 evidence. Use persistent isolated worktrees,
+preserve runtime/private paths/venvs/data and stop honestly on unresolved jobs.
+Native recipients, fixed published base and Coding → exact-final-commit delivery
+QA → Producer prerequisites are in [AID-146's plan](/AID/issues/AID-146#document-plan).
+QA reviews actual D1–D3 and explicitly leaves D4 pending CTY's demo reply for
+Producer; technical PASS alone does not close/publish the feature. Changed code
+needs renewed exact review; owner-demo acceptance and later roadmap phase-close
+review retain separate authority. Phase 2 is inactive and no routine owner
+confirmation remains. This handoff publishes reports/status, not implementation,
+runtime or generation/retrieval evidence; prior tests retain their attribution.

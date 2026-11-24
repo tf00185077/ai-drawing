@@ -22,9 +22,9 @@ consumption, meet the three-run exit, or imply aesthetic/phase acceptance.
 The [p1-05 target clarification](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
 scopes a bounded canonical PNG content option on Gallery and strict one-wait
 qualification after kickoff K5-1/K5-2. **It is not implemented by this source.**
-Current Gallery calls below still return metadata/locators only. Fresh kickoff
-CLEAR, implementation, exact-commit delivery review, three real runs and CTY's
-explicit demo reply remain pending; do not use a proposed argument as a deployed
+Current Gallery calls below still return metadata/locators only. Independent [kickoff round-2 CLEAR](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review.md)
+is recorded; implementation, exact-commit delivery review, three real runs and
+CTY's explicit demo reply remain pending; do not use a proposed argument as a deployed
 contract or count an external client fetch as MCP-only retrieval.
 
 ## Install

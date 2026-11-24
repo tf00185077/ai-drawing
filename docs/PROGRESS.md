@@ -500,3 +500,43 @@ real generation/training/worker dispatch or live Gallery-byte retrieval. Keep
 runtime/private configuration, venvs and all retained data. Source publication
 is not deployment; Phase 2 stays inactive. The new decisions record the durable
 contract; no duplicate memory topic is added.
+
+## 2026-11-24 — p1-05 kickoff round 2 CLEAR; implementation handoff
+
+[QA AID-170](/AID/issues/AID-170) returned **CLEAR** at fixed
+`4fc3ff25eb95e191ec45432c11f82055b914dae5`, exact report/evidence
+`a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the full actual report,
+verified five official uploads, all 93 indexed payloads/94 members, exact
+binary/full-index patch/tree and independently fetched prerequisite bundle.
+The eight QA report/evidence files integrate unchanged; cleared task/clarification/
+decision hashes remain as [kickoff acceptance](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-acceptance.md)
+records. Original task/report/evidence, 16 registry rows and all prior histories
+stay unchanged. K5-1/K5-2 are resolved at specification level; one ambiguity event/
+two P1 findings, clarification 1/round-2 CLEAR and zero implementation rejections.
+
+Producer can dispatch Coding and separate exact-final-commit delivery QA from
+the published handoff base, with actual recipients/full SHA and native
+Coding → Review → Producer prerequisites in [AID-146's plan](/AID/issues/AID-146#document-plan).
+Coding owns bounded canonical PNG bytes, meaningful tests, real SDK driver and
+complete sampling/lineage/attempt/preparation/recovery/audit evidence. Preserve
+strict one submit/one wait, finite budgets and timeout/retry reset; unresolved
+jobs/admission stop honestly. No hidden resubmission, external fetch exemption
+or cached-original qualification. Use persistent isolated source worktrees for
+runtime, preserve active jobs/private configuration/venvs and all retained data.
+
+Independent delivery QA pins the actual final candidate, reviews D1–D3 and leaves
+D4 pending CTY's explicit reviewed-demo reply for Producer to obtain. Technical
+PASS or a send receipt is not whole-task/phase acceptance. New code needs new
+exact review; feature publication follows required PASS and actual owner demo.
+The later roadmap phase-close review remains separate before Phase 2. No routine
+owner/start/resource confirmation remains. Adopted Illustrious/default/no-LoRA/
+local and four-step 512×512 technical parameters remain, without performance or
+aesthetic promise. Three real pairs, bytes/lineage, demo and phase exit are still
+unaccepted at this handoff.
+
+QA's round-2 read-only fixed-source/Git/AST/document audit passed; it ran no new
+pytest/build/full suite and preserved attribution of prior AID-169/AID-168 checks.
+Producer verifies source/documents/official evidence/Git/publication only, with
+no full-suite repeat, live product probe/restart/deployment, real generation/
+training/worker dispatch or live Gallery-byte retrieval. Publishing source does
+not deploy it. Existing decisions/memory cover the lessons; no duplicate topic.
