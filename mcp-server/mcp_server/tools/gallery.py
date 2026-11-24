@@ -10,6 +10,7 @@ from typing import Literal
 from mcp_server.config import get_mcp_settings
 from mcp_server.client import get_backend_client as _get_client
 from mcp_server.tools.responses import exception_error_json
+from mcp_server.gallery_content import ContentError, read_png
 
 
 def gallery_list(
@@ -80,15 +81,29 @@ def get_gallery_image(image_id: int) -> str:
         return exception_error_json("get_gallery_image", e, where="backend")
 
 
-def get_gallery_artifact(artifact_id: int) -> str:
+def get_gallery_artifact(artifact_id: int, include_content: bool = False) -> str:
     """Get a recorded generated artifact, including video artifacts, and return stable JSON with local delivery metadata."""
     try:
         client = _get_client()
         resp = client.get(f"gallery/artifacts/{artifact_id}")
+        content = {}
+        if include_content:
+            settings = get_mcp_settings()
+            try:
+                content['content'] = read_png(resp, artifact_id, gallery_dir=settings.gallery_dir,
+                                              backend_url=settings.backend_api_url)
+            except ContentError as exc:
+                resp = resp if isinstance(resp, dict) else {}
+                return json.dumps({'ok': False, 'error': {
+                    'code': exc.code, 'message': 'Canonical artifact PNG content could not be read.',
+                    'hint': 'Inspect the same artifact metadata and configured MCP_GALLERY_DIR; a metadata-only read remains available.',
+                    'details': {'artifact_id': artifact_id, 'artifact_type': resp.get('artifact_type'),
+                                'mime_type': resp.get('mime_type'), 'job_id': resp.get('job_id')}}})
         return json.dumps(
             {
                 "ok": True,
                 "tool": "get_gallery_artifact",
+                **content,
                 "artifact_id": resp.get("id", artifact_id),
                 "artifact_type": resp.get("artifact_type"),
                 "mime_type": resp.get("mime_type"),

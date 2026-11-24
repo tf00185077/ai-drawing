@@ -19,13 +19,11 @@ baseline remains 23 intervention units/eight incidents. This MCP software
 change is verified offline and does not redeploy that runtime, prove remote URL
 consumption, meet the three-run exit, or imply aesthetic/phase acceptance.
 
-The [p1-05 target clarification](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
-scopes a bounded canonical PNG content option on Gallery and strict one-wait
-qualification after kickoff K5-1/K5-2. **It is not implemented by this source.**
-Current Gallery calls below still return metadata/locators only. Independent [kickoff round-2 CLEAR](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review.md)
-is recorded; implementation, exact-commit delivery review, three real runs and
-CTY's explicit demo reply remain pending; do not use a proposed argument as a deployed
-contract or count an external client fetch as MCP-only retrieval.
+The p1-05 candidate adds canonical static PNG bytes on `gallery_get` and the
+[strict Mac smoke driver](#strict-mac-smoke-driver). This is candidate behavior;
+independent delivery QA, the actual three-pair evidence and CTY's owner-demo
+remain separate gates. Historical p1-00a bytes were fetched outside MCP and do
+not substitute for this qualification.
 
 ## Install
 
@@ -114,7 +112,7 @@ Each description starts with exactly one `Risk: read`, `Risk: mutate` or
 | `list_resources` | read | Backend-host models/workflows and generation forms |
 | `deliver_to_discord` | mutate | completed job, destination alias, optional force_resend; bot allowlist/dedup |
 | `gallery_search` | read | filter/paginate images |
-| `gallery_get` | read | exactly one image_id or artifact_id; includes existing video artifacts |
+| `gallery_get` | read | exactly one image_id or artifact_id; optional bounded canonical static PNG content |
 | `gallery_rerun` | mutate | replay recorded image parameters; no revision lineage |
 | `comfyui_admin` | admin | action=restart, free_memory or install_node; configured local ComfyUI |
 | `style_preset_save` | mutate | from_source=fields or successful_job |
@@ -317,14 +315,41 @@ Use `list_workers` when selecting the configured worker; inspect health reasons
 before generation. This accepted flow is executable in source and verified
 offline. Deployment, real-run wait and the Phase 1 exit remain unverified here.
 
-**Retrieve:** gallery_get(image_id=...) constructs local_path from
-MCP_GALLERY_DIR and returns full image metadata, including exact integer seeds
-and revision context. gallery_get(artifact_id=...) preserves Backend local_path,
-URLs, workflow metadata and video artifact reads. Consume an unmodified absolute
-local_path only where the client can access that host filesystem, then decode
-bytes to verify retrieval. This file operation is separate from MCP metadata.
-URLs may be relative /gallery routes. No remote/relative-URL consumption proof
-is claimed. Set MCP_GALLERY_DIR to the Backend's actual host Gallery root.
+**Retrieve:** `gallery_get(image_id=...)` retains image metadata and locators;
+`gallery_get(artifact_id=...)` retains full canonical metadata, including existing
+video/legacy/non-PNG behavior. Metadata reads open no content. Set
+`include_content=true` with exactly one **positive integer canonical artifact ID**
+to receive PNG bytes through MCP. Image IDs, booleans/coercible IDs, absent/multiple
+selectors and unsupported fields fail validation before Backend/file access.
+
+Content reads use the existing Backend artifact route, verify its identity and
+require `artifact_type=image` and declared `image/png`. Only a supported Gallery
+mapping under the actual resolved `MCP_GALLERY_DIR` is read. Nested/Unicode paths
+retain identity. The regular file actually opened is checked through its OS
+handle, including intermediate symlink races; unsupported handle inspection fails
+closed. No caller path/URL/root, URL fetch, basename remapping, copying or state
+change is accepted. Host Gallery filesystem access is required by the MCP server.
+
+A single bounded read requests at most 2,097,153 bytes, with maximum content
+2,097,152 bytes (2 MiB). Content must fully decode as one static PNG frame, with
+width/height 1–2048 and at most 4,194,304 pixels. Header dimensions are checked
+before full decoding. Pillow is a declared dependency; bytes are never rewritten.
+Success retains ordinary `data` metadata and adds exactly:
+
+```json
+{"content":{"encoding":"base64","mime_type":"image/png","byte_length":123,"sha256":"<lower-case SHA-256 of returned bytes>","width":512,"height":512,"base64":"<standard unwrapped base64>"}}
+```
+
+The client can decode and validate these received bytes without another product
+fetch. Length, digest and dimensions describe those exact bytes. Backend lookup
+errors retain their prior codes/hints. Other failures return no partial content:
+`artifact_content_unavailable` for missing/unreadable/unsafe/unmapped or identity
+conflicts, `artifact_content_too_large` for byte/dimension/pixel limits, and
+`artifact_content_invalid` for empty/corrupt/non-PNG/animated/unsupported MIME or
+media. Details retain the requested ID and safe identity metadata, omitting unsafe
+paths and file contents. Inspect the same artifact metadata/configuration or use a
+metadata-only read; completed jobs stay completed. Metadata locators alone still
+do not prove retrieval.
 
 **Revise:** submit generate(mode=template) with revision_context containing the
 same request_ref, a new brief_revision, and canonical parent_artifact_id (never
@@ -378,6 +403,70 @@ deliver_to_discord accepts job_id, allowlisted destination_alias and optional
 force_resend. The bot enforces allowlist and dedup; it cannot send arbitrary
 files, messages or channel IDs through this tool.
 
+## Strict Mac smoke driver
+
+Use a separate environment; do not modify canonical Backend/MCP venvs for this
+experiment. From the pinned candidate worktree:
+
+```bash
+uv venv .venv --python 3.11
+uv pip install --python .venv/bin/python -e ./mcp-server
+.venv/bin/python scripts/mcp_smoke_mac.py prepare \
+  --config /persistent/evidence/invocation.json \
+  --backend http://127.0.0.1:8001 --gallery /actual/host/gallery
+.venv/bin/python scripts/mcp_smoke_mac.py run \
+  --config /persistent/evidence/invocation.json --output /persistent/evidence/run-1
+```
+
+`prepare` creates a new file containing six request references and twelve distinct
+48-bit seeds from `secrets.randbits`, allocated before qualification. Review and
+record runtime/client preparation before `run`. The exact fixed parameters are
+Illustrious-XL-v2.0.safetensors/default, explicit local, `loras=[]`, 512×512,
+batch 1, four steps, CFG 7, Euler/normal, fixed fresh seeds and red-cup/blue-cup
+prompts. Four steps guarantee neither speed nor aesthetics. The script validates
+the fixed inputs and source fingerprints; it never downloads or changes models.
+Bind the actual Backend/ComfyUI source/process/import/configuration/roots in the
+preparation ledger; source fingerprints in `frozen.json` identify the client
+worktree, not an uninspected long-running Backend. Preserve active jobs, private
+configuration, roots and complete database schema/values before a controlled
+replacement. Never infer loaded source from HEAD/cwd/health or restart for docs.
+
+Every attempt is exactly `health → list_resources → generate → wait_for_job →
+gallery_get(include_content=true) → generate(parent_artifact_id=original) →
+wait_for_job → gallery_get(include_content=true)`. Each image has one submit and
+one wait with the unchanged **50-second total tool fallback**. This SDK driver
+uses a disclosed 65-second response guard; it does not measure another calling
+client's limit or expand the tool wait. No external byte fetch or status salvage
+occurs in an attempt. Bytes/digest/length/full decode and persisted canonical
+parent/job/request/brief context must validate before accepting a pair.
+
+Timeout/error/nonterminal/failure/cancellation/invalid bytes/lineage/interruption
+resets the streak. Recovery is a separate ledger of at most six same-ID read-only
+waits per possibly outstanding known job. All preceding submitted jobs must be
+terminal before a new declared attempt. Unknown admission without a recovered ID
+or unresolved finite recovery stops the invocation, preserving jobs. It never
+cancels, resubmits or changes target. Six attempts maximum; stop after three
+consecutive successes. A timeout fails qualification without proving job failure.
+
+The output directory must be new and is never overwritten. `sdk-messages.jsonl`
+contains complete sent/received SDK JSON-RPC messages and actual content payloads;
+`calls.jsonl` records phase/attempt, UTC, durations, arguments and complete SDK
+results. `events.jsonl`, separate session stderr, `frozen.json`, `summary.json`
+and decoded `payloads/*.png` retain failures and successes. A second SDK process
+and session corroborates all validated records after attempts. A zero exit code
+means **streak complete, independent sampling audit pending**. Exit 2 is honest
+non-exit/interruption/audit failure; it is never permission to rerun silently.
+
+After results, independently reconcile all six distinct jobs/artifacts with six
+ComfyUI prompts, compiled graphs and actual sampling/cache evidence. Retain every
+post-result audit call, including outside-MCP Backend/ComfyUI/file reads, separately.
+Audit failure invalidates technical exit evidence. Reconcile preparation, attempts,
+recovery and audits against original F1–F8 units 1,1,1,6,1,11,1,1 = 23; never
+label the whole round zero interventions merely because a qualifying attempt had
+none. A product/input change requires renewed applicable qualification. Independent
+QA reviews D1–D3 at the exact final candidate. D4 stays pending Producer/CTY's
+explicit reviewed-demo reply, followed by the separate roadmap phase-close gate.
+
 ## Error codes and recovery
 
 | Code | Meaning / hint |
@@ -390,6 +479,7 @@ files, messages or channel IDs through this tool.
 | invalid_json | Custom workflow must be a valid JSON string. |
 | generation_failed | Job failed; inspect node errors; never automatically fall back from worker to local. |
 | timeout | Overall wait budget exhausted; last-known status is retained, unknown before a completed read; call wait_for_job again with the same ID. |
+| artifact_content_unavailable, artifact_content_too_large, artifact_content_invalid | Inspect the same artifact metadata and MCP_GALLERY_DIR; metadata-only reads remain available. No job-state change. |
 | artifact_locator_unavailable | Generation completed; inspect existing Gallery metadata/configuration. Full known result identities survive; never invent locators or automatically migrate/resubmit. |
 | job_cancelled | Backend terminal cancellation is retained in error.details; inspect the same job before deciding on a new request. |
 | training_failed | Training failed without a more specific safe code; public output/registration state survives. |

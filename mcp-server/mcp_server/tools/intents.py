@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import inspect
 from typing import Any, Literal
+from pydantic import StrictBool, StrictInt
 
 from mcp_server.tools import generate as generation, gallery, prompt_library, style_presets, comfyui, comfyui_nodes
 from mcp_server.tools.responses import error_payload
@@ -70,18 +71,23 @@ def generate(
     return fn(**{key: value for key, value in values.items() if key in allowed})
 
 
-def gallery_get(image_id: int | None = None, artifact_id: int | None = None) -> Any:
+def gallery_get(image_id: StrictInt | None = None, artifact_id: StrictInt | None = None,
+                include_content: StrictBool = False) -> Any:
     """Read image metadata/locators or a canonical artifact (including existing videos).
 
+    include_content=true requires a positive canonical artifact_id and reads a
+    bounded static PNG from configured host Gallery (2 MiB, 2048 per dimension).
     Supply exactly one selector. Image IDs and artifact IDs are different
     namespaces. Returned paths and URLs are preserved; host paths require
     access to the Backend filesystem. Use a canonical artifact ID for revision.
     """
     if (image_id is None) == (artifact_id is None):
         return _invalid("Provide exactly one of image_id or artifact_id")
+    if include_content and (image_id is not None or type(artifact_id) is not int or artifact_id <= 0):
+        return _invalid("Content requires one positive canonical artifact_id")
     if image_id is not None:
         return gallery.get_gallery_image(image_id)
-    return gallery.get_gallery_artifact(artifact_id)
+    return gallery.get_gallery_artifact(artifact_id, include_content=include_content)
 
 
 def prompt_write(
