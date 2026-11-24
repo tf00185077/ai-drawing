@@ -14,7 +14,7 @@ Order: core before support, support before add-ons. MCP basics come first becaus
 
 ## Milestones
 
-### Phase 0 — Clean foundation (active)
+### Phase 0 — Clean foundation (done 2026-11-24)
 
 Role: foundation.
 Scope: integrated `main`; documentation rebuilt in English; history removed; a progress table based on the current code; a known, documented test result for every suite.
@@ -22,7 +22,7 @@ Unknowns, riskiest first: whether the full Backend suite passes on Windows after
 Exit: a new agent understands the system, its state and its rules from README → AGENTS → INDEX; every failing test is fixed or explicitly quarantined with a reason.
 Demo: CTY reads README, CURRENT and ROADMAP and finds them accurate; one command per suite runs with the documented result.
 
-### Phase 1 — MCP that agents use smoothly (next)
+### Phase 1 — MCP that agents use smoothly (next; starts after the owner reviews its tasks)
 
 Role: core. Depends on: Phase 0.
 Scope: one response envelope for every tool (`{ok, data}` / `{ok: false, error: {code, message, hint}}`); tools consolidated to about 20, one per intent, with risk labels; `wait_for_job` returning artifact paths/URLs; `health` and `list_workers`; a real end-to-end smoke script on the Mac ComfyUI. Tasks: [p1-01](../tasks/p1-01-mcp-response-envelope/task.md) → [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md) → [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md) → [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md) → [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md); decisions in [mcp](../decisions/mcp.md).
@@ -82,6 +82,7 @@ Ask after 3 tasks in a row that do not advance the active milestone, a blocker l
 
 ## Review history
 
+- 2026-11-24 — Phase 0 closed on the Windows result (Backend 2018 passed, MCP 314 passed); the macOS Backend rerun moved into p1-05 ([decisions](../decisions/roadmap.md)).
 - 2026-11-24 — Destination rewritten around the one-sentence flow; new Phase 2 (Civitai tools, resource record, workflow selection, fixed image-to-video with interpolation); LoRA marked core and moved ahead of the dashboard. Order: MCP → one-sentence flow → workers → LoRA → dashboard ([decisions](../decisions/roadmap.md)).
 - 2026-11-23 — Order changed to MCP → workers → dashboard → LoRA (Phase 2 and 3 swapped).
 - 2026-11-23 — Four goals and phase order set by CTY; Phase 0 activated; roadmap accepted; thresholds and Not now approved ([decisions](../decisions/roadmap.md)).

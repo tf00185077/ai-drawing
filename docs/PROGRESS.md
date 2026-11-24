@@ -5,7 +5,7 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
-## Phase 0 — Clean foundation (active)
+## Phase 0 — Clean foundation (done 2026-11-24)
 
 | Item | Status |
 |---|---|
@@ -16,6 +16,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Known test failures removed (outdated snapshot, packaging and platform tests); fixtures pinned to LF | Done |
 | Backend suite on Windows: no failures or hangs (2018 passed, 6 skipped); MCP 314 passed | Done 2026-11-24 |
 | LoRA run files read as UTF-8 on Windows ([p0-01](tasks/p0-01-windows-utf8-lora-files/task.md)) | Done 2026-11-24 |
+| Backend suite on macOS after the cleanup | Moved to [p1-05](tasks/p1-05-mcp-e2e-smoke-mac/task.md) |
 
 ## Goal 1 — MCP for agents
 
@@ -102,6 +103,9 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Launcher (setup, start, stop, status) | `setup.sh`, `setup.ps1`, `scripts/launcher/` | `scripts/tests/` |
 
 ## Log
+
+### 2026-11-24 — Phase 0 closed
+- Windows Backend and MCP suites pass with no hangs; non-feature failing tests removed; LoRA files read as UTF-8 (`1898378`). macOS rerun moved into p1-05 by the owner.
 
 ### 2026-11-24 — Roadmap rebuilt around the one-sentence flow
 - New Goal 2 (Civitai tools, resource record, workflow selection, fixed image-to-video with interpolation); LoRA is core and moves ahead of the dashboard. Goals renumbered: MCP → one-sentence flow → workers → LoRA → dashboard ([decisions](decisions/roadmap.md)).

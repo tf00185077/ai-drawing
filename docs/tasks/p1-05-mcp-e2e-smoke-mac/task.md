@@ -10,12 +10,13 @@ All MCP behavior so far is verified with mocks. Phase 1 is done only when it wor
 A script, and CTY in a demo, can run the full flow on the Mac and see the image, its revision and their Gallery records.
 
 ## Scope
-Included: a repeatable script under `scripts/` that drives the MCP server over stdio: `health` → `list_resources` → `generate` → `wait_for_job` → `gallery_get` → `generate` with revision context (`parent_artifact_id`) → `wait_for_job` → `gallery_get`; a short run guide in `docs/mcp.md`.
+Included: a repeatable script under `scripts/` that drives the MCP server over stdio: `health` → `list_resources` → `generate` → `wait_for_job` → `gallery_get` → `generate` with revision context (`parent_artifact_id`) → `wait_for_job` → `gallery_get`; a short run guide in `docs/mcp.md`; the full Backend suite run on the Mac (moved here from Phase 0, see [p0-01](../p0-01-windows-utf8-lora-files/task.md)).
 Excluded: Windows worker runs (Phase 3); aesthetic judgment (CTY).
 Open questions: which checkpoint and template the script uses on the Mac — CTY names one before the run.
 Read first: p1-01 to p1-04 results, [docs/mcp.md](../../mcp.md), [docs/setup.md](../../setup.md).
 
 ## Done when
+- [ ] The full Backend suite passes on the Mac with no failures or hangs, before the smoke run. Check: the commands in AGENTS.md with `--timeout=60`. Evidence: test summary line and duration.
 - [ ] The script completes on the Mac against the real Backend and ComfyUI and prints both artifact IDs and file paths. Check: manual run. Evidence: command, full output, timestamps.
 - [ ] The revised image's Gallery record links to the first image as its parent. Check: manual (`gallery_get` output). Evidence: both records.
 - [ ] No step needed a call outside MCP. Check: manual (QA reviews the script). Evidence: the script.

@@ -17,6 +17,13 @@
 
 ## Log (newest first)
 
+### 2026-11-24 · Phase 0 closed; macOS rerun moved to p1-05
+- Decision: Phase 0 is done on the Windows test result; the macOS Backend rerun becomes part of p1-05 (real Mac smoke).
+- Why: the Windows exit is met, and p1-05 already runs on the Mac.
+- Supersedes: "Rerun the Backend suite on macOS" as Phase 0 remaining work.
+- Provenance: owner-confirmed@"先 commit、Mac 重跑併入 p1-05"
+- Link: [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md)
+
 ### 2026-11-24 · Roadmap rebuilt around the one-sentence flow
 - Decision: Destination rewritten around the original need; new Phase 2 "one-sentence flow" (Civitai search/download/register tools, resource record, workflow selection, one fixed image-to-video workflow with interpolation); LoRA training is core and moves ahead of the dashboard. Order: P1 MCP → P2 one-sentence flow → P3 workers → P4 LoRA → P5 dashboard.
 - Why: the roadmap had lost the original purpose; the free Civitai public API covers search, version details, image metadata, hash lookup and downloads (API key only for login-required files); LoRA training was always meant to keep characters and styles consistent.

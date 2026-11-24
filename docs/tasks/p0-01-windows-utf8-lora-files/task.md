@@ -18,10 +18,10 @@ Read first: [docs/lora-training.md](../../lora-training.md), `backend/app/servic
 ## Done when
 - [x] No `read_text()`, `write_text()` or text-mode `open()` in `backend/app` lacks an explicit encoding. Check: `grep` in the manifest. Evidence: command output.
 - [x] The `_WINDOWS_UTF8_BUG` marker no longer exists in `backend/tests`, and the tests it skipped pass on Windows. Check: Backend suite on Windows. Evidence: test output.
-- [ ] The full Backend suite passes on Windows (done) and on macOS (not yet rerun) with no hang. Check: the commands in AGENTS.md. Evidence: test output.
+- [x] The full Backend suite passes on Windows with no hang; the macOS rerun moved to [p1-05](../p1-05-mcp-e2e-smoke-mac/task.md). Check: the commands in AGENTS.md. Evidence: test output.
 
 ## Result
-2026-11-24, in the planning session: 7 reads in `backend/app` and 20 in `backend/tests` now use UTF-8; the skip marker is gone. Windows: Backend 2018 passed, 6 skipped; MCP 314 passed, 4 skipped. macOS not rerun.
+2026-11-24, in the planning session: 7 reads in `backend/app` and 20 in `backend/tests` now use UTF-8; the skip marker is gone. Windows: Backend 2018 passed, 6 skipped; MCP 314 passed, 4 skipped. macOS rerun moved to p1-05 (owner, 2026-11-24). Commit `1898378`.
 
 ## Delivery
 - Artifact: commit on a feature branch, `manifest.md`.
