@@ -2,15 +2,11 @@
 
 Each JSON stores ComfyUI nodes, connections and inputs. Resource filenames, dimensions, sampler settings and seeds are in the linked JSON; do not maintain a second parameter table here. Style recipes and their saved workflows are separate: [style presets](../../style_presets/README.md).
 
-**Output effects: Needs re-verification (需要再驗證).** Static graph inspection is not execution or aesthetic acceptance. Historical “verified” metadata and job IDs are provenance, not current validation.
-
 ## Select and execute
 
 - Discover exposed templates with `list_available_resources` or Backend `GET /api/workflow-catalog/generation-forms`.
-- `generate_image(template=<id>, ...)` applies parameters to a template. Custom-workflow interfaces accept a full graph. Both queue generation and require authorization.
-- Check model/LoRA architecture, node packages and input mapping. Pose, subject, mask, first/last frame and audio inputs are not interchangeable. Stored input filenames may be placeholders.
-- `LoraLoader` patches model and CLIP; `LoraLoaderModelOnly` patches only the model. These are inference workflows, not training.
-- A checkpoint loader is not compatible with every model family. Split Anima/Qwen/Wan models require their loader/encoder/latent interfaces.
+- `generate_image(template=<id>, ...)` applies parameters to a template. Custom-workflow interfaces accept a full graph. Both queue generation.
+- Loader and input rules per model family: [model family loaders](../../docs/memory/model-family-loader-compatibility.md). Stored input filenames may be placeholders.
 
 ## Image workflows
 
@@ -41,8 +37,8 @@ Each JSON stores ComfyUI nodes, connections and inputs. Resource filenames, dime
 | [Discord Wan Animate](discord_wan22_animate_fixed.json) | Image/video reference, vision encoder, pose preprocessing and Wan Animate GGUF |
 | [Discord MiniMax H3](discord_minimax_h3_i2v_fixed.json) | Stored H3 ComfyUI graph; not the current Discord H3 runtime procedure |
 
-The three `discord_*_fixed` graphs lack catalog metadata and are not automatically exposed in the ordinary workflow selector. Do not add metadata merely to make them appear. The current H3 command uses an Argus MLX runtime, not this stored ComfyUI graph.
+Video workflows are frozen until Phase 4. The `discord_*_fixed` graphs have no `.meta.json` and are not in the selector ([video frames and FILM](../../docs/memory/video-frame-and-film-rules.md)).
 
 ## Resource checks
 
-Read loader inputs in the chosen graph for exact model, encoder, VAE, LoRA, ControlNet and input filenames; neighboring `.meta.json` files describe catalog intent. Missing version/source/license or node-package information remains unverified. Confirm availability on the target before execution; filenames and historical paths do not prove installation.
+Read loader inputs in the chosen graph for exact filenames; neighboring `.meta.json` files describe catalog intent. Confirm the files exist on the target host before running.

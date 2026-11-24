@@ -10,7 +10,7 @@ On each run, read the product [AGENTS.md](../../AGENTS.md), [docs/INDEX.md](../.
 
 - Merge duplicates and fix entries that no longer match the source code.
 - Delete entries that are logs, incident history, task receipts or one-off details.
-- Keep each entry short: the fact, how to apply it, and the source path.
+- Keep each topic in the skill's shape: Context, Why, How to apply, Evidence, and `curated_on`.
 - Keep `MEMORY.md` as one line per entry.
 - Making no changes is a valid result.
 

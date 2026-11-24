@@ -1,11 +1,9 @@
 # Document map
 
-The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inventory.md)). Entries marked *legacy* are pre-rebuild and will be replaced.
-
 ## Start
 
 - [README](../README.md) — what the system is, components, quick start
-- [AGENTS.md](../AGENTS.md) — agent guide, conventions, interim policy
+- [AGENTS.md](../AGENTS.md) — agent guide, conventions, verification
 - [Project memory](memory/MEMORY.md) — durable facts for agents
 
 ## Product
@@ -17,7 +15,8 @@ The doc set is being rebuilt (see the [rebuild plan](requests/2026-11-23-doc-inv
 | Current state | [CURRENT.md](CURRENT.md) | current |
 | Progress history | [PROGRESS.md](PROGRESS.md) | current |
 | Decisions | [decisions/](decisions/) | current |
-| Task specs | [tasks/](tasks/) (Phase 0: `p0-*`, Phase 1: `p1-*`) | current |
+| Owner requests (verbatim) | [requests/](requests/) | current |
+| Task specs | [tasks/](tasks/) (`p<phase>-<nn>-<name>/task.md`) | current |
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup.md](setup.md) | current |
 | MCP server | [mcp.md](mcp.md) | current |
@@ -33,4 +32,4 @@ Source code and live API schemas (`/docs`, `/openapi.json` on a running Backend)
 
 ## History
 
-Earlier history is in git. `tasks/` holds task specs and reviews written by the team.
+Earlier history is in git; it is not needed to understand the current state.

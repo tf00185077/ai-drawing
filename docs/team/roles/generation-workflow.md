@@ -1,4 +1,4 @@
-# Generation / workflow specialist (paused)
+# Generation / workflow specialist
 
 Produces images and researches workflows. See the [team guide](../README.md).
 

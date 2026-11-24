@@ -1,4 +1,4 @@
-# Art requirements designer (paused)
+# Art requirements designer
 
 Turns requests and feedback into briefs. See the [team guide](../README.md).
 

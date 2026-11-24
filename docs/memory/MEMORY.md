@@ -1,13 +1,16 @@
 # Project Memory
 
-Durable facts for future agents. No logs or incident history.
-
-- [Compute target and resource scope](compute-target-and-resource-scope.md) — generation target vs training subprocess vs resource listing scope
-- [Explicit LoRA list semantics](explicit-lora-list-semantics.md) — omitted vs empty list, loader bypass, late capacity check
-- [Anima training components](anima-training-component-readiness.md) — Anima needs a VAE despite optional schema
-- [Revision lineage](ordinary-generation-revision-lineage.md) — rerun is not a revision; use revision context fields
-- [Gallery seed precision](gallery-seed-precision.md) — seeds exceed JS safe integers
-- [Gallery routing](gallery-document-asset-routing.md) — Vite proxy must not catch the /gallery page
-- [Frontend cache isolation](frontend-shared-cache-isolation.md) — Vitest cache leaks via shared node_modules
-- [Worker offline tests](windows-worker-offline-test-limits.md) — CREATE_NO_WINDOW missing off Windows
-- [Paperclip card lineage](native-interaction-card-lineage.md) — a new question card expires older pending ones
+- [Compute target and resource scope](compute-target-and-resource-scope.md) — before judging where a job or training ran, or what models a worker has.
+- [Explicit LoRA list](explicit-lora-list-semantics.md) — before building or forwarding a `loras` list.
+- [Model family loaders](model-family-loader-compatibility.md) — before matching models, LoRAs and workflows.
+- [Revision lineage](ordinary-generation-revision-lineage.md) — before revising a result.
+- [Style preset replay](style-preset-saved-graph-replay.md) — before composing, replaying or editing style presets.
+- [Video frames and FILM](video-frame-and-film-rules.md) — before touching image-to-video or interpolation.
+- [Anima training components](anima-training-component-readiness.md) — before an Anima LoRA run.
+- [Gallery seed precision](gallery-seed-precision.md) — when reading or showing seeds.
+- [Gallery routing](gallery-document-asset-routing.md) — before changing the Vite proxy.
+- [Frontend cache isolation](frontend-shared-cache-isolation.md) — when running frontend tests in parallel worktrees.
+- [Worker tests off Windows](windows-worker-offline-test-limits.md) — when worker tests fail on macOS or Linux.
+- [Worker PowerShell control](worker-powershell-control.md) — before running, updating or redeploying the Windows worker.
+- [Discord bot config and ledger](discord-bot-config-and-ledger.md) — before starting or reconfiguring the Discord bot.
+- [Paperclip question cards](native-interaction-card-lineage.md) — before asking CTY several questions in Paperclip.

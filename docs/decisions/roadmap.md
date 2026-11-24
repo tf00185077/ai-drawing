@@ -13,12 +13,20 @@
 - Every phase states Role, Depends on, Scope, Remove, Unknowns, First check, Exit and Demo · why: the project drifted by adding without removing; each phase must also shrink what is outside its scope · owner-confirmed · [phase rules](../roadmap/ROADMAP.md#phase-rules)
 - A phase exit needs 3 consecutive real runs with zero manual fixes (any human action, retry, workaround or non-MCP call) · why: past runs worked only after repeated manual fixes · owner-confirmed
 - The owner reviews the roadmap at every phase close, before the next phase is activated · why: stop the roadmap drifting from the owner's intent · owner-confirmed
+- Project memory follows the `project-memory-curation` skill shape (one question per topic: Context, Why, How to apply, Evidence, `curated_on`); outdated docs are distilled into memory and then trimmed to current facts; `.codex/` removed · why: old content misled agents about the current state · owner-confirmed
 - Escalation thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
 - Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond the dashboard phase (now Phase 6) · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
 - No OpenSpec: task specs in `docs/tasks/<task>/task.md` are the only spec format; durable behavior rules live in the topic docs · owner-confirmed
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-24 · Outdated docs distilled into memory
+- Decision: facts a next agent needs were moved into 14 memory topics in the curation-skill shape; README goal, INDEX, PROGRESS (re-keyed by phase), team roster and the worker, Discord, workflow and style-preset READMEs trimmed to current facts; the 2026-11-23 rebuild plan and `.codex/` deleted.
+- Why: old and superseded content led agents to misjudge the current state.
+- Supersedes: the 2026-11-23 documentation rebuild plan (in git history).
+- Provenance: owner-confirmed@"只保留結構，有關舊的或是過期的內容先進行整理後全部刪除，整理方法是，只保留有助於下次agent接手的事實" · @".codex整個資料夾刪掉"
+- Link: [memory](../memory/MEMORY.md)
 
 ### 2026-11-24 · Phase rules
 - Decision: every phase has Remove and First check fields; exits need 3 consecutive real runs with zero manual fixes; the roadmap is reviewed at each phase close. First checks added to Phase 5 (LoRA) and Phase 6 (dashboard); p1-05 now runs 3 times.

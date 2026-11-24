@@ -18,7 +18,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | LoRA run files read as UTF-8 on Windows ([p0-01](tasks/p0-01-windows-utf8-lora-files/task.md)) | Done 2026-11-24 |
 | Backend suite on macOS after the cleanup | Moved to [p1-00](tasks/p1-00-mcp-friction-run-mac/task.md) |
 
-## Goal 1 — MCP for agents
+## Phase 1 — MCP for agents
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -34,7 +34,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
-## Goal 2 — One-sentence flow (resources → workflow → image or clip)
+## Phase 2 — One-sentence image flow (resources → workflow → image)
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -43,12 +43,9 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
 | Resource record agents can list and filter; hash lookup of unknown local files | Partial (ledger and aliases exist; no agent-facing record) | `services/civitai_local_identity_ledger.py`, `civitai_source_alias_registry.py` | `test_civitai_*` | — |
 | Workflow selection from chosen resources | Partial (manifest match exists) | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_match.py` | No |
-| Image-to-video workflows (Wan first frame, first+last frame) | Done | `backend/workflows/gen_img2video_wan_*`, `api/generate.py` | `test_wan_keyframes.py` | No |
-| FILM frame interpolation | Done | `services/film_postprocess.py` | `test_film_audio_mux.py` | No |
-| One fixed image-to-video + interpolation MCP tool | Not started | — | — | — |
 | End-to-end one-sentence run | Not started | — | — | — |
 
-## Goal 3 — LAN Windows workers
+## Phase 3 — LAN Windows workers
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -62,7 +59,16 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Worker registry, heartbeat, `execution_target=auto` | Not started | — | — | — |
 | Replace legacy updater | Not started | `worker/windows/updater/` | `test_worker_updater_*` | — |
 
-## Goal 4 — LoRA training
+## Phase 4 — Image-to-video clip with interpolation
+
+| Capability | Status | Code | Tests | Real run |
+|---|---|---|---|---|
+| Image-to-video workflows (Wan first frame, first+last frame) | Done | `backend/workflows/gen_img2video_wan_*`, `api/generate.py` | `test_wan_keyframes.py` | No |
+| FILM frame interpolation | Done | `services/film_postprocess.py` | `test_film_audio_mux.py` | No |
+| One fixed image-to-video + interpolation MCP tool | Not started | — | — | — |
+| End-to-end sentence → image → clip run | Not started | — | — | — |
+
+## Phase 5 — LoRA training
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -77,7 +83,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | First real training run | Not started | — | — | — |
 | Training on a worker | Not started | — | — | — |
 
-## Goal 5 — Prompt dashboard
+## Phase 6 — Prompt dashboard
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -104,14 +110,8 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 ## Log
 
+### 2026-11-24 — Roadmap set to six phases
+- Order: MCP → one-sentence image flow → workers → image-to-video clip → LoRA → dashboard; phase rules added ([decisions](decisions/roadmap.md)).
+
 ### 2026-11-24 — Phase 0 closed
-- Windows Backend and MCP suites pass with no hangs; non-feature failing tests removed; LoRA files read as UTF-8 (`1898378`). macOS rerun moved into p1-05 by the owner.
-
-### 2026-11-24 — Roadmap rebuilt around the one-sentence flow
-- New Goal 2 (Civitai tools, resource record, workflow selection, fixed image-to-video with interpolation); LoRA is core and moves ahead of the dashboard. Goals renumbered: MCP → one-sentence flow → workers → LoRA → dashboard ([decisions](decisions/roadmap.md)).
-
-### 2026-11-23 — Four goals set; Phase 0 started
-- CTY set the four goals and their order: MCP for agents → LAN Windows workers → prompt dashboard → LoRA training (workers moved ahead of the dashboard the same day).
-- Retained LoRA, Gallery and maintenance work from 29 local branches integrated into `main` as `32b59fd`.
-- Documentation rebuilt in English; operating policy made default-open; memory pruned ([decisions](decisions/roadmap.md)).
-- History, research data, OpenSpec and scratch files removed; verified behavior rules moved into the topic docs.
+- Windows Backend and MCP suites pass with no hangs; non-feature failing tests removed; LoRA files read as UTF-8 (`1898378`). The macOS rerun is the first step of p1-00.

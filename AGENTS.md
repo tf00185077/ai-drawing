@@ -51,4 +51,4 @@ Paperclip role agents also follow the [team guide](docs/team/README.md) and thei
 
 ## Memory
 
-Any agent may add or fix entries in [docs/memory/](docs/memory/MEMORY.md) when it learns a durable fact that will help future agents. Keep entries short (fact, how to apply, source path) and never store logs or incident history.
+Any agent may add or fix entries in [docs/memory/](docs/memory/MEMORY.md) when it learns a fact without which a future agent would act wrongly. One topic per question, with Context, Why, How to apply and Evidence sections and a `curated_on` date; `MEMORY.md` has one line per topic saying when to open it. Never store logs, receipts or incident history.

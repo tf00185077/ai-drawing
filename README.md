@@ -2,12 +2,11 @@
 
 AI Drawing lets AI agents and people generate images through a local ComfyUI. A FastAPI Backend owns jobs, artifacts and provenance; an MCP server gives agents intent-level tools; a React UI covers prompt composition, generation, the Gallery and LoRA training.
 
-## Goals
+## Goal
 
-1. **Agent-ready MCP server**: an agent can request, track, retrieve and revise images without human help.
-2. **LAN workers**: ComfyUI jobs can run on other Windows machines on the same network that run the same project.
-3. **Prompt dashboard**: users build reusable prompt combinations for ComfyUI workflows.
-4. **LoRA training**: train, register and use LoRA models from owner datasets.
+A user says one sentence to an agent. Through this project's MCP tools the agent finds and downloads the checkpoint and LoRAs it needs on Civitai and registers them; this project picks the matching workflow, runs it on ComfyUI and returns an image or a short image-to-video clip with frame interpolation. LoRAs trained from the owner's datasets keep characters and styles consistent. Same-LAN Windows workers carry the load (the Mac is too slow), and a dashboard saves reusable prompt recipes.
+
+Phases: 1 MCP that agents use smoothly → 2 one-sentence image flow → 3 Windows workers → 4 image-to-video clip → 5 LoRA training → 6 prompt dashboard. Details: [roadmap](docs/roadmap/ROADMAP.md).
 
 Current state: [docs/CURRENT.md](docs/CURRENT.md).
 

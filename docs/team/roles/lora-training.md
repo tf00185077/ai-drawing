@@ -1,4 +1,4 @@
-# LoRA training specialist (paused)
+# LoRA training specialist
 
 Prepares datasets and runs LoRA training. See the [team guide](../README.md) and [LoRA training](../../lora-training.md).
 

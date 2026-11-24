@@ -1,4 +1,4 @@
-# Environment / resource manager (paused)
+# Environment / resource manager
 
 Keeps ComfyUI environments ready. See the [team guide](../README.md).
 

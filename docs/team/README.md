@@ -4,18 +4,18 @@ AI Drawing is operated by a Paperclip company (`AID`) of AI agents. CTY is the o
 
 ## Roster
 
-| Role | State | Owns |
-|---|---|---|
-| [Producer](roles/producer.md) | Active | Intake, priorities, task specs, dispatch, reporting to CTY |
-| [Coding agent](roles/platform-engineer.md) | Active | All software changes |
-| [QA agent](roles/engineering-qa.md) | Active | Independent review of every software change |
-| [Auto Dreamer](../../agents/auto-dreamer/AGENTS.md) | Active | Periodic memory cleanup |
-| [Generation / workflow specialist](roles/generation-workflow.md) | Paused | Prompts, workflows, generation, workflow research |
-| [LoRA training specialist](roles/lora-training.md) | Paused | Datasets, captions, training runs |
-| [Art requirements designer](roles/art-specification.md) | Paused | Turning requests and feedback into briefs |
-| [Environment / resource manager](roles/environment-resource-manager.md) | Paused | ComfyUI nodes, models, dependencies |
+| Role | Owns |
+|---|---|
+| [Producer](roles/producer.md) | Intake, priorities, task specs, dispatch, reporting to CTY |
+| [Coding agent](roles/platform-engineer.md) | All software changes |
+| [QA agent](roles/engineering-qa.md) | Independent review of every software change |
+| [Auto Dreamer](../../agents/auto-dreamer/AGENTS.md) | Periodic memory cleanup |
+| [Generation / workflow specialist](roles/generation-workflow.md) | Prompts, workflows, generation, workflow research |
+| [LoRA training specialist](roles/lora-training.md) | Datasets, captions, training runs |
+| [Art requirements designer](roles/art-specification.md) | Turning requests and feedback into briefs |
+| [Environment / resource manager](roles/environment-resource-manager.md) | ComfyUI nodes, models, dependencies |
 
-All roles report to Producer; Producer reports to CTY. Paused roles keep their identity and history and can be resumed by CTY.
+All roles report to Producer; Producer reports to CTY. Which roles are active or paused is in [CURRENT](../CURRENT.md#team); paused roles can be resumed by CTY.
 
 ## How work flows
 
