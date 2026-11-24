@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 evidence accepted at `3081952`; p1-00a kickoff CLEAR and repair dispatched; p1-01/02 remain gated**.
+Status: **p1-00 evidence accepted at `3081952`; p1-00a delivery round 1 FAIL (D5); bounded inventory correction next; p1-01/02 remain gated**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -60,9 +60,11 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | [AID-148](/AID/issues/AID-148), completed | Coding ran p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | [Evidence](../p1-00-mcp-friction-run-mac/manifest.md) `3081952`: passing Mac suite, completed original, byte retrieval/revision blocked; 23 intervention units/eight incidents |
 | [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `3081952` for D1-D4 including the documented-blocker route; report/registry `c377a02` |
 | [AID-150](/AID/issues/AID-150), completed | QA independently reviewed [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification `4ac3d56` and accepted baseline evidence | [CLEAR](../p1-00a-mac-runtime-and-retrieval/kickoff-review.md); official report/archive/patch match `9bd0029`; no specification change |
-| [AID-151](/AID/issues/AID-151), executing | Coding executes p1-00a | AID-150 actual CLEAR read; isolated branch from published `eaf11b8`; fixed task unchanged | Identified actual runtime, usable locators and baseline preservation, one fresh original/revision pair with bytes/lineage, changed-component checks and exact final commit/evidence |
-| [AID-152](/AID/issues/AID-152), waiting | QA independently reviews the exact p1-00a delivery | AID-151 native prerequisite; read actual manifest and candidate | PASS / FAIL / AMBIGUITY at the exact final commit; blocked journey fails D3; no hidden repair |
-| [AID-142](/AID/issues/AID-142), 1 | Producer accepted the evidence-only baseline and coordinates necessary repairs | AID-152 native prerequisite; read actual delivery verdict | Accepted repair with identified running source, usable artifact bytes and a fresh traceable original/revision pair before later release |
+| [AID-151](/AID/issues/AID-151), completed | Coding delivered p1-00a candidate `00ebb4d`, unmerged | AID-150 actual CLEAR read; isolated branch from published `eaf11b8`; fixed task unchanged | Runtime/client-configuration/docs-only repair; fresh pair and decoded bytes/lineage; original raw evidence retained |
+| [AID-152](/AID/issues/AID-152), completed | QA independently reviewed exact candidate `00ebb4d` | AID-151 actual delivery | FAIL: D1-D4 PASS, D5 incomplete runtime inventory; report `537d47f`; no loss of old values demonstrated |
+| p1-00a correction 1, next | Coding corrects inventory/schema evidence under original D5 | Actual QA finding and [bounded correction](../p1-00a-mac-runtime-and-retrieval/repair-round-1.md); original CLEAR/task unchanged | New exact candidate, complete schema delta/preservation receipts and refreshed uploads; no product change/restart/new generation indicated |
+| p1-00a delivery QA round 2, next | QA independently reviews the corrected exact candidate | Native prerequisite on correction Coding | D1-D5 verdict; reuse applicable unchanged-source evidence, focus on D5; one prior rejection carries forward |
+| [AID-142](/AID/issues/AID-142), 1 | Producer accepted the baseline and triages the first repair rejection | Correction and round-2 exact-commit QA before acceptance | Accepted complete repair evidence before merge/publication or later release |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -129,13 +131,20 @@ aligns the existing Backend runtime and resolves the locator/client boundary,
 then proves a fresh original/revision pair with actual bytes and persisted
 lineage. No envelope/consolidation/wait/health redesign is pulled forward. The
 original 23-unit/eight-incident no-repair baseline remains unchanged; repair
-interventions are recorded separately. Coding AID-151 is now executing on an
-isolated branch from published `eaf11b8`, whose task/source remain unchanged from
-the cleared snapshot. QA delivery AID-152 waits natively on Coding and reviews
-the exact final commit. Both saved native plans were read back; QA's prerequisite
-was verified. AID-142 waits on AID-152 and stays open through acceptance;
-AID-141/AID-143 remain natively blocked by it. No ordinary owner confirmation
-is pending. A blocked journey cannot pass this repair's D3.
+interventions are recorded separately. Coding AID-151 delivered `00ebb4d` from
+published `eaf11b8`, with unchanged product/test source. QA AID-152 returned FAIL:
+D1-D4 pass, but D5 omits eight nullable training columns and a new empty reservation
+table from the existing startup footprint. Its read-only audit found old values
+preserved. Producer checked the official report/audit and startup source; the
+candidate is not merged or accepted.
+
+[Correction 1](../p1-00a-mac-runtime-and-retrieval/repair-round-1.md) fixes the
+inventory and schema receipts within original cleared D5. No specification change,
+product fix, restart or extra generation is indicated. Separate Coding and
+exact-commit review round 2 carry one prior delivery rejection; applicable D1-D4
+evidence may be reused with source/environment equivalence. AID-142 stays open
+through acceptance; AID-141/AID-143 remain gated. No ordinary owner confirmation
+or escalation threshold is pending. A blocked journey still cannot pass D3.
 
 Later coordination cards depend on their predecessor. This is an event-driven
 continuation, not polling or a prose-only promise to resume. A completed review
@@ -163,8 +172,14 @@ Traditional Chinese in Discord `1562710701280202813`. No owner response is
 requested for these ordinary choices. Later delivery reports must distinguish
 offline tests, running services, real generation and artifact retrieval.
 
+The delivery-triage round inspected actual manifest/review/schema evidence and
+published the bounded correction/status records only. QA's full Backend/MCP,
+runtime, decoded-byte and lineage checks remain attributed to QA. D5 accounting
+fails despite the verified journey; no acceptance, merge or dependent release.
+
 Knowledge capture: the delegated-choice rule remains in roadmap/MCP decisions;
 the new [runtime source-contract topic](../../memory/runtime-source-contract-verification.md)
 explains why a current checkout and healthy process cannot certify loaded
-revision behavior. Compute/model/lineage topics remain in place. Receipts and
+revision behavior. The [startup-schema topic](../../memory/backend-startup-additive-schema.md)
+explains whole-schema inventory versus old-column value preservation. Compute/model/lineage topics remain in place. Receipts and
 incident accounting stay in task evidence.

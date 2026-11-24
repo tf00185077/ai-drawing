@@ -5,6 +5,7 @@
 - [Model family loaders](model-family-loader-compatibility.md) — before matching models, LoRAs and workflows.
 - [Revision lineage](ordinary-generation-revision-lineage.md) — before revising a result.
 - [Runtime source contract](runtime-source-contract-verification.md) — before claiming the running Backend implements the current checkout's revision or other contract.
+- [Backend startup schema](backend-startup-additive-schema.md) — before relaunching current Backend source against an older SQLite database or reporting the runtime's database changes.
 - [Style preset replay](style-preset-saved-graph-replay.md) — before composing, replaying or editing style presets.
 - [Video frames and FILM](video-frame-and-film-rules.md) — before touching image-to-video or interpolation.
 - [Anima training components](anima-training-component-readiness.md) — before an Anima LoRA run.

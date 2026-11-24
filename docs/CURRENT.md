@@ -6,7 +6,7 @@
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | One original generated; Gallery metadata | Runtime revision mismatch; byte retrieval/revision blocked; mixed responses; no wait tool |
+| 1. MCP for agents | Mostly | Fresh original/revision bytes + lineage verified on unaccepted repair | Runtime inventory incomplete (D5); mixed responses; no wait tool |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
@@ -21,6 +21,8 @@ Windows, 2026-11-24: Backend 2018 passed, 6 skipped, no failures or hangs (about
 
 macOS, 2026-11-24: [p1-00](tasks/p1-00-mcp-friction-run-mac/manifest.md) full Backend suite `1900 passed, 124 skipped, 77 warnings in 43.84s`; independent [QA rerun](tasks/p1-00-mcp-friction-run-mac/review.md) `1900 passed, 124 skipped, 77 warnings in 44.13s`. Both exited 0 with `--timeout=60`; QA confirmed every skip requires Windows. Tests/skips were unchanged. No new full MCP, Frontend or Windows verification is claimed.
 
+Unmerged repair candidate `00ebb4d`, [QA AID-152](/AID/issues/AID-152): independent full Backend `1900 passed, 124 skipped, 76 warnings in 42.40s` and MCP `314 passed, 4 skipped in 1.10s`, both exit 0 with isolated roots and `--timeout=60`. Backend skips require Windows; MCP skips require separately exported HTTP fixtures. Product/test source is unchanged. D4 passes, but the delivery fails D5; no new Frontend/Windows result is implied.
+
 ## Phase 0
 
 Done 2026-11-24 (`1898378`).
@@ -33,14 +35,16 @@ Removed research data (`experiments/`, `research/`, `model_benchmarks/`); eviden
 
 Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target for p1-00/p1-05. The exact small baseline model/graph/parameter combination completed a real local original; broader compatibility is unverified.
 
-[Coding AID-148](/AID/issues/AID-148) delivered no-repair evidence commit `3081952`; [QA AID-149](/AID/issues/AID-149) independently returned [PASS for that evidence-only record](tasks/p1-00-mcp-friction-run-mac/review.md). Producer accepted the reviewed record and integrated its unchanged files plus QA's report/registry from `c377a02`. Baseline: **23 intervention units across eight incidents**, one completed original, Gallery metadata only, no retrieved image bytes or revision. The relative URL failed locally before HTTP; the live Backend lacks the current revision contract, and its loaded commit is unknown. No end-to-end success or phase exit is claimed.
+[Coding AID-148](/AID/issues/AID-148) delivered no-repair evidence commit `3081952`; [QA AID-149](/AID/issues/AID-149) independently returned [PASS for that evidence-only record](tasks/p1-00-mcp-friction-run-mac/review.md). Producer accepted that unchanged record plus QA's report/registry `c377a02`. Baseline remains **23 intervention units across eight incidents**, one completed original and Gallery metadata only. At measurement time the relative URL failed locally before HTTP and the old Backend lacked the revision contract; its loaded commit remains unknown. Later repair evidence does not rewrite that no-repair result.
 
 [AID-142](/AID/issues/AID-142) coordinates bounded [p1-00a runtime/retrieval repair](tasks/p1-00a-mac-runtime-and-retrieval/task.md). [QA kickoff AID-150](/AID/issues/AID-150) returned [CLEAR](tasks/p1-00a-mac-runtime-and-retrieval/kickoff-review.md) for fixed specification `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`; Producer read the actual verdict and verified its official report/archive/patch against `9bd0029`. No specification change or owner answer is needed.
 
-[Coding AID-151](/AID/issues/AID-151) is executing the repair on an isolated engineering branch from published `eaf11b8`; the task is unchanged from the cleared snapshot. [QA delivery AID-152](/AID/issues/AID-152) waits natively on Coding and reviews its exact final commit. Both native plans were read back and QA's prerequisite verified. AID-142 now waits on AID-152 and stays open through actual repair acceptance. AID-141 and AID-143 remain natively blocked by AID-142. Kickoff CLEAR does not satisfy the repair: decoded bytes and persisted lineage for a fresh original/revision pair are still required.
+[Coding AID-151](/AID/issues/AID-151) delivered runtime/client-configuration/docs-only candidate `00ebb4d`; it remains **unmerged**. [QA delivery AID-152](/AID/issues/AID-152#comment-c64c55d7-ac7c-4849-94cf-8447f62d3e2b) returned **FAIL: D1-D4 PASS, D5 FAIL**. QA independently verified the identified Backend, unmodified returned host-path consumption/decoded bytes, fresh pair and persisted canonical lineage. The cached original and colocated-client limit remain disclosed.
+
+D5's inventory omits eight nullable training columns and the empty `lora_output_reservations` table added by existing startup code. QA found all old values preserved; Producer verified the official report/audit against startup source. [Delivery correction 1](tasks/p1-00a-mac-runtime-and-retrieval/repair-round-1.md) fixes inventory/schema evidence under unchanged original D5; no product change, restart or extra generation is indicated. Separate Coding and exact-commit QA round 2 follow. This is one delivery rejection, below the owner escalation threshold. AID-142 stays open; AID-141/AID-143 remain gated until actual repair acceptance.
 
 The existing sequence continues only after repair PASS: AID-143 (p1-01/02 ship together), AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs and demo). Exact-commit independent review precedes each software merge. Phase boundaries and exit rules are unchanged.
 
 ## Team
 
-Coding is executing AID-151; QA completed AID-150 and next owns AID-152. Auto Dreamer is idle; other production specialists remain paused. Producer verified kickoff and native dispatch only in this follow-through, with no new software suite, service probe, generation or image-byte retrieval. No repair delivery has been accepted yet.
+Coding and QA completed delivery/review round 1; Producer is dispatching the bounded evidence correction and round-2 review. Retain the active Coding worktree and canonical Backend venv until reviewed deployment replaces that runtime. Auto Dreamer is idle; other production specialists remain paused. Producer inspected delivered documents/audits only this round, with no new software suite, live probe, generation or live image-byte read. Repair acceptance remains pending.
