@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **execution authorized inside existing boundaries; kickoff pending**.
+Status: **p1-00 kickoff CLEAR at `e443f2e`; Coding baseline dispatched**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -56,8 +56,10 @@ cards follow CLEAR kickoff without another routine start confirmation.
 
 | Native card / order | Work and execution owner | Native prerequisite | Observable delivery |
 |---|---|---|---|
-| [AID-147](/AID/issues/AID-147), first | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit, pinned on its card | CLEAR / ASK OWNER / BLOCK, independent reading and material differences on the QA card |
-| [AID-142](/AID/issues/AID-142), 1 | Producer coordinates p1-00; Coding executes; QA reviews evidence | AID-147; read actual verdict and require CLEAR | Mac Backend suite with `--timeout=60`; ordered stdio transcript; original + traceable revision retrieval or explicit blocker; full friction log and baseline count |
+| [AID-147](/AID/issues/AID-147), completed | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit `e443f2e` | [CLEAR](../p1-00-mcp-friction-run-mac/kickoff-review.md); independent reading and comparison; no execution acceptance |
+| [AID-148](/AID/issues/AID-148), executing | Coding runs p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | Exact evidence commit, Mac Backend suite with `--timeout=60`, raw ordered stdio transcript, friction log and baseline count |
+| [AID-149](/AID/issues/AID-149), waiting | QA independently reviews p1-00 evidence | AID-148 native prerequisite; read the actual delivery | PASS / FAIL / AMBIGUITY at the exact evidence commit, D1-D4 outcomes and truthful verification limits |
+| [AID-142](/AID/issues/AID-142), 1 | Producer coordinates p1-00 and accepts or repairs the reviewed result | AID-149; read actual verdict, not only completed status | Accepted usable baseline after any necessary bounded repairs; CURRENT/PROGRESS updated before later release |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -104,19 +106,29 @@ For p1-01/02, deliver a manifest in each task folder and review their combined
 final commit. Merge/push together only after PASS; every later software delivery
 also needs PASS. Update CURRENT/PROGRESS and continue without per-item starts.
 
-AID-141 waits natively on AID-142 while the first execution path proceeds. AID-142
-waits on QA kickoff, then on the Coding/evidence-review chain. Later coordination
-cards depend on their predecessor. This is an event-driven continuation, not
-polling or a prose-only promise to resume. If kickoff returns ASK OWNER/BLOCK,
-Producer triages the verdict before dispatch; no implicit implementation starts.
+AID-147 returned CLEAR for `e443f2e`; Producer read its independent comparison and
+verified the repository mirror against the official review attachment. AID-148
+is now executing against that fixed baseline. AID-149 has AID-148 as its native
+prerequisite and reviews the exact delivered evidence commit. AID-142 waits on
+AID-149; AID-141 remains blocked by AID-142. Each new recipient has a saved native
+plan carrying the specification and CTY's delegated-choice authority. No routine
+owner interaction was created.
+
+Later coordination cards depend on their predecessor. This is an event-driven
+continuation, not polling or a prose-only promise to resume. A completed review
+with FAIL or AMBIGUITY is triaged before dependent release. Any later kickoff
+returning ASK OWNER/BLOCK is likewise triaged before implementation starts.
 
 ## Verification and reporting
 
-This planning heartbeat verifies source/docs, native plans and prerequisite edges,
+The planning round verified source/docs, native plans and prerequisite edges,
 publication and kickoff release. Read-only Backend/ComfyUI health/resource probes
-succeeded. No software was changed; no Backend/MCP/frontend suite was rerun, no
-image generated and no new Gallery artifact retrieved. Prior Windows counts stay
-prior evidence; Mac Backend verification is p1-00's first execution action.
+succeeded. The follow-through round verified the independent kickoff, its exact
+attachment mirror, both recipient plans and Coding's live execution path. Producer
+changed status documents only and did not run a suite, probe services, generate an
+image or retrieve a generated artifact in follow-through. Baseline runtime results
+remain subject to delivery review. Prior Windows counts stay prior evidence; Mac
+Backend verification is p1-00's first execution action.
 
 Report the adopted pair, first work, native task links and actual next actor in
 Traditional Chinese in Discord `1562710701280202813`. No owner response is

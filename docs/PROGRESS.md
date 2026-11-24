@@ -122,3 +122,8 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 - Producer adopted the installed Illustrious/default pair, no LoRA/local, for p1-00 and p1-05 under delegated authority; no individual CTY model selection or aesthetic acceptance is claimed.
 - Created native Producer coordination AID-142–146 with prerequisite edges and released QA kickoff [AID-147](/AID/issues/AID-147) at a pinned published planning/spec commit. [AID-141](/AID/issues/AID-141) waits on the first execution coordinator; CLEAR precedes Coding/evidence-review dispatch.
 - First execution remains p1-00: Mac Backend suite then current-tool friction baseline. This round verifies docs/source, native handoff and read-only services only; no suite rerun, generation, new artifact retrieval or phase-exit claim.
+
+### 2026-11-24 — p1-00 cleared and dispatched
+- Read QA's independent [CLEAR kickoff](tasks/p1-00-mcp-friction-run-mac/kickoff-review.md) on [AID-147](/AID/issues/AID-147), pinned to `e443f2e`. Its repository mirror matches the official attachment; no specification or software changed in kickoff.
+- [AID-142](/AID/issues/AID-142) created [Coding AID-148](/AID/issues/AID-148) and separate [QA evidence review AID-149](/AID/issues/AID-149), each with the approved specification and delegated-choice authority in its native plan. Coding has a live execution run; QA waits natively on Coding, AID-142 waits on QA, and AID-141 continues to wait on AID-142.
+- The first delivery still measures the full Mac Backend suite and current-tool original/revision flow without repairs. No routine CTY question was created. Producer verified documents, kickoff and handoff only; baseline test, generation and generated-artifact outcomes remain unaccepted until delivery review.

@@ -1,6 +1,6 @@
 # Current
 
-2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, kickoff and Mac baseline ([roadmap](roadmap/ROADMAP.md))
+2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, Mac friction baseline ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -33,8 +33,10 @@ Removed research data (`experiments/`, `research/`, `model_benchmarks/`); eviden
 
 Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target for p1-00/p1-05. Backend and Mac ComfyUI list the checkpoint; real compatibility is still unverified.
 
-QA kickoff [AID-147](/AID/issues/AID-147) is first; after CLEAR, Producer [AID-142](/AID/issues/AID-142) dispatches the Mac Backend suite and today's MCP generate/retrieve/revise friction baseline. No fixes inside the baseline. Native sequence then continues through AID-143 (p1-01/02 ship together), AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs and demo). Exact-commit independent review precedes each software merge. Phase boundaries and exit rules are unchanged.
+QA kickoff [AID-147](/AID/issues/AID-147) returned [CLEAR](tasks/p1-00-mcp-friction-run-mac/kickoff-review.md) for fixed specification commit `e443f2e`. Producer [AID-142](/AID/issues/AID-142) dispatched [Coding AID-148](/AID/issues/AID-148), now executing the Mac Backend suite and today's MCP generate/retrieve/revise friction baseline. No fixes inside the baseline. [QA AID-149](/AID/issues/AID-149) waits natively on Coding and will review the exact delivered evidence commit; AID-142 waits on that review, and AID-141 remains blocked by AID-142. CLEAR is kickoff clearance, not delivery acceptance.
+
+Native sequence then continues through AID-143 (p1-01/02 ship together), AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs and demo). A failed suite or blocked flow needs a bounded repair and independent review before dependent release. Exact-commit independent review precedes each software merge. Phase boundaries and exit rules are unchanged.
 
 ## Team
 
-Producer resumed; Coding and Auto Dreamer idle. QA kickoff is the first released assignment; other production specialists remain paused. This planning round checked source and live read-only health/resources, and dispatched the kickoff path. No suite rerun, real generation or new artifact retrieval is claimed yet.
+Coding is executing AID-148; QA completed kickoff and next owns AID-149. Auto Dreamer is idle; other production specialists remain paused. Producer verified kickoff evidence and native dispatch. No baseline suite result, real generation or retrieved generated artifact has been accepted yet.
