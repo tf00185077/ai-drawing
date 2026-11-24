@@ -1,0 +1,17 @@
+{
+  "responses": [
+    {
+      "url": null,
+      "expected_hostname": "EXPECTED-PC",
+      "expected_protocol_version": 2,
+      "hostname": null,
+      "protocol_version": null,
+      "resolved_url": null,
+      "last_error": null,
+      "configured": false,
+      "reachable": false,
+      "status": "not_configured"
+    }
+  ],
+  "requests": []
+}

@@ -1,10 +1,13 @@
 # MCP server
 
-The stdio MCP server gives agents 30 tools with one response envelope and one
+The stdio MCP server gives agents 31 tools with one response envelope and one
 risk label per intent. It calls the existing Backend APIs; direct ComfyUI admin
 operations and Discord delivery use their configured service endpoints.
 
-This is the combined p1-01/02 breaking change. Reload client tool discovery and
+This candidate includes p1-04 health/configured-worker visibility, replacing temporary
+`mcp_ping` with `health` and adding `list_workers`. It awaits exact-commit
+independent QA and Producer integration; the running product is unchanged.
+The earlier combined p1-01/02 delivery was a breaking change. Reload client tool discovery and
 migrate old calls using the [complete capability map](tasks/p1-02-mcp-tool-consolidation/manifest.md#old-to-new-capability-map).
 The catalog in `mcp-server/mcp_server/tool_catalog.py` drives registration.
 
@@ -54,7 +57,7 @@ Read from the process environment only (not `.env`), in `mcp_server/config.py`.
 | Variable | Default | Purpose |
 |---|---|---|
 | `MCP_BACKEND_API_URL` | `http://127.0.0.1:8001` | Backend (use `8000` when running it without Docker) |
-| `MCP_COMFYUI_API_URL` | `http://127.0.0.1:8188` | Direct ComfyUI operations |
+| `MCP_COMFYUI_API_URL` | `http://127.0.0.1:8188` | Direct admin operations only; independent of Backend-local health |
 | `MCP_GALLERY_DIR` | developer-specific; always set it | Host path of the Gallery |
 | `MCP_DISCORD_OPERATOR_URL` | `http://127.0.0.1:8765` | Discord bot operator endpoint |
 | `MCP_DISCORD_OPERATOR_TOKEN` | unset | Shared secret for the bot endpoint |
@@ -90,7 +93,8 @@ Each description starts with exactly one `Risk: read`, `Risk: mutate` or
 <!-- MCP-CATALOG:START -->
 | Tool | Risk | Intent / selectors |
 |---|---|---|
-| `mcp_ping` | read | Backend /health only; temporary until p1-04 |
+| `health` | read | Backend, Backend-local ComfyUI and worker reachability; retains unknown reads |
+| `list_workers` | read | zero/one configured worker; configuration separate from current observations |
 | `civitai_source_info` | read | inspect source image metadata |
 | `civitai_resource_acquire` | mutate | acquire model/LoRA |
 | `civitai_resource_status` | read | read acquisition status |
@@ -125,7 +129,78 @@ Each description starts with exactly one `Risk: read`, `Risk: mutate` or
 The two old video submission tools and Civitai generate-like are absent from
 MCP. Their Backend APIs remain unchanged and frozen. Civitai's three retained
 names and all nine LoRA/caption names remain separate until their later phases.
-There is no MCP `health` or `list_workers` in this delivery.
+`health` and `list_workers` use only the existing Backend GET/status routes.
+There is no registry, heartbeat, scheduler or worker-control intent in discovery.
+
+## Health and configured worker
+
+Call `health()` before selecting a target. Its common success envelope always
+contains `data.backend`, `data.comfyui` and `data.worker`. Each has `reachable`
+and a nullable `reason`. False reachability has a safe nonempty reason:
+
+- `reason_code: reported_unreachable` means the Backend reports a failed probe.
+- `reason_code: not_configured` means a successful read confirms no configuration.
+- `reason_code: not_observed` means the dependency status could not be read
+  through the Backend. `configured` is null, and `read_error` gives a stable
+  code, safe message and same-read recovery hint. It does not establish a
+  failed dependency probe.
+
+Full recorded envelopes and GET requests are in the candidate
+[offline samples](tasks/p1-04-mcp-health-and-workers/delivery-1-evidence/recorded-mcp-samples.output.txt).
+
+The tool reads `/health` first. If that read fails or is invalid, Backend is
+unreachable with a read error and both dependencies remain not observed; no
+further request is sent. Otherwise `/api/system/status` and
+`/api/workers/status` are read independently: failure of either leaves the
+other observation intact. Read failures are represented in the aggregate's
+success data so all three entries survive. They do not turn into job failure.
+
+ComfyUI preserves Backend `mode`, `state`, `configured`, `reachable`, model
+counts, `warnings` and `hint`. In particular `no_models` and `degraded` can
+remain reachable. This is **Backend-local** ComfyUI configured by Backend
+`COMFYUI_MODE`/`COMFYUI_BASE_URL`, not `MCP_COMFYUI_API_URL` for direct admin.
+Health sends no direct ComfyUI or worker fallback request. Each Backend read
+uses a five-second HTTP timeout; these are sequential observations, without
+an atomic snapshot or an overall wait-style deadline.
+
+`list_workers()` reads only `/api/workers/status`. A successful authoritative
+unconfigured response returns exactly `{"ok":true,"data":{"workers":[]}}`.
+A configured worker returns one entry even when its current probe fails:
+
+```json
+{"ok":true,"data":{"workers":[{"url":"http://192.0.2.10:8791","expected_hostname":"EXPECTED-PC","expected_protocol_version":2,"hostname":null,"protocol_version":null,"resolved_url":null,"reachable":false,"status":"unavailable","last_error":"Worker status probe failed; inspect Backend NVIDIA_WORKER_URL, expected hostname/protocol and worker availability, then retry this read."}]}}
+```
+
+`url` is Backend `NVIDIA_WORKER_URL` with trailing slashes removed. Expected
+hostname (null when unset) and protocol (default 2) are configuration, never
+observations. Accepted current probes supply `hostname`, `protocol_version`
+and `resolved_url`, with `last_error: null`. A URL-only configuration may be
+reachable with `hostname: null` and a valid protocol. With existing discovery,
+`url` can remain `http://192.0.2.10:8791` while `resolved_url` is the accepted
+`http://192.0.2.11:8791`. A later connection/HTTP/identity failure clears all
+three observations even when that address remains cached. `last_error` is a
+safe reason for the current failed probe, without persistent error history.
+
+Backend connection/HTTP/invalid or inconsistent worker status makes
+configuration unknown and returns the common error envelope, never an empty
+list or inferred observation. Example:
+
+```json
+{"ok":false,"error":{"code":"invalid_backend_status","message":"Backend status response is missing, invalid or inconsistent.","hint":"Inspect Backend availability and status/configuration, then retry this read; no job submission is needed."}}
+```
+
+Health uses that same error object in the affected entry's `read_error` and
+labels the dependency not observed. `backend_http_error` retains HTTP status
+without arbitrary response text; `backend_unavailable` reports connection or
+timeout failure. Inspect Backend availability, deployed status contract and
+configuration, then repeat the read. Failed worker probes instead require
+checking Backend worker URL/expected identity and worker availability.
+
+One worker only until Phase 3. Reachability does not certify remote ComfyUI,
+worker model/node parity, generation readiness, loaded-source identity or
+artifact availability/bytes/client access. `list_resources` still inventories
+the Backend host. Keep execution target explicit; discovery submits, cancels,
+installs and controls nothing, and never silently falls back worker to local.
 
 ## Bounded wait and results
 
@@ -207,11 +282,12 @@ remote consumption remain later verification, including p1-05.
 
 ## Common flows
 
-The executable current flow is **mcp_ping → list_resources → generate →
+The executable current flow is **health → list_resources → generate →
 wait_for_job → consume the returned locator**. Example tool arguments:
 
 ```json
-{"tool": "mcp_ping", "arguments": {}}
+{"tool": "health", "arguments": {}}
+{"tool": "list_workers", "arguments": {}}
 {"tool": "list_resources", "arguments": {}}
 {"tool": "generate", "arguments": {"mode": "template", "prompt": "a red ceramic cup", "checkpoint": "Illustrious-XL-v2.0.safetensors", "template": "default", "execution_target": "local", "loras": []}}
 {"tool": "wait_for_job", "arguments": {"job_id": "<data.job_id from generate>", "timeout_seconds": 50}}
@@ -228,10 +304,9 @@ prove failure: inspect the existing job ID before any resubmission. No automatic
 resubmission or failed-worker local fallback occurs. cancel_job remains for
 queued generation; LoRA status and cancel use their own named tools.
 
-The staged final Phase 1 flow is **health → list_resources → generate →
-wait_for_job → consume locator (gallery_get for full metadata)**. p1-04 replaces temporary
-ping and adds worker discovery. Ping currently checks only Backend connectivity,
-not ComfyUI, workers or loaded source identity.
+Use `list_workers` when selecting the configured worker; inspect health reasons
+before generation. This candidate flow is executable in source and verified
+offline. Deployment, real-run wait and the Phase 1 exit remain unverified here.
 
 **Retrieve:** gallery_get(image_id=...) constructs local_path from
 MCP_GALLERY_DIR and returns full image metadata, including exact integer seeds
@@ -288,7 +363,8 @@ An omitted profile selects __base__.api.json, not a profile named default.
 submit image parameters through generate. list_resources describes Backend-host
 files, never worker readiness. comfyui_admin always uses MCP_COMFYUI_API_URL;
 install_node resolves curated Manager packages and never restarts automatically.
-Restart may interrupt work; ping afterwards still proves only Backend availability.
+Restart may interrupt work. Health afterwards reports Backend-local dependencies;
+if direct admin targets another ComfyUI, its state is not observed by health.
 deliver_to_discord accepts job_id, allowlisted destination_alias and optional
 force_resend. The bot enforces allowlist and dedup; it cannot send arbitrary
 files, messages or channel IDs through this tool.
@@ -301,6 +377,7 @@ files, messages or channel IDs through this tool.
 | backend_http_error | Unstructured/unknown HTTP error; message keeps HTTP status; inspect before retry. |
 | backend_unavailable | HTTP connection/timeout; check service; inspect existing job ID before resubmission. |
 | tool_execution_failed | Unexpected wrapper/dependency exception; inspect before retry; writes may have uncertain admission. |
+| invalid_backend_status | Health dependency read or worker configuration is unknown: inspect the deployed Backend status contract/configuration, then retry this read. Never infer an empty worker list. |
 | invalid_json | Custom workflow must be a valid JSON string. |
 | generation_failed | Job failed; inspect node errors; never automatically fall back from worker to local. |
 | timeout | Overall wait budget exhausted; last-known status is retained, unknown before a completed read; call wait_for_job again with the same ID. |
@@ -333,7 +410,9 @@ Backend hint text. Known domain failures are not collapsed into a connection err
 | Problem | Check |
 |---|---|
 | Server does not start | Client MCP logs, wrapper path, uv on PATH, dependencies |
-| Ping fails | MCP_BACKEND_API_URL and Backend availability |
+| Health Backend entry fails | MCP_BACKEND_API_URL and Backend availability; dependencies are not observed |
+| Worker list read fails | Backend status endpoint/schema/configuration; repeat the same read |
+| Configured worker unavailable | Backend NVIDIA_WORKER_URL, expected hostname/protocol and worker availability |
 | Tools missing or stale | Reload client discovery; compare tool_catalog.py |
 | Discord delivery fails | Bot endpoint/token, allowlisted alias and completed job |
 | Direct ComfyUI action fails | MCP_COMFYUI_API_URL and ComfyUI-Manager for node/restart actions |

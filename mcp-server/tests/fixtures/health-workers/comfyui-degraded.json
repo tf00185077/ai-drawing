@@ -1,0 +1,24 @@
+{
+  "response": {
+    "application": "healthy",
+    "comfyui": {
+      "mode": "external",
+      "state": "degraded",
+      "configured": true,
+      "reachable": true,
+      "model_count": 1,
+      "checkpoint_count": 1,
+      "diffusion_model_count": 0,
+      "warnings": [
+        "diffusion_models 模型目錄不存在。"
+      ],
+      "hint": "ComfyUI 可使用，但部分模型目錄不可用；請檢查掛載與讀取權限。"
+    }
+  },
+  "requests": [
+    [
+      "GET",
+      "http://backend-local.invalid:8188/system_stats"
+    ]
+  ]
+}

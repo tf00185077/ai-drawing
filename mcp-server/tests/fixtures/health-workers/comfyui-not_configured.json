@@ -1,0 +1,17 @@
+{
+  "response": {
+    "application": "healthy",
+    "comfyui": {
+      "mode": "disabled",
+      "state": "not_configured",
+      "configured": false,
+      "reachable": false,
+      "model_count": 0,
+      "checkpoint_count": 0,
+      "diffusion_model_count": 0,
+      "warnings": [],
+      "hint": "執行 setup.ps1 reconfigure 或 ./setup.sh reconfigure 以設定或安裝 ComfyUI。"
+    }
+  },
+  "requests": []
+}

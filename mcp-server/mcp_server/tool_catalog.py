@@ -31,7 +31,8 @@ class ToolCatalogEntry:
 
 
 INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
-    ToolCatalogEntry('mcp_ping', 'mcp_server.server', 'mcp_ping', 'read', ('GET /health',)),
+    ToolCatalogEntry('health', 'mcp_server.tools.health', 'health', 'read', ('GET /health', 'GET /api/system/status', 'GET /api/workers/status')),
+    ToolCatalogEntry('list_workers', 'mcp_server.tools.health', 'list_workers', 'read', ('GET /api/workers/status',)),
     ToolCatalogEntry('civitai_source_info', 'mcp_server.tools.civitai', 'civitai_source_info', 'read', ('GET /api/civitai/source-info',)),
     ToolCatalogEntry('civitai_resource_acquire', 'mcp_server.tools.civitai', 'civitai_resource_acquire', 'mutate', ('POST /api/civitai/resources/acquire',)),
     ToolCatalogEntry('civitai_resource_status', 'mcp_server.tools.civitai', 'civitai_resource_status', 'read', ('GET /api/civitai/resources/status',)),

@@ -1,0 +1,26 @@
+{
+  "response": {
+    "application": "healthy",
+    "comfyui": {
+      "mode": "external",
+      "state": "no_models",
+      "configured": true,
+      "reachable": true,
+      "model_count": 0,
+      "checkpoint_count": 0,
+      "diffusion_model_count": 0,
+      "warnings": [],
+      "hint": "ComfyUI 已連線；請自行將 checkpoint 或 diffusion model 放入對應模型目錄。"
+    }
+  },
+  "requests": [
+    [
+      "GET",
+      "http://backend-local.invalid:8188/system_stats"
+    ],
+    [
+      "GET",
+      "http://backend-local.invalid:8188/object_info"
+    ]
+  ]
+}

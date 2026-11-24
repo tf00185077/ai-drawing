@@ -9,7 +9,7 @@ metadata:
 
 ## Context
 
-The host Backend is a long-running Python process. Its cwd can point at the current repository while its imported code still implements an older contract. MCP ping checks connectivity, not loaded-source identity. Repository revision support does not prove that the service persists revision annotations.
+The host Backend is a long-running Python process. Its cwd can point at the current repository while its imported code still implements an older contract. MCP health checks reachability, not loaded-source identity. Repository revision support does not prove that the service persists revision annotations.
 
 ## Why
 
@@ -23,4 +23,4 @@ Before claiming deployed behavior, identify the source used to launch the Backen
 
 - [p1-00 independent review](../tasks/p1-00-mcp-friction-run-mac/review.md): live-schema comparison and read-only status/Gallery evidence.
 - `backend/app/schemas/generate.py`: `RevisionContextRequest`, `RevisionContext` and `GenerateRequest.revision_context`.
-- `mcp-server/mcp_server/server.py`: `mcp_ping` connectivity check.
+- `mcp-server/mcp_server/tools/health.py`: Backend/dependency reachability reads.

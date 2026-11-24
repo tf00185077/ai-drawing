@@ -14,13 +14,11 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
-# Catalog lookup of the ping callable must reuse the served module when this
+# Catalog lookup must reuse the served module when this
 # file runs as ``python -m mcp_server.server``, rather than loading a second copy.
 if __name__ == "__main__":
     sys.modules["mcp_server.server"] = sys.modules[__name__]
 
-from mcp_server.client import HttpBackendClient
-from mcp_server.config import get_mcp_settings
 from mcp_server.tools.responses import backend_error_payload, envelope
 
 
@@ -169,18 +167,6 @@ mcp = ContractFastMCP(
     "AI Drawing",
     json_response=True,
 )
-
-
-def mcp_ping() -> dict[str, Any]:
-    """Check MCP Server and Backend connection status. Returns an error if the Backend is not running."""
-    try:
-        # Use the /health endpoint, independent of DB or gallery
-        settings = get_mcp_settings()
-        client = HttpBackendClient(base_url=settings.backend_api_url, timeout=5.0)
-        client.get("health")
-        return {"ok": True, "data": {"backend_reachable": True}}
-    except Exception as e:
-        return backend_error_payload("mcp_ping", e)
 
 
 # Catalog-driven registration keeps risk, schemas and names at the public

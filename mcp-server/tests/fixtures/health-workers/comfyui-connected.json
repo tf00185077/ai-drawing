@@ -1,0 +1,22 @@
+{
+  "response": {
+    "application": "healthy",
+    "comfyui": {
+      "mode": "external",
+      "state": "connected",
+      "configured": true,
+      "reachable": true,
+      "model_count": 1,
+      "checkpoint_count": 1,
+      "diffusion_model_count": 0,
+      "warnings": [],
+      "hint": "ComfyUI 與生圖模型已就緒。"
+    }
+  },
+  "requests": [
+    [
+      "GET",
+      "http://backend-local.invalid:8188/system_stats"
+    ]
+  ]
+}

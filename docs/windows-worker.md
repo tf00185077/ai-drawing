@@ -63,6 +63,34 @@ Discovery runs only on connection errors, scans the CIDR on port 8791 and accept
 
 Backend source: `backend/app/services/nvidia_worker.py`, `backend/app/api/workers.py`.
 
+## Read-only status visibility
+
+The candidate `GET /api/workers/status` response extends the existing
+`configured`, `reachable`, `status`, failed `error_type` and successful nested
+`worker` fields. It adds normalized configured `url`, `expected_hostname`
+(null when unset), `expected_protocol_version`, current `hostname`,
+`protocol_version`, `resolved_url` and `last_error`. It introduces no new route
+or control capability. See [MCP health and worker discovery](mcp.md#health-and-configured-worker).
+
+A successful current `health()` client probe accepts the existing identity
+validation before reporting its actual selected endpoint as `resolved_url`.
+That endpoint may differ from configuration after existing discovery/cache.
+URL-only success can have no hostname. Failed probes retain configuration,
+set status unavailable and a safe current error, and clear observed identity
+and resolved URL; an old runtime cache remains distinct from this observation.
+Success sets `last_error` null. There is no persistent error history.
+
+MCP `list_workers` returns empty only for a successfully read unconfigured
+Backend response, one configured entry even when unavailable, or a common
+error when Backend configuration cannot be read/validated. MCP `health` keeps
+Backend, Backend-local ComfyUI and worker entries on partial/outage reads.
+These tools issue existing GET/status requests only. Backend discovery may
+perform its existing private-LAN probes; it sends no generation or control.
+Reachability proves neither remote ComfyUI nor model/node parity, generation
+readiness, source version or artifact access. This source change has offline
+route/client/registered-tool checks; deployment and real worker operation
+remain unverified, with independent QA and Producer integration pending.
+
 ## Install (current scripts)
 
 Scripts in `worker/windows/`:

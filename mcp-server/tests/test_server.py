@@ -1,14 +1,13 @@
 """MCP Server 單元測試"""
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 import sys
 
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from mcp_server.server import mcp, mcp_ping
+from mcp_server.server import mcp
 from mcp_server.tool_catalog import INTENDED_TOOLS
 
 
@@ -16,17 +15,6 @@ def test_mcp_instance_exists() -> None:
     """MCP 實例存在且為 FastMCP"""
     assert mcp is not None
     assert mcp.name == "AI Drawing"
-
-
-def test_mcp_ping_returns_structured_result() -> None:
-    """Ping checks its health dependency without contacting a product service."""
-    client = MagicMock()
-    client.get.return_value = {"status": "ok"}
-    with patch("mcp_server.server.HttpBackendClient", return_value=client):
-        result = mcp_ping()
-    client.get.assert_called_once_with("health")
-    assert isinstance(result, dict)
-    assert "ok" in result
 
 
 def test_minimum_loop_tools_are_importable() -> None:
@@ -143,7 +131,10 @@ async def test_stdio_envelope_success_and_non_lora_validation_before_http() -> N
     class Backend(BaseHTTPRequestHandler):
         def do_GET(self):
             requests.append(self.path)
-            body = b'{"status":"ok"}'
+            fixtures = Path(__file__).parent / 'fixtures' / 'health-workers'
+            filename, key = {'/health': ('backend', 'response'), '/api/system/status': ('comfyui-connected', 'response'), '/api/workers/status': ('up', 'responses')}[self.path]
+            payload = json.loads((fixtures / (filename + '.json')).read_text(encoding='utf-8'))[key]
+            body = json.dumps(payload[0] if key == 'responses' else payload).encode()
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(body)))
@@ -160,9 +151,12 @@ async def test_stdio_envelope_success_and_non_lora_validation_before_http() -> N
         async with stdio_client(params) as (read_stream, write_stream):
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
-                result = await session.call_tool('mcp_ping', {})
+                result = await session.call_tool('health', {})
                 assert result.isError is False
-                assert result.structuredContent == {'ok': True, 'data': {'backend_reachable': True}}
+                assert result.structuredContent['ok'] is True
+                data = result.structuredContent['data']
+                assert set(data) == {'backend', 'comfyui', 'worker'}
+                assert all(entry['reachable'] for entry in data.values())
                 assert json.loads(result.content[0].text) == result.structuredContent
                 for name, args in [('job_status', {}), ('prompt_compose', {'save_as': None})]:
                     result = await session.call_tool(name, args)
@@ -170,7 +164,7 @@ async def test_stdio_envelope_success_and_non_lora_validation_before_http() -> N
                     assert set(result.structuredContent) == {'ok', 'error'}
                     assert result.structuredContent['error']['code'] == 'request_validation_failed'
                     assert json.loads(result.content[0].text) == result.structuredContent
-        assert requests == ['/health']
+        assert requests == ['/health', '/api/system/status', '/api/workers/status']
     finally:
         backend.shutdown()
         backend.server_close()

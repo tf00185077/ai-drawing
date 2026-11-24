@@ -1,0 +1,11 @@
+{
+  "response": {
+    "status": "healthy"
+  },
+  "requests": [
+    [
+      "GET",
+      "/health"
+    ]
+  ]
+}

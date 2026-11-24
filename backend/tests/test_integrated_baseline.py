@@ -48,7 +48,8 @@ def test_unavailable_worker_preserves_lora_http_mcp_and_graph_contract(
     monkeypatch.setattr(workers, "get_worker_client", lambda: worker)
     monkeypatch.setattr(workers, "get_settings", lambda: SimpleNamespace(nvidia_worker_url=worker.base_url))
     client = TestClient(app)
-    assert client.get("/api/workers/status").json() == {
+    worker_status = client.get("/api/workers/status").json()
+    assert {key: worker_status[key] for key in ("configured", "reachable", "status", "error_type")} == {
         "configured": True, "reachable": False, "status": "unavailable",
         "error_type": "WorkerConfigurationError",
     }

@@ -20,10 +20,12 @@ CATALOG_DOCS = (
 # Source: docs/decisions/mcp.md (tool map, retained intents and staged delivery),
 # cleared at 496cee2f842dc9386d336afb237075bf952271ce; p1-02 D2.
 # p1-03 adds wait=read under the cleared decision at a88b84a; all prior labels remain.
-# Keep mcp_ping until p1-04. Preflight/compose POSTs are read intents; caption,
+# p1-04 replaces ping and adds health/list_workers=read under the cleared
+# configured-worker decision at b075f36. Preflight/compose POSTs are read intents; caption,
 # acquisition, training/smoke submission and cancellation mutate persistent state.
 APPROVED_INTENT_RISKS = {
-    "mcp_ping": "read",
+    "health": "read",
+    "list_workers": "read",
     "list_resources": "read",
     "generate": "mutate",
     "job_status": "read",
@@ -58,7 +60,7 @@ APPROVED_INTENT_RISKS = {
 
 def test_catalog_risks_match_approved_intent_policy() -> None:
     """A false label (e.g. ComfyUI restart as read) must fail independently."""
-    assert len(INTENDED_TOOLS) == len(APPROVED_INTENT_RISKS) == 30
+    assert len(INTENDED_TOOLS) == len(APPROVED_INTENT_RISKS) == 31
     assert {entry.name: entry.risk for entry in INTENDED_TOOLS} == APPROVED_INTENT_RISKS
     assert all(entry.external for entry in INTENDED_TOOLS)
 
@@ -114,11 +116,11 @@ async def test_generate_image_exposes_multi_lora_schema() -> None:
 @pytest.mark.asyncio
 async def test_removed_tools_and_staged_tools_are_not_registered() -> None:
     registered = {tool.name for tool in await mcp.list_tools()}
-    assert len(registered) == 30
+    assert len(registered) == 31
     assert not registered & {
         "generate_image", "generate_image_custom_workflow", "get_generation_status",
         "generate_video_wan_keyframes", "generate_video_custom_workflow", "civitai_generate_like",
-        "health", "list_workers", "prompt_library_restore",
+        "mcp_ping", "prompt_library_restore",
     }
 
 

@@ -206,7 +206,7 @@ def test_worker_status_is_configured_with_only_worker_url(monkeypatch) -> None:
     monkeypatch.setattr(
         workers,
         "get_worker_client",
-        lambda: type("Worker", (), {"health": lambda self: {"ready": True}})(),
+        lambda: type("Worker", (), {"base_url": "http://worker:8791", "health": lambda self: {"ready": True}})(),
     )
 
     response = TestClient(app).get("/api/workers/status")

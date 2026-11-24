@@ -522,7 +522,7 @@ def test_backend_status_is_unavailable_on_identity_mismatch(monkeypatch, hostnam
         lambda request: httpx.Response(200, json={"hostname": hostname, "protocol_version": protocol}),
     )
 
-    assert workers.worker_status() == {
+    assert {key: value for key, value in workers.worker_status().items() if key in {"configured", "reachable", "status", "error_type", "worker"}} == {
         "configured": True, "reachable": False, "status": "unavailable",
         "error_type": "WorkerConfigurationError",
     }
@@ -537,7 +537,7 @@ def test_backend_status_is_ready_on_matching_identity(monkeypatch) -> None:
         lambda request: httpx.Response(200, json={"hostname": "expected-pc", "protocol_version": 2}),
     )
 
-    assert workers.worker_status() == {
+    assert {key: value for key, value in workers.worker_status().items() if key in {"configured", "reachable", "status", "error_type", "worker"}} == {
         "configured": True, "reachable": True, "status": "ready",
         "worker": {"hostname": "expected-pc", "protocol_version": 2},
     }

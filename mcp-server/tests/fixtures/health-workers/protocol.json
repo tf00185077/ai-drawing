@@ -1,0 +1,23 @@
+{
+  "responses": [
+    {
+      "url": "http://192.0.2.10:8791",
+      "expected_hostname": "EXPECTED-PC",
+      "expected_protocol_version": 2,
+      "hostname": null,
+      "protocol_version": null,
+      "resolved_url": null,
+      "last_error": "Worker status probe failed; inspect Backend NVIDIA_WORKER_URL, expected hostname/protocol and worker availability, then retry this read.",
+      "configured": true,
+      "reachable": false,
+      "status": "unavailable",
+      "error_type": "WorkerConfigurationError"
+    }
+  ],
+  "requests": [
+    [
+      "GET",
+      "http://192.0.2.10:8791/v1/worker/status"
+    ]
+  ]
+}

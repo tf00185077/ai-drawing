@@ -52,8 +52,20 @@ def cancel_powershell_command(command_id: str) -> dict:
 def worker_status() -> dict:
     settings = get_settings()
     configured = bool(settings.nvidia_worker_url)
+    # Configuration is authoritative even when the current probe fails. Never
+    # populate observations from the discovery cache or expected identity.
+    visibility = {
+        "url": settings.nvidia_worker_url.rstrip("/") if configured else None,
+        "expected_hostname": getattr(settings, "nvidia_worker_hostname", "") or None,
+        "expected_protocol_version": getattr(settings, "nvidia_worker_protocol_version", 2),
+        "hostname": None,
+        "protocol_version": None,
+        "resolved_url": None,
+        "last_error": None,
+    }
     if not configured:
         return {
+            **visibility,
             "configured": False,
             "reachable": False,
             "status": "not_configured",
@@ -61,17 +73,26 @@ def worker_status() -> dict:
     try:
         # Use the same discovery-aware runtime factory as generation. This
         # keeps status and every Worker HTTP endpoint on one resolved URL.
-        status = get_worker_client().health()
+        client = get_worker_client()
+        status = client.health()
     except Exception as error:
         return {
+            **visibility,
             "configured": True,
             "reachable": False,
             "status": "unavailable",
             "error_type": type(error).__name__,
+            "last_error": "Worker status probe failed; inspect Backend NVIDIA_WORKER_URL, expected hostname/protocol and worker availability, then retry this read.",
         }
     return {
+        **visibility,
         "configured": True,
         "reachable": True,
         "status": "ready",
         "worker": status,
+        "hostname": status.get("hostname"),
+        "protocol_version": status.get("protocol_version"),
+        # This request-local client has just accepted the probe. Its base_url
+        # includes any existing discovery resolution used by that same call.
+        "resolved_url": client.base_url,
     }

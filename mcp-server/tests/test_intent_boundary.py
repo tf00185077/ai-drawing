@@ -53,6 +53,13 @@ def transport(monkeypatch, *, status=200, body=None, exception=None):
             payload = {'ok': True, 'job_id': 'job-1', 'status': 'queued', 'id': 44,
                        'caption': 'a cup', 'content': 'a cup', 'image_path': 'cup.png',
                        'message_ids': ['message-1'], 'artifact_count': 1, 'deduplicated': True}
+            status_files = {'/health': ('backend', 'response'), '/api/system/status': ('comfyui-connected', 'response'), '/api/workers/status': ('up', 'responses')}
+            if request.url.path in status_files:
+                import os
+                directory = Path(os.environ.get('HEALTH_WORKER_HTTP_EXPORT', Path(__file__).parent / 'fixtures' / 'health-workers'))
+                filename, key = status_files[request.url.path]
+                payload = json.loads((directory / (filename + '.json')).read_text(encoding='utf-8'))[key]
+                if key == 'responses': payload = payload[0]
             if request.url.path == '/api/generate/job/fixture':
                 payload = {'job_id': 'fixture', 'status': 'completed', 'image_id': 44, 'image_path': 'cup.png', 'artifacts': []}
             if request.url.path == '/customnode/getmappings':
@@ -85,7 +92,13 @@ async def test_catalog_registered_success_failure_envelope(monkeypatch, entry, f
     with transport(monkeypatch, **kwargs) as requests:
         payload = await call(entry.name, arguments_for(tool))
     assert requests, 'must execute a real wrapper dependency'
-    if failure:
+    if failure and entry.name == 'health':
+        assert payload['ok'] is True
+        assert set(payload['data']) == {'backend', 'comfyui', 'worker'}
+        assert all(not item['reachable'] for item in payload['data'].values())
+        assert payload['data']['comfyui']['reason_code'] == payload['data']['worker']['reason_code'] == 'not_observed'
+        if failure == 'http': assert '598' in payload['data']['backend']['reason']
+    elif failure:
         assert set(payload) == {'ok', 'error'}
         assert payload['ok'] is False
         assert all(payload['error'].get(key) for key in ('code', 'message', 'hint'))

@@ -63,7 +63,7 @@ def artifact(identity, path='nested/旅 人.png', kind='image', **extra):
 
 async def test_discovery_is_one_read_intent_with_bounded_schema():
     tools = {t.name: t for t in await mcp.list_tools()}
-    assert len(tools) == 30
+    assert len(tools) == 31
     tool = tools['wait_for_job']
     assert tool.description.startswith('Risk: read.')
     assert tool.inputSchema['required'] == ['job_id']
