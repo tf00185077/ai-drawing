@@ -44,8 +44,10 @@ generate/retrieve/revise journey or release later work.
 ## Next action and gate
 
 [p1-00a](../p1-00a-mac-runtime-and-retrieval/task.md) is a bounded repair inside
-Phase 1, using the delegated reference pair. Independent fixed-commit kickoff
-must be CLEAR before Producer creates Coding and delivery-review cards. The
+Phase 1, using the delegated reference pair. [QA kickoff AID-150](/AID/issues/AID-150)
+reviews fixed published specification `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`;
+its saved native plan matches the assignment. AID-142 waits natively on it. Actual
+CLEAR is required before Producer creates Coding and delivery-review cards. The
 repair aligns the running Backend, provides a consumable locator and proves one
 fresh original/revision pair with image bytes and persisted lineage. Runtime/
 configuration/docs changes may suffice; source changes require behavioral tests

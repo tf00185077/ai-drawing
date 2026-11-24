@@ -59,7 +59,7 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | [AID-147](/AID/issues/AID-147), completed | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit `e443f2e` | [CLEAR](../p1-00-mcp-friction-run-mac/kickoff-review.md); independent reading and comparison; no execution acceptance |
 | [AID-148](/AID/issues/AID-148), completed | Coding ran p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | [Evidence](../p1-00-mcp-friction-run-mac/manifest.md) `3081952`: passing Mac suite, completed original, byte retrieval/revision blocked; 23 intervention units/eight incidents |
 | [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `3081952` for D1-D4 including the documented-blocker route; report/registry `c377a02` |
-| p1-00a kickoff, next | QA independently reviews [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification and accepted baseline evidence | CLEAR / ASK OWNER / BLOCK on QA's own card before Coding dispatch; fresh exact-commit QA after execution |
+| [AID-150](/AID/issues/AID-150), assigned | QA independently reviews [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification `4ac3d56` and accepted baseline evidence; native plan read back | CLEAR / ASK OWNER / BLOCK on QA's own card before Coding dispatch; fresh exact-commit QA after execution |
 | [AID-142](/AID/issues/AID-142), 1 | Producer accepted the evidence-only baseline and coordinates necessary repairs | p1-00a kickoff, then separate Coding and delivery-QA cards | Accepted repair with identified running source, usable artifact bytes and a fresh traceable original/revision pair before later release |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
@@ -120,7 +120,8 @@ URL failed locally before an HTTP image request; no bytes or revision were
 retrieved. The live Backend omits revision context and its loaded commit is
 unknown. This is an accepted baseline record, not a usable end-to-end journey.
 
-Producer now sends p1-00a to independent fixed-commit kickoff. Its bounded scope
+Producer sent p1-00a to independent fixed-commit kickoff on AID-150 at `4ac3d56`
+and verified the saved native plan. AID-142 waits natively on AID-150. Its bounded scope
 aligns the existing Backend runtime and resolves the locator/client boundary,
 then proves a fresh original/revision pair with actual bytes and persisted
 lineage. No envelope/consolidation/wait/health redesign is pulled forward. The
