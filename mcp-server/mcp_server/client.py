@@ -61,6 +61,21 @@ class HttpBackendClient:
             resp.raise_for_status()
             return resp.json() if resp.content else {}
 
+    async def get_async(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Cancellable read; the caller owns any overall deadline.
+
+        Async I/O lets a surrounding AnyIO deadline abort connection, headers
+        and incremental body reads. The ordinary HTTP inactivity timeout is
+        still a secondary bound, never a replacement for that deadline.
+        Existing synchronous clients and their defaults are unchanged.
+        """
+        import httpx
+
+        async with httpx.AsyncClient(timeout=self._timeout_for(path)) as client:
+            resp = await client.get(self._url(path), params=params or {})
+            resp.raise_for_status()
+            return resp.json() if resp.content else {}
+
     def post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
         import httpx
 

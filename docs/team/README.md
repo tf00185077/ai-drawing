@@ -47,5 +47,7 @@ Each active role loads shared skills from the owner's skill library; see [skill 
 Use the current [MCP intent catalog and flow](../mcp.md). Every tool returns
 `{ok, data}` on success or `{ok: false, error: {code, message, hint}}` on failure.
 Read successful fields under `data`, and preserve job IDs for status checks
-after timeouts. Temporary `mcp_ping` and `job_status` polling are executable now;
-health/worker discovery and bounded wait remain staged.
+after timeouts. Temporary `mcp_ping` and bounded `wait_for_job` with existing
+result locators are executable in the candidate source; health/worker discovery
+remains staged. `job_status` and LoRA status remain separate explicit reads.
+Source availability does not establish runtime deployment or real-run proof.

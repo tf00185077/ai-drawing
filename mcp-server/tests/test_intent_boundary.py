@@ -1,6 +1,7 @@
 """Exercise real registered MCP wrappers; replace only external HTTP transport."""
 import json
 from contextlib import contextmanager
+from pathlib import Path
 from unittest.mock import patch
 
 import httpx
@@ -12,6 +13,7 @@ from mcp_server.tool_catalog import INTENDED_TOOLS
 
 
 ARGUMENTS = {
+    'wait_for_job': {'job_id': 'fixture', 'timeout_seconds': .05},
     'generate': {'mode': 'template', 'prompt': 'cup', 'loras': [], 'execution_target': 'local'},
     'gallery_get': {'image_id': 44},
     'gallery_rerun': {'image_id': 44},
@@ -38,7 +40,7 @@ def transport(monkeypatch, *, status=200, body=None, exception=None):
     """No tool callable is replaced: SDK validation, wrappers and HTTP client stay real."""
     monkeypatch.setenv('MCP_BACKEND_API_URL', 'http://backend.invalid')
     monkeypatch.setenv('MCP_COMFYUI_API_URL', 'http://comfy.invalid')
-    monkeypatch.setenv('MCP_GALLERY_DIR', '/fixture/gallery')
+    monkeypatch.setenv('MCP_GALLERY_DIR', str(Path('/fixture/gallery').resolve()))
     monkeypatch.setenv('MCP_DISCORD_OPERATOR_TOKEN', 'synthetic-operator-token')
     get_mcp_settings.cache_clear()
     requests = []
@@ -51,11 +53,14 @@ def transport(monkeypatch, *, status=200, body=None, exception=None):
             payload = {'ok': True, 'job_id': 'job-1', 'status': 'queued', 'id': 44,
                        'caption': 'a cup', 'content': 'a cup', 'image_path': 'cup.png',
                        'message_ids': ['message-1'], 'artifact_count': 1, 'deduplicated': True}
+            if request.url.path == '/api/generate/job/fixture':
+                payload = {'job_id': 'fixture', 'status': 'completed', 'image_id': 44, 'image_path': 'cup.png', 'artifacts': []}
             if request.url.path == '/customnode/getmappings':
                 payload = {'example-pack': [['ExampleNode'], {}]}
         return httpx.Response(status, json=payload, request=request)
     real_client = httpx.Client
-    with patch('httpx.Client', side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs)), patch('httpx.post', side_effect=lambda url, **kwargs: respond(httpx.Request('POST', url, json=kwargs.get('json')))):
+    real_async_client = httpx.AsyncClient
+    with patch('httpx.AsyncClient', side_effect=lambda **kwargs: real_async_client(transport=httpx.MockTransport(respond), **kwargs)), patch('httpx.Client', side_effect=lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs)), patch('httpx.post', side_effect=lambda url, **kwargs: respond(httpx.Request('POST', url, json=kwargs.get('json')))):
         try:
             yield requests
         finally:
@@ -216,7 +221,7 @@ async def test_gallery_keeps_namespaces_locators_metadata_and_lineage(monkeypatc
     if 'image_id' in selector:
         assert data['image_id'] == 44 and 'artifact_id' not in data
         assert data['image_url'] == backend['image_url']
-        assert data['local_path'] == '/fixture/gallery/2026/cup.png'
+        assert data['local_path'] == str(Path('/fixture/gallery').resolve() / '2026/cup.png')
         assert data['metadata']['seed'] == backend['seed']
     else:
         assert data['artifact_id'] == 9 and 'image_id' not in data
