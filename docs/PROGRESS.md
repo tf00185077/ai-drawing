@@ -30,7 +30,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | ComfyUI restart, node install, free memory | Done | `tools/comfyui_nodes.py`, `comfyui.py` | `test_comfyui_nodes.py` | No |
 | Discord delivery of results | Done | `tools/discord_delivery.py` | `test_discord_delivery.py` | No |
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
-| `wait_for_job` and truthful result locators | Not started; p1-03 clarification awaits fresh CLEAR | [task/contract](tasks/p1-03-mcp-wait-and-result/task.md) | Kickoff source/fixture checks only; no wait tests yet | No |
+| `wait_for_job` and truthful result locators | Not started; p1-03 kickoff round 2 CLEAR, implementation next | [task/contract](tasks/p1-03-mcp-wait-and-result/task.md) | Kickoff source/fixture checks only; no wait tests yet | No |
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
@@ -220,3 +220,37 @@ p1-02/p1-00a histories, nine registry guards and the original 23-unit/eight-inci
 baseline remain. This round changes docs/evidence only, with no product-service
 probe/restart, real generation/training or live Gallery-byte retrieval. Active
 runtime/private configuration, canonical environments and retained data are preserved.
+
+## 2026-11-24 — p1-03 kickoff CLEAR and implementation handoff
+
+[QA AID-162](/AID/issues/AID-162) independently returned [round-2 CLEAR](tasks/p1-03-mcp-wait-and-result/kickoff-review.md)
+at fixed `522c2f10b550d90f7b88ab1a3c9d1f6352439c8e`, exact report/evidence
+`3bbcb9cdd30397c497c71da50ce83482642302e7`. Producer read the full report,
+verified all five official uploads by size/hash, exact report/binary patch,
+bundle head/prerequisite and all 90 indexed source/evidence payloads against Git
+(92 total archive members). K3-1 is resolved at specification level, not erased:
+one kickoff ambiguity/clarification 1/kickoff 2 CLEAR remains. No p1-03 delivery
+or delivery rejection exists. Cleared task/decision bytes, round-1 task/report/
+evidence and nine standing registry items stay unchanged.
+
+Fresh QA source checks observed Backend 3 passed/one warning, MCP 19 passed and
+an extended isolated real-route/SQLite fixture probe, including null canonical
+smoke artifact ID and independent queued/failed/cancelled/unavailable smoke.
+Producer does not rerun equivalent source checks or relabel those results as
+wait implementation tests. Current software still has 29 tools; p1-03 will add
+one read intent and retain current risk/namespace/envelope contracts.
+
+Producer's [native handoff plan](/AID/issues/AID-144#document-plan) names separate
+Coding and exact-commit delivery-QA cards with native Coding → Review → Producer
+prerequisites. Coding owns implementation in an isolated worktree; QA independently
+checks all D1-D5 at the actual delivered full SHA and completes its own verdict
+card even for FAIL. A changed candidate needs new review; feature merge/push and
+p1-04 remain gated by actual PASS. Source actual client-limit evidence or explicitly
+retain unknown/50-second total fallback, including request/enrichment costs.
+
+This handoff round integrates unchanged QA report/evidence and coordination docs
+only; scoped document/Git/publication checks pass, with no extra software suite,
+product-service probe/restart/deployment, real generation/training or live Gallery
+retrieval. Active runtime/private configuration, canonical venvs and all retained
+data stay intact. Prior full suites/live proof, 23-unit/eight-incident baseline,
+separate p1-02/p1-00a histories, remote/aesthetic/three-run/phase-close limits remain.
