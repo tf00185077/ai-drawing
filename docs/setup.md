@@ -77,6 +77,23 @@ Non-interactive examples:
 
 Backend settings are defined in `backend/app/config.py`.
 
+### Existing host Backend
+
+A host Python process can keep older imported code after its checkout changes.
+Before relaunching it, identify its command, interpreter and open database;
+inspect Backend generation, trainer and ComfyUI queues. Preserve active work
+before stopping the process. Preserve the private configuration and all resolved
+database, Gallery, output, model, training and authored-data paths, including
+defaults that would otherwise move when starting from another worktree.
+
+Launch from a clean, identified source tree with an explicit interpreter, cwd and
+Python import path. Record the full source SHA, relevant file fingerprints,
+process identity and non-secret effective settings. Compare the live OpenAPI
+contract and a persisted generation round trip; `/health` or cwd alone cannot
+identify loaded source. [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/manifest.md)
+records the bounded Mac relaunch, private configuration locations and verification.
+Its worktree remains the running source until a reviewed deployment replaces it.
+
 ## Data and backups
 
 | Host path | In container | Contents |
