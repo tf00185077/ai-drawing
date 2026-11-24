@@ -1,6 +1,7 @@
 # Decisions · roadmap
 
 ## Settled
+- Inside the existing project boundaries, Producer adopts routine recommended/reference options and proceeds after kickoff; ask CTY about boundary changes · why: avoid turning ordinary choices into new approval gates · owner-confirmed · [follow-through request](../requests/2026-11-24-proceed-within-project-boundaries.md)
 - Core purpose: one sentence to an agent → Civitai resources found, downloaded and registered → matching workflow → image or short clip; consistent characters through owner-trained LoRAs · why: the project's original need · owner-confirmed
 - Phase order: MCP basics → one-sentence image flow → LAN Windows workers → image-to-video clip → LoRA training → prompt dashboard · why: core before support, support before add-ons; video and LoRA need the NVIDIA worker · owner-confirmed
 - Layers: core = MCP, Civitai tools and resource record, workflow selection, fixed image-to-video, LoRA training; support = Windows workers (Mac too slow); add-on = prompt dashboard · owner-confirmed
@@ -20,6 +21,13 @@
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-24 · Continue executable work after planning
+- Decision: proceed with the existing Phase 1 scope and adopt routine reference options; preserve CLEAR kickoff and independent exact-commit delivery review. Boundary changes still go to CTY.
+- Why: the owner explicitly authorized action after planning instead of waiting for ordinary-choice confirmation.
+- Supersedes: the earlier planning-only intake framing and pending routine task-review/resource confirmation wait. It does not supersede phase scope/order, artistic acceptance or the phase-close review.
+- Provenance: owner-confirmed@"跟producer補充，如果規畫完可以直接開工就開工，除非涉及專案邊界，不然若只有建議參考選項，直接用參考選項，然後完成時一併回報即可。" — authenticated board relay on AID-141, not an inferred response.
+- Link: [owner request](../requests/2026-11-24-proceed-within-project-boundaries.md), [execution plan](../tasks/p1-planning-2026-11-24/plan.md)
 
 ### 2026-11-24 · Outdated docs distilled into memory
 - Decision: facts a next agent needs were moved into 14 memory topics in the curation-skill shape; README goal, INDEX, PROGRESS (re-keyed by phase), team roster and the worker, Discord, workflow and style-preset READMEs trimmed to current facts; the 2026-11-23 rebuild plan and `.codex/` deleted.

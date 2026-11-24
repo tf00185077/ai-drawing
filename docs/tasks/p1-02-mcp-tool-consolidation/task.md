@@ -11,7 +11,7 @@ An agent sees a short tool list where each tool has one intent and one risk labe
 
 ## Scope
 Included: the [tool map](../../decisions/mcp.md#tool-map); `tool_catalog.py` gains a `risk` field (`read`, `mutate`, `admin`), exactly one per tool; `generate` keeps only the `template` and `custom_workflow` modes; Wan keyframe video, custom video and `civitai_generate_like` are removed from the registered tools (Backend code stays, frozen); `test_saved_style_preset_workflow` moves to `style_preset_test`; old names removed; friction items from [p1-00](../p1-00-mcp-friction-run-mac/task.md) mapped to this task; `docs/mcp.md` tool table and flows rewritten; tool names in `docs/OPERATING-POLICY.md`, `docs/ARCHITECTURE.md`, `style_presets/README.md`, `backend/workflows/README.md` and `docs/memory/` updated; Paperclip role prompts under `docs/team/` that name old tools or response shapes updated.
-Excluded: Civitai tools and LoRA tools (envelope from p1-01 only; no rename or merge); new behavior beyond the map (`wait_for_job` in p1-03; `health` and `list_workers` in p1-04); Backend API changes.
+Excluded: Civitai tools and all LoRA tools, including `lora_train_job_status` and `lora_train_cancel` (envelope from p1-01 and one risk label only; no rename or merge); new behavior beyond the map (`wait_for_job` in p1-03; `health` and `list_workers` in p1-04); Backend API changes.
 Open questions: final tool names may differ from the map if QA agrees each intent still has exactly one tool.
 Read first: [decisions/mcp.md](../../decisions/mcp.md), the p1-00 friction log, the p1-01 result, [docs/mcp.md](../../mcp.md).
 
@@ -20,8 +20,7 @@ Read first: [decisions/mcp.md](../../decisions/mcp.md), the p1-00 friction log, 
 - [ ] Every tool has exactly one `risk` label in the catalog and its description states it. Check: test. Evidence: test output.
 - [ ] Each mode or action of a merged tool has at least one test through the MCP call path. Check: test. Evidence: test names.
 - [ ] Every p1-00 friction item mapped to p1-02 is fixed or explained in the manifest. Check: manual. Evidence: the list.
-- [ ] `docs/mcp.md` lists the new tools and the common flow `health → list_resources → generate → wait_for_job → gallery_get`. Check: manual. Evidence: doc link.
-- [ ] MCP suite passes with no new failures. Check: test. Evidence: command and summary line.
+- [ ] `docs/mcp.md` lists the new tools and the common flow `health → list_resources → generate → wait_for_job → gallery_get`, and the MCP suite passes with no new failures. Check: manual documentation review + test. Evidence: doc link, command and summary line.
 
 ## Delivery
 - Artifact: commit on a feature branch after p1-01, merged together with it; `manifest.md` with the old → new mapping.

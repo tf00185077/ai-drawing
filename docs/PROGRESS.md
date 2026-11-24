@@ -115,3 +115,10 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 ### 2026-11-24 — Phase 0 closed
 - Windows Backend and MCP suites pass with no hangs; non-feature failing tests removed; LoRA files read as UTF-8 (`1898378`). The macOS rerun is the first step of p1-00.
+
+### 2026-11-24 — Fresh planning and authorized Phase 1 start
+- Saved the [initial request](requests/2026-11-24-fresh-producer-planning.md) and [later owner instruction](requests/2026-11-24-proceed-within-project-boundaries.md) with exact quotations and relay provenance. The later instruction removes the earlier routine-confirmation wait and authorizes executable in-boundary work.
+- Assessed fetched `6be499f` and existing Phase 1 implementation/specs. [Execution plan](tasks/p1-planning-2026-11-24/plan.md) reuses the current system; map/spec consistency corrections preserve all LoRA names, regroup acceptance checks and clarify wait output/timeout evidence.
+- Producer adopted the installed Illustrious/default pair, no LoRA/local, for p1-00 and p1-05 under delegated authority; no individual CTY model selection or aesthetic acceptance is claimed.
+- Created native Producer coordination AID-142–146 with prerequisite edges and released QA kickoff [AID-147](/AID/issues/AID-147) at a pinned published planning/spec commit. [AID-141](/AID/issues/AID-141) waits on the first execution coordinator; CLEAR precedes Coding/evidence-review dispatch.
+- First execution remains p1-00: Mac Backend suite then current-tool friction baseline. This round verifies docs/source, native handoff and read-only services only; no suite rerun, generation, new artifact retrieval or phase-exit claim.

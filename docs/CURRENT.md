@@ -1,6 +1,6 @@
 # Current
 
-2026-11-24 · `main` · Phase 0 done · Next: **Phase 1 — MCP that agents use smoothly**, after the owner reviews its tasks ([roadmap](roadmap/ROADMAP.md))
+2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, kickoff and Mac baseline ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -27,11 +27,14 @@ Done 2026-11-24 (`1898378`).
 
 Removed research data (`experiments/`, `research/`, `model_benchmarks/`); evidence will be rebuilt by testing after the code changes.
 
-## Waiting on the owner
+## Next work
 
-- Name the checkpoint and template for the Mac runs (p1-00, reused by p1-05).
-- Review the phase structure of the roadmap (Phase 1 tasks re-scoped 2026-11-24).
+[Execution plan and native backlog](tasks/p1-planning-2026-11-24/plan.md), [AID-141](/AID/issues/AID-141). CTY's [later instruction](requests/2026-11-24-proceed-within-project-boundaries.md) authorizes executable work inside existing boundaries and delegates routine reference choices; no ordinary-choice confirmation is pending.
+
+Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target for p1-00/p1-05. Backend and Mac ComfyUI list the checkpoint; real compatibility is still unverified.
+
+QA kickoff [AID-147](/AID/issues/AID-147) is first; after CLEAR, Producer [AID-142](/AID/issues/AID-142) dispatches the Mac Backend suite and today's MCP generate/retrieve/revise friction baseline. No fixes inside the baseline. Native sequence then continues through AID-143 (p1-01/02 ship together), AID-144 (wait), AID-145 (health/workers), AID-146 (three real Mac runs and demo). Exact-commit independent review precedes each software merge. Phase boundaries and exit rules are unchanged.
 
 ## Team
 
-Producer paused; coding, QA and Auto Dreamer ready on demand. No work running.
+Producer resumed; Coding and Auto Dreamer idle. QA kickoff is the first released assignment; other production specialists remain paused. This planning round checked source and live read-only health/resources, and dispatched the kickoff path. No suite rerun, real generation or new artifact retrieval is claimed yet.

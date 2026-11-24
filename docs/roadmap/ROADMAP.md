@@ -28,10 +28,12 @@ Unknowns, riskiest first: whether the full Backend suite passes on Windows after
 Exit: a new agent understands the system, its state and its rules from README → AGENTS → INDEX; every failing test is fixed or explicitly quarantined with a reason.
 Demo: CTY reads README, CURRENT and ROADMAP and finds them accurate; one command per suite runs with the documented result.
 
-### Phase 1 — MCP that agents use smoothly (next; starts after the owner reviews its tasks)
+### Phase 1 — MCP that agents use smoothly (active: kickoff and Mac baseline)
 
 Role: core. Depends on: Phase 0.
-Scope: a friction run on today's tools that records every manual fix; one response envelope for every tool (`{ok, data}` / `{ok: false, error: {code, message, hint}}`); generation, job, Gallery, prompt, style-preset and ComfyUI tools consolidated to one per intent with one risk label each (Civitai and LoRA tools keep their names until Phase 2 and Phase 4; video and Civitai generate-like leave MCP); `wait_for_job` returning artifact paths/URLs within the client's call limit; `health` and `list_workers`; a real end-to-end smoke script on the Mac ComfyUI. Tasks: [p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md) → [p1-01](../tasks/p1-01-mcp-response-envelope/task.md) + [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md) (shipped together) → [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md) → [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md) → [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md); decisions in [mcp](../decisions/mcp.md).
+Scope: a friction run on today's tools that records every manual fix; one response envelope for every tool (`{ok, data}` / `{ok: false, error: {code, message, hint}}`); generation, job, Gallery, prompt, style-preset and ComfyUI tools consolidated to one per intent with one risk label each (Civitai and LoRA tools keep their names until Phase 2 and Phase 5; video and Civitai generate-like leave MCP); `wait_for_job` returning artifact paths/URLs within the client's call limit; `health` and `list_workers`; a real end-to-end smoke script on the Mac ComfyUI. Tasks: [p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md) → [p1-01](../tasks/p1-01-mcp-response-envelope/task.md) + [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md) (shipped together) → [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md) → [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md) → [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md); decisions in [mcp](../decisions/mcp.md).
+Execution status: [2026-11-24 plan and native backlog](../tasks/p1-planning-2026-11-24/plan.md). CTY authorized executable work inside the existing boundaries and delegated routine choices; Producer adopted the recommended Mac pair and proceeds through CLEAR kickoff. No phase-exit result is claimed.
+
 Remove: Wan keyframe video, custom video and Civitai generate-like tools from MCP (Backend code frozen); every old tool name replaced by the consolidation.
 Unknowns, riskiest first: which manual fixes a run needs today and whether they are MCP problems or Backend/ComfyUI problems; the MCP client's tool-call time limit; how many tools can be merged without losing needed control.
 First check: p1-00 — run the flow on the Mac with today's tools and log every manual fix; the count is the baseline.
@@ -103,6 +105,8 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Ask after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task.
 
 ## Review history
+
+- 2026-11-24 — CTY authorized executable work after planning inside existing project boundaries and delegated routine reference choices. Phase 1 proceeds through the existing kickoff/build/review workflow; scope/order/exit rules are unchanged ([request](../requests/2026-11-24-proceed-within-project-boundaries.md)).
 
 - 2026-11-24 — Phase rules added: every phase has Remove and First check fields; exits need 3 consecutive real runs with zero manual fixes; the roadmap is reviewed at every phase close ([decisions](../decisions/roadmap.md)).
 - 2026-11-24 — Phase 2 split: image flow stays Phase 2; image-to-video with interpolation becomes Phase 4, after workers, because it needs the NVIDIA machine. LoRA moves to Phase 5, dashboard to Phase 6 ([decisions](../decisions/roadmap.md)).

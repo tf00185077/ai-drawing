@@ -12,7 +12,7 @@ A friction log: every step where the run needed a human, a retry, a workaround o
 ## Scope
 Included: the full Backend suite on the Mac first (moved here from p1-05); one agent run over stdio with the current tools: check the Backend → list resources → generate → poll → retrieve the image → generate a revision with `parent_artifact_id` → poll → retrieve; a friction log in `manifest.md`, one row per incident (step, tool, what happened, manual fix, likely cause, which p1 task should fix it).
 Excluded: fixing anything found (later tasks fix it; a blocker is reported, not patched); Windows worker; aesthetic judgment.
-Open questions: which checkpoint and template the run uses — CTY names one before the run (the same one is reused by p1-05).
+Open questions: none. Under [CTY's delegated-choice instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md), Producer adopts `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, explicit `execution_target=local`; pass the checkpoint explicitly rather than using the graph's saved filename. Reuse this pair in p1-05. This is a technical baseline choice, not aesthetic acceptance.
 Read first: [docs/mcp.md](../../mcp.md), [docs/setup.md](../../setup.md), [memory](../../memory/MEMORY.md).
 
 ## Done when
