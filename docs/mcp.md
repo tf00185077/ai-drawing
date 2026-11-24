@@ -6,7 +6,7 @@ The MCP server (`mcp-server/`) gives agents intent-level tools for generation, t
 
 **Built:** tools for generation (image, custom workflow, video), job status and cancel, resource listing, Gallery, Civitai, style presets, Prompt Library, LoRA training, Discord delivery, ComfyUI restart/node install/memory. Image generation accepts a revision context (`request_ref`, `parent_artifact_id`, feedback), so revisions are traceable. The tool list is in `mcp-server/mcp_server/tool_catalog.py`.
 
-**Verified in a real run:** the [Mac baseline](tasks/p1-00-mcp-friction-run-mac/manifest.md), independently [reviewed](tasks/p1-00-mcp-friction-run-mac/review.md), completed one local original with Illustrious/default and retrieved Gallery metadata. It stopped before image-byte retrieval and revision: the relative locator failed locally before HTTP, and the live Backend lacks the source's revision contract. The exact loaded Backend commit is unknown. [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/task.md) repairs these blockers before later Phase 1 release; no end-to-end success is claimed.
+**Verified in a real run:** the [Mac baseline](tasks/p1-00-mcp-friction-run-mac/manifest.md), independently [reviewed](tasks/p1-00-mcp-friction-run-mac/review.md), completed one local original with Illustrious/default and retrieved Gallery metadata. It stopped before image-byte retrieval and revision: the relative locator failed locally before HTTP, and the Backend then running lacked the source's revision contract and its loaded commit was unknown. The [p1-00a repair delivery](tasks/p1-00a-mac-runtime-and-retrieval/manifest.md) records a known-source relaunch, decoded local-path retrieval and one fresh original/revision pair with persisted lineage. Independent exact-commit QA and Producer acceptance are pending; no Phase 1 exit is claimed.
 
 **Gaps:**
 - Responses mix plain text, JSON strings and objects.
@@ -88,6 +88,21 @@ Direct ComfyUI tools use `MCP_COMFYUI_API_URL`, not the Backend, and always targ
 2. `generate_image` → job ID.
 3. Poll `get_generation_status` until done.
 4. `get_gallery_image` (images) or `get_gallery_artifact` (video).
+
+For a client on the Backend's host with filesystem access, consume the returned
+absolute `local_path` directly. Set `MCP_GALLERY_DIR` to the Backend's actual host
+Gallery root: `get_gallery_image` constructs its path from that setting;
+`get_gallery_artifact` returns the Backend's path. Read the returned file and
+decode the image to verify delivery. These tools return metadata; the file read
+is a separate client operation outside MCP.
+
+The URL fields can contain relative `/gallery/...` routes. A client that requires
+an absolute URL cannot pass those unchanged to a URL opener. The supported local
+path avoids constructing an origin on a colocated Mac client; it does not
+establish retrieval from a remote client. The [p1-00a repair evidence](tasks/p1-00a-mac-runtime-and-retrieval/manifest.md)
+records unchanged baseline bytes and one fresh original/revision pair consumed
+through returned local paths. Its runtime/configuration delivery awaits exact-commit QA;
+the earlier baseline remains the separate no-repair record.
 
 **Revise a result** — call `generate_image` again with a revision context (`request_ref`, `brief_revision`, `parent_artifact_id`, feedback). `gallery_rerun` only replays recorded parameters.
 
