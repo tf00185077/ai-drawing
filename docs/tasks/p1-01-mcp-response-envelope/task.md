@@ -13,7 +13,7 @@ An agent parses every tool result the same way: `{"ok": true, "data": ...}` or `
 Included: all tools registered in `mcp-server/mcp_server/server.py`; a shared envelope helper; a documented list of error codes with hints; the catalog's `response_category` replaced by the single envelope.
 Excluded: renaming or merging tools (p1-02); new tools (p1-03, p1-04); Backend API changes.
 Open questions: none.
-Read first: [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
+Read first: the [p1-00](../p1-00-mcp-friction-run-mac/task.md) friction log, [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
 
 ## Done when
 - [ ] Every registered tool returns the envelope on success and on failure, including Backend HTTP errors, validation errors and connection errors. Check: test — one parametrized test calls every catalog tool with a mocked success and a mocked failure. Evidence: test name and output.
@@ -22,5 +22,5 @@ Read first: [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.
 - [ ] MCP suite passes with no new failures. Check: test — `AI_DRAWING_TEST_ROOT=... python -m pytest -c pytest.ini mcp-server/tests -q`. Evidence: command and summary line.
 
 ## Delivery
-- Artifact: commit on a feature branch, `manifest.md` in this folder.
-- Known limitations: agent prompts written for the old shapes must be updated.
+- Artifact: commit on a feature branch, `manifest.md` in this folder. Merged to `main` together with p1-02, so MCP clients see one breaking change, not two.
+- Known limitations: only agents call MCP (the Discord bot calls the Backend directly); Paperclip role prompts written for the old shapes are updated in p1-02.

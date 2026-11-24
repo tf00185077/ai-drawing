@@ -2,7 +2,7 @@
 
 ## Settled
 - Core purpose: one sentence to an agent → Civitai resources found, downloaded and registered → matching workflow → image or short clip; consistent characters through owner-trained LoRAs · why: the project's original need · owner-confirmed
-- Phase order: MCP basics → one-sentence flow → LAN Windows workers → LoRA training → prompt dashboard · why: core before support, support before add-ons · owner-confirmed
+- Phase order: MCP basics → one-sentence image flow → LAN Windows workers → image-to-video clip → LoRA training → prompt dashboard · why: core before support, support before add-ons; video and LoRA need the NVIDIA worker · owner-confirmed
 - Layers: core = MCP, Civitai tools and resource record, workflow selection, fixed image-to-video, LoRA training; support = Windows workers (Mac too slow); add-on = prompt dashboard · owner-confirmed
 - This project provides Civitai search, download and registration tools through MCP, using the free public API; the agent decides what to search for · owner-confirmed
 - Video scope: one fixed image-to-video workflow with frame interpolation · owner-confirmed
@@ -10,12 +10,36 @@
 - Docs are English only and rebuilt from scratch · why: owner preference; AI translates on demand · owner-confirmed
 - Nearly all operations are allowed by default · why: owner removed approval gates · owner-confirmed · [policy](../OPERATING-POLICY.md)
 - The repo adapts to the `project-roadmap-steering` skill (ROADMAP, CURRENT, PROGRESS, requests, decisions), not the other way round · why: the skill is fixed · owner-confirmed
+- Every phase states Role, Depends on, Scope, Remove, Unknowns, First check, Exit and Demo · why: the project drifted by adding without removing; each phase must also shrink what is outside its scope · owner-confirmed · [phase rules](../roadmap/ROADMAP.md#phase-rules)
+- A phase exit needs 3 consecutive real runs with zero manual fixes (any human action, retry, workaround or non-MCP call) · why: past runs worked only after repeated manual fixes · owner-confirmed
+- The owner reviews the roadmap at every phase close, before the next phase is activated · why: stop the roadmap drifting from the owner's intent · owner-confirmed
 - Escalation thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
-- Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond the dashboard phase (now Phase 5) · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
+- Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond the dashboard phase (now Phase 6) · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
 - No OpenSpec: task specs in `docs/tasks/<task>/task.md` are the only spec format; durable behavior rules live in the topic docs · owner-confirmed
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-24 · Phase rules
+- Decision: every phase has Remove and First check fields; exits need 3 consecutive real runs with zero manual fixes; the roadmap is reviewed at each phase close. First checks added to Phase 5 (LoRA) and Phase 6 (dashboard); p1-05 now runs 3 times.
+- Why: the project became cluttered over several iterations and runs needed repeated manual fixes.
+- Supersedes: the open questions on measurable exit targets and on reviewing the roadmap at phase close.
+- Provenance: owner-confirmed@"三個都寫進去"
+- Link: [ROADMAP phase rules](../roadmap/ROADMAP.md#phase-rules)
+
+### 2026-11-24 · Video split out of Phase 2
+- Decision: Phase 2 ends at the image; image-to-video with interpolation becomes Phase 4, after workers. LoRA moves to Phase 5 and the dashboard to Phase 6. Order: P1 MCP → P2 one-sentence image → P3 workers → P4 clip → P5 LoRA → P6 dashboard.
+- Why: the clip probably needs the NVIDIA machine; keeping it in Phase 2 could block that phase until workers exist.
+- Supersedes: the same-day Phase 2 that included the fixed image-to-video workflow.
+- Provenance: owner-confirmed@"拆，影片放在 workers 後"
+- Link: [ROADMAP](../roadmap/ROADMAP.md)
+
+### 2026-11-24 · macOS rerun moved to p1-00
+- Decision: the macOS Backend rerun is the first step of p1-00 (friction run) instead of p1-05.
+- Why: Phase 1 now starts with a real Mac run; the suite result should come before any code change.
+- Supersedes: the same-day move into p1-05.
+- Provenance: owner-confirmed@"你提到的都改"
+- Link: [p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md)
 
 ### 2026-11-24 · Phase 0 closed; macOS rerun moved to p1-05
 - Decision: Phase 0 is done on the Windows test result; the macOS Backend rerun becomes part of p1-05 (real Mac smoke).
@@ -74,6 +98,4 @@
 - Link: [ARCHITECTURE](../ARCHITECTURE.md#known-limitations-to-optimize)
 
 ## Open questions
-- Measurable exit targets per phase (for example success rate of the one-sentence flow over N runs) — proposed, not yet set.
-- Review the roadmap whenever a phase closes — proposed, not yet adopted.
-- Remove, rather than freeze, the video code outside the fixed image-to-video workflow? Frozen for now.
+- Remove, rather than freeze, the video code outside the fixed image-to-video workflow? Frozen for now; decided in Phase 4 (its Remove field).

@@ -2,11 +2,23 @@
 
 ## Settled
 - Every MCP tool returns one envelope: `{ok, data}` on success, `{ok: false, error: {code, message, hint}}` on failure · why: agents learn one shape · owner-confirmed
-- Tools are consolidated to one tool per intent (about 20, from 40) · why: a smaller surface is easier for agents to choose from · owner-confirmed · [tool map](#proposed-tool-map)
+- Tools are consolidated to one tool per intent, each with exactly one risk label · why: a smaller surface is easier for agents to choose from · owner-confirmed · [tool map](#tool-map)
+- Civitai and LoRA tools are not renamed or merged in Phase 1 (envelope only); Phase 2 and Phase 5 redesign them · why: avoid doing the work twice · owner-confirmed
+- `generate` has only the `template` and `custom_workflow` modes; Wan keyframe video, custom video and Civitai generate-like are removed from MCP (Backend code frozen) · why: fewer, clearer parameters; video returns as the Phase 4 image-to-video tool · owner-confirmed
+- `wait_for_job` caps its timeout below the MCP client's tool-call limit and returns `timeout` for the agent to call again · why: the tool must answer before the client gives up · owner-confirmed
+- Phase 1 starts with a friction run on today's tools ([p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md)); its count of manual fixes is the baseline p1-05 must bring to zero · why: generation already works; the problem is the manual fixes around it · owner-confirmed
+- p1-01 and p1-02 merge to `main` together · why: one breaking change for clients instead of two · owner-confirmed
 - End-to-end MCP verification runs on the Mac ComfyUI first, then extends to the Windows worker · owner-confirmed
 - Phase 1 is implemented by the Paperclip team from the specs in `docs/tasks/p1-*`; this planning session only writes documents · owner-confirmed
 
 ## Log (newest first)
+
+### 2026-11-24 · Phase 1 re-scoped after review
+- Decision: add p1-00 friction run (Mac suite moves there from p1-05); leave Civitai and LoRA tools unmerged; `generate` keeps two modes; video and Civitai generate-like leave MCP; one risk label per tool (`caption_image` stays its own `mutate` tool); `wait_for_job` timeout capped below the client limit; p1-01 and p1-02 ship together.
+- Why: generation through MCP already works; the problem is the manual fixes a run needs, and Phase 2 and Phase 5 will redesign Civitai and LoRA tools anyway.
+- Supersedes: the 2026-11-23 tool map (about 20 tools including Civitai and LoRA merges and six `generate` modes).
+- Provenance: owner-confirmed@"你提到的都改" · @"我確信現在工具是可以跑出圖片的…當時跑過要一直東修西修步驟"
+- Link: [ROADMAP Phase 1](../roadmap/ROADMAP.md#phase-1--mcp-that-agents-use-smoothly-next)
 
 ### 2026-11-23 · Phase 1 MCP direction
 - Decision: uniform envelope for all tools; consolidate to ~20 intent tools; Mac-first end-to-end smoke; team implements.
@@ -15,17 +27,18 @@
 - Provenance: owner-confirmed@"全部統一" · "精簡合併" · "mac優先，之後才擴充到worker的windows" · "這個session都只定義文件"
 - Link: [ROADMAP Phase 1](../roadmap/ROADMAP.md#phase-1--mcp-that-agents-use-smoothly-next)
 
-## Proposed tool map
+## Tool map
 
-Status: proposal for the consolidation task ([p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md)); the coding agent may adjust names with QA agreement, but each intent keeps one tool.
+Status: target for [p1-02](../tasks/p1-02-mcp-tool-consolidation/task.md); the coding agent may adjust names with QA agreement, but each intent keeps one tool and one risk label.
 
 | New tool | Replaces | Risk |
 |---|---|---|
-| `health` | `mcp_ping` (adds ComfyUI and worker reachability) | read |
+| `health` | `mcp_ping` (adds ComfyUI and worker reachability, p1-04) | read |
+| `list_workers` | new (p1-04) | read |
 | `list_resources` | `list_available_resources` | read |
-| `generate` (`mode`: `template`, `custom_workflow`, `video_keyframes`, `video_custom`, `style_preset_graph`, `civitai_like`) | `generate_image`, `generate_image_custom_workflow`, `generate_video_wan_keyframes`, `generate_video_custom_workflow`, `test_saved_style_preset_workflow`, `civitai_generate_like` | mutate |
+| `generate` (`mode`: `template`, `custom_workflow`) | `generate_image`, `generate_image_custom_workflow` | mutate |
 | `job_status` | `get_generation_status`, `lora_train_job_status` | read |
-| `wait_for_job` | new | read |
+| `wait_for_job` | new (p1-03) | read |
 | `cancel_job` | `cancel_job`, `lora_train_cancel` | mutate |
 | `gallery_search` | `gallery_list` | read |
 | `gallery_get` | `get_gallery_image`, `get_gallery_artifact` | read |
@@ -36,14 +49,14 @@ Status: proposal for the consolidation task ([p1-02](../tasks/p1-02-mcp-tool-con
 | `style_preset_get` (no id = list) | `list_style_presets`, `get_style_preset` | read |
 | `style_preset_compose` | `compose_style_preset` | read |
 | `style_preset_save` (`from`: fields or successful job) | `create_style_preset`, `save_successful_workflow_as_style_preset` | mutate |
-| `civitai_inspect` | `civitai_source_info` | read |
-| `civitai_acquire` (returns status when polled with its id) | `civitai_resource_acquire`, `civitai_resource_status` | mutate |
+| `style_preset_test` | `test_saved_style_preset_workflow` | mutate |
 | `comfyui_admin` (`action`: `restart`, `free_memory`, `install_node`) | `comfyui_restart`, `free_comfyui_memory`, `comfyui_node_provision` | admin |
 | `deliver_to_discord` | `deliver_generation_result_to_discord` | mutate |
-| `lora_dataset` (`action`: `list`, `inspect`, `caption`) | `lora_dataset_list`, `lora_dataset_inspect`, `caption_image` | read / mutate |
-| `lora_preflight` | `lora_training_decision_preflight` | read |
-| `lora_train` (`action`: `start`, `logs`, `smoke_test`) | `lora_train_start`, `lora_train_logs`, `lora_train_smoke_test` | mutate |
-| `list_workers` | new | read |
+
+**Kept as they are in Phase 1** (envelope only; redesigned later): Civitai — `civitai_source_info`, `civitai_resource_acquire`, `civitai_resource_status` (Phase 2); LoRA — `lora_dataset_list`, `lora_dataset_inspect`, `caption_image`, `lora_training_decision_preflight`, `lora_train_start`, `lora_train_logs`, `lora_train_smoke_test` (Phase 5). Their risk labels follow the one-label rule (`caption_image` is `mutate`, the dataset reads are `read`).
+
+**Removed from MCP** (Backend code frozen): `generate_video_wan_keyframes`, `generate_video_custom_workflow`, `civitai_generate_like`.
 
 ## Open questions
-- Which checkpoint and workflow the Mac smoke test uses — needed by [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md).
+- Which checkpoint and workflow the Mac runs use — needed by [p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md) and reused by p1-05.
+- The tool-call timeout of the MCP client the Paperclip agents use — found in [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md).

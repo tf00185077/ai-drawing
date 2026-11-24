@@ -4,7 +4,7 @@
 Read and write LoRA run files as UTF-8 so LoRA training can be started on Windows.
 
 ## Purpose
-On Windows, starting a LoRA training job fails with `training_parameters_write_failed` (API 503). `lora_parameters.py` and `lora_trainer.py` call `read_text()` without an encoding, so Windows decodes the UTF-8 run files (`manifest.json`, `training-parameters.json`) as cp950 and fails on non-ASCII names such as `水彩旅人`. Phase 4 trains on the Windows worker, so this blocks it.
+On Windows, starting a LoRA training job fails with `training_parameters_write_failed` (API 503). `lora_parameters.py` and `lora_trainer.py` call `read_text()` without an encoding, so Windows decodes the UTF-8 run files (`manifest.json`, `training-parameters.json`) as cp950 and fails on non-ASCII names such as `水彩旅人`. Phase 5 (LoRA) trains on the Windows worker, so this blocks it.
 
 ## Outcome
 Starting, running and recording a LoRA training job works on Windows exactly as on macOS, and the LoRA feature tests that are skipped on Windows run and pass there.
@@ -25,4 +25,4 @@ Read first: [docs/lora-training.md](../../lora-training.md), `backend/app/servic
 
 ## Delivery
 - Artifact: commit on a feature branch, `manifest.md`.
-- Known limitations: a real training run is verified in Phase 4.
+- Known limitations: a real training run is verified in Phase 5.
