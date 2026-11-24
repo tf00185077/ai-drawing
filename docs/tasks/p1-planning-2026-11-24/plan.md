@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/00a and p1-01–04 accepted/published; p1-05 kickoff CLEAR, delivery 1 FAIL R5-1, correction 1 and renewed exact-commit review next; demo/phase close pending**.
+Status: **p1-00/00a and p1-01–04 accepted/published; p1-05 correction 1 exact-commit D1–D3 technical PASS; reviewed six-image demo awaits CTY’s explicit reply before feature merge, with phase close separate**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -602,3 +602,31 @@ concurrent shared-main memory edits. Driver repair does not imply runtime
 restart; any necessary replacement follows actual job/source/preservation checks.
 Required technical PASS and CTY's explicit reviewed-demo reply precede feature
 publication. Later phase-close roadmap review is separate before Phase 2.
+
+## p1-05 correction 1 review 2 technical PASS; owner demo pending
+
+Producer read actual Coding AID-174 **91d6e3790ecbb258b1a079395a1156912d090b62**
+and independent QA AID-175 **D1–D3 technical PASS**, report/evidence
+**ade78141f693a6ff1259d8b61d883e77434b2ccd**. R5-1 resolved with actual CLI
+signal-boundary RED/GREEN, five meaningful independent faults/restoration and
+fresh corrected-source three-pair evidence. [Technical acceptance](../p1-05-mcp-e2e-smoke-mac/technical-review-acceptance.md)
+is limited to D1–D3; [all six images and Gallery records](../p1-05-mcp-e2e-smoke-mac/demo.md)
+are ready for CTY's explicit project-channel reply under unchanged D4. Native
+human-only owner interaction on AID-146 carries the waiting path, delivered by
+paperclip-hermes-notify with recommendation to accept the reviewed technical
+demo and then integrate exact reviewed source/evidence. No routine start/resource
+confirmation; this is the existing owner-demo gate. Feature stays unmerged until
+actual acceptance. Later phase-close roadmap review is separate before Phase 2.
+
+All 22 uploads/1,897 Coding and 680 QA indexed payloads, exact patches/trees,
+independent bundles, 291 freeze hashes, 24 flow calls/six PNGs/lineages match.
+Producer views official image copies, not live Gallery bytes; no new live product
+probe/restart/generation. QA Backend 1916/124 existing skips, complete MCP plus
+six QA cases 672/four existing skips, fresh export one/cross-layer seven pass.
+QA certifies D1/D3 while retaining 16 rows (18 in reviewed tree); main registry
+unchanged before merge. Old baseline 23/eight incidents and old delivery 81 stay;
+new Coding 22+0+0+14=36, separate QA 2+0+0+13=15, whole round nonzero. One
+implementation rejection/correction 1/review 2 technical PASS retains all kickoff
+and earlier task histories. Preserve concurrent shared-main memory edits,
+AID-171 runtime/private settings/backups, AID-151 snapshots, canonical venvs and
+all data. Existing decisions/memory cover durable rules; results stay in task docs.

@@ -1,12 +1,12 @@
 # Current
 
-2026-11-25 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, p1-05 interruption repair and renewed real proof next ([roadmap](roadmap/ROADMAP.md))
+2026-11-25 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, p1-05 technical PASS; CTY reviewed-demo reply pending ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | p1-05 candidate: real MCP bytes/lineage and three pairs corroborated by QA | Candidate D3 interruption accounting failed; repair, renewed proof and demo pending |
+| 1. MCP for agents | Mostly | p1-05 candidate: real MCP bytes/lineage and three pairs corroborated by QA | Corrected candidate D1–D3 PASS; CTY demo reply and phase-close review pending |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
@@ -110,36 +110,59 @@ safely, but streak remains 1 after attempt-2 interruption and its call/end ledge
 is incomplete. One implementation rejection/correction 1/next delivery review 2
 is now recorded separately from the unchanged kickoff history.
 
-[Correction 1](tasks/p1-05-mcp-e2e-smoke-mac/repair-round-1.md) stays under the
-original CLEAR/D3, adds actual signal regressions and requires a fresh frozen
-three-pair qualification. New separate Coding and exact-final-commit QA cards
-with Coding → Review → Producer prerequisites are pinned in
-[AID-146's native plan](/AID/issues/AID-146#document-plan). No routine owner
-confirmation or new scope/kickoff is needed. The rejected product stays off main.
+[Coding AID-174](/AID/issues/AID-174) delivered corrected exact candidate
+**91d6e3790ecbb258b1a079395a1156912d090b62**, freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**.
+[Independent QA AID-175](/AID/issues/AID-175) completed delivery review 2 with
+**technical D1–D3 PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**.
+Producer accepts that limited result after reading actual source/reports/evidence,
+verifying 22 official uploads, all 1,897 Coding/680 QA indexed payloads, exact
+patches/trees and independent bundle fetches, matching 291 frozen fingerprints,
+24 flow calls and six MCP byte payloads/lineages, and viewing all six official
+images. [Technical acceptance](tasks/p1-05-mcp-e2e-smoke-mac/technical-review-acceptance.md).
+R5-1 is resolved: three actual CLI signal cases reproduce old RED then corrected
+GREEN, and five independent faults fail/restoration before complete MCP GREEN.
+History remains first delivery FAIL/one implementation rejection/correction 1/
+review 2 technical PASS, separately from the unchanged kickoff/earlier histories.
 
-QA independently corroborated seven sampled jobs, a failed timeout attempt and
-three qualifying pairs (3866→3867, 3868→3869, 3870→3871), fetched the same six
-actual MCP PNGs and checked persisted lineage/runtime/schema. Those images and
-old ledger **53 prep + 0 attempt interventions + 1 recovery + 27 audit = 81**
-stay historical; they do not qualify the corrected source. Original baseline
-**23 units/eight incidents** is unchanged. Zero applies only within qualifying
-request-to-result pairs. Producer performed source/document/official-attachment
-checks, with no new product probe, generation or live Gallery-byte read.
+Fresh attempts 1–3 qualify on corrected frozen software: **3872→3873,
+3874→3875, 3876→3877**. QA independently corroborates six distinct uncached
+samplers, actual MCP-returned PNGs and persisted parent/job/request/brief, with
+new SDK sessions. Fresh independent Backend **1916 passed/124 existing platform
+skips**, complete MCP plus six QA cases **672 passed/four existing optional
+skips**, fresh export **one passed**, current cross-layer **seven passed**.
+QA preserves 16 prior registry rows and certifies D1/D3, 18 in its reviewed tree;
+main's registry/product source stay unchanged before owner acceptance.
 
-Retain AID-171's persistent runtime worktree/private settings/backups and AID-151
-snapshots, canonical venvs and all retained data. Historical reviewed launch is
-Backend PID 99953/ComfyUI PID 99952; verify live identity/jobs before new work.
-No restart for a docs SHA. Required technical PASS and CTY's explicit reviewed-demo
-reply precede feature publication; phase-close roadmap review remains separate
-before Phase 2. Delivery QA leaves D4 unchecked for Producer/CTY. No phase exit
-or aesthetics accepted.
+**Next: CTY reviews [all six images and Gallery records](tasks/p1-05-mcp-e2e-smoke-mac/demo.md)
+and explicitly replies in the project channel**, tracked by AID-146's native
+owner interaction and paperclip-hermes-notify. D4 stays unchecked. Producer's
+recommendation is to accept this technical demo and then integrate the exact
+reviewed feature/evidence. Main receives only presentation/status/integrity docs
+at this stage; feature merge/push waits for actual CTY acceptance. A technical
+PASS, send receipt or silence cannot fill D4. Later roadmap phase-close review
+is separate before Phase 2, which stays inactive.
+
+Original baseline stays **23 units/eight incidents**; old rejected delivery
+**81** stays historical. New Coding totals **22 preparation + 0 attempt
+interventions + 0 recovery + 14 audits = 36**, QA separately **2+0+0+13=15**.
+Zero applies only inside qualifying request-to-result flows; no whole-round-zero
+or below-baseline claim. Producer makes no new product probe/restart/generation
+or live Gallery-byte read; official-copy presentation is separate coordination.
+
+Retain AID-171's runtime/private configuration/backups, AID-151 snapshots,
+canonical venvs and all data. Coding/QA corroborate the existing PID/source/
+imports/settings/schema/old values read-only; no restart for this correction.
+Historical reviewed PIDs 99953/99952 do not replace future live identity/job
+checks. No restart for docs SHA. One Mac/checkpoint/template/static-PNG scope,
+50-second wait fallback/65-second SDK guard and unverified actual caller limit
+retain their limits; CTY alone judges aesthetics.
 
 ## Team
 
-Coding owns the bounded interruption repair and fresh real evidence; independent
-QA pins its actual final commit, reviews D1–D3 and completes its own card even
-if adverse. Producer reads actual results and owns repairs, CTY demo/acceptance
-and later phase close. Native prerequisites carry continuation. Engineering
-uses isolated persistent worktrees; preserve concurrent memory edits in shared
-main and all active runtime/data. Other production specialists remain paused.
-This Producer round publishes repair/status/integrity documents only.
+Coding and independent technical QA completed their recipient-owned cards.
+Producer owns the concrete reviewed demo, CTY's actual reply, later exact-source
+integration/acceptance and separate phase-close review. The native human-only
+interaction carries the waiting path. Shared main's concurrent memory edits and
+all active runtime/private configuration/data are preserved. Other production
+specialists remain paused. This Producer round publishes presentation/status/
+integrity documents only.

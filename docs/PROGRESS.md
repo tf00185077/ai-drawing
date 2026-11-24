@@ -32,7 +32,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
 | `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
 | `health` / `list_workers`, additive configured-worker status | Done, p1-04 accepted | `tools/health.py`, `api/workers.py` | Real route/client and registered mocked-HTTP checks; independent 51 calls/107 GETs, ten detected faults; Backend 1916/124 Windows skips, MCP 606/2 | Offline only; no real worker readiness claim |
-| End-to-end smoke script against real ComfyUI | Unmerged; delivery 1 rejected, correction 1 next | Candidate `8736298`, outside main | QA D1/recorded D2 PASS, D3 interruption FAIL | Three recorded pairs and MCP PNGs corroborated; corrected source must requalify |
+| End-to-end smoke script against real ComfyUI | Unmerged; corrected D1–D3 PASS, D4 pending | Corrected `91d6e37`, outside main | Review 2 actual signal regression PASS; MCP 672/4, Backend 1916/124 | Fresh three pairs/six MCP PNGs and persisted lineage independently corroborated |
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 
@@ -575,3 +575,40 @@ receipts and technical PASS cannot fill it. Separate phase-close roadmap review
 precedes Phase 2; no phase exit/aesthetic acceptance is claimed. Existing
 normative decisions and runtime/lineage memory cover enduring rules; the concrete
 cancellation defect/regression belongs in task evidence, not duplicate memory.
+
+## 2026-11-25 — p1-05 correction 1 technical PASS; reviewed demo to CTY
+
+Read actual [Coding AID-174](/AID/issues/AID-174) final **91d6e3790ecbb258b1a079395a1156912d090b62**,
+freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**, and [independent QA AID-175](/AID/issues/AID-175)
+**D1–D3 technical PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**.
+[Technical acceptance](tasks/p1-05-mcp-e2e-smoke-mac/technical-review-acceptance.md)
+resolves demonstrated R5-1 with exact source/actual CLI signal evidence and
+preserves original FAIL/manifest/raw histories. History is one kickoff ambiguity
+event/two P1 findings/clarification 1/kickoff 2 CLEAR; review 1 FAIL/one
+implementation rejection/one P1 R5-1; correction 1/review 2 technical PASS.
+
+Producer verifies all **22 official uploads**, reconstructed split Coding
+packet/patch, all **1,897 Coding/680 QA indexed payloads (1,898/681 members)**,
+exact Git bodies/modes, exact binary/full-index patches/reconstructed trees and
+independent prerequisite bundle fetches. All **291** frozen fingerprints equal
+final candidate; 24 flow calls/six original MCP bytes/canonical lineage match.
+Six images are viewed from official copies. Initial inspection helpers selected
+a nested index instead of the root, then assumed the same root-index casing;
+reading each actual archive schema corrected those read-only tooling assumptions.
+Full integrity verification passes; no product operation or source change.
+
+- **Offline:** QA freshly repeats complete Backend 1916 passed/124 existing platform skips; final restored MCP plus six QA cases 672 passed/four existing optional skips; fresh revision export one passed/current cross-layer consumers seven passed. Old actual signal boundaries RED, corrected health/admitted-wait/uncertain-submit GREEN; five independent faults RED/restored. No reused full-suite QA result. Producer checks matching documents/Git/official artifacts and one affected document guard, with no full product-suite repeat. QA retains all 16 registry rows and certifies D1/D3 (18 in reviewed tree); main registry remains unchanged before merge.
+- **Running services:** Coding/QA read-only process/source/import/effective-settings/OpenAPI/schema/pre-existing-value corroboration, no restart/configuration/resource/worker/training change. Existing persistent runtime/private snapshots/venvs and retained data are preserved. Producer makes no new live product probe.
+- **Real generation:** corrected frozen invocation attempts 1–3 at 16:57:28.571–16:58:15.132 UTC on 2026-11-24, six distinct fresh uncached samplers, exactly eight calls per pair, no flow retry/fix/recovery/outside-MCP operation. QA produces no replacement generation; Producer generates nothing.
+- **Artifact retrieval:** six actual MCP PNGs **3872→3873, 3874→3875, 3876→3877**, static 512×512 bytes/digests/decoding/graphs and persisted parent/job/request/brief independently corroborated, including fresh QA SDK reads. Producer checks official copies/recorded bytes, not live Gallery files. Original baseline 23 units/eight incidents/F1–F8 unchanged, old 81 historical. New Coding 22+0+0+14=36 and separate QA 2+0+0+13=15; only qualifying request-to-result flows are zero.
+
+[Reviewed demo](tasks/p1-05-mcp-e2e-smoke-mac/demo.md) presents all six unchanged
+images and Gallery records for CTY. **D4 stays unchecked; actual explicit
+project-channel reply is required**, with a native human-only owner interaction
+and paperclip-hermes-notify delivery. Recommendation: accept this technical demo,
+then integrate exact reviewed feature/evidence. Presentation/status/integrity
+publication is not feature merge or whole-task acceptance. Changed code needs
+new exact QA and applicable qualification. After actual demo acceptance and
+feature publication, Producer separately asks for phase-close roadmap review
+before activating Phase 2. No aesthetic/phase-close decision inferred. Existing
+decisions/runtime/lineage memory cover durable rules; no duplicate memory receipt.
