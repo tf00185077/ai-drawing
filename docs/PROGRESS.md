@@ -1,6 +1,6 @@
 # Progress
 
-Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-24). Current state in one screen: [CURRENT](CURRENT.md).
+Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-25). Current state in one screen: [CURRENT](CURRENT.md).
 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
@@ -32,7 +32,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
 | `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
 | `health` / `list_workers`, additive configured-worker status | Done, p1-04 accepted | `tools/health.py`, `api/workers.py` | Real route/client and registered mocked-HTTP checks; independent 51 calls/107 GETs, ten detected faults; Backend 1916/124 Windows skips, MCP 606/2 | Offline only; no real worker readiness claim |
-| End-to-end smoke script against real ComfyUI | Not started | — | — | — |
+| End-to-end smoke script against real ComfyUI | Unmerged; delivery 1 rejected, correction 1 next | Candidate `8736298`, outside main | QA D1/recorded D2 PASS, D3 interruption FAIL | Three recorded pairs and MCP PNGs corroborated; corrected source must requalify |
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 
@@ -298,7 +298,6 @@ are unchanged. Completion/publication of [AID-144](/AID/issues/AID-144) releases
 [AID-145](/AID/issues/AID-145) for its own p1-04 fresh kickoff/build/exact-review
 cycle, using current envelopes and 30 intents. No routine owner confirmation.
 
-
 ## 2026-11-24 — p1-04 kickoff ambiguity and worker-identity clarification
 
 [QA AID-165](/AID/issues/AID-165) returned independent **AMBIGUITY K4-1** at
@@ -337,7 +336,6 @@ Runtime/private configuration, venvs and all retained data stay unchanged.
 The technical choice is recorded in MCP decisions; no duplicate memory topic or
 ordinary owner confirmation is needed. Source publication is not deployment.
 
-
 ## 2026-11-24 — p1-04 kickoff CLEAR and implementation handoff
 
 [QA AID-166](/AID/issues/AID-166) returned independent **round-2 CLEAR** at
@@ -374,7 +372,6 @@ active runtime/private configuration, canonical venvs and all retained data.
 No new memory topic is needed; the normative technical choice is already in
 MCP decisions. Original 23-unit/eight-incident baseline, colocated cached-pair
 proof, client-limit uncertainty and phase/aesthetic/three-run gates remain.
-
 
 ## 2026-11-24 — p1-04 health/configured worker accepted; real Mac smoke next
 
@@ -540,3 +537,41 @@ Producer verifies source/documents/official evidence/Git/publication only, with
 no full-suite repeat, live product probe/restart/deployment, real generation/
 training/worker dispatch or live Gallery-byte retrieval. Publishing source does
 not deploy it. Existing decisions/memory cover the lessons; no duplicate topic.
+
+## 2026-11-25 — p1-05 delivery 1 rejected; bounded interruption repair
+
+[Coding AID-171](/AID/issues/AID-171) delivered exact **873629869dce8935d68daa8236f0aaf8eb1b553a**,
+software frozen **6bcb402ff8be2bea59c2dc3dbcd0de01c78ecab9** before the actual
+run. [QA AID-172](/AID/issues/AID-172) completed independent delivery review 1
+**FAIL R5-1 (P1, D3)**, report/evidence **f510a0afde938671f43b590c66d9885507dd7046**.
+Producer accepts the demonstrated adverse finding after reading full actual
+manifest/report/source and actual subprocess signal evidence. On interruption
+after one pair, the CLI safely stops with exit 2 and no further submit, but
+streak remains 1 and the interrupted call/attempt-end accounting is missing.
+[Correction 1](tasks/p1-05-mcp-e2e-smoke-mac/repair-round-1.md) stays within the
+unchanged CLEAR and original D3; no routine owner or new kickoff question.
+
+Producer verified all **16 official uploads**, all **133 Coding/206 QA indexed
+payloads (134/207 archive members)** against sizes/hashes/Git blobs/named bytes,
+both exact binary patches/reconstructed trees and independent prerequisite-bundle
+fetches. Six official PNG attachments match recorded MCP bytes. Integrity and
+triage are retained in repair-round-1-evidence; original report/evidence remain
+immutable on the role cards and report commit. New Coding → exact-final-commit
+QA → Producer cards/prerequisites are recorded in AID-146's plan. This is the
+**first implementation rejection/correction 1/next delivery review 2**; one
+kickoff ambiguity event/two P1 findings/clarification 1/round-2 CLEAR and earlier
+task histories stay separate. Sixteen registry rows stay unchanged.
+
+Evidence levels for this result:
+
+- **Offline:** QA fresh Backend 1916 passed/124 existing platform skips; restored MCP plus six QA cases 669 passed/four existing optional skips; fresh Backend revision export one passed, current cross-layer consumers seven passed; seven meaningful faults RED/restored. Actual CLI signal probe fails strict reset/accounting. Producer checks source/docs/Git/official artifacts and one affected documentation guard, not a repeat product suite.
+- **Running service:** Coding's controlled persistent AID-171 launch/source/import/settings/schema binding and QA's independent read-only corroboration preserve all old values and roots. Producer performs no new live product probe/restart. Retain that runtime worktree/private settings/backups, AID-151 snapshots, canonical environments and all data; verify current identity/jobs before qualification.
+- **Real generation:** QA independently corroborates seven sampled jobs, first timeout followed by separate same-ID recovery and attempts 2–4's three pairs. QA and Producer generate nothing new here. Corrected software requires a fresh frozen streak; preserve all old evidence.
+- **Artifact retrieval:** all six recorded MCP PNG payloads/lineage are corroborated; QA freshly retrieves/decodes those same bytes through SDK. Producer reads official attached copies only, not live Gallery files. Original baseline stays 23 units/eight incidents. Old ledger stays 53 preparation + 0 attempt interventions + 1 recovery + 27 audit = 81; whole round is not zero or below baseline. New repair/qualification/QA ledgers remain separate.
+
+The feature stays off main until renewed exact-commit technical PASS and CTY's
+explicit reply to the reviewed images/Gallery demo. D4 remains unchecked; send
+receipts and technical PASS cannot fill it. Separate phase-close roadmap review
+precedes Phase 2; no phase exit/aesthetic acceptance is claimed. Existing
+normative decisions and runtime/lineage memory cover enduring rules; the concrete
+cancellation defect/regression belongs in task evidence, not duplicate memory.

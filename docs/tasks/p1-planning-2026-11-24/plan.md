@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 accepted after exact-commit PASS; p1-05 fresh kickoff and real Mac smoke/demo next**.
+Status: **p1-00/00a and p1-01–04 accepted/published; p1-05 kickoff CLEAR, delivery 1 FAIL R5-1, correction 1 and renewed exact-commit review next; demo/phase close pending**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -564,3 +564,41 @@ needs renewed exact review; owner-demo acceptance and later roadmap phase-close
 review retain separate authority. Phase 2 is inactive and no routine owner
 confirmation remains. This handoff publishes reports/status, not implementation,
 runtime or generation/retrieval evidence; prior tests retain their attribution.
+
+## p1-05 delivery review 1 FAIL and correction 1
+
+Read actual Coding AID-171 candidate **873629869dce8935d68daa8236f0aaf8eb1b553a**
+and independent QA AID-172 report/evidence **f510a0afde938671f43b590c66d9885507dd7046**.
+QA D1 and recorded D2 pass independent checks; **D3 FAIL R5-1/P1**, D4 unchecked.
+Actual SIGINT after one qualifying pair safely stops but leaves streak 1 and
+omits the interrupted call/attempt finalization. Producer verified the full
+reports/source/reproduction, all 16 official uploads, all 133/206 indexed payloads,
+exact patches/trees and independent bundles. [Correction 1](../p1-05-mcp-e2e-smoke-mac/repair-round-1.md)
+requires actual signal regressions, complete interruption/admission accounting
+and a fresh frozen real three-pair streak. Original CLEAR/task/clarification/
+decision hashes remain unchanged; no new scope or routine owner confirmation.
+
+New Coding repair starts from **f510a0afde938671f43b590c66d9885507dd7046**, a
+report-only descendant with product bytes equal the reviewed candidate; it uses
+a new persistent worktree and imports only the published repair supplement.
+New independent QA pins the actual final corrected SHA after Coding, checks
+D1–D3 plus actual new bytes/lineage/sampling/accounting, and completes its own
+card even if adverse. AID-146 retains Producer ownership, waits through native
+Coding → Review → Producer prerequisites and reads the actual verdict. The
+native plan pins published supplement and separate recipient cards. Historical
+manifest/FAIL/evidence mirrors remain byte-identical. First implementation
+rejection/correction 1/next delivery review 2 stays separate from one kickoff
+ambiguity/two P1 findings/clarification 1/round-2 CLEAR and prior task histories.
+
+QA's fresh offline Backend 1916/124 existing platform skips and final restored
+MCP plus six extra cases 669/four existing optional skips retain attribution.
+Recorded seven real sampled jobs and three pairs/six MCP PNGs with persisted
+lineage passed independent audit for the old software only. Keep old 81-unit
+ledger and unchanged 23-unit/eight-incident baseline; new repair/qualification
+and QA operations get separate honest totals. Producer adds no product probe,
+restart, generation or live Gallery-byte read. Preserve AID-171 runtime/private
+configuration/backups, AID-151 snapshots, canonical venvs, all retained data and
+concurrent shared-main memory edits. Driver repair does not imply runtime
+restart; any necessary replacement follows actual job/source/preservation checks.
+Required technical PASS and CTY's explicit reviewed-demo reply precede feature
+publication. Later phase-close roadmap review is separate before Phase 2.

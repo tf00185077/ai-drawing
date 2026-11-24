@@ -1,12 +1,12 @@
 # Current
 
-2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, real Mac smoke, demo and three-run exit proof next ([roadmap](roadmap/ROADMAP.md))
+2026-11-25 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, p1-05 interruption repair and renewed real proof next ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | Original/revision bytes + lineage; colocated Mac host paths | Runtime/client setup and zero-intervention exit proof pending |
+| 1. MCP for agents | Mostly | p1-05 candidate: real MCP bytes/lineage and three pairs corroborated by QA | Candidate D3 interruption accounting failed; repair, renewed proof and demo pending |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
@@ -30,6 +30,15 @@ Accepted corrected feature `616f67f`, [independent QA round 2 AID-160](/AID/issu
 Accepted p1-03 `77e3e3c`, [independent QA AID-164](/AID/issues/AID-164): fresh Backend **1900 passed, 124 Windows-only skips, 76 warnings in 44.39s**; restored full MCP **540 passed, 2 unchanged optional smoke-export skips in 2.80s**; targeted wait **77 passed**, additional registered QA **28 passed**. Fresh Backend exports/pinned imports and `--timeout=60` are recorded. Seven meaningful faults fail and restore before GREEN; 13 QA registry rows retain all nine prior rows. Actual client limit remains **unverified**, with approved **50-second overall fallback**; short mocked deadlines include SDK/setup overhead and are not live client-limit measurements. Producer verified source/document/package/integration/publication, with no extra suite or live product/generation/retrieval run.
 
 Accepted p1-04 `72f4834`, [independent QA AID-168](/AID/issues/AID-168): fresh final restored Backend **1916 passed, 124 Windows-only skips, 76 warnings in 42.21s**; full MCP **606 passed, two unchanged optional smoke-export skips in 3.27s**. Fresh Backend exports, pinned imports and --timeout=60 are recorded. Ten meaningful faults fail and restore before full GREEN; independent 51-call/107-GET probe and 28 fresh wait cases pass. All 13 earlier registry rows survive; three additions yield **16 active** items. No new Frontend/native Windows/runtime/generation/retrieval result. Producer verified official packages/Git/publication and unchanged reviewed inputs, without repeating full suites. Two affected documentation/catalog guards pass after topic status edits.
+
+Unaccepted p1-05 delivery `8736298`, [QA AID-172](/AID/issues/AID-172), report
+`f510a0a`: fresh Backend **1916 passed/124 existing platform skips**; final restored
+MCP plus six independent QA cases **669 passed/four existing optional skips**;
+fresh Backend revision export **one passed**, current cross-layer consumers
+**seven passed**, seven effective production faults RED/restored. Actual CLI
+SIGINT probe demonstrates **R5-1 P1 D3 FAIL** despite those green suites.
+D1 and recorded D2 pass independent checks; D4 stays unchecked. These results
+are evidence for that rejected candidate, not accepted main or repaired software.
 
 ## Phase 0
 
@@ -90,28 +99,47 @@ decision and original task/report/evidence stay unchanged; 16 registry rows and
 23-unit/eight-incident baseline stay. One ambiguity event/two findings,
 clarification 1/round-2 CLEAR and zero implementation rejections remain.
 
-Next: Coding implements the [cleared p1-05 task](tasks/p1-05-mcp-e2e-smoke-mac/task.md)
-in a persistent isolated worktree, followed by independent exact-final-commit
-delivery QA. [AID-146's native plan](/AID/issues/AID-146#document-plan) pins the
-published base, separate recipients and Coding → Review → Producer prerequisites.
-Gallery content is specified, not yet delivered or deployed. Retain runtime/
-private configuration, canonical venvs and all data; loaded runtime/client
-contracts need actual preparation/verification. Illustrious/default/no-LoRA/local
-and fixed four-step 512×512 technical parameters remain, without speed/aesthetic
-promise. Three real zero-intervention original/revision pairs, actual MCP bytes/
-lineage, CTY's explicit demo reply and later phase-close review remain unaccepted.
-Delivery QA leaves D4 pending owner-demo for Producer/CTY; technical PASS alone
-does not close the task. Phase 2 stays inactive; no routine owner confirmation.
+[Coding AID-171](/AID/issues/AID-171) delivered exact candidate
+**873629869dce8935d68daa8236f0aaf8eb1b553a**, software frozen at `6bcb402`.
+[QA AID-172](/AID/issues/AID-172) completed independent delivery review 1
+**FAIL R5-1 (P1, D3)**, report/evidence **f510a0afde938671f43b590c66d9885507dd7046**.
+Producer read actual reports/source/reproduction and verified all 16 official
+uploads, 133 Coding/206 QA indexed payloads, exact patches/trees and independent
+bundle fetches. Cancellation bypasses the call/attempt handlers: exit 2 stops
+safely, but streak remains 1 after attempt-2 interruption and its call/end ledger
+is incomplete. One implementation rejection/correction 1/next delivery review 2
+is now recorded separately from the unchanged kickoff history.
+
+[Correction 1](tasks/p1-05-mcp-e2e-smoke-mac/repair-round-1.md) stays under the
+original CLEAR/D3, adds actual signal regressions and requires a fresh frozen
+three-pair qualification. New separate Coding and exact-final-commit QA cards
+with Coding → Review → Producer prerequisites are pinned in
+[AID-146's native plan](/AID/issues/AID-146#document-plan). No routine owner
+confirmation or new scope/kickoff is needed. The rejected product stays off main.
+
+QA independently corroborated seven sampled jobs, a failed timeout attempt and
+three qualifying pairs (3866→3867, 3868→3869, 3870→3871), fetched the same six
+actual MCP PNGs and checked persisted lineage/runtime/schema. Those images and
+old ledger **53 prep + 0 attempt interventions + 1 recovery + 27 audit = 81**
+stay historical; they do not qualify the corrected source. Original baseline
+**23 units/eight incidents** is unchanged. Zero applies only within qualifying
+request-to-result pairs. Producer performed source/document/official-attachment
+checks, with no new product probe, generation or live Gallery-byte read.
+
+Retain AID-171's persistent runtime worktree/private settings/backups and AID-151
+snapshots, canonical venvs and all retained data. Historical reviewed launch is
+Backend PID 99953/ComfyUI PID 99952; verify live identity/jobs before new work.
+No restart for a docs SHA. Required technical PASS and CTY's explicit reviewed-demo
+reply precede feature publication; phase-close roadmap review remains separate
+before Phase 2. Delivery QA leaves D4 unchecked for Producer/CTY. No phase exit
+or aesthetics accepted.
 
 ## Team
 
-Coding owns the cleared implementation/real evidence; QA owns the separate
-exact-final-commit delivery review after Coding; Producer owns AID-146, reads
-actual results and handles repairs, CTY demo and phase close. Native recipients/
-prerequisites are pinned in AID-146's plan. Preserve active runtime and all data;
-long-lived services use persistent source worktrees, never run-owned scratch.
-Auto Dreamer is idle; other specialists stay paused. This handoff integrates
-unchanged QA report/evidence and status documents, with no feature or phase
-acceptance. QA's new round is source/Git/AST/document checks only; prior offline
-results retain attribution. No product probe/restart/deployment, generation or
-live Gallery-byte retrieval by Producer.
+Coding owns the bounded interruption repair and fresh real evidence; independent
+QA pins its actual final commit, reviews D1–D3 and completes its own card even
+if adverse. Producer reads actual results and owns repairs, CTY demo/acceptance
+and later phase close. Native prerequisites carry continuation. Engineering
+uses isolated persistent worktrees; preserve concurrent memory edits in shared
+main and all active runtime/data. Other production specialists remain paused.
+This Producer round publishes repair/status/integrity documents only.
