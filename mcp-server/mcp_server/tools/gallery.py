@@ -8,11 +8,10 @@ import os
 from typing import Literal
 
 from mcp_server.config import get_mcp_settings
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
 from mcp_server.tools.responses import exception_error_json
 
 
-@mcp.tool()
 def gallery_list(
     checkpoint: str | None = None,
     lora: str | None = None,
@@ -36,10 +35,9 @@ def gallery_list(
         resp = client.get("gallery/", params=params)
         return json.dumps({"ok": True, "tool": "gallery_list", "data": resp}, ensure_ascii=False)
     except Exception as e:
-        return f"error: {e}"
+        return exception_error_json("gallery", e, where="backend")
 
 
-@mcp.tool()
 def get_gallery_image(image_id: int) -> str:
     """Get a single image and return agent-friendly JSON including image_url, local_path, and full metadata."""
     try:
@@ -82,7 +80,6 @@ def get_gallery_image(image_id: int) -> str:
         return exception_error_json("get_gallery_image", e, where="backend")
 
 
-@mcp.tool()
 def get_gallery_artifact(artifact_id: int) -> str:
     """Get a recorded generated artifact, including video artifacts, and return stable JSON with local delivery metadata."""
     try:
@@ -129,7 +126,6 @@ def get_gallery_artifact(artifact_id: int) -> str:
         )
 
 
-@mcp.tool()
 def gallery_rerun(
     image_id: int,
     execution_target: Literal["local", "worker"] = "local",
@@ -142,6 +138,6 @@ def gallery_rerun(
             json={"execution_target": execution_target},
         )
         job_id = resp.get("job_id", "unknown")
-        return f"已加入生圖佇列: job_id={job_id}"
+        return json.dumps({"ok": True, "job_id": job_id, **resp}, ensure_ascii=False)
     except Exception as e:
-        return f"error: {e}"
+        return exception_error_json("gallery", e, where="backend")

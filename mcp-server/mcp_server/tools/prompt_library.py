@@ -6,7 +6,8 @@ from typing import Any
 from urllib.parse import quote
 import httpx
 
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
+from mcp_server.tools.responses import backend_error_payload
 
 
 _CJK = re.compile(r"[㐀-䶿一-鿿]")
@@ -32,13 +33,7 @@ def _bilingual_warnings(resource_type: str, payload: dict) -> list[dict[str, Any
 
 
 def _error(tool: str, exc: Exception) -> dict[str, Any]:
-    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
-        try: body = exc.response.json()
-        except ValueError: body = {}
-        detail = body.get("detail", body) if isinstance(body, dict) else {}
-        if not isinstance(detail, dict): detail = {"message": str(detail)}
-        return {"ok": False, "tool": tool, "error": {"code": str(detail.get("code", "backend_http_error")), "message": str(detail.get("message", exc)), "hint": str(detail.get("hint", "Reload, correct the request, and retry.")), "details": detail.get("details", {})}, "status_code": exc.response.status_code}
-    return {"ok": False, "tool": tool, "error": {"code": exc.__class__.__name__, "message": str(exc), "hint": "Confirm the backend is running, then retry.", "details": {"where": "backend"}}}
+    return backend_error_payload(tool, exc)
 
 
 def _locator(resource_type: str, resource_id: str, polarity: str | None, category_id: str | None) -> tuple[str | None, dict | None]:
@@ -52,7 +47,6 @@ def _locator(resource_type: str, resource_id: str, polarity: str | None, categor
     return None, {"ok": False, "error": {"code": "invalid_resource_locator", "message": "resource locator is incomplete", "hint": "category needs polarity; entry needs polarity and category_id; combination needs only resource_id", "details": {}}}
 
 
-@mcp.tool()
 def prompt_library_search(query: str = "", polarity: str | None = None, resource_types: list[str] | None = None, category_id: str | None = None, threshold: int = 45, limit: int = 50, include_archived: bool = False) -> dict[str, Any]:
     tool = "prompt_library_search"
     try:
@@ -72,7 +66,6 @@ def prompt_library_search(query: str = "", polarity: str | None = None, resource
     except Exception as exc: return _error(tool, exc)
 
 
-@mcp.tool()
 def prompt_library_save(resource_type: str, resource_id: str, payload: dict, expected_revision: int = 0, expected_etag: str | None = None, polarity: str | None = None, category_id: str | None = None) -> dict[str, Any]:
     """建立或更新 Prompt Library 的 entry／category／combination。
 
@@ -92,18 +85,16 @@ def prompt_library_save(resource_type: str, resource_id: str, payload: dict, exp
     except Exception as exc: return _error(tool, exc)
 
 
-@mcp.tool()
 def prompt_library_compose(combination_id: str | None = None, positive: list[dict] | None = None, negative: list[dict] | None = None, save_as: dict | None = None) -> dict[str, Any]:
     tool = "prompt_library_compose"; body: dict[str, Any] = {"positive": positive or [], "negative": negative or []}
     if combination_id: body["combination_id"] = combination_id
     if save_as: body["save_as"] = save_as
     try:
         response = _get_client().post("prompt-library/compose", json=body)
-        return {"ok": True, "tool": tool, **response, "generation": {"prompt": response.get("positive_prompt", ""), "negative_prompt": response.get("negative_prompt", "")}, "next": "call generate_image with generation"}
+        return {"ok": True, "tool": tool, **response, "generation": {"prompt": response.get("positive_prompt", ""), "negative_prompt": response.get("negative_prompt", "")}, "next": "call generate with generation"}
     except Exception as exc: return _error(tool, exc)
 
 
-@mcp.tool()
 def prompt_library_archive(resource_type: str, resource_id: str, expected_revision: int, expected_etag: str, polarity: str | None = None, category_id: str | None = None) -> dict[str, Any]:
     tool = "prompt_library_archive"; _, problem = _locator(resource_type, resource_id, polarity, category_id)
     if problem: return {"tool": tool, **problem}
@@ -114,7 +105,6 @@ def prompt_library_archive(resource_type: str, resource_id: str, expected_revisi
     except Exception as exc: return _error(tool, exc)
 
 
-@mcp.tool()
 def prompt_library_restore(
     resource_type: str,
     resource_id: str,

@@ -12,7 +12,7 @@ import httpx
 
 from mcp_server.character_style import resolve_to_prompt
 from mcp_server.config import get_mcp_settings
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
 from mcp_server.tools.responses import error_json, exception_error_json
 
 
@@ -49,7 +49,6 @@ def _resource_list(resp: dict, key: str) -> list:
     return value if isinstance(value, list) else []
 
 
-@mcp.tool()
 def generate_image(
     prompt: str = "1girl, solo",
     character: str | None = None,
@@ -77,7 +76,7 @@ def generate_image(
     execution_target: Literal["local", "worker"] = "local",
     revision_context: dict | None = None,
 ) -> str:
-    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. revision_context optionally annotates ordinary images with request_ref, brief_revision, parent_artifact_id, feedback_ref and feedback_summary (schema_version defaults to string 1.0). Feedback never changes prompt or authorizes execution; parent identity is resolved by Backend. Returns job_id and canonical revision_context or an error message. To generate based on a Civitai image, use civitai_generate_like instead."""
+    """Trigger image generation. Accepts character and style in natural language or a direct prompt. Supports full parameter control: sampler_name, scheduler, lora_strength, denoise, width/height, etc. batch_size allows generating multiple images at once (1-8). template selects the workflow template (e.g. "anima" for the Anima diffusion-model family); omit it to auto-pick default / default_lora based on lora. diffusion_model / text_encoder / vae are components for diffusion-model families (e.g. Anima). loras is an ordered list of {name, strength_model, strength_clip?} for multi-LoRA workflows, taking precedence over the single lora. revision_context optionally annotates ordinary images with request_ref, brief_revision, parent_artifact_id, feedback_ref and feedback_summary (schema_version defaults to string 1.0). Feedback never changes prompt or authorizes execution; parent identity is resolved by Backend. Returns job_id and canonical revision_context or an error message. To generate based on a Civitai image, use Backend Civitai generate-like endpoint (MCP submission removed) instead."""
     # Optional ordinary-image annotation: Backend validates closed request shape
     # and resolves canonical parent identity before enqueue. Feedback stays data.
     try:
@@ -154,7 +153,7 @@ def generate_image(
                 "submitted": body,
                 "revision_context": resp.get("revision_context"),
                 "revision_context_error": resp.get("revision_context_error"),
-                "next": "call get_generation_status with this job_id",
+                "next": "call job_status with this job_id",
             },
             ensure_ascii=False,
         )
@@ -162,7 +161,6 @@ def generate_image(
         return _generate_image_error_json(e)
 
 
-@mcp.tool()
 def generate_video_wan_keyframes(
     images: list[str],
     prompt: str,
@@ -177,7 +175,7 @@ def generate_video_wan_keyframes(
     filename_prefix: str = "video/wan_keyframes",
     execution_target: Literal["local", "worker"] = "local",
 ) -> str:
-    """Generate one Wan video from multiple gallery-relative keyframe images using a single WanDancer workflow. This is not pairwise segment concatenation: the backend batches all keyframes into WanDancerPadKeyframes and submits one workflow. Poll get_generation_status(job_id), then fetch completed video artifacts via get_gallery_artifact."""
+    """Generate one Wan video from multiple gallery-relative keyframe images using a single WanDancer workflow. This is not pairwise segment concatenation: the backend batches all keyframes into WanDancerPadKeyframes and submits one workflow. Poll job_status(job_id), then fetch completed video artifacts via gallery_get(artifact_id=...)."""
     try:
         client = _get_client()
         body: dict[str, object] = {
@@ -210,7 +208,7 @@ def generate_video_wan_keyframes(
                 "status": status,
                 "keyframe_count": len(images),
                 "workflow_family": "wan_dancer_multi_keyframe",
-                "next": "poll get_generation_status(job_id); on completion use artifacts[] with get_gallery_artifact",
+                "next": "poll job_status(job_id); on completion use artifacts[] with gallery_get(artifact_id=...)",
             },
             ensure_ascii=False,
         )
@@ -218,7 +216,6 @@ def generate_video_wan_keyframes(
         return exception_error_json("generate_video_wan_keyframes", e, where="backend")
 
 
-@mcp.tool()
 def generate_image_custom_workflow(
     workflow: str,
     prompt: str = "1girl, solo",
@@ -344,7 +341,7 @@ def generate_image_custom_workflow(
                 "tool": "generate_image_custom_workflow",
                 "job_id": job_id,
                 "status": status,
-                "next": "poll get_generation_status(job_id); if status=failed with node_errors, fix those nodes and resubmit",
+                "next": "poll job_status(job_id); if status=failed with node_errors, fix those nodes and resubmit",
             },
             ensure_ascii=False,
         )
@@ -358,7 +355,6 @@ def generate_image_custom_workflow(
     except Exception as e:
         return exception_error_json("generate_image_custom_workflow", e, where="backend")
 
-@mcp.tool()
 def generate_video_custom_workflow(
     workflow: str,
     prompt: str = "1girl, solo",
@@ -385,7 +381,7 @@ def generate_video_custom_workflow(
     vae: str | None = None,
     execution_target: Literal["local", "worker"] = "local",
 ) -> str:
-    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, optionally inject gallery-relative image/first_frame/last_frame/video_ref inputs, then poll get_generation_status."""
+    """Submit a supplied ComfyUI video workflow JSON through the normal generation queue. This MVP does not synthesize a video graph from prose; start from a known-good local workflow, optionally inject gallery-relative image/first_frame/last_frame/video_ref inputs, then poll job_status."""
     try:
         client = _get_client()
         wf_obj = json.loads(workflow)
@@ -430,7 +426,7 @@ def generate_video_custom_workflow(
                 "job_id": job_id,
                 "status": status,
                 "submitted": body,
-                "next": "poll get_generation_status(job_id); on completion use artifacts[] with get_gallery_artifact; call free_comfyui_memory after heavy video jobs",
+                "next": "poll job_status(job_id); on completion use artifacts[] with gallery_get(artifact_id=...); call comfyui_admin(action=free_memory) after heavy video jobs",
             },
             ensure_ascii=False,
         )
@@ -445,7 +441,6 @@ def generate_video_custom_workflow(
         return exception_error_json("generate_video_custom_workflow", e, where="backend")
 
 
-@mcp.tool()
 def get_generation_status(job_id: str) -> str:
     """Query generation job status, returns agent-friendly JSON. Completed jobs include artifacts[]; image jobs keep image_id/image_path. Failed jobs return a structured error."""
     try:
@@ -460,9 +455,9 @@ def get_generation_status(job_id: str) -> str:
                 if isinstance(artifact, dict)
             )
             next_step = (
-                "call get_gallery_artifact with an artifact id from artifacts[]"
+                "call gallery_get(artifact_id=...) with an artifact id from artifacts[]"
                 if has_non_image_artifact
-                else "call get_gallery_image with image_id to deliver the result"
+                else "call gallery_get(image_id=...) with image_id to deliver the result"
             )
             return json.dumps(
                 {
@@ -510,7 +505,7 @@ def get_generation_status(job_id: str) -> str:
                     "prompt_id": resp.get("prompt_id"),
                     "revision_context": resp.get("revision_context"),
                     "revision_context_error": resp.get("revision_context_error"),
-                    "next": "wait, then call get_generation_status again",
+                    "next": "wait, then call job_status again",
                 },
                 ensure_ascii=False,
             )
@@ -526,7 +521,6 @@ def get_generation_status(job_id: str) -> str:
         return exception_error_json("get_generation_status", e, where="backend", job_id=job_id)
 
 
-@mcp.tool()
 def cancel_job(job_id: str) -> str:
     """Cancel an image generation job that has not yet started (pending status). Running jobs cannot be cancelled."""
     try:
@@ -546,7 +540,6 @@ def cancel_job(job_id: str) -> str:
         return exception_error_json("cancel_job", e, where="backend", job_id=job_id)
 
 
-@mcp.tool()
 def list_available_resources() -> str:
     """List available checkpoints, LoRAs, diffusion models, text encoders, VAEs, and workflow templates, returns agent-friendly JSON. To add a new model from Civitai, use civitai_resource_acquire."""
     try:
@@ -564,7 +557,7 @@ def list_available_resources() -> str:
         workflows = _resource_list(resp, "workflows")
         default_checkpoint = resp.get("default_checkpoint")
         next_step = (
-            "choose a checkpoint, then call generate_image"
+            "choose a checkpoint, then call generate"
             if checkpoints
             else "no checkpoints available; download one with civitai_resource_acquire or check that the model disk is mounted"
         )

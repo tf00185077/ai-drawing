@@ -10,9 +10,9 @@ Adopted by the owner on 2026-11-23. This is the single source for what agents ma
 | Run tests, type checks and builds | — |
 | Generate images and videos on local ComfyUI | — |
 | Dispatch generation to a LAN worker | — |
-| Restart ComfyUI (`comfyui_restart`) | — |
-| Install custom nodes (`comfyui_node_provision`) | — |
-| Free ComfyUI memory (`free_comfyui_memory`) | — |
+| Restart ComfyUI (`comfyui_admin(action=restart)`) | — |
+| Install custom nodes (`comfyui_admin(action=install_node)`) | — |
+| Free ComfyUI memory (`comfyui_admin(action=free_memory)`) | — |
 | Cancel jobs, including jobs submitted by others | — |
 | Download models and resources (`civitai_resource_acquire`, manual) | — |
 | Start LoRA training runs | — |

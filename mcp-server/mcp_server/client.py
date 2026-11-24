@@ -87,3 +87,9 @@ class HttpBackendClient:
             resp = client.delete(url)
             resp.raise_for_status()
             return resp.json() if resp.content else {}
+
+
+def get_backend_client() -> HttpBackendClient:
+    """Build the configured client without importing tool registration."""
+    from mcp_server.config import get_mcp_settings
+    return HttpBackendClient(base_url=f"{get_mcp_settings().backend_api_url}/api")

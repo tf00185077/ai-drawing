@@ -18,16 +18,7 @@ from mcp_server.tools.lora_train import lora_train_smoke_test
 from mcp_server.tools.style_presets import test_saved_style_preset_workflow as run_saved_workflow_test
 
 
-COMFYUI_JOB_TOOLS = (
-    "generate_image",
-    "generate_image_custom_workflow",
-    "generate_video_custom_workflow",
-    "generate_video_wan_keyframes",
-    "civitai_generate_like",
-    "gallery_rerun",
-    "test_saved_style_preset_workflow",
-    "lora_train_smoke_test",
-)
+COMFYUI_JOB_TOOLS = ("generate", "gallery_rerun", "style_preset_test", "lora_train_smoke_test")
 
 
 @pytest.mark.asyncio

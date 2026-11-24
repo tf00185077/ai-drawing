@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 import httpx
 
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
 from mcp_server import lora_public
 
 
@@ -514,7 +514,6 @@ def _compact(body: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in body.items() if value is not None}
 
 
-@mcp.tool()
 def caption_image(image_path: str) -> dict[str, Any]:
     """Generate one caption through the backend LLM caption endpoint."""
     tool = "caption_image"
@@ -529,7 +528,6 @@ def caption_image(image_path: str) -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_training_decision_preflight(
     folder: str,
     output_name: str,
@@ -560,7 +558,6 @@ def lora_training_decision_preflight(
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_train_start(
     folder: str,
     output_name: str,
@@ -595,7 +592,6 @@ def lora_train_start(
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_train_job_status(job_id: str) -> dict[str, Any]:
     """Read a durable training job and reconcile its smoke image; never submits."""
     tool = "lora_train_job_status"
@@ -609,7 +605,6 @@ def lora_train_job_status(job_id: str) -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_train_logs(job_id: str, lines: int = 100) -> dict[str, Any]:
     """Retrieve bounded logs for one LoRA training job."""
     tool = "lora_train_logs"
@@ -620,7 +615,6 @@ def lora_train_logs(job_id: str, lines: int = 100) -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_train_cancel(job_id: str) -> dict[str, Any]:
     """Cancel a queued or running LoRA training job."""
     tool = "lora_train_cancel"
@@ -630,7 +624,6 @@ def lora_train_cancel(job_id: str) -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_dataset_list() -> dict[str, Any]:
     """List LoRA training datasets with image/caption/hash/lock summary so an agent can choose work."""
     tool = "lora_dataset_list"
@@ -640,7 +633,6 @@ def lora_dataset_list() -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_dataset_inspect(folder: str) -> dict[str, Any]:
     """Inspect one LoRA dataset (agent-ready: profile summary, caption suitability, dataset/profile hashes)."""
     tool = "lora_dataset_inspect"
@@ -651,7 +643,6 @@ def lora_dataset_inspect(folder: str) -> dict[str, Any]:
         return _backend_error(tool, exc)
 
 
-@mcp.tool()
 def lora_train_smoke_test(
     job_id: str,
     prompt: str | None = None,

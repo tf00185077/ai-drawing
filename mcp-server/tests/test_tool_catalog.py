@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import re
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,63 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DOCS = (
     PROJECT_ROOT / "docs" / "mcp.md",
 )
+
+# Independent policy expectations, not values read from the production catalog.
+# Source: docs/decisions/mcp.md (tool map, retained intents and staged delivery),
+# cleared at 496cee2f842dc9386d336afb237075bf952271ce; p1-02 D2.
+# Keep mcp_ping until p1-04. Preflight/compose POSTs are read intents; caption,
+# acquisition, training/smoke submission and cancellation mutate persistent state.
+APPROVED_INTENT_RISKS = {
+    "mcp_ping": "read",
+    "list_resources": "read",
+    "generate": "mutate",
+    "job_status": "read",
+    "cancel_job": "mutate",
+    "gallery_search": "read",
+    "gallery_get": "read",
+    "gallery_rerun": "mutate",
+    "prompt_search": "read",
+    "prompt_compose": "read",
+    "prompt_write": "mutate",
+    "style_preset_get": "read",
+    "style_preset_compose": "read",
+    "style_preset_save": "mutate",
+    "style_preset_test": "mutate",
+    "comfyui_admin": "admin",
+    "deliver_to_discord": "mutate",
+    "civitai_source_info": "read",
+    "civitai_resource_acquire": "mutate",
+    "civitai_resource_status": "read",
+    "lora_dataset_list": "read",
+    "lora_dataset_inspect": "read",
+    "caption_image": "mutate",
+    "lora_training_decision_preflight": "read",
+    "lora_train_start": "mutate",
+    "lora_train_job_status": "read",
+    "lora_train_logs": "read",
+    "lora_train_cancel": "mutate",
+    "lora_train_smoke_test": "mutate",
+}
+
+
+def test_catalog_risks_match_approved_intent_policy() -> None:
+    """A false label (e.g. ComfyUI restart as read) must fail independently."""
+    assert len(INTENDED_TOOLS) == len(APPROVED_INTENT_RISKS) == 29
+    assert {entry.name: entry.risk for entry in INTENDED_TOOLS} == APPROVED_INTENT_RISKS
+    assert all(entry.external for entry in INTENDED_TOOLS)
+
+
+@pytest.mark.asyncio
+async def test_discovered_risks_match_approved_intent_policy() -> None:
+    """Actual MCP discovery must expose exactly one approved label per intent."""
+    tools = await mcp.list_tools()
+    assert len(tools) == len(APPROVED_INTENT_RISKS)
+    assert {tool.name for tool in tools} == set(APPROVED_INTENT_RISKS)
+    for tool in tools:
+        expected = APPROVED_INTENT_RISKS[tool.name]
+        assert tool.description.count("Risk:") == 1, tool.name
+        assert re.findall(r"\bRisk:\s*(\w+)\.", tool.description) == [expected], tool.name
+        assert tool.description.startswith(f"Risk: {expected}."), tool.name
 
 
 def test_package_readme_routes_to_current_tool_and_acceptance_authorities() -> None:
@@ -45,33 +103,31 @@ def test_catalog_points_to_existing_tool_functions() -> None:
 async def test_generate_image_exposes_multi_lora_schema() -> None:
     """generate_image keeps ordered multi-LoRA fields visible to agents."""
     registered = {tool.name: tool for tool in await mcp.list_tools()}
-    properties = registered["generate_image"].inputSchema["properties"]
+    properties = registered["generate"].inputSchema["properties"]
     assert properties["execution_target"]["enum"] == ["local", "worker"]
     for field in ("lora", "lora_strength", "loras"):
         assert field in properties
 
 
 @pytest.mark.asyncio
-async def test_civitai_generate_like_exposes_intent_level_schema() -> None:
-    """The one-call Civitai tool keeps its forgiving, prompt-first schema."""
-    registered = {tool.name: tool for tool in await mcp.list_tools()}
-    properties = registered["civitai_generate_like"].inputSchema["properties"]
-    for field in ("source", "prompt", "batch_size", "download_missing", "checkpoint"):
-        assert field in properties
+async def test_removed_tools_and_staged_tools_are_not_registered() -> None:
+    registered = {tool.name for tool in await mcp.list_tools()}
+    assert len(registered) == 29
+    assert not registered & {
+        "generate_image", "generate_image_custom_workflow", "get_generation_status",
+        "generate_video_wan_keyframes", "generate_video_custom_workflow", "civitai_generate_like",
+        "health", "list_workers", "wait_for_job", "prompt_library_restore",
+    }
 
 
 @pytest.mark.asyncio
-async def test_prompt_library_restore_exposes_exact_locator_schema() -> None:
+async def test_prompt_write_exposes_locator_and_concurrency_schema() -> None:
     registered = {tool.name: tool for tool in await mcp.list_tools()}
-    schema = registered["prompt_library_restore"].inputSchema
-
-    assert set(schema["required"]) == {
-        "resource_type",
-        "resource_id",
-        "expected_revision",
-        "expected_etag",
-    }
-    assert {"polarity", "category_id"} <= set(schema["properties"])
+    schema = registered["prompt_write"].inputSchema
+    assert set(schema["required"]) == {"action", "resource_type", "resource_id"}
+    assert {"polarity", "category_id", "payload", "expected_revision", "expected_etag"} <= set(schema["properties"])
+    assert schema["properties"]["action"]["enum"] == ["save", "archive", "restore"]
+    assert "save_as" not in registered["prompt_compose"].inputSchema["properties"]
 
 
 @pytest.mark.asyncio
@@ -113,16 +169,18 @@ async def test_lora_preflight_advertises_optional_broad_recipe_hints() -> None:
 
 
 @pytest.mark.asyncio
-async def test_response_categories_match_fastmcp_output_schema() -> None:
-    """Structured dict tools expose object output; transitional string tools expose result strings."""
+async def test_envelope_schema_and_one_truthful_risk_per_tool() -> None:
     registered = {tool.name: tool for tool in await mcp.list_tools()}
     for entry in INTENDED_TOOLS:
         schema = registered[entry.name].outputSchema
-        if entry.response_category == "dict":
-            assert schema.get("type") == "object", entry.name
-            assert "result" not in schema.get("properties", {}), entry.name
-        else:
-            assert schema["properties"]["result"]["type"] == "string", entry.name
+        assert entry.response_category == "envelope"
+        assert schema.get("type") == "object", entry.name
+        assert "result" not in schema.get("properties", {}), entry.name
+        assert entry.risk in {"read", "mutate", "admin"}
+        assert registered[entry.name].description.count("Risk:") == 1
+        assert registered[entry.name].description.startswith(f"Risk: {entry.risk}.")
+    assert {entry.name: entry.risk for entry in INTENDED_TOOLS}["caption_image"] == "mutate"
+
 
 
 def test_catalog_docs_list_active_tools() -> None:
@@ -150,10 +208,11 @@ def test_mcp_docs_do_not_advertise_removed_workflow_tools() -> None:
 def test_saved_workflow_intents_are_in_the_audited_catalog() -> None:
     entries = {entry.name: entry for entry in INTENDED_TOOLS}
     assert entries[
-        "save_successful_workflow_as_style_preset"
+        "style_preset_save"
     ].backend_endpoints == (
+        "POST /api/style-presets/",
         "POST /api/style-presets/{preset_id}/workflow/save",
     )
-    assert entries["test_saved_style_preset_workflow"].backend_endpoints == (
+    assert entries["style_preset_test"].backend_endpoints == (
         "POST /api/style-presets/{preset_id}/workflow/test",
     )

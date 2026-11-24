@@ -12,7 +12,7 @@ style as a preset in conversation, so creation is a first-class intent).
 These tools let an agent discover creator/style recipes ("presets"), inspect them,
 validate that the referenced ComfyUI resources are installed, and compose a preset
 with a user content prompt into a generation payload. Composition does NOT submit a
-job: the agent then forwards the composed `generation` payload to generate_image
+job: the agent then forwards the composed `generation` payload to generate
 (compose first, generate second).
 """
 import json
@@ -20,51 +20,24 @@ from typing import Literal
 
 import httpx
 
-from mcp_server.server import _get_client, mcp
+from mcp_server.client import get_backend_client as _get_client
 from mcp_server.tools.responses import error_json, exception_error_json
 
 
 def _workflow_error_json(tool: str, exc: Exception) -> str:
-    code = exc.__class__.__name__
-    message = str(exc)
-    hint = "Check the backend connection and retry the explicit operation."
-    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
-        try:
-            payload = exc.response.json()
-        except ValueError:
-            payload = {}
-        detail = payload.get("detail") if isinstance(payload, dict) else None
-        if isinstance(detail, dict):
-            code = str(detail.get("code") or "backend_http_error")
-            message = str(detail.get("message") or message)
-            hint = str(
-                detail.get("hint")
-                or "Correct the request using the backend error and retry."
-            )
-        else:
-            code = "backend_http_error"
-            hint = "Inspect the backend response, correct the request, and retry."
-    return json.dumps(
-        {
-            "ok": False,
-            "tool": tool,
-            "error": {"code": code, "message": message, "hint": hint},
-        },
-        ensure_ascii=False,
-    )
+    return exception_error_json(tool, exc, where="backend")
 
 
-@mcp.tool()
 def list_style_presets() -> str:
-    """List available style presets (creator/style recipes) from the lightweight index — does not load full preset bodies. Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with compose_style_preset to build a generation payload."""
+    """List available style presets (creator/style recipes) from the lightweight index — does not load full preset bodies. Returns agent-friendly JSON with each preset's id, name, available profiles, and summary resource references. Use a preset id with style_preset_compose to build a generation payload."""
     try:
         client = _get_client()
         resp = client.get("style-presets/")
         items = resp.get("items", [])
         next_step = (
-            "call get_style_preset or compose_style_preset with a preset id"
+            "call style_preset_get(preset_id=...) or style_preset_compose with a preset id"
             if items
-            else "no presets defined; ask the user to add a recipe or use generate_image directly"
+            else "no presets defined; ask the user to add a recipe or use generate directly"
         )
         return json.dumps(
             {
@@ -79,7 +52,6 @@ def list_style_presets() -> str:
         return exception_error_json("list_style_presets", e, where="backend")
 
 
-@mcp.tool()
 def get_style_preset(preset_id: str) -> str:
     """Get the full recipe for a style preset by id: resource references, base/negative prompt, default params, profiles, and note metadata. Returns agent-friendly JSON."""
     try:
@@ -90,7 +62,7 @@ def get_style_preset(preset_id: str) -> str:
                 "ok": True,
                 "tool": "get_style_preset",
                 "preset": resp,
-                "next": "call compose_style_preset with this preset_id and a content_prompt",
+                "next": "call style_preset_compose with this preset_id and a content_prompt",
             },
             ensure_ascii=False,
         )
@@ -103,7 +75,6 @@ def get_style_preset(preset_id: str) -> str:
         )
 
 
-@mcp.tool()
 def compose_style_preset(
     preset_id: str,
     content_prompt: str,
@@ -111,7 +82,7 @@ def compose_style_preset(
     overrides: dict | None = None,
 ) -> str:
     """
-    Compose a style preset with a user content_prompt into a generate_image-compatible payload.
+    Compose a style preset with a user content_prompt into a generate-compatible payload.
 
     content_prompt is "what the user wants in this image" (not the full final prompt); the final
     prompt is assembled as preset base_prompt + profile prefix + content_prompt + profile suffix.
@@ -119,7 +90,7 @@ def compose_style_preset(
     params (e.g. {"seed": 123, "steps": 40}) that take highest priority.
 
     This does NOT submit a job. On success the returned JSON includes the composed `generation`
-    payload and a `next` instruction to call generate_image with that payload.
+    payload and a `next` instruction to call generate with that payload.
     """
     try:
         client = _get_client()
@@ -136,7 +107,7 @@ def compose_style_preset(
                 "preset_id": resp.get("preset_id", preset_id),
                 "profile": resp.get("profile"),
                 "generation": resp.get("generation", {}),
-                "next": "call generate_image with the fields in `generation` (prompt, checkpoint, lora, diffusion_model, etc.)",
+                "next": "call generate with the fields in `generation` (prompt, checkpoint, lora, diffusion_model, etc.)",
             },
             ensure_ascii=False,
         )
@@ -149,7 +120,6 @@ def compose_style_preset(
         )
 
 
-@mcp.tool()
 def create_style_preset(
     id: str,
     name: str,
@@ -193,31 +163,15 @@ def create_style_preset(
         if missing:
             nxt = f"created; but missing resources {[m['name'] for m in missing]} — install them or edit the preset"
         else:
-            nxt = "created and valid; use compose_style_preset to generate with it"
+            nxt = "created and valid; use style_preset_compose to generate with it"
         return json.dumps(
-            {"ok": True, "tool": "create_style_preset", **resp, "next": nxt},
+            {"ok": True, "tool": "style_preset_save(from_source=fields)", **resp, "next": nxt},
             ensure_ascii=False,
-        )
-    except httpx.HTTPStatusError as e:
-        code = e.response.status_code if e.response is not None else None
-        if code == 409:
-            err, nxt = "already_exists", "set overwrite=true to replace, or choose a different id"
-        elif code == 422:
-            err, nxt = "invalid_request", "id must be a slug (letters/digits/_/-) and name is required"
-        else:
-            err, nxt = str(e), "check backend"
-        return error_json(
-            "create_style_preset",
-            err,
-            err,
-            details={"where": "backend", "status_code": code},
-            next=nxt,
         )
     except Exception as e:
         return exception_error_json("create_style_preset", e, where="backend")
 
 
-@mcp.tool()
 def save_successful_workflow_as_style_preset(
     source: int | str,
     preset_id: str,
@@ -252,7 +206,7 @@ def save_successful_workflow_as_style_preset(
                 ),
                 "retest_required": response.get("retest_required", True),
                 "next": (
-                    "call test_saved_style_preset_workflow for this preset/profile"
+                    "call style_preset_test for this preset/profile"
                 ),
             },
             ensure_ascii=False,
@@ -261,13 +215,12 @@ def save_successful_workflow_as_style_preset(
         return _workflow_error_json(tool, exc)
 
 
-@mcp.tool()
 def test_saved_style_preset_workflow(
     preset_id: str,
     profile: str | None = None,
     execution_target: Literal["local", "worker"] = "local",
 ) -> str:
-    """Queue the backend-owned saved workflow verbatim, without workflow JSON or prompt overrides, then poll get_generation_status with the returned job id."""
+    """Queue the backend-owned saved workflow verbatim, without workflow JSON or prompt overrides, then poll job_status with the returned job id."""
     tool = "test_saved_style_preset_workflow"
     body: dict[str, object] = {"execution_target": execution_target}
     if profile is not None:
@@ -285,7 +238,7 @@ def test_saved_style_preset_workflow(
                 "profile": response.get("profile"),
                 "job_id": job_id,
                 "status": response.get("status", "queued"),
-                "next": f"poll get_generation_status with job_id {job_id}",
+                "next": f"poll job_status with job_id {job_id}",
             },
             ensure_ascii=False,
         )

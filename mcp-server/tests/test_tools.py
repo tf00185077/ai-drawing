@@ -40,7 +40,7 @@ def test_list_resources_returns_agent_friendly_json() -> None:
     assert data["video_loras"] == []
     assert data["video_inputs"] == []
     assert data["workflows"] == ["default", "default_lora"]
-    assert "generate_image" in data["next"]
+    assert "generate" in data["next"]
     assert [call.args[0] for call in mock_client.get.call_args_list] == [
         "generate/available-resources",
         "workflow-catalog/generation-forms",
@@ -73,7 +73,7 @@ def test_list_resources_backend_error_returns_structured_error() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "list_available_resources"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "backend down"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -112,7 +112,7 @@ def test_generate_image_returns_agent_friendly_json() -> None:
     assert data["status"] == "queued"
     assert data["submitted"]["prompt"] == "1girl, solo"
     assert data["submitted"]["batch_size"] == 1
-    assert "get_generation_status" in data["next"]
+    assert "job_status" in data["next"]
     mock_client.post.assert_called_once_with(
         "generate/",
         json={
@@ -192,7 +192,7 @@ def test_generate_image_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "generate_image"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "queue full"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -264,7 +264,7 @@ def test_get_generation_status_completed_includes_image_info() -> None:
     assert data["status"] == "completed"
     assert data["image_id"] == 7
     assert data["image_path"] == "2026-06-11/ComfyUI_00007__job_0.png"
-    assert "get_gallery_image" in data["next"]
+    assert "gallery_get" in data["next"]
 
 
 def test_get_generation_status_completed_video_includes_artifacts_and_artifact_next() -> None:
@@ -290,7 +290,7 @@ def test_get_generation_status_completed_video_includes_artifacts_and_artifact_n
     assert data["ok"] is True
     assert data["status"] == "completed"
     assert data["artifacts"][0]["artifact_type"] == "video"
-    assert "get_gallery_artifact" in data["next"]
+    assert "gallery_get" in data["next"]
 
 
 def test_get_generation_status_failed_surfaces_node_errors() -> None:
@@ -343,7 +343,7 @@ def test_get_generation_status_backend_error_returns_structured_json() -> None:
     assert data["ok"] is False
     assert data["tool"] == "get_generation_status"
     assert data["job_id"] == "job-err2"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "connection refused"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -379,7 +379,7 @@ def test_cancel_job_backend_error_returns_structured_json() -> None:
     assert data["ok"] is False
     assert data["tool"] == "cancel_job"
     assert data["job_id"] == "job-err"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "backend rejected cancel"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -489,7 +489,7 @@ def test_get_gallery_image_backend_error_returns_structured_json() -> None:
     data = json.loads(result)
     assert data["ok"] is False
     assert data["tool"] == "get_gallery_image"
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert data["error"]["message"] == "not found"
     assert data["error"]["details"]["where"] == "backend"
 
@@ -537,7 +537,7 @@ def test_get_gallery_artifact_backend_error_returns_structured_json() -> None:
     assert data["ok"] is False
     assert data["tool"] == "get_gallery_artifact"
     assert data["artifact_id"] == 999
-    assert data["error"]["code"] == "RuntimeError"
+    assert data["error"]["code"] == "tool_execution_failed"
     assert "artifact_not_found" in data["error"]["message"]
 
 
@@ -667,7 +667,7 @@ def test_generate_video_custom_workflow_submits_video_endpoint_with_refs() -> No
     assert data["ok"] is True
     assert data["tool"] == "generate_video_custom_workflow"
     assert data["job_id"] == "video-1"
-    assert "get_generation_status" in data["next"]
+    assert "job_status" in data["next"]
     mock_client.post.assert_called_once()
     assert mock_client.post.call_args[0][0] == "generate/video/custom"
     call_json = mock_client.post.call_args[1]["json"]

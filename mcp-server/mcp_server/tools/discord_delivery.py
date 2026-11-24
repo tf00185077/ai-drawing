@@ -6,10 +6,8 @@ from typing import Any
 import httpx
 
 from mcp_server.config import get_mcp_settings
-from mcp_server.server import mcp
 
 
-@mcp.tool()
 def deliver_generation_result_to_discord(
     job_id: str,
     destination_alias: str,
