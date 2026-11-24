@@ -125,6 +125,31 @@ published handoff base in AID-143's native plan. Task digests, decisions and
 historical reports remain unchanged. Future software is not accepted by this
 kickoff; exact-final-commit PASS still precedes combined feature publication.
 
+## First p1-01/02 delivery result and correction
+
+[Coding AID-157](/AID/issues/AID-157) delivered combined candidate
+`b1082a855a66eedba6a4f11fbd4fcec0e9e867ab`, based on `cee1013`.
+[QA AID-158](/AID/issues/AID-158) independently returned p1-01 PASS / p1-02
+FAIL F2-1 (P1, D2), report/evidence/registry `1001586`. Producer read both actual
+manifests/verdicts and the exact mutant/discovery/request evidence. All official
+uploads, raw Git diffs, bundles and indexed archive contents match immutable Git.
+Correct catalog labels are delivered, but the automated test uses the same
+catalog as its oracle; a ComfyUI admin-to-read mutation remains fully green.
+
+[Correction round 1](../p1-02-mcp-tool-consolidation/repair-round-1.md) repairs
+this already cleared test-checked D2 without changing specifications or product
+behavior. Coding must independently assert all 29 policy risks against catalog
+and discovery, show false-admin-read fails, restore source and pass the full
+MCP suite. Both manifests and a new exact combined candidate go to separate
+independent delivery QA round 2. The live card identities and native prerequisite
+chain are in [AID-143's plan](/AID/issues/AID-143#document-plan).
+
+One p1-02 delivery rejection/correction round 1/next review round 2 is retained;
+one kickoff ambiguity/clarification round 1/kickoff round 2 CLEAR and p1-00a
+history remain separate. Candidate source stays unmerged and p1-03 remains gated
+until both tasks independently PASS a new exact SHA, followed by publication.
+No ordinary CTY confirmation or boundary/threshold escalation is needed.
+
 ## Handoff, delivery and continuation
 
 After CLEAR, Producer creates a Coding card and a separate QA delivery-review
