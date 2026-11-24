@@ -471,3 +471,35 @@ explains why a current checkout and healthy process cannot certify loaded
 revision behavior. The [startup-schema topic](../../memory/backend-startup-additive-schema.md)
 explains whole-schema inventory versus old-column value preservation. Compute/model/lineage topics remain in place. Receipts and
 incident accounting stay in task evidence.
+
+## p1-05 fresh kickoff after accepted prerequisites
+
+[Producer AID-146](/AID/issues/AID-146) read the actual accepted baseline/repair
+and p1-01–04 manifests, independent PASS reports and acceptances after native
+[AID-145](/AID/issues/AID-145) completed. [QA AID-169](/AID/issues/AID-169) now owns
+the independent kickoff at fixed published `d95f1a3607709285d45ac25f6d87a3be53a7ba41`.
+The existing task remains unchanged at SHA-256
+`5ff74c8794101ed1dc1c1346096444d184ca0b6f999271e820ae6829fcc8ea8b`.
+Its complete self-contained assignment/verbatim task was saved in the recipient
+card's native plan at creation and read back exactly. AID-146 depends on that
+actual verdict; no earlier CLEAR transfers to p1-05 and no Coding or delivery-QA
+card is dispatched before its own CLEAR.
+
+The [handoff](../p1-05-mcp-e2e-smoke-mac/kickoff-handoff.md) records accepted
+identities and the independent review's concrete boundaries: retrieved bytes
+versus locators/outside-MCP file reads, bounded same-ID wait/counting, runtime
+preparation/source identity, real versus cached generation, three-run resets,
+and technical delivery versus CTY demo/phase-close decisions. These are review
+questions, not adopted exceptions to owner rules. Producer handles findings
+and any real owner-boundary decision after reading the actual report. QA owns
+its report on its own card and completes even an adverse review.
+
+Retain the adopted Illustrious/default/no-LoRA/local pair, immutable original
+23-unit/eight-incident baseline, prior colocated cached-original/revision proof,
+and all separate clarification/rejection histories. No routine start/resource
+confirmation remains. Source publication does not deploy services. This round
+does document/source/Git/native-handoff checks only; no new software suite,
+product probe/restart, generation or live Gallery bytes. Preserve active runtime,
+private configuration, canonical venvs and all retained data. Three real
+zero-intervention runs, CTY's explicit demo reply and phase-close roadmap review
+remain unaccepted; Phase 2 stays inactive. No new memory topic is needed.

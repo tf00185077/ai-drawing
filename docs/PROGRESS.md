@@ -421,3 +421,36 @@ for fresh p1-05 kickoff and the existing real Mac smoke/demo task. Original
 baseline, cached colocated pair and remote/aesthetic/three-run/phase-close limits
 remain. No ordinary owner confirmation is needed. The existing decisions and
 runtime-source memory cover the durable lesson; no duplicate memory topic.
+
+## 2026-11-24 — p1-05 fresh independent kickoff dispatched
+
+[AID-145](/AID/issues/AID-145) is done. [Producer AID-146](/AID/issues/AID-146)
+read the actual accepted baseline/repair and published p1-01–04 manifests,
+independent PASS reports and acceptances, then created [QA AID-169](/AID/issues/AID-169)
+for the existing p1-05 task's own kickoff at fixed published
+`d95f1a3607709285d45ac25f6d87a3be53a7ba41`. The task is unchanged, SHA-256
+`5ff74c8794101ed1dc1c1346096444d184ca0b6f999271e820ae6829fcc8ea8b`.
+The complete assignment/verbatim task was saved in QA's native plan at creation
+and read back exactly. [Handoff](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-handoff.md)
+records accepted inputs and review boundaries. AID-146 waits through a native
+prerequisite on the recipient-owned QA card, whose next action is the actual
+independent verdict; an adverse completed review is delivered as done for
+Producer triage. No Coding or delivery-QA dispatch before CLEAR.
+
+Kickoff explicitly checks actual bytes versus metadata/outside-MCP file reads,
+bounded same-ID wait/counting, loaded runtime/client preparation, genuine
+ComfyUI versus cached output, three-run resets and CTY demo/phase-close ordering.
+These are review questions, not exceptions or changed acceptance criteria.
+Original 23-unit/eight-incident baseline, prior cached-original/revision host-path
+proof and each earlier kickoff/rejection history remain intact. Adopted
+Illustrious/default, no-LoRA/local remains; no ordinary owner confirmation.
+
+This coordination round verifies source/report/document/Git and native
+recipient/plan/dependency identity only. No new software suite, product probe,
+restart/deployment, real generation/training/worker dispatch or live Gallery-byte
+retrieval. Prior independently observed Backend 1916/124 Windows-only skips and
+MCP 606/two optional export skips remain prior offline results. Active runtime,
+private configuration, canonical venvs and all models/datasets/outputs/Gallery
+records are preserved. Phase 1 stays active; CTY's explicit demo reply and
+phase-close roadmap review remain later gates. Existing memory covers these
+pitfalls; no duplicate topic or new accepted behavior is recorded.
