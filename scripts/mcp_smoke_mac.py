@@ -181,6 +181,7 @@ class Run:
     def __init__(self,config,evidence):
         self.config=config;self.evidence=evidence;self.frozen=fingerprints()
         self.jobs={};self.artifacts=set();self.phase='attempt';self.attempt=0;self.call_count=0
+        self.current=None;self.unknown_admission=False
         self.summary={'result':'interrupted','streak':0,'attempts':[],'jobs':self.jobs,
                       'sampling_audit':'pending independent Backend/ComfyUI corroboration','owner_demo':'pending Producer/CTY'}
 
@@ -191,18 +192,32 @@ class Run:
             result=await client.call_tool(tool,args)
             payload=envelope(result)
             self.evidence.append('calls.jsonl',{'phase':self.phase,'attempt':self.attempt,'tool':tool,'arguments':args,
-                'started':started,'duration_seconds':time.monotonic()-begin,'result':result.model_dump(mode='json',by_alias=True,exclude_none=True)})
-        except Exception as exc:
+                'started':started,'ended':utc(),'duration_seconds':time.monotonic()-begin,'result':result.model_dump(mode='json',by_alias=True,exclude_none=True)})
+        except BaseException as exc:
+            # Cancellation has no result. Retain the attempted call; only SDK
+            # traffic can establish transmission, never an inferred admission.
             self.evidence.append('calls.jsonl',{'phase':self.phase,'attempt':self.attempt,'tool':tool,'arguments':args,
-                'started':started,'duration_seconds':time.monotonic()-begin,'exception':repr(exc)})
+                'started':started,'ended':utc(),'duration_seconds':time.monotonic()-begin,'exception':repr(exc),
+                **({'interruption':repr(exc)} if not isinstance(exc,Exception) else {})})
             raise
         require(fingerprints()==self.frozen,'source changed during call')
         return payload
 
     def status(self,job,payload):
         details=payload.get('data',{}) if payload.get('ok') else payload.get('error',{}).get('details',{})
-        if details.get('job_id')==job and details.get('status') in TERMINAL:
+        if details.get('job_id')==job and details.get('status') in TERMINAL | {'queued','running'}:
             self.jobs[job]=details['status']
+
+    def finish_attempt(self,reason=None):
+        """Complete an open attempt once, including cancellation during unwind."""
+        if self.current is None or 'ended' in self.current:
+            return
+        if reason is not None:
+            self.current.update(qualifying=False,reason=reason)
+            self.summary['streak']=0
+        self.current.update(ended=utc(),calls=self.call_count,streak=self.summary['streak'],
+                            unknown_admission=self.unknown_admission)
+        self.evidence.append('events.jsonl',{'phase':'attempt','event':'ended',**self.current})
 
     async def image(self,client,declared,index,parent=None):
         args={**PARAMETERS,'prompt':PROMPTS[index],'seed':declared['seeds'][index],
@@ -274,10 +289,12 @@ class Run:
                     await self.image(client,declared,1,original)
                     require(self.call_count==8,'extra/missing attempt calls')
                     self.current['qualifying']=True;self.summary['streak']+=1
-                except Exception as exc:
-                    self.current['reason']=str(exc);self.summary['streak']=0
-                self.current.update(ended=utc(),calls=self.call_count,streak=self.summary['streak'])
-                self.evidence.append('events.jsonl',{'phase':'attempt','event':'ended',**self.current})
+                except BaseException as exc:
+                    self.finish_attempt(f'{type(exc).__name__}: {exc}')
+                    if not isinstance(exc,Exception):
+                        raise  # Interruption must never enter recovery or another attempt.
+                finally:
+                    self.finish_attempt()
                 if self.unknown_admission:
                     self.summary['result']='unknown_admission';break
                 if not self.current['qualifying'] and not await self.recover(client):
@@ -332,6 +349,8 @@ def main():
     evidence=Evidence(args.output);driver=Run(config,evidence)
     try: return asyncio.run(driver.execute())
     except BaseException as exc:
+        driver.finish_attempt(f'{type(exc).__name__}: {exc}')
+        driver.summary.update(result='interrupted',streak=0,unknown_admission=driver.unknown_admission)
         evidence.append('events.jsonl',{'phase':driver.phase,'event':'invocation_interrupted','error':repr(exc)})
         if not (evidence.path/'summary.json').exists():
             driver.summary['interruption']=repr(exc);evidence.write('summary.json',driver.summary)

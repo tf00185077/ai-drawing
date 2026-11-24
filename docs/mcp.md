@@ -448,6 +448,15 @@ or unresolved finite recovery stops the invocation, preserving jobs. It never
 cancels, resubmits or changes target. Six attempts maximum; stop after three
 consecutive successes. A timeout fails qualification without proving job failure.
 
+SIGINT/cancellation records the interrupted call with its arguments, start/end,
+duration and interruption rather than inventing a response. SDK traffic records
+whether the request was sent. The active attempt ends once, nonqualifying, with
+zero streak and explicit admission uncertainty. Known job identities and their
+last observed status remain intact. Interruption exits immediately without
+recovery, audit or another submit; the exclusive evidence directory cannot be
+resumed. Any later same-ID read-only recovery is separate disclosed work. An
+unknown admission without a recovered ID prohibits a new attempt or resubmission.
+
 The output directory must be new and is never overwritten. `sdk-messages.jsonl`
 contains complete sent/received SDK JSON-RPC messages and actual content payloads;
 `calls.jsonl` records phase/attempt, UTC, durations, arguments and complete SDK
