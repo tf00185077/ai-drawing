@@ -1,267 +1,241 @@
-Verdict: AMBIGUITY
-Review round: 1 (fresh p1-05 kickoff)
+Verdict: CLEAR
+Review round: 2 (specification and implementability only)
 
-Reviewed source: **`d95f1a3607709285d45ac25f6d87a3be53a7ba41`**.
-Task SHA-256: **`5ff74c8794101ed1dc1c1346096444d184ca0b6f999271e820ae6829fcc8ea8b`**.
-Date: 2026-11-24 UTC. Independent QA: [AID-169](/AID/issues/AID-169).
+Reviewed source: **`4fc3ff25eb95e191ec45432c11f82055b914dae5`**.
+Task SHA-256: **`c8bbbe8215f440e8859a5bc0bedf3febf4686f42ea0178fc82da871b041b8698`**.
+Clarification 1 SHA-256: **`f172d2098b69308b62a7cff7dc9c9cba7ed6bc71b3161a08b86ed9e9aa20e859`**.
+Full MCP decision SHA-256: **`bf94f8b4277e7a264770b4788d2facfa2fbcdd7ec216538c429865b6c693e395`**.
+Date: 2026-11-24 UTC. Independent QA: [AID-170](/AID/issues/AID-170).
 Producer: [AID-146](/AID/issues/AID-146).
 
-**Do not dispatch implementation under this unchanged specification.** K5-1 and
-K5-2 below are P1 contract ambiguities. Producer owns the smallest clarification
-or prerequisite task and a fresh independent kickoff. This completed adverse
-review is the deliverable of AID-169; it is not a delivery rejection, an owner
-question, or evidence of unimplemented p1-05 behavior.
+**K5-1 and K5-2 are resolved at specification level.** The refreshed task and
+normative clarification supply implementable means and observable acceptance
+criteria for all four items. No remaining blocking ambiguity or owner-boundary
+change is demonstrated. No additional owner question or specification change is
+needed before Coding. This CLEAR permits the clarified implementation handoff;
+it certifies no unimplemented behavior, deployed service, qualifying run or phase
+exit. There is no p1-05 `manifest.md` at this source.
 
 ## Independent owner reading and comparison
 
-My reading: the delegated Illustrious/default, explicit-local, no-LoRA Mac flow
-must produce a real original and traceable revision, retrieve their image bytes
-through MCP, and succeed three consecutive times with zero manual fixes. Printed
-IDs/paths, metadata, mock output and the earlier cached original do not establish
-that result. All attempts and interventions remain visible. CTY explicitly
-replies to the demo and alone judges aesthetics; CTY reviews the roadmap before
-Phase 2 activation. Routine technical choices need no new owner confirmation.
+My reading: an agent must use the real SDK stdio MCP flow on the local Mac to
+obtain and decode both an actually sampled original and a fresh, persistently
+traceable revision, three consecutive times without manual fixes or client
+retries. Metadata and paths alone cannot establish retrieval. Every unsuccessful
+attempt, preparation, recovery and audit remains visible under the original
+23-unit/eight-incident baseline. Routine technical choices inside Phase 1 are
+delegated. CTY explicitly replies to the reviewed demo and alone judges
+aesthetics; a later roadmap review precedes Phase 2.
 
-[Owner reading](kickoff-evidence/owner-reading.json) was recorded from the owner
-request, roadmap and plan before opening the repository task. The wake had
-already supplied the task verbatim; no blind-reading claim is made. The task
-matches the intended outcome, adopted resources and Mac-first boundary, but its
-allowed script-only implementation cannot currently retrieve bytes through MCP,
-and its no-retry/count wording does not reconcile bounded-wait recovery or the
-baseline's preparation accounting.
+The [owner reading](kickoff-round-2-evidence/owner-reading.json) was recorded from
+the actual owner request, roadmap, team rules and prior adverse report before
+opening the repository task. The authenticated wake already supplied the task
+and clarification; this is not a blind-reading claim. I read the complete task,
+clarification and MCP decision, and the accepted prerequisite manifests,
+independent reports and acceptances. The difference from the original proposal
+is now an explicit bounded content feature and strict attempt/accounting policy,
+which implement the existing owner goal without changing it.
 
-No p1-05 `manifest.md` exists at the pinned source. This is a kickoff review,
-not an exact-final-feature delivery review. I used my own run-scratch worktree
-on `aid-169-p1-05-kickoff`, not the shared checkout or Coding's runtime tree.
-The [source audit](kickoff-evidence/source-audit.json) pins input hashes and
-accepted evidence identities. During this review Producer advanced shared main
-to `401587aeefa1d15ede3addec4099639bf972f859` with dispatch/status documentation;
-I did not update or review against that moving checkout. The report/evidence commit and report byte hash
-are pinned by the external receipt and completion on this recipient issue;
-a commit cannot embed its own SHA.
+[CTY's delegated instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md)
+permits routine technical choices inside current boundaries. Static PNG delivery
+on the existing Gallery read, four-step 512×512 smoke parameters and fresh seeds
+are such choices. They do not add a phase, compute target, workflow engine or
+resource acquisition, excuse an outside-MCP read/retry, promise performance, or
+transfer aesthetic/phase-close authority to QA.
 
-## Blocking contract findings
+I reviewed my own run-scratch worktree on `aid-170-p1-05-kickoff-round-2`, pinned
+to the full source above. Shared main and AID-151's runtime/private configuration
+were untouched. The [source audit](kickoff-round-2-evidence/source-audit.json)
+pins the relevant Git blobs and byte hashes. It verifies the 25-file publication
+commit is documents only; the 26-file delta from round-1 source also includes
+the earlier kickoff handoff. All tracked non-document inputs are unchanged.
 
-### K5-1 — actual retrieval is missing from the permitted MCP contract (P1, D1/D3)
+## Resolution of the actual prior findings
 
-Evidence: task lines 4, 10 and 13 require retrieval through the listed MCP flow,
-but D1 line 19 only asks for printed IDs/paths. `tools/intents.py:73` exposes
-`gallery_get(image_id, artifact_id)` and dispatches metadata reads; `tools/gallery.py`
-projects locators/metadata, not image content. `docs/mcp.md:312` explicitly says
-host-byte consumption is a separate file operation. `wait_for_job` constructs
-locators without reading bytes. Server registration has no resource reader that
-fills this gap.
+### K5-1 — resolved by a bounded canonical-artifact PNG read
 
-The independent [registered probe](kickoff-evidence/source-contract-probe.log)
-finds 31 tools, zero MCP resources/templates, text-only Gallery metadata and one
-mocked metadata GET. A proposed `include_bytes` argument is rejected before any
-second HTTP request. This proves the current contract's boundary; it is not an
-implemented byte-read feature or a live artifact test. p1-00a's accepted manifest,
-PASS and acceptance explicitly disclose `Path(...).read_bytes()`/decode outside
-MCP for its colocated Mac client.
+The actual [round-1 report](kickoff-review-round-1.md), also read back from its
+[official AID-169 upload](/api/attachments/69962b71-71e0-4605-a241-b78410dc0390/content),
+found a missing means of actual MCP retrieval. The refreshed task now explicitly
+includes that missing feature. Current `tools/intents.py::gallery_get` still has
+only image/artifact selectors; `tools/gallery.py` still projects metadata. That
+is the expected starting point, not a new defect or proof of byte delivery.
 
-Concrete failure: Coding prints two paths and calls that retrieval, or adds a
-client filesystem/HTTP read and calls it zero interventions. The first fails
-the owner's retrieved-image gate; the second fails unchanged D3/phase rules.
-An automatic external read is still outside MCP. Neither is an allowed exemption.
+Clarification 1 specifies each boundary needed to implement and test the change:
 
-Smallest recommended resolution: Producer explicitly scope a bounded byte-read
-extension of the existing read intent, or a prerequisite providing it, before
-the smoke driver. Keep one Gallery intent/risk and the metadata default. For
-example, an explicit canonical-artifact content option could return bounded PNG
-bytes encoded in the common envelope, with MIME, byte length and digest. Set the
-exact selector, payload, byte/decode limits and failure/recovery semantics in the
-clarified contract. Resolve only the Backend-owned canonical artifact under the
-configured Gallery authority/root; reject arbitrary paths/URLs, traversal and
-symlink escapes. Preserve canonical IDs, video/legacy metadata behavior and
-unchanged job status. No silent copying, remapping, upload or resubmission.
-This is a proposal, not an approved schema or implementation instruction.
+| Boundary | Independent assessment and later proof |
+|---|---|
+| Selection and compatibility | `include_content` defaults to false. True requires one positive canonical artifact ID and rejects image, absent/multiple or invalid selectors in the common envelope before access. Existing metadata/video/legacy behavior remains. Registered validation must assert zero Backend/file calls on rejection; schema/SDK discovery must retain 31 intents and the literal Gallery read risk. Invalid types include boolean/coercible selectors that do not represent the required canonical ID. |
+| Backend identity and authority | The existing artifact route supplies ID, kind, MIME, Gallery mapping, job and revision context. Verify returned canonical identity; never fall back to an image ID or accept caller path/URL/root. No Backend redesign is required. Tests must make a mismatched ID fail, even if a readable PNG exists. |
+| Actual opened file | Resolve configured `MCP_GALLERY_DIR` to its actual host root and establish the supported Gallery relationship. Preserve nested/Unicode identity. Reject nonregular files, traversal, symlink escape, outside/container-only or contradictory mappings. A lexical prefix or earlier resolve alone cannot prove containment of the file actually opened; the implementation must preserve the specified boundary through opening. Existing locator construction is useful metadata logic, not sufficient byte-read proof. No basename substitution, copying, migration or arbitrary URL request is allowed. |
+| Byte/decode limits | A bounded read of at most 2,097,153 bytes detects the 2,097,152-byte maximum. Nonempty static PNG only, declared image/png, dimensions 1–2048 and at most 4,194,304 pixels; check format/dimensions before full decode and require successful full decoding/one frame. Signature or extension alone cannot pass. Test exact byte boundary, oversized streams, dimension rejection before expensive decode, corruption, empty/non-PNG/animated input, MIME conflict and unreadability. A minimal declared decoder dependency is allowed and its setup belongs in preparation. |
+| Successful payload | Preserve ordinary metadata under data; add exactly content.encoding/mime_type/byte_length/sha256/width/height/base64 as specified. Decode standard unwrapped base64 and independently recompute exact bytes, lower-case digest, length and dimensions. Text/structured envelopes must agree. No conversion, thumbnail or rewritten bytes. Pure validation of the received MCP payload is permitted; another filesystem/HTTP artifact fetch is not. |
+| Errors and state | Existing Backend lookup codes/hints remain. Other failures use artifact_content_unavailable, artifact_content_too_large or artifact_content_invalid according to the normative categories, with no partial success/content. Keep the requested canonical ID and safe available metadata; unsafe locators/contents must not leak through error details. Hints inspect the same artifact/configuration or use metadata-only reads. No completed-job failure, cancellation, regeneration or resubmission. |
 
-Later proof must include both images' actual payloads received through the SDK
-stdio channel, lengths/digests and successful decoding, with IDs/paths/lineage.
-Decoding those received bytes is client-side validation of an MCP result, not a
-second host-file or HTTP fetch. Meaningful byte-identity/missing/oversize/unsafe
-cases and a stdio round trip must guard the chosen extension. Producer may adopt
-an in-scope technical solution under delegated authority; weakening MCP-only or
-accepting paths as bytes would change the owner gate.
+These are bounded extensions of an existing read capability. The scope expressly
+excludes general file transfer, arbitrary remote retrieval and video/legacy
+content. No residual K5-1 clarification is needed. Later QA must inspect the
+actual implementation and prove the opening/decoding/error boundaries; this
+kickoff does not presume them implemented.
 
-### K5-2 — wait recovery and preparation need explicit qualification/accounting (P1, D1/D3)
+### K5-2 — resolved by literal qualification and complete accounting
 
-Evidence: unchanged D3 says no retry; `docs/roadmap/ROADMAP.md:18` counts retries,
-workarounds and outside-MCP calls. Accepted wait defaults/clamps to a 50-second
-overall budget and tells the caller to repeat with the same ID on timeout
-(`docs/mcp.md:208`, `:273`; `tools/wait_for_job.py:63`). Its internal GET polling
-is within the MCP tool. A second client tool call is a separate visible action.
-The baseline counted 11 repeated status calls, plus environment setup and
-pre/post-run diagnostics, for 23 units across F1–F8. The raw transcript audit
-reconciles 90 events, 17 tool calls and 12 same-job status reads. A run can time
-out while the Backend job remains running or even completed during enrichment.
+The prior report found that repeated waits and omitted preparation could falsely
+appear to meet zero retries. The clarification now gives an explicit state and
+accounting policy, preserving the accepted read-only wait behavior:
 
-Concrete failure: a driver loops on timeout until success, hides extra waits
-inside a helper and reports zero retries; or setup/relaunch and outside-MCP
-checks move outside a newly chosen clock and disappear from the F1–F8 comparison.
-A job taking longer than one bounded wait makes these interpretations observable.
-The historical original required roughly two minutes of polling; that is not a
-measurement of current performance and does not prove every future run will time
-out. Increasing the requested wait above 50 does not remove the clamp.
+- Freeze driver/product source and declare all invocation inputs, request
+  references and fresh seed allocations before qualification. Identify loaded
+  Backend/MCP/ComfyUI source, interpreters/imports and effective non-secret data,
+  model and authored-data roots during disclosed preparation. Health, HEAD and
+  cwd alone are insufficient. Any necessary controlled replacement first checks
+  active work, preserves private snapshots/paths/data and audits complete startup
+  schema plus old-value preservation. Never relaunch for a documentation SHA.
+- An attempt starts immediately before health and uses the exact eight-call
+  flow: health, list_resources, original generate/wait/content, revision
+  generate/wait/content. Each image has one submit and one bounded wait; internal
+  tool polling is distinct from another client call. End at successful revision
+  content/lineage validation or the first disqualifying event. The invocation
+  permits at most six attempts and stops on three consecutive successes.
+- Timeout/error/failure/cancellation/nonterminal response, uncertain admission,
+  extra client call to salvage a result, outside-MCP product operation, manual
+  change, invalid bytes, wrong lineage or interruption ends qualification and
+  resets the streak. It never reclassifies an unknown/running/completed Backend
+  job as failed. Retain all events, existing IDs and earlier outputs.
+- Recovery is a separately recorded, same-ID read-only status/wait sequence,
+  at most six calls per possibly outstanding known job, each within existing
+  tool policy and waits at most 50 seconds. Establish all prior jobs terminal
+  before another declared attempt. Unknown admission without a recovered ID,
+  or exhausted recovery with unresolved state, stops the invocation. No cancel,
+  blind resubmission or target fallback; recovery cannot rehabilitate a failed
+  attempt. This is duplicate avoidance, not a new idempotency guarantee.
+- A qualifying streak has six distinct new jobs/artifacts and six correlated
+  ComfyUI prompts with actual sampling. New IDs/seeds alone are insufficient;
+  retain graph and sampling/cache evidence. Original and revision share a
+  per-pair request_ref, use changed brief_revision and a new generate with the
+  original canonical parent. Gallery reads must contain fresh persisted context
+  without context errors. A new SDK session independently corroborates persistence
+  after results. All post-result Backend/ComfyUI/file reads are audit work,
+  disclosed separately and included in totals; failed audit invalidates exit
+  evidence. A product repair requires renewed applicable review and a fresh
+  qualifying streak under the fixed source, retaining the earlier record.
 
-Smallest recommended resolution, retaining the literal zero-retry gate:
+The actual client call limit is still unverified. Fifty seconds remains the
+unchanged overall wait fallback, including lookup/enrichment/preparation. The
+four-step workload guarantees neither completion within one wait nor acceptable
+art. The implementation may honestly exhaust its budget or stop unresolved;
+that is a non-exit result, not a reason to increase the limit, hide a retry or
+waive a gate. There is no remaining K5-2 policy gap requiring Producer/CTY input.
 
-- Declare qualification start/end and a finite attempt/recovery budget before
-  execution. Each qualifying attempt uses one submit and one bounded wait per
-  image. Internal tool polling is not another client call. Every client call,
-  failure, interruption and sequence reset is timestamped and retained.
-- A timeout, uncertain submit, extra retry, external workaround or manual change
-  makes that attempt nonqualifying and resets the consecutive-success counter.
-  Timeout does **not** label the job failed. Persist the known job ID; recover
-  by read-only same-ID status/wait outside the qualifying attempt, retaining all
-  recovery calls and their intervention accounting. Never blindly submit again,
-  silently cancel, or fall back to another target. With uncertain admission and
-  no recovered ID, stop explicitly rather than create a potential duplicate.
-- Subsequent attempts are explicitly new requests, not hidden reruns of the
-  uncertain request. Establish the old job's state before new work, preserve its
-  outputs/records, and count a success only after both bytes and lineage validate.
-  Retain every failed attempt before/between the final three; no log truncation.
-- Publish a preparation ledger separately from the request-to-result count and
-  reconcile it against every original baseline row/counting rule. One-time
-  dependency/client/runtime binding is disclosed as preparation, not silently
-  called eliminated friction. If such intervention is needed during an attempt,
-  it disqualifies it. Keep the original 23-unit/eight-incident baseline immutable.
+## Every refreshed Done when item and later evidence
 
-This strict policy is implementable without waiving the owner rule; it may expose
-that the real workload cannot qualify within one accepted wait. That must remain
-an honest non-exit result requiring a separately reviewed solution. If Producer
-instead wants repeated bounded waits to count as zero retries, it must reconcile
-the existing owner rule explicitly through the proper decision path; QA cannot
-create that exemption. No question is being sent to CTY in this review.
+No Coding manifest supplies levels yet. Proposed P1 levels below reflect false
+retrieval, lineage, exit or owner-acceptance consequences; there is no demonstrated
+P0 issue. These classify future proof, not current feature certification.
 
-## Original Done when classification and future evidence
-
-No levels were supplied by Coding because there is no manifest. These proposed
-P1 levels reflect false phase-exit/lineage/owner-acceptance scenarios. There are
-no demonstrated P0 issues. Manual evidence remains manual; passing offline tests
-does not replace a real run. Owner-demo remains unchecked by technical QA.
-
-| Item | Check / proposed level | Kickoff assessment | Evidence later required |
+| Item | Check / proposed level | Kickoff result | Required later evidence |
 |---|---|---|---|
-| D1 — three consecutive real Mac runs, IDs/paths, reset | manual / P1 | AMBIGUITY K5-1/K5-2 | Frozen driver/source and SDK command/configuration; complete timestamped attempts/calls/results and reset counter; three qualified original/revision pairs (six distinct new jobs and canonical artifacts), adopted checkpoint/template/local/explicit `loras=[]`; decoded MCP bytes, IDs and supported paths; actual ComfyUI execution/cache evidence. No deterministic replay counted as fresh diffusion execution. |
-| D2 — each revision's persisted Gallery parent | manual / P1 | Implementable in current source; no independent ambiguity | New generate with shared per-pair request_ref, changed brief_revision, canonical `parent_artifact_id`; fresh `gallery_get(artifact_id=...)` records for both artifacts in every run, including Backend-derived parent job/request/brief. Re-read persisted records in a new session, with those verification calls disclosed. An image ID or `gallery_rerun` is insufficient. |
-| D3 — zero fixes/retries/outside calls, all friction rows | manual / P1 | AMBIGUITY K5-1/K5-2 | Reviewable script/guide, full SDK stdio evidence, complete call/intervention/preparation/recovery ledger, F1–F8 comparison with original unit rules. No client host-byte fetch, hidden loop, resubmission, envelope fallback, omitted failure or setup exemption. Focused meaningful driver/contract tests supporting the real manual proof. |
-| D4 — CTY sees demo/both images and replies | owner-demo / P1 | Clear owner authority; UNCHECKED, later gate | Producer presents reviewed images/revision/Gallery records and technical evidence through the existing project-channel path; preserve CTY's explicit reply with message/source identity. A bot send receipt, Coding statement or QA technical PASS cannot stand for the reply/aesthetic judgment. |
+| D1 — optional canonical static PNG bytes | test / P1, with manual source/security inspection | CLEAR, unimplemented | Meaningful tests through actual registered validation/wrappers/client, transport/storage fixtures only, plus real SDK stdio to a test Backend with synthetic PNG. Prove exact received bytes/identity, default metadata/video/legacy compatibility, selector-before-access rejection, limits and full decode, safe actual opening, nested/Unicode paths, missing/unreadable/invalid/animated/MIME cases, conflicting identity/locators, error privacy and no write/submit. Exact implementation/declared dependencies, applicable affected suites/16 standing guards and deliberate fault/restoration evidence in the manifest. |
+| D2 — three consecutive real original/revision pairs | manual / P1, supported by tests | CLEAR, unexecuted | Frozen driver and real source-bound SDK stdio command; declared Illustrious/default, local, loras=[], 512×512/batch 1/four steps/CFG 7/Euler/normal, prompts and fresh seeds. Complete timestamped SDK messages/commands/stderr for all attempts, resets and IDs; six distinct jobs/artifacts/prompts with actual sampling and correct compiled inputs. Both MCP payloads per pair decode with matching length/digest/dimensions. Persisted canonical parent/job/request/brief fields and new-session corroboration, plus independent Backend/ComfyUI audit. No fixture/cache-only substitution. |
+| D3 — strict no-fix/no-retry qualification and full friction | test + manual / P1 | CLEAR, unimplemented/unexecuted | Tests of the actual driver boundary reject missing/invalid bytes, digest/length mismatch, wrong stored parent, nonterminal/failed/cancelled/timeout and uncertain-submit states. Assert one submit/wait, no hidden status salvage/resubmit/fallback, reset/retained failures, six-attempt stop, finite same-ID recovery and stop on unknown admission/unresolved jobs. Inspect full source/logs/ledgers independently; reconcile preparation, attempts, recovery, audit and total with every original F1–F8 unit rule. Honest non-exit remains possible. Offline state-machine checks cannot replace D2. |
+| D4 — CTY explicitly replies to reviewed demo | owner-demo / P1 | CLEAR, UNCHECKED/pending later owner-demo | Producer presents the exact technically reviewed candidate's images/revision/Gallery records in the existing project channel and records CTY's actual explicit reply/message/source identity. A bot send receipt, silence, Coding assertion or QA technical PASS cannot satisfy it. CTY alone judges aesthetics. |
 
-## Required execution and handoff details (no additional demonstrated blocker)
+For D1/D3, later mutation checks must reach the meaningful boundary: for example,
+wrong bytes/digest, bypassed root/size checks, accepted invalid lineage or a
+second client wait must make the corresponding tests fail. A duplicate state
+machine or patched tool callable is not proof of the actual driver. There is no
+appropriate product fault injection now: neither requested feature exists yet.
 
-**Runtime/client binding.** Before qualification, identify the Backend, MCP and
-ComfyUI processes/interpreters/source/import paths and effective non-secret
-DB/Gallery/output/model/authored-data roots. The accepted active Backend launch
-is `eaf11b8f75fb573db3d0a4e858973d59385b5087`, not newly published `d95f1a3`.
-Record pre-run preparation and verify loaded generation/revision/health/worker
-contracts, SDK tool schemas and common structured/text envelopes. Health/current
-HEAD/cwd alone prove no loaded revision. Canonical venvs and AID-151's private
-configuration/worktree stay intact until a controlled, separately evidenced
-replacement. If replacement is needed, first check active generation, trainer,
-ComfyUI work and preserve it; pin all effective paths and configuration, preserve
-private snapshots, audit complete additive schema and old-value preservation.
-Use the existing setup/memory procedure; never restart merely to change a docs SHA.
-Persistence during the actual pairs is the final contract proof.
+## Baseline, prerequisites and preservation
 
-**Real execution versus cache.** Predeclare fresh seeds/prompts using existing
-controls, retaining the same adopted checkpoint/template and no LoRA. Retain
-compiled graphs, actual Backend/ComfyUI job/prompt correlation and evidence of
-sampling execution/cache disposition for all six outputs. Pre-enabled logs or
-post-result audit can corroborate execution without an extra client operation
-inside the counted flow; disclose those audit operations in the baseline
-reconciliation. Do not flush caches or change models as an unreported fix.
-The p1-00a deterministic cached original is historical evidence, never one of
-these three runs. Distinct artifact IDs alone do not prove fresh computation.
+The audit rechecks all 12 accepted manifest/report byte comparisons against their
+actual delivery/QA commits and all six acceptance documents against round-1
+source. Their limits remain unchanged:
 
-**Client and driver.** Use the real MCP SDK `stdio_client`/`ClientSession` and
-an explicitly source-bound MCP subprocess with interpreter/cwd/URL/Gallery
-configuration. `list_resources` is this project's tool, distinct from MCP's
-resource discovery. Refresh tools; use `data` once, canonical artifact selector,
-explicit local target and `loras=[]`. Preserve stderr, request/result IDs, UTC
-and durations, settings relevant to any client call timeout, and all failures.
-The calling-client limit remains unverified; 50 seconds is fallback policy.
-Do not replace SDK transport with imports, mock Backend for qualifying runs,
-or accept mocked validation as real generation. Keep evidence redacted.
-
-Minimal driver tests should reject metadata-only/undecodable bytes, mismatched
-parent IDs, failed/cancelled/nonterminal/timeout results and uncertain admission;
-assert no duplicate submit/fallback, correct counter reset, retained failed
-attempts and exact envelopes/selectors. Test the actual driver boundary, rather
-than a second implementation of its state machine. If Gallery content behavior
-changes, add the meaningful security/byte tests in K5-1. Later delivery QA runs
-all affected suites and standing guards. This kickoff needs no full-workspace
-build and does not certify new registry rows.
-
-**Owner/demo ordering.** The existing reviewspec owner-demo convention supplies
-a workable route: Coding hands off the exact final technical candidate/evidence;
-independent delivery QA reviews it, reports D1–D3 and leaves D4 unchecked. Any
-technical PASS must explicitly remain pending the owner-demo item. Producer
-then presents that reviewed candidate/evidence, obtains CTY's actual reply and
-records D4 in acceptance. Do not close the whole milestone by self-certification
-or strand Coding/QA waiting on a reply only Producer owns. Subsequent software
-changes require a new exact-final-commit review. The phase-close roadmap review
-is separate from a demo reply and precedes any Phase 2 activation. Neither gate
-is met by this kickoff. Producer should write this ordering into the handoff.
-
-## Accepted prerequisites and preserved accounting
-
-I read the actual published manifests, reports and acceptances, not just their
-native done statuses. The indexed source packet includes these fixed inputs.
-
-| Input | Accepted result and limit |
+| Input | Accepted evidence and retained limit |
 |---|---|
-| p1-00 | Original 23 intervention units/eight incidents; one real original, metadata only, relative-URL fetch failed locally, revision not submitted and live revision context null. Original raw transcript/counts remain unchanged. |
-| p1-00a | Corrected `b6d58468147e11a21b3d7a26ea25ed4353a28a28`, independent PASS `3d5d8902a89a8c3c8994ed89e944fcaee0260577`. Identified launch, persisted pair and decoded unmodified host paths for colocated client; original cached and bytes outside MCP. One prior rejection/correction 1/review 2 stays separate. |
-| p1-01/02 | Combined corrected `616f67ff68fc27070e85861e94d70de1baf5082a`, independent round-2 PASS `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`. Common envelopes, literal risks/intent/mode/namespace preservation. One p1-02 delivery rejection/correction 1/review 2 and its separate kickoff clarification history remain intact. |
-| p1-03 | `77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`, PASS `d088c3258ab782623631d60daaaccc8ce6fcb6dc`. Bounded wait, honest terminal/timeout states and supported locators; no byte/client-access proof. Client limit unverified, 50-second overall fallback. Same-ID reads, never timeout cancellation/submission. |
-| p1-04 | `72f483418524a613fb104b92ab483e39f7432bfc`, PASS `3422ccda7a66514fe7dadf7d3c8785a5718ba472`; published `d95f1a3`. Exactly 31 intents; configured/observed worker identity distinct, unknown reads not empty. Sequential five-second reads, no total/atomic health deadline; no live worker required for this local task, registry/heartbeat/scheduling stay Phase 3. |
+| p1-00 | 23 units/eight incidents; original completed, metadata only, relative-URL client fetch failed before HTTP; revision not submitted and live context null. No-repair baseline stays immutable. |
+| p1-00a | Corrected b6d5846 / QA 3d5d890: identified launch, original/revision lineage and decoded colocated host paths. Original used deterministic cache; byte reads were outside MCP. One prior rejection/correction 1/review 2 stays separate. |
+| p1-01/02 | 616f67f / QA 28cd451: common envelopes, literal risks, intent/mode/capability/namespace preservation. One p1-02 delivery rejection and separate kickoff history stay intact. |
+| p1-03 | 77e3e3c / QA d088c32: bounded read-only wait, truthful terminal/timeout/identity/locators; client limit unverified, 50-second fallback. No real wait/byte proof. |
+| p1-04 | 72f4834 / QA 3422ccd: 31 intents, configured/expected/current worker identity distinct and unknown reads not empty. Health is reachability with sequential five-second reads, not loaded-source/readiness proof. No live Windows worker is required for this local task. |
 
-F1 setup and F2 client binding need disclosed repeatable preparation; F3 uses the
-accepted uniform envelope; F4 source identity and F5 persisted revision require
-actual runtime binding; F6 requires honest bounded-wait/retry accounting; F7
-health/status visibility does not attest sampling execution; F8 requires actual
-MCP bytes. Explaining a remaining incident does not waive zero fixes. Preserve
-all eight rows and their original units (1,1,1,6,1,11,1,1), not a replacement
-baseline. All 16 standing registry entries and their history remain unchanged.
+The F1–F8 comparison remains explicit, with original units **1,1,1,6,1,11,1,1 =
+23**. F1 test/dependency setup and F2 client/source/root binding are preparation;
+F3 uses the delivered common envelope; F4/F5 require actual loaded-source and
+persisted revision proof; F6 applies the strict single-wait rule and counts
+recovery visibly; F7 sampling/cache corroboration belongs in the disclosed audit;
+F8 requires MCP-returned bytes. Setup/relaunch/diagnostic work does not disappear
+from the complete total. Only the request-to-result qualifying-attempt count can
+be zero while preparation/audit totals are nonzero. No whole-round zero claim
+follows. Original records and all failed attempts remain inspectable.
 
-## Checks actually run and limits
+All 13 round-1 report/evidence files and the original task are byte-identical at
+their preserved paths; the official prior report also matches byte-for-byte.
+All 16 registry rows remain unchanged. This kickoff does not run the registry
+builder or certify p1-05. History remains **one kickoff ambiguity event/two P1
+findings, clarification 1, kickoff round 2 CLEAR; zero implementation delivery
+rejections**. Earlier tasks' histories remain separate.
 
-Exact argv, allowlisted environment, cwd, UTC times, exits and full outputs are
-in [kickoff-evidence](kickoff-evidence/README.md). Unchanged canonical component
-interpreters load this pinned worktree. `pytest-timeout==2.4.0` was installed
-**offline from cache into run scratch only**; no venv/dependency file changed.
-Pytest used isolated roots below run-owned TMPDIR and `--timeout=60`.
+## Checks actually performed and limits
 
-| Check | Actual outcome |
-|---|---|
-| `python kickoff-evidence/run-checks.py.txt` → source-contract-probe.py.txt | Exit 0; pinned task hash, actual registration/schema/resource absence, metadata-only Gallery and rejected content option, baseline transcript/count reconciliation. HTTP transport mocked only. |
-| MCP catalog + formal SDK stdio tests + Gallery namespace test + bounded timeout/same-ID/clamp cases (exact nodes in receipt) | **32 passed in 2.10s**, exit 0. Stdio connects only to its ephemeral test Backend; other HTTP is mocked. |
-| Backend `test_revision_context.py::test_root_feedback_child_survives_real_recording_restart_and_http` | **1 passed, 1 existing warning in 0.50s**, exit 0. Real FastAPI/SQLite/recording/persisted re-read, synthetic execution and PNGs; no live service or generation. |
-| Fixed-input/source audit and report package integrity | Receipts pin immutable inputs, report/evidence SHA, exact binary/full-index patch and verified prerequisite Git bundle; final package checks are in the external integrity receipt. |
+The new [verification command](kickoff-round-2-evidence/verification-command.json)
+and [full output](kickoff-round-2-evidence/verification-command.log) record UTC,
+argv, cwd, duration and exit **0** for `python -B .../verify-inputs.py.txt`.
+The audit checks pinned hashes, fixed Git/AST/source contracts, input equality,
+prior official report readback, preserved history and baseline/registry counts.
+An exploratory rg command named the nonexistent tools/generation.py before the
+actual tools/generate.py was read; this was source navigation, with no product
+change. The audit's field name was aligned to the existing receipt schema before
+its first execution. Both actual audit invocations passed; the final invocation
+has the retained command/output receipt. No product or dependency fix was made.
 
-These are implementability checks only. I did not rerun full Backend/MCP or any
-Frontend/build/Windows suite; the assignment explicitly scopes kickoff to small
-source checks. Prior accepted full results (Backend 1916/124 skips/76 warnings,
-MCP 606/two optional skips, 51-call/107-GET health probe, 28 fresh wait cases,
-ten restored faults) remain attributed to prior QA, not to this run. No source
-mutation experiment is appropriate for an unimplemented script or docs-only
-kickoff. No registry builder/certification was run or changed. One source-audit helper
-initially assumed a registry status column; reading the actual generated table
-resolved that parser error without changing candidate files. The final audit
-passes all 12 accepted-file equivalence checks and preserves 16 active rows.
+Applicable historical evidence is reused with attribution, as the assignment
+requires for this documents-only kickoff. Backend, MCP, Frontend, worker, bot,
+scripts, prompt library and style-preset trees, all tests, dependency declarations
+and root non-document inputs match the earlier fixed source. This establishes
+source-check applicability; it does not assert installed-package/process equality
+or manufacture a current test result.
 
-**Running service:** none probed, restarted, deployed or reconfigured.
-**Real generation/training/download/worker dispatch:** none.
-**Generated-artifact retrieval:** none; only offline metadata/fixture checks.
-No cancellation, live recovery, duplicate prevention/idempotency, remote bytes,
-worker readiness, aesthetics, owner demo or phase exit is certified. No model,
-dataset, output or Gallery record was removed. Shared main remains untouched;
-this commit adds only the independent report and its supporting evidence. No
-merge/push or cross-agent issue write is required or performed.
+- **Offline tests:** no new pytest/full-suite/build run. Actual AID-169 receipts
+  retain 32 selected MCP cases passed in 2.10s (real registration/SDK stdio with
+  test-only HTTP and mocked transport), one Backend persisted-route/SQLite case
+  passed with one warning in 0.50s (synthetic execution), and the metadata-only
+  registered source probe. These remain earlier results. Actual AID-168 full
+  Backend 1916 passed/124 Windows-only skips/76 warnings and MCP 606 passed/two
+  optional skips, ten restored faults and all standing guards remain prior
+  independent source evidence, not p1-05 acceptance or a fresh run here.
+- **Running product service:** no probe, restart, deployment, reconfiguration or
+  source-identity assertion. No product dependency installation or venv change.
+- **Real generation/training/download/worker dispatch:** none. No cancellation,
+  live recovery, cache/parameter manipulation or duplicate submission.
+- **Generated-artifact retrieval:** none. Only the prior review-document
+  attachment was downloaded; that is not a live Gallery/image read.
 
-Producer reads this actual adverse verdict, resolves the bounded contracts and
-obtains fresh CLEAR before dispatch. The eventual feature still needs independent
-exact-final-commit delivery review, CTY's explicit demo reply and phase-close
-roadmap review. No Phase 2 expansion is authorized.
+Frontend/native Windows/runtime/decode/performance/aesthetic checks are not
+performed. Current metadata source is not relabeled as a content feature.
+Models, datasets, outputs, Gallery records and private configuration remain
+preserved. QA writes only this current kickoff report and round-2 evidence;
+no task/clarification/decision/manifest/registry edit, merge/push, parent write,
+cross-agent issue write or CTY message is part of this review.
+
+## Handoff and acceptance order
+
+Producer can now hand the clarified task to Coding, then arrange independent
+exact-final-commit delivery QA through native prerequisites. Coding supplies its
+manifest/source/tests and complete real evidence on its own card; a completed
+adverse QA verdict is still that review card's done deliverable. Later software
+changes require a new exact-commit review; execution-input changes require
+renewed applicable qualification. No implementation acceptance is implied here.
+
+Delivery QA evaluates D1–D3 and explicitly leaves D4 unchecked/pending owner-demo.
+Producer reads the actual technical verdict, obtains CTY's explicit reply for
+that reviewed candidate and records D4 before whole-task acceptance and feature
+merge/push. Owner aesthetic judgment is not inferred from technical PASS. The
+later roadmap phase-close review is a separate owner gate before Phase 2.
+
+The external integrity/readback receipt and AID-170 completion pin this report's
+exact byte hash and report/evidence commit, indexed source packet, exact
+binary/full-index patch and verified prerequisite Git bundle. A commit cannot
+embed its own SHA. Producer reads the actual CLEAR deliverable on this
+recipient-owned card; no parent mutation is needed to complete this review.
