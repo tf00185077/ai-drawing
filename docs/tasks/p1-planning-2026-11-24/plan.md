@@ -150,6 +150,37 @@ history remain separate. Candidate source stays unmerged and p1-03 remains gated
 until both tasks independently PASS a new exact SHA, followed by publication.
 No ordinary CTY confirmation or boundary/threshold escalation is needed.
 
+## Accepted combined correction and next release
+
+[Coding AID-159](/AID/issues/AID-159) delivered exact corrected combined
+`616f67ff68fc27070e85861e94d70de1baf5082a`. [QA AID-160](/AID/issues/AID-160)
+independently returned PASS for both original tasks at that SHA, report/evidence/
+registry `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`. Producer read both actual
+manifests and reports plus exact false-label fault/restore/GREEN evidence.
+All thirteen official uploads, exact patches/bundles and 147/123 archive entries
+match their inventories and named immutable Git references.
+
+[Combined acceptance](../p1-01-mcp-response-envelope/acceptance.md) integrates
+reviewed source/manifests/reports/history/registry unchanged at
+`7ba2059f7e46920eaf860e19e61aa84bae8bf02c`. Fresh independent QA Backend 1900/124 Windows skips,
+restored MCP 460/two unchanged optional skips, parity five and additional
+boundaries 15 pass. The risk downgrade now fails both guards/full suite before
+restoration. Original task/decision bytes, 40-row mapping, all merged
+capabilities, F1–F8 and prior baseline/repair evidence stay intact.
+
+The final published main SHA/equality receipt is recorded in
+[AID-143's plan](/AID/issues/AID-143#document-plan); subsequent acceptance/status
+changes contain no new product code. One p1-02 rejection/correction round 1/
+review round 2 PASS and prior kickoff/p1-00a counts remain recorded. No new live
+service, generation, Gallery-byte, aesthetic or phase-exit proof is claimed.
+
+AID-143's accepted publication/completion releases [AID-144](/AID/issues/AID-144)
+for the existing p1-03 task's independent CLEAR kickoff. Its handoff must read
+the new envelope/intent contracts and accepted manifests, preserve truthful
+training outputs/locators and source the client limit or explicitly use the
+unverified-limit/50-second fallback, including request time in the budget.
+No routine start/resource/plan confirmation is pending.
+
 ## Handoff, delivery and continuation
 
 After CLEAR, Producer creates a Coding card and a separate QA delivery-review
