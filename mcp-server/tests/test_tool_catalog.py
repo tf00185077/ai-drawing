@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import re
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,63 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CATALOG_DOCS = (
     PROJECT_ROOT / "docs" / "mcp.md",
 )
+
+# Independent policy expectations, not values read from the production catalog.
+# Source: docs/decisions/mcp.md (tool map, retained intents and staged delivery),
+# cleared at 496cee2f842dc9386d336afb237075bf952271ce; p1-02 D2.
+# Keep mcp_ping until p1-04. Preflight/compose POSTs are read intents; caption,
+# acquisition, training/smoke submission and cancellation mutate persistent state.
+APPROVED_INTENT_RISKS = {
+    "mcp_ping": "read",
+    "list_resources": "read",
+    "generate": "mutate",
+    "job_status": "read",
+    "cancel_job": "mutate",
+    "gallery_search": "read",
+    "gallery_get": "read",
+    "gallery_rerun": "mutate",
+    "prompt_search": "read",
+    "prompt_compose": "read",
+    "prompt_write": "mutate",
+    "style_preset_get": "read",
+    "style_preset_compose": "read",
+    "style_preset_save": "mutate",
+    "style_preset_test": "mutate",
+    "comfyui_admin": "admin",
+    "deliver_to_discord": "mutate",
+    "civitai_source_info": "read",
+    "civitai_resource_acquire": "mutate",
+    "civitai_resource_status": "read",
+    "lora_dataset_list": "read",
+    "lora_dataset_inspect": "read",
+    "caption_image": "mutate",
+    "lora_training_decision_preflight": "read",
+    "lora_train_start": "mutate",
+    "lora_train_job_status": "read",
+    "lora_train_logs": "read",
+    "lora_train_cancel": "mutate",
+    "lora_train_smoke_test": "mutate",
+}
+
+
+def test_catalog_risks_match_approved_intent_policy() -> None:
+    """A false label (e.g. ComfyUI restart as read) must fail independently."""
+    assert len(INTENDED_TOOLS) == len(APPROVED_INTENT_RISKS) == 29
+    assert {entry.name: entry.risk for entry in INTENDED_TOOLS} == APPROVED_INTENT_RISKS
+    assert all(entry.external for entry in INTENDED_TOOLS)
+
+
+@pytest.mark.asyncio
+async def test_discovered_risks_match_approved_intent_policy() -> None:
+    """Actual MCP discovery must expose exactly one approved label per intent."""
+    tools = await mcp.list_tools()
+    assert len(tools) == len(APPROVED_INTENT_RISKS)
+    assert {tool.name for tool in tools} == set(APPROVED_INTENT_RISKS)
+    for tool in tools:
+        expected = APPROVED_INTENT_RISKS[tool.name]
+        assert tool.description.count("Risk:") == 1, tool.name
+        assert re.findall(r"\bRisk:\s*(\w+)\.", tool.description) == [expected], tool.name
+        assert tool.description.startswith(f"Risk: {expected}."), tool.name
 
 
 def test_package_readme_routes_to_current_tool_and_acceptance_authorities() -> None:
