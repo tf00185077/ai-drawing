@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 clarification 1 awaits fresh kickoff round-2 CLEAR**.
+Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 kickoff round-2 CLEAR accepted; implementation and exact-commit delivery review next**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -286,6 +286,36 @@ source. Later exact-commit PASS/publication still precedes p1-05. No ordinary
 owner confirmation is needed. QA's selected existing Backend 9/one warning,
 catalog 14 and shape checks remain offline source-contract evidence. Producer
 adds no suite, live probe/restart, generation or Gallery-byte retrieval.
+
+## p1-04 kickoff round 2 CLEAR and implementation handoff
+
+[QA AID-166](/AID/issues/AID-166) returned independent **CLEAR** for fixed
+`5cf158b65d924a9508a3b5bfb7b47adb92eff7a1`, exact report/evidence
+`e75a94ec63a507bac194b702a87eb369ea1ccb20`. Producer read the actual report
+and verified all five official uploads, exact binary patch/bundle and 78 indexed
+payloads/80 archive members against sizes, hashes, blob IDs and pinned Git.
+The [cleared task](../p1-04-mcp-health-and-workers/task.md) retains SHA-256
+`28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`;
+full MCP decision and clarification hashes remain unchanged. K4-1 is resolved at
+specification level. One kickoff ambiguity/clarification 1/round-2 CLEAR and zero
+implementation delivery rejections remain separate from earlier task histories.
+
+This actual CLEAR permits Coding dispatch from the published handoff base,
+followed by a separate exact-final-commit delivery-QA card. [AID-145's native
+plan](/AID/issues/AID-145#document-plan) records recipients, fixed source and
+Coding → Review → Producer prerequisites. Implement the four cleared requirements,
+including authoritative configured/observed identity and failed-read recovery;
+replace ping, add health/list_workers=read and preserve other 29 names/risks.
+Existing status endpoints and empty/one worker remain the boundary; no registry,
+heartbeat, scheduling or runtime deployment is pulled forward. Exact-candidate
+PASS/publication still precedes p1-05. No ordinary owner confirmation is pending.
+
+Fresh QA selected Backend **10 passed/one warning**, MCP catalog **14 passed**
+and the **11-case/12-GET** existing-route/client probe are source-contract
+checks. No feature implementation is certified. Producer verifies documents,
+official evidence/Git and publication only, with no new software suite, live
+product probe/restart, generation/training/worker dispatch or Gallery-byte read.
+Runtime/private configuration, canonical venvs and all retained data stay intact.
 
 ## Handoff, delivery and continuation
 

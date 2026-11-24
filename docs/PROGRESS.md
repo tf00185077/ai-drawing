@@ -336,3 +336,41 @@ restart, real generation/training/worker dispatch or live Gallery-byte retrieval
 Runtime/private configuration, venvs and all retained data stay unchanged.
 The technical choice is recorded in MCP decisions; no duplicate memory topic or
 ordinary owner confirmation is needed. Source publication is not deployment.
+
+
+## 2026-11-24 — p1-04 kickoff CLEAR and implementation handoff
+
+[QA AID-166](/AID/issues/AID-166) returned independent **round-2 CLEAR** at
+fixed published `5cf158b65d924a9508a3b5bfb7b47adb92eff7a1`, exact
+[report/evidence](tasks/p1-04-mcp-health-and-workers/kickoff-review.md)
+`e75a94ec63a507bac194b702a87eb369ea1ccb20`. K4-1 is resolved at specification
+level; all four requirements are implementable and testable. Producer read the
+actual report and verified five official uploads, exact binary patch/bundle and
+78 indexed payloads/80 archive members against sizes, hashes, blob IDs and Git.
+
+Cleared task SHA-256 remains
+`28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`;
+MCP decision and clarification bytes are unchanged. The original task/report/
+evidence and all 13 standing registry items remain intact. Accounting is one
+p1-04 kickoff ambiguity/clarification 1/round-2 CLEAR and zero implementation
+delivery rejections. Earlier task histories and acceptance limits stay separate.
+
+Producer releases Coding from the published handoff base and a separate QA
+card for the exact final candidate. [The native plan](/AID/issues/AID-145#document-plan)
+names recipients and native Coding → Review → Producer prerequisites. Required
+proof covers truthful three-component health, empty/one/error worker results,
+configured versus nullable observed identity including discovery/cache failure,
+real registered GET paths, 31 independent literal risks and delivered docs.
+The Backend status extension stays additive and read-only; registry/heartbeat/
+scheduling remain Phase 3. Later exact-commit PASS still precedes feature
+merge/push and p1-05 release. No ordinary owner confirmation is needed.
+
+Fresh QA selected Backend **10 passed/one warning**, catalog **14 passed** and
+**11-case/12-worker-GET** probe are existing-source/specification evidence,
+not future feature acceptance. Producer added document/source/upload/Git and
+publication checks only: no new software suite, product probe/restart/deployment,
+real generation/training/worker dispatch or live Gallery-byte retrieval. Keep
+active runtime/private configuration, canonical venvs and all retained data.
+No new memory topic is needed; the normative technical choice is already in
+MCP decisions. Original 23-unit/eight-incident baseline, colocated cached-pair
+proof, client-limit uncertainty and phase/aesthetic/three-run gates remain.
