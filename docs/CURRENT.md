@@ -1,5 +1,21 @@
 # Current
 
+
+Coding candidate [AID-171](/AID/issues/AID-171) delivers p1-05 software frozen at
+`6bcb402ff8be2bea59c2dc3dbcd0de01c78ecab9`; the [manifest](tasks/p1-05-mcp-e2e-smoke-mac/manifest.md)
+and external completion pin its final evidence commit. Offline: MCP 663 passed/
+4 existing optional export skips (two later cross-layer consumers pass), Backend
+1916 passed/124 existing platform skips, restored fault checks. Running service:
+controlled source-bound Backend/ComfyUI replacements preserve effective roots,
+complete schema and all old row values. Real generation: one invocation, first
+attempt timeout plus one same-ID recovery, then three consecutive eight-call
+original/revision pairs. Artifact retrieval: all six PNG payloads received/decoded
+through real SDK stdio with canonical persisted lineage and actual sampling audit.
+Preparation/recovery/audit total remains 81 intervention units; the three qualifying
+pairs alone need zero fixes/retries. Initial aborted audit probe is disclosed.
+**Candidate only: independent QA AID-172 and D4 Producer/CTY owner-demo are pending.**
+No feature merge/push, whole-task/phase acceptance or Phase 2 activation.
+
 2026-11-24 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, real Mac smoke, demo and three-run exit proof next ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
@@ -90,11 +106,11 @@ decision and original task/report/evidence stay unchanged; 16 registry rows and
 23-unit/eight-incident baseline stay. One ambiguity event/two findings,
 clarification 1/round-2 CLEAR and zero implementation rejections remain.
 
-Next: Coding implements the [cleared p1-05 task](tasks/p1-05-mcp-e2e-smoke-mac/task.md)
-in a persistent isolated worktree, followed by independent exact-final-commit
-delivery QA. [AID-146's native plan](/AID/issues/AID-146#document-plan) pins the
+Next: independent [QA AID-172](/AID/issues/AID-172) reviews the exact final
+p1-05 candidate and its [manifest](tasks/p1-05-mcp-e2e-smoke-mac/manifest.md). [AID-146's native plan](/AID/issues/AID-146#document-plan) pins the
 published base, separate recipients and Coding → Review → Producer prerequisites.
-Gallery content is specified, not yet delivered or deployed. Retain runtime/
+Gallery content and the SDK driver are delivered as a candidate with the real
+evidence above; independent review and owner acceptance remain pending. Retain runtime/
 private configuration, canonical venvs and all data; loaded runtime/client
 contracts need actual preparation/verification. Illustrious/default/no-LoRA/local
 and fixed four-step 512×512 technical parameters remain, without speed/aesthetic
@@ -105,7 +121,7 @@ does not close the task. Phase 2 stays inactive; no routine owner confirmation.
 
 ## Team
 
-Coding owns the cleared implementation/real evidence; QA owns the separate
+Coding delivered the candidate implementation/real evidence; QA owns the separate
 exact-final-commit delivery review after Coding; Producer owns AID-146, reads
 actual results and handles repairs, CTY demo and phase close. Native recipients/
 prerequisites are pinned in AID-146's plan. Preserve active runtime and all data;

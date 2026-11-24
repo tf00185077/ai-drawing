@@ -1,5 +1,21 @@
 # Progress
 
+
+Coding candidate [AID-171](/AID/issues/AID-171) delivers p1-05 software frozen at
+`6bcb402ff8be2bea59c2dc3dbcd0de01c78ecab9`; the [manifest](tasks/p1-05-mcp-e2e-smoke-mac/manifest.md)
+and external completion pin its final evidence commit. Offline: MCP 663 passed/
+4 existing optional export skips (two later cross-layer consumers pass), Backend
+1916 passed/124 existing platform skips, restored fault checks. Running service:
+controlled source-bound Backend/ComfyUI replacements preserve effective roots,
+complete schema and all old row values. Real generation: one invocation, first
+attempt timeout plus one same-ID recovery, then three consecutive eight-call
+original/revision pairs. Artifact retrieval: all six PNG payloads received/decoded
+through real SDK stdio with canonical persisted lineage and actual sampling audit.
+Preparation/recovery/audit total remains 81 intervention units; the three qualifying
+pairs alone need zero fixes/retries. Initial aborted audit probe is disclosed.
+**Candidate only: independent QA AID-172 and D4 Producer/CTY owner-demo are pending.**
+No feature merge/push, whole-task/phase acceptance or Phase 2 activation.
+
 Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-24). Current state in one screen: [CURRENT](CURRENT.md).
 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
