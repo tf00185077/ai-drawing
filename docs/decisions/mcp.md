@@ -104,6 +104,81 @@ the replacement save path carries returned fragments plus concurrency fields
 and preserves the existing conflict result. A correct label alone is not this
 proof.
 
+## Wait results and media locators
+
+Target contract for [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md), clarified
+by Producer under delegated technical authority after [K3-1](../tasks/p1-03-mcp-wait-and-result/kickoff-clarification-1.md).
+Fresh independent kickoff CLEAR remains required; this section does not claim
+that `wait_for_job` is delivered or deployed. It stays one `read` intent in the
+common envelope. Backend state, identity and provenance remain authoritative.
+
+- A completed generation with supported Gallery locators returns success,
+  unchanged job ID/status and every existing canonical image/video artifact's
+  real `artifact_id`, kind, host path and Backend Gallery URL. Preserve result
+  order/provenance and canonical revision references; no arbitrary result cap
+  may omit the required artifact set.
+- Resolve safe Gallery-relative locators under `MCP_GALLERY_DIR` for the host
+  path and the configured Backend Gallery route for the URL. Preserve file
+  identity through nested/Unicode names and URL encoding. An existing relative
+  Backend URL is a supported locator; making it absolute may only bind it to
+  the configured Backend base without changing its target. A host path is usable
+  only by clients with access to that filesystem. Locator construction does not
+  verify file existence, bytes or remote consumption.
+- Never infer host containment from a basename, remap an outside-root or
+  container-only absolute path to a different file, accept traversal/escape or
+  arbitrary remote URLs, or create/copy/move a file to fill in missing metadata.
+  An absolute path may supply a host locator only when its Gallery relationship
+  is established without guessing; unsupported/missing relationships follow
+  the error disposition below.
+- A legacy image-only completion keeps `artifacts: []` and a separate legacy
+  image result carrying the actual image ID, kind=image and supported path/URL.
+  Its canonical artifact ID stays null/absent. Never use an image ID as an
+  artifact ID or invent an artifact row. The separate namespace must remain
+  explicit in docs and tests.
+- If any required generation media locator is missing, outside the supported
+  Gallery mapping or unsafe, return `ok: false` with
+  `error.code: artifact_locator_unavailable`. `error.details` retains the target
+  job ID, job domain, unchanged completed Backend status, all known canonical
+  artifact identities/kinds and separate legacy image identities, plus which
+  locator is unavailable and why. Return supported available locators truthfully;
+  unavailable ones remain null/absent, and an unverified outside-root path must
+  not be advertised as a usable Gallery host path or exposed through a new URL.
+  The hint directs the caller to inspect the same job and existing Gallery
+  metadata/configuration before another read; do not imply generation failure,
+  cancel, resubmit or automatically migrate data. Preserve the whole known result
+  identity set even when only one artifact lacks locators.
+- Training completion reports existing public output/registration fields;
+  safetensors output is not Gallery image/video media. Keep `artifacts: []` when
+  no real canonical media exists. Preserve independently bound smoke job, image
+  and nullable artifact IDs, locators, status and safe diagnostics exactly as
+  available, including legacy image-only and `artifact_unavailable` states.
+  Pending/failed/unavailable smoke is not training failure. Do not wait for,
+  start or resubmit that separate job or turn its image ID into an artifact ID.
+- Read failures preserve safe Backend reason/code/recovery and target identity;
+  training's successful status-read flag does not turn a failed training job
+  into wait success. Resolve the two UUID job domains with existing reads;
+  a connection error/5xx is not a not-found proof or a reason to probe another
+  domain as if the first were absent. Preserve terminal cancellation truthfully.
+- All lookup/status/enrichment requests, sleeps and response preparation share
+  one monotonic deadline. High requested timeouts clamp to the sourced maximum,
+  or the explicit 50-second fallback if the actual client limit is unverified.
+  A budget exhausted before complete result preparation returns timeout with
+  current/last-known status, or explicitly unknown if no read completed, and
+  a call-again hint for the same job. It never cancels/resubmits. A completed
+  status observed near the deadline cannot start unbounded enrichment. Existing
+  per-request defaults do not override the overall deadline.
+
+Acceptance cases include normal multi-image/mixed image-video completion,
+separate image/artifact IDs, nested/Unicode locators, legacy image-only success,
+a canonical artifact with no URL, outside-root/container-only paths, missing or
+unsafe locator input and mixed available/unavailable results. Also check training
+completion without media, real/legacy/absent/pending/failed/unavailable smoke
+references, failed/cancelled jobs in both domains, and deadlines consumed by the
+first status read, fallback lookup and artifact enrichment. Tests traverse the
+registered MCP/HTTP boundary with mocked existing Backend shapes; a short real
+elapsed-time mocked-transport check supports the configured bound. No new real
+training run, remote retrieval claim or Backend change is required.
+
 ## Open questions
 - None for resource selection: Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target under [delegated routine-choice authority](../requests/2026-11-24-proceed-within-project-boundaries.md); p1-00 verifies runtime compatibility, p1-05 reuses the pair.
 - The tool-call timeout of the MCP client the Paperclip agents use — found in [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md).

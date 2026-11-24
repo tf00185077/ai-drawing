@@ -22,15 +22,15 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
-| 40 intent-level tools, catalog kept in sync with registration | Done | `mcp-server/mcp_server/tool_catalog.py`, `server.py` | `test_tool_catalog.py`, `test_server.py` | — |
-| Image, custom-workflow and video generation; status; cancel | Done | `tools/generate.py` | `test_generate_tools.py`, `test_tools.py` | Mac default original/revision + status (p1-00a) |
+| 29 consolidated intent tools, one risk each; catalog/discovery aligned | Done, p1-01/02 accepted | `mcp-server/mcp_server/tool_catalog.py`, `server.py`, `tools/intents.py` | Independent literal risk/discovery guards; full MCP 460 passed/2 optional skips | Software verified offline; new surface not deployed here |
+| Image template/custom-workflow generation; generation status/cancel; video submission removed from MCP | Done, p1-02 accepted | `tools/intents.py`, `tools/generate.py` | Registered mode/request preservation and full MCP | Prior Mac original/revision + status (p1-00a); consolidated surface offline |
 | Revision context and parent lookup on generation | Done | `schemas/generate.py`, `tools/generate.py` | `test_revision_context.py` (Backend + MCP), `test_revision_parent_errors.py` | Yes, Mac original/revision canonical lineage (p1-00a) |
 | Gallery read, artifact read, rerun | Done | `tools/gallery.py` | `test_tools.py` | Both readers' returned host paths consumed/decoded on Mac (p1-00a) |
 | Prompt Library, style presets, Civitai tools | Done | `tools/prompt_library.py`, `style_presets.py`, `civitai.py` | matching `test_*` files | No |
 | ComfyUI restart, node install, free memory | Done | `tools/comfyui_nodes.py`, `comfyui.py` | `test_comfyui_nodes.py` | No |
 | Discord delivery of results | Done | `tools/discord_delivery.py` | `test_discord_delivery.py` | No |
-| Uniform structured responses `{ok, data, error}` | Not started | — | — | — |
-| `wait_for_job` and result tool | Not started | — | — | — |
+| Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
+| `wait_for_job` and truthful result locators | Not started; p1-03 clarification awaits fresh CLEAR | [task/contract](tasks/p1-03-mcp-wait-and-result/task.md) | Kickoff source/fixture checks only; no wait tests yet | No |
 | `list_workers` / `worker_status` | Not started | — | — | — |
 | End-to-end smoke script against real ComfyUI | Not started | — | — | — |
 
@@ -38,7 +38,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
-| Civitai resource acquire/status, source info, generate-like (MCP) | Done | `tools/civitai.py`, `services/civitai_resource_*` | `test_civitai_*` | No |
+| Retained Civitai resource acquire/status and source info (MCP); generate-like removed from MCP, Backend frozen | Done, p1-02 accepted | `tools/civitai.py`, `services/civitai_resource_*` | `test_civitai_*`, registration exclusion checks | No |
 | Civitai recipe import, resource resolution, safe download, source aliases, local identity ledger | Done | `services/civitai_*`, `api/civitai_*` | `test_civitai_*` | No |
 | Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
 | Resource record agents can list and filter; hash lookup of unknown local files | Partial (ledger and aliases exist; no agent-facing record) | `services/civitai_local_identity_ledger.py`, `civitai_source_alias_registry.py` | `test_civitai_*` | — |
@@ -190,3 +190,33 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 - Preserve exact first-round p1-01 PASS / p1-02 FAIL, one p1-02 rejection/correction round 1/review round 2 PASS. Kickoff ambiguity/clarification/rounds and p1-00a history remain separate. The QA helper import-origin misbinding is recorded and excluded from product results; only helper environment was corrected before the full fault/restore/GREEN rerun. No specification or product fix was hidden in review.
 - Completion of [AID-143](/AID/issues/AID-143) releases [AID-144](/AID/issues/AID-144) for its own p1-03 CLEAR/build/exact-review cycle, using current envelopes/intents and the existing client-budget/training-output boundaries. Ordinary choices remain delegated; no new owner confirmation is needed. Wait → health → smoke order and CTY phase/aesthetic gates remain intact.
 - Producer checks source/document/official artifact/Git identity and publication; no extra software suite on identical product/test inputs, no product probe/restart/deployment, real generation or live Gallery-byte read. Original 23 units/eight incidents and the bounded cached-original/revision colocated Mac proof keep their limits. Preserve the runtime/private configuration/canonical venvs and all retained data. Existing decisions/memory plus the correction record cover durable facts; no new memory incident log.
+
+## 2026-11-24 — p1-03 kickoff ambiguity and locator clarification
+
+[QA AID-161](/AID/issues/AID-161) returned [AMBIGUITY K3-1](tasks/p1-03-mcp-wait-and-result/kickoff-review-round-1.md)
+at fixed `7a46cb70bde83ba18417620ead3759a78e3c7c14`, report/evidence
+`b3276dc0c138fea8f99fed4a19b76e3a20043781`. Existing readers support completed
+legacy images without artifact rows and canonical artifacts without Gallery URLs.
+Producer inspected those source contracts and actual offline fixture responses,
+verified all five official uploads, exact report/binary patch/bundle and all
+68 indexed archive entries against hashes/Git. Original task/report/evidence
+remain intact. QA's selected Backend 3 passed/one warning, MCP 19 passed and
+isolated shape probe are attributed to QA; no new suite was run by Producer.
+
+[Clarification 1](tasks/p1-03-mcp-wait-and-result/kickoff-clarification-1.md) adopts
+the recommended truthful locator disposition inside delegated authority: canonical
+media keeps its own IDs; legacy images stay separate; unavailable generation
+locators return a recoverable common error retaining completed Backend status.
+No fabricated ID, path/URL, file migration or Backend change is allowed. Training
+output and independent nullable smoke references remain separate; all five
+acceptance items and the overall bounded-wait/no-resubmit rule remain. The actual
+client limit is unverified unless sourced; 50 seconds is the approved fallback.
+
+This is one p1-03 kickoff ambiguity/clarification 1/next kickoff round 2, not a
+software delivery rejection. Producer's [native plan](/AID/issues/AID-144#document-plan)
+records the fresh QA recipient and fixed source. Actual CLEAR is required before
+Coding and a separate exact-commit delivery review; p1-04 remains gated. Prior
+p1-02/p1-00a histories, nine registry guards and the original 23-unit/eight-incident
+baseline remain. This round changes docs/evidence only, with no product-service
+probe/restart, real generation/training or live Gallery-byte retrieval. Active
+runtime/private configuration, canonical environments and retained data are preserved.

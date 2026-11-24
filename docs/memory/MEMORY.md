@@ -9,6 +9,7 @@
 - [Style preset replay](style-preset-saved-graph-replay.md) — before composing, replaying or editing style presets.
 - [Video frames and FILM](video-frame-and-film-rules.md) — before touching image-to-video or interpolation.
 - [Anima training components](anima-training-component-readiness.md) — before an Anima LoRA run.
+- [Media identities and locators](gallery-artifact-identity-and-locators.md) — before assuming every completed image has a canonical artifact ID or usable Gallery path/URL.
 - [Gallery seed precision](gallery-seed-precision.md) — when reading or showing seeds.
 - [Gallery routing](gallery-document-asset-routing.md) — before changing the Vite proxy.
 - [Frontend cache isolation](frontend-shared-cache-isolation.md) — when running frontend tests in parallel worktrees.

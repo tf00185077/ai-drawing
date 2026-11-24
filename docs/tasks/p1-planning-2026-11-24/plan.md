@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 and p1-00a accepted; both p1-01/02 specifications CLEAR at `496cee2` after independent kickoff round 2; combined implementation released through separate Coding/delivery-QA cards, with feature publication still gated by exact-commit PASS**.
+Status: **p1-00/p1-00a and combined p1-01/02 accepted/published; p1-03 kickoff round 1 returned AMBIGUITY K3-1, clarification 1 is prepared for fresh independent round-2 CLEAR before Coding**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -180,6 +180,33 @@ the new envelope/intent contracts and accepted manifests, preserve truthful
 training outputs/locators and source the client limit or explicitly use the
 unverified-limit/50-second fallback, including request time in the budget.
 No routine start/resource/plan confirmation is pending.
+
+## p1-03 kickoff result and clarification
+
+[QA AID-161](/AID/issues/AID-161) independently returned **AMBIGUITY K3-1**
+at fixed published `7a46cb7`, exact report/evidence `b3276dc`. Producer read
+and verified the actual report, official uploads, archive/Git identity and
+existing Backend source shapes. The [original task](../p1-03-mcp-wait-and-result/task-kickoff-round-1.md),
+[round-1 report](../p1-03-mcp-wait-and-result/kickoff-review-round-1.md) and evidence
+remain unchanged. One kickoff ambiguity is separate from delivery rejections.
+
+[Clarification 1](../p1-03-mcp-wait-and-result/kickoff-clarification-1.md) resolves
+the locator disposition under the delegated technical-choice rule: return real
+canonical artifact identities and supported Gallery locators, preserve legacy
+image-only results separately, and return a recoverable locator error with the
+completed Backend state when required generation locators are unavailable/unsafe.
+Training output and independent nullable smoke references stay truthful. No new
+Backend storage/migration, file copying or phase boundary is introduced. The task
+still has five Done when items and requires a total budget including request and
+enrichment durations, sourced client limit or explicit unverified-limit/50-second
+fallback, and no timeout cancellation/resubmission.
+
+The next gate is fresh independent kickoff round 2 at the published clarified
+source; [AID-144's native plan](/AID/issues/AID-144#document-plan) names the fixed
+commit and recipient. No Coding dispatch before actual CLEAR and no p1-04 release
+before exact-commit delivery PASS/publication. Producer performed document/source/
+identity checks only; selected fixture tests remain QA's prior results, not a
+new live deployment, generation or Gallery-byte retrieval.
 
 ## Handoff, delivery and continuation
 
