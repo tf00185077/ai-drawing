@@ -297,3 +297,42 @@ history. Original baseline/live proof and remote/aesthetic/three-run/phase limit
 are unchanged. Completion/publication of [AID-144](/AID/issues/AID-144) releases
 [AID-145](/AID/issues/AID-145) for its own p1-04 fresh kickoff/build/exact-review
 cycle, using current envelopes and 30 intents. No routine owner confirmation.
+
+
+## 2026-11-24 — p1-04 kickoff ambiguity and worker-identity clarification
+
+[QA AID-165](/AID/issues/AID-165) returned independent **AMBIGUITY K4-1** at
+fixed source `c70162dee637bfa5e954aa446bf38faad97bbecd`, report/evidence
+`3a980ec557e5ab23a91e917491b13c947587f63d`. Producer read the actual report,
+mocked route shapes and worker settings/client. D1/D3/D4 are CLEAR at specification
+level; D2 lacked a normative configured-versus-observed identity contract.
+
+Producer verified five official attachments, exact binary patch/bundle and all
+59 indexed payloads/61 members against hashes, sizes, blob IDs and pinned Git.
+The [original task](tasks/p1-04-mcp-health-and-workers/task-kickoff-round-1.md),
+[round-1 report](tasks/p1-04-mcp-health-and-workers/kickoff-review-round-1.md)
+and evidence are preserved unchanged. QA selected existing Backend **9 passed,
+one warning**, catalog **14 passed**, shape probe and import/source checks are
+source-contract evidence, not new feature or live proof.
+
+[Clarification 1](tasks/p1-04-mcp-health-and-workers/kickoff-clarification-1.md)
+adopts QA's bounded recommendation under delegated technical authority. Extend
+the existing read-only worker status additively; retain configured URL/expected
+identity separately from nullable accepted current observations/resolved URL.
+Failed probes keep one configured entry and safe current error; Backend-read
+failure is a common-envelope error rather than an empty configuration. Existing
+LAN discovery/cache stays; no registry/heartbeat/scheduling, worker deployment
+or persistent history is added. Four Done when items remain.
+
+Next is independent fixed-source kickoff round 2; [AID-145's native plan](/AID/issues/AID-145#document-plan)
+names the published full SHA and recipient. No Coding dispatch before actual
+CLEAR or p1-05 release before exact-final-commit delivery PASS/publication.
+Accounting is one p1-04 kickoff ambiguity/clarification 1/next round 2, zero
+delivery rejections; earlier tasks' histories remain separate.
+
+Producer changed documentation/specification/status only, with source/upload/Git
+identity and link/whitespace checks. No new software suite, product service probe/
+restart, real generation/training/worker dispatch or live Gallery-byte retrieval.
+Runtime/private configuration, venvs and all retained data stay unchanged.
+The technical choice is recorded in MCP decisions; no duplicate memory topic or
+ordinary owner confirmation is needed. Source publication is not deployment.

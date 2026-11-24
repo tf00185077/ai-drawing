@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 fresh kickoff is next**.
+Status: **p1-00/p1-00a, combined p1-01/02 and bounded wait/results p1-03 accepted/published after actual independent exact-commit PASS; health/configured-worker p1-04 clarification 1 awaits fresh kickoff round-2 CLEAR**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -259,6 +259,33 @@ Coding and exact-commit PASS before publication. Read current 30-intent envelope
 use existing endpoints and empty/one configured worker, not Phase 3 registry/
 heartbeat/scheduling. Real Mac smoke/demo/three-run/phase-close gates remain later.
 No routine owner/start/resource confirmation remains.
+
+## p1-04 kickoff ambiguity and identity clarification
+
+[QA AID-165](/AID/issues/AID-165) returned **AMBIGUITY K4-1** for fixed
+`c70162d`, exact report/evidence `3a980ec`. Producer read the actual report and
+worker route/client/settings, and verified five official uploads, exact binary
+patch/bundle and 59 indexed payloads/61 members against pinned Git/hashes.
+D1/D3/D4 are CLEAR at specification level; D2 needs configured-versus-observed
+identity semantics for failed and URL-only probes.
+
+[Clarification 1](../p1-04-mcp-health-and-workers/kickoff-clarification-1.md)
+adopts a minimal additive extension of existing worker status. Configured URL
+and expected identity remain distinct from nullable current observed identity
+and validated resolved endpoint; failed probes retain one entry and safe current
+error. Backend-read failure returns an error, never an inferred empty list.
+The [normative contract](../../decisions/mcp.md#configured-worker-health-and-identity)
+preserves single-worker/read-only scope, existing LAN discovery/cache and all
+unrelated intents/risks. No registry/heartbeat/scheduling or persistent history.
+Original task/report/evidence stay intact; one kickoff ambiguity/clarification 1/
+next kickoff round 2 is not an implementation delivery rejection (zero).
+
+Fresh independent round-2 CLEAR at the published clarified SHA precedes Coding;
+[AID-145's native plan](/AID/issues/AID-145#document-plan) pins the recipient and
+source. Later exact-commit PASS/publication still precedes p1-05. No ordinary
+owner confirmation is needed. QA's selected existing Backend 9/one warning,
+catalog 14 and shape checks remain offline source-contract evidence. Producer
+adds no suite, live probe/restart, generation or Gallery-byte retrieval.
 
 ## Handoff, delivery and continuation
 

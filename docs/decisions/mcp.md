@@ -10,9 +10,17 @@
 - Phase 1 starts with a friction run on today's tools ([p1-00](../tasks/p1-00-mcp-friction-run-mac/task.md)); its count of manual fixes is the baseline p1-05 must bring to zero · why: generation already works; the problem is the manual fixes around it · owner-confirmed
 - p1-01 and p1-02 merge to `main` together · why: one breaking change for clients instead of two · owner-confirmed
 - End-to-end MCP verification runs on the Mac ComfyUI first, then extends to the Windows worker · owner-confirmed
+- Configured-worker discovery preserves configuration separately from nullable current observations and uses an additive extension of existing Backend status; failed probes retain one configured worker and Backend-read failure is not an empty list · Producer choice under delegated authority after K4-1 · [contract](#configured-worker-health-and-identity)
 - Phase 1 is implemented by the Paperclip team from `docs/tasks/p1-*`; the earlier planning-only session restriction is superseded for this round by the [follow-through instruction](../requests/2026-11-24-proceed-within-project-boundaries.md) · owner-confirmed
 
 ## Log (newest first)
+
+### 2026-11-24 · Keep configured worker identity distinct from probe observations
+- Decision: adopt the [configured-worker contract](#configured-worker-health-and-identity) for p1-04. Extend the existing read-only worker-status response additively; keep its existing flags/nested worker response. Expose configured URL/expected identity independently of nullable current observations and the validated resolved endpoint. Preserve one configured entry after probe failure; report an unavailable/unknown Backend read through the common error envelope.
+- Why: the current status route has no URL and drops identity metadata on failed probes. Guessing identity or returning no workers would misstate configuration. Current `last_error` needs no persistent history or heartbeat store.
+- Supersedes: the unspecified configured-versus-observed field meaning and endpoint-extension disposition in p1-04 kickoff round 1, not the read-only/single-worker scope.
+- Provenance: Producer adopts [QA's K4-1 recommendation](/AID/issues/AID-165#comment-ba500f6f-fe78-44e1-87d4-dc81558560b9) under the [delegated routine-choice instruction](../requests/2026-11-24-proceed-within-project-boundaries.md), after reading the actual report, route evidence and current worker client/settings. This is a technical choice inside Phase 1, not a new owner-boundary decision or implementation acceptance.
+- Link: [clarification 1](../tasks/p1-04-mcp-health-and-workers/kickoff-clarification-1.md). Fresh independent fixed-source kickoff must CLEAR the clarified task before Coding.
 
 ### 2026-11-24 · Keep prompt composition read-only; save through the write intent
 - Decision: `prompt_compose` accepts composition inputs only and rejects the legacy MCP `save_as` argument with the common validation-error envelope and a hint to use `prompt_write(action=save)`. Saving composed positive/negative fragment arrays, metadata and existing concurrency/provenance fields goes through that `mutate` intent. Backend APIs remain unchanged.
@@ -178,6 +186,79 @@ first status read, fallback lookup and artifact enrichment. Tests traverse the
 registered MCP/HTTP boundary with mocked existing Backend shapes; a short real
 elapsed-time mocked-transport check supports the configured bound. No new real
 training run, remote retrieval claim or Backend change is required.
+
+## Configured-worker health and identity
+
+Target contract for [p1-04](../tasks/p1-04-mcp-health-and-workers/task.md), adopted
+by Producer after K4-1 under delegated technical authority. This is a clarified
+specification, not a claim that health or worker discovery is delivered or
+deployed. Fresh independent kickoff CLEAR and later exact-commit delivery PASS
+remain required.
+
+Reuse `GET /health`, `GET /api/system/status` and `GET /api/workers/status`.
+The existing worker-status response may be extended additively to expose the
+required configuration and observation fields; preserve its existing
+`configured`, `reachable`, `status`, failure `error_type` and successful nested
+`worker` behavior for existing consumers. Backend configuration remains the
+authority; MCP must not read a private Backend settings file or add a parallel
+worker configuration. No second status route, registry, heartbeat, scheduling
+or persistent error history is introduced.
+
+For the MCP `list_workers` entry, field meanings are:
+
+| Field | Meaning |
+|---|---|
+| `url` | Configured `NVIDIA_WORKER_URL`, with the existing worker client's trailing-slash normalization; never silently replaced by a discovered address. |
+| `expected_hostname` | Configured expected hostname, or null if none was set. It is an expectation, not an observation. |
+| `expected_protocol_version` | Configured expected protocol version, including the existing default. It is not evidence of a successful probe. |
+| `hostname` | Hostname actually returned by this accepted current worker-status probe; null if absent or the probe/identity validation failed. Never substitute an expectation or stale observation. |
+| `protocol_version` | Protocol actually returned and accepted by the current probe; null on failed probe/validation. |
+| `resolved_url` | Actual endpoint used by the accepted current worker-status probe, including an address chosen by existing LAN discovery/cache. Null without an accepted current probe; it does not rewrite `url`. |
+| `reachable` | Whether that current worker-status probe succeeded under existing identity validation. This does not certify remote ComfyUI, models or generation readiness. |
+| `status` | Existing worker-status disposition (`ready` or `unavailable` for a configured worker). |
+| `last_error` | Null on an accepted current probe; otherwise a safe nonempty reason string for the current failed observation, with read/configuration recovery guidance. It is not persisted error history. |
+
+Backend response layout may keep configuration and observations nested; it
+must supply these meanings to MCP without private settings access or guesses.
+Preserve existing hostname/protocol validation and single-worker LAN discovery
+semantics, including its derived runtime URL cache. Failed identity validation
+does not produce accepted current observations. URL-only configuration can
+successfully report a valid protocol without a hostname; in that case
+`hostname` is null and `reachable` can be true.
+
+- A successful authoritative Backend response with `configured: false` yields
+  an empty worker list. It is the only basis for the empty/unconfigured result.
+- A configured worker yields one entry even after connection, HTTP, protocol or
+  hostname validation failure. Keep its configuration, false reachability,
+  safe current error and null current observations/resolved URL. Do not show a
+  stale success as current or erase configuration because a probe failed.
+- Backend connection/HTTP/invalid-status failure makes configuration unknown.
+  Return the common error envelope with a stable code and safe same-read/config
+  recovery hint, never an inferred empty list or worker observation.
+- `health` retains one entry each for Backend, Backend-local ComfyUI and worker
+  even on Backend-down or partial status-read failure. A false `reachable`
+  observation needs a safe reason that distinguishes a reported failed probe
+  from an unavailable/not-observed dependency read. No direct dependency fallback
+  probe is introduced. Preserve ComfyUI configuration/state/hints: `no_models`
+  and `degraded` can still be reachable. Response layout/error spelling remain
+  Coding choices within the existing common envelope.
+
+Both MCP tools are `read` and use the real registered HTTP path. Replace ping
+and add health/list_workers, yielding 31 intents while preserving all other 29
+names/risks and accepted wait behavior. Independent literal risk expectations
+and recorded GET paths must prove this; deriving the expected labels from the
+catalog itself is not a guard. No generation/training submission, cancellation,
+PowerShell, install or control request is part of discovery.
+
+Acceptance includes unconfigured, configured up/down, failed hostname/protocol
+validation, URL-only success without hostname, an accepted existing-discovery
+endpoint distinct from configuration, Backend-down/partial-read failure and
+reachable ComfyUI without models. Use real Backend routes/client validation
+and registered MCP wrappers/client with mocked transports, not live LAN scans.
+Document the actual response/error examples and recovery. Backend-local ComfyUI
+health is separate from `MCP_COMFYUI_API_URL` used by direct admin. Resource
+inventory, reachability and locators do not prove worker model parity, loaded
+source, job readiness, artifact bytes or client access.
 
 ## Open questions
 - None for resource selection: Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target under [delegated routine-choice authority](../requests/2026-11-24-proceed-within-project-boundaries.md); p1-00 verifies runtime compatibility, p1-05 reuses the pair.
