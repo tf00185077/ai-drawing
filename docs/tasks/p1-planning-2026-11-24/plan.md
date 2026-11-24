@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00 and p1-00a accepted; p1-01 kickoff CLEAR and p1-02 AMBIGUITY at `d1ffb8d`; bounded compose/save clarification prepared for fresh round-2 verdicts; Coding not released**.
+Status: **p1-00 and p1-00a accepted; both p1-01/02 specifications CLEAR at `496cee2` after independent kickoff round 2; combined implementation released through separate Coding/delivery-QA cards, with feature publication still gated by exact-commit PASS**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -66,6 +66,7 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | [AID-154](/AID/issues/AID-154), completed | QA independently reviewed exact corrected candidate `b6d5846`, round 2 | AID-153 actual delivery | [D1-D5 PASS](../p1-00a-mac-runtime-and-retrieval/review.md), report/evidence/registry `3d5d890`; applicable D1-D4 evidence reused with equivalence checks; one prior rejection retained |
 | [AID-142](/AID/issues/AID-142), 1 | Producer accepted baseline and corrected repair | Actual AID-154 PASS read and official packets checked | [Acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), unchanged reviewed delivery integrated; publication/completion releases AID-143 |
 | [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `d1ffb8d` | AID-143 complete baseline/friction handoff | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review-round-1.md); [p1-02 AMBIGUITY K2-1](../p1-02-mcp-tool-consolidation/kickoff-review-round-1.md), report `b32ac4f`; Producer's compose/save clarification needs fresh round-2 kickoff |
+| [AID-156](/AID/issues/AID-156), completed | QA independently reviewed clarified fixed specs at `496cee2` | Actual first-round reports and Producer clarification 1 | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review.md) and [p1-02 CLEAR](../p1-02-mcp-tool-consolidation/kickoff-review.md), exact report `9d79d20`; K2-1 resolved at specification level, first-round history preserved |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -115,6 +116,14 @@ existing concurrency/provenance semantics. Backend APIs and p1-01 task bytes
 stay unchanged. Fresh independent round-2 verdicts for both fixed specs precede
 Coding. This is one kickoff ambiguity/clarification round 1, not an
 implementation delivery rejection; p1-00a accounting remains separate.
+
+AID-156 returned explicit CLEAR for both at fixed `496cee2`. Producer read both
+full reports and verified official reports/archive/patch/bundle and fixed
+references against report commit `9d79d20`. This satisfies the kickoff gate;
+Coding and a separate natively dependent delivery-QA card can proceed from the
+published handoff base in AID-143's native plan. Task digests, decisions and
+historical reports remain unchanged. Future software is not accepted by this
+kickoff; exact-final-commit PASS still precedes combined feature publication.
 
 ## Handoff, delivery and continuation
 
