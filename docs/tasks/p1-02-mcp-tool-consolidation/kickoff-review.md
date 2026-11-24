@@ -1,226 +1,235 @@
-Verdict: AMBIGUITY
+Verdict: CLEAR
+Review round: 2
 
-Review type: independent kickoff only, 2026-11-24. QA: [AID-155](/AID/issues/AID-155).
-Fixed specification/source: `d1ffb8d8d9db12f728ed98704e966e76489faafb`.
+Review type: independent kickoff only, 2026-11-24. QA: [AID-156](/AID/issues/AID-156).
+Fixed specification/source: `496cee2f842dc9386d336afb237075bf952271ce`.
 Task: `docs/tasks/p1-02-mcp-tool-consolidation/task.md`.
-Task SHA-256: `b5b650b882bbe1659fd9cf0d84e3cc33b13d895453c52c8cab6d5dbb2146a7a9`.
-
-One bounded intent/risk clarification is needed before Coding. The separate
-[p1-01 kickoff](../p1-01-mcp-response-envelope/kickoff-review.md) is CLEAR; that
-does not clear this task or release their combined delivery. This is not a
-delivery rejection: p1-01/02 have no implementation delivery yet.
+Task SHA-256: `9b9540278fdf041f66ce3fd80f218e4d7260d34a002814471ff8094e62102028`.
+Done when count: **5**. [p1-01 round-2 verdict](../p1-01-mcp-response-envelope/kickoff-review.md): **CLEAR**.
 
 ## Independent owner reading and comparison
 
-My reading: reduce overlapping tools to one per intent with one truthful risk
-label, preserve the Phase 1 capabilities and canonical Backend state, leave
-Civitai and all LoRA names unchanged except the explicitly removed generate-like
-tool, remove both video tools only from MCP, and ship the envelope/consolidation
-together. Keep temporary ping, then add wait and health/workers in the later
-tasks. Routine internal choices are delegated to Producer; no ordinary CTY
-confirmation is pending.
+My reading: reduce overlapping tools to one per intent and one truthful risk,
+retain needed Phase 1 capabilities and Backend-owned state, and preserve the
+approved Civitai/LoRA exclusions and staged phase order. A read-labeled compose
+must never persist; saving must remain available through the existing mutate
+intent with fragments, metadata, provenance and optimistic concurrency intact.
+Explicitly rejecting legacy save requests avoids returning a misleading unsaved
+success. Routine internal choices are delegated to Producer; no CTY boundary
+question is demonstrated.
 
-This reading was saved after the preserved owner direction, approved decisions
-and active milestone were read, before opening the fixed on-disk task files.
-The inline assignment already exposed their contents. Sources are the [later
-owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md),
-[approved tool map](../../decisions/mcp.md#tool-map),
-[roadmap](../../roadmap/ROADMAP.md) and
-[execution plan](../p1-planning-2026-11-24/plan.md).
+I saved this reading after the [owner direction](../../requests/2026-11-24-proceed-within-project-boundaries.md),
+[approved decisions/map](../../decisions/mcp.md) and roadmap, before opening the
+on-disk tasks; the inline assignment already exposed their text. Difference:
+none at this fixed clarified specification. This is an independent comparison,
+not acceptance merely because the prerequisite or first review completed.
 
-Difference: the task/map do not settle an existing optional write capability
-inside the tool assigned the new read-only prompt-composition intent.
+## Finding K2-1 — resolved; P1, D1/D2 and associated D3
 
-## Finding K2-1 — P1, D1/D2 and associated D3 coverage
+The [historical finding](kickoff-review-round-1.md) remains intact. I independently
+checked [clarification 1](kickoff-clarification-1.md), the normative
+[composition/save contract](../../decisions/mcp.md#prompt-composition-and-saving)
+and the actual unchanged source:
 
-The approved map assigns `prompt_library_compose` to `prompt_compose`, risk
-`read` (`docs/decisions/mcp.md:60`). Existing source exposes `save_as` in
-`mcp-server/mcp_server/tools/prompt_library.py:96`, forwards it at line 99 to
-`POST /api/prompt-library/compose`, and the Backend's
-`FilePromptLibraryProvider.compose` calls `_writer.save_combination` when it is
-present (`backend/app/core/prompt_library.py:148`).
-`backend/app/schemas/prompt_library.py:163` includes that save intent in the
-request contract. This is persistent writing, not just rendering a prompt:
-`backend/tests/test_prompt_library_api.py::test_compose_can_save_and_read_back_safe_unicode_combination_id`
-contains a save followed by a successful readback assertion. I inspected these
-sources; I did not execute that write or test.
+- `mcp-server/mcp_server/tools/prompt_library.py:96` advertises `save_as` and
+  forwards a truthy value into compose; empty/null is currently ignored by that
+  wrapper. The new contract explicitly rejects presence, including those values.
+- `backend/app/core/prompt_library.py:148` returns composed arrays without saving
+  when `save_as is None`, otherwise calls the same combination writer with the
+  composed arrays and save-intent metadata.
+- `backend/app/schemas/prompt_library.py:94` defines revision/ETag inputs;
+  `CombinationSaveIntent` extends `CombinationWriteRequest` with only `id`.
+  Both therefore share positive/negative fragments, metadata and applicable
+  `source_combination_id`, `document_context_token`, `literal_conversion_token`
+  and `provenance_resolutions`. `ComposeResponse` returns both fragment arrays.
+- Existing MCP save uses the combination PUT locator and forwards payload data
+  with explicit concurrency arguments. Backend `api/prompt_library.py:181` and
+  `core/prompt_library_writes.py:280` use that same write schema and writer.
+  `assert_precondition` requires revision 0/no ETag for create, current revision
+  and ETag for update; conflicts remain `revision_conflict` or `external_change`
+  with their existing hints. These are not generation's `revision_request_conflict`.
+- `PromptComposer.compose` resolves and returns fragments; saving re-resolves
+  them under existing Backend behavior. Two calls do not promise a snapshot
+  transaction or identical rendering if referenced resources change between
+  calls. The clarified contract makes no cross-call atomicity claim and changes
+  no Backend behavior. Existing API tests demonstrate optional save/readback;
+  I inspected them without executing a library write.
 
-Concrete scenario: Coding can rename the current callable to `prompt_compose`,
-retain `save_as`, set its catalog/description risk to `read`, and pass the stated
-label/registration checks. An agent selecting this read-labeled tool can then
-create or update a stored combination. Conversely, deleting the optional save
-path without an explicit disposition can lose a currently exposed capability
-while the 40-name table still appears complete.
+The capability migration is now explicit and judgeable:
 
-D1 requires every old tool's intent/risk/mode disposition, D2 requires the single
-risk label, and D3 requires merged mode/action coverage. None explicitly resolves
-this old mixed-intent optional mode or requires a negative guard against writes
-through the new read intent. Name coverage plus label cardinality alone cannot
-judge that outcome. The issue is the proposed map applied to the actual source,
-not a request to repair an unrelated Backend feature.
-
-Producer action: pin the disposition of compose-with-save and its MCP-path
-acceptance check before Coding. Recommended bounded interpretation: retain
-`prompt_compose` as pure composition, explicitly remove/reject its `save_as`
-write path at MCP, and document saving composed fragments through
-`prompt_write(action=save)` with the existing revision/ETag contract. State that
-optional-capability migration in the old-to-new mapping and require a registered
-MCP test proving the read tool cannot reach the writer, plus coverage of the
-replacement write path. Backend compose/save behavior can remain unchanged.
-
-This recommendation follows the existing read/write intent map; Producer owns
-the final clarification and a fresh fixed-spec kickoff. QA has not edited the
-specification or selected an implementation. No new CTY boundary decision is
-demonstrated by this finding. Do not dispatch combined Coding until both fixed
-specifications actually have CLEAR.
-
-## All 40 baseline dispositions checked
-
-The following is QA's source-to-map cross-check, not Coding's future manifest.
-All old names occur exactly once. There are 15 retained names, eight renames,
-14 old entries merged into six destinations, and three removals: 29 provisional
-delivered names. Names may still change within the spec's QA-agreement rule.
-Risks for retained tools that the map does not explicitly label are source-based
-QA proposals for Coding to state in its manifest; no new behavior is approved.
-Removed rows show their old intent's risk for accounting, not a delivered label.
-
-| Old tool | Disposition / destination | Intent; mode/action or selector | Risk |
-|---|---|---|---|
-| `mcp_ping` | keep | Backend connectivity; transitional | read |
-| `civitai_source_info` | keep | Civitai preview | read |
-| `civitai_generate_like` | remove from MCP | Civitai reproduction; Backend frozen | mutate |
-| `civitai_resource_acquire` | keep | Civitai download | mutate |
-| `civitai_resource_status` | keep | Acquisition status | read |
-| `generate_image` | merge → `generate` | Image generation; `template` | mutate |
-| `generate_image_custom_workflow` | merge → `generate` | Image generation; `custom_workflow` | mutate |
-| `generate_video_wan_keyframes` | remove from MCP | Wan video; Backend frozen | mutate |
-| `generate_video_custom_workflow` | remove from MCP | Custom video; Backend frozen | mutate |
-| `get_generation_status` | rename → `job_status` | Generation status; same job ID | read |
-| `cancel_job` | keep | Generation-queue cancellation | mutate |
-| `list_available_resources` | rename → `list_resources` | Discover resources and generation forms | read |
-| `deliver_generation_result_to_discord` | rename → `deliver_to_discord` | Completed-job delivery; allowlisted alias, dedup/force-resend | mutate |
-| `gallery_list` | rename → `gallery_search` | Gallery search; filters/pagination | read |
-| `get_gallery_image` | merge → `gallery_get` | Retrieval; image-ID branch | read |
-| `get_gallery_artifact` | merge → `gallery_get` | Retrieval; canonical artifact-ID branch | read |
-| `gallery_rerun` | keep | Replay recorded image parameters; not revision | mutate |
-| `free_comfyui_memory` | merge → `comfyui_admin` | Administration; `free_memory` | admin |
-| `comfyui_node_provision` | merge → `comfyui_admin` | Administration; `install_node` | admin |
-| `comfyui_restart` | merge → `comfyui_admin` | Administration; `restart` | admin |
-| `create_style_preset` | merge → `style_preset_save` | Save preset; from fields | mutate |
-| `list_style_presets` | merge → `style_preset_get` | Read preset; no ID = list | read |
-| `get_style_preset` | merge → `style_preset_get` | Read preset; ID = detail | read |
-| `compose_style_preset` | rename → `style_preset_compose` | Compose payload; does not generate | read |
-| `save_successful_workflow_as_style_preset` | merge → `style_preset_save` | Save preset; from successful job | mutate |
-| `test_saved_style_preset_workflow` | rename → `style_preset_test` | Submit saved server-owned graph | mutate |
-| `prompt_library_search` | rename → `prompt_search` | Catalog/category/search | read |
-| `prompt_library_save` | merge → `prompt_write` | Write prompts; `save` | mutate |
-| `prompt_library_compose` | rename → `prompt_compose`; K2-1 unresolved | Compose; existing optional `save_as` writes | read in map; write capability unresolved |
-| `prompt_library_archive` | merge → `prompt_write` | Write prompts; `archive` | mutate |
-| `prompt_library_restore` | merge → `prompt_write` | Write prompts; `restore` | mutate |
-| `caption_image` | keep | Caption image | mutate |
-| `lora_training_decision_preflight` | keep | Non-starting training decision | read |
-| `lora_train_start` | keep | Start training | mutate |
-| `lora_train_job_status` | keep | Training status; separate from generation | read |
-| `lora_train_logs` | keep | Bounded training logs | read |
-| `lora_train_cancel` | keep | Training cancellation; separate from generation | mutate |
-| `lora_dataset_list` | keep | List datasets | read |
-| `lora_dataset_inspect` | keep | Inspect dataset | read |
-| `lora_train_smoke_test` | keep | Existing submit-once/return-existing smoke intent | mutate |
-
-Static AST enumeration finds all 40 catalog entries and exactly matching
-`@mcp.tool()` registrations. Retained baseline live discovery matches them too.
-All nine LoRA/caption names and three retained Civitai names remain distinct.
-No training status/cancel is absorbed by the generation tools. Both image
-generation modes and all removed video/generate-like entries are explicit.
-
-## Other acceptance gates and preservation checks
-
-| Item | Kickoff assessment |
+| Case | Required observable MCP result and boundary |
 |---|---|
-| D1 — registration and complete old-to-new mapping | Observable through `test_tool_catalog.py`, static catalog/registration equality and manual 40-row comparison. K2-1 prevents complete capability/risk disposition for one row. |
-| D2 — exactly one risk in catalog and description | Metadata cardinality is observable. K2-1 must pin the prompt-composition capability so the label is truthful as well. |
-| D3 — every merged mode/action through MCP | Observable via `mcp.call_tool`, with mocks below each real wrapper. Minimum branches: two generate modes; image/artifact Gallery selectors; three prompt-write actions; preset list/detail; preset fields/successful-job save; three ComfyUI actions. Preserve existing internal resource-type, concurrency and error checks as well. Add the resolved K2-1 boundary guard. |
-| D4 — friction fixed or explained | Complete F1–F8 disposition agrees with accepted evidence, as reconciled below. Only F3 is directly fixed; F5/F8 preservation remains material. |
-| D5 — executable/staged docs and MCP suite | Observable. Current flow uses `mcp_ping → list_resources → generate → job_status` polling, then `gallery_get`; health/wait must be labeled staged. Full MCP suite with isolated root and `--timeout=60`; no new failures. |
+| Ordinary `prompt_compose` | Schema advertises composition inputs only; real wrapper request contains no `save_as`. |
+| Legacy `save_as` with object, empty object/string or null | Presence is rejected before any Backend request; common envelope `ok=false`, `error.code=request_validation_failed`, hint to compose then `prompt_write(action=save)`. Removing a signature field or checking truthiness alone is insufficient. |
+| Compose then `prompt_write(action=save, resource_type=combination, resource_id=...)` | Pass returned positive/negative fragment arrays, preserving refs, snapshots, weights/order and applicable context/provenance; use existing save metadata and explicit revision/ETag arguments. Rendered strings do not replace arrays. |
+| Save concurrency conflict | Preserve existing Backend code/hint through the common envelope; no automatic overwrite/retry. Create and update keep their existing rules. |
 
-Preservation requirements are concrete at the source boundary:
+D1 names the optional-capability migration, D2 binds risk to actual capability,
+and D3 demands these registered MCP request/error assertions with dependencies
+mocked below real wrappers. The read intent has no save route; saving remains a
+mutate action. This closes the demonstrated ambiguity without inventing a new
+API, tool or persistence system. No remaining blocking specification ambiguity
+was demonstrated. Whether implementation meets these gates is still untested.
 
-- `tools/generate.py` forwards `revision_context` and distinguishes omitted
-  `loras` from `[]`. Preserve those meanings in `generate(template)`; Backend
-  resolves the canonical parent. Custom-workflow behavior stays its existing
-  supported behavior; this task adds no Backend revision contract to it.
-- `tools/gallery.py:43` constructs an image `local_path` from configured Gallery
-  root while preserving a returned URL; line 86 forwards canonical-artifact
-  locators and metadata. Merging must explicitly distinguish image IDs from
-  artifact IDs, retain metadata/context and supported locators, and retain
-  existing artifact retrieval even though new video submissions leave MCP.
-- `gallery_rerun` remains parameter replay. `job_status` and generation cancel
-  must retain their status/error semantics. LoRA status/cancel and existing
-  uncertain-admission recovery stay separate. Do not add automatic resubmission
-  or fallback to local execution after worker failure.
-- Preserve prompt revision/ETag guards and restore locators; the saved-preset
-  server-owned graph and explicit save semantics; direct local ComfyUI targeting;
-  and Discord allowlisted-alias/dedup behavior. Risk labels do not broaden any
-  endpoint, destination or security boundary. No new worker control is needed.
-- The stated documentation scope includes `docs/mcp.md`, operating policy,
-  architecture, style/workflow READMEs, affected memory and team role prompts.
-  Rewrite current executable examples and old response-shape guidance; retain
-  historical task evidence. `docs/mcp.md` also still describes repair QA as
-  pending, which should be reconciled while its current flows are rewritten.
-  Backend removal or later wait/health implementation is outside this delivery.
+## Complete tool and acceptance reconciliation
 
-## Friction and prerequisite evidence
+The first 40-tool audit's source inputs are equal. I reused its 39 unaffected
+rows and independently resolved the compose row below; this is a QA cross-check,
+not Coding's future manifest. Each old name occurs once. Counts remain 15 kept,
+eight renamed, 14 merged old entries into six destinations and three removed:
+**29 provisional delivered names**, before any QA-agreed naming adjustment.
+Each delivered destination below has one consistent risk; removed risks describe
+old intent only. Retained-tool labels inferred from source remain proposals for
+Coding to state and prove; metadata alone does not certify capability boundaries.
 
-I independently agree with all eight rows in the fixed
-[kickoff context](../p1-01-mcp-response-envelope/kickoff-context.md) and the
-complete per-row reconciliation in the [p1-01
-report](../p1-01-mcp-response-envelope/kickoff-review.md#original-friction-and-accepted-repair-reconciliation):
-F1=1 setup (p1-05), F2=1 bootstrap (p1-05), F3=1 parsing (direct p1-01/02),
-F4=6 runtime diagnostics (bounded launch repaired; general visibility p1-04),
-F5=1 revision mismatch (new persistence repaired; preserve here), F6=11 polls
-(p1-03), F7=1 visibility (p1-03/04), F8=1 failed relative-URL consumption
-(colocated host-path repair accepted; preserve here, later result/smoke proof).
-Total remains **23 units/eight incidents**, including the original failed
-retrieval/revision outcome. No count is subtracted or attributed to this new task.
+| Old name | Destination/disposition | Intent | Mode/action or capability | Risk |
+|---|---|---|---|---|
+| `mcp_ping` | `mcp_ping` (kept) | Backend connectivity | transitional | read |
+| `civitai_source_info` | `civitai_source_info` (kept) | Civitai preview | unchanged | read |
+| `civitai_generate_like` | removed (Backend frozen) | Civitai reproduce | MCP removal only | mutate |
+| `civitai_resource_acquire` | `civitai_resource_acquire` (kept) | Civitai download | unchanged | mutate |
+| `civitai_resource_status` | `civitai_resource_status` (kept) | Civitai acquisition status | unchanged | read |
+| `generate_image` | `generate` (merged) | Generate image | template | mutate |
+| `generate_image_custom_workflow` | `generate` (merged) | Generate image | custom_workflow | mutate |
+| `generate_video_wan_keyframes` | removed (Backend frozen) | Wan video | MCP removal only | mutate |
+| `generate_video_custom_workflow` | removed (Backend frozen) | Custom video | MCP removal only | mutate |
+| `get_generation_status` | `job_status` (renamed) | Generation status | unchanged job ID | read |
+| `cancel_job` | `cancel_job` (kept) | Generation cancel | generation queue | mutate |
+| `list_available_resources` | `list_resources` (renamed) | Resource discovery | resources and forms | read |
+| `deliver_generation_result_to_discord` | `deliver_to_discord` (renamed) | Deliver completed job | allowlisted alias; dedup/force_resend | mutate |
+| `gallery_list` | `gallery_search` (renamed) | Gallery search | filters/pagination | read |
+| `get_gallery_image` | `gallery_get` (merged) | Gallery retrieval | image ID branch | read |
+| `get_gallery_artifact` | `gallery_get` (merged) | Gallery retrieval | canonical artifact ID branch | read |
+| `gallery_rerun` | `gallery_rerun` (kept) | Replay image parameters | not a revision | mutate |
+| `free_comfyui_memory` | `comfyui_admin` (merged) | ComfyUI administration | free_memory | admin |
+| `comfyui_node_provision` | `comfyui_admin` (merged) | ComfyUI administration | install_node | admin |
+| `comfyui_restart` | `comfyui_admin` (merged) | ComfyUI administration | restart | admin |
+| `create_style_preset` | `style_preset_save` (merged) | Save style preset | from fields | mutate |
+| `list_style_presets` | `style_preset_get` (merged) | Read style preset | no ID = list | read |
+| `get_style_preset` | `style_preset_get` (merged) | Read style preset | ID = detail | read |
+| `compose_style_preset` | `style_preset_compose` (renamed) | Compose preset | does not generate | read |
+| `save_successful_workflow_as_style_preset` | `style_preset_save` (merged) | Save style preset | from successful job | mutate |
+| `test_saved_style_preset_workflow` | `style_preset_test` (renamed) | Test saved graph | server-owned graph | mutate |
+| `prompt_library_search` | `prompt_search` (renamed) | Search prompts | catalog/category/search | read |
+| `prompt_library_save` | `prompt_write` (merged) | Write prompts | save | mutate |
+| `prompt_library_compose` | `prompt_compose` (renamed) | Compose prompts | pure compose; all legacy save_as rejected before Backend; saving arrays/metadata migrates to prompt_write(save) | read |
+| `prompt_library_archive` | `prompt_write` (merged) | Write prompts | archive | mutate |
+| `prompt_library_restore` | `prompt_write` (merged) | Write prompts | restore | mutate |
+| `caption_image` | `caption_image` (kept) | Caption image | unchanged | mutate |
+| `lora_training_decision_preflight` | `lora_training_decision_preflight` (kept) | Training preflight | non-starting | read |
+| `lora_train_start` | `lora_train_start` (kept) | Start training | unchanged | mutate |
+| `lora_train_job_status` | `lora_train_job_status` (kept) | Training status | separate from generation status | read |
+| `lora_train_logs` | `lora_train_logs` (kept) | Training logs | bounded lines | read |
+| `lora_train_cancel` | `lora_train_cancel` (kept) | Cancel training | separate from generation cancel | mutate |
+| `lora_dataset_list` | `lora_dataset_list` (kept) | List datasets | unchanged | read |
+| `lora_dataset_inspect` | `lora_dataset_inspect` (kept) | Inspect dataset | unchanged | read |
+| `lora_train_smoke_test` | `lora_train_smoke_test` (kept) | Training smoke generation | existing submit-or-return semantics | mutate |
 
-I read the actual original manifest/review, corrected repair manifest,
-acceptance, final PASS and historical FAIL. Fixed Git comparisons retain all 20
-original baseline files unchanged, corrected repair manifest/raw flow at
-`b6d58468147e11a21b3d7a26ea25ed4353a28a28`, final review at
-`3d5d8902a89a8c3c8994ed89e944fcaee0260577` and historical round-1 review.
-Publication `a963386a3141194a6a08853d89224b548d112aa2` accepted one bounded
-original/revision pair with canonical lineage and real decoded bytes from both
-Gallery tools' unmodified host paths, for a colocated Mac client. The original
-used cache. Remote/relative-URL consumption, timeout/cancellation/recovery,
-idempotency, aesthetics, demo and three-zero-intervention-run phase exit remain
-unproved. The one rejection/correction round 1/review round 2 remain p1-00a's
-history, not p1-01/02's.
+The optional save capability of the single `prompt_library_compose` row migrates
+to `prompt_write(save)` (`mutate`), while its pure composition maps to
+`prompt_compose` (`read`). This is intentional capability accounting, not a
+second old-name row or a 30th delivered tool. The separate actions remain within
+the existing prompt-write intent.
 
-## Verification, artifacts and handoff
+| Item | Verdict | Required later delivery evidence |
+|---|---|---|
+| D1 — catalog/registration and all old capabilities | CLEAR | Catalog test plus exact 40-row manifest map including this optional migration. All nine LoRA/caption and three retained Civitai names remain separate, especially training status/cancel. Three MCP removals leave Backend implementations frozen. |
+| D2 — truthful single risk | CLEAR | One catalog risk, stated in description and consistent with exposed capability; metadata and no-save/rejection boundary tests. `caption_image` is mutate, dataset reads read, ComfyUI actions admin, temporary ping read. |
+| D3 — every merged mode/action through MCP | CLEAR | Real registered wrappers: generate template/custom_workflow; Gallery image/artifact selectors; prompt save/archive/restore; preset list/detail and save from fields/successful job; ComfyUI restart/free_memory/install_node. Add all clarified compose/no-write/replacement-save/conflict cases above. Retain existing resource-type/locator and validation checks. |
+| D4 — all friction fixed/explained | CLEAR | F1-F8 section unchanged; per-row obligations and 23-unit/eight-incident boundary independently reconciled in the p1-01 round-2 report. F3 is the direct fix; F5/F8 require preservation; other later-task obligations are not dropped. |
+| D5 — current/staged docs and full MCP suite | CLEAR | Executable current `mcp_ping → list_resources → generate → job_status` polling then `gallery_get`; label `health → list_resources → generate → wait_for_job → gallery_get` as staged. Full MCP suite, isolated root and `--timeout=60`, command/summary in manifest. |
 
-Review used recipient-owned branch `aid-155-fixed-kickoff-review` at
-`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-155-kickoff-review`,
-created at the full fixed specification SHA. No p1-01/02 manifest exists there.
-Source/contract, Git-object and AST checks were read-only. The static audit
-command and complete verification limits are recorded in the p1-01 report;
-it exited 0 with all 40 dispositions covered and K2-1 positively identified.
-`git diff --check` and outgoing exact-file/package checks are part of this
-report handoff. The two committed reports, task digests, audit source/JSON,
-independent owner reading and exact patch are uploaded on AID-155. Package
-receipt records the full report commit and file hashes.
+Scope still requires `docs/mcp.md`, operating policy, architecture, style/workflow
+READMEs, affected memory and team role prompts to use delivered names and the
+common parse shape. Current `docs/mcp.md` still describes mixed shapes and older
+repair status; rewriting it is delivery work. Keep historical evidence unchanged.
+No new wait, health or worker-list tool is added now: p1-03 adds wait, p1-04
+replaces temporary ping with health and adds list_workers.
 
-No offline software suite, product-service probe, restart, generation or live
-image-byte retrieval was performed. Historical independent Backend
-`1900 passed / 124 Windows-only skips` and MCP `314 passed / 4 exported-fixture
-skips` were inspected as accepted prior evidence; they do not test future
-consolidation. This kickoff adds no registry certification. Shared main, the
-active AID-151 worktree/private configuration, canonical Backend venv, models,
-datasets, outputs and Gallery records were left untouched.
+Preservation remains material: omitted versus empty `loras`, `revision_context`
+and canonical parent artifact IDs, Gallery metadata/supported locators and image/
+artifact namespaces, existing artifact reads even when video submissions leave
+MCP, rerun versus revision semantics, generation and LoRA status/cancel separation,
+safe uncertain-admission recovery, prompt concurrency/restore constraints,
+server-owned saved-preset replay, direct local ComfyUI targeting and Discord
+allowlist/dedup behavior. No automatic timeout resubmission or failed-worker
+fallback is introduced. Risk labels do not expand security boundaries.
 
-Complete this QA card with AMBIGUITY as its delivered verdict. Producer on
-[AID-143](/AID/issues/AID-143) owns clarification, a fresh fixed-spec kickoff and
-later dispatch. After both tasks actually clear, use separate Coding and QA
-delivery cards, with native QA dependency on Coding; inspect one combined exact
-final commit and both manifests. Independent PASS precedes combined merge/push.
-Any later candidate change requires a new exact-commit review. Completing this
-kickoff card does not satisfy that release gate.
+## History, verification and handoff
+
+Round 1 was [AID-155](/AID/issues/AID-155), source
+`d1ffb8d8d9db12f728ed98704e966e76489faafb`, report commit
+`b32ac4fcabf8c57e2370aa81bb06f6708863ff22`: p1-01 CLEAR / p1-02 AMBIGUITY
+K2-1. Accounting remains one p1-02 kickoff ambiguity, clarification round 1,
+this kickoff review round 2; no p1-01/02 implementation delivery, delivery
+rejection or delivery review exists. Both `kickoff-review-round-1.md` mirrors
+are byte-identical to that exact report commit and are left unchanged.
+The separate p1-00a history stays one delivery rejection, correction round 1,
+delivery review round 2.
+
+I read the preserved owner requests, approved map, both actual task files,
+clarification, revised shared context, original reports, original baseline
+manifest/review and corrected repair manifest/acceptance/final and historical
+reviews. Neither reviewed task has a `manifest.md`; this is kickoff only.
+Guides and skills: AGENTS, project memory/INDEX, team/QA role/bindings,
+reviewspec-core, reviewspec-review, paperclip-task-handoff, Paperclip,
+Git/worktree and verification-before-completion.
+
+Recipient-owned worktree:
+`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-156-kickoff-review`,
+branch `aid-156-fixed-kickoff-round-2`, created at the full fixed SHA above.
+Checks used fixed Git objects, AST/schema inspection, `git diff`, `git ls-tree`,
+SHA-256 and the uploaded static audit:
+
+```sh
+python3 "$PAPERCLIP_RUN_SCRATCH_DIR/kickoff-round2-audit.py"   /Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-156-kickoff-review   "$PAPERCLIP_RUN_SCRATCH_DIR/round2-audit.json"
+git diff --check
+```
+
+The static audit exited 0: both digests/counts match; 40 catalog/registration/
+original-discovery names and dispositions, 29 provisional destinations, 23 units/
+eight incidents and unchanged source/evidence inputs reconcile. All 20 original
+baseline files remain equal to `3081952e0ba12a339ab7e60b8081ede61a131b7f`;
+all 91 repair-folder files equal the first kickoff source, with corrected
+manifest/raw flow and final review also equal their named immutable commits.
+The changed specification paths are documentation only. Backend/MCP and the
+other checked product trees equal the prior source. The only tool-map row
+changes concern composition and saving; the F1-F8 section is byte-identical.
+
+I downloaded all four official AID-155 artifacts. Both standalone reports and
+the patch equal the exact Git bytes. The archive has 17 members including its
+receipt, with all 16 indexed non-self files verified by size/hash; all nine
+reference snapshots equal their named first-source Git objects. This identifies
+the prior static audit being reused; it is not an old clearance substituted for
+this combined-contract review. Fresh report hashes, full report commit, exact
+patch, audit source/result and fixed reference snapshots accompany the AID-156
+uploads. Outgoing document links, allowed changed paths, whitespace and package
+bytes are checked separately before handoff.
+
+Verification boundaries:
+
+- Offline software suites: none run. Static specification review changes no
+  software. Historical repair Backend `1900 passed / 124 Windows-only skips`
+  and MCP `314 passed / 4 exported-fixture skips` remain historical evidence;
+  they do not verify future envelope/consolidation code.
+- Running service: no new product probe, restart, private configuration or
+  canonical Backend venv access/change. No loaded-source claim is inferred
+  from a documentation commit.
+- Real generation: none. Accepted evidence remains one original/revision pair,
+  with a cached deterministic original and persisted canonical lineage.
+- Generated artifact retrieval: no new live image-byte read. Accepted proof is
+  decoded bytes from both Gallery tools' unmodified returned host paths for a
+  colocated Mac filesystem client only. Remote/relative-URL consumption remains
+  unproved. Review-file upload readback is a separate integrity check.
+- Errors/cancellation/recovery/duplicate submission/security: static contracts
+  only; no new live behavior certification. Existing job IDs must be inspected
+  before resubmission after timeout. No worker exposure, data cleanup or changes
+  to shared main, active AID-151 runtime/private files or retained data occurred.
+
+Both fixed specifications now have explicit CLEAR. Producer on
+[AID-143](/AID/issues/AID-143) owns separate Coding and delivery-QA cards, with QA
+natively waiting on Coding. Delivery QA must read both actual manifests at one
+combined exact final commit and return independent PASS before combined merge/
+push and p1-03 release. New candidate code requires a new exact-commit review.
+This kickoff adds no registry coverage, software acceptance, release of p1-03,
+aesthetic/demo approval or phase-close authority.
