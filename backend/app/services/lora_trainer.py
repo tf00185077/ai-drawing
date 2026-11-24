@@ -1448,7 +1448,7 @@ def _register_output_lora(source_path: Path, job_id: str) -> tuple[str, str]:
         expected=root/'artifacts'/(job['resolved_output_name']+'.safetensors')
         if source_path.absolute() != expected.absolute():
             raise delivery.DeliveryError('output_ownership_mismatch','source is not this job’s exact final path')
-        manifest=json.loads(delivery.confined(root/'manifest.json',root).read_text())
+        manifest=json.loads(delivery.confined(root/'manifest.json',root).read_text(encoding='utf-8'))
         if manifest.get('job_id') != job_id or manifest.get('run_locator') != job['run_locator']:
             raise delivery.DeliveryError('output_ownership_mismatch','run manifest does not belong to this job')
         content_hash=delivery.validate_final(expected,root/'artifacts')
@@ -1545,7 +1545,7 @@ def _worker_loop() -> None:
             if not job.run_locator or not job.resolved_output_name:
                 raise TrainerServiceError('legacy_output_unknown','job lacks an allocated run; cannot launch')
             run_root=delivery.run_path(lora_base,job.run_locator)
-            manifest=json.loads(delivery.confined(run_root/'manifest.json',run_root).read_text())
+            manifest=json.loads(delivery.confined(run_root/'manifest.json',run_root).read_text(encoding='utf-8'))
             if manifest.get('job_id') != job.job_id:
                 raise TrainerServiceError('output_ownership_mismatch','run belongs to another job')
             output_dir = delivery.confined(run_root/'artifacts',run_root)

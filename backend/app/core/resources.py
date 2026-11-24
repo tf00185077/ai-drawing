@@ -83,7 +83,7 @@ def lora_catalog(settings: ResourceSettings) -> dict:
             locator=path.relative_to(root).as_posix()
             owner=None
             if locator.startswith('AI-Drawing/'):
-                try: owner=json.loads((path.parent/'registration.json').read_text())
+                try: owner=json.loads((path.parent/'registration.json').read_text(encoding='utf-8'))
                 except (OSError,ValueError): pass
             key=unicodedata.normalize('NFC',locator).casefold()
             found.setdefault(key,[]).append((locator,path,owner))

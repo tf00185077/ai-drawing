@@ -17,7 +17,7 @@ def _sha(data: bytes) -> str:
 
 
 def _fixture() -> dict:
-    return json.loads((Path(__file__).parent / "fixtures" / "civitai" / "resource_inspect_model.json").read_text())
+    return json.loads((Path(__file__).parent / "fixtures" / "civitai" / "resource_inspect_model.json").read_text(encoding='utf-8'))
 
 
 def test_resource_inspect_is_canonical_and_redacts_secret_url() -> None:

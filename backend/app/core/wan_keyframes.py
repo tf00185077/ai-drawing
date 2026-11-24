@@ -144,7 +144,7 @@ def build_wan_keyframe_workflow(
     if fps <= 0:
         raise ValueError("fps must be positive")
 
-    template = json.loads(_template_path().read_text())
+    template = json.loads(_template_path().read_text(encoding="utf-8"))
     workflow: dict[str, Any] = copy.deepcopy(template)
     slug = _safe_stem(task_slug or f"wan_keyframes_{uuid.uuid4().hex[:8]}")
     relative_inputs, _ = _copy_keyframes_to_comfy_input(

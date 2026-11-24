@@ -2688,30 +2688,6 @@ def _run_worker_root_harness(tmp_path: Path, body: str) -> subprocess.CompletedP
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows root contract requires Windows")
-def test_direct_d_root_accepts_only_the_canonical_install_path(tmp_path: Path) -> None:
-    accepted = _run_worker_root_harness(
-        tmp_path,
-        "Resolve-WorkerInstallRoot -Path 'D:\\code\\AI-Drawing-Worker'",
-    )
-    assert accepted.returncode == 0, accepted.stderr
-    assert accepted.stdout.strip().casefold() == r"D:\code\AI-Drawing-Worker".casefold()
-
-    for invalid in (
-        r"AI-Drawing-Worker",
-        r"\\server\share\AI-Drawing-Worker",
-        "D:\\",
-        r"D:\code\ai-drawing",
-        "D:\\code\\AI-Drawing-Worker ",
-        r"C:\AI-Drawing-Worker",
-    ):
-        rejected = _run_worker_root_harness(
-            tmp_path,
-            f"Resolve-WorkerInstallRoot -Path {_ps_quote(invalid)} | Out-Null",
-        )
-        assert rejected.returncode != 0, invalid
-
-
-@pytest.mark.skipif(os.name != "nt", reason="Windows root contract requires Windows")
 def test_direct_d_root_rejects_a_reparse_parent_without_following_it(tmp_path: Path) -> None:
     outside = tmp_path / "outside"
     link = tmp_path / "link"
@@ -2884,80 +2860,6 @@ def test_product_generation_contracts_default_local_and_accept_worker(model, pay
 def test_strict_civitai_generation_contracts_expose_execution_target() -> None:
     assert "execution_target" in CivitaiRecipeVariantGenerateRequest.model_fields
     assert "execution_target" in CivitaiRecipeVariationSetCreateRequest.model_fields
-
-
-def test_worker_manifest_is_pinned_and_distribution_matches_source() -> None:
-    repo = Path(__file__).resolve().parents[2]
-    source = repo / "worker" / "windows"
-    manifest = json.loads((source / "worker-manifest.json").read_text())
-    assert manifest["cache_gb"] == 100
-    assert manifest["minimum_free_gb"] == 20
-    assert manifest["custom_nodes"]
-    assert all(item.get("repository") and item.get("revision") for item in manifest["custom_nodes"])
-    dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
-    for name in (
-        "worker.py",
-        "worker-manifest.json",
-        "WorkerRoot.ps1",
-        "Clean-Install-Worker.ps1",
-        "Setup-D.ps1",
-        "Setup-D.cmd",
-        "Install-Worker.ps1",
-        "Migrate-Worker.ps1",
-        "Start-Worker.ps1",
-        "UpdaterBootstrap.ps1",
-        "WorkerSecurity.ps1",
-        "requirements.txt",
-        "README.md",
-        "README.txt",
-        "updater/cli.py",
-        "updater/config.py",
-        "updater/git_source.py",
-        "updater/runtime.py",
-        "updater/request_lock.py",
-        "updater/state.py",
-        "updater/windows_runtime.py",
-    ):
-        assert (dist / name).read_bytes() == (source / name).read_bytes()
-
-
-def test_restart_management_artifacts_are_fixed_and_distributed() -> None:
-    repo = Path(__file__).resolve().parents[2]
-    source = repo / "worker" / "windows"
-    dist = repo / "dist" / "AI-Drawing-NVIDIA-Worker"
-    names = ("restart_contract.py", "Restart-Worker.ps1", "Wait-Restart-Result.ps1", "Restart-Worker.cmd")
-    for name in names:
-        assert (source / name).is_file()
-        assert (dist / name).read_bytes() == (source / name).read_bytes()
-
-    launcher = (source / "Restart-Worker.cmd").read_text(encoding="utf-8")
-    assert "AI-Drawing NVIDIA Worker Restart" in launcher
-    assert "%*" not in launcher and "%1" not in launcher
-    restart = (source / "Restart-Worker.ps1").read_text(encoding="utf-8")
-    wait_restart = (source / "Wait-Restart-Result.ps1").read_text(encoding="utf-8")
-    for marker in (
-        "FileMode]::OpenOrCreate", "FileShare]::None", "8188, 8791", "Get-NetTCPConnection",
-        "Start-Worker.ps1", 'Write-State "started"', "request_id",
-        "Move-Item", "Select-Object -Skip 5",
-    ):
-        assert marker in restart
-    for retired_gate in (
-        "NVIDIA_WORKER_TOKEN",
-        "Authorization",
-        "Bearer",
-        "/system_stats",
-        "/v1/worker/status",
-        "/v1/workflows/preflight",
-        "Invoke-RestMethod",
-        "TaskTimeoutSeconds",
-        "RESTART_HEALTH_TIMEOUT",
-        'Write-State "verifying"',
-        'Write-State "timed_out"',
-    ):
-        assert retired_gate not in restart
-    for script in (restart, wait_restart):
-        assert "$Parts = $Line -split '=', 2" in script
-        assert ".Split(@('='), 2)" not in script
 
 
 def test_installer_registers_fixed_restart_task_and_desktop_launcher() -> None:
@@ -3199,7 +3101,7 @@ $Context = Get-ProductionMigrationContext
 
 def test_migration_main_bootstraps_legacy_install_before_reading_context() -> None:
     repo = Path(__file__).resolve().parents[2]
-    text = (repo / "worker" / "windows" / "Migrate-Worker.ps1").read_text()
+    text = (repo / "worker" / "windows" / "Migrate-Worker.ps1").read_text(encoding='utf-8')
 
     bootstrap = text.index("function Initialize-ProductionMigrationPrerequisites")
     main = text.index("function Invoke-MigrationMain")

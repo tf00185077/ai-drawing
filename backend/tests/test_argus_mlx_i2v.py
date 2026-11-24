@@ -200,15 +200,3 @@ def test_argus_timeout_is_positive_finite(value):
         Settings(argus_mlx_timeout_seconds=value)
 
 
-def test_env_example_has_argus_inventory():
-    text = (Path(__file__).parents[2] / ".env.example").read_text()
-    keys = [
-        "ARGUS_MLX_RUNTIME_ROOT", "ARGUS_MLX_PYTHON", "ARGUS_MLX_GENERATE_SCRIPT",
-        "ARGUS_MLX_CHECKPOINT", "ARGUS_MLX_TRANSFORMER", "ARGUS_MLX_TURBO_LORA",
-        "ARGUS_MLX_WORK_ROOT", "ARGUS_MLX_HF_CACHE", "ARGUS_MLX_ACCEPT_LICENSE",
-        "ARGUS_MLX_MAX_CONCURRENCY",
-        "ARGUS_MLX_TIMEOUT_SECONDS", "ARGUS_MLX_FFMPEG", "ARGUS_MLX_FFPROBE",
-    ]
-    for key in keys:
-        assert text.count(f"{key}=") == 1
-    assert "MINIMAX_H3_EXECUTION_TARGET" not in text

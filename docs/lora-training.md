@@ -4,7 +4,7 @@ The Backend prepares datasets and trains LoRA models with kohya sd-scripts, then
 
 ## Status
 
-**Built:** dataset inspection, curation and auto-captioning; preflight; recipe compiler; sd-scripts runner for SD1.5, SDXL and Anima; required readable `output_name` with automatic serial numbers; a separate folder per run with an effective-parameter record; registration status reported separately from training; smoke-test submission with reconciliation and image validation; status, logs, cancel; UI page and MCP tools.
+**Built:** dataset inspection, curation and auto-captioning; preflight; recipe compiler; sd-scripts runner for SD1.5, SDXL and Anima; required readable `output_name` with automatic serial numbers; a separate folder per run with an effective-parameter record; registration status reported separately from training; smoke-test submission with reconciliation and image validation (code only: its tests were removed on 2026-11-24 and are rewritten in Phase 4); status, logs, cancel; UI page and MCP tools.
 
 **Verified in a real run:** trainer Python imports on the Backend host. No real training run has completed.
 

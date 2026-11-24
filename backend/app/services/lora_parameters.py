@@ -81,7 +81,7 @@ def prepare_parameters(root: Path, *, job, argv, dataset_toml: str, evidence) ->
 def write_parameters(root: Path, snapshot: dict) -> None:
     try:
         confined(root/'training-parameters.json',root)
-        manifest=json.loads(confined(root/'manifest.json',root).read_text())
+        manifest=json.loads(confined(root/'manifest.json',root).read_text(encoding='utf-8'))
         if manifest.get('job_id') != snapshot.get('job_id') or manifest.get('run_locator') != snapshot.get('run_locator'):
             raise DeliveryError('output_ownership_mismatch','parameter documents do not belong to this job/run')
         content=json.dumps(snapshot,ensure_ascii=False,sort_keys=True,indent=2)+'\n'
@@ -94,7 +94,7 @@ def write_parameters(root: Path, snapshot: dict) -> None:
         markdown='\n'.join(md)
         atomic_write(root/'training-parameters.json',content.encode('utf-8'))
         atomic_write(root/'training-parameters.md',markdown.encode('utf-8'))
-        if json.loads((root/'training-parameters.json').read_text()) != snapshot or (root/'training-parameters.md').read_text() != markdown:
+        if json.loads((root/'training-parameters.json').read_text(encoding='utf-8')) != snapshot or (root/'training-parameters.md').read_text(encoding='utf-8') != markdown:
             raise ValueError('parameter readback differs')
         manifest.update({k:snapshot[k] for k in ('job_id','output_name','resolved_output_name','output_serial','run_locator','status')})
         manifest['parameter_files']={name:digest(root/name) for name in ('training-parameters.json','training-parameters.md')}
@@ -107,7 +107,7 @@ def update_phase(root: Path, *, job_id: str, status: str, started_utc: str | Non
     """Retain documents on every outcome; absent files mean trainer never prepared."""
     path=confined(root/'training-parameters.json',root)
     if not path.exists(): return
-    snapshot=json.loads(path.read_text())
+    snapshot=json.loads(path.read_text(encoding='utf-8'))
     if snapshot.get('job_id') != job_id:
         raise DeliveryError('output_ownership_mismatch','cannot update another job’s parameter documents')
     snapshot['status']=status

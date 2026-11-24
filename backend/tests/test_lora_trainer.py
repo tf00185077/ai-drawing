@@ -404,7 +404,7 @@ def test_enqueue_valid_folder_returns_job_id_and_queued(
     assert len(st["queue"]) == 1
     job=lora_trainer._queue[0]
     root=lora_trainer.delivery.run_path(valid_train_dir/"lora_train",job.run_locator)
-    assert json.loads((root/"training-parameters.json").read_text())["trainer_process"]=="not started"
+    assert json.loads((root/"training-parameters.json").read_text(encoding='utf-8'))["trainer_process"]=="not started"
     assert st["queue"][0]["job_id"] == job_id
     assert st["queue"][0]["folder"] == "my_lora"
 

@@ -58,7 +58,7 @@ def test_bootstrap_creates_required_marker_before_provider_access(tmp_path: Path
         "run_id": None,
         "data_validated": False,
     }
-    marker = json.loads((root / ".comma-atomic-migration.json").read_text())
+    marker = json.loads((root / ".comma-atomic-migration.json").read_text(encoding='utf-8'))
     assert marker["state"] == "required"
 
 

@@ -61,9 +61,9 @@ def test_backfill_creates_family_filed_template(tmp_path) -> None:
     tid = r["template_id"]
     assert tid.startswith("gen_img2img_sdxl")  # 家族（modality+family）編入命名
     # 形狀有寫、且已剝 seed
-    saved = json.loads((tmp_path / f"{tid}.json").read_text())
+    saved = json.loads((tmp_path / f"{tid}.json").read_text(encoding='utf-8'))
     assert saved["3"]["inputs"]["seed"] == 0
-    meta = json.loads((tmp_path / f"{tid}.meta.json").read_text())
+    meta = json.loads((tmp_path / f"{tid}.meta.json").read_text(encoding='utf-8'))
     assert meta["modality"] == "img2img" and "controlnet_pose" in meta["conditioning"]
 
 
@@ -92,7 +92,7 @@ def test_backfill_versions_and_deprecates_broken_same_key(tmp_path) -> None:
     assert r["ok"] and r["created"]
     assert r["deprecated"] == "broken"
     # 舊的被標 deprecated（只動 meta，未刪）
-    old_meta = json.loads((tmp_path / "broken.meta.json").read_text())
+    old_meta = json.loads((tmp_path / "broken.meta.json").read_text(encoding='utf-8'))
     assert old_meta["deprecated"] is True
 
 
@@ -178,7 +178,7 @@ def test_backfill_endpoint_promotes_video_artifact(client_db) -> None:
     assert r.status_code == 200
     body = r.json()
     assert body["created"] is True
-    meta = json.loads((tmp_path / f"{body['template_id']}.meta.json").read_text())
+    meta = json.loads((tmp_path / f"{body['template_id']}.meta.json").read_text(encoding='utf-8'))
     assert meta["modality"] == "img2video"
     assert meta["model_family"] == "wan"
     assert "first_frame" in meta["io"]

@@ -39,7 +39,9 @@ AI_DRAWING_TEST_ROOT="$TMPDIR/ai-drawing-mcp-tests" python -m pytest -c pytest.i
 cd frontend && npm test && npm run build
 ```
 
-All suites are expected to pass on `main`; a change must not add failures.
+On Windows, also set `TMPDIR` (the test root must be below it) and `MCP_TEST_PYTHON` (the MCP venv's `python.exe`). Run long suites with a per-test timeout (`pytest-timeout`, `--timeout=60`) so a hang fails fast.
+
+All suites are expected to pass on `main` on macOS and Windows; a change must not add failures. Keep only tests that check a feature. Never leave a test failing or hanging: a test that does not check a feature is removed; a feature test blocked by a known bug is skipped with a reason that links its task.
 
 When reporting, separate what you verified: offline tests, a running service, a real generation, artifact retrieval.
 

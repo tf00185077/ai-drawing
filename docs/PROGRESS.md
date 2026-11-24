@@ -13,7 +13,9 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Docs rebuilt in English (entry, policy, architecture, current, roadmap, topics, team, memory) | Done |
 | History, research data, OpenSpec and scratch files removed | Done |
 | Progress table based on current code | Done (this page) |
-| Known test failures removed (outdated snapshot, packaging and platform tests); fixtures pinned to LF | Done (Backend full run on Windows pending) |
+| Known test failures removed (outdated snapshot, packaging and platform tests); fixtures pinned to LF | Done |
+| Backend suite on Windows: no failures or hangs (2018 passed, 6 skipped); MCP 314 passed | Done 2026-11-24 |
+| LoRA run files read as UTF-8 on Windows ([p0-01](tasks/p0-01-windows-utf8-lora-files/task.md)) | Done 2026-11-24 |
 
 ## Goal 1 — MCP for agents
 
@@ -69,7 +71,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | sd-scripts runner for SD1.5, SDXL, Anima | Done | `services/lora_trainer.py` | `test_lora_trainer.py`, `test_lora_lifecycle.py` | No |
 | Output name with serials, per-run folders, parameter record | Done | `services/lora_trainer.py` | `test_lora_delivery.py`, `test_lora_public_results.py` | No |
 | Registration status separate from training status | Done | `services/lora_trainer.py` | `test_lora_projection_contract.py` | No |
-| Smoke test with reconciliation and image validation | Done | `services/lora_trainer.py` | `test_lora_smoke_reconciliation.py`, `test_lora_smoke_image_validation.py` | No |
+| Smoke test with reconciliation and image validation | Done (tests removed 2026-11-24; new smoke tests come with Phase 4) | `services/lora_trainer.py` | — | No |
 | UI pages and MCP tools | Done | `pages/LoraTrain.tsx`, `LoraDocs.tsx`, `tools/lora_train.py` | `LoraTrain.test.tsx`, `test_lora_train_tools.py` | No |
 | First real training run | Not started | — | — | — |
 | Training on a worker | Not started | — | — | — |

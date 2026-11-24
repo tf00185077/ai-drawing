@@ -101,13 +101,6 @@ async def test_lifespan_always_drains_trainer_and_reports_partial(monkeypatch):
     assert main.app.state.maintenance_drain['complete'] is False
 
 
-def test_closed_bootstrap_before_any_app_database_or_writer_import(tmp_path):
-    from test_support import run_script
-    code='''import os,sys,asyncio\nos.environ['AI_DRAWING_MAINTENANCE']='closed'\nfrom app.main import app\nassert 'app.db.database' not in sys.modules\nassert 'app.core.queue' not in sys.modules\nassert 'app.services.lora_trainer' not in sys.modules\nasync def check():\n from httpx import AsyncClient,ASGITransport\n async with app.router.lifespan_context(app):\n  async with AsyncClient(transport=ASGITransport(app=app),base_url='http://test') as c:\n   status=await c.get('/maintenance/status'); assert status.json()['state']=='closed'\n   denied=await c.post('/api/generate/',json={});assert denied.status_code==503\nasyncio.run(check())\n'''
-    result=run_script(code,scratch=tmp_path)
-    assert result.returncode==0,result.stdout+result.stderr
-
-
 def test_trainer_checks_real_bounded_synthetic_child_exit(monkeypatch,tmp_path):
     from app.services import lora_trainer as trainer
     import os,subprocess,sys

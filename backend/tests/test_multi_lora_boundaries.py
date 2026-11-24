@@ -19,7 +19,7 @@ from app.core.workflow import apply_params, load_template
 from app.main import app
 
 FIXTURE = Path(__file__).parent / "fixtures" / "multi_lora_connected.json"
-CONTRACT = json.loads(FIXTURE.read_text())
+CONTRACT = json.loads(FIXTURE.read_text(encoding='utf-8'))
 LOADERS = ("z", "a", "m")  # Deliberately differs from sorted node-id order.
 
 
@@ -97,7 +97,7 @@ def test_existing_preset_composes_only_selected_model_only_loras():
     """A real two-LoRA recipe must not retain the template's third loader."""
     root = Path(__file__).resolve().parents[2]
     path = root / "style_presets/agent/presets/anima-shattered-dreams-detailer-candidate.json"
-    params = compose_preset(_parse_preset(json.loads(path.read_text())), "contract").generation
+    params = compose_preset(_parse_preset(json.loads(path.read_text(encoding='utf-8'))), "contract").generation
     original = load_template(params.pop("template"))
     before = deepcopy(original)
     graph = apply_params(original, **params)

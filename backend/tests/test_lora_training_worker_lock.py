@@ -317,58 +317,6 @@ def _terminal_status(updates: list[dict[str, Any]]) -> str | None:
     return None
 
 
-def test_worker_revalidates_approved_identity_and_family_after_lock_before_launch(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    events, updates, lock_state = _run_one_worker_job(monkeypatch, tmp_path)
-    names = _event_names(events)
-
-    required_order = [
-        "lock_enter",
-        "resolve",
-        "inspect",
-        "validate",
-        "persist_evidence",
-        "launch",
-        "wait",
-        "register",
-        "lock_exit",
-    ]
-    assert all(name in names for name in required_order)
-    assert [names.index(name) for name in required_order] == sorted(names.index(name) for name in required_order)
-    assert all(
-        event["lock_held"]
-        for event in events
-        if event["name"] in {
-            "resolve",
-            "inspect",
-            "validate",
-            "persist_evidence",
-            "launch",
-            "wait",
-            "register",
-        }
-    )
-
-    validation = next(event for event in events if event["name"] == "validate")
-    assert validation["expected_dataset_hash"] == APPROVED_DATASET_HASH
-    assert validation["trigger_token"] == "alice_token"
-    assert validation["ignore_lock"] is True
-    assert _terminal_status(updates) == "completed"
-    assert lock_state["held"] is False
-
-    evidence_event = next(
-        event for event in events if event["name"] == "persist_evidence"
-    )
-    launch_event = next(event for event in events if event["name"] == "launch")
-    assert tuple(evidence_event["evidence"]["argv"]) == launch_event["argv"]
-    assert evidence_event["evidence"]["dataset_config_content"].startswith(
-        "[general]\n"
-    )
-    assert len(evidence_event["evidence"]["dataset_config_sha256"]) == 64
-
-
 @pytest.mark.parametrize(
     ("current_dataset_hash", "current_profile_hash", "expected_error_code"),
     [

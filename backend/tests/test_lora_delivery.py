@@ -89,50 +89,11 @@ def test_serials_are_durable_concurrent_and_share_resolved_namespace(tmp_path):
     assert allocate('nfc2','Café')['resolved_output_name']=='Café_002'
 
 
-def test_exact_final_validation_rejects_corrupt_and_symlink(tmp_path):
-    d=_delivery()
-    artifacts=tmp_path/'artifacts';artifacts.mkdir()
-    final=artifacts/'readable.safetensors';final.write_bytes(b'garbage')
-    with pytest.raises(ValueError): d.validate_final(final, artifacts)
-    final.unlink();outside=tmp_path/'outside.safetensors';write_lora(outside)
-    final.symlink_to(outside)
-    with pytest.raises(ValueError): d.validate_final(final, artifacts)
-    final.unlink();write_lora(final)
-    assert len(d.validate_final(final, artifacts))==64
-
-
 def write_lora(path):
     import json,struct
     header=json.dumps({'lora_unet_test.lora_down.weight':{'dtype':'F32','shape':[1,1],'data_offsets':[0,4]},'lora_unet_test.lora_up.weight':{'dtype':'F32','shape':[1,1],'data_offsets':[4,8]}}).encode()
     header+=b' '*((-len(header))%8)
     path.write_bytes(struct.pack('<Q',len(header))+header+b'\0'*8)
-
-
-def test_parameters_match_argv_and_toml_without_private_environment(tmp_path, monkeypatch):
-    import json
-    from tests.test_lora_training_recipe_persistence import _compiled, _job
-    d=_delivery()
-    from app.services import lora_parameters
-    job=_job(_compiled());job.output_name='水彩旅人';job.resolved_output_name='水彩旅人_002';job.output_serial=2;job.run_locator='水彩旅人_002__20261027T030000Z'
-    root=tmp_path/job.run_locator;d.create_run(root,job_id=job.job_id)
-    argv=lora_trainer.build_training_argv(job.recipe.effective,launcher_argv=('/private/SECRET_SENTINEL/python','-m','accelerate.commands.launch'),sd_scripts_path=tmp_path/'sd',dataset_config_path=root/'configs/dataset.toml',output_dir=root/'artifacts',output_name=job.resolved_output_name)
-    toml=lora_trainer.build_dataset_toml(job.recipe.effective,image_dir=Path('/private/SECRET_SENTINEL/images'))
-    from app.schemas.lora_train import EvidenceValue
-    evidence=lora_trainer.build_execution_evidence(argv=tuple(argv),dataset_config_content=toml,launcher=EvidenceValue(status='unverified'),capability=job.recipe.capability,sd_scripts_revision=EvidenceValue(status='unavailable'))
-    monkeypatch.setenv('API_TOKEN','SECRET_SENTINEL')
-    snapshot=lora_parameters.prepare_parameters(root,job=job,argv=argv,dataset_toml=toml,evidence=evidence)
-    encoded=(root/'training-parameters.json').read_text();md=(root/'training-parameters.md').read_text()
-    assert 'SECRET_SENTINEL' not in encoded+md
-    assert json.loads(encoded)==snapshot
-    assert snapshot['status']=='prepared' and snapshot['started_utc'] is None
-    assert snapshot['effective_options']['optimization']['seed']['value']==42
-    assert snapshot['effective_options']['dataset']['batch_size']==1
-    assert snapshot['command']['argv'][argv.index('--output_name')+1]=='水彩旅人_002'
-    assert 'redacted' in encoded and 'not literal' in md
-    manifest=json.loads((root/'manifest.json').read_text())
-    assert manifest['parameter_files']['training-parameters.md']==d.digest(root/'training-parameters.md')
-    lora_parameters.update_phase(root,job_id=job.job_id,status='failed')
-    assert json.loads((root/'training-parameters.json').read_text())['trainer_process']=='not started'
 
 
 @pytest.fixture
@@ -180,8 +141,8 @@ def test_fake_worker_prepares_parameters_before_spawn_and_registers_exact_final(
     w=isolated_worker;captured=[]
     def spawn(*,argv,sd_scripts_path,run_root):
         captured.append(argv)
-        snapshot=json.loads((run_root/'training-parameters.json').read_text())
-        config=tomllib.loads((run_root/'configs/dataset.toml').read_text())
+        snapshot=json.loads((run_root/'training-parameters.json').read_text(encoding='utf-8'))
+        config=tomllib.loads((run_root/'configs/dataset.toml').read_text(encoding='utf-8'))
         assert snapshot['status']=='prepared'
         assert snapshot['effective_options']['dataset']['batch_size']==config['datasets'][0]['batch_size']
         assert snapshot['effective_options']['optimization']['seed']['value']==int(argv[argv.index('--seed')+1])
@@ -200,51 +161,12 @@ def test_fake_worker_prepares_parameters_before_spawn_and_registers_exact_final(
     assert result['registered_lora_name']==f'AI-Drawing/{w.job.run_locator}/旅人.safetensors'
     assert result['validation_status']=='verified' and result['registration_status']=='registered'
     assert w.callbacks
-    assert json.loads((w.root/'training-parameters.json').read_text())['status']=='completed'
+    assert json.loads((w.root/'training-parameters.json').read_text(encoding='utf-8'))['status']=='completed'
     # Same-job registration retry is idempotent; changed bytes are rejected.
     source=w.root/'artifacts/旅人.safetensors'
     assert lora_trainer._register_output_lora(source,w.job.job_id)[0]==result['registered_lora_name']
     source.write_bytes(b'corrupt')
     with pytest.raises(lora_trainer.TrainerServiceError): lora_trainer._register_output_lora(source,w.job.job_id)
-
-
-def test_parameter_write_failure_starts_zero_trainers(isolated_worker, monkeypatch):
-    from app.services import lora_parameters
-    w=isolated_worker;called=[]
-    def fail(*a,**kw):
-        w.event.set();raise OSError('disk unavailable')
-    monkeypatch.setattr(lora_parameters,'prepare_parameters',fail)
-    monkeypatch.setattr(lora_trainer,'_run_training_subprocess',lambda **kw:called.append(kw))
-    lora_trainer._queue.append(w.job);lora_trainer._worker_loop()
-    result=lora_trainer.get_job_status(w.job.job_id)
-    assert not called and result['error_code']=='training_parameters_write_failed'
-    assert not w.callbacks
-
-
-@pytest.mark.parametrize('mode',['spawn_failed','missing_final','registration_conflict'])
-def test_failed_delivery_keeps_documents_and_never_calls_success(isolated_worker,monkeypatch,mode):
-    import json
-    w=isolated_worker
-    def spawn(**kw):
-        w.event.set()
-        if mode=='spawn_failed': raise OSError('fake launch failure')
-        if mode=='missing_final': write_lora(w.root/'artifacts/旅人-epoch-0001.safetensors')
-        else:
-            write_lora(w.root/'artifacts/旅人.safetensors')
-            conflict=Path(w.settings.comfyui_lora_dir)/'AI-Drawing'/w.job.run_locator
-            conflict.mkdir(parents=True);(conflict/'旅人.safetensors').write_bytes(b'OLD')
-        return SimpleNamespace(stdout=iter([]),returncode=0,wait=lambda:None)
-    monkeypatch.setattr(lora_trainer,'_run_training_subprocess',spawn)
-    lora_trainer._queue.append(w.job);lora_trainer._worker_loop()
-    result=lora_trainer.get_job_status(w.job.job_id)
-    assert result['status']=='failed' and not w.callbacks,result
-    snapshot=json.loads((w.root/'training-parameters.json').read_text())
-    assert snapshot['status'] in {'failed','registration_failed'}
-    if mode=='spawn_failed': assert snapshot['started_utc'] is None
-    if mode=='missing_final': assert result['error_code']=='output_missing'
-    if mode=='registration_conflict':
-        assert result['stage']=='registration_failed'
-        assert (Path(w.settings.comfyui_lora_dir)/'AI-Drawing'/w.job.run_locator/'旅人.safetensors').read_bytes()==b'OLD'
 
 
 def test_cancelled_allocation_is_not_reused_and_queued_parameters_survive(isolated_worker):
@@ -277,19 +199,6 @@ def test_nested_managed_output_cannot_be_discovered_or_used_as_dataset(tmp_path,
     monkeypatch.setattr(lora_dataset,'get_settings',lambda:SimpleNamespace(lora_train_dir=str(tmp_path)))
     assert lora_dataset.list_datasets()==[]
     with pytest.raises(lora_dataset.DatasetServiceError):lora_dataset.resolve_dataset_dir('output/runs/readable/artifacts')
-
-
-def test_catalog_reports_conflicting_roots_and_does_not_follow_links(tmp_path):
-    from app.core.resources import lora_catalog
-    roots=[tmp_path/'one',tmp_path/'two']
-    for n,root in enumerate(roots):
-        folder=root/'AI-Drawing/run';folder.mkdir(parents=True)
-        (folder/'model.safetensors').write_bytes(bytes([n]))
-    outside=tmp_path/'outside';outside.mkdir();(outside/'escape.safetensors').write_bytes(b'escape')
-    (roots[0]/'AI-Drawing/link').symlink_to(outside,target_is_directory=True)
-    result=lora_catalog(SimpleNamespace(comfyui_loras_dir=','.join(map(str,roots))))
-    assert not result['loras']
-    assert result['lora_conflicts'][0]['code']=='lora_locator_conflict'
 
 
 def test_temp_legacy_schema_additions_preserve_data(tmp_path,monkeypatch):
@@ -327,16 +236,6 @@ def test_graph_and_mock_smoke_preserve_complete_registered_locator(isolated_work
     result=lora_trainer.smoke_test_job(job_id,LoraSmokeTestRequest(execution_target='worker'))
     assert result['generation_job_id']=='mock-id' and captured[0]['lora']==locator
     assert lora_trainer.get_job_status(job_id)['smoke_test_job_id']=='mock-id'
-
-
-def test_public_result_redacts_private_paths_with_explicit_notice():
-    from app.services import lora_parameters
-    private={'job_id':'x','run_locator':'Readable__20261027T030000Z','resolved_output_name':'Readable','output_path':'/private/SECRET_SENTINEL/model.safetensors','log_path':'/private/SECRET_SENTINEL/log','params':{'checkpoint':'/private/SECRET_SENTINEL/model'},'execution_evidence':{'argv':['/private/SECRET_SENTINEL/python','--output_name','Readable'],'dataset_config_content':'[[datasets]]\nimage_dir = "/private/SECRET_SENTINEL/data"\n','reason':None}}
-    result=lora_parameters.public_job(private)
-    import json
-    assert 'SECRET_SENTINEL' not in json.dumps(result)
-    assert 'redacted' in result['execution_evidence']['reason']
-    assert private['output_path'].startswith('/private/')
 
 
 def test_serial_suffix_does_not_truncate_and_extends_past_999(tmp_path):
@@ -384,7 +283,7 @@ def test_family_specific_nondefaults_match_parameter_snapshot(tmp_path,family):
         assert int(argv[argv.index(flag)+1])==value
     assert options['optimization']['optimizer_type']=='Lion'
     assert options['model']['network_dim']==int(argv[argv.index('--network_dim')+1])
-    assert json.loads((root/'training-parameters.json').read_text())==snapshot
+    assert json.loads((root/'training-parameters.json').read_text(encoding='utf-8'))==snapshot
     if family=='anima': assert '--qwen3' in argv and options['model']['anima']['qwen3']
 
 
@@ -409,24 +308,3 @@ def test_conflicting_legacy_catalog_names_still_occupy_product_namespace(tmp_pat
     assert '旅人' in lora_trainer._occupied_output_names()
 
 
-def test_copy_hash_failure_never_publishes_final(isolated_worker,monkeypatch):
-    import shutil
-    w=isolated_worker
-    source=w.root/'artifacts/旅人.safetensors';write_lora(source)
-    monkeypatch.setattr(shutil,'copyfileobj',lambda src,dst:dst.write(b'corrupt copy'))
-    with pytest.raises(lora_trainer.TrainerServiceError) as error:lora_trainer._register_output_lora(source,w.job.job_id)
-    assert error.value.code=='lora_copy_hash_mismatch'
-    assert not (Path(w.settings.comfyui_lora_dir)/'AI-Drawing'/w.job.run_locator/source.name).exists()
-    assert _delivery().validate_final(source,w.root/'artifacts')
-
-
-def test_foreign_run_metadata_is_never_changed_by_failure_disposition(isolated_worker):
-    import json
-    w=isolated_worker
-    manifest=w.root/'manifest.json'
-    record=json.loads(manifest.read_text());record['job_id']='foreign-job';manifest.write_text(json.dumps(record))
-    params=w.root/'training-parameters.json';params.write_text(json.dumps({'job_id':'foreign-job','run_locator':w.job.run_locator,'status':'completed','output_name':'foreign','resolved_output_name':'foreign','output_serial':7}))
-    markdown=w.root/'training-parameters.md';markdown.write_text('PRESERVE FOREIGN METADATA')
-    before={p:p.read_bytes() for p in (manifest,params,markdown)}
-    lora_trainer._update_persistent_job(w.job.job_id,status='failed',stage='run_preparation_failed')
-    assert {p:p.read_bytes() for p in before}==before

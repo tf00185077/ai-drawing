@@ -91,7 +91,7 @@ def test_validate_reports_detail_without_index_entry(tmp_path) -> None:
 def test_validate_reports_index_entry_without_detail(tmp_path) -> None:
     prov = _agent(tmp_path, _preset("a"))
     # index 列了 phantom，但無對應 detail 檔
-    idx = json.loads((tmp_path / "index.json").read_text())
+    idx = json.loads((tmp_path / "index.json").read_text(encoding='utf-8'))
     idx["presets"].append({"id": "phantom", "name": "x", "profiles": []})
     (tmp_path / "index.json").write_text(json.dumps(idx), encoding="utf-8")
     inv = ResourceInventory(checkpoints=("m.safetensors",), workflows=("default_lora",))

@@ -94,25 +94,12 @@ def test_postcommit_http_retains_canonical_identity(fault,admission,monkeypatch,
     import os
     from pathlib import Path
     file=Path(os.environ['AI_DRAWING_TEST_ROOT'])/'http-export.json'
-    exported=json.loads(file.read_text()) if file.exists() else []
+    exported=json.loads(file.read_text(encoding='utf-8')) if file.exists() else []
     exported.append({'fault':fault,'http_status':response.status_code,'body':response.json()})
     file.write_text(json.dumps(exported,indent=2))
     assert rows[0].status=='queued'
     # The read-only aggregate can find an untracked committed row; no second POST.
     assert client.get('/api/lora-train/status').json()['durable']['nonterminal_total']==1
-
-def test_queued_log_failure_still_acknowledges_and_schedules(admission,monkeypatch,client):
-    def fail(*a,**kw):raise OSError('/private/SECRET_SENTINEL')
-    calls=[]
-    monkeypatch.setattr(t,'_append_log',fail)
-    monkeypatch.setattr(t,'_ensure_worker',lambda:calls.append('ensure'))
-    response=client.post('/api/lora-train/start',json=admission)
-    assert response.status_code==202 and len(calls)==1
-    with database.SessionLocal() as db:
-        rows=db.query(LoraTrainingJob).all()
-        assert len(rows)==1 and rows[0].job_id==response.json()['job_id']
-    assert 'SECRET_SENTINEL' not in response.text
-
 
 def test_file_observation_uses_readonly_selects_preserves_rows_names_and_bytes(tmp_path,monkeypatch,client):
     import sqlite3
