@@ -1,9 +1,27 @@
 # Progress
 
-Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-26). Current state in one screen: [CURRENT](CURRENT.md).
+Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-27). Current state in one screen: [CURRENT](CURRENT.md).
 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
+
+## 2026-11-27 — p2-02 seventh rejection and correction7
+
+Actual [review7](tasks/p2-02-resource-record/review-round-7.md) at42775d8f,
+report5388e08d, is FAIL/original R1 incomplete: preceding ordinary quotes hide
+explicit complete credential assignments. Screen38/212,nested44/40,phase12/six
+feature failures/controls repeat after restoration. Supplied serialized cases,
+R2-R4 and checked R5 bounds pass. Seven rejections/five distinct P1 findings;
+current Backend3864/124,MCP666/four and restored1886 do not override the defect.
+[Seventh-result reassessment/correction7](tasks/p2-02-resource-record/repair-round-7.md)
+adopts bounded candidate recognition independent of enclosing prose quote pairing,
+then independent exact QA8 under unchanged task/CLEAR and current delegation.
+No routine owner gate/new finding or phase-boundary change; product/tests stay off
+main. [Integrity](tasks/p2-02-resource-record/producer-correction7-integrity.json)
+records21 official uploads/1066 indexed payloads/1046 Git bodies and two exact
+declared-shallow restorations. Concurrent memory observations are retained;
+Producer's current14 bodies/statuses are separate from QA's initial13 pin.
+No new Producer product suite/live product/provider/model/Gallery-byte action.
 
 ## Phase 0 — Clean foundation (done 2026-11-24)
 

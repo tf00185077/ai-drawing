@@ -23,6 +23,28 @@
 
 ## Log
 
+### 2026-11-27 · Keep label candidates independent of prose quote pairing
+
+- Decision: associate explicit assignment delimiters with relevant local label
+  boundaries independently of unrelated enclosing prose quotes. A quote consumed
+  by a preceding candidate must not disappear as a possible following label
+  boundary. Use bounded candidate tracking/delimiter association in raw and
+  relevant once-serialized views; exclude the complete affected original value.
+- Why: disjoint quote pairing can be monotonic and still skip a complete label.
+  Ordinary preceding prose quotes then disable recognition while identical plain
+  controls, key removal, serialization and latency guards all pass. Progress and
+  candidate coverage are separate obligations; safe output keeps its original form.
+- Reassessment: the seventh rejection leaves original R1 incomplete; supplied
+  serialized cases and checked R5 bounds now pass, as do R2-R4. Retain resource
+  identity and bounded views; replace the incomplete candidate-selection premise
+  without all-pairs/growing-suffix work, timeout increases or format exclusions.
+  This stays unchanged task/CLEAR and current delegation; report adopted results.
+- Evidence: [actual review7](../tasks/p2-02-resource-record/review-round-7.md),
+  [quote-context phase traces](../tasks/p2-02-resource-record/review-round-7-evidence/independent_quote_context_boundary.py)
+  and [correction7](../tasks/p2-02-resource-record/repair-round-7.md). Producer's
+  application is not a new owner quote, new finding number or accepted behavior.
+
+
 ### 2026-11-26 · Resolve representation before associating credential delimiters
 
 - Decision: account for relevant once-serialized assignment text before matching
