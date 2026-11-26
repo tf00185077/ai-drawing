@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from app.db.models import DownloadedResource
 from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_resource_resolution import LocalResourceLedgerEntry
+from app.services.resource_records import project_resource, metadata_for
+from app.services.civitai_resource_legacy import normalize_model_family
 
 
 _ID_FIELDS = (
@@ -46,28 +48,22 @@ def _availability(row: DownloadedResource) -> bool:
 
 def _audited_model_family(row: DownloadedResource, errors: list[dict[str, str]]) -> str | None:
     """Read only the installer's redacted provider snapshot; never infer from names."""
-    if not row.notes:
+    snapshot, errors_unused = metadata_for(row)
+    if snapshot is None:
         return None
-    try:
-        snapshot = json.loads(row.notes)
-    except (TypeError, json.JSONDecodeError):
+    if any(d.code in {"malformed_legacy_notes", "invalid_base_model"} for d in snapshot.diagnostics):
         errors.append({"field": "notes.model_family", "code": "malformed_persisted_model_family"})
         return None
-    value = snapshot.get("model_family") if isinstance(snapshot, dict) else None
+    value = snapshot.base_model
     if value is None:
         return None
-    if not isinstance(value, str):
-        errors.append({"field": "notes.model_family", "code": "malformed_persisted_model_family"})
-        return None
-    normalized = value.strip().casefold()
-    if normalized == "illustrious" or normalized.startswith("illustrious "):
-        return "illustrious"
-    if normalized == "sdxl" or normalized.startswith("sdxl "):
-        return "sdxl"
-    if normalized == "anima" or normalized.startswith("anima "):
-        return "anima"
-    errors.append({"field": "notes.model_family", "code": "unsupported_persisted_model_family"})
-    return None
+    # Frozen recipe enum adapter, independent from the canonical Phase 2 family.
+    family = normalize_model_family(value)
+    if family is None and project_resource(row).model_family == "sdxl":
+        family = "sdxl"
+    if family is None:
+        errors.append({"field": "notes.model_family", "code": "unsupported_persisted_model_family"})
+    return family
 
 
 def _entry_from_row(row: DownloadedResource) -> LocalResourceLedgerEntry:
@@ -77,7 +73,7 @@ def _entry_from_row(row: DownloadedResource) -> LocalResourceLedgerEntry:
         for source, target in _ID_FIELDS
     }
     model_family = _audited_model_family(row, errors)
-    diagnostics: dict[str, Any] = {"database_id": row.id, "status": row.status}
+    diagnostics: dict[str, Any] = {"database_id": row.id, "status": row.status, "resource_record": project_resource(row).model_dump(mode="json")}
     if errors:
         diagnostics["identity_errors"] = errors
     return LocalResourceLedgerEntry(

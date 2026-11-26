@@ -68,18 +68,10 @@ class _StreamingDownloadTransport(ProviderDownloadTransport):
     pass
 
 
-def normalize_model_family(base_model: Any) -> str | None:
-    """Best-effort architecture family from Civitai's baseModel label."""
-    if not isinstance(base_model, str):
-        return None
-    lowered = base_model.casefold()
-    if "illustrious" in lowered:
-        return "illustrious"
-    if "sdxl" in lowered or "pony" in lowered:
-        return "sdxl"
-    if "anima" in lowered:
-        return "anima"
-    return None
+# Public import retained for frozen recipe/AIR callers and Anima package routing.
+from app.services.civitai_resource_legacy import normalize_model_family
+from app.services.resource_records import (assert_identity, measured_evidence, publish_metadata,
+    provider_snapshot, ResourceIdentityConflict)
 
 
 def _anima_component(file_name: str) -> tuple[str, str]:
@@ -213,6 +205,7 @@ def _normalize_file(chosen: dict[str, Any]) -> dict[str, Any]:
         "download_url": download_url,
         "civitai_file_id": chosen.get("id"),
         "scan_status": scan,
+        "provider_file": chosen,
     }
 
 
@@ -386,7 +379,23 @@ def start_acquisition(
     jobs: list[dict[str, Any]] = []
 
     for chosen, comp_root, comp_type in components:
-        matched = next((row for row in existing if row.resource_name == chosen["name"]), None)
+        matched = next((row for row in existing if row.resource_name == chosen["name"] or
+                        (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
+        snapshot = provider_snapshot(version, model, chosen["provider_file"])
+        identity = {"provider": "civitai", "resource_type": comp_type,
+                    "model_id": str(model_id) if model_id is not None else None,
+                    "version_id": str(version_id) if version_id is not None else None,
+                    "civitai_file_id": str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+                    "sha256": chosen["sha256"],
+                    "air": chosen["provider_file"].get("air") or version.get("air")}
+        if matched is not None:
+            try:
+                assert_identity(matched, identity)
+                publish_metadata(matched, snapshot, identity=identity)
+            except ResourceIdentityConflict:
+                db.rollback()
+                raise AcquireError("resource_identity_conflict", "Recorded resource identity conflicts with the selected provider file",
+                                   hint="Inspect the existing resource ID; choose a distinct provider file without rebinding it.") from None
         if matched is not None and matched.status in _INSTALLED_STATUSES and matched.local_path and Path(matched.local_path).is_file():
             done_rows.append(matched)
             continue
@@ -395,7 +404,7 @@ def start_acquisition(
             continue
         notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
         target = roots[comp_root] / chosen["name"]
-        row = DownloadedResource(
+        row = matched or DownloadedResource(
             resource_name=chosen["name"],
             resource_type=comp_type,
             provider="civitai",
@@ -411,10 +420,14 @@ def start_acquisition(
             status="downloading",
             notes=json.dumps(redact_secrets(notes), ensure_ascii=False),
         )
+        if matched is not None:
+            row.status = "downloading"
+        publish_metadata(row, snapshot, identity=identity)
         db.add(row)
-        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row})
+        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity})
 
     if not jobs:
+        db.commit()
         rows = done_rows + active_rows
         status = "downloading" if active_rows else "already_installed"
         return {
@@ -433,6 +446,7 @@ def start_acquisition(
     job_specs = [
         {
             "acquisition_id": job["acquisition_id"],
+            "identity": job["identity"],
             "target": job["target"],
             "notes": job["notes"],
             "metadata": CivitaiFileMetadata(
@@ -498,6 +512,7 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
         fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
         fresh_notes = dict(notes)
         if result.status == "completed":
+            assert_identity(fresh, spec["identity"])
             stat = Path(result.final_path).stat()
             fresh_notes["file_identity"] = {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}
             fresh.status = "installed"
@@ -505,6 +520,10 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
             fresh.file_size = result.bytes
             fresh.sha256 = result.actual_sha256
             fresh.downloaded_at = datetime.utcnow()
+            from app.services.resource_records import metadata_for
+            snapshot, _ = metadata_for(fresh)
+            if snapshot is not None:
+                publish_metadata(fresh, snapshot, measured=measured_evidence(Path(result.final_path), result.bytes, result.actual_sha256))
         else:
             fresh.status = "failed"
             fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"

@@ -189,6 +189,9 @@ class CivitaiResourceSource(_StrictResourceModel):
     civitai_model_id: PositiveInt | None = None
 
 
+from app.schemas.resources import ResourceMetadata
+
+
 class CivitaiResourceCandidate(_StrictResourceModel):
     """The complete inspect descriptor; unsafe evidence remains representable for diagnostics."""
     civitai_model_id: PositiveInt | None = None
@@ -205,6 +208,7 @@ class CivitaiResourceCandidate(_StrictResourceModel):
     usage_restrictions: JsonValue | None = None
     air: str | None = None
     model_family: str | None = None
+    resource_metadata: ResourceMetadata | None = None
 
 
 class CivitaiResourceSelectedDescriptor(_StrictResourceModel):
@@ -223,6 +227,7 @@ class CivitaiResourceSelectedDescriptor(_StrictResourceModel):
     usage_restrictions: JsonValue
     air: str | None
     model_family: str | None
+    resource_metadata: ResourceMetadata | None = None
 
 
 class CivitaiResourceInspectResponse(_StrictResourceModel):

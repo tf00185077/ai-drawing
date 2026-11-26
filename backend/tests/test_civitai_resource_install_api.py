@@ -232,10 +232,12 @@ def test_install_redacts_secret_bearing_license_evidence_before_persistence(tmp_
     assert "proof_url" in row.notes
 
 
-def _selected(data: bytes) -> dict:
+def _selected(data: bytes, *, base_model: str | None = None) -> dict:
     from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource
 
     fixture = _fixture()
+    if base_model is not None:
+        fixture["modelVersions"][0]["baseModel"] = base_model
     fixture["modelVersions"][0]["files"][0]["hashes"]["SHA256"] = _sha(data)
     fixture["modelVersions"][0]["files"][0]["sizeKB"] = len(data) / 1024
     return select_civitai_resource(inspect_civitai_resource(fixture), {"civitai_file_id": 11})["selected"]
@@ -538,7 +540,7 @@ def test_installed_audited_model_family_reaches_strict_resolution_lock(tmp_path:
     from app.services.civitai_resource_resolution import resolve_recipe_resources
 
     data = b"audited illustrious checkpoint"
-    selected = {**_selected(data), "resource_kind": "checkpoint", "model_family": "Illustrious"}
+    selected = {**_selected(data, base_model="Illustrious"), "resource_kind": "checkpoint"}
     with _session(tmp_path)() as db:
         result = install_civitai_resource(
             selected, "checkpoints", db=db,
