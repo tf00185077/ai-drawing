@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 review9 FAIL (outer ledger R1); correction9 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 accepted; p2-03 bounded-download kickoff next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,38 +90,35 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review9 FAIL accepted:** [Coding AID-203](/AID/issues/AID-203) FINAL
-**c01730db22cc91d64aa779550313c3125fd66355**, freeze5baa7cfa, received actual
-[independent QA AID-204](/AID/issues/AID-204) [original R1 incomplete](tasks/p2-02-resource-record/review-round-9.md),
-report/evidence **b58b6d2cd82a9b72b7c1d536c563e6052f38bef9**. Supplied QA8
-unit/new-note/status cases now pass; R2-R4 and checked R5 bounds pass. The whole
-public local ledger still exposes selected-provider AIR/filename assignments in
-outer `air`/`local_path`, beside safe typed diagnostics. Eight complete traces
-fail initially/confirmation; two useful controls pass,104 observations/16 exposed
-phases. Exact old columns/metadata/notes remain. All synthetic, no actual key read.
+**Accepted: [p2-02 Backend resource-record foundation](tasks/p2-02-resource-record/acceptance.md)**.
+Coding FINAL **c705d211f64497df7190120d46f94d94b785d24b**, freeze1edcf825, after
+independent [QA AID-206](/AID/issues/AID-206) **review10 PASS**, report/evidence
+**a94324fef3f264fb361c9761af0ff828eeb77e81**. All D–Z items pass; nine prior
+rejections/five historical P1 findings remain. Whole public projections are safe;
+raw internal identity/locator matching and old storage remain exact. Unsafe ready
+locks refuse before execution rather than execute a masked locator. The existing
+row, typed metadata/single mapping, additive schema/backfill and bounded Backend
+reads are integrated. Agent MCP record/search/default flows remain pending.
 
-Nine rejected deliveries/five distinct historical P1 findings/original R1 open.
-[Correction9 reassessment](tasks/p2-02-resource-record/repair-round-9.md) retains
-single-row/internal matching/path semantics, applies the shared complete-value
-policy to the entire public ledger, and audits raw outer fields/actual consumers.
-Real whole-response/fault/old-storage guards precede another delivery. Original
-task/repairs1-8/CLEAR/bounds/current delegation stay unchanged; no routine owner
-question or architecture/scope change. Separate Coding and exact QA10 follow;
-Producer handles findings/acceptance, no product merge before independent PASS.
+Exact QA registry: **72 active items**, 22 prior rows unchanged plus 50 certified
+additions. Independent Backend **7043/124 existing skips**, MCP **666/four**,
+restored affected5065, current exports/readers93/73 and 35 distinct production
+mutations/48 invocations pass with restoration. Source code/test/replay inputs
+stay exact; Producer reuses applicable full-suite evidence and verifies merge/docs.
+[Integrity](tasks/p2-02-resource-record/producer-acceptance-integrity.json) records
+23 official uploads,1344 payloads/1324 Git bodies, complete inventories and both
+independent exact declared-shallow restores. All 14 current shared memory bodies/
+statuses are preserved. No new Producer key/provider/service/restart/download/
+register/generation/live Gallery-byte result; publication is not deployment.
 
-Rejected-source independent Backend6774/124 existing skips,MCP666/four,restored
-4796,495 additional positives,fresh93/73/412/12/19/schema2 and25 progress cases/
-180 observations pass.29 mutations/39 invocations/1577 feature assertions plus20
-actual3s timeouts restore exactly. These are current-source observations, not
-R1 acceptance or changed-source qualification. QA9's initial archive422/partial
-saved uploads/verified original parts and corrected report packaging remain.
-[Producer integrity](tasks/p2-02-resource-record/producer-correction9-integrity.json)
-records28 official uploads and both exact declared-shallow restorations; current
-14 shared memory bodies/statuses and distinct prior pins remain preserved.
-Product/tests stay off main. No new Producer product suite/key/provider/service/
-restart/download/register/generation/live Gallery bytes; remaining Phase2
-jobs/budgets/hash/search/MCP/defaults/removals/automatic three different sentences/
-fresh checkpoint+LoRA/CTY demo/exit remain pending. Source is not deployment.
+**Next: [p2-03 stock download execution limits](tasks/p2-03-bounded-download/task.md)**,
+with a fresh independent kickoff before Coding and separate exact delivery QA.
+Adopt configurable8GiB/file and20GiB destination free-space floor, actual streamed
+byte checks/valid resume, safetensors checkpoint/LoRA selection and no-overwrite
+publication. These are delegated in-boundary choices, not implemented results.
+Durable attempts/jobs/aggregate reservations follow this execution prerequisite;
+search/hash lookup/MCP/defaults/proven removals and three different zero-fix
+sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit remain pending.
 
 ## Team
 

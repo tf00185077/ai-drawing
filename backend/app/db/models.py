@@ -379,6 +379,8 @@ class DownloadedResource(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     downloaded_at = Column(DateTime, nullable=True)
+    # Versioned metadata/evidence augments this row; identity columns remain authoritative.
+    metadata_json = Column(Text, nullable=True)
 
 
 class LoraOutputReservation(Base):

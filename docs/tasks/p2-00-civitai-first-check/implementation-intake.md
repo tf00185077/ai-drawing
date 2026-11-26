@@ -38,3 +38,17 @@ reservation counter. This is an in-phase dependency refinement, not an owner
 scope/order change. Unknown-local identification, complete alias replacement,
 stock bounded download jobs and new MCP flow remain subsequent detailed tasks.
 Only this bounded foundation is now specified; fresh CLEAR is required.
+
+## 2026-11-27 sequencing after p2-02 acceptance
+
+[p2-02](../p2-02-resource-record/acceptance.md) is accepted after exact review10
+PASS. The next bounded part of order2 is [p2-03 stock execution limits](../p2-03-bounded-download/task.md):
+actual per-file bytes, destination free-space, safetensors checkpoint/LoRA selection,
+valid resume and no-overwrite publication through both retained callers. Adopt
+configurable8GiB/file and20GiB observed free-space floor under current delegation.
+Persistent download attempts/jobs, aggregate budget/reservations and wait/status
+integration follow this prerequisite as a separate detailed task. No generation
+queue rewrite or second resource authority. This split does not claim order2 is
+done; the old acquisition thread/resourceID remains distinct from a durable job.
+Fresh independent kickoff precedes implementation. Owner phase scope/order/Not now,
+three different zero-fix sentences/fresh checkpoint+LoRA and CTY demo remain.

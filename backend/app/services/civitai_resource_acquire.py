@@ -68,18 +68,11 @@ class _StreamingDownloadTransport(ProviderDownloadTransport):
     pass
 
 
-def normalize_model_family(base_model: Any) -> str | None:
-    """Best-effort architecture family from Civitai's baseModel label."""
-    if not isinstance(base_model, str):
-        return None
-    lowered = base_model.casefold()
-    if "illustrious" in lowered:
-        return "illustrious"
-    if "sdxl" in lowered or "pony" in lowered:
-        return "sdxl"
-    if "anima" in lowered:
-        return "anima"
-    return None
+# Public import retained for frozen recipe/AIR callers and Anima package routing.
+from app.services.civitai_resource_legacy import normalize_model_family
+from app.schemas.resources import ResourceMetadata
+from app.services.resource_records import (assert_identity, measured_evidence, metadata_for, publish_metadata, safe_evidence,
+    provider_snapshot, ResourceIdentityConflict)
 
 
 def _anima_component(file_name: str) -> tuple[str, str]:
@@ -201,7 +194,7 @@ def _normalize_file(chosen: dict[str, Any]) -> dict[str, Any]:
     if scan not in _CLEAN_SCAN_STATUSES:
         raise AcquireError(
             "virus_scan_not_clean",
-            f"病毒掃描狀態為 {scan or 'unknown'}，拒絕下載",
+            f"病毒掃描狀態為 {safe_evidence(chosen.get('virusScanResult')) or 'unknown'}，拒絕下載",
             hint="這是硬性安全檢查，不提供繞過；請改用其他掃描通過的版本",
         )
     if not sha256 or not isinstance(size_kb, (int, float)) or not isinstance(download_url, str):
@@ -213,6 +206,7 @@ def _normalize_file(chosen: dict[str, Any]) -> dict[str, Any]:
         "download_url": download_url,
         "civitai_file_id": chosen.get("id"),
         "scan_status": scan,
+        "provider_file": chosen,
     }
 
 
@@ -267,7 +261,7 @@ def license_snapshot(model_payload: dict[str, Any] | None) -> tuple[dict[str, An
             "模型授權欄位不完整（缺 " + ", ".join(missing) + "）；已照常下載並標記 license_verified=false，"
             "若要商用或公開發布請先自行到模型頁確認授權"
         )
-    return snapshot, warnings
+    return safe_evidence(snapshot), warnings
 
 
 def _storage_roots(settings: Any) -> dict[str, Path]:
@@ -294,6 +288,9 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
                 notes = parsed
         except ValueError:
             pass
+    snapshot, _ = metadata_for(row)
+    operation = snapshot.source_evidence.get("acquisition") if snapshot else None
+    current_error = operation.get("error") if isinstance(operation, dict) else notes.get("error")
     total = row.file_size or notes.get("expected_size_bytes")
     progress: dict[str, Any] = {}
     if row.status in _ACTIVE_STATUSES and row.local_path:
@@ -302,7 +299,7 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
         progress = {"downloaded_bytes": downloaded, "total_bytes": total}
         if isinstance(total, int) and total > 0:
             progress["percent"] = round(downloaded * 100 / total, 1)
-    return redact_secrets({
+    return safe_evidence({
         "acquisition_id": row.id,
         "resource_name": row.resource_name,
         "resource_type": row.resource_type,
@@ -316,8 +313,13 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
         "base_model": notes.get("base_model"),
         "license": notes.get("license"),
         "progress": progress or None,
-        "error": notes.get("error"),
+        "error": current_error,
     })
+
+
+def _new_notes_json(notes: dict[str, Any]) -> str:
+    """Normalize new source-derived notes; retained note bytes are never replaced."""
+    return json.dumps(safe_evidence(notes), ensure_ascii=False)
 
 
 def start_acquisition(
@@ -345,7 +347,7 @@ def start_acquisition(
         supported = ", ".join(sorted({key for key in _MODEL_TYPE_ROOTS}))
         raise AcquireError(
             "unsupported_model_type",
-            f"不支援的模型類型：{model_type or 'unknown'}",
+            f"不支援的模型類型：{safe_evidence((model or {}).get('type') or (version.get('model') or {}).get('type')) or 'unknown'}",
             hint=f"目前支援：{supported}",
         )
     root_key, resource_type = _MODEL_TYPE_ROOTS[model_type]
@@ -386,7 +388,23 @@ def start_acquisition(
     jobs: list[dict[str, Any]] = []
 
     for chosen, comp_root, comp_type in components:
-        matched = next((row for row in existing if row.resource_name == chosen["name"]), None)
+        matched = next((row for row in existing if row.resource_name == chosen["name"] or
+                        (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
+        snapshot = provider_snapshot(version, model, chosen["provider_file"])
+        identity = {"provider": "civitai", "resource_type": comp_type,
+                    "model_id": str(model_id) if model_id is not None else None,
+                    "version_id": str(version_id) if version_id is not None else None,
+                    "civitai_file_id": str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+                    "sha256": chosen["sha256"],
+                    "air": chosen["provider_file"].get("air") or version.get("air")}
+        if matched is not None:
+            try:
+                assert_identity(matched, identity)
+                publish_metadata(matched, snapshot, identity=identity)
+            except ResourceIdentityConflict:
+                db.rollback()
+                raise AcquireError("resource_identity_conflict", "Recorded resource identity conflicts with the selected provider file",
+                                   hint="Inspect the existing resource ID; choose a distinct provider file without rebinding it.") from None
         if matched is not None and matched.status in _INSTALLED_STATUSES and matched.local_path and Path(matched.local_path).is_file():
             done_rows.append(matched)
             continue
@@ -395,7 +413,7 @@ def start_acquisition(
             continue
         notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
         target = roots[comp_root] / chosen["name"]
-        row = DownloadedResource(
+        row = matched or DownloadedResource(
             resource_name=chosen["name"],
             resource_type=comp_type,
             provider="civitai",
@@ -409,20 +427,26 @@ def start_acquisition(
             version_id=str(version_id) if version_id is not None else None,
             civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
             status="downloading",
-            notes=json.dumps(redact_secrets(notes), ensure_ascii=False),
+            notes=_new_notes_json(notes),
         )
+        if matched is not None:
+            row.status = "downloading"
+        publish_metadata(row, snapshot, identity=identity)
         db.add(row)
-        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row})
+        _publish_acquisition_outcome(row, "downloading")
+        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity,
+                     "preserve_notes": matched is not None})
 
     if not jobs:
+        db.commit()
         rows = done_rows + active_rows
         status = "downloading" if active_rows else "already_installed"
-        return {
+        return safe_evidence({
             "status": status,
             "resource": _resource_summary(rows[0]),
             "resources": [_resource_summary(row) for row in rows],
             "warnings": warnings,
-        }
+        })
 
     db.commit()
     for job in jobs:
@@ -433,6 +457,8 @@ def start_acquisition(
     job_specs = [
         {
             "acquisition_id": job["acquisition_id"],
+            "identity": job["identity"],
+            "preserve_notes": job["preserve_notes"],
             "target": job["target"],
             "notes": job["notes"],
             "metadata": CivitaiFileMetadata(
@@ -471,21 +497,28 @@ def start_acquisition(
         )
         statuses = {row.status for row in fresh_rows} | {row.status for row in done_rows}
         status = "installed" if statuses <= _INSTALLED_STATUSES else ("failed" if "failed" in statuses else fresh_rows[0].status)
-        return {
+        return safe_evidence({
             "status": status,
             "resource": _resource_summary(fresh_rows[0]),
             "resources": [_resource_summary(row) for row in done_rows + fresh_rows],
             "warnings": warnings,
-        }
+        })
 
     started_rows = done_rows + active_rows + [job["row"] for job in jobs]
-    return {
+    return safe_evidence({
         "status": "downloading",
         "resource": _resource_summary(jobs[0]["row"]),
         "resources": [_resource_summary(row) for row in started_rows],
         "warnings": warnings,
         "next_step": "下載已在背景進行；用 civitai_resource_status 查進度，installed 之後即可用於生圖",
-    }
+    })
+
+
+def _publish_acquisition_outcome(row: DownloadedResource, status: str, error: Any = None, *, measured=None) -> None:
+    """Current operation state augments metadata; historical notes stay evidence."""
+    snapshot, _ = metadata_for(row)
+    snapshot = snapshot or ResourceMetadata(origin="legacy_notes")
+    publish_metadata(row, snapshot, measured=measured, operation={"status": status, "error": error})
 
 
 def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings: Any) -> None:
@@ -498,6 +531,7 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
         fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
         fresh_notes = dict(notes)
         if result.status == "completed":
+            assert_identity(fresh, spec["identity"])
             stat = Path(result.final_path).stat()
             fresh_notes["file_identity"] = {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}
             fresh.status = "installed"
@@ -505,19 +539,25 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
             fresh.file_size = result.bytes
             fresh.sha256 = result.actual_sha256
             fresh.downloaded_at = datetime.utcnow()
+            _publish_acquisition_outcome(fresh, "installed", measured=measured_evidence(Path(result.final_path), result.bytes, result.actual_sha256))
         else:
             fresh.status = "failed"
             fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
             if result.diagnostics.get("code"):
                 fresh_notes["error"] = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
-        fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
+            _publish_acquisition_outcome(fresh, "failed", fresh_notes["error"])
+        if not spec.get("preserve_notes", False):
+            fresh.notes = _new_notes_json(fresh_notes)
         session.commit()
     except Exception as exc:  # noqa: BLE001 — the thread must record any failure
         session.rollback()
         try:
             fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
             fresh.status = "failed"
-            fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}}), ensure_ascii=False)
+            error = exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}
+            _publish_acquisition_outcome(fresh, "failed", error)
+            if not spec.get("preserve_notes", False):
+                fresh.notes = _new_notes_json({**notes, "error": error})
             session.commit()
         except Exception:
             session.rollback()

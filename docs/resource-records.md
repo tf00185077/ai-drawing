@@ -1,35 +1,197 @@
-# Resource record foundation
+# Backend resource records
 
-The [p2-02 task](tasks/p2-02-resource-record/task.md) specifies existing-row typed
-metadata authority, one SDXL mapping and bounded Backend reads. Main product
-remains accepted p2-01; p2-02 product/tests remain unintegrated.
+The existing `downloaded_resources` row is the authoritative model identity.
+`resource_id` equals its existing integer primary key; provider IDs, path, SHA-256
+and status stay in their original columns. A nullable `metadata_json` field adds
+version 1 typed metadata and verification evidence. There is no second registry.
+This Backend foundation is [accepted after exact delivery review10 PASS](tasks/p2-02-resource-record/acceptance.md).
+Source publication does not identify a loaded service, implement search/download
+jobs/defaults, or establish Phase 2 exit.
 
-[Review9 FAIL](tasks/p2-02-resource-record/review-round-9.md) at actual FINAL
-**c01730db22cc91d64aa779550313c3125fd66355** corrects supplied QA8 unit/new-note/
-status cases and retains checked R5 bounds/R2-R4. Original R1 remains in public
-local-ledger outer AIR/path fields, beside safe typed diagnostics: eight complete
-traces fail twice/two useful controls pass,104 observations/16 exposed phases;
-old storage stays exact. Nine rejections/five historical P1 findings, synthetic
-only. Reassessment retains internal row/identity/path semantics and applies the
-shared complete-value policy to the whole public ledger serialization, with
-field/consumer inventory and real outer-boundary fault sensitivity.
-[Correction9](tasks/p2-02-resource-record/repair-round-9.md) and independent exact
-QA10 retain original task/repairs1-8/CLEAR/bounds/current delegation. No routine
-owner gate, architecture change or technical/Phase2 acceptance.
+`GET /api/resources` returns `{items, total, limit, offset}` in ascending ID order.
+`limit` is an integer 1–100 (default 25), `offset` a nonnegative integer (default 0).
+Exact optional filters are `resource_type`, `provider`, raw `base_model`,
+`model_family` (`sdxl` only), `status` and a case-insensitive 64-hex `sha256`.
+Strings are trimmed, including outer Unicode whitespace. All filters combine;
+total is counted before SQL pagination. Connection-local deterministic SQLite
+scalars use the projection's complete typed metadata parser and the sole family
+mapping, including legacy notes fallback and Unicode case folding. Invalid typed
+JSON/version/nested fields have null base/family for both filtering and projection;
+they do not fall back to notes. SQL counts and bounds the query before ORM row
+materialization; there is no whole-table or already-paged Python post-filter.
+Unsupported valid values return no items;
+malformed selectors return 422. `GET /api/resources/{resource_id}` returns the same
+projection, or 404 `resource_not_found` with a recovery hint. OpenAPI describes
+both typed responses. Unknown query parameters are rejected.
 
-Immutable technical snapshots describe [delivery1](tasks/p2-02-resource-record/resource-records-round-1.md)
-and corrections [1](tasks/p2-02-resource-record/resource-records-correction-1.md),
-[2](tasks/p2-02-resource-record/resource-records-correction-2.md),
-[3](tasks/p2-02-resource-record/resource-records-correction-3.md),
-[4](tasks/p2-02-resource-record/resource-records-correction-4.md),
-[5](tasks/p2-02-resource-record/resource-records-correction-5.md),
-[6](tasks/p2-02-resource-record/resource-records-correction-6.md),
-[7](tasks/p2-02-resource-record/resource-records-correction-7.md) and
-[8](tasks/p2-02-resource-record/resource-records-correction-8.md).
-Original manifests/reports/raw histories, including QA9's partial-upload record,
-stay exact. Rejected-source records are not accepted main or deployed behavior.
+The projection distinguishes provider-declared size from measured size. A declared
+hash, installed status or historical file stat never proves verification.
+`sha256_verified` is true only when an actual successful download/adoption supplied
+measured hash/size and those facts still match the authoritative columns and file
+stat. Otherwise it is null with `verification_unknown`. This is retained measured
+evidence, not a new read-time hash: modification that preserves all stat fields
+cannot be detected without a later explicit byte-verification operation.
+`installed` reflects recorded status; `path_available` separately reports a regular
+file at its current path (null without a path). Reads may stat paths, but never
+read model bodies, call providers, backfill, repair, or write the database.
 
-The [resource decision](decisions/civitai-resource-record.md) and
-[roadmap](roadmap/ROADMAP.md) govern subsequent jobs/budgets/hash/search/MCP/defaults/
-proven removals. Preserve IDs, old evidence, shared edits/private runtime/settings
-and all model/data records. No complete Phase2 chain/exit or artistic acceptance.
+The sole Phase 2 mapping is in `resource_records.WORKFLOW_FAMILIES`: trimmed,
+case-insensitive exact `SDXL 1.0`, `Illustrious`, `Pony`, `NoobAI` map to `sdxl`.
+Other/missing/malformed labels have null family and `no_matching_workflow`.
+The raw label is retained. This does not establish checkpoint/LoRA compatibility.
+
+Both current publication paths share `provider_snapshot`, `publish_metadata` and
+`project_resource`: acquisition admission/background completion and retained
+inspect/select/install/adoption. Strict descriptors carry an optional typed
+`resource_metadata` snapshot of the actually selected version/file. Historical
+inputs without it retain unknown triggers/recommendations. Repeated identical
+publication retains IDs and evidence; conflicting known immutable identities are
+refused. Empty identity fields may be filled after the complete conflict check. An omitted
+optional identity, including AIR, preserves the known column rather than clearing
+it. Non-null conflicting identities are still refused before assignments.
+A failed acquisition retry reuses its same row. All preexisting notes, including
+null, empty, malformed and whitespace-bearing bodies, remain byte-for-byte through
+success, failed-result and exception branches. Current operation status and
+sanitized errors live under metadata `source_evidence.acquisition`; status responses
+read that outcome instead of a stale legacy-note error. A retry clears the current
+error on admission/success without changing the old note. This reserved field is
+written only by internal operation publication and retained across ordinary provider
+snapshot refreshes; a supplied snapshot cannot replace it. Newly created rows keep
+the established generated notes/file-identity/error behavior. Legacy acquisition/status responses
+keep their established IDs and enums; no MCP tool name or risk changes.
+
+Snapshots keep ordered unique trimmed trainedWords, diagnose invalid entries,
+and retain only explicit typed finite sampler/scheduler/steps/CFG/width/height/
+LoRA-strength recommendations with source field names. Integers are required for
+steps and dimensions; sampler/scheduler are nonblank strings; CFG/strength are
+finite numbers. Conflicting recommendations are excluded. Current recognized
+sources are `version.meta` and `file.metadata`, with keys `sampler`, `scheduler`,
+`steps`, `cfgScale`/`cfg`, `width`, `height`, `strength`/`loraStrength`. Missing
+parameters stay absent; sample-image prompts provide no defaults. Safe source
+metadata remains opaque evidence. License permissions and optional explicit model/
+file license evidence are stored without a commercial-use filter; missing and
+invalid permission fields are explicit. Provider credentials and URL queries are
+excluded. Every typed nested field passes shared safe normalization at provider
+snapshot construction, publication and public projection: license values and keys,
+missing-field strings, diagnostics, trigger words, recommendation values/source
+fields, raw labels and opaque evidence. HTTP locators lose userinfo, queries and
+fragments. A recognizable credential-bearing free-text string is redacted in
+full, including Basic/Proxy-Authorization schemes, later cookies, quoted multiword
+values, compound labels, whitespace and delimiters. Token-by-token removal cannot
+safely locate their ends. The same normalization covers retained descriptor
+license/usage fields and newly generated acquisition license snapshots. Credential
+keys are excluded before renaming so repeated normalization is idempotent.
+
+Keys and parsed assignment/header labels use one identifier policy. Labels may
+be unquoted or enclosed in matching single/double quotes; colon/equal delimiters
+and Unicode whitespace are accepted. Matching quoted labels are consumed as complete
+lexical units before recognition, including leading/trailing inner spaces, tabs
+and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
+their lexical meaning. Ordinary quoted values do not hide inner assignments;
+each quote kind scans independently, including opposite-quote labels inside
+ordinary quoted values. Adjacent same-kind quotes form local candidate boundaries;
+every quote remains a possible opener even after ending the preceding candidate.
+Both literal and escape-aware boundary interpretations are checked, so preceding
+backslashes cannot hide an unchanged opener while escaped quotes inside a complete
+label retain their meaning.
+A delimiter after a quote therefore checks the immediately preceding boundary
+independently of unrelated prose pairing. Candidate spans and whitespace after
+quotes do not overlap within each interpretation, so extraction and common-policy work remain linear in the
+input length. Escapes consume their next character or end of input explicitly.
+No all-pairs scan, growing suffix retry, truncation or format/size restriction is
+needed; ordinary unmatched/odd quote contexts retain their useful original text.
+Recognition checks raw text and a fixed set of once-serialized/local-unit views
+before associating labels with delimiters. Adjacent double-quote boundaries also
+form JSON-unit candidates independently of prose pairing, with both literal and
+escape-aware interpretations. Their interiors are disjoint within a pass. A valid
+escaped JSON unit removes its own envelope quotes; a boundary shared with another
+valid unit is removed once. This preserves supported identifier fragments such as
+`HTTP_AUTH"\u004f"RIZATION` under harmless prefixes and suffixes.
+
+There are fixed lexical-before-unit and unit-before-lexical stages for once-serialized
+unit fragments and escaped neighboring label text. Unquoted Unicode/control escapes
+receive the same single label decoding as quoted labels. No stage repeats until
+stable, enumerates quote pairs or branches into all combinations. At most eight
+distinct assignment views and four local-unit traversals are considered; duplicate
+views are checked once. Each cursor, slice, substitution and JSON parse covers
+bounded total input length. Terminal escapes consume the next character or EOF.
+Only recognition sees these views; safe output keeps its original representation.
+Existing three-second description feature bounds remain unchanged.
+
+Acquisition normalizes every new note body through this same `safe_evidence`
+policy before admission persistence and background success/refusal/exception
+persistence. Base label, model/version names, license values and later diagnostic
+fields all share that boundary. Complete admission/reuse/synchronous responses,
+including package-skip warnings, and `_resource_summary` status projections use
+that policy too. Registered acquisition refusal diagnostics normalize their public
+projection with the same function. A typed snapshot alone does not certify these
+separate surfaces. Old notes remain immutable compatibility evidence; summary
+reads safely project them without repair writes or another metadata authority.
+
+Identifier components use whitespace,
+underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
+component ending in `token`, `secret`, `authorization`, `password`, `credential`,
+`signature`, `cookie` or `api key` (including joined `apikey`) is sensitive,
+case-insensitively; prefixes need no word boundary. Thus `CIVITAI_API_KEY`,
+`HTTP_AUTHORIZATION`, `providerApiKey`, `provider.api.key` and Unicode-prefixed
+identifiers have the same meaning as keys and as assignment labels. Extra
+separator-delimited components do not undo recognition. The complete affected
+string is redacted regardless of its value, including opaque labelled Basic.
+Trailing letters are significant: `tokenizer`, `api_keyboard`, `secretariat` and
+`passwordless` remain useful keys/values. Unassigned prose such as “API_KEY
+documentation” is retained. This is recognizable labelled metadata treatment,
+not arbitrary unlabelled secret discovery or a list of app environment settings.
+Bare Basic text is recognized only with a decodable user:password value;
+ordinary text such as “basic painting” remains useful. Credential-resolution
+recovery guidance uses sentence syntax so the setting and file requirements stay
+actionable through the same metadata normalization. Bare Bearer treatment and
+URL exclusion keep their established behavior. Sensitive evidence keys are removed.
+Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
+are normalized for reads without repair writes. Invalid typed snapshots remain
+readable as incomplete; supplied verification never establishes measured evidence.
+Original notes are never returned as diagnostics.
+
+Normal startup adds the nullable column only. Explicit backfill is a caller-owned
+maintenance operation, separate from startup/read routes:
+
+```python
+from app.services.resource_record_backfill import backfill_metadata
+# db is an explicitly selected SQLAlchemy Session; do not use a live DB to test.
+report_by_resource_id = backfill_metadata(db)
+```
+
+It fills only absent metadata from recognized legacy notes, commits that selected
+session, and preserves every old column, original notes, row, alias/history and
+file. It reports malformed notes, conflicts, unsupported labels, duplicates and
+unavailable paths. It neither hashes nor guesses model identities from filenames
+or image aliases. Repeat backfill/startup preserves counts, IDs and projections.
+The supplied migration test uses a synthetic copy of all pre-task tables/schema;
+no production database was migrated by this task.
+
+The local-ledger adapter includes the same typed record under diagnostics. Its
+historical status-based availability and recipe family enums remain frozen.
+`civitai_resource_legacy.normalize_model_family` exists only for those enums,
+AIR ecosystems and Anima split-package routing. It is never Phase 2 mapping
+or evidence that an unsupported workflow/loader is compatible. Retained install
+still requires its old complete descriptor safety gates; acquisition keeps its
+old scan, storage, package and allowed-extension behavior. Safetensors-only future
+download-job policy, byte budgets, unknown-local adoption and alias replacement
+remain separate tasks.
+
+The ledger's raw internal snapshot retains AIR and filesystem locators for exact
+filters, recipe matching, hashing and filename planning. `ledger_payload` applies
+the existing complete-value policy to the **whole** public entry and snapshot,
+including outer AIR/path/hash/kind/status copies beside typed diagnostics. Safe
+AIRs, paths, IDs, hashes, state and counts retain their meaning; old storage is
+never repaired or hidden. Canonical status strings use the same normalization.
+
+Registered resolve/resolve-local project outgoing results only after raw matching
+and verification. Their internal report/lock transfer format stays raw. A ready report requiring
+projection is refused with `unsafe_resource_projection` and inspect/retry guidance
+rather than returning a masked path as an executable verified lock. Unavailable
+reports retain their existing 409 state and safely projected diagnostics. Variant
+provenance likewise refuses an unsafe report before build or queue; it cannot
+rewrite a locator without changing its bound hashes. Safe variants keep their original locks and
+hashes. Retained source-info/generate-like responses project public plan copies;
+internal filesystem matching and execution parameters remain raw. No new recipe,
+alias or generation feature is introduced.

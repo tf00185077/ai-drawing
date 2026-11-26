@@ -21,6 +21,7 @@ _ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
     "downloaded_resources": {
         "civitai_file_id": "VARCHAR(128)",
         "air": "VARCHAR(512)",
+        "metadata_json": "TEXT",
     },
     "generated_images": {
         "workflow_json": "TEXT",

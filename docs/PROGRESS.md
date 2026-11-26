@@ -5,6 +5,29 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-02 accepted; bounded download execution enters kickoff
+
+[Actual acceptance](tasks/p2-02-resource-record/acceptance.md): Codingc705d211,
+independent review10 PASSa94324fe at the exact full candidate/tree. All D–Z items
+pass, resolving original R1–R4 and checked R5 meanings; nine earlier rejections/
+five distinct historical P1 findings and raw evidence remain. Existing-row typed
+metadata/mapping, compatible production writers, whole safe public projections,
+non-destructive migration/backfill and bounded canonical Backend reads are built.
+Unsafe executable projections refuse before queue; internal locators stay raw.
+72 active registry rows preserve all22 earlier rows. Offline Backend7043/124,
+MCP666/four,restored5065,35 distinct mutations/48 invocations and full restoration
+are exact-source independent evidence. [Producer integrity](tasks/p2-02-resource-record/producer-acceptance-integrity.json)
+verifies23 uploads,1344 payloads/1324 Git bodies and two independent exact restores.
+No new live service/provider/key/model/generation/Gallery-byte result by Producer.
+
+Next [p2-03](tasks/p2-03-bounded-download/task.md) enforces stock per-file bytes,
+destination free-space and no-overwrite publication, with safetensors selection/
+valid resume through retained callers. Adopt8GiB/file and20GiB free-space floor
+as configurable delegated recommendations; durable attempts/aggregate accounting
+follow separately. Fresh independent kickoff then Coding/exactdeliveryQA; no
+routine owner gate or phase-boundary change. Source is not deployed; fullPhase2
+exit and CTY aesthetics remain open. Current14 shared memory bodies stay exact.
+
 ## 2026-11-27 — p2-02 ninth rejection and correction9
 
 Actual [review9](tasks/p2-02-resource-record/review-round-9.md) atc01730db,
@@ -108,13 +131,10 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 review9 FAIL](tasks/p2-02-resource-record/review-round-9.md) remains the
-current rejected delivery; see the dated ninth-result record above. Supplied QA8
-cases/R2-R4/checked R5 bounds pass, while outer ledger AIR/path exposes synthetic
-labelled values. Correction9/exact QA10 retain original task/CLEAR/current
-delegation and all preservation obligations. Main product remains accepted p2-01;
-no p2-02 feature, automatic chain/three sentences/freshcheckpoint+LoRA/CTY demo/
-phase exit is accepted.
+[p2-02 is accepted](tasks/p2-02-resource-record/acceptance.md) after exact review10
+PASS; its Backend row/metadata/migration/reads are built. [p2-03](tasks/p2-03-bounded-download/task.md)
+now enters independent kickoff for bounded stock execution. Persistent download
+jobs/budgets, new search/MCP/defaults and whole Phase2 qualification remain open.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
@@ -122,7 +142,7 @@ phase exit is accepted.
 | Civitai recipe import, resource resolution, safe download, source aliases, local identity ledger | Done | `services/civitai_*`, `api/civitai_*` | `test_civitai_*` | No |
 | Backend private key-file and bounded credential-safe retained provider paths | Done, p2-01 accepted | `services/civitai_provider.py` and retained callers | Exact review 2 D1–D5 PASS; fresh full/fault/registered-path proof | Read-only source HEAD auth comparison; no runtime deployment |
 | Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
-| Resource record agents can list and filter; hash lookup of unknown local files | Partial (ledger and aliases exist; no agent-facing record) | `services/civitai_local_identity_ledger.py`, `civitai_source_alias_registry.py` | `test_civitai_*` | — |
+| Resource row, typed metadata/mapping and bounded Backend reads | Done, p2-02 accepted; new MCP/unknown-local hash lookup pending | `services/resource_records.py`, `api/resources.py`, compatible writers | Exact review10 D–Z PASS, full suites and fault-sensitive guards | Offline fixtures only |
 | Workflow selection from chosen resources | Partial (manifest match exists) | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_match.py` | No |
 | End-to-end one-sentence run | Not started | — | — | — |
 

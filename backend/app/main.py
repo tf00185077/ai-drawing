@@ -107,6 +107,8 @@ else:
         workers,
     )
 
+    from app.api import resources
+    app.include_router(resources.router)
     app.include_router(generate.router)
     app.include_router(civitai_easy.router)
     app.include_router(civitai_recipes.router)

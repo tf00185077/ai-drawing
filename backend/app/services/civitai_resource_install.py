@@ -15,6 +15,9 @@ from urllib.parse import urlsplit, urlunsplit
 from sqlalchemy.orm import Session
 
 from app.db.models import DownloadedResource
+from app.schemas.resources import ResourceMetadata
+from app.services.resource_records import (assert_identity, measured_evidence, metadata_for,
+    normalize_metadata, provider_snapshot, publish_metadata, ResourceIdentityConflict, safe_evidence)
 from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_safe_download import CivitaiFileMetadata, safe_download
 
@@ -162,18 +165,19 @@ def inspect_civitai_resource(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "usage_restrictions": file.get("usage") or payload.get("usage") or policy_usage,
                 "air": file.get("air") or version.get("air"),
                 "model_family": version.get("baseModel") or payload.get("baseModel"),
+                "resource_metadata": provider_snapshot(dict(version), dict(payload) if is_model_payload else None, dict(file)).model_dump(mode="json"),
             }
-            candidates.append(redact_secrets(candidate))
+            candidates.append(safe_evidence(redact_secrets(candidate)))
     candidates.sort(key=lambda item: (
         item["civitai_model_id"] or 0, item["civitai_model_version_id"] or 0,
         item["civitai_file_id"] or 0, item["name"],
     ))
-    return redact_secrets({
+    return safe_evidence(redact_secrets({
         "status": "completed",
         "source": {"provider": "civitai", "civitai_model_id": declared_model_id},
         "model_family": payload.get("baseModel"),
         "candidates": candidates,
-    })
+    }))
 
 
 def _safe(candidate: Mapping[str, Any]) -> bool:
@@ -238,9 +242,17 @@ def _safe_filename(name: str) -> bool:
 
 def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] | None, str]:
     """Require exactly the inspect-produced canonical descriptor before transport."""
-    if set(selected) != _DESCRIPTOR_FIELDS:
+    if set(selected) - {"resource_metadata"} != _DESCRIPTOR_FIELDS:
         return None, "invalid_selected_descriptor"
     descriptor = dict(selected)
+    if descriptor.get("resource_metadata") is not None:
+        try:
+            snapshot = ResourceMetadata.model_validate(descriptor["resource_metadata"])
+            if snapshot.base_model != descriptor.get("model_family") or snapshot.verification is not None:
+                return None, "invalid_selected_descriptor"
+            descriptor["resource_metadata"] = normalize_metadata(snapshot).model_dump(mode="json")
+        except ValueError:
+            return None, "invalid_selected_descriptor"
     if descriptor.get("resource_kind") not in _ALLOWED_KINDS:
         return None, "invalid_selected_descriptor"
     if any(_number(descriptor.get(field)) is None or descriptor[field] != _number(descriptor[field]) for field in (
@@ -258,7 +270,9 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
         return None, "invalid_selected_descriptor"
     if descriptor.get("model_family") is not None and not isinstance(descriptor["model_family"], str):
         return None, "invalid_selected_descriptor"
-    return descriptor, ""
+    # Canonical identity/locator gates must run on the supplied input; cleaning
+    # a forged locator first would turn a refusal into an accepted descriptor.
+    return safe_evidence(descriptor), ""
 
 
 def _stream_file_identity(path: Path) -> tuple[int, str]:
@@ -283,12 +297,15 @@ def _has_conflicting_ledger_identity(descriptor: Mapping[str, Any], target: Path
         "model_id": str(descriptor["civitai_model_id"]),
         "version_id": str(descriptor["civitai_model_version_id"]),
         "civitai_file_id": str(descriptor["civitai_file_id"]), "sha256": descriptor["sha256"],
-        "local_path": str(target),
+        "local_path": str(target), "air": descriptor["air"],
     }
     for row in {row.id: row for row in [*by_file, *by_path]}.values():
-        if row.status != "installed":
-            continue
-        if any(getattr(row, field) != value for field, value in expected.items()):
+        immutable = {key: value for key, value in expected.items() if key != "local_path"}
+        try:
+            assert_identity(row, immutable)
+        except ResourceIdentityConflict:
+            return True
+        if row.status in {"installed", "available"} and row.local_path != str(target):
             return True
     return False
 
@@ -314,12 +331,23 @@ def _persist_ledger_identity(
         "air": descriptor["air"], "status": "installed", "notes": json.dumps(metadata_snapshot, sort_keys=True),
         "downloaded_at": datetime.utcnow(),
     }
+    if row is not None:
+        assert_identity(row, {k: values[k] for k in ("provider", "resource_type", "model_id", "version_id", "civitai_file_id", "sha256", "air")})
+        values.pop("notes")  # old notes are immutable source evidence
+        if row.downloaded_at is not None: values.pop("downloaded_at")
     if row is None:
         row = DownloadedResource(**values)
         db.add(row)
     else:
         for key, value in values.items():
+            if key in {"provider", "resource_type", "model_id", "version_id", "civitai_file_id", "sha256", "air"} and value is None:
+                continue  # unknown incoming identity cannot erase known evidence
             setattr(row, key, value)
+    snapshot = (ResourceMetadata.model_validate(descriptor["resource_metadata"])
+                if descriptor.get("resource_metadata") is not None else metadata_for(row)[0])
+    if snapshot is None:
+        snapshot = ResourceMetadata(origin="legacy_notes")
+    publish_metadata(row, snapshot, measured=measured_evidence(target, byte_size, sha256))
     db.commit()
     return row.id
 
@@ -372,6 +400,8 @@ def install_civitai_resource(
             "diagnostic": {"code": "adopted_existing"},
         }, secrets=tuple((authorization or "").split()))
 
+    if _has_conflicting_ledger_identity(descriptor, target, db=db):
+        return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
     metadata = CivitaiFileMetadata(
         download_url=descriptor["download_url_identity"], sha256=descriptor["sha256"], size=descriptor["byte_size"],
         availability=True, scan_status=descriptor["scan_status"], license=descriptor["license"],

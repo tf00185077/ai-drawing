@@ -23,6 +23,26 @@
 
 ## Log
 
+### 2026-11-27 · Accept the whole projection and preserve executable identity
+
+- Decision: accept exact Codingc705d211 after independent review10 PASSa94324fe.
+  Public normalization happens after internal matching/verification. When safety
+  changes a ready executable locator/lock, refuse before build/queue; do not
+  execute masked copies or rewrite old storage. The resource row remains the
+  authority, and safe compatibility paths retain their original locks/digests.
+- Why: whole-response safety and execution integrity are independent obligations.
+  Fixing an outer serializer cannot turn a redacted filename into a verified
+  resource. The actual consumer/fault review covers that boundary and preserves
+  old notes/IDs, typed readers and useful safe output.
+- Evidence: [acceptance](../tasks/p2-02-resource-record/acceptance.md), exact
+  [review10](../tasks/p2-02-resource-record/review-round-10.md) and current
+  [topic](../resource-records.md). Nine earlier rejections/five historical P1
+  findings are retained, not converted to prior passes. Next use the established
+  identity for [stock download limits](civitai-download-limits.md), then durable
+  attempts/aggregate accounting within the existing roadmap. No phase close or
+  aesthetic acceptance is inferred.
+
+
 ### 2026-11-27 · Judge the whole public ledger independently of typed diagnostics
 
 - Decision: apply the existing complete-value policy to the entire public ledger

@@ -61,6 +61,7 @@ from app.schemas.civitai_recipes import (
 )
 from app.db.database import get_db
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
+from app.services.resource_records import safe_evidence
 from app.services.civitai_acquisition import AcquisitionError, redact_secrets, parse_civitai_locator
 from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource, install_civitai_resource
 from app.services.civitai_provider import CivitaiProviderError, ProviderOperation, ProviderDownloadTransport
@@ -598,6 +599,13 @@ def validate_civitai_recipe(request: CivitaiRecipeInspectRequest) -> dict[str, A
 def resolve_civitai_recipe(request: CivitaiRecipeResolveRequest) -> dict[str, Any]:
     ledger = [LocalResourceLedgerEntry(**entry.model_dump()) for entry in request.ledger]
     result = resolve_recipe(request.recipe, ledger=ledger, strict=request.strict)
+    raw_result = result
+    result = safe_evidence(result)
+    if raw_result["report"]["ready"] and result != raw_result:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail(
+            "unsafe_resource_projection", "resource resolution cannot publish executable locks safely",
+            hint="Inspect the resource identity and locator metadata before retrying.",
+        ))
     report = result["report"]
     if request.strict and not report["ready"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_detail("resource_resolution_failed", "strict resource resolution did not produce verified locks", report=report))
@@ -632,6 +640,15 @@ def resolve_local_civitai_recipe(
     """Strictly resolve against one backend-owned ledger snapshot only."""
     snapshot = local_identity_ledger(db)
     result = resolve_recipe(request.recipe, ledger=snapshot.entries, strict=True)
+    # Matching/hash verification above consumes raw identities and locators. Only
+    # this outgoing copy is public; internal report/lock serialization stays raw.
+    raw_result = result
+    result = safe_evidence(result)
+    if raw_result["report"]["ready"] and result != raw_result:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=_detail(
+            "unsafe_resource_projection", "resource resolution cannot publish executable locks safely",
+            hint="Inspect the resource identity and locator metadata before retrying.",
+        ))
     report = result["report"]
     if not report["ready"]:
         raise HTTPException(

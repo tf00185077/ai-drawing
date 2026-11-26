@@ -19,6 +19,7 @@ from app.schemas.civitai_recipe_variants import (
 from app.schemas.civitai_source_aliases import CivitaiSourceAliasLineageBinding, CivitaiSourceAliasMaterializedParent
 from app.schemas.generation_recipe import GenerationRecipe
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
+from app.services.resource_records import safe_evidence
 from app.services.civitai_recipe_compatibility import preflight_recipe_compatibility
 from app.services.civitai_recipe_derivation import RecipeDerivationError, derive_generation_recipe
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle, canonical_sha256
@@ -347,6 +348,13 @@ def _generate_one_variant(
             raise VariantFacadeError("provenance_validation", "phase_output_invalid")
         if report.get("ready") is not True:
             raise VariantFacadeError("resolve_local", "local_resource_resolution_failed")
+        # This report becomes executable locks AND digest-bound public provenance.
+        # Do not compile projected locators or rewrite its hashes after queueing.
+        if safe_evidence(report) != report:
+            raise VariantFacadeError(
+                "resolve_local", "unsafe_resource_projection",
+                "Inspect the resource identity and locator metadata before retrying; no variant was queued.",
+            )
     except VariantFacadeError:
         raise
     except Exception as exc:
