@@ -95,15 +95,16 @@ policy when followed by an explicit delimiter. No failed suffix is retried at it
 inner quotes. Together with maximal ordinary runs, this bounds traversal work by
 the complete input length, including odd/even terminal escapes, while retaining
 full ordinary values without truncation or a new format/size restriction.
-Recognition checks the original text and one relevant serialization view before
-associating quoted labels with delimiters. A complete JSON string is decoded once
-without its outer envelope; escaped content without that envelope receives one
-lexical escape pass. The decoded view is used only to recognize assignments.
-Any recognized assignment redacts the complete original value; safe public text
-keeps its original representation. Views are not recursively decoded, and the
-same monotonic scanner runs at most twice. JSON parsing, lexical substitution and
-both scans each make bounded progress over the input; terminal escapes keep the
-explicit EOF behavior and unchanged three-second feature bounds.
+Recognition checks raw text and bounded once-serialized views before associating
+quoted labels with delimiters. A forward-only cursor decodes closed, disjoint JSON
+string units, including units embedded in ordinary prose. A separate lexical
+escape view handles serialized content without an envelope. Both are derived
+from the original input; neither is decoded recursively. Views are used only for
+recognition: an explicit assignment redacts the complete original value, while
+safe public text keeps its original representation. At most three parser calls
+are made. Quote traversal, JSON string parsing and substitution each make bounded
+progress; unmatched tails and terminal escapes retain explicit EOF handling and
+unchanged three-second feature bounds.
 Identifier components use whitespace,
 underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
 component ending in `token`, `secret`, `authorization`, `password`, `credential`,

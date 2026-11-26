@@ -32,7 +32,11 @@ PLAIN = [
     '"ordinary" = "useful"; " 資源.api.key\u2003" = "complete synthetic value"',
     "ordinary prefix; ' HTTP_AUTHORIZATION ' : Basic b3BhcXVl",
 ]
-ATTACKS = [encoded for text in PLAIN for encoded in representations(text)]
+EMBEDDED = [prefix + json.dumps(text) + suffix
+            for text in [PLAIN[0], PLAIN[6]]
+            for prefix, suffix in [('ordinary prefix; ', ''), ('', '; ordinary suffix'),
+                                   ('ordinary prefix; ', '; ordinary suffix')]]
+ATTACKS = [encoded for text in PLAIN for encoded in representations(text)] + EMBEDDED
 
 
 @pytest.mark.parametrize('text', ATTACKS)
@@ -50,7 +54,7 @@ def test_serialized_assignment_edited_install_and_new_notes(boundary, text):
     values.test_complete_value_registered_edited_install_publication(boundary, text)
 
 
-@pytest.mark.parametrize('text', representations(PLAIN[0]) + representations(PLAIN[6]))
+@pytest.mark.parametrize('text', representations(PLAIN[0]) + representations(PLAIN[6]) + EMBEDDED)
 @pytest.mark.parametrize('field', values.FIELDS)
 def test_serialized_assignment_old_reads_finally(client, tmp_path, monkeypatch, field, text):
     data = provider_snapshot({'baseModel':'Pony', 'trainedWords':['allowed']}, None, {}).model_dump()
