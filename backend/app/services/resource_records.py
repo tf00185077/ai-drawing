@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import re
+from threading import RLock
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 from pydantic import ValidationError
@@ -16,6 +17,11 @@ from app.db.models import DownloadedResource
 from app.schemas.resources import (LicenseSnapshot, MeasuredEvidence, MetadataDiagnostic,
     Recommendation, ResourceMetadata, ResourceRecord)
 from app.services.civitai_acquisition import redact_secrets
+
+# Both stock callers share this Backend's admission boundary. The committed
+# row owns subsequent work; this lock only serializes inspection/claim, never
+# a model-body download. It is not a durable or cross-process reservation.
+resource_admission = RLock()
 
 # The sole Phase 2 inference table. Recipe/Anima adapters are explicitly legacy.
 WORKFLOW_FAMILIES = {'sdxl 1.0':'sdxl', 'illustrious':'sdxl', 'pony':'sdxl', 'noobai':'sdxl'}

@@ -53,8 +53,21 @@ Failures after admission publish `failed` and the current sanitized reason under
 columns remain evidence. Retained errors include `diagnostic.resource_id`; read it
 through existing acquisition status or canonical resource detail. There is no new
 attempt table, resource registry, generation job, scheduler, MCP intent or hidden
-second submission. An unavailable database can prevent recording a failure; such
-an error is returned as `ledger_persistence_failed`, never installation success.
+second submission. A true pre-admission database failure returns `ledger_persistence_failed` without
+publishing a new row. After admission, an unavailable database can prevent failure
+persistence; the response still retains the known ID and actual provider/file
+reason when available, never installation success.
+
+An existing `downloading` row owns its pending or running operation. Retained
+install refuses with HTTP 409 `civitai_resource_active`, the same `resource_id`
+and inspect/wait guidance before any competing model-body request or mutation.
+The ownership check is repeated on refreshed ORM state at admission, including
+when an active owner or a final target appears after read-only preflight.
+Acquisition reuses active IDs without publishing competing metadata. Both callers
+serialize their claim sections in this single Backend process and release that
+process-local lock before model-body work. This does not provide cross-process
+reservations or restart recovery. Failed-row retry and verified inactive reuse
+remain available.
 
 A resumable `.part` needs authority from that existing row: provider, selected
 version/file/resource IDs, declared SHA-256 and byte size, complete device/inode/
@@ -85,7 +98,14 @@ file, directory or symlink. After verified linking, only the still-owned part na
 is removed. Unsupported link publication fails; there is no replacement fallback.
 
 Preexisting exact-file adoption is an explicit full size/hash verification with
-unchanged ownership. Acquisition records adoption eligibility before admission;
+unchanged ownership. Retained adoption claims the existing row before installed
+publication. A later timeout or file change, including after the actual installed
+commit, publishes failed/current state and the actual sanitized code/hint on that
+same known ID. Rollback alone cannot undo a commit. Genuine historical measurement
+and old notes remain; the public projection certifies a hash only while its measured
+file identity still matches. Adoption failures never delete the preexisting file
+or a foreign replacement, and failure persistence does not extend the expired
+provider deadline. Acquisition records adoption eligibility before admission;
 a later collision, even with identical bytes, cannot be adopted as this download.
 Known acquisition rows retain their raw recorded storage path when configured roots
 change; a new-root collision cannot redirect or replace that existing identity.

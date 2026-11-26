@@ -24,7 +24,7 @@ from app.services.civitai_safe_download import (CivitaiFileMetadata, safe_downlo
     verified_existing, remove_owned_publication, _matches)
 from app.services.civitai_download_policy import DownloadPolicy, download_error
 from app.services.civitai_provider import CivitaiProviderError
-from app.services.resource_records import download_context, publish_download_state
+from app.services.resource_records import download_context, publish_download_state, resource_admission
 
 _ALLOWED_KINDS = frozenset({"checkpoint", "lora", "vae", "embedding", "controlnet", "upscaler"})
 _CLEAN = frozenset({"clean", "success", "passed"})
@@ -359,8 +359,27 @@ def _persist_ledger_identity(
     return row.id
 
 
+class _ActiveInstall(Exception):
+    def __init__(self, resource_id):
+        self.resource_id = resource_id
+
+
+def _install_row(descriptor, *, db):
+    # Re-read committed ownership even when preflight loaded this identity in
+    # the Session already. A stale ORM object cannot authorize a second owner.
+    return db.query(DownloadedResource).filter_by(
+        provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"])
+    ).populate_existing().one_or_none()
+
+
+def _require_inactive(row):
+    if row is not None and row.status == "downloading":
+        raise _ActiveInstall(row.id)
+
+
 def _admit_install(descriptor, storage_root, target, *, db):
-    row = db.query(DownloadedResource).filter_by(provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"])).one_or_none()
+    row = _install_row(descriptor, db=db)
+    _require_inactive(row)
     if row is None:
         row = DownloadedResource(resource_name=descriptor["name"], resource_type=descriptor["resource_kind"], provider="civitai",
             source_url=descriptor["download_url_identity"], resolved_download_url=descriptor["download_url_identity"],
@@ -403,38 +422,36 @@ def install_civitai_resource(
         return {"status": "blocked", "diagnostic": {"code": "unsafe_destination"}}
     metadata = CivitaiFileMetadata(descriptor["download_url_identity"], descriptor["sha256"], descriptor["byte_size"],
         scan_status=descriptor["scan_status"], license=descriptor["license"], usage=descriptor["usage_restrictions"])
+    adoption = None
     try:
         policy = policy if policy is not None else DownloadPolicy.from_settings()
         policy.validate(metadata.size, metadata.sha256)
         policy.validate_format(descriptor["resource_kind"], descriptor["name"])
+        existing = _install_row(descriptor, db=db)
+        _require_inactive(existing)
         if _has_conflicting_ledger_identity(descriptor, target, db=db):
             return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
         if os.path.lexists(target):
             try:
-                actual_size, actual_sha256, owned = verified_existing(target, metadata, operation)
+                adoption = verified_existing(target, metadata, operation)
             except (OSError, CivitaiProviderError):
                 return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
-            try:
-                if operation is not None: operation.remaining()
-                ledger_id = _persist_ledger_identity(descriptor, storage_root, target, actual_size, actual_sha256,
-                    db=db, authorization=authorization, identity=owned, operation=operation)
-                if not _matches(target, owned):
-                    raise download_error("civitai_file_changed", "Final changed during adoption")
-            except Exception:
-                db.rollback()
-                return {"status": "failed", "diagnostic": {"code": "ledger_persistence_failed"}}
-            return redact_secrets({"status": "completed", "final_path": str(target), "byte_size": actual_size,
-                "sha256": actual_sha256, "ledger_id": ledger_id, "diagnostic": {"code": "adopted_existing"}}, secrets=tuple((authorization or "").split()))
-        existing = db.query(DownloadedResource).filter_by(provider="civitai", civitai_file_id=str(descriptor["civitai_file_id"])).one_or_none()
-        association, resume = download_context(existing, metadata.size, metadata.sha256) if existing else (None, None)
-        preflight_download(metadata, target, policy, association=association, resume=resume, operation=operation)
+        else:
+            association, resume = download_context(existing, metadata.size, metadata.sha256) if existing else (None, None)
+            preflight_download(metadata, target, policy, association=association, resume=resume, operation=operation)
+        # Claim even an adoption before installed-state publication. Retain
+        # this known ID if a later commit/deadline/path check fails.
+        with resource_admission:
+            if operation is not None: operation.remaining()
+            row = _admit_install(descriptor, storage_root, target, db=db)
+    except _ActiveInstall as exc:
+        return {"status": "blocked", "ledger_id": exc.resource_id, "diagnostic": {
+            "code": "civitai_resource_active", "resource_id": exc.resource_id,
+            "message": "The resource already has an active download owner",
+            "hint": "Inspect the same resource ID and wait for its current operation before retrying."}}
     except (CivitaiProviderError, OSError) as exc:
         diagnostic = exc.to_dict() if isinstance(exc, CivitaiProviderError) else {"code": "civitai_download_failed"}
         return {"status": "blocked", "diagnostic": diagnostic}
-
-    # Admission commits the existing identity before any model request/partial.
-    try:
-        row = _admit_install(descriptor, storage_root, target, db=db)
     except Exception:
         db.rollback()
         return {"status": "failed", "diagnostic": {"code": "ledger_persistence_failed"}}
@@ -458,15 +475,19 @@ def install_civitai_resource(
         db.commit()
 
     try:
-        result = safe_download(metadata, target, transport=transport, authorization=authorization, operation=operation,
-                               policy=policy, association=association, resume=resume, record_partial=record_partial)
-        if result.status != "completed":
-            return failure(result.diagnostics)
+        if adoption is not None:
+            byte_size, sha256, identity = adoption
+        else:
+            result = safe_download(metadata, target, transport=transport, authorization=authorization, operation=operation,
+                                   policy=policy, association=association, resume=resume, record_partial=record_partial)
+            if result.status != "completed":
+                return failure(result.diagnostics)
+            byte_size, sha256, identity = result.bytes, cast(str, result.actual_sha256), result.publication
         if operation is not None: operation.remaining()
-        if not _matches(target, result.publication):
+        if not _matches(target, identity):
             raise download_error("civitai_file_changed", "Final changed before ledger publication")
-        ledger_id = _persist_ledger_identity(descriptor, storage_root, target, result.bytes, cast(str, result.actual_sha256),
-                                            db=db, authorization=authorization, identity=result.publication, operation=operation)
+        ledger_id = _persist_ledger_identity(descriptor, storage_root, target, byte_size, sha256,
+                                            db=db, authorization=authorization, identity=identity, operation=operation)
     except BaseException as exc:
         # A racing replacement is never this invocation's compensation target.
         if result is not None:
@@ -480,5 +501,6 @@ def install_civitai_resource(
         if not isinstance(exc, Exception):
             raise
         return outcome
-    return redact_secrets({"status": "completed", "final_path": str(target), "byte_size": result.bytes,
-        "sha256": result.actual_sha256, "ledger_id": ledger_id, "diagnostic": result.diagnostics}, secrets=tuple((authorization or "").split()))
+    return redact_secrets({"status": "completed", "final_path": str(target), "byte_size": byte_size,
+        "sha256": sha256, "ledger_id": ledger_id,
+        "diagnostic": {"code": "adopted_existing"} if adoption is not None else result.diagnostics}, secrets=tuple((authorization or "").split()))
