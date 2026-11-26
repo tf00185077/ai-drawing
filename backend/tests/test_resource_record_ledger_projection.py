@@ -184,7 +184,7 @@ def test_seeded_old_whole_ledger_readonly_exact_columns(boundary,monkeypatch,sta
 @pytest.mark.parametrize('field',['air','local_path'])
 @pytest.mark.parametrize('state',['installed','downloading','failed'])
 @pytest.mark.parametrize('text',TEXTS)
-def test_raw_internal_resolution_public_success_and_failure(boundary,field,state,text):
+def test_raw_internal_resolution_public_refusal_and_failure(boundary,field,state,text):
     b=boundary;rid,original,path=seed(b,field,text,state)
     recipe=_recipe(b.sha);recipe['resources'][0]['air']=original['air']
     model=GenerationRecipe.model_validate(recipe)
@@ -199,16 +199,22 @@ def test_raw_internal_resolution_public_success_and_failure(boundary,field,state
                 assert raw.ready and raw.resource_lock[0]['local_path']==str(path)
                 assert raw.resource_lock[0]['air']==original['air']
             assert ledger_payload(snapshot)['snapshot']['row_count']==1
-        response=b.client.post('/api/civitai-recipes/resolve-local',json={'recipe':recipe})
-        assert response.status_code==(200 if state=='installed' else 409),response.text
-        assert 'retained suffix' not in response.text
-        report=response.json()['report'] if state=='installed' else response.json()['detail']['report']
-        assert report['ready'] is (state=='installed')
-        assert report['entries'][0]['status']==entry.status
         public_entry={key:getattr(snapshot.entries[0],key) for key in ['kind','local_path','sha256','civitai_model_id','civitai_model_version_id','civitai_file_id','air','availability','diagnostics']}
-        response=b.client.post('/api/civitai-recipes/resolve',json={'recipe':recipe,'ledger':[public_entry],'strict':True})
-        assert response.status_code==(200 if state=='installed' else 409),response.text
-        assert 'retained suffix' not in response.text
+        for endpoint,payload in [('resolve-local',{'recipe':recipe}),
+                ('resolve',{'recipe':recipe,'ledger':[public_entry],'strict':True})]:
+            response=b.client.post('/api/civitai-recipes/'+endpoint,json=payload)
+            assert 'retained suffix' not in response.text
+            if state=='installed':
+                # A public executable lock cannot contain a projected fake locator.
+                assert response.status_code==422,response.text
+                assert response.json()['detail']['code']=='unsafe_resource_projection'
+                assert 'Inspect' in response.json()['detail']['hint']
+                assert 'resource_lock' not in response.json()['detail']
+            else:
+                assert response.status_code==409,response.text
+                report=response.json()['detail']['report']
+                assert report['ready'] is False and report['entries'][0]['status']==entry.status
+
     finally:
         with database.SessionLocal() as db:
             row=db.get(DownloadedResource,rid)

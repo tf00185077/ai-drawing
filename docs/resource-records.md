@@ -185,10 +185,12 @@ AIRs, paths, IDs, hashes, state and counts retain their meaning; old storage is
 never repaired or hidden. Canonical status strings use the same normalization.
 
 Registered resolve/resolve-local project outgoing results only after raw matching
-and verification. Their internal report/lock transfer format stays raw. Variant
-provenance cannot rewrite a locator without changing its bound hashes: a report
-requiring projection is refused with `unsafe_resource_projection` before build or
-queue, with inspect/retry guidance. Safe variants keep their original locks and
+and verification. Their internal report/lock transfer format stays raw. A ready report requiring
+projection is refused with `unsafe_resource_projection` and inspect/retry guidance
+rather than returning a masked path as an executable verified lock. Unavailable
+reports retain their existing 409 state and safely projected diagnostics. Variant
+provenance likewise refuses an unsafe report before build or queue; it cannot
+rewrite a locator without changing its bound hashes. Safe variants keep their original locks and
 hashes. Retained source-info/generate-like responses project public plan copies;
 internal filesystem matching and execution parameters remain raw. No new recipe,
 alias or generation feature is introduced.
