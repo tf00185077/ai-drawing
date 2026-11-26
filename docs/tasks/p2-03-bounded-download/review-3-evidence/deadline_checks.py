@@ -128,7 +128,7 @@ def test_real_operation_entry_boundaries_balance_lock(boundary, monkeypatch, pat
         if path in {'expired', 'entry_expired'}:
             with pytest.raises(provider.CivitaiProviderError) as err:
                 with records.bounded_resource_admission(op):
-                    pytest.fail('expired operation reached mutation body')
+                    assert False, 'expired operation reached mutation body'
             assert err.value.code == 'civitai_timeout'
         elif path == 'exception':
             with pytest.raises(RuntimeError, match='synthetic body failure'):

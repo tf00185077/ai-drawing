@@ -89,7 +89,7 @@ for name,path,old,new,guard in faults:
           'original_sha256':digest(original),'mutated_sha256':digest(mutated)}
     try:
         (ROOT/path).write_bytes(mutated)
-        item.update(assertion_red('qa3-fault-'+name,[guard]))
+        item.update(assertion_red('qa3-fault-v2-'+name,[guard]))
     finally:
         (ROOT/path).write_bytes(original);restored()
         item['restored_sha256']=digest((ROOT/path).read_bytes())
