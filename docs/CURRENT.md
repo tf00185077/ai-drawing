@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-01 accepted; p2-02 kickoff CLEAR, implementation next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review1 FAIL; correction1 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,25 +90,37 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**Next: [p2-02 resource-record foundation](tasks/p2-02-resource-record/task.md)**
-has actual [AID-185](/AID/issues/AID-185) round-1 [CLEAR](tasks/p2-02-resource-record/kickoff-review.md),
-report/evidence **14b4c98aa1c80c1ab8646b600af14a63ac925c02**, fixed f8d3143/task
-hash c43339e4 unchanged. [Implementation handoff](tasks/p2-02-resource-record/implementation-handoff.md)
-dispatches separate Coding and independent exact-final-commit delivery QA with
-native prerequisites; AID-146 retains Producer ownership. Four official uploads,
-218 indexed package payloads/219 members,211 fingerprints, independent bundle/
-patch tree and238 static checks verified. No fresh product suite or product
-implementation/deployment is implied. Zero p2-02 kickoff ambiguities/owner
-questions/implementation rejections. The [adopted decision](decisions/civitai-resource-record.md)
-extends existing downloaded_resources IDs, normalizes metadata/SDXL mapping and
-aligns producers/readers before download-job/reservation persistence. Image/recipe
-aliases remain preserved history, not guessed model identities. This is the joint
-record/download contract's prerequisite, not a phase-order change or full record
-replacement claim. AID-146 retains Producer ownership and native dependency on the
-actual delivery QA verdict after Coding. No routine owner confirmation. Stock safe download budgets/
-async jobs, unknown-local hash identification, safe search/MCP replacement,
-automatic defaults/workflows and proven removals remain separate. Owner scope/
-order/Not now and CTY artistic judgment remain.
+**p2-02 delivery review1 FAIL accepted:** [Coding AID-186](/AID/issues/AID-186)
+**9abe3d1c3237791b684e3b9f5a692879df747361**, frozen17e90a65, received actual
+[independent QA AID-187](/AID/issues/AID-187) [four P1 findings](tasks/p2-02-resource-record/review-round-1.md),
+report/evidence **4b95c7a74c032d092ac86b53b657bd107bdfcb3e**. R1 typed snapshot
+secrecy, R2 filter/projection disagreement, R3 omitted AIR erasure and R4 retained
+retry notes overwrite are reproduced with synthetic registered/ORM fixtures.
+No real credential disclosure is claimed. D1/D2/D4 and delivery acceptance fail;
+isolated D3 migration passes. The rejected product/tests stay off main.
+
+**Next: [correction1](tasks/p2-02-resource-record/repair-round-1.md)** and separate
+exact-final-commit delivery QA2 under unchanged task/c43339e4 and kickoff1CLEAR.
+One rejected delivery/four P1 findings, zero kickoff ambiguities or owner questions.
+Producer accepts demonstrated defects, retains ownership and native Coding→QA→
+Producer dependencies; no routine owner confirmation or new kickoff is needed.
+[Resource decision](decisions/civitai-resource-record.md) applies existing secrecy,
+canonical validation, known-identity and immutable-note rules to every writer/read.
+No new registry, job schema, scope/order/architecture or artistic decision.
+
+Producer verifies eight official uploads,139/86 indexed archive payloads140/87
+members,136/83 exact Git bodies,2603 frozen/2710 Coding/2793 QA fingerprints,
+both independently fetched bundles/exact patch trees/fsck. Original manifests,
+FAIL and all raw evidence remain exact. QA fresh rejected-source Backend2039/124
+existing skips, MCP666/four, producers93/readers73/standing412/wait12/provider19,
+seven effective faults/nine failures/restored61 feature cases stay attributed;
+four adverse expected-feature failures prevent acceptance. Producer adds document/
+source/artifact verification only, no product suite, private key/provider/service
+probe/restart/download/register/generation/live Gallery-byte action. Preserve13
+memory edits, all runtime/private config/environments/worktrees/data.
+
+Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
+replacement, automatic defaults/workflows and proven removals remain separate.
 
 QA fresh offline Backend 1916/124 existing skips, MCP 666/four skips, registered
 PNG six passed, frontend 226/one skip/build passed; 18 registry rows unchanged.

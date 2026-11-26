@@ -15,8 +15,27 @@
 - Old source aliases describe image/recipe evidence, not necessarily models.
   Preserve that evidence and its history. Do not invent model identity from an
   alias name, image ID, recipe hash, filename or a missing provider field.
+- Typed metadata still crosses an untrusted input boundary. Normalize every
+  persisted/public nested field under the secrecy policy, and use the same typed
+  validity for filtering/counting and projection. Unknown incoming identity does
+  not erase known identity; retained-row retries preserve original notes as well
+  as backfill does. These apply the existing record contract to every writer/read.
 
 ## Log
+
+### 2026-11-26 · Keep validation and preservation at every resource boundary
+
+- Decision: apply the existing secrecy policy to complete typed snapshots at
+  publication and public projection; exact filters/counts use the projection's
+  typed validity; absence cannot erase known identity; retained-row retries keep
+  original notes as immutable evidence while current errors remain truthful.
+- Why: Pydantic typing does not sanitize arbitrary nested strings, a separate SQL
+  JSON interpretation can select a record the canonical projection rejects, and
+  assignment/error branches can bypass otherwise-correct shared publication.
+- Provenance: Producer's implementation application after source and independent
+  [R1–R4 evidence](../tasks/p2-02-resource-record/review-round-1.md), not a new owner
+  quote or scope. [Correction1](../tasks/p2-02-resource-record/repair-round-1.md)
+  must prove these existing contract boundaries with fresh exact delivery QA.
 
 ### 2026-11-26 · Establish resource identity before download accounting
 

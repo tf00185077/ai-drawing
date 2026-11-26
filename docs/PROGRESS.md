@@ -49,18 +49,23 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-Next [p2-02](tasks/p2-02-resource-record/task.md) establishes existing resource-row
-identity, typed metadata, one SDXL mapping, producer/reader alignment and bounded
-Backend reads before download-job accounting. Actual [kickoff1 CLEAR](tasks/p2-02-resource-record/kickoff-review.md)
-by [AID-185](/AID/issues/AID-185), report14b4c98a, fixed f8d3143/unchanged task
-c43339e4, permits the [separate Coding/exact-delivery-QA handoff](tasks/p2-02-resource-record/implementation-handoff.md).
-Four uploads/218 package payloads/211 source fingerprints/238 static checks,
-bundle and patch tree verified; no new product suite, implementation or live
-product/provider/generation/retrieval result. No task change or owner gate.
-[Decision](decisions/civitai-resource-record.md) records why the
-joint download/record intake is sequenced this way; aliases retain image/recipe
-evidence and are not model identity. No owner scope/order/Not now change. Remaining
-automation/download/search/defaults/removal/real three-sentence exit stays pending.
+[p2-02 delivery1](tasks/p2-02-resource-record/manifest-round-1.md), candidate
+9abe3d1c/freeze17e90a65, received [independent review1 FAIL](tasks/p2-02-resource-record/review-round-1.md)
+4b95c7a7 with four P1 findings: unsafe typed metadata exposure, malformed family
+filter mismatch, known AIR erasure and original retry-note loss. D1/D2/D4 fail,
+isolated D3 migration passes; D5 acceptance remains FAIL despite ordinary green
+suites. One rejected delivery/four findings; original kickoff1CLEAR/task unchanged.
+[Correction1](tasks/p2-02-resource-record/repair-round-1.md) and new exact delivery
+QA2 follow; no owner/specification gate or rejected product/test merge.
+
+Actual QA rejected-source Backend2039/124 existing skips, MCP666/four, fresh
+producers93/readers73/standing412/wait12/provider19, seven faults/nine failures
+and restored61 feature cases are retained. Four independent expected-feature
+probes remain RED. Producer verifies8uploads/139+86payloads/136+83Git bodies,
+2603/2710/2793 fingerprints, both bundle/patch restorations and fsck; no new
+product suite/provider/service/model/Gallery action. All22 registry contracts,
+13 shared memory bodies/private runtime/data preserved. Scope/order/Not now,
+remaining Phase2 automation/download/search/defaults/removal/exit unchanged.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
