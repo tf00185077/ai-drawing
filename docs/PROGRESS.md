@@ -51,8 +51,13 @@ reads. No running-Backend deployment, model-body/Gallery retrieval or generation
 
 Next [p2-02](tasks/p2-02-resource-record/task.md) establishes existing resource-row
 identity, typed metadata, one SDXL mapping, producer/reader alignment and bounded
-Backend reads before download-job accounting. Fresh independent kickoff precedes
-implementation. [Decision](decisions/civitai-resource-record.md) records why the
+Backend reads before download-job accounting. Actual [kickoff1 CLEAR](tasks/p2-02-resource-record/kickoff-review.md)
+by [AID-185](/AID/issues/AID-185), report14b4c98a, fixed f8d3143/unchanged task
+c43339e4, permits the [separate Coding/exact-delivery-QA handoff](tasks/p2-02-resource-record/implementation-handoff.md).
+Four uploads/218 package payloads/211 source fingerprints/238 static checks,
+bundle and patch tree verified; no new product suite, implementation or live
+product/provider/generation/retrieval result. No task change or owner gate.
+[Decision](decisions/civitai-resource-record.md) records why the
 joint download/record intake is sequenced this way; aliases retain image/recipe
 evidence and are not model identity. No owner scope/order/Not now change. Remaining
 automation/download/search/defaults/removal/real three-sentence exit stays pending.

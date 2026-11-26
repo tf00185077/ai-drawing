@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-01 accepted; resource-record foundation next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-01 accepted; p2-02 kickoff CLEAR, implementation next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -91,13 +91,21 @@ Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
 **Next: [p2-02 resource-record foundation](tasks/p2-02-resource-record/task.md)**
-gets its own independent kickoff before Coding. The [adopted decision](decisions/civitai-resource-record.md)
+has actual [AID-185](/AID/issues/AID-185) round-1 [CLEAR](tasks/p2-02-resource-record/kickoff-review.md),
+report/evidence **14b4c98aa1c80c1ab8646b600af14a63ac925c02**, fixed f8d3143/task
+hash c43339e4 unchanged. [Implementation handoff](tasks/p2-02-resource-record/implementation-handoff.md)
+dispatches separate Coding and independent exact-final-commit delivery QA with
+native prerequisites; AID-146 retains Producer ownership. Four official uploads,
+218 indexed package payloads/219 members,211 fingerprints, independent bundle/
+patch tree and238 static checks verified. No fresh product suite or product
+implementation/deployment is implied. Zero p2-02 kickoff ambiguities/owner
+questions/implementation rejections. The [adopted decision](decisions/civitai-resource-record.md)
 extends existing downloaded_resources IDs, normalizes metadata/SDXL mapping and
 aligns producers/readers before download-job/reservation persistence. Image/recipe
 aliases remain preserved history, not guessed model identities. This is the joint
 record/download contract's prerequisite, not a phase-order change or full record
 replacement claim. AID-146 retains Producer ownership and native dependency on the
-actual next QA verdict. No routine owner confirmation. Stock safe download budgets/
+actual delivery QA verdict after Coding. No routine owner confirmation. Stock safe download budgets/
 async jobs, unknown-local hash identification, safe search/MCP replacement,
 automatic defaults/workflows and proven removals remain separate. Owner scope/
 order/Not now and CTY artistic judgment remain.

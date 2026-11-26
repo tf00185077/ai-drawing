@@ -63,7 +63,10 @@ resolves R1; source publication does not deploy it. Producer next establishes
 [p2-02 resource-record identity/metadata/mapping](../tasks/p2-02-resource-record/task.md)
 before download-job/reservation persistence, following the joint intake and
 [adopted existing-row decision](../decisions/civitai-resource-record.md). Fresh
-independent kickoff precedes new software. Producer AID-146 retains coordination;
+independent [kickoff1 CLEAR](../tasks/p2-02-resource-record/kickoff-review.md)
+(14b4c98a, fixed f8d3143/unchanged taskc43339e4) permits separate Coding and
+exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementation-handoff.md).
+No p2-02 implementation PASS yet. Producer AID-146 retains coordination;
 no routine owner confirmation or phase-exit claim.
 
 Exit: from one sentence, an agent finds a checkpoint and a LoRA on Civitai, registers them and gets back an image that used the LoRA's trigger words, in 3 consecutive real runs with zero manual fixes. The three runs use three different sentences; at least one downloads both a new checkpoint and a new LoRA, and the others may reuse resources the agent finds in the resource record.
