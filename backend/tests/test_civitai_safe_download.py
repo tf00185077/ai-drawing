@@ -48,15 +48,28 @@ def _metadata(data: bytes, **overrides: object) -> CivitaiFileMetadata:
     return CivitaiFileMetadata(**payload)
 
 
+def _associated(target, metadata, prefix):
+    association = {"provider": "civitai", "version_id": "7", "file_id": "11", "resource_id": 42,
+                   "sha256": metadata.sha256, "size": metadata.size}
+    proofs = []
+    def interrupted():
+        yield prefix
+        raise KeyboardInterrupt()
+    with pytest.raises(KeyboardInterrupt):
+        safe_download(metadata, target, transport=FakeTransport([DownloadResponse(200, interrupted())]),
+                      association=association, record_partial=proofs.append)
+    return {"association": association, "resume": proofs[-1]}
+
+
 def test_206_resumes_from_part_offset_and_atomically_publishes_only_after_hash_and_size(tmp_path: Path) -> None:
     data = b"abcdefghij"
     target = tmp_path / "models" / "file.safetensors"
     part = target.with_name(target.name + ".part")
     target.parent.mkdir()
-    part.write_bytes(data[:4])
+    association = _associated(target, _metadata(data), data[:4])
     transport = FakeTransport([DownloadResponse(206, data[4:], {"Content-Range": "bytes 4-9/10"})])
 
-    result = safe_download(_metadata(data), target, transport=transport)
+    result = safe_download(_metadata(data), target, transport=transport, **association)
 
     assert result.status == "completed"
     assert result.resume_used is True
@@ -71,10 +84,10 @@ def test_200_ignoring_range_overwrites_part_safely_instead_of_concatenating(tmp_
     data = b"abcdefghij"
     target = tmp_path / "file.safetensors"
     part = target.with_name(target.name + ".part")
-    part.write_bytes(b"stale")
+    association = _associated(target, _metadata(data), b"stale")
     transport = FakeTransport([DownloadResponse(200, data, {})])
 
-    result = safe_download(_metadata(data), target, transport=transport)
+    result = safe_download(_metadata(data), target, transport=transport, **association)
 
     assert result.status == "completed"
     assert result.resume_used is False
@@ -132,6 +145,7 @@ def test_part_symlink_cannot_damage_existing_final_target_on_failure(tmp_path: P
 
     assert result.status == "failed"
     assert target.read_bytes() == b"known-good-final"
+    assert part.is_symlink()  # a refused foreign link is retained
 
 
 def test_retry_is_bounded_to_three_requests_for_429_5xx_and_transport_failure(tmp_path: Path) -> None:

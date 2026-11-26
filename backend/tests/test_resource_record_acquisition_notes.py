@@ -163,10 +163,11 @@ def test_retained_adverse_notes_acquisition_reuse_and_retry_exact(boundary,state
     print('RETAINED_NOTES_PHASES_JSON='+json.dumps(phases))
     for phase in phases:assert_excluded(phase)
     summary=phases[1]['value']['resources'][0]
-    expected=state if state!='failed' else 'installed' if outcome=='success' else 'failed'
+    # Exact retained finals are now explicitly rehashed/adopted without a body request.
+    expected=state if state!='failed' else 'installed' if outcome!='exception' else 'failed'
     assert summary['status']==expected
     if state=='failed':
-        if outcome=='success':assert summary['error'] is None
+        if outcome!='exception':assert summary['error'] is None
         else:assert summary['error']['code'] and summary['error']['message'] and summary['error']['hint']
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,rid)

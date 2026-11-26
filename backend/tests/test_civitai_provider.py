@@ -594,3 +594,42 @@ def test_registered_cookie_responses_install_without_replaying_credentials(produ
         assert stored.id==identity and stored.civitai_file_id=='11'
         durable=json.dumps({c.name:getattr(stored,c.name) for c in DownloadedResource.__table__.columns},default=str)
     assert 'registered-cookie-sentinel' not in durable+json.dumps(admitted)+json.dumps(status)
+
+
+@pytest.mark.parametrize('entry',['acquire','install'])
+@pytest.mark.parametrize('bad',['format','oversize','fractional','sha','space','unknown_space'])
+def test_p203_production_admission_gates_have_no_body_partial_or_row(production_routes,wire,tmp_path,monkeypatch,entry,bad):
+    from app.db import database
+    from app.db.models import DownloadedResource
+    import shutil
+    client,pending=production_routes
+    key=tmp_path/'key';key.write_text('synthetic-p203');configure(monkeypatch,key)
+    monkeypatch.setenv('COMFYUI_LORAS_DIR',str(tmp_path/'loras'))
+    monkeypatch.setenv('CIVITAI_DOWNLOAD_MAX_BYTES','8')
+    monkeypatch.setenv('CIVITAI_DOWNLOAD_FREE_SPACE_FLOOR_BYTES','10');get_settings.cache_clear()
+    version,model=resource_payload(); file=version['files'][0]; requests=[]
+    if bad=='format': file['name']='fixture.ckpt'
+    elif bad=='oversize': file['sizeKB']=9/1024
+    elif bad=='fractional': file['sizeKB']=2.75/1024
+    elif bad=='sha': file['hashes']['SHA256']='invalid'
+    elif bad=='space': monkeypatch.setattr(shutil,'disk_usage',lambda _: type('Space',(),{'free':15})())
+    elif bad=='unknown_space': monkeypatch.setattr(shutil,'disk_usage',lambda _: type('Space',(),{'free':None})())
+    def handler(request):
+        requests.append(request.url.path)
+        if '/model-versions/' in request.url.path:return httpx.Response(200,json=version)
+        if '/api/v1/models/' in request.url.path:return httpx.Response(200,json=model)
+        raise AssertionError('pre-admission body traffic')
+    wire(handler)
+    if entry=='acquire':
+        response=call_mcp('civitai_resource_acquire',{'source':'7'})
+        assert response['ok'] is False
+    else:
+        inspected=client.post('/api/civitai-recipes/resource-inspect',json={'locator':'https://civitai.com/models/8'})
+        selection=client.post('/api/civitai-recipes/resource-select',json={'inspect':inspected.json(),'selectors':{'civitai_file_id':11}})
+        if selection.status_code==200:
+            response=client.post('/api/civitai-recipes/resource-install',json={'selected':selection.json()['selected'],'storage_root':'loras'})
+            assert response.status_code in {409,422}
+        else: assert selection.status_code in {409,422}
+    with database.SessionLocal() as db: assert db.query(DownloadedResource).count()==0
+    assert not pending and not (tmp_path/'loras').exists()
+    assert all('/api/download/' not in path for path in requests)

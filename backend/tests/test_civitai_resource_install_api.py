@@ -484,7 +484,7 @@ def test_kind_root_and_caller_path_matrix_blocks_before_transport(tmp_path: Path
 
 
 @pytest.mark.parametrize("body,status", [(b"server error", 500), (b"wrong-size", 200), (b"same length bad!", 200)])
-def test_http_size_sha_failures_leave_no_final_or_ledger(tmp_path: Path, body: bytes, status: int) -> None:
+def test_http_size_sha_failures_leave_no_final_and_publish_failed_same_id(tmp_path: Path, body: bytes, status: int) -> None:
     from app.services.civitai_resource_install import install_civitai_resource
     from app.services.civitai_safe_download import DownloadResponse
     expected = b"verified install"; selected = _selected(expected)
@@ -496,7 +496,11 @@ def test_http_size_sha_failures_leave_no_final_or_ledger(tmp_path: Path, body: b
         result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": tmp_path / "loras"}, transport=transport)
         assert result["status"] == "failed"
         assert not (tmp_path / "loras" / selected["name"]).exists()
-        assert db.query(DownloadedResource).count() == 0
+        row = db.query(DownloadedResource).one()
+        assert row.status == "failed" and row.id == result["ledger_id"]
+        assert row.sha256 == selected["sha256"]
+        assert json.loads(row.metadata_json)["verification"] is None
+        assert json.loads(row.metadata_json)["source_evidence"]["acquisition"]["error"]["code"]
 
 
 def test_symlink_part_fails_without_transport_final_or_ledger(tmp_path: Path) -> None:
@@ -510,7 +514,9 @@ def test_symlink_part_fails_without_transport_final_or_ledger(tmp_path: Path) ->
     transport = _Transport(data)
     with _session(tmp_path)() as db:
         result = install_civitai_resource(selected, "loras", db=db, storage_roots={"loras": root}, transport=transport)
-        assert result["status"] == "failed"
+        assert result["status"] == "blocked"
+        assert result["diagnostic"]["code"] == "civitai_unsafe_partial"
+        assert (root / (selected["name"] + ".part")).is_symlink()
         assert transport.calls == []
         assert outside.read_bytes() == b"do-not-touch"
         assert not (root / selected["name"]).exists()

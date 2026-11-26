@@ -21,7 +21,7 @@
 | Setup | [setup.md](setup.md) | current |
 | Civitai credentials | [civitai-credentials.md](civitai-credentials.md) — owner Mac key-file locator and safe loading | current |
 | Phase 2 resource identity | [topic](resource-records.md), [decision](decisions/civitai-resource-record.md), [p2-02 acceptance](tasks/p2-02-resource-record/acceptance.md) | exact review10 PASS; Backend foundation accepted |
-| Phase 2 download limits | [decision](decisions/civitai-download-limits.md), [p2-03 task](tasks/p2-03-bounded-download/task.md) | independent kickoff1 CLEAR; Coding/exact delivery QA next |
+| Phase 2 download limits | [topic](civitai-downloads.md), [decision](decisions/civitai-download-limits.md), [p2-03 task](tasks/p2-03-bounded-download/task.md) | independent kickoff1 CLEAR; Coding/exact delivery QA next |
 | MCP server | [mcp.md](mcp.md) | current |
 | Prompt dashboard | [prompt-dashboard.md](prompt-dashboard.md) | current |
 | Windows worker | [windows-worker.md](windows-worker.md) | current |

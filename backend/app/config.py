@@ -84,6 +84,19 @@ class Settings(BaseSettings):
     # CIV-V-D backend-only resource installation settings. Never accepted from MCP.
     civitai_api_key_file: str | None = None
     civitai_authorization: str | None = None
+    civitai_download_max_bytes: int = 8589934592
+    civitai_download_free_space_floor_bytes: int = 21474836480
+
+    @field_validator("civitai_download_max_bytes", "civitai_download_free_space_floor_bytes", mode="before")
+    @classmethod
+    def positive_download_bytes(cls, value):
+        # Environment strings are decimal integers; direct booleans/floats are not.
+        if isinstance(value, str) and value.isascii() and value.isdecimal():
+            value = int(value)
+        if type(value) is not int or value <= 0:
+            raise ValueError("download byte policy must be a positive integer")
+        return value
+
     comfyui_embeddings_dir: str = "D:/AI/ComfyUI/models/embeddings"
     comfyui_controlnet_dir: str = "D:/AI/ComfyUI/models/controlnet"
     comfyui_upscale_models_dir: str = "D:/AI/ComfyUI/models/upscale_models"
