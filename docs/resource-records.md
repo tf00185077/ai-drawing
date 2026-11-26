@@ -90,9 +90,12 @@ their lexical meaning. Ordinary quoted values do not hide inner assignments;
 each quote kind scans independently, including opposite-quote labels inside
 ordinary quoted values. Adjacent same-kind quotes form local candidate boundaries;
 every quote remains a possible opener even after ending the preceding candidate.
+Both literal and escape-aware boundary interpretations are checked, so preceding
+backslashes cannot hide an unchanged opener while escaped quotes inside a complete
+label retain their meaning.
 A delimiter after a quote therefore checks the immediately preceding boundary
 independently of unrelated prose pairing. Candidate spans and whitespace after
-quotes do not overlap, so extraction and common-policy work remain linear in the
+quotes do not overlap within each interpretation, so extraction and common-policy work remain linear in the
 input length. Escapes consume their next character or end of input explicitly.
 No all-pairs scan, growing suffix retry, truncation or format/size restriction is
 needed; ordinary unmatched/odd quote contexts retain their useful original text.
