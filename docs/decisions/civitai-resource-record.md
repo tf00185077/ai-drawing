@@ -23,6 +23,29 @@
 
 ## Log
 
+### 2026-11-27 · Complete recognition and publication across every representation seam
+
+- Decision: relevant one-level representation candidates must survive harmless
+  prose contexts before assignment detection too. Keep bounded local candidates,
+  monotonic escape/EOF work and useful original safe output. Apply the same complete
+  value policy to source-derived new notes and existing acquisition/status DTOs;
+  safely project old notes without rewriting stored history.
+- Why: a corrected assignment scanner cannot inspect a decoded unit that disjoint
+  preprocessing skipped. Safe typed metadata likewise cannot certify new-note
+  persistence or a legacy summary still using a weaker redactor. Candidate
+  coverage and whole-surface policy are distinct from progress/idempotence.
+- Reassessment: eight rejected deliveries leave original R1 incomplete at two
+  seams; supplied review7 examples, checked R5 bounds and R2-R4 pass. Retain resource
+  identity and the shared boundary, correct the remaining pipeline assumptions
+  without recursive/all-pairs work, safe-value loss, timeout increases or storage
+  repair. This stays task/CLEAR/current delegation; report the in-boundary option.
+- Evidence: [actual review8](../tasks/p2-02-resource-record/review-round-8.md),
+  [unit contexts](../tasks/p2-02-resource-record/review-round-8-evidence/independent_unit_contexts_final.py),
+  [raw-label notes/status](../tasks/p2-02-resource-record/review-round-8-evidence/independent_raw_label_notes.py)
+  and [correction8](../tasks/p2-02-resource-record/repair-round-8.md). This is a
+  Producer application, not a new finding number, owner quote or accepted behavior.
+
+
 ### 2026-11-27 · Keep label candidates independent of prose quote pairing
 
 - Decision: associate explicit assignment delimiters with relevant local label

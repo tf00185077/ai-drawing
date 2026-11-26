@@ -194,7 +194,7 @@ def _normalize_file(chosen: dict[str, Any]) -> dict[str, Any]:
     if scan not in _CLEAN_SCAN_STATUSES:
         raise AcquireError(
             "virus_scan_not_clean",
-            f"病毒掃描狀態為 {scan or 'unknown'}，拒絕下載",
+            f"病毒掃描狀態為 {safe_evidence(chosen.get('virusScanResult')) or 'unknown'}，拒絕下載",
             hint="這是硬性安全檢查，不提供繞過；請改用其他掃描通過的版本",
         )
     if not sha256 or not isinstance(size_kb, (int, float)) or not isinstance(download_url, str):
@@ -299,7 +299,7 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
         progress = {"downloaded_bytes": downloaded, "total_bytes": total}
         if isinstance(total, int) and total > 0:
             progress["percent"] = round(downloaded * 100 / total, 1)
-    return redact_secrets({
+    return safe_evidence({
         "acquisition_id": row.id,
         "resource_name": row.resource_name,
         "resource_type": row.resource_type,
@@ -315,6 +315,11 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
         "progress": progress or None,
         "error": current_error,
     })
+
+
+def _new_notes_json(notes: dict[str, Any]) -> str:
+    """Normalize new source-derived notes; retained note bytes are never replaced."""
+    return json.dumps(safe_evidence(notes), ensure_ascii=False)
 
 
 def start_acquisition(
@@ -342,7 +347,7 @@ def start_acquisition(
         supported = ", ".join(sorted({key for key in _MODEL_TYPE_ROOTS}))
         raise AcquireError(
             "unsupported_model_type",
-            f"不支援的模型類型：{model_type or 'unknown'}",
+            f"不支援的模型類型：{safe_evidence((model or {}).get('type') or (version.get('model') or {}).get('type')) or 'unknown'}",
             hint=f"目前支援：{supported}",
         )
     root_key, resource_type = _MODEL_TYPE_ROOTS[model_type]
@@ -422,7 +427,7 @@ def start_acquisition(
             version_id=str(version_id) if version_id is not None else None,
             civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
             status="downloading",
-            notes=json.dumps(redact_secrets(notes), ensure_ascii=False),
+            notes=_new_notes_json(notes),
         )
         if matched is not None:
             row.status = "downloading"
@@ -436,12 +441,12 @@ def start_acquisition(
         db.commit()
         rows = done_rows + active_rows
         status = "downloading" if active_rows else "already_installed"
-        return {
+        return safe_evidence({
             "status": status,
             "resource": _resource_summary(rows[0]),
             "resources": [_resource_summary(row) for row in rows],
             "warnings": warnings,
-        }
+        })
 
     db.commit()
     for job in jobs:
@@ -492,21 +497,21 @@ def start_acquisition(
         )
         statuses = {row.status for row in fresh_rows} | {row.status for row in done_rows}
         status = "installed" if statuses <= _INSTALLED_STATUSES else ("failed" if "failed" in statuses else fresh_rows[0].status)
-        return {
+        return safe_evidence({
             "status": status,
             "resource": _resource_summary(fresh_rows[0]),
             "resources": [_resource_summary(row) for row in done_rows + fresh_rows],
             "warnings": warnings,
-        }
+        })
 
     started_rows = done_rows + active_rows + [job["row"] for job in jobs]
-    return {
+    return safe_evidence({
         "status": "downloading",
         "resource": _resource_summary(jobs[0]["row"]),
         "resources": [_resource_summary(row) for row in started_rows],
         "warnings": warnings,
         "next_step": "下載已在背景進行；用 civitai_resource_status 查進度，installed 之後即可用於生圖",
-    }
+    })
 
 
 def _publish_acquisition_outcome(row: DownloadedResource, status: str, error: Any = None, *, measured=None) -> None:
@@ -542,7 +547,7 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
                 fresh_notes["error"] = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
             _publish_acquisition_outcome(fresh, "failed", fresh_notes["error"])
         if not spec.get("preserve_notes", False):
-            fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
+            fresh.notes = _new_notes_json(fresh_notes)
         session.commit()
     except Exception as exc:  # noqa: BLE001 — the thread must record any failure
         session.rollback()
@@ -552,7 +557,7 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
             error = exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}
             _publish_acquisition_outcome(fresh, "failed", error)
             if not spec.get("preserve_notes", False):
-                fresh.notes = json.dumps(redact_secrets({**notes, "error": error}), ensure_ascii=False)
+                fresh.notes = _new_notes_json({**notes, "error": error})
             session.commit()
         except Exception:
             session.rollback()

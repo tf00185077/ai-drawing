@@ -16,6 +16,7 @@ from app.core.queue import QueueFullError
 from app.db.database import get_db
 from app.services.civitai_easy import EasyGenerateError, generate_like, source_info
 from app.services.civitai_resource_acquire import AcquireError, acquisition_status, start_acquisition
+from app.services.resource_records import safe_evidence
 
 router = APIRouter(prefix="/api/civitai", tags=["civitai-easy"])
 
@@ -47,7 +48,7 @@ def _easy_error(exc: EasyGenerateError) -> HTTPException:
 
 def _acquire_error(exc: AcquireError) -> HTTPException:
     status = 404 if exc.code == "not_found" else 422
-    return HTTPException(status_code=status, detail=exc.to_dict())
+    return HTTPException(status_code=status, detail=safe_evidence(exc.to_dict()))
 
 
 @router.get("/source-info")

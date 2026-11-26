@@ -99,16 +99,34 @@ quotes do not overlap within each interpretation, so extraction and common-polic
 input length. Escapes consume their next character or end of input explicitly.
 No all-pairs scan, growing suffix retry, truncation or format/size restriction is
 needed; ordinary unmatched/odd quote contexts retain their useful original text.
-Recognition checks raw text and bounded once-serialized views before associating
-quoted labels with delimiters. A forward-only cursor decodes closed, disjoint JSON
-string units, including units embedded in ordinary prose. A separate lexical
-escape view handles serialized content without an envelope. Both are derived
-from the original input; neither is decoded recursively. Views are used only for
-recognition: an explicit assignment redacts the complete original value, while
-safe public text keeps its original representation. At most three parser calls
-are made. Quote traversal, JSON string parsing and substitution each make bounded
-progress; unmatched tails and terminal escapes retain explicit EOF handling and
-unchanged three-second feature bounds.
+Recognition checks raw text and a fixed set of once-serialized/local-unit views
+before associating labels with delimiters. Adjacent double-quote boundaries also
+form JSON-unit candidates independently of prose pairing, with both literal and
+escape-aware interpretations. Their interiors are disjoint within a pass. A valid
+escaped JSON unit removes its own envelope quotes; a boundary shared with another
+valid unit is removed once. This preserves supported identifier fragments such as
+`HTTP_AUTH"\u004f"RIZATION` under harmless prefixes and suffixes.
+
+There are fixed lexical-before-unit and unit-before-lexical stages for once-serialized
+unit fragments and escaped neighboring label text. Unquoted Unicode/control escapes
+receive the same single label decoding as quoted labels. No stage repeats until
+stable, enumerates quote pairs or branches into all combinations. At most eight
+distinct assignment views and four local-unit traversals are considered; duplicate
+views are checked once. Each cursor, slice, substitution and JSON parse covers
+bounded total input length. Terminal escapes consume the next character or EOF.
+Only recognition sees these views; safe output keeps its original representation.
+Existing three-second description feature bounds remain unchanged.
+
+Acquisition normalizes every new note body through this same `safe_evidence`
+policy before admission persistence and background success/refusal/exception
+persistence. Base label, model/version names, license values and later diagnostic
+fields all share that boundary. Complete admission/reuse/synchronous responses,
+including package-skip warnings, and `_resource_summary` status projections use
+that policy too. Registered acquisition refusal diagnostics normalize their public
+projection with the same function. A typed snapshot alone does not certify these
+separate surfaces. Old notes remain immutable compatibility evidence; summary
+reads safely project them without repair writes or another metadata authority.
+
 Identifier components use whitespace,
 underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
 component ending in `token`, `secret`, `authorization`, `password`, `credential`,

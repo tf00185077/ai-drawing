@@ -23,8 +23,10 @@ LICENSE_FIELDS = ('allowNoCredit','allowCommercialUse','allowDerivatives','allow
 SHA256 = re.compile(r'^[0-9a-fA-F]{64}$')
 # A recognizable credential-bearing string is a complete safety unit. Token
 # boundaries cannot identify the end of cookies, quoted values or auth schemes.
+_IDENTIFIER_UNIT = r"(?:[\w.-]|\\(?:u[0-9a-fA-F]{4}|[bfnrt]))"
 _ASSIGNMENT_LABEL = re.compile(
-    r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>[\w.-]+(?:\s+[\w.-]+)*)"
+    r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>" + _IDENTIFIER_UNIT + r"+"
+    r"(?:\s+" + _IDENTIFIER_UNIT + r"+)*)"
     r"(?P=quote)\s*(?P<delimiter>[:=]?)",
 )
 _LABEL_ESCAPE = re.compile(r'\\(u[0-9a-fA-F]{4}|["\'\\/bfnrt])')
@@ -51,6 +53,8 @@ def credential_label(label: str) -> bool:
 
 
 def _assignment_in_view(value: str) -> bool:
+    if ':' not in value and '=' not in value:
+        return False  # no assignment delimiter in this recognition view
     # Decode serialized labels once, as lexical string content. Literal tabs and
     # other Unicode whitespace already have their ordinary key-policy meaning.
     def decode(match):
@@ -66,82 +70,99 @@ def _assignment_in_view(value: str) -> bool:
     for quote in ('"', "'"):
         for escape_aware in (True, False):
             start = None
-            position = 0
-            while position < length:
-                char = value[position]
-                if escape_aware and char == "\\":
-                    position = min(position + 2, length)
+            # Match only boundaries/escape units; ordinary spans advance in C.
+            # The optional escape payload also consumes a lone backslash at EOF.
+            pattern = r'\\[\s\S]?|' + re.escape(quote) if escape_aware else re.escape(quote)
+            for boundary in re.finditer(pattern, value):
+                if escape_aware and boundary[0].startswith("\\"):
                     continue
-                if char == quote:
-                    delimiter = position + 1
-                    while delimiter < length and value[delimiter].isspace():
-                        delimiter += 1
-                    if start is not None and delimiter < length and value[delimiter] in ':=':
-                        label = _LABEL_ESCAPE.sub(decode, value[start + 1:position])
-                        if credential_label(label):
-                            return True
-                    start = position
-                position += 1
+                position = boundary.start()
+                delimiter = position + 1
+                while delimiter < length and value[delimiter].isspace():
+                    delimiter += 1
+                if start is not None and delimiter < length and value[delimiter] in ':=':
+                    label = _LABEL_ESCAPE.sub(decode, value[start + 1:position])
+                    if credential_label(label):
+                        return True
+                start = position
     # Inspect unquoted assignments too, including those inside a quoted value.
     # Maximal token runs prevent retrying long ordinary prose at every word.
-    return any(match['delimiter'] and credential_label(match['label'])
+    return any(match['delimiter'] and credential_label(_LABEL_ESCAPE.sub(decode, match['label']))
                for match in _ASSIGNMENT_LABEL.finditer(value))
 
 
 def _credential_assignment(value: str) -> bool:
-    """Recognize raw and once-serialized text without rewriting public values."""
-    if _assignment_in_view(value):
+    """Bounded raw/once-serialized and local-unit candidates; original output stays."""
+    seen = set()
+    def inspect(view):
+        if view in seen:
+            return False
+        seen.add(view)
+        return _assignment_in_view(view)
+    if inspect(value):
         return True
     if "\\" not in value:
         return False
     decoded = _json_string_view(value)
-    if decoded != value and _assignment_in_view(decoded):
+    if inspect(decoded):
         return True
-    # Bare serialized content has no JSON envelope. Decode only this original
-    # input, never another recognition view, so representations cannot recurse.
+    literal_units = _json_string_view(value, escape_aware=False)
+    if inspect(literal_units):
+        return True
     def decode(match):
         escape = match[1]
         return chr(int(escape[1:], 16)) if escape.startswith('u') else _LABEL_ESCAPES[escape]
     escaped = _LABEL_ESCAPE.sub(decode, value)
-    return escaped != value and escaped != decoded and _assignment_in_view(escaped)
+    if inspect(escaped):
+        return True
+    # Fixed lexical/local-unit stages cover a once-serialized unit fragment and
+    # escaped text adjacent to a raw unit. No view is fed back until stable:
+    # each original has at most two boundary interpretations at either stage.
+    for units in (decoded, literal_units):
+        if inspect(_LABEL_ESCAPE.sub(decode, units)):
+            return True
+    if escaped != value:
+        for unit_escape_aware in (True, False):
+            if inspect(_json_string_view(escaped, escape_aware=unit_escape_aware)):
+                return True
+    return False
 
 
-def _json_string_view(value: str) -> str:
-    """Decode disjoint JSON string units, including units embedded in prose.
+def _json_string_view(value: str, *, escape_aware: bool = True) -> str:
+    """Decode adjacent escaped JSON units independently of prose quote pairing.
 
-    Each cursor consumes a quote unit or its unmatched tail once. Decoding only
-    closed disjoint units keeps JSON parsing linear and avoids nested containers.
+    Consecutive quote boundaries delimit local candidates with disjoint interiors.
+    A quote may end one candidate and begin the next; it is never consumed by
+    unrelated prose. Valid escaped units remove their own envelope boundaries.
+    Shared boundaries are removed once, without enumerating combined views.
+    This recognition-only view never replaces useful original public text.
     """
     parts = []
-    copied = position = 0
-    length = len(value)
-    while position < length:
-        start = value.find('"', position)
-        if start < 0:
-            break
-        position = start + 1
-        while position < length:
-            if value[position] == "\\":
-                position = min(position + 2, length)
-            elif value[position] == '"':
-                break
+    previous = None
+    pattern = r'\\[\s\S]?|"' if escape_aware else '"'
+    for boundary in re.finditer(pattern, value):
+        if escape_aware and boundary[0].startswith("\\"):
+            continue
+        position = boundary.start()
+        if previous is None:
+            parts.extend((value[:position], '"'))
+        else:
+            content = value[previous + 1:position]
+            decoded = None
+            if "\\" in content:
+                try:
+                    decoded = json.loads('"' + content + '"')
+                except ValueError:
+                    pass
+            if decoded is None:
+                parts.extend((content, '"'))
             else:
-                position += 1
-        if position == length:
-            break
-        position += 1
-        unit = value[start:position]
-        if "\\" not in unit:
-            continue
-        try:
-            decoded = json.loads(unit)
-        except ValueError:
-            continue
-        parts.extend((value[copied:start], decoded))
-        copied = position
-    if not parts:
+                parts[-1] = ''  # preceding envelope, possibly already removed
+                parts.extend((decoded, ''))
+        previous = position
+    if previous is None:
         return value
-    parts.append(value[copied:])
+    parts.append(value[previous + 1:])
     return ''.join(parts)
 
 
