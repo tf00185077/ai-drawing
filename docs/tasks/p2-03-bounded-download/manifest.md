@@ -1,182 +1,191 @@
-# p2-03 correction1 Coding delivery
+# p2-03 correction2 Coding delivery
 
-Coding [AID-210](/AID/issues/AID-210) delivers a new candidate for independent
-[QA AID-211](/AID/issues/AID-211). [Producer AID-146](/AID/issues/AID-146) owns
-findings and acceptance. Original task/kickoff1 CLEAR remain unchanged. Review1
-was one rejected delivery with two P1 findings, R1/R2. This delivery claims no
-independent PASS, feature merge/push, runtime deployment or Phase 2 acceptance.
+[Coding AID-212](/AID/issues/AID-212) delivers the admission-deadline repair for
+independent QA3. [Producer AID-146](/AID/issues/AID-146) owns findings and acceptance.
+Original task/kickoff1 CLEAR/correction1 are unchanged. History remains two rejected
+deliveries and three distinct P1 findings; this is a new candidate, not independent
+PASS, accepted main, a feature push/merge, deployment or Phase2 exit.
 
-## Exact identity
+## Exact identity and preservation
 
 | Input | Identity |
 |---|---|
-| Fixed rejected-product/report base | `3ed5ae8fc5e86e6a74301e45e52013394a41983f` |
-| Base tree | `a159b0d5ef8fe93ac9713de673155fb1505bad78` |
-| Authorized supplement | `81895a416e3c2e06940fd15b37f4eaa08fa252b2` |
+| Fixed report-only QA base | `7b37b8c87e222eaadcb42d22286951c19e9e6ecc` |
+| Base tree | `5042d00d491b7348071aa6dfb1ebcb02f0dcde3d` |
+| Authorized five-path supplement | `2624d13da93fbcbeb4d0a37bf4f80be0e3fa2d11` |
 | Unchanged task SHA-256 | `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0` |
-| Product/tests/feature-helper/topic freeze | `bc5cab04fdf7bbc4641e0502e76a747c30e05cea` |
-| Freeze tree | `9ca3c35c4fe43a6c11f3642c7d2472983091e362` |
-| Persistent branch | `aid-210-p203-correction1` |
-| Persistent isolated worktree | `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-210-download-correction` |
+| Product/tests/helpers/topic freeze | `3209a712330b8beb948199dfeca75ae9f8f71b7d` |
+| Freeze tree | `9eddd0fb7149234eb7f2d8ef22def3290b3d655b` |
+| Persistent branch | `aid-212-p203-correction2` |
+| Persistent isolated worktree | `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-212-download-correction` |
 
-The official post-commit delivery index and final AID-210 comment bind the actual
-NEW FINAL full SHA/tree to this manifest's exact body/hash, complete ordinary
-fingerprints and official attachments. That actual final is the review target;
-the software freeze is its ancestor. A commit cannot contain its own hash without
-a circular dependency. Only reporting/evidence changes follow the freeze.
+The official post-commit index and final card comment bind this manifest's exact
+body/hash to the actual NEW FINAL full SHA/tree. A commit cannot contain its own
+hash; the actual final in that index is the review target, with the freeze as its
+ancestor. Only reporting/evidence changes follow the freeze.
 
-Only repair-round-1.md, manifest-round-1.md, review-round-1.md,
-download-topic-round-1.md and the current download decision were imported from
-the supplement. The whole Producer tree was not merged. Original implementation-
-evidence/, review-evidence/, review.md and all immutable mirrors remain byte-exact.
-All new attempts are in [correction-1-evidence](correction-1-evidence/).
+Only repair-round-2.md, manifest-correction-1.md, review-round-2.md,
+download-topic-correction-1.md and the current download decision were imported
+from the supplement. Main was not merged over rejected software. The prior
+manifest is preserved in its authorized immutable mirror. All original raw
+implementation/review/correction1/review2 bodies and reports remain exact.
+New evidence is solely [correction-2-evidence](correction-2-evidence/).
 
-## Result and boundaries
+[Preservation](correction-2-evidence/integrity-preservation.json) confirms all
+7,394 original task bodies/modes and all 7,835 fixed-base task paths remain exact
+at freeze; final reporting changes only the current Coding manifest and new
+correction2 evidence. Registry remains the same72, SHA-256
+`b71084a95126e99ff3261541baa125ab9b29e13188358598e915781d0608adca`; read-only rebuild
+is exact with zero warnings. The 31 MCP names/risks, sole family map, frozen
+recipe/Anima/other-kind behavior and all 14 shared dirty memory bodies/statuses
+remain. No new registry certification or supersession is claimed.
 
-Retained adoption now verifies the preexisting final, commits admission on the
-existing resource authority, retains that known ID and uses the same bounded
-failure path as newly downloaded installs. An exception after the actual installed
-commit publishes failed/current state with the actual `civitai_timeout` or
-`civitai_file_changed` code/hint on the same ID. Original notes, known identity,
-download time and genuine historical measurement survive. A changed final loses
-current hash certification through the existing projection. Adopted/preexisting
-and foreign replacement bytes are never compensation targets. The provider deadline
-is not extended to write failure state.
+## Repair and actual boundary
 
-An active `downloading` row owns pending/running work. Retained install refuses
-with HTTP409 `civitai_resource_active`, the owner's resource ID and inspect/wait
-hint before competing body/state/partial/file mutation. It checks early and again
-on refreshed ORM state at admission. Acquisition reuses active rows without
-publishing competing metadata. Both claim sections use one process-local reentrant
-lock in the existing Backend; model bodies run after release. This is neither a
-cross-process reservation nor a durable attempt/job architecture. Failed-row retries
-and verified inactive reuse remain useful. No new table/schema/queue/dependency,
-MCP intent, worker, UI, default, removal or resource authority is introduced.
+Both callers retain the shared process-local RLock. The new context manager
+acquires it with the applicable operation's existing remaining time, checks the
+same deadline after entry, and releases exactly one successfully acquired level
+in finally. Failed/expired acquisition never releases another owner's level.
+Acquisition creates its existing admission ProviderOperation before waiting;
+retained install passes its already-started registered route operation. Waiting,
+entry and subsequent preflight/hash checks consume that same budget. No budget
+reset, larger timeout, second lock or synchronization removal is used.
 
-A true pre-admission DB failure rolls back without a new row. After admission,
-permanently unavailable persistence may prevent recording current failure; the
-response still returns failure, the known ID and actual reason when available.
-The explicit unavailable-DB control distinguishes that limit from writable-DB R1.
+A timed-out retained contender returns blocked/current `civitai_timeout`, actual
+hint and already-known resource ID without changing the row, status, metadata,
+notes, files, partials or body count. Expiration during existing-file preflight
+keeps the actual timeout rather than incorrectly becoming `already_exists`.
+Original pending/running ownership, useful inactive reuse/retry and same-ID
+post-commit failure publication remain. Legacy direct service calls lacking an
+operation can acquire an available lock immediately; they cannot wait without
+an applicable deadline. Model bodies still execute after admission release.
+The existing background operation lifecycle is unchanged. This is neither a
+cross-process reservation nor a durable download attempt/job architecture.
 
-The [download topic](../../civitai-downloads.md) documents policy and the corrected
-admission/failure contract. Existing effective defaults remain 8 GiB/file
-`CIVITAI_DOWNLOAD_MAX_BYTES=8589934592` and observed 20 GiB destination floor
-`CIVITAI_DOWNLOAD_FREE_SPACE_FLOOR_BYTES=21474836480`, both positive integer bytes.
-Exact provider size, safetensors selection, associated resume, chunk/space/range
-checks, atomic no-overwrite, size/hash verification, configured-file credentials,
-absolute deadline, closure, public normalization and raw internal locators remain.
-The original [caller inventory](implementation-evidence/caller-inventory.md) still
-applies; the two writers and their current callers/readers are unchanged.
+See the [admission-site inventory](correction-2-evidence/admission-inventory.md)
+and [original caller inventory](implementation-evidence/caller-inventory.md).
+Production changes are limited to resource_records.py and the two existing
+callers. The [download topic](../../civitai-downloads.md) documents the contract.
+No schema/table/queue/dependency/MCP/UI/worker/default/removal feature was added.
 
-## D1–D5 and C1–C5 evidence
+Effective real Settings defaults remain positive integer bytes:
+`CIVITAI_DOWNLOAD_MAX_BYTES=8589934592` (8 GiB/file),
+`CIVITAI_DOWNLOAD_FREE_SPACE_FLOOR_BYTES=21474836480` (20 GiB observed floor).
+[Effective settings/root receipt](correction-2-evidence/final-settings-bootstrap.log)
+uses actual Python3.11.15 Settings/bootstrap and emits no credential value.
+Actual caller guards use configured synthetic credential files; no manual key
+or alternative download transport certifies them. HTTPX replaces external HTTP
+only; ProviderOperation, registered HTTP/MCP, ORM commits and temporary files are real.
 
-All items remain P1. These are Coding checks; D5/C5's independent verdict belongs
-to AID-211. HTTPX substitutes external HTTP only. Settings, configured synthetic
-key files, production ProviderOperation/transport, registered HTTP/MCP, ORM commits,
-status projections and temporary files are real. Scheduling and disk observations
-are deterministic fixtures, not production deployment or reservation evidence.
+## D1–D5 / C1–C5 / E1–E5 evidence
 
-| Item | Check | Feature evidence, layer and real boundary |
+All items remain P1. These are Coding checks and delivery evidence; independent
+D5/C5/E5 certification belongs to QA3, not this manifest.
+
+| Item | Check / level | Evidence, layer and real boundary |
 |---|---|---|
-| D1 | test | Existing registered admission matrices in `test_civitai_provider.py`, bounds/easy/install/writer tests: policy/settings/type/format/exact size/hash, no body/partial/row effects, package-wide admission, frozen Anima/other-kind and exact inactive reuse. Current affected476/full Backend7158/MCP666 cover both callers and registered adapters. |
-| D2 | test | Existing bounds and real-row caller guards plus unchanged independent byte/space/range guards: actual accepted bytes, decreasing/unknown space, valid associated206/owned200, full-prefix hash and foreign/linked/changed-part preservation. All five original production faults cause intended RED again. |
-| D3 | test | New `test_civitai_download_correction.py` and all repaired original independent cases: same-ID current outcomes after committed adoption, active pending/running/late-target/stale-boundary refusal, actual partial preservation, registered cross-caller reuse, simultaneous retained calls, original owner completion and genuine measurement. Original collision/compensation/no-overwrite/old-note tests remain. |
-| D4 | test | New real installed-commit deadline/replacement traces, writable/permanently unavailable DB controls; unchanged independent configured-file rotation/origin/bad-file and sixteen provider-exit cases, retained p2-01 provider19 and current provider suites. No manual key or alternate download transport is injected to certify callers. |
-| D5 | test + delivery | Current frozen full/affected suites, fresh exports/readers/standing consumers, complete fingerprints, all raw attempts, eight assertion-sensitive faults and exact finally restoration. Registry72/history preserved. Official archive/index/bundle/full-index patch and prerequisite-only pack allow exact independent restore; actual AID-211 verdict is pending. |
-| C1 | test | `test_adoption_current_failure_keeps_actual_reason_id_and_history` covers new/existing rows × actual deadline/replacement after real commit. Response/status/code/hint/ID agree; notes and adopted/foreign bytes survive; historical measured evidence stays exact and projection invalidates changed bytes. Six DB controls distinguish admission/publication/unavailable persistence. Original two R1 cases now pass unchanged. Current-publication and current-reason faults each fail four intended assertions. |
-| C2 | test | `test_active_acquire_refuses_retained_without_mutating_owner` covers pending/running × late-target; stale preflight rechecks actual committed ownership, retained-owner acquire/install overlap preserves all columns, real partial bytes/stat/metadata survive both competitors, simultaneous retained requests produce one owner. Retry/inactive controls stay useful. Original R2 passes unchanged; admission bypass fails the stale-boundary assertion. |
-| C3 | test | All original affected456 plus twenty new correction cases pass; full suites and unchanged independent feature47 pass. No old feature test is edited/deleted/skipped. Original compatibility replacements remain explicit in `implementation-evidence/compatibility.md`; the only new public compatibility behavior is active retained refusal and truthful post-adoption failure. |
-| C4 | test | `correction-1-evidence/fault_replay.py` serializes eight faults: current publication4, current reason4, active ownership1, byte1, space1, range5, no-overwrite1, size/hash2 assertion failures (19 total). No setup/collection/timeout substitute. Every finally restores exact original bytes; complete restored feature222 passes without known-defect deselection. |
-| C5 | test + delivery | Frozen source qualification, 8,415 freeze-body hashes/modes, 828 ordinary software/test/helper inputs per final receipt, 19 fresh exports, same registry72 and 7,394 historical task bodies/modes. Actual final full SHA/tree and official exact-restore readback are bound by the post-commit index; separate exact QA remains required. |
+| D1 | test / P1 | Current registered admission matrices in provider/bounds/callers/install/easy/writer tests retain Settings/type/format/exact declared size/hash and package-wide no-side-effect refusal, inactive reuse and frozen Anima/other-kind routing. Selected-size production fault causes2 assertions. Existing compatibility replacements remain explicit in implementation-evidence/compatibility.md. |
+| D2 | test / P1 | Actual temporary chunk/prefix files, observed destination space, associated206/owned200 and full-prefix hash; foreign/linked/changed partial preservation. Byte/space/range faults cause1/1/5 assertions before exact restoration. |
+| D3 | test / P1 | Registered same-ID acquisition/retained status, old notes/foreign targets, atomic publication/compensation and measured evidence remain. Original independent47 and author correction20 pass in complete249. Publication/verification faults cause1/2 assertions. |
+| D4 | test / P1 | Same real configured credentials/ProviderOperation, request-origin/redirect/closure/backoff, disk/hash/publication deadlines. New registered contention has actual budget before waiting; unchanged QA R3 guard passes. Provider19 plus current provider suite/exit guards pass. |
+| D5 | test + delivery / P1 | Frozen current full/affected/feature suites, fresh producers/readers/standing consumers, twelve assertion-sensitive faults/restoration, complete ordinary fingerprints, raw attempts, unchanged72/history and official restore artifacts. Independent exact-final verdict remains required. |
+| C1 | test / P1 | Original corrected post-commit deadline/replacement cases plus real committed-adoption history/deletion/identical-byte replacement and writable/unavailable-DB controls. Actual reason, ID/hint/status agree without erasing history/notes or deleting foreign bytes. Current-publication/current-reason faults each cause3 assertions. |
+| C2 | test / P1 | Pending/running/late target/stale ORM admission, actual partial bytes/metadata, retained-owner overlap, simultaneous retained calls and useful retry/inactive adoption remain. Active-admission bypass causes2 assertions. New timeout does not falsely fail the original owner. |
+| C3 | test / P1 | Complete249 includes original bounds/provider/caller features, repaired R1/R2 and R3. Affected492/full Backend7174/MCP666 pass. One explicit access-time fixture repair below; no feature deletion, new skip or defect deselection. |
+| C4 | test / P1 | Twelve sequential production faults produce25 intended assertion failures, not setup/hang/timeout substitutions; exact finally restoration followed by complete249 GREEN. Original five boundaries plus publication/reason/ownership/size/post-commit guards remain meaningful. |
+| C5 | test + delivery / P1 | Freeze8629 ordinary fingerprints/modes and current per-run inputs match final product/tests/helpers. All old task bodies/modes and registry72 remain. Actual NEW FINAL/tree, exact manifest/index/archive/bundle/patch/prerequisite restore receipts provide QA3's review target. |
+| E1 | test / P1 | New test_registered_contender_times_out_before_original_owner_releases covers install/acquire ×0.15s/already-expired. The original registered acquisition owns production admission throughout measurement; return is required before release within0.6s (explicit0.45s scheduling margin). Before/during columns, ID, notes, ownership stat, bytes, body/partial/row counters and original successful completion remain exact. Unchanged QA R3 guard also passes. |
+| E2 | test / P1 | All16 new registered cases cover short/expired/available budgets, existing/absent final, real reentrant lock levels, exception release, original completion and following successful admission; a different-thread probe detects leaked levels. Both callsites and legacy no-operation policy are audited. Unbounded wait/budget-reset faults each cause2 assertions. |
+| E3 | test / P1 | Complete feature249, affected492 and full suites preserve D1–D4/C1–C3, active same-ID ownership, old notes/measurements, adopted/foreign bytes, size/space/range/no-overwrite, configured credentials/deadline/closure and frozen compatibility. No safe timeout changes the original owner. |
+| E4 | test / P1 | correction-2-evidence/fault_replay.py serializes all12 faults; final-fault-audit.json records exact substitutions/hashes, selectors and25 intended RED assertions. Original source restores byte-exact in finally; final-complete-features249 includes R3 without known-defect deselection. |
+| E5 | test + delivery / P1 | All current gates apply to the exact freeze and unchanged descendant software, with Python3.11 imports, isolated guarded roots/DBs, per-test60s/outer600s limits, raw failures/recoveries, fresh19 fixture exports, registry/history and official empty-store bundle/patch restoration. Actual independent QA3 remains pending. |
 
-## Current qualification
+## Current frozen qualification
 
-All rows below execute after the actual freeze with current-worktree imports,
-read-only dependency sites, isolated scratch/test/SQLite paths, disabled plugin
-autoload and `--timeout=60` per test/600-second outer bounds. Actual argv,
-environment, source hashes, import/SQLite receipts, timings and raw-log hashes
-are in [verification.json](correction-1-evidence/verification.json). Successful
-qualification has zero guard denials; guard activation deliberately denies six
-private/write/DNS probes. All original platform/optional skips remain explained.
+[Verification](correction-2-evidence/verification.json) retains every actual argv,
+allowlisted environment, cwd/root, source hash/mode, child imports/SQLite identities,
+timing, exit and raw-log hash. [Qualification identity](correction-2-evidence/qualification-integrity.json)
+confirms all current run inputs match freeze. Dependency sites are read-only;
+current-worktree Python3.11.15 imports and isolated test roots are pinned. All long
+suites use `--timeout=60` per test and600s outer bounds. Guard activation proves
+six deliberate denials; current qualification has zero unexpected denials.
 
-| Check | Actual result |
+| Gate | Actual result |
 |---|---|
-| Full Backend | 7158 passed, 124 existing skips, 112 warnings; 193.89 s |
-| Full MCP | 666 passed, four existing skips; 88.45 s |
-| Affected production/compatibility + correction | 476 passed; 15.35 s |
-| Eight production faults | 19 meaningful assertion failures, each expected exit1; exact finally restoration |
-| Complete restored features, including all repaired independent cases | 222 passed; 2.98 s; no known-defect deselection |
-| Fresh Backend producers / separate MCP readers | 93 / 73 passed; 19 retained exports |
-| Standing MCP/PNG/stdio/content/smoke consumers | 412 passed; 87.46 s |
-| Retained independent provider / fresh wait consumers | 19 / 12 passed |
-| Registry/history | Same72 rows, read-only relative-input rebuild exact; 7394 prior task bodies/modes exact |
-| Shared checkout preservation | All14 original dirty memory bodies/statuses preserved; checked again at delivery |
+| Full Backend | 7174 passed,124 existing skips,112 warnings;195.39s |
+| Full MCP | 666 passed,four existing skips;85.67s |
+| Affected production/compatibility/corrections | 492 passed;15.68s |
+| Complete restored features including R3 | 249 passed;4.68s; no known-defect deselection |
+| Twelve production faults | 25 intended assertion failures; exact finally restoration |
+| Fresh Backend producers / separate MCP readers | 93 /73 passed;19 exact retained exports |
+| Standing MCP/PNG/stdio/content/smoke consumers | 412 passed;83.57s |
+| Independent configured-provider / fresh wait consumers | 19 /12 passed |
+| Registry/history/shared edits | Same72;7394 original task bodies/modes;14 memory entries exact |
 
-The [fault audit](correction-1-evidence/final-fault-audit.json) records each exact
-substitution, source/mutated/restored hashes and feature selector. The unchanged
-helper restores SHA-256 `a8413c44f08d7ac2f52744db87aca6ad02362fe9e947dd0db32c86db49f182ee`.
-[Sixty parsed observations](correction-1-evidence/outcome-traces.json) bind the
-restored source log and include adoption/current-ID/old-note/body/closure/range/
-partial/compensation outcomes. Raw logs retain every assertion, not only summaries.
+The [fault audit](correction-2-evidence/final-fault-audit.json) has failures by fault:
+current-publication3, current-reason3, active-admission2, byte1, space1, range5,
+no-overwrite1, size/hash2, selected-size2, post-commit deadline1, admission-wait2,
+admission-budget-reset2. All are assertion RED with exit1. Setup/collection/timeout
+termination never counts as sensitivity. [59 parsed observations](correction-2-evidence/outcome-traces.json)
+retain before-release thread stacks/timing and owner/adoption/current-outcome traces;
+raw logs remain authoritative.
 
-## Attempts, compatibility and limits
+## Attempts and compatibility
 
-Rejected-base `rejected-r1-r2` reproduces exactly three intended assertion failures
-(two adoption, one duplicate) before software changes. The expanded pre-fix
-correction suite produces ten assertion failures/two passing retry controls.
-Initial `correction-tdd-red` was terminated (-15) after an unbounded recursive
-running-caller fixture; a single-entry guard fixes that probe. First implementation
-`correction-green-initial` passes eight correction cases, then is terminated (-15)
-when a deterministic nested acquisition exposes an overbroad retained preflight
-lock. Narrowing the retained lock to refresh/claim resolves it. Neither interrupted
-attempt is a meaningful fault result or qualification. `correction-green-boundary`
-passes59, expanded controls pass20 and pre-freeze affected476 pass. Final results
-above are fresh and apply to the frozen source, not those intermediates.
+All29 run attempts and29 raw logs are preserved. `rejected-r3` independently
+reproduces the fixed rejected product: real0.15s operation still blocked at0.6s
+in production lock entry, then original owner completes after release. The old
+QA log is retained as input, not substituted for this experiment.
 
-The initial copied runner indexed tracked inputs and omitted then-untracked new
-tests/helpers. Early receipts remain unchanged and explicitly limited;
-[early-source-inventory-limit.json](correction-1-evidence/early-source-inventory-limit.json)
-retains reconstructed new-test bodies from the recorded deterministic write/edit
-sequence, labelled as reconstruction rather than contemporaneous hashes. The final
-runner includes untracked ordinary source too, and all feature inputs are tracked
-at freeze before final qualification. Final complete inventories are authoritative.
+The first expanded TDD run has5 failures/7 passes and a fixture limitation: its
+shortening hook also reached the original background operation in negative-budget
+cases. Clearing that hook before owner completion corrects only the fixture.
+The corrected TDD run again has5 intended failures/7 passes: short retained wait,
+late acquisition budget initialization (short/expired), and expired retained
+adoption reason in two contexts. Initial repair passes37, pre-freeze affected492;
+final results above are fresh at freeze. Early test bodies reconstructed from the
+recorded write/single edit are explicitly labelled reconstruction and checked against
+contemporaneous recorded SHA-256 in early-inputs.json; no absent hash is inferred.
 
-One report aggregation guessed7394 after excluding the whole current task. That
-selection actually has7365 paths; the original handoff's7394 includes29 current-task
-kickoff paths. The corrected preservation check uses the actual published handoff
-path set, with exact bodies/modes, and retains this packaging failure. No source or
-test outcome changed. Authored files pass whitespace checks; raw pytest logs retain
-their original diff whitespace. No generated cache is staged or delivered. Original
-cache-removal/intermediate history is retained through the prerequisite/bundle.
+One legacy feature fixture is explicitly repaired:
+`test_acquisition_retains_known_storage_when_configured_root_changes` now observes
+preservation before its own byte read. It retains exact old/foreign bytes and
+ownership-critical device/inode/mode/link/uid/gid/size/mtime/ctime assertions.
+Access time is excluded because reads change it. The actual review2 initial
+1FAIL/475PASS, controlled self-read reproduction, unchanged476 repeat and original
+raw fixture history remain immutable. No feature is removed, weakened to hide a
+product mutation, deselected or newly skipped.
 
-No scope/specification deviation, new skip, registry supersession or legacy test
-edit. The lock changes indentation of acquisition's existing admission block;
-its policy/package/dedupe/commit logic is reused. Retained adoption and download
-share the existing completion/failure logic. Rollback-only adoption, an early-only
-active check and blanket install refusal were rejected because they cannot meet
-same-ID/current-outcome and useful retry/reuse requirements.
+A reporting-only Settings command initially omitted the mandatory test bootstrap;
+the production import guard refuses before Settings evaluation. The corrected
+command calls real test_support.activate and successfully records effective defaults
+and isolated roots. Both raw attempts/argv remain; no production/test/helper changed
+and this setup failure is not qualification. See [attempt ledger](correction-2-evidence/attempt-ledger.json).
 
-Offline only: synthetic external HTTP/credentials, controlled scheduling/space,
-real Settings/ORM/filesystem. Running service: not started/restarted/deployed or
-backfilled. Real generation and live model download: none. Artifact retrieval:
-synthetic installed bytes and official task attachments only, no live Gallery bytes.
-Frontend/native Windows remain unrun; inherited open-writer unlink denial is an
-offline emulation. Private key/config/runtime/jobs/databases/snapshots/backups,
-canonical dependencies, other worktrees and model/dataset/output/Gallery data are
-preserved. No artistic verdict, durable-job/aggregate-budget claim or Phase2 exit.
+## Official delivery and limits
 
-## Exact delivery and continuation
+[Replay](correction-2-evidence/replay.md) specifies the guarded commands and official
+restoration sequence. Ten uploaded/read-back prerequisite-only parts reconstruct
+78,887,056 bytes, SHA-256
+`f177e368dbe7732ab71c138b5e8169b1c2e027a4c28e7ac6098eb8b882395a61`, with declared
+shallow cutoff `b4e71d18ba4600ad7e053274b90b45ffdfbce87b`. Two empty stores are seeded
+only from those official bytes, with candidate absence and no alternates before
+import. The official post-commit index binds actual FINAL/tree, full ordinary
+fingerprints/modes, exact Git payload archive, incremental bundle, independent
+full-index binary patch and their exact official readbacks/restores/fsck receipts.
+Source publication/send receipts do not establish acceptance.
 
-[Replay instructions](correction-1-evidence/replay.md) and the official index provide
-actual final pin, manifest hash, archive member/body hashes, complete final ordinary
-fingerprints, incremental bundle and full-index binary patch. Ten published/read-back
-prerequisite-only pack parts reconstruct77,962,971 bytes with declared shallow
-cutoff `b4e71d18ba4600ad7e053274b90b45ffdfbce87b`. Two empty stores are seeded only
-from those official prerequisite bytes; candidate absence/no alternates are checked
-before final artifact import. The post-commit official receipt records exact bundle
-FINAL/tree restoration, independent patch-tree agreement and both fsck results.
+Offline only: synthetic external HTTP/credentials/time/scheduling/space with real
+Settings/ProviderOperation/registered callers/ORM/filesystem. Running service:
+none started/restarted/deployed/backfilled. Real generation/live model download:
+none. Retrieval: synthetic installed bytes and official task artifacts only;
+no live Gallery/model bytes. Frontend/native Windows remain unrun; inherited
+open-writer deletion denial is an offline emulation. Private key/configuration,
+runtime/jobs/databases/snapshots/backups, canonical environments, other worktrees
+and models/datasets/outputs/Gallery are preserved. No artistic acceptance, durable
+attempt/job/aggregate-budget feature or Phase2 exit is inferred.
 
-AID-210 completes with this delivered candidate. AID-211 is the real independent
-review card natively blocked on Coding; its reviewer pins the actual NEW FINAL
-before substantive review and publishes its own verdict even if adverse. Producer
-handles findings and acceptance. Feature integration waits for actual PASS.
+Coding completes its own card with actual FINAL and artifacts. The native independent
+QA3 card reads that actual pin before substantive review and publishes its own
+verdict even if adverse. Producer owns repair/acceptance; changed software needs
+another exact review and feature integration waits for independent PASS.
