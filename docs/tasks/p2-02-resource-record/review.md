@@ -230,6 +230,11 @@ base4b95c7a as an explicit prerequisite ref, --update-shallow and the declared
 b4e71d18 shallow boundary. Prior official prerequisite handles are in Coding's
 index; this is a delta, not a standalone pre-boundary history backup.
 
+The initial QA report commit omitted normalized .log files under Git ignore
+rules while retaining every byte-exact raw.log.gz. Before official upload, a
+separate report-only commit force-adds all27 linked logs; the initial commit and
+raw history remain. No product/test/source qualification input changes.
+
 QA's report/evidence delta, exact report commit/tree, official artifact hashes,
 sizes/readback and usable prerequisites are published in this card's post-commit
 delivery. No feature source is pushed or merged. The shared-main13 memory-body
