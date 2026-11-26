@@ -8,9 +8,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db.models import DownloadedResource
-from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_resource_resolution import LocalResourceLedgerEntry
-from app.services.resource_records import project_resource, metadata_for
+from app.services.resource_records import project_resource, metadata_for, safe_evidence
 from app.services.civitai_resource_legacy import normalize_model_family
 
 
@@ -99,7 +98,10 @@ def local_identity_ledger(
     sha256: str | None = None,
     availability: bool | None = None,
 ) -> LocalLedgerSnapshot:
-    """Return one deterministic local snapshot; no network, writes, or URL exposure."""
+    """Internal raw snapshot for identity matching and filesystem resolution.
+
+    Serialize public copies with ledger_payload; never resolve a projected path.
+    """
     rows = db.query(DownloadedResource).order_by(DownloadedResource.id.asc()).all()
     entries: list[LocalResourceLedgerEntry] = []
     excluded_non_civitai_count = 0
@@ -139,6 +141,7 @@ def local_identity_ledger(
 
 
 def ledger_payload(snapshot: LocalLedgerSnapshot) -> dict[str, Any]:
+    """Project the entire public copy, including outer row-derived locators."""
     entries = []
     for entry in snapshot.entries:
         entries.append({
@@ -153,4 +156,4 @@ def ledger_payload(snapshot: LocalLedgerSnapshot) -> dict[str, Any]:
             "availability": entry.availability,
             "diagnostics": dict(entry.diagnostics),
         })
-    return redact_secrets({"entries": entries, "snapshot": snapshot.metadata})
+    return safe_evidence({"entries": entries, "snapshot": snapshot.metadata})

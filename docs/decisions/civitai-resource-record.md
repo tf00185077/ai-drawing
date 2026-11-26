@@ -23,6 +23,28 @@
 
 ## Log
 
+### 2026-11-27 · Judge the whole public ledger independently of typed diagnostics
+
+- Decision: apply the existing complete-value policy to the entire public ledger
+  serialization, including raw outer identity/locator fields. Keep internal
+  matching/path values and stored AIR/path/metadata/notes exact; safe projection
+  cannot become an internal locator or destructive repair. Inventory row-derived
+  outer fields and actual public consumers separately from typed diagnostics.
+- Why: a safe nested resource record does not cover raw copies beside it. The
+  existing wrapper uses a weaker redactor, so selected AIR/filename assignments
+  survive real acquisition/ORM and public ledger reads despite passing canonical,
+  notes/status and parser guards. Whole-response assertions need their own fault.
+- Reassessment: nine delivery rejections/five historical P1 findings leave original
+  R1 open. Supplied QA8 cases/R2-R4/checked R5 bounds pass. Retain the single-row
+  authority and bounded scanner; correct this compatibility projection rather
+  than add a registry, new matching architecture or global secrecy framework.
+  This stays original task/CLEAR/current delegation; report the in-boundary option.
+- Evidence: [actual review9](../tasks/p2-02-resource-record/review-round-9.md),
+  [complete phase probe](../tasks/p2-02-resource-record/review-round-9-evidence/independent_ledger_surfaces.py)
+  and [correction9](../tasks/p2-02-resource-record/repair-round-9.md). This is Producer's
+  application, not a new finding number, owner quotation or accepted behavior.
+
+
 ### 2026-11-27 · Complete recognition and publication across every representation seam
 
 - Decision: relevant one-level representation candidates must survive harmless

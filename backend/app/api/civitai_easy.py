@@ -55,7 +55,7 @@ def _acquire_error(exc: AcquireError) -> HTTPException:
 def get_source_info(locator: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     """預覽一張 Civitai 圖片的生成參數與本地資源可用性（唯讀）。"""
     try:
-        return source_info(locator, db=db)
+        return safe_evidence(source_info(locator, db=db))
     except EasyGenerateError as exc:
         raise _easy_error(exc) from exc
     except AcquireError as exc:
@@ -66,7 +66,7 @@ def get_source_info(locator: str, db: Session = Depends(get_db)) -> dict[str, An
 def post_generate_like(request: GenerateLikeRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
     """參考 Civitai 圖片的參數生圖：換 prompt、保留採樣設定、自動補資源。"""
     try:
-        return generate_like(
+        return safe_evidence(generate_like(
             request.locator,
             db=db,
             prompt=request.prompt,
@@ -80,7 +80,7 @@ def post_generate_like(request: GenerateLikeRequest, db: Session = Depends(get_d
             checkpoint=request.checkpoint,
             download_missing=request.download_missing,
             execution_target=request.execution_target,
-        )
+        ))
     except EasyGenerateError as exc:
         raise _easy_error(exc) from exc
     except AcquireError as exc:

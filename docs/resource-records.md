@@ -176,3 +176,19 @@ still requires its old complete descriptor safety gates; acquisition keeps its
 old scan, storage, package and allowed-extension behavior. Safetensors-only future
 download-job policy, byte budgets, unknown-local adoption and alias replacement
 remain separate tasks.
+
+The ledger's raw internal snapshot retains AIR and filesystem locators for exact
+filters, recipe matching, hashing and filename planning. `ledger_payload` applies
+the existing complete-value policy to the **whole** public entry and snapshot,
+including outer AIR/path/hash/kind/status copies beside typed diagnostics. Safe
+AIRs, paths, IDs, hashes, state and counts retain their meaning; old storage is
+never repaired or hidden. Canonical status strings use the same normalization.
+
+Registered resolve/resolve-local project outgoing results only after raw matching
+and verification. Their internal report/lock transfer format stays raw. Variant
+provenance cannot rewrite a locator without changing its bound hashes: a report
+requiring projection is refused with `unsafe_resource_projection` before build or
+queue, with inspect/retry guidance. Safe variants keep their original locks and
+hashes. Retained source-info/generate-like responses project public plan copies;
+internal filesystem matching and execution parameters remain raw. No new recipe,
+alias or generation feature is introduced.

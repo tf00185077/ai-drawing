@@ -398,7 +398,7 @@ def project_resource(row: DownloadedResource) -> ResourceRecord:
         model_id=ids['model_id'],version_id=ids['version_id'],civitai_file_id=ids['civitai_file_id'],air=safe_text(row.air) if row.air else None,
         base_model=base,model_family=family,sha256=sha,sha256_verified=verified,
         declared_size_bytes=snap.declared_size_bytes if snap else None,measured_size_bytes=measured.size_bytes if measured else None,
-        status=row.status,installed=row.status in {'installed','available'},local_path=safe_text(row.local_path) if row.local_path else None,
+        status=safe_text(row.status),installed=row.status in {'installed','available'},local_path=safe_text(row.local_path) if row.local_path else None,
         path_available=available,trigger_words=snap.trigger_words if snap else [],recommended_parameters=snap.recommended_parameters if snap else {},
         license=snap.license if snap else LicenseSnapshot(missing_fields=list(LICENSE_FIELDS)),
         metadata_origin=snap.origin if snap else None,metadata_version=snap.version if snap else None,
