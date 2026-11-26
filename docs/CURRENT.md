@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review4 FAIL; correction4 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review5 FAIL (new R5); correction5 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,37 +90,39 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review4 FAIL accepted:** [Coding AID-192](/AID/issues/AID-192) FINAL
-**bff2fb127d4ab5de69fe2124e9efc54cad0fd59a**, freezeaffcd947, received actual
-[independent QA AID-193](/AID/issues/AID-193) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-4.md),
-report/evidence **5d6542607cd2384bb6b86f2e2126512836bba46c**. Matching quoted
-credential labels with internal whitespace escape text parsing although the same
-keys are removed. Actual registered/provider/ORM/old-read probes twice yield33
-feature failures/45 passes; three real key controls pass. Synthetic only; no actual
-key read/disclosure. R2-R4 and isolated D3 pass at that source; acceptance fails.
-Rejected product/tests stay off main.
+**p2-02 review5 FAIL accepted:** [Coding AID-194](/AID/issues/AID-194) FINAL
+**690d5ab04a3d864e9d36decbb4748f05045845a5**, freeze3caeebd6, received actual
+[independent QA AID-195](/AID/issues/AID-195) [new R5/P1](tasks/p2-02-resource-record/review-round-5.md),
+report/evidence **79e709cec49abbbad2ff3a9e944b9278440f8908**. Current original
+R1-R4 probes pass; no current credential disclosure was demonstrated. The new
+quoted scanner rescans growing suffixes when ordinary text ends with one
+backslash. Initial/final trailing cases each two timeouts/two controls; registered
+provider/detail/list/local-ledger five timeouts/one scaling pass.92,001-character
+ordinary metadata violates the existing three-second bound; doubling takes about
+four times the work. Older source is a latency control, not secrecy acceptance.
+D2/D4 and combined acceptance fail. Rejected product/tests remain off main.
 
-**Fourth rejection reassessed after the already-reported third-rejection threshold.**
-Retain single-row identity, complete-value exclusion and passing R2-R4. Adopt
-complete matching quoted-label parsing before the common key/assignment policy,
-with whitespace/serialization consistency, positive neighbors and real parsing
-fault coverage. [Correction4](tasks/p2-02-resource-record/repair-round-4.md) and
-independent exact QA5 continue under unchanged task/repairs1-3/kickoff1CLEAR.
-Report actual results/options under current delegation; no project boundary change
-or routine owner gate. One unresolved original finding remains.
+**Fifth-result reassessment:** five rejected deliveries/five distinct P1 findings,
+new R5 unresolved; original R1-R4 pass for checked meanings at that exact source.
+Retain single-row identity and complete-value secrecy. Adopt monotonic quote/escape
+traversal with explicit end-of-input handling, both quote kinds/ordinary neighbors,
+actual bounds and performance-fault coverage. [Correction5](tasks/p2-02-resource-record/repair-round-5.md)
+and independent exact QA6 follow unchanged task/repairs1-4/kickoff1CLEAR. No timeout
+increase, silent truncation/hidden old resources/new format restriction. Report
+results/options under current delegation; no boundary change or routine owner gate.
 
-QA rejected-source Backend2696/124 existing skips,MCP666/four,restored718,
-fresh93/73/412/12/19/schema2 and18 distinct faults/20 invocations/393 assertion
-failures remain attributed evidence, not qualification of changed software.
-Producer verifies20 official uploads/nine base chunks,559payloads/561members/
-545Gitbodies,3789/3917/4081 fingerprints and both independent exact bundle/patch
-chains/fsck with declared shallow metadata;1492 exact task bodies preserved.
-One existing catalog documentation guard is recorded with publication evidence.
-No new Producer product suite/key/provider/service/restart/model/Gallery-byte action.
-All22 registry rows, prior raw evidence,13 memory bodies/private runtime/data retained.
+QA rejected-source Backend3402/124 existing skips,MCP666/four,restored1424,
+independent130 lexical cases,fresh93/73/412/12/19/schema2 and19 distinct faults/
+23 invocations/902 assertion failures remain attributed, not qualification of
+changed software or an override of R5. Producer verifies20 official uploads/nine
+base chunks,523payloads/525members/511Gitbodies,4208/4399/4588 fingerprints and
+both independent official declared-shallow bundle/patch exact chains/fsck;
+1998 exact QA task bodies preserved. Existing catalog documentation guard and
+publication checks are recorded with the integrity evidence. No new Producer
+product suite/key/provider/service/restart/model/live Gallery-byte result.
+All22 registry rows,old raw evidence,13 memory bodies/private runtime/data retained.
 Remaining jobs/budgets/hash/search/MCP/defaults/removals/three different zero-fix
-sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit remain pending. Source is not
-deployment.
+sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit pending. Source is not deployment.
 
 Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
 replacement, automatic defaults/workflows and proven removals remain separate.
