@@ -330,9 +330,18 @@ def safe_download(metadata, target_path, *, transport, authorization=None, backo
             if not _matches(part, identity, single_link=False):
                 raise download_error('civitai_file_changed', 'Partial changed during publication')
             _remaining(operation)
+            # Some filesystems refuse deleting a name with an open writer.
+            # Carry the verified identity across close and recheck both names.
+            stream.close()
+            if not _matches(part, identity, single_link=False) or not _matches(target, identity, single_link=False):
+                raise download_error('civitai_file_changed', 'Publication changed while closing the writer')
             part.unlink()
             identity = None
-            publication = file_identity(os.fstat(stream.fileno()))
+            published = os.lstat(target)
+            if (published.st_dev, published.st_ino, published.st_size, published.st_mtime_ns) != (
+                    current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns):
+                raise download_error('civitai_file_changed', 'Final changed while removing the owned partial')
+            publication = file_identity(published)
             if not _matches(target, publication):
                 raise download_error('civitai_file_changed', 'Final changed after publication')
             try:

@@ -4,6 +4,7 @@ The transport yields deterministic chunks; disk observations are controlled.
 Everything else (open/stat/hash/link/cleanup) uses the real temporary filesystem.
 """
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -49,6 +50,7 @@ def test_actual_chunk_is_refused_before_the_violating_write(tmp_path):
     assert result.status=='failed' and not target.exists()
     assert result.bytes==2
     assert result.diagnostics['code']=='civitai_byte_limit_exceeded'
+    print('P203_BYTE_TRACE='+json.dumps({'declared':6,'accepted_bytes':result.bytes,'prefix_before_refused_chunk':observed[0].hex(),'code':result.diagnostics['code']}))
 
 
 def test_space_floor_is_checked_before_each_write(tmp_path,monkeypatch):
@@ -63,6 +65,7 @@ def test_space_floor_is_checked_before_each_write(tmp_path,monkeypatch):
     assert result.status=='failed' and result.bytes==2
     assert result.diagnostics['code']=='civitai_insufficient_space'
     assert writes==[b'ab'] and not target.exists()
+    print('P203_SPACE_TRACE='+json.dumps({'observations':[100,100,11],'floor':10,'accepted_bytes':result.bytes,'refused_write_bytes':4,'code':result.diagnostics['code']}))
 
 
 @pytest.mark.parametrize('free',[15,None,-1,True])
@@ -158,6 +161,7 @@ def test_bad_resume_coverage_refuses_before_append_and_closes(tmp_path,header):
     body=Body(); result=safe_download(metadata(),target,transport=Transport(body,{'Content-Range':header} if header else {},206),association=association,resume=proof)
     assert result.status=='failed' and result.diagnostics['code']=='civitai_invalid_range'
     assert body.closed and part.stat()==before and part.read_bytes()==b'ab' and not target.exists()
+    print('P203_RANGE_TRACE='+json.dumps({'header':header,'offset':2,'declared':6,'part_unchanged':part.stat()==before,'body_closed':body.closed,'code':result.diagnostics['code']}))
 
 
 @pytest.mark.parametrize('change',['selected_file','resource','prefix','stat'])
@@ -252,3 +256,23 @@ def test_failed_space_observation_is_an_actionable_refusal(tmp_path,monkeypatch)
     monkeypatch.setattr(shutil,'disk_usage',broken)
     result=safe_download(metadata(),tmp_path/'file',transport=Transport(b'abcdef'))
     assert result.status=='failed' and result.diagnostics['code']=='civitai_space_unavailable'
+
+
+def test_publication_releases_writer_before_unlink_on_delete_denial_platforms(tmp_path,monkeypatch):
+    """Emulate an OS refusing unlink while our writer still has the file open."""
+    target=tmp_path/'close-before-unlink';part=tmp_path/'close-before-unlink.part';fds=[]
+    original_open=os.open;original_unlink=Path.unlink
+    def opened(path,*args,**kw):
+        fd=original_open(path,*args,**kw)
+        if Path(path)==part:fds.append(fd)
+        return fd
+    def unlink(path,*args,**kw):
+        if path==part:
+            for fd in fds:
+                try:os.fstat(fd)
+                except OSError:continue
+                raise PermissionError('OS refuses unlink of an open writer')
+        return original_unlink(path,*args,**kw)
+    monkeypatch.setattr(os,'open',opened);monkeypatch.setattr(Path,'unlink',unlink)
+    result=safe_download(metadata(),target,transport=Transport(b'abcdef'))
+    assert result.status=='completed' and target.read_bytes()==b'abcdef' and not part.exists()

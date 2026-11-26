@@ -87,6 +87,8 @@ is removed. Unsupported link publication fails; there is no replacement fallback
 Preexisting exact-file adoption is an explicit full size/hash verification with
 unchanged ownership. Acquisition records adoption eligibility before admission;
 a later collision, even with identical bytes, cannot be adopted as this download.
+Known acquisition rows retain their raw recorded storage path when configured roots
+change; a new-root collision cannot redirect or replace that existing identity.
 Retained compensation after ledger failure removes only a still-owned publication;
 a replaced final survives. Failure cleanup removes only a newly exclusively created
 part with unchanged fingerprint and matching observed prefix digest. Foreign,

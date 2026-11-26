@@ -66,6 +66,7 @@ def test_admitted_failure_keeps_same_row_notes_identity_and_closes(boundary,monk
     if fault=='collision':assert target.read_bytes()==b'foreign racing final'
     else:assert not target.exists()
     assert all(r.headers.get('Authorization')=='Bearer resource-fixture-key' for r in seen)
+    print('P203_ROW_TRACE='+json.dumps({'entry':entry,'fault':fault,'resource_id':rid,'status':status['status'],'code':status['error']['code'],'old_notes_sha256':hashlib.sha256(raw.encode()).hexdigest(),'old_notes_exact':row.notes==raw,'selected_sha256':b.sha,'body_requests':len(streams),'all_bodies_closed':all(s.closed for s in streams),'final_exists':target.exists()}))
 
 
 @pytest.mark.parametrize('replace_final',[False,True])
@@ -86,6 +87,7 @@ def test_retained_commit_compensation_checks_the_actual_publication(boundary,mon
     assert response['status']=='failed' and response['diagnostic']['code']=='ledger_persistence_failed'
     if replace_final: assert target.read_bytes()==b'foreign replacement' and target.with_suffix('.owned').read_bytes()==b.body
     else: assert not target.exists()
+    print('P203_COMPENSATION_TRACE='+json.dumps({'replaced':replace_final,'status':response['status'],'resource_id':response['ledger_id'],'final_exists':target.exists(),'replacement_preserved':target.read_bytes()==b'foreign replacement' if replace_final else None}))
 
 
 @pytest.mark.parametrize('entry',['acquire','install'])
@@ -128,6 +130,7 @@ def test_real_row_resume_association_survives_interruption_and_retries_same_id(b
         with database.SessionLocal() as db:rid=db.query(DownloadedResource).one().id
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,rid);association,proof=download_context(row,len(b.body),b.sha)
+        print('P203_ASSOCIATION_TRACE='+json.dumps({'entry':entry,'response':response_status,'association':association,'proof':proof,'current_status':row.status}))
         assert proof['association']==association and proof['identity']['size']==1024*1024
         assert row.status=='failed'
     interrupted[0]=False
@@ -148,6 +151,7 @@ def test_real_row_resume_association_survives_interruption_and_retries_same_id(b
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,rid); assert row.status=='installed' and project_resource(row).sha256_verified is True
     assert requests[-1].headers['Range']=='bytes=1048576-'
+    print('P203_RESUME_TRACE='+json.dumps({'entry':entry,'response':response_status,'range':requests[-1].headers['Range'],'resource_id':rid,'bytes':target.stat().st_size,'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'status':row.status}))
 
 
 def test_background_must_not_adopt_a_collision_created_after_admission(boundary):
@@ -158,3 +162,23 @@ def test_background_must_not_adopt_a_collision_created_after_admission(boundary)
     assert status['status']=='failed' and status['error']['code']=='civitai_target_exists'
     assert target.read_bytes()==b.body and target.stat()==before
     with database.SessionLocal() as db: assert project_resource(db.get(DownloadedResource,rid)).sha256_verified is None
+
+
+@pytest.mark.parametrize('state',['installed','failed'])
+def test_acquisition_retains_known_storage_when_configured_root_changes(boundary,monkeypatch,state):
+    from app.config import get_settings
+    b=boundary;rid=acquire_http(b).json()['resource']['acquisition_id'];b.pending.pop()()
+    old=b.tmp/'loras'/b.file['name'];old_info=old.stat()
+    with database.SessionLocal() as db:
+        row=db.get(DownloadedResource,rid);row.status=state;db.commit()
+    new=b.tmp/'new-root';new.mkdir();foreign=new/b.file['name'];foreign.write_bytes(b'foreign model at new root');before=foreign.stat()
+    monkeypatch.setenv('COMFYUI_LORAS_DIR',str(new));get_settings.cache_clear()
+    response=acquire_http(b);assert response.status_code==202,response.text
+    assert response.json()['resource']['acquisition_id']==rid
+    if b.pending:b.pending.pop()()
+    with database.SessionLocal() as db:
+        row=db.get(DownloadedResource,rid)
+        assert row.status=='installed' and row.local_path==str(old)
+        assert project_resource(row).sha256_verified is True
+    assert old.read_bytes()==b.body and old.stat()==old_info
+    assert foreign.read_bytes()==b'foreign model at new root' and foreign.stat()==before

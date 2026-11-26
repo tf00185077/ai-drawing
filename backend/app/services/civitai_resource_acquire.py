@@ -405,7 +405,7 @@ def start_acquisition(
                            (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
             if matched is not None and matched.status in _ACTIVE_STATUSES:
                 continue
-            target = roots[comp_root] / chosen["name"]
+            target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
             metadata = CivitaiFileMetadata(chosen["download_url"], chosen["sha256"], chosen["size_bytes"], scan_status=chosen["scan_status"])
             if os.path.lexists(target):
                 _, _, adoptions[str(target)] = verified_existing(target, metadata, admission)
@@ -449,7 +449,7 @@ def start_acquisition(
             active_rows.append(matched)
             continue
         notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
-        target = roots[comp_root] / chosen["name"]
+        target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
         row = matched or DownloadedResource(
             resource_name=chosen["name"],
             resource_type=comp_type,
