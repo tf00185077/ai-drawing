@@ -217,6 +217,13 @@ One reporting aggregation guessed 24 run records and asserted against the actual
 or product/input change. This packaging error is recorded in
 [packaging-attempts.json](review-evidence/packaging-attempts.json).
 
+The first evidence commit also included one generated guard `.pyc` after the
+staged-cache assertion failed; continuing to commit was a QA packaging mistake.
+A subsequent report-only commit removes that generated cache without rewriting
+history. All raw/source/test/input bodies stay exact. A whole-payload whitespace
+check reports 17 original pytest diff lines; those raw bytes are intentionally
+retained, and the authored non-log changes pass their separate whitespace check.
+
 Reproduction uses the frozen runner and current isolated scratch root. Prepare the
 QA-owned environment with `review-evidence/setup_environment.py`, activate its guard,
 then run the full repo-relative independent file using the recorded argv. The
