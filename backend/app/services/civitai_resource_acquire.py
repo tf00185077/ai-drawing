@@ -22,14 +22,13 @@ from pathlib import Path
 import threading
 from typing import Any, Callable
 
-import httpx
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db.database import SessionLocal
 from app.db.models import DownloadedResource
 from app.services.civitai_acquisition import AcquisitionError, parse_civitai_locator, redact_secrets
-from app.services.civitai_safe_download import CivitaiFileMetadata, DownloadResponse, safe_download
+from app.services.civitai_safe_download import CivitaiFileMetadata, safe_download
 
 _CLEAN_SCAN_STATUSES = frozenset({"success", "clean", "passed"})
 _ACTIVE_STATUSES = frozenset({"downloading"})
@@ -51,51 +50,22 @@ _MODEL_TYPE_ROOTS: dict[str, tuple[str, str]] = {
 _LICENSE_FIELDS = ("allowNoCredit", "allowCommercialUse", "allowDerivatives", "allowDifferentLicense")
 
 
-class AcquireError(Exception):
-    """Structured acquisition failure with an actionable hint for the agent."""
-
-    def __init__(self, code: str, message: str, hint: str | None = None) -> None:
-        self.code = code
-        self.message = message
-        self.hint = hint
-        super().__init__(message)
-
-    def to_dict(self) -> dict[str, Any]:
-        detail: dict[str, Any] = {"code": self.code, "message": self.message}
-        if self.hint:
-            detail["hint"] = self.hint
-        return detail
+# Keep the established public exception name and transport adapters.
+from app.services.civitai_provider import (
+    CivitaiProviderError as AcquireError, ProviderOperation, ProviderDownloadTransport, resolve_credentials,
+)
 
 
 class _JsonTransport:
-    def get_json(self, url: str, *, headers: dict[str, str] | None = None) -> tuple[int, Any]:
-        response = httpx.get(url, headers=headers or {}, timeout=30.0, follow_redirects=True)
-        try:
-            payload: Any = response.json()
-        except ValueError:
-            payload = {}
-        return response.status_code, payload
+    def __init__(self, operation: ProviderOperation):
+        self.operation = operation
+
+    def get_json(self, url: str, *, headers=None):
+        return self.operation.get_json(url)
 
 
-class _StreamingDownloadTransport:
-    def get(self, url: str, *, headers: dict[str, str] | None = None) -> Any:
-        stream = httpx.stream(
-            "GET", url, headers=headers,
-            timeout=httpx.Timeout(connect=60.0, read=None, write=60.0, pool=60.0),
-            follow_redirects=True,
-        )
-        response = stream.__enter__()
-        if not 200 <= response.status_code < 300:
-            stream.__exit__(None, None, None)
-            return DownloadResponse(response.status_code, b"", dict(response.headers))
-
-        def chunks():
-            try:
-                yield from response.iter_bytes(chunk_size=1024 * 1024)
-            finally:
-                stream.__exit__(None, None, None)
-
-        return DownloadResponse(response.status_code, chunks(), dict(response.headers))
+class _StreamingDownloadTransport(ProviderDownloadTransport):
+    pass
 
 
 def normalize_model_family(base_model: Any) -> str | None:
@@ -128,27 +98,22 @@ def _anima_component(file_name: str) -> tuple[str, str]:
 
 
 def _auth_headers() -> dict[str, str]:
-    authorization = get_settings().civitai_authorization
-    if not authorization:
-        return {}
-    value = authorization.strip()
-    if not value.lower().startswith("bearer "):
-        value = f"Bearer {value}"
-    return {"Authorization": value}
+    authorization = resolve_credentials(get_settings())
+    return {"Authorization": authorization} if authorization else {}
 
 
-def _fetch_json(transport: Any, url: str) -> Any:
-    status, payload = transport.get_json(url, headers=_auth_headers())
+def _fetch_json(transport: Any, url: str, headers: dict[str, str]) -> Any:
+    status, payload = transport.get_json(url, headers=headers)
     if status == 404:
-        raise AcquireError("not_found", f"Civitai 找不到資源：{url}")
+        raise AcquireError("not_found", "Civitai resource was not found")
     if status == 401 or status == 403:
         raise AcquireError(
             "unauthorized",
             f"Civitai 拒絕存取（HTTP {status}）",
-            hint="部分資源需要 API key：在 .env 設定 CIVITAI_AUTHORIZATION=<你的 Civitai API key> 後重試",
+            hint="Check Backend CIVITAI_API_KEY_FILE or legacy CIVITAI_AUTHORIZATION; provider access restrictions still apply.",
         )
     if not 200 <= status < 300:
-        raise AcquireError("civitai_api_error", f"Civitai API 回應 HTTP {status}，可稍後重試")
+        raise AcquireError("civitai_api_error", f"Civitai API 回應 HTTP {status}，可稍後重試", hint="Check provider availability/access limits, then inspect the same acquisition ID before retrying.")
     return payload
 
 
@@ -159,7 +124,12 @@ def resolve_version_metadata(locator: int | str, *, transport: Any | None = None
     ID, bare model ID (uses its latest version). Image/post URLs get a hint to
     supply the model page instead.
     """
-    transport = transport or _JsonTransport()
+    with ProviderOperation('metadata', settings=get_settings()) as operation:
+        result = _resolve_version_metadata(locator, transport=transport or _JsonTransport(operation), headers=operation.headers)
+        return operation.metadata(result)
+
+
+def _resolve_version_metadata(locator, *, transport, headers):
     model_id: int | None = None
     version_id: int | None = None
 
@@ -168,9 +138,9 @@ def resolve_version_metadata(locator: int | str, *, transport: Any | None = None
         # A bare number is ambiguous: try model-version first, then model.
         candidate = int(raw)
         try:
-            version_payload = _fetch_json(transport, f"https://civitai.com/api/v1/model-versions/{candidate}")
+            version_payload = _fetch_json(transport, f"https://civitai.com/api/v1/model-versions/{candidate}", headers)
             if isinstance(version_payload, dict) and version_payload.get("id") == candidate:
-                model_payload = _maybe_fetch_model(transport, version_payload.get("modelId"))
+                model_payload = _maybe_fetch_model(transport, version_payload.get("modelId"), headers)
                 return {"version": version_payload, "model": model_payload}
         except AcquireError as exc:
             if exc.code != "not_found":
@@ -195,24 +165,26 @@ def resolve_version_metadata(locator: int | str, *, transport: Any | None = None
         model_id, version_id = parsed.model_id, parsed.model_version_id
 
     if version_id is not None:
-        version_payload = _fetch_json(transport, f"https://civitai.com/api/v1/model-versions/{version_id}")
-        model_payload = _maybe_fetch_model(transport, version_payload.get("modelId") if isinstance(version_payload, dict) else None)
+        version_payload = _fetch_json(transport, f"https://civitai.com/api/v1/model-versions/{version_id}", headers)
+        model_payload = _maybe_fetch_model(transport, version_payload.get("modelId") if isinstance(version_payload, dict) else None, headers)
         return {"version": version_payload, "model": model_payload}
     if model_id is None:
         raise AcquireError("unsupported_locator", "無法從輸入解析出模型 ID")
-    model_payload = _fetch_json(transport, f"https://civitai.com/api/v1/models/{model_id}")
+    model_payload = _fetch_json(transport, f"https://civitai.com/api/v1/models/{model_id}", headers)
     versions = model_payload.get("modelVersions") if isinstance(model_payload, dict) else None
     if not isinstance(versions, list) or not versions or not isinstance(versions[0], dict):
         raise AcquireError("no_versions", "此模型沒有可用版本")
     return {"version": versions[0], "model": model_payload}
 
 
-def _maybe_fetch_model(transport: Any, model_id: Any) -> dict[str, Any] | None:
+def _maybe_fetch_model(transport: Any, model_id: Any, headers: dict[str, str]) -> dict[str, Any] | None:
     if not isinstance(model_id, int):
         return None
     try:
-        payload = _fetch_json(transport, f"https://civitai.com/api/v1/models/{model_id}")
-    except AcquireError:
+        payload = _fetch_json(transport, f"https://civitai.com/api/v1/models/{model_id}", headers)
+    except AcquireError as exc:
+        if exc.code != "not_found":
+            raise
         return None
     return payload if isinstance(payload, dict) else None
 
@@ -428,7 +400,7 @@ def start_acquisition(
             resource_type=comp_type,
             provider="civitai",
             source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
-            resolved_download_url=chosen["download_url"],
+            resolved_download_url=redact_secrets(chosen["download_url"]),
             local_path=str(target),
             storage_root=comp_root,
             file_size=chosen["size_bytes"],
@@ -457,8 +429,7 @@ def start_acquisition(
         db.refresh(job["row"])
         job["acquisition_id"] = job["row"].id
 
-    authorization = _auth_headers().get("Authorization")
-    transport = download_transport or _StreamingDownloadTransport()
+    transport = download_transport
     job_specs = [
         {
             "acquisition_id": job["acquisition_id"],
@@ -483,7 +454,7 @@ def start_acquisition(
         session = (session_factory or SessionLocal)()
         try:
             for spec in job_specs:
-                _run_one(session, spec, transport=transport, authorization=authorization)
+                _run_one(session, spec, transport=transport, settings=settings)
         finally:
             session.close()
 
@@ -517,12 +488,13 @@ def start_acquisition(
     }
 
 
-def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, authorization: str | None) -> None:
+def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings: Any) -> None:
     """Download one file and record the outcome; never let one failure stop the batch."""
     acquisition_id = spec["acquisition_id"]
     notes = spec["notes"]
     try:
-        result = safe_download(spec["metadata"], spec["target"], transport=transport, authorization=authorization)
+        with ProviderOperation('download', settings=settings) as operation:
+            result = safe_download(spec["metadata"], spec["target"], transport=transport or _StreamingDownloadTransport(operation), authorization=operation.authorization, operation=operation)
         fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
         fresh_notes = dict(notes)
         if result.status == "completed":
@@ -536,6 +508,8 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, authoriz
         else:
             fresh.status = "failed"
             fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
+            if result.diagnostics.get("code"):
+                fresh_notes["error"] = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
         fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
         session.commit()
     except Exception as exc:  # noqa: BLE001 — the thread must record any failure
@@ -543,7 +517,7 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, authoriz
         try:
             fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
             fresh.status = "failed"
-            fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.__class__.__name__}), ensure_ascii=False)
+            fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}}), ensure_ascii=False)
             session.commit()
         except Exception:
             session.rollback()

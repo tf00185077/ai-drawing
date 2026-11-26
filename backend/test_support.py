@@ -25,7 +25,7 @@ def activate():
         'DATABASE_URL': f'sqlite:///{root / "test.db"}',
         'COMFYUI_MODE': 'disabled', 'COMFYUI_RECORD_EXTERNAL': 'false',
         'NVIDIA_WORKER_URL': '', 'NVIDIA_WORKER_DISCOVERY_ENABLED': 'false',
-        'LLM_CAPTION_URL': '', 'CIVITAI_AUTHORIZATION': '',
+        'LLM_CAPTION_URL': '', 'CIVITAI_AUTHORIZATION': '', 'CIVITAI_API_KEY_FILE': '',
         'LORA_DEFAULT_CHECKPOINT': '', 'SD_SCRIPTS_PYTHON': '',
         'LORA_ANIMA_QWEN3': '', 'LORA_ANIMA_VAE': '', 'LORA_ANIMA_T5_TOKENIZER_PATH': '',
         'LORA_CHECKPOINT_DIRS': str(root/'checkpoints'),

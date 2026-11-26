@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): First check accepted; p2-01 correction 1 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-01 accepted; resource-record foundation next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -69,27 +69,38 @@ Comfy and 137 Backend hashes/current-Git corroboration do not reconstruct them.
 [Evidence decision](decisions/evidence.md) preserves ordinary source-path hashes
 in future helpers. Baseline units differ from Phase 1's 23/eight incidents.
 
-**Next: [p2-01 private key-file loading/credential-safe requests](tasks/p2-01-civitai-key-file/task.md)**,
-after [independent AID-180](/AID/issues/AID-180) round-1 **CLEAR** at fixed
-316327d. The [actual report](tasks/p2-01-civitai-key-file/kickoff-review.md),
-04629d2b25600348424fb9c7d12f9e41efc3c13f, and [implementation handoff](tasks/p2-01-civitai-key-file/implementation-handoff.md)
-are accepted without a task change. Actual [Coding AID-181](/AID/issues/AID-181)
-candidate **160681d1**, frozen **8a77b907**, received [QA AID-182](/AID/issues/AID-182)
-**FAIL R1 (P1, D3)**, report **301c5dee**: the HTTP client cookie jar can replay
-a canonical credential cookie to b2 despite stripped Authorization. Factory and
-registered acquisition reproducers use synthetic configured-file credentials;
-actual selected live HEADs had no cookies. [Correction 1](tasks/p2-01-civitai-key-file/repair-round-1.md)
-requires stateless final request credentials, meaningful cookie regressions/faults,
-fresh frozen D4 and delivery review 2. The rejected feature stays off main.
-D1/D2/D4/D5 passed for that exact old candidate; changed code needs new exact QA.
-Producer dispatches distinct repair Coding/QA with native prerequisites.
-AID-146 retains Producer ownership and native continuation;
-no new routine owner confirmation. [Ranked intake](tasks/p2-00-civitai-first-check/implementation-intake.md)
-keeps stock download budgets/async jobs, one resource record/SDXL mapping, safe
-search/MCP replacement, automatic defaults/workflows and proven removals separate.
-The owner-authorized key file stays private, current product still uses legacy
-authorization and manual bridging; this spec/publication is not implemented or
-deployed file loading. Scope/order/Not now and CTY artistic judgment remain.
+**Accepted: [p2-01 private key-file and credential-safe requests](tasks/p2-01-civitai-key-file/acceptance.md)**.
+Coding AID-183 **2e3850307f767ec2be213781accde367f321dc1d**, corrected freeze
+2491ceb7, after independent QA AID-184 **D1–D5 PASS**, report/evidence/registry
+**155e2209a9910556dfa0255223a9b4a30f120d87**. Production source reads the private
+file and enforces bounded stateless final-request credentials. Original R1/P1/D3
+FAIL 301c5dee and first manifest/raw evidence remain unchanged; correction 1/
+review 2 resolves it, with one delivery rejection retained. Kickoff 1 CLEAR and
+task hash unchanged. All reviewed product/tests/evidence and QA's **22-row**
+registry integrate exactly. Source publication is not runtime deployment.
+
+QA freshly records Backend **1978 passed/124 existing skips**, MCP **666/four**,
+exports 93/readers 73/wait 12/restored registry 412/restored feature 81; meaningful
+faults fail then restore. Frozen Coding and independent source HEADs observe
+anonymous 401 versus configured-file 307→200, no Cookie/Proxy-Authorization/key
+outside permitted Authorization, closed responses and zero body-method calls.
+Producer verifies 15 official uploads, 234/79 exact archive payloads, both bundles,
+2436/2494 complete fingerprints and private-value exclusion; no new product suite,
+live provider/service probe/restart/download/generation/live Gallery-byte read.
+Failed attempts remain attributed in actual reports; no new skips or product fix
+by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
+
+**Next: [p2-02 resource-record foundation](tasks/p2-02-resource-record/task.md)**
+gets its own independent kickoff before Coding. The [adopted decision](decisions/civitai-resource-record.md)
+extends existing downloaded_resources IDs, normalizes metadata/SDXL mapping and
+aligns producers/readers before download-job/reservation persistence. Image/recipe
+aliases remain preserved history, not guessed model identities. This is the joint
+record/download contract's prerequisite, not a phase-order change or full record
+replacement claim. AID-146 retains Producer ownership and native dependency on the
+actual next QA verdict. No routine owner confirmation. Stock safe download budgets/
+async jobs, unknown-local hash identification, safe search/MCP replacement,
+automatic defaults/workflows and proven removals remain separate. Owner scope/
+order/Not now and CTY artistic judgment remain.
 
 QA fresh offline Backend 1916/124 existing skips, MCP 666/four skips, registered
 PNG six passed, frontend 226/one skip/build passed; 18 registry rows unchanged.

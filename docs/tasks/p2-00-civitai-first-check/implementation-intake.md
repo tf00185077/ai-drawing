@@ -25,3 +25,16 @@ The seven used Civitai modules include a value type and preparation reads;
 [service inventory](evidence/service-inventory.json) and retained failure ledger
 govern later explicit removal specifications. Do not revive recipe/generate-like
 features as incidental work. No provider preview or explicit content is needed.
+
+## 2026-11-26 sequencing after p2-01 acceptance
+
+[p2-01 is accepted](../p2-01-civitai-key-file/acceptance.md) after exact delivery
+review2 PASS. Adopt [p2-02 resource-record foundation](../p2-02-resource-record/task.md)
+from the joint order2/3 dependency before implementing download-job/budget
+persistence. The existing local ledger already projects downloaded_resources;
+source aliases bind image/recipe evidence. Typed current row identity, metadata,
+mapping and compatible publication/reads come first; no competing record or
+reservation counter. This is an in-phase dependency refinement, not an owner
+scope/order change. Unknown-local identification, complete alias replacement,
+stock bounded download jobs and new MCP flow remain subsequent detailed tasks.
+Only this bounded foundation is now specified; fresh CLEAR is required.

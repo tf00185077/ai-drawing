@@ -326,7 +326,7 @@ def _persist_ledger_identity(
 
 def install_civitai_resource(
     selected: Mapping[str, Any], storage_root: str, *, db: Session, storage_roots: Mapping[str, Path],
-    transport: Any, authorization: str | None = None,
+    transport: Any, authorization: str | None = None, operation: Any | None = None,
 ) -> dict[str, Any]:
     descriptor, error = _validated_descriptor(selected)
     if descriptor is None:
@@ -377,7 +377,7 @@ def install_civitai_resource(
         availability=True, scan_status=descriptor["scan_status"], license=descriptor["license"],
         usage=descriptor["usage_restrictions"],
     )
-    result = safe_download(metadata, target, transport=transport, authorization=authorization, sleep=lambda _: None)
+    result = safe_download(metadata, target, transport=transport, authorization=authorization, operation=operation)
     if result.status != "completed":
         return redact_secrets({
             "status": result.status, "final_path": str(target), "byte_size": result.bytes,

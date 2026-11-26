@@ -91,24 +91,15 @@ def test_model_version_locator_joins_authoritative_model_policy_before_selection
     version_payload = {**selected_version, "model": {"id": 376130}}
     requested_urls: list[str] = []
 
-    class Response:
-        status_code = 200
+    import httpx
+    original = httpx.AsyncClient
 
-        def __init__(self, payload: dict) -> None:
-            self._payload = payload
+    def fake_get(request):
+        requested_urls.append(str(request.url))
+        payload = model_payload if "/api/v1/models/" in str(request.url) else version_payload
+        return httpx.Response(200, json=payload)
 
-        def raise_for_status(self) -> None:
-            return None
-
-        def json(self) -> dict:
-            return self._payload
-
-    def fake_get(url: str, **_kwargs) -> Response:
-        requested_urls.append(url)
-        payload = model_payload if "/api/v1/models/" in url else version_payload
-        return Response(payload)
-
-    monkeypatch.setattr(api.httpx, "get", fake_get)
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: original(transport=httpx.MockTransport(fake_get), **kw))
     inspected = api.inspect_civitai_resource_route(CivitaiResourceInspectRequest(
         locator="https://civitai.com/models/376130?modelVersionId=2940478",
     ))
@@ -650,42 +641,36 @@ def test_backend_route_redacts_authorization_and_token_query_in_success_and_erro
 
 def test_civitai_download_transport_follows_redirects_and_streams(monkeypatch) -> None:
     from app.api import civitai_recipes
+    import httpx
 
-    calls: list[dict] = []
+    calls, streams = [], []
+    original = httpx.AsyncClient
 
-    class Response:
-        status_code = 200
-        headers = {"content-length": "6"}
+    class Body(httpx.AsyncByteStream):
+        closed = False
 
-        def iter_bytes(self, chunk_size: int):
-            assert chunk_size == 1024 * 1024
+        async def __aiter__(self):
             yield b"abc"
             yield b"def"
 
-    class StreamContext:
-        def __init__(self) -> None:
-            self.closed = False
-
-        def __enter__(self):
-            return Response()
-
-        def __exit__(self, exc_type, exc, tb):
+        async def aclose(self):
             self.closed = True
 
-    context = StreamContext()
+    def handle(request):
+        calls.append(request)
+        stream = Body()
+        streams.append(stream)
+        if len(calls) == 1:
+            return httpx.Response(307, headers={"location": "https://b2.civitai.com/file"}, stream=stream)
+        return httpx.Response(200, stream=stream)
 
-    def fake_stream(method: str, url: str, **kwargs):
-        calls.append({"method": method, "url": url, **kwargs})
-        return context
-
-    monkeypatch.setattr(civitai_recipes.httpx, "stream", fake_stream)
-    result = civitai_recipes._CivitaiDownloadTransport().get(
-        "https://civitai.com/api/download/models/3118448",
-        headers={"Authorization": "Bearer sentinel"},
-    )
-
-    assert calls[0]["method"] == "GET"
-    assert calls[0]["follow_redirects"] is True
-    assert result.status_code == 200
-    assert b"".join(result.body) == b"abcdef"
-    assert context.closed is True
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: original(transport=httpx.MockTransport(handle), **kw))
+    result = civitai_recipes._CivitaiDownloadTransport().get("https://civitai.com/api/download/models/3118448")
+    try:
+        assert result.status_code == 200
+        assert b"".join(result.body) == b"abcdef"
+    finally:
+        result.close()
+    assert [r.url.host for r in calls] == ["civitai.com", "b2.civitai.com"]
+    assert calls[1].headers.get("authorization") is None
+    assert all(stream.closed for stream in streams)

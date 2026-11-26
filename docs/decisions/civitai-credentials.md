@@ -29,8 +29,10 @@
   routes and inspect/install adapters. Observe actual outgoing headers in realistic
   cookie-setting fixtures and prove fault sensitivity. Keep old adverse evidence
   immutable; original selected live HEADs observed no cookies, so no actual
-  owner-key disclosure is inferred. Correction and exact review remain pending
-  under [repair round 1](../tasks/p2-01-civitai-key-file/repair-round-1.md).
+  owner-key disclosure is inferred. [Correction 1](../tasks/p2-01-civitai-key-file/repair-round-1.md)
+  is accepted at exact 2e385030 after independent review 2 PASS 155e2209;
+  [acceptance](../tasks/p2-01-civitai-key-file/acceptance.md) preserves fault and
+  fresh source evidence. Source publication is not running-Backend deployment.
 
 ## Open questions
 

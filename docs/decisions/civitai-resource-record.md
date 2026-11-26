@@ -1,0 +1,47 @@
+# Decisions · Phase 2 resource identity
+
+## Settled
+
+- Extend `downloaded_resources` as the authoritative model-resource record. Its
+  existing integer IDs remain resource IDs; do not introduce another model
+  registry, filename identity store or persistent metadata sidecar.
+- Preserve source labels separately from workflow family. One Phase 2 table maps
+  `SDXL 1.0`, `Illustrious`, `Pony`, `NoobAI` to `sdxl`; unsupported/unknown labels
+  have no matching workflow. This does not establish pair or loader compatibility.
+- A resource is not a download attempt or disk reservation. Future attempt/job
+  accounting references resource IDs and has one authoritative transactional
+  accounting path in the existing Backend database; this increment implements no
+  job/budget/reservation schema or competing counters.
+- Old source aliases describe image/recipe evidence, not necessarily models.
+  Preserve that evidence and its history. Do not invent model identity from an
+  alias name, image ID, recipe hash, filename or a missing provider field.
+
+## Log
+
+### 2026-11-26 · Establish resource identity before download accounting
+
+- Decision: take the bounded [p2-02 foundation](../tasks/p2-02-resource-record/task.md)
+  before the stock download-job/budget task. Use a normalized, versioned metadata
+  projection on the existing resource row and migrate legacy notes without
+  destroying their original evidence. Existing acquisition/install producers and
+  the local-ledger reader must share this authority.
+- Why: current acquisition IDs are resource-row IDs, the local ledger is already
+  a projection of those rows, and source aliases bind immutable image targets.
+  Implementing an independent registry or budget keyed by filename would create
+  another identity and make dedupe/reuse/migration harder.
+- Alternatives: a new model table duplicates existing IDs; a standalone job-budget
+  ledger first leaves identity and reuse unresolved. Keeping untyped notes as the
+  only public contract retains competing family/metadata interpretations.
+- Provenance: Producer's in-boundary choice from the accepted real First check,
+  [ranked intake](../tasks/p2-00-civitai-first-check/implementation-intake.md), actual
+  source/ORM inspection and CTY's [current delegation](../requests/2026-11-26-phase-2-start-and-key-file.md).
+  It changes no approved phase scope/order/architecture and is not an owner quote.
+- Applies: this source foundation and later download/search/default specifications.
+  Unknown-local hash lookup, complete legacy alias removal, new MCP replacement
+  tools and actual downloads remain later tasks. Those need their own CLEAR and
+  exact delivery review; this decision does not implement or pre-clear them.
+
+## Open questions
+
+None for the bounded foundation. Future detailed download admission/reservation,
+unknown-local identification and MCP replacement contracts remain unimplemented.

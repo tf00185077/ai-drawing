@@ -38,22 +38,30 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 The real [First check is accepted](tasks/p2-00-civitai-first-check/acceptance.md),
 with 20 manual interventions and its five missing historical source hashes
-retained. [p2-01](tasks/p2-01-civitai-key-file/task.md) private key-file/loading
-and credential-safe requests now have [independent kickoff CLEAR](tasks/p2-01-civitai-key-file/kickoff-review.md),
-round 1, report 04629d2b. Actual candidate 160681d1/freeze 8a77b907 received
-[delivery review 1 FAIL](tasks/p2-01-civitai-key-file/review-round-1.md), report
-301c5dee: one P1/D3 cookie credential replay defect. Factory and registered
-acquisition fixtures reproduce it; live HEADs observed no cookies.
-[Correction 1](tasks/p2-01-civitai-key-file/repair-round-1.md) and separate exact
-delivery review 2 follow. First rejection/one finding are retained; unchanged
-CLEAR and all 18 registry contracts remain. Product/test source stays off main.
-Producer publishes actual reports/evidence/status only, with no new provider/
-runtime/generation/live artifact result.
+retained. [p2-01 is accepted](tasks/p2-01-civitai-key-file/acceptance.md) at
+corrected **2e385030**, after independent review 2 **D1–D5 PASS 155e2209**.
+Private file loading, retained production callers and bounded stateless credentials
+are integrated exactly with the reviewed evidence and **22 active registry rows**.
+Kickoff 1 CLEAR; original delivery 1 FAIL/one P1 R1/one rejection; correction 1/
+review 2 PASS remain distinct. Fresh independent Backend **1978/124 existing
+skips**, MCP **666/four**, exports93/readers73/wait12/registry412/feature81 pass;
+meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
+401 versus configured-file307→200, no cookies/proxy credentials and zero body
+reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
+
+Next [p2-02](tasks/p2-02-resource-record/task.md) establishes existing resource-row
+identity, typed metadata, one SDXL mapping, producer/reader alignment and bounded
+Backend reads before download-job accounting. Fresh independent kickoff precedes
+implementation. [Decision](decisions/civitai-resource-record.md) records why the
+joint download/record intake is sequenced this way; aliases retain image/recipe
+evidence and are not model identity. No owner scope/order/Not now change. Remaining
+automation/download/search/defaults/removal/real three-sentence exit stays pending.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
 | Retained Civitai resource acquire/status and source info (MCP); generate-like removed from MCP, Backend frozen | Done, p1-02 accepted | `tools/civitai.py`, `services/civitai_resource_*` | `test_civitai_*`, registration exclusion checks | No |
 | Civitai recipe import, resource resolution, safe download, source aliases, local identity ledger | Done | `services/civitai_*`, `api/civitai_*` | `test_civitai_*` | No |
+| Backend private key-file and bounded credential-safe retained provider paths | Done, p2-01 accepted | `services/civitai_provider.py` and retained callers | Exact review 2 D1–D5 PASS; fresh full/fault/registered-path proof | Read-only source HEAD auth comparison; no runtime deployment |
 | Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
 | Resource record agents can list and filter; hash lookup of unknown local files | Partial (ledger and aliases exist; no agent-facing record) | `services/civitai_local_identity_ledger.py`, `civitai_source_alias_registry.py` | `test_civitai_*` | — |
 | Workflow selection from chosen resources | Partial (manifest match exists) | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_match.py` | No |
