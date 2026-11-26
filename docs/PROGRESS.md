@@ -36,6 +36,16 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 
+The real [First check is accepted](tasks/p2-00-civitai-first-check/acceptance.md),
+with 20 manual interventions and its five missing historical source hashes
+retained. [p2-01](tasks/p2-01-civitai-key-file/task.md) private key-file/loading
+and credential-safe requests now have [independent kickoff CLEAR](tasks/p2-01-civitai-key-file/kickoff-review.md),
+round 1, report 04629d2b. Separate Coding and exact-commit delivery QA follow the
+[handoff](tasks/p2-01-civitai-key-file/implementation-handoff.md). Product behavior
+is not implemented by this report/status publication; the 18-row registry and
+all existing product/test trees are unchanged. No new provider/runtime/generation
+or live artifact result is added by this Producer round.
+
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
 | Retained Civitai resource acquire/status and source info (MCP); generate-like removed from MCP, Backend frozen | Done, p1-02 accepted | `tools/civitai.py`, `services/civitai_resource_*` | `test_civitai_*`, registration exclusion checks | No |

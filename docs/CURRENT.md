@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): next step is its First check hand run** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): First check accepted; p2-01 implementation next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -70,8 +70,12 @@ Comfy and 137 Backend hashes/current-Git corroboration do not reconstruct them.
 in future helpers. Baseline units differ from Phase 1's 23/eight incidents.
 
 **Next: [p2-01 private key-file loading/credential-safe requests](tasks/p2-01-civitai-key-file/task.md)**,
-with its own fresh independent CLEAR kickoff before Coding and exact-final-commit
-QA before integration. AID-146 retains Producer ownership and native continuation;
+after [independent AID-180](/AID/issues/AID-180) round-1 **CLEAR** at fixed
+316327d. The [actual report](tasks/p2-01-civitai-key-file/kickoff-review.md),
+04629d2b25600348424fb9c7d12f9e41efc3c13f, and [implementation handoff](tasks/p2-01-civitai-key-file/implementation-handoff.md)
+are accepted without a task change. Producer dispatches distinct Coding and
+exact-final-commit delivery QA with native Coding → QA → Producer prerequisites.
+AID-146 retains Producer ownership and native continuation;
 no new routine owner confirmation. [Ranked intake](tasks/p2-00-civitai-first-check/implementation-intake.md)
 keeps stock download budgets/async jobs, one resource record/SDXL mapping, safe
 search/MCP replacement, automatic defaults/workflows and proven removals separate.
