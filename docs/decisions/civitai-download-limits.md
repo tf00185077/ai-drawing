@@ -82,3 +82,20 @@ remain subsequent work. [Correction1](../tasks/p2-03-bounded-download/repair-rou
 and new exact delivery QA2 apply the unchanged task/kickoffCLEAR. First rejection,
 two P1 findings; no new boundary/spec ambiguity or routine owner gate. Report actual
 results under CTY's existing delegation; no Phase2/artistic acceptance.
+
+## 2026-11-27 application after delivery review2 FAIL
+
+[Actual review2](../tasks/p2-03-bounded-download/review-round-2.md) passes original
+R1/R2 in checked scope but demonstrates new R3: process-local admission contention
+waits beyond an existing ProviderOperation deadline. A correct timeout reason after
+lock release does not bound waiting. Admission coordination is part of the existing
+operation's absolute budget, even before network/body work.
+
+Adopt bounded acquisition or immediate safe refusal at the existing admission boundary,
+using the applicable budget before contention and preserving active ownership,
+reentrancy and useful retry/reuse. Audit both callers; do not reset the deadline
+after entry, drop synchronization or create a scheduler/attempt architecture.
+[Correction2](../tasks/p2-03-bounded-download/repair-round-2.md)/new exact review3
+remain unchanged task/CLEAR/current delegation. Two delivery rejections/three P1s;
+R3 unresolved, no scope/order/Not now or artistic-authority change. Report actual
+results without a routine owner gate or Phase2 acceptance.

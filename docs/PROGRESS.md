@@ -5,6 +5,30 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-03 second rejection; correction2
+
+[Independent QA AID-211](/AID/issues/AID-211)
+[review2 FAIL](tasks/p2-03-bounded-download/review-round-2.md) at Coding33b920fd,
+report7b37b8c8. R1/R2 pass in checked scope; new R3/P1 waits at an unbounded admission
+lock beyond ProviderOperation's remaining deadline. Registered0.15s budget remains
+blocked at0.6s; correct error arrives only after release. Original owner succeeds,
+ID/bytes preserved. Complete scope1FAIL/232PASS, two rejections/three distinct P1s.
+[Correction2](tasks/p2-03-bounded-download/repair-round-2.md) adopts deadline-aware
+existing admission, preserving ownership/reentrancy/reuse/retry and original D/C
+requirements. Unchanged task/CLEAR, no new architecture/owner gate/boundary change.
+Coding then new exact independent delivery QA3; rejected product/tests off main.
+
+QA Backend7158/124 existing skips,MCP666/four,affected-repeat476,fresh93/73/standing412/
+provider19/wait12 pass; ten production faults yield21 assertions/exact restoration.
+Narrower232GREEN does not certify R3. Preserve first affected1FAIL/475PASS and controlled
+self-read access-time diagnosis, all31 attempts/32 raw logs/import/packaging mistakes.
+[Integrity](tasks/p2-03-bounded-download/producer-correction2-integrity.json):26 official
+uploads,108/117 members,106/115 Git bodies,8487/8601 fingerprints; official ten-part
+77962971byte prerequisite pack and both bundle/independent patch restores/fsck0.
+7394 old task bodies/modes/72 registry items/current14 shared memory edits preserved.
+No new Producer full product suite/key/provider/runtime/model/generation/Gallery bytes;
+source is not deployment or Phase2/CTY artistic acceptance.
+
 ## 2026-11-27 — p2-03 first rejection; correction1
 
 Actual [independent QA AID-209](/AID/issues/AID-209)

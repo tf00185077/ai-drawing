@@ -72,10 +72,10 @@ rejections/five historical P1 findings remain. Source publication integrates the
 Backend foundation and exact72-row QA registry, without runtime deployment.
 [p2-03](../tasks/p2-03-bounded-download/task.md) has actual independent
 [kickoff1 CLEAR](../tasks/p2-03-bounded-download/kickoff-review.md) at86837c7/task285af6d1,
-report9dfdf9f1. [Delivery review1 FAIL](../tasks/p2-03-bounded-download/review-round-1.md) at9db56097/report3ed5ae8f
-has two P1s: post-commit adoption failure/current-state and duplicate active
-acquisition. [Correction1](../tasks/p2-03-bounded-download/repair-round-1.md) and new
-exact QA2 apply unchanged D3/D4; one rejection/two findings, rejected product/tests
+report9dfdf9f1. [Delivery review2 FAIL](../tasks/p2-03-bounded-download/review-round-2.md) at33b920fd/report7b37b8c8
+passes R1/R2 in checked scope; new R3/P1 waits beyond the existing operation deadline
+at admission. [Correction2](../tasks/p2-03-bounded-download/repair-round-2.md) and new
+exact QA3 apply unchanged D4/C3; two rejections/three findings, rejected product/tests
 off main. Durable attempts and aggregate reservations remain subsequent work. These are in-phase dependency refinements under current delegation,
 not a change to owner scope/order/architecture/Not now. Search/hash lookup/newMCP/
 defaults/proven removals and real qualification remain pending.
@@ -135,6 +135,16 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-27 — p2-03 review2 FAIL: original R1/R2 pass in checked scope, new R3
+  lets admission contention exceed the existing operation deadline. Adopt bounded
+  admission using the applicable budget before waiting, retain synchronization/
+  original ownership and useful retry/reuse; correction2/exact QA3 stay unchanged
+  task/CLEAR/scope/order/Not now. Two rejections/three P1s, report actual results
+  under current delegation, no routine owner gate or Phase2/artistic acceptance
+  ([decision](../decisions/civitai-download-limits.md),
+  [repair](../tasks/p2-03-bounded-download/repair-round-2.md)).
+
 
 - 2026-11-27 — p2-03 actual review1 FAIL: adoption after a real commit loses its
   current timeout/file-change outcome; retained install ignores an active resource
