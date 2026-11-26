@@ -481,3 +481,116 @@ def test_metadata_sanitizes_provider_echoes_but_keeps_ephemeral_signed_locator(w
     assert resolved['model']['name']=='[REDACTED]'
     assert resolved['model']['authorization']=='[REDACTED]' and resolved['model']['token']=='[REDACTED]'
     assert 'SIGNED_SENTINEL' in resolved['version']['files'][0]['downloadUrl']
+
+
+@pytest.mark.parametrize('scope', [
+    'Domain=.civitai.com; Path=/; Secure',
+    'Domain=civitai.com; Path=/files; Secure',
+    'Path=/; Secure',
+    'Domain=.civitai.com; Path=/',
+])
+def test_provider_cookie_credentials_never_replay_on_same_cross_or_return_hops(wire, tmp_path, monkeypatch, scope):
+    """Removing stateless cookie protection must expose a final wire credential."""
+    from app.services.civitai_provider import ProviderOperation, ProviderDownloadTransport
+    key=tmp_path/'key'; key.write_text('cookie-file-sentinel'); configure(monkeypatch,key)
+    seen=[]; streams=[]
+    destinations=[
+        'https://civitai.com/files/same', 'https://www.civitai.com/files/www',
+        'https://b2.civitai.com/files/cdn', 'https://civitai.com/files/return',
+        'https://civitai.com/files/end',
+    ]
+    def handle(request):
+        seen.append(request); stream=Stream(); streams.append(stream)
+        headers={'set-cookie':'session=cookie-file-sentinel; '+scope}
+        if len(seen)<=len(destinations):
+            headers['location']=destinations[len(seen)-1]
+            return httpx.Response(307,headers=headers,stream=stream)
+        return httpx.Response(200,headers=headers,stream=stream)
+    wire(handle)
+    with ProviderOperation('download') as op:
+        response=ProviderDownloadTransport(op).get('https://civitai.com/files/start')
+        assert b''.join(response.body)==b'abcdef'
+        # Another request in the same operation gets its allowed Authorization,
+        # without accepting any earlier cookie, even after a return hop.
+        response=ProviderDownloadTransport(op).get('https://civitai.com/files/repeated')
+        assert b''.join(response.body)==b'abcdef'
+    assert [r.headers.get('authorization') for r in seen]==['Bearer cookie-file-sentinel']*2+[None]*4+['Bearer cookie-file-sentinel']
+    for request in seen:
+        assert 'cookie' not in request.headers
+        assert 'proxy-authorization' not in request.headers
+        assert 'cookie-file-sentinel' not in str(request.url)
+        assert all('cookie-file-sentinel' not in v for k,v in request.headers.multi_items() if k!='authorization')
+    assert all(s.closed for s in streams)
+
+
+def test_final_prepared_request_strips_implicit_and_caller_credential_headers(tmp_path,monkeypatch):
+    """A filter before build_request cannot stop implicit client credential state."""
+    from app.services.civitai_provider import ProviderOperation
+    key=tmp_path/'key'; key.write_text('prepared-file-sentinel'); configure(monkeypatch,key)
+    original=httpx.AsyncClient; seen=[]
+    def handle(request):
+        seen.append(request)
+        return httpx.Response(200,json={'ok':True})
+    class ImplicitClient(original):
+        def __init__(self,**kwargs):
+            super().__init__(transport=httpx.MockTransport(handle),headers={
+                'Cookie':'session=implicit-sentinel','Proxy-Authorization':'Basic implicit-sentinel',
+                'Authorization':'Bearer implicit-sentinel'},**kwargs)
+            self.cookies.set('implicit','cookie-jar-sentinel',domain='.civitai.com')
+    monkeypatch.setattr(httpx,'AsyncClient',ImplicitClient)
+    with ProviderOperation('metadata') as op:
+        for host in ('civitai.com','www.civitai.com','b2.civitai.com'):
+            with op.request('HEAD','https://'+host+'/files',headers={
+                    'cOoKiE':'caller-sentinel','pRoXy-AuThOrIzAtIoN':'caller-sentinel',
+                    'aUtHoRiZaTiOn':'caller-sentinel','Accept':'application/json'}) as response:
+                assert response.status_code==200
+    assert [r.headers.get('authorization') for r in seen]==['Bearer prepared-file-sentinel',None,None]
+    for request in seen:
+        assert request.headers['accept']=='application/json'
+        assert 'cookie' not in request.headers
+        assert 'proxy-authorization' not in request.headers
+        assert all('implicit-sentinel' not in v and 'caller-sentinel' not in v for v in request.headers.values())
+
+
+@pytest.mark.parametrize('cdn',['b2.civitai.com','www.civitai.com'])
+def test_registered_cookie_responses_install_without_replaying_credentials(production_routes,wire,tmp_path,monkeypatch,cdn):
+    """Old cookie replay must fail at the registered MCP/Backend/background wire."""
+    from app.db import database
+    from app.db.models import DownloadedResource
+    _,pending=production_routes
+    key=tmp_path/'key';key.write_text('registered-cookie-sentinel');configure(monkeypatch,key)
+    monkeypatch.setenv('COMFYUI_LORAS_DIR',str(tmp_path/'loras'));get_settings.cache_clear()
+    version,model=resource_payload();seen=[];streams=[];downloads=[]
+    def handle(request):
+        seen.append(request);stream=Stream();streams.append(stream)
+        headers={'set-cookie':'session=registered-cookie-sentinel; Domain=.civitai.com; Path=/; Secure'}
+        if '/model-versions/' in request.url.path:return httpx.Response(200,json=version,headers=headers)
+        if '/api/v1/models/' in request.url.path:return httpx.Response(200,json=model,headers=headers)
+        downloads.append(request)
+        if len(downloads)==1:
+            headers['location']='https://'+cdn+'/file'
+            return httpx.Response(307,headers=headers,stream=stream)
+        if len(downloads)==2:
+            headers['location']='https://civitai.com/return'
+            return httpx.Response(307,headers=headers,stream=stream)
+        return httpx.Response(200,headers=headers,stream=stream)
+    wire(handle)
+    admitted=call_mcp('civitai_resource_acquire',{'source':'7'});assert admitted['ok']
+    identity=admitted['data']['resource']['acquisition_id'];assert len(pending)==1
+    pending.pop()()
+    status=call_mcp('civitai_resource_status',{'acquisition_id':identity})
+    row=status['data']['resources'][0]
+    assert row['status']=='installed' and row['acquisition_id']==identity
+    assert Path(row['local_path']).read_bytes()==b'abcdef'
+    assert [r.headers.get('authorization') for r in downloads]==['Bearer registered-cookie-sentinel',None,None]
+    for request in seen:
+        assert 'cookie' not in request.headers
+        assert 'proxy-authorization' not in request.headers
+        assert all('registered-cookie-sentinel' not in v for k,v in request.headers.multi_items() if k!='authorization')
+    # Only download responses use the explicit streams above.
+    assert all(s.closed for s in streams[2:])
+    with database.SessionLocal() as db:
+        stored=db.query(DownloadedResource).one()
+        assert stored.id==identity and stored.civitai_file_id=='11'
+        durable=json.dumps({c.name:getattr(stored,c.name) for c in DownloadedResource.__table__.columns},default=str)
+    assert 'registered-cookie-sentinel' not in durable+json.dumps(admitted)+json.dumps(status)

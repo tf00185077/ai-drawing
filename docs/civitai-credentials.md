@@ -55,7 +55,12 @@ hosts, default port, no userinfo, and at most five explicit redirects. Authoriza
 is sent only to the canonical `civitai.com` origin and stays stripped after an
 origin change, including a redirect back. Other destinations produce
 `civitai_redirect_blocked`; new CDN hosts require a separately reviewed policy
-change. Streams close on completion, refusal, deadline or interruption.
+change. Provider requests reject cookie storage and replay. After HTTP client
+preparation, each final request removes Cookie, Proxy-Authorization and implicit
+Authorization, then applies only the operation's permitted Authorization header.
+Same-origin, CDN and return hops use this boundary; provider Set-Cookie does not
+create another credential channel. See the [credential transport decision](decisions/civitai-credentials.md).
+Streams close on completion, refusal, deadline or interruption.
 
 Provider 401/403 remain refusals, and 429/provider/network errors remain failures
 with recovery hints. `civitai_timeout` describes a transport/deadline outcome.

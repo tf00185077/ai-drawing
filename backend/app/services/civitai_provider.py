@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import contextmanager
 from contextvars import ContextVar
+from http.cookiejar import CookieJar, DefaultCookiePolicy
 import logging
 import os
 import re
@@ -113,6 +114,15 @@ def _timeout_error() -> CivitaiProviderError:
                                'Inspect the same acquisition ID before retrying; do not submit a duplicate after a caller timeout.')
 
 
+class _RejectProviderCookies(DefaultCookiePolicy):
+    """Provider credentials have no cookie channel, including implicit state."""
+    def set_ok(self, cookie, request):
+        return False
+
+    def return_ok(self, cookie, request):
+        return False
+
+
 class ProviderOperation:
     def __init__(self, kind: str, *, settings: Any | None = None) -> None:
         if kind not in {'metadata', 'download'}:
@@ -201,15 +211,20 @@ class ProviderOperation:
         send_auth = origin == ('https', 'civitai.com', 443)
         # Ignore caller Authorization: the credential snapshot is Backend owned.
         safe_headers = {k: v for k, v in (headers or {}).items() if k.lower() not in {'authorization', 'cookie', 'proxy-authorization'}}
-        client = httpx.AsyncClient(follow_redirects=False, trust_env=False)
+        client = httpx.AsyncClient(follow_redirects=False, trust_env=False,
+                                   cookies=CookieJar(policy=_RejectProviderCookies()))
         response = None
         try:
             for hop in range(6):
                 remaining = self.remaining()
                 timeout = httpx.Timeout(connect=min(self.connect_limit, remaining), read=min(self.read_limit, remaining),
                                         write=min(self.connect_limit, remaining), pool=min(self.connect_limit, remaining))
-                request_headers = {**safe_headers, **(self.headers if send_auth else {})}
-                request = client.build_request(method, url, headers=request_headers, timeout=timeout)
+                request = client.build_request(method, url, headers=safe_headers, timeout=timeout)
+                # Client preparation can add default headers or cookie-jar state.
+                # Apply the channel policy to the final request on every hop.
+                for name in ('Authorization', 'Cookie', 'Proxy-Authorization'):
+                    request.headers.pop(name, None)
+                request.headers.update(self.headers if send_auth else {})
                 response = self.run(client.send(request, stream=True))
                 self._responses.append(response)
                 self.remaining()
