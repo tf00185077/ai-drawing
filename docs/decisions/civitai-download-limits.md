@@ -64,3 +64,21 @@ unreported metadata change. See [handoff](../tasks/p2-03-bounded-download/implem
 for source evidence and compatibility feature replacements. These are applications
 of existing D1–D5, not a task/specification or project-boundary change. Actual
 implementation and exact independent delivery QA remain required.
+
+## 2026-11-27 application after delivery review1 FAIL
+
+Actual [review1](../tasks/p2-03-bounded-download/review-round-1.md) demonstrates
+that post-commit adoption failures and already-active acquisition ownership need
+the same existing-ID contract as newly downloaded installations. Rollback cannot
+undo an installed-state commit. An earlier target-absence or identity check cannot
+authorize a competing submission after the resource is already admitted.
+
+Within unchanged D3/D4, adopt same-ID current failure publication with the actual
+sanitized reason after adoption, and respect existing active ownership through
+retained admission before any extra model-body submission/state mutation. Preserve
+old notes, genuine historical evidence, inactive safe reuse/retry and foreign bytes.
+Use the existing resource authority; durable attempts/jobs/aggregate reservations
+remain subsequent work. [Correction1](../tasks/p2-03-bounded-download/repair-round-1.md)
+and new exact delivery QA2 apply the unchanged task/kickoffCLEAR. First rejection,
+two P1 findings; no new boundary/spec ambiguity or routine owner gate. Report actual
+results under CTY's existing delegation; no Phase2/artistic acceptance.

@@ -5,6 +5,29 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-03 first rejection; correction1
+
+Actual [independent QA AID-209](/AID/issues/AID-209)
+[review1 FAIL](tasks/p2-03-bounded-download/review-round-1.md) at Coding9db56097,
+report3ed5ae8f: R1/P1 leaves installed/current-success after post-commit adoption
+failure; R2/P1 duplicates an active acquisition then corrupts same-ID current state.
+Independent44PASS/3FAIL; old notes/foreign bytes survive. One rejection/two findings,
+unchanged task285af6d1/kickoff1CLEAR. Adopt actual-reason same-ID adoption failure
+and existing active ownership under D3/D4; [correction1](tasks/p2-03-bounded-download/repair-round-1.md)
+then new exact QA2. No rejected product/tests merge, new registry certification,
+spec ambiguity or owner-boundary question. Native Coding → QA → Producer follows.
+
+Rejected-source Backend7138/124 existing skips,MCP666/four,affected456,fresh93/73/
+standing412/provider19/wait12 pass. Five independent faults cause ten assertions;
+restored125GREEN/3known-defects-deselected does not remove the full feature RED.
+[Integrity](tasks/p2-03-bounded-download/producer-correction1-integrity.json):11 uploads,
+165/86 members,158/85 Git bodies,8302/8387 fingerprints, two exact official bundle
+finals and independent patch trees/fsck0 from prerequisite-only stores. Original
+7394 task bodies/modes and72 registry items stay exact;14 shared memory edits
+remain. Raw failures/packaging/cache-removal histories stay attributed. No new
+Producer product suite/live key/provider/service/model/generation/Gallery bytes;
+source publication is not deployment or Phase2/CTY artistic acceptance.
+
 ## 2026-11-27 — p2-03 kickoff CLEAR; implementation dispatched
 
 Actual [QA AID-207](/AID/issues/AID-207) [kickoff1 CLEAR](tasks/p2-03-bounded-download/kickoff-review.md)

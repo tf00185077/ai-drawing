@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 kickoff CLEAR; Coding and exact delivery QA next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 review1 FAIL; correction1 and exact delivery QA2 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -111,18 +111,27 @@ independent exact declared-shallow restores. All 14 current shared memory bodies
 statuses are preserved. No new Producer key/provider/service/restart/download/
 register/generation/live Gallery-byte result; publication is not deployment.
 
-**Current: [p2-03 stock download execution limits](tasks/p2-03-bounded-download/task.md)**,
-with actual independent [kickoff1 CLEAR](tasks/p2-03-bounded-download/kickoff-review.md)
-at fixed86837c7/task285af6d1, report/evidence9dfdf9f1. No blocking ambiguity or
-owner question. The unchanged task now proceeds under the [implementation handoff](tasks/p2-03-bounded-download/implementation-handoff.md)
-to separate Coding and exact-final-commit delivery QA. Producer retains ownership
-and waits on actual delivery QA, not a completion-only or self-PASS claim.
-Adopt configurable8GiB/file and20GiB destination free-space floor, actual streamed
-byte checks/valid resume, safetensors checkpoint/LoRA selection and no-overwrite
-publication. These are delegated in-boundary choices, not implemented results.
-Durable attempts/jobs/aggregate reservations follow this execution prerequisite;
-search/hash lookup/MCP/defaults/proven removals and three different zero-fix
-sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit remain pending.
+**Current: [p2-03 review1 FAIL](tasks/p2-03-bounded-download/review-round-1.md)** at
+Coding9db56097, independent report/evidence3ed5ae8f. One delivery rejection/two
+P1 findings: committed adoption returns failure while status remains installed;
+retained install duplicates an already-admitted acquisition and corrupts its current
+outcome. Independent44PASS/3assertionFAIL overrides passing ordinary suites.
+[Correction1](tasks/p2-03-bounded-download/repair-round-1.md) preserves the original
+task285af6d1/kickoff1CLEAR and applies same-ID current failure plus active ownership
+inside existing D3/D4. Separate Coding and new exact delivery QA2 follow; Producer
+owns findings/acceptance. Rejected product/tests stay off main; registry remains72.
+
+Rejected-source independent Backend7138/124 existing skips,MCP666/four,affected456,
+fresh93/73/standing412/provider19/wait12 remain attributed. Five faults yield ten
+assertion failures; restored125GREEN explicitly deselects three known defects.
+[Producer integrity](tasks/p2-03-bounded-download/producer-correction1-integrity.json)
+records11 uploads,165/86 members,158/85 Git bodies,8302/8387 full fingerprints,
+both official bundles/exact finals and independent patch trees/fsck0. Current14
+shared memory bodies stay exact. No new Producer full product suite/key/provider/
+service/model/generation/liveGallery-byte result; source publication is not deployment.
+Durable attempts/jobs/aggregate reservations, search/hash/MCP/defaults/removals,
+three different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/Phase2 exit remain
+pending. No routine owner gate or phase-boundary change.
 
 ## Team
 
