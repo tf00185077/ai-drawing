@@ -48,7 +48,7 @@ Removed research data (`experiments/`, `research/`, `model_benchmarks/`); eviden
 
 ## Next work
 
-**Phase 2 (active 2026-11-26).** First check: one hand run of Civitai search → download with the owner's key file → register → `default_lora` generate on the Mac, recording every failure and the Civitai services it touched, before any Phase 2 task spec ([ROADMAP](roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26), [request](requests/2026-11-26-phase-1-close-and-phase-2-review.md)). The key file location comes from CTY; if it is missing, that is the run's first recorded failure.
+**Phase 2 (active 2026-11-26).** First check: one hand run of Civitai search → download with the owner's key file → register → `default_lora` generate on the Mac, recording every failure and the Civitai services it touched, before any Phase 2 task spec ([ROADMAP](roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26), [request](requests/2026-11-26-phase-1-close-and-phase-2-review.md)). The authorized key file is `/Users/tf00185088/Desktop/civitai.txt`; use [credential guidance](civitai-credentials.md), including the planned `CIVITAI_API_KEY_FILE` reader versus existing runtime authorization. A missing/unreadable file is a concrete failure at this known path, not an outstanding request for its location. CTY's [current execution direction](requests/2026-11-26-phase-2-start-and-key-file.md) delegates routine choices and roadmap-permitted progression to Producer; report adopted choices with results and ask about project-boundary changes.
 
 Phase 1 history:
 
@@ -147,11 +147,12 @@ zero or lower-total claim. One kickoff ambiguity/two P1 findings/clarification
 PASS retained. Prior full integrity checks cover 22 uploads, 1,897/680 payloads,
 exact patches/trees/bundles and 291 freeze hashes, with no duplicate uploads.
 
-**Next: CTY reviews the [Phase 1 exit / roadmap proposal](tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md)**
-through a separate native owner interaction and paperclip-hermes-notify. Recommend
-closing Phase 1 with unchanged roadmap order/scope and starting Phase 2 at its
-existing real Civitai First check. **Phase 2 remains inactive until that response.**
-The accepted demo did not close the phase or authorize next-phase work.
+**Phase 1 close is resolved:** CTY's later published
+[roadmap review](requests/2026-11-26-phase-1-close-and-phase-2-review.md) closes
+Phase 1 and activates the revised Phase 2; the [original proposal](tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md)
+remains historical. The subsequent [start direction](requests/2026-11-26-phase-2-start-and-key-file.md)
+supplies the concrete key-file path and continuing authority. Reconcile the older
+native proposal against those newer sources instead of waiting on its old scope.
 
 Preserve AID-171 runtime/private configuration/backups, AID-151 snapshots,
 canonical environments and all models/datasets/outputs/Gallery data. Integration
@@ -164,9 +165,10 @@ stay in task records. Concurrent shared-main memory edits are preserved.
 
 ## Team
 
-Coding and independent QA completed their recipient-owned cards. Producer owns
-accepted integration/publication and the separate phase-close owner review.
-AID-146 keeps a real human-only interaction path while awaiting that decision;
-no Phase 2 software card or real resource action is dispatched before approval.
+Coding and independent QA completed their Phase 1 recipient-owned cards. Producer
+owns reconciliation of AID-146 with CTY's published closeout and current start
+direction, the real Phase 2 First check, and subsequent reviewed implementation.
+No routine start/resource/phase-close confirmation is pending under that direction.
 Other production specialists remain paused; retained runtime/worktrees/data and
-concurrent shared-main edits are preserved.
+concurrent shared-main edits are preserved. Actual execution and results belong
+to the native task/run records, not an inference from the active roadmap label.

@@ -646,3 +646,21 @@ existing real Civitai First check. Phase 2 remains inactive before that response
 The accepted demo itself did not close the phase. Existing memory covers durable
 rules; owner response/results/verification stay in task/request records. Thirteen
 concurrent memory edits in shared main are preserved and excluded from this merge.
+
+## 2026-11-26 — Published Phase 2 direction and concrete key-file handoff
+
+CTY closed Phase 1 and activated the sharpened Phase 2 at owner-published
+`9e2d175` ([owner review](requests/2026-11-26-phase-1-close-and-phase-2-review.md)).
+The later [execution direction](requests/2026-11-26-phase-2-start-and-key-file.md)
+supplies `/Users/tf00185088/Desktop/civitai.txt`, authorizes Phase 2 execution and
+delegates roadmap-permitted progression and recommended in-boundary choices.
+The current ROADMAP, decisions, team and setup entries point to one
+[credential guide](civitai-credentials.md), preserving independent QA, actual
+exit evidence, project-boundary decisions and CTY's artistic judgment.
+
+Hermes verified that the private file is readable, nonempty and owner-only;
+the key value is not included in documents or shared output. This is a
+documentation and native-coordination handoff, not a new authenticated Civitai
+result, deployed file reader, download, generation or artifact-retrieval proof.
+The real search/keyed-download/register/`default_lora` First check is the next
+Producer-owned execution before detailed Phase 2 specifications.

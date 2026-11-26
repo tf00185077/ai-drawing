@@ -32,7 +32,7 @@ Art and LoRA work follow the same pattern with the matching specialist instead o
 ## Rules
 
 - [Operating policy](../OPERATING-POLICY.md) defines what any agent may do.
-- **Questions for CTY** go to the project channel through `paperclip-hermes-notify`, with options and a recommendation. Ask when a milestone looks done, when work falls outside the active milestone or would change the roadmap, when a roadmap threshold is reached, or when the approved scope, architecture or constraints would change. Otherwise decide and continue; finish in-flight work while waiting.
+- **Questions for CTY** go to the project channel through `paperclip-hermes-notify`, with options and a recommendation, when a decision changes the approved project scope, order, architecture or constraints. Under [CTY's current delegation](../requests/2026-11-26-phase-2-start-and-key-file.md), Producer adopts recommended options inside the accepted roadmap, verifies actual milestone/phase exit, records its roadmap review and continues when requirements are met; report choices with results instead of opening routine start/choice/phase-close approvals. Thresholds trigger reassessment and reporting; unresolved boundary decisions still go to CTY. Artistic judgment remains CTY's, and independent kickoff/delivery QA is unchanged.
 - **Aesthetics** — CTY alone judges style, image selection and training results. Technical checks do not imply artistic acceptance.
 - **Workspaces** — the shared checkout stays on `main`. Engineering changes use a separate worktree. QA reviews a fixed commit, not a moving directory.
 - **Memory** — any agent may add or fix entries in [project memory](../memory/MEMORY.md) when it learns a durable fact useful to future agents. No logs or incident history.
@@ -62,5 +62,7 @@ establish deployment or real-run proof.
 Accepted [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) adds optional
 bounded canonical PNG bytes to the existing Gallery read and the strict Mac
 SDK driver, preserving all 31 names/risks. Exact QA, three real zero-fix flows
-and native fixed-demo owner acceptance are recorded separately; phase-close
-roadmap review still precedes Phase 2. Preserve runtime-source and data boundaries.
+and native fixed-demo owner acceptance are recorded separately. CTY has since
+closed Phase 1 and activated the revised Phase 2; follow the current ROADMAP and
+[Civitai key-file guidance](../civitai-credentials.md). Preserve runtime-source
+and data boundaries.

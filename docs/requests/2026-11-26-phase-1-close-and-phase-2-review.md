@@ -23,8 +23,11 @@ models", CTY chose: **personal use, no filtering**.
   and the [roadmap decisions](../decisions/roadmap.md).
 - Licenses: use is personal and non-commercial, so models are not filtered by
   commercial-use permission; the license is still recorded.
-- API key: CTY owns a free Civitai key and will place it in a local file outside
-  the repo. The Backend reads it from the path in its private configuration
-  (`CIVITAI_API_KEY_FILE`). Agents never commit, log or return the key. If the
-  file is not there yet when the First check starts, the run records that as its
-  first failure and asks CTY for the file location.
+- API key: CTY subsequently supplied the file at
+  `/Users/tf00185088/Desktop/civitai.txt`, outside the repo. The approved Phase 2
+  private setting is `CIVITAI_API_KEY_FILE`; [credential guidance](../civitai-credentials.md)
+  records the current locator and distinguishes planned file loading from existing
+  runtime support. Agents never commit, log or return the key. A missing or
+  unreadable file is recorded at this known path; its location is no longer pending.
+  [The later start direction](2026-11-26-phase-2-start-and-key-file.md) supplies
+  executable continuation and routine-choice authority.

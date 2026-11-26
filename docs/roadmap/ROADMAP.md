@@ -16,7 +16,7 @@ Order: core before support, support before add-ons. MCP basics come first becaus
 
 - **Fields.** Every phase states Role, Depends on, Scope, Remove, Unknowns, First check, Exit and Demo. *Remove* names the code, tools or docs the phase deletes or freezes, so each phase leaves the project smaller outside its own scope. *First check* is a hand run of the riskiest part before any task spec is written.
 - **Exit counts.** An exit is met only after **3 consecutive real runs with zero manual fixes**. A manual fix is any human action, retry, workaround or call outside MCP between the request and the result. The first run of a phase records its baseline count of manual fixes.
-- **Phase close.** When a phase exits, the owner reviews this roadmap (order, scope and next phase) before the next phase is activated; the review is logged under Review history.
+- **Phase close.** Producer records actual exit evidence and reviews order, scope and the next phase against this accepted roadmap. When its requirements are met without changing the project boundary, adopt the recommended continuation, log the review under Review history and proceed; report choices with results. Ask CTY before changing approved order, scope, architecture or constraints. CTY's artistic judgment remains separate ([current delegation](../requests/2026-11-26-phase-2-start-and-key-file.md)).
 
 ## Milestones
 
@@ -46,7 +46,7 @@ Role: core. Depends on: Phase 1 (envelope, `wait_for_job`).
 Scope:
 - Civitai tools for agents: search models by text, type (checkpoint, LoRA, …) and base model, returning what an agent needs to choose (base model, download count, rating, file size, NSFW level, license); safe content by default, NSFW only when asked; inspect a version (files, trigger words, recommended parameters).
 - Download as a Backend job the agent follows with `wait_for_job` or a status call, since checkpoints (about 6.5 GB for SDXL) cannot finish inside one MCP call; `.safetensors` only, hash verified after download; a per-file size limit and a total disk budget, refusing with a clear error rather than filling the disk. Files the free key cannot download (for example Early Access) fail with a clear error.
-- Civitai API key: the owner places a free key in a local file outside the repo; the Backend reads it from the path set in its private configuration (`CIVITAI_API_KEY_FILE`). The key is never committed, logged or returned through MCP; without it, only files that need no login download, and login-required files fail with a clear error.
+- Civitai API key: use the owner-provided file `/Users/tf00185088/Desktop/civitai.txt`, outside the repo. The Phase 2 Backend reads it through private `CIVITAI_API_KEY_FILE` configuration; [credential guidance](../civitai-credentials.md) distinguishes this planned file reader from the existing authorization setting and explains the First check bridge. The key is never committed, logged or returned through MCP; without it, only files that need no login download, and login-required files fail with a clear error.
 - Resource record: one Backend-owned record for every downloaded or already-present model, with source, type, base model, mapped model family, file hash, trigger words, recommended parameters and license. Unknown local files are identified by hash lookup. Agents list and filter the record, and reuse a registered resource instead of downloading it again. It replaces the overlapping local identity ledger and source aliases rather than adding a second record.
 - Base-model mapping: one table from Civitai base models to manifest `model_family`. Phase 2 supports only the SDXL group (`SDXL 1.0`, `Illustrious`, `Pony`, `NoobAI` → `sdxl`); every other base model returns "no matching workflow".
 - Workflow selection: given the chosen resources, pick the matching template from the existing workflow manifests (for checkpoint + LoRA, `default_lora`), or return a clear "no matching workflow" error.
@@ -107,10 +107,11 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 
 ## Thresholds
 
-Ask after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task.
+Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
 
+- 2026-11-26 — CTY supplied the concrete Civitai key-file locator and instructed Producer to start Phase 2 from the updated main, adopt recommended in-boundary options, continue when roadmap requirements are met and report choices with results. Routine progression is delegated; project-boundary changes and artistic judgment remain with CTY ([request](../requests/2026-11-26-phase-2-start-and-key-file.md), [credential guidance](../civitai-credentials.md)).
 - 2026-11-26 — Phase 1 closed by CTY; order unchanged; Phase 2 activated with added scope: base-model mapping (SDXL group only), download as a job with size/disk limits, API key read from a local key file, one resource record replacing the ledger and aliases, trigger words and recommended parameters applied by `generate`, no commercial-use license filter (personal use), concrete Remove list, `default_lora` added as an unknown, and an exit with three different sentences and at least one fresh download ([decisions](../decisions/roadmap.md)).
 - 2026-11-26 — p1-05 fixed demo accepted by native human-only Board confirmation; reviewed feature integrated after exact QA PASS. [Actual phase-exit evidence/proposal](../tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md) is submitted for the separate phase-close roadmap decision. No order/scope/Not now change or Phase 2 activation is inferred.
 

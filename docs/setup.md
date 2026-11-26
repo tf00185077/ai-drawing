@@ -77,6 +77,16 @@ Non-interactive examples:
 
 Backend settings are defined in `backend/app/config.py`.
 
+### Phase 2 Civitai key file
+
+On the owner Mac, the authorized file is `/Users/tf00185088/Desktop/civitai.txt`.
+The approved Phase 2 private setting is
+`CIVITAI_API_KEY_FILE=/Users/tf00185088/Desktop/civitai.txt`. Follow
+[Civitai credential guidance](civitai-credentials.md) before the First check: the
+existing Backend uses `CIVITAI_AUTHORIZATION`, and the file reader is planned
+Phase 2 work, not installed by this documentation update. Keep the key in its
+owner-only file; never paste its value into shared configuration or evidence.
+
 ### Existing host Backend
 
 A host Python process can keep older imported code after its checkout changes.
