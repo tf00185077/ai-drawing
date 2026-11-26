@@ -168,6 +168,9 @@ production calls reproduces that stat change; [diagnosis](review-2-evidence/atim
 Unchanged full affected repeat 476 and full Backend 7158 pass. This remains a fixture
 fragility note; no product/test edit or deselection hides it. Auxiliary-payload
 lookup and preservation-count packaging mistakes are retained/corrected separately.
+The first report commit omitted ignored raw logs after a staging rejection; a
+report-only descendant explicitly adds all32 logs. This QA packaging mistake is
+retained in history, with no product/helper change or rewritten run result.
 
 ## Evidence limits and disposition
 
