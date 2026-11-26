@@ -239,7 +239,8 @@ is `c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`, repair8
 All6966 candidate bodies were byte-exact after restoration and before replacing the
 current report. Its old body remains exact as review-round-8.md. All6713 Coding
 freeze fingerprints/509 protected bodies and7090 QA freeze fingerprints/19 QA replay
-helpers verify. Ordinary pathname/hash suppression is empty. All31 intents/risks,
+helpers verified before publication packaging. Feature-check helpers remain exact;
+the later packaging-only adjustment is recorded below. Ordinary pathname/hash suppression is empty. All31 intents/risks,
 22 prior contracts and frozen recipe/AIR/Anima/alias behavior remain unchanged.
 FAIL adds no registry certification.
 
@@ -279,6 +280,21 @@ manifest are recorded; the actual correction8 manifest was verified before pinni
 All Coding failed internal expectations and older QA failed/interrupted/recovery
 attempts remain immutable. No task-owned interruption or partial fault invocation
 occurred in this review.
+
+
+The first official QA publication at report commit **90d06024ad6ff415e85d895cda49295bf1505cf7** saved and
+read back the report, bundle and aggregate patch, then rejected the complete
+15,645,283-byte evidence archive with HTTP422. The control-plane source bounds
+attachments (default10MiB) and returns422 for LIMIT_FILE_SIZE. This is a reporting
+failure, not a product result. [Partial-publication receipt](review-round-9-evidence/partial-publication-attempt.json)
+preserves the three completed uploads and the rejected archive's complete bytes
+as two official read-back-verified parts; no completed upload was repeated. The
+original packaging helper is retained byte-exact as package_review_initial.py.
+The corrected reporting-only packager indexes ordered8MiB archive parts, verifies
+their combined original size/SHA256 before opening, then performs both independent
+restorations. Product/tests/feature-check replay inputs remain unchanged, so their
+completed verification still applies. New report/package bytes have a separate
+report-only commit and official identity; the earlier partial attempt remains.
 
 ## Limits and disposition
 
