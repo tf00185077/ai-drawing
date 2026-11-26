@@ -66,15 +66,15 @@ before download-job/reservation persistence, following the joint intake and
 independent [kickoff1 CLEAR](../tasks/p2-02-resource-record/kickoff-review.md)
 (14b4c98a, fixed f8d3143/unchanged taskc43339e4) permits separate Coding and
 exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementation-handoff.md).
-Actual [review5 FAIL](../tasks/p2-02-resource-record/review-round-5.md) at FINAL690d5ab0
-(report79e709ce) changes the open finding: current R1-R4 probes pass, new R5/P1
-causes quadratic scanning/timeouts for ordinary terminal-escape descriptions.
-Fifth-result reassessment retains identity/complete-value secrecy, adopts monotonic
-quote/escape traversal with explicit EOF under [correction5](../tasks/p2-02-resource-record/repair-round-5.md),
-reports results/options and continues to independent exact review6. Existing
-three-second description bounds/task/repairs1-4/kickoff1CLEAR remain; rejected
-product stays off main. No boundary/routine owner gate, phase scope/order/architecture/
-Not now change or exit acceptance is implied.
+Actual [review6 FAIL](../tasks/p2-02-resource-record/review-round-6.md) at FINALafe9d694
+(reportae24638a) resolves R5's checked bounds but leaves original R1 incomplete for
+once-serialized quoted assignments; R2-R4 and earlier R1 forms pass. Sixth-result
+reassessment retains identity/monotonic scanning, adopts bounded representation
+handling before label/delimiter association under [correction6](../tasks/p2-02-resource-record/repair-round-6.md),
+reports results/options and continues to independent exact review7. Task/repairs1-5/
+kickoff1CLEAR and existing bounds remain; rejected product stays off main. No
+boundary/routine owner gate, phase scope/order/architecture/Not now change or exit
+acceptance is implied.
 
 Exit: from one sentence, an agent finds a checkpoint and a LoRA on Civitai, registers them and gets back an image that used the LoRA's trigger words, in 3 consecutive real runs with zero manual fixes. The three runs use three different sentences; at least one downloads both a new checkpoint and a new LoRA, and the others may reuse resources the agent finds in the resource record.
 Demo: give an agent one sentence; show the Civitai search, the download job, the resource records, the selected workflow, the applied trigger words and parameters, the image and its Gallery record. CTY judges the image.
@@ -131,6 +131,15 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-26 — Sixth p2-02 delivery rejection: review6 confirms R5's checked bounds
+  repair, but original R1 fails for once-serialized quoted assignments. Retain
+  identity and monotonic scanning; adopt bounded representation handling before
+  label/delimiter association, complete-value exclusion and useful safe output.
+  Correction6 and independent exact review7 stay within unchanged task/CLEAR;
+  report actual results under current delegation. No new boundary or phase exit
+  ([decision](../decisions/civitai-resource-record.md),
+  [repair](../tasks/p2-02-resource-record/repair-round-6.md)).
 
 - 2026-11-26 — Fifth p2-02 delivery rejection: review5's current R1-R4 probes pass,
   but new R5 makes ordinary terminal-escape descriptions quadratic on actual

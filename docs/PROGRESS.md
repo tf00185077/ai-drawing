@@ -49,27 +49,28 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 review5 FAIL](tasks/p2-02-resource-record/review-round-5.md), QA79e709ce
-at Coding FINAL690d5ab0/freeze3caeebd6, demonstrates new R5/P1: ordinary terminal-
-backslash descriptions cause quadratic quoted scanning in actual provider/read
-paths. Initial/final trailing cases each two timeouts/two controls,registered five timeouts/
-1scaling pass. Current R1-R4 probes pass/no current disclosure demonstrated; older
-source's latency controls do not certify secrecy. Five rejections/five distinct P1
-findings/new R5 unresolved. Reassessment retains identity/complete-value semantics,
-adopts monotonic quote/escape traversal with explicit EOF and class/bounds/fault
-coverage. [Correction5](tasks/p2-02-resource-record/repair-round-5.md) and exact
-independent QA6 follow unchanged task/repairs1-4/CLEAR. Report results; no boundary
-change/routine owner gate or accepted product merge.
+[p2-02 review6 FAIL](tasks/p2-02-resource-record/review-round-6.md), QAae24638a
+at Coding FINALafe9d694/freeze02e21afc, leaves original R1 incomplete for quoted
+assignments serialized once as JSON text.22 feature failures/20 controls twice;
+three complete writer/old-read trace failures twice expose full synthetic values.
+No actual owner-key disclosure. R5 bounds resolved for checked meanings, R2-R4 and
+earlier R1 forms pass; D1/D2/D4 and combined gates fail. Six rejections/five distinct
+P1 findings/R1 unresolved. Reassess representation handling before label/delimiter
+association, retain monotonic scanning/useful safe output and all identity behavior.
+[Correction6](tasks/p2-02-resource-record/repair-round-6.md) plus independent exact
+QA7 follow unchanged task/repairs1-5/CLEAR and existing bounds. Report results;
+no new boundary/routine owner gate or feature acceptance.
 
-Rejected-source QA Backend3402/124 existing skips,MCP666/four,1424 restored,
-130 lexical cases,19 faults/23 invocations/902 assertion failures and fresh
-93/73/412/12/19/schema2 remain attributed. Producer verifies20 uploads/nine base
-chunks/523 indexed payloads/511 Git bodies/4208-4399-4588 fingerprints and both
-exact official restorations/fsck;1998 exact QA task bodies/old histories preserved.
-Existing catalog documentation guard/publication checks are recorded with integrity.
-No new product suite/private/live action.22 contracts/13 memory bodies/private
-runtime/data retained. No Phase2 automation/three different zero-fix sentences/
-freshcheckpoint+LoRA/CTY demo/exit acceptance. Main product remains accepted p2-01.
+Rejected-source QA Backend3476/124 existing skips,MCP666/four,1498 restored,
+360 independent terminal cases,20 faults/25 invocations/902 assertions plus20
+feature timeouts,fresh93/73/412/12/19/schema2 remain attributed. Producer verifies20
+uploads/nine base chunks/520 indexed payloads/508 Git bodies/4682-4878-5092
+fingerprints and both exact official restorations/fsck;2501 exact QA task bodies,
+all old histories/mirrors preserved. Existing catalog doc guard/publication checks
+recorded with integrity. No new product suite/private/live action.22 contracts/
+13 memory bodies/status/private runtime/data retained. No full Phase2 automation/
+three different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/exit acceptance.
+Main product remains accepted p2-01; rejected p2-02 product/tests stay off main.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|

@@ -20,7 +20,7 @@
 | Roadmap | [roadmap/ROADMAP.md](roadmap/ROADMAP.md) | current |
 | Setup | [setup.md](setup.md) | current |
 | Civitai credentials | [civitai-credentials.md](civitai-credentials.md) — owner Mac key-file locator and safe loading | current |
-| Phase 2 resource identity | [decision](decisions/civitai-resource-record.md) and [p2-02 foundation](tasks/p2-02-resource-record/task.md) — existing row authority before download accounting | kickoff CLEAR; review5 FAIL (new R5), correction5 after reassessment |
+| Phase 2 resource identity | [decision](decisions/civitai-resource-record.md) and [p2-02 foundation](tasks/p2-02-resource-record/task.md) — existing row authority before download accounting | kickoff CLEAR; review6 FAIL (serialized R1), correction6 after reassessment |
 | MCP server | [mcp.md](mcp.md) | current |
 | Prompt dashboard | [prompt-dashboard.md](prompt-dashboard.md) | current |
 | Windows worker | [windows-worker.md](windows-worker.md) | current |
