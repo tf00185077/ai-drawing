@@ -160,7 +160,7 @@ size/mtime/ctime. The corruption fault fails both variants, confirming preserved
 feature sensitivity. Review2's original self-read diagnosis/failures/repeat remain
 unchanged; this review adds no silent test removal, skip or weakened byte check.
 
-[Attempt ledger](review-3-evidence/attempt-ledger.json) retains two QA setup/reporting
+[Attempt ledger](review-3-evidence/attempt-ledger.json) retains QA setup/reporting
 limitations. The first entry-expiration fault correctly failed via `pytest.fail`,
 but the driver required an explicit AssertionError and stopped before its last
 fault/GREEN. That attempt is not counted as completed sensitivity; replacing the
@@ -168,7 +168,10 @@ helper failure primitive with `assert False` preserves the condition and the ful
 fault replay/current GREEN then completes. Initial provider selector guessed a
 nonexistent filename and collected no tests (exit4). The actual retained boundary
 module then passes19. Every original log/receipt survives; neither error changes
-product or hides a defect. Earlier Coding/review1/review2 attempts remain immutable.
+product or hides a defect. Initial QA packaging used a raw SHA for bundle export; Git refused an empty
+bundle before any upload. Exporting actual HEAD corrects that packaging command;
+first package files remain retained. No product/helper/test changed. Earlier
+Coding/review1/review2 attempts remain immutable.
 
 ## Evidence limits and disposition
 
