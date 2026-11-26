@@ -79,9 +79,26 @@ full, including Basic/Proxy-Authorization schemes, later cookies, quoted multiwo
 values, compound labels, whitespace and delimiters. Token-by-token removal cannot
 safely locate their ends. The same normalization covers retained descriptor
 license/usage fields and newly generated acquisition license snapshots. Credential
-keys are excluded before renaming so repeated normalization is idempotent. Bare
-Basic text is recognized only with a decodable user:password value; ordinary text
-such as “basic painting” remains useful. Sensitive evidence keys are removed.
+keys are excluded before renaming so repeated normalization is idempotent.
+
+Keys and parsed assignment/header labels use one identifier policy. Labels may
+be unquoted or enclosed in matching single/double quotes; colon/equal delimiters
+and Unicode whitespace are accepted. Identifier components use whitespace,
+underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
+component ending in `token`, `secret`, `authorization`, `password`, `credential`,
+`signature`, `cookie` or `api key` (including joined `apikey`) is sensitive,
+case-insensitively; prefixes need no word boundary. Thus `CIVITAI_API_KEY`,
+`HTTP_AUTHORIZATION`, `providerApiKey`, `provider.api.key` and Unicode-prefixed
+identifiers have the same meaning as keys and as assignment labels. Extra
+separator-delimited components do not undo recognition. The complete affected
+string is redacted regardless of its value, including opaque labelled Basic.
+Trailing letters are significant: `tokenizer`, `api_keyboard`, `secretariat` and
+`passwordless` remain useful keys/values. Unassigned prose such as “API_KEY
+documentation” is retained. This is recognizable labelled metadata treatment,
+not arbitrary unlabelled secret discovery or a list of app environment settings.
+Bare Basic text is recognized only with a decodable user:password value;
+ordinary text such as “basic painting” remains useful. Bare Bearer treatment and
+URL exclusion keep their established behavior. Sensitive evidence keys are removed.
 Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
 are normalized for reads without repair writes. Invalid typed snapshots remain
 readable as incomplete; supplied verification never establishes measured evidence.

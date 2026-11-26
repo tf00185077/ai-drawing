@@ -23,13 +23,28 @@ LICENSE_FIELDS = ('allowNoCredit','allowCommercialUse','allowDerivatives','allow
 SHA256 = re.compile(r'^[0-9a-fA-F]{64}$')
 # A recognizable credential-bearing string is a complete safety unit. Token
 # boundaries cannot identify the end of cookies, quoted values or auth schemes.
-_CREDENTIAL_TEXT = re.compile(
-    r"\b(?:(?:(?:proxy[\s_-]*)?authorization|(?:set[\s_-]*)?cookie|"
-    r"api[\s_-]*key|access[\s_-]*token|token|secret|password|credential|signature)"
-    r"[\"']?\s*[:=]|bearer\s+\S)", re.I,
+_ASSIGNMENT_LABEL = re.compile(
+    r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>[\w.-]+(?:\s+[\w.-]+)*)"
+    r"(?P=quote)\s*[:=]",
 )
+_BEARER_AUTH = re.compile(r'\bbearer\s+\S', re.I)
 _BASIC_AUTH = re.compile(r'\bbasic\s+([A-Za-z0-9+/]+={0,2})(?=$|[\s,;])', re.I)
-_SENSITIVE = re.compile(r'token|secret|authorization|password|credential|signature|cookie|api.?key',re.I)
+_SENSITIVE = re.compile(
+    r'(?:token|secret|authorization|password|credential|signature|cookie|api[\s_.-]*key)'
+    r'(?=$|[\s_.-])', re.I,
+)
+
+
+def credential_label(label: str) -> bool:
+    """One conservative identifier policy for keys and assignment/header labels.
+
+    Split camelCase/acronym transitions, then recognize credential suffixes of
+    identifier components (space, underscore, dot or hyphen separated). Prefixes
+    need no word boundary; trailing letters do: tokenizer/api_keyboard are safe.
+    """
+    label = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', label.strip().strip('\"\''))
+    label = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', label)
+    return bool(_SENSITIVE.search(label))
 
 
 def workflow_family(label: Any) -> str | None:
@@ -46,7 +61,8 @@ def safe_text(value: str) -> str:
             return '[redacted locator]'
     value = re.sub(r'https?://[^\s<>"\']+', locator, value, flags=re.I)
     # Credentials in free-form nested strings are not necessarily URL queries.
-    if _CREDENTIAL_TEXT.search(value):
+    if (any(credential_label(match['label']) for match in _ASSIGNMENT_LABEL.finditer(value))
+            or _BEARER_AUTH.search(value)):
         return '[redacted credential]'
     # A bare Basic scheme is recognizable when its base64 contains user:password;
     # natural language such as "basic painting" is ordinary metadata.
@@ -62,7 +78,7 @@ def safe_text(value: str) -> str:
 def safe_evidence(value: Any) -> Any:
     if isinstance(value,dict):
         return {safe_text(k):safe_evidence(v) for k,v in value.items()
-                if isinstance(k,str) and not _SENSITIVE.search(k) and safe_text(k) != '[redacted credential]'}
+                if isinstance(k,str) and not credential_label(k) and safe_text(k) != '[redacted credential]'}
     if isinstance(value,list): return [safe_evidence(v) for v in value]
     if isinstance(value,str): return safe_text(value)
     if isinstance(value,float) and not math.isfinite(value): return None
