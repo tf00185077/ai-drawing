@@ -27,6 +27,16 @@ _ASSIGNMENT_LABEL = re.compile(
     r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>[\w.-]+(?:\s+[\w.-]+)*)"
     r"(?P=quote)\s*(?P<delimiter>[:=]?)",
 )
+# Consume each matching quoted unit once, including inner whitespace and escaped
+# quotes. Delimiters are optional while scanning so ordinary quoted values keep
+# their lexical boundaries; only units followed by colon/equal are labels.
+_QUOTED_LABEL = re.compile(
+    r'''(?P<label>"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\s*(?P<delimiter>[:=]?)''',
+    re.S,
+)
+_LABEL_ESCAPE = re.compile(r'\\(u[0-9a-fA-F]{4}|["\'\\/bfnrt])')
+_LABEL_ESCAPES = {'"':'"', "'":"'", '\\':'\\', '/':'/', 'b':'\b',
+                  'f':'\f', 'n':'\n', 'r':'\r', 't':'\t'}
 _BEARER_AUTH = re.compile(r'\bbearer\s+\S', re.I)
 _BASIC_AUTH = re.compile(r'\bbasic\s+([A-Za-z0-9+/]+={0,2})(?=$|[\s,;])', re.I)
 _SENSITIVE = re.compile(
@@ -47,6 +57,23 @@ def credential_label(label: str) -> bool:
     return bool(_SENSITIVE.search(label))
 
 
+def _credential_assignment(value: str) -> bool:
+    # Decode serialized labels once, as lexical string content. Literal tabs and
+    # other Unicode whitespace already have their ordinary key-policy meaning.
+    def decode(match):
+        escape = match[1]
+        return chr(int(escape[1:], 16)) if escape.startswith('u') else _LABEL_ESCAPES[escape]
+    for match in _QUOTED_LABEL.finditer(value):
+        if match['delimiter']:
+            label = _LABEL_ESCAPE.sub(decode, match['label'][1:-1])
+            if credential_label(label):
+                return True
+    # Inspect unquoted assignments too, including those inside a quoted value.
+    # Maximal token runs prevent retrying long ordinary prose at every word.
+    return any(match['delimiter'] and credential_label(match['label'])
+               for match in _ASSIGNMENT_LABEL.finditer(value))
+
+
 def workflow_family(label: Any) -> str | None:
     return WORKFLOW_FAMILIES.get(label.strip().casefold()) if isinstance(label,str) else None
 
@@ -63,8 +90,7 @@ def safe_text(value: str) -> str:
     # Credentials in free-form nested strings are not necessarily URL queries.
     # Consume ordinary token runs too: requiring a delimiter in the regex would
     # retry a long unassigned description at every word. Only assignments count.
-    if (any(match['delimiter'] and credential_label(match['label']) for match in _ASSIGNMENT_LABEL.finditer(value))
-            or _BEARER_AUTH.search(value)):
+    if _credential_assignment(value) or _BEARER_AUTH.search(value):
         return '[redacted credential]'
     # A bare Basic scheme is recognizable when its base64 contains user:password;
     # natural language such as "basic painting" is ordinary metadata.

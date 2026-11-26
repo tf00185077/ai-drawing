@@ -83,7 +83,12 @@ keys are excluded before renaming so repeated normalization is idempotent.
 
 Keys and parsed assignment/header labels use one identifier policy. Labels may
 be unquoted or enclosed in matching single/double quotes; colon/equal delimiters
-and Unicode whitespace are accepted. Identifier components use whitespace,
+and Unicode whitespace are accepted. Matching quoted labels are consumed as complete
+lexical units before recognition, including leading/trailing inner spaces, tabs
+and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
+their lexical meaning. Ordinary quoted values do not hide inner assignments;
+maximal ordinary runs and quoted units keep long-description scanning bounded.
+Identifier components use whitespace,
 underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
 component ending in `token`, `secret`, `authorization`, `password`, `credential`,
 `signature`, `cookie` or `api key` (including joined `apikey`) is sensitive,

@@ -23,6 +23,25 @@
 
 ## Log
 
+### 2026-11-26 · Parse complete quoted labels before credential recognition
+
+- Decision: consume a matching quoted assignment/header label as a complete unit,
+  then apply the same credential identifier policy as for dictionary keys. Include
+  inner leading/trailing whitespace and the literal/serialized forms exercised by
+  actual probes; preserve safe neighbors and bounded long-description scanning.
+- Why: sharing a recognizer is insufficient when the text extractor drops a
+  recognizable quoted label or loses its delimiter during unquoted fallback.
+  Matching key controls can pass while writer and old-read text still expose values.
+- Reassessment: the fourth p2-02 rejection leaves original R1 unresolved. Retain
+  the single-row design, complete-value boundary and passing R2-R4; correct parsing
+  and add class/consistency/fault coverage under unchanged task/CLEAR. Current
+  delegation permits this in-boundary option; report it with results. No new owner
+  requirement, phase boundary change or accepted product behavior is implied.
+- Evidence: [actual review4](../tasks/p2-02-resource-record/review-round-4.md),
+  [real key controls](../tasks/p2-02-resource-record/review-round-4-evidence/independent_key_controls.py)
+  and [correction4](../tasks/p2-02-resource-record/repair-round-4.md).
+
+
 ### 2026-11-26 · Share recognition for credential keys and assignment labels
 
 - Decision: apply one documented credential-label policy to dictionary keys and
