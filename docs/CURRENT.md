@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review2 FAIL; correction2 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review3 FAIL; correction3 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,32 +90,32 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review2 FAIL accepted:** corrected [Coding AID-188](/AID/issues/AID-188)
-**6fbcb24602e23d72363834cc9437a4a14f216386**, freeze42e6812e, receives actual
-[independent QA AID-189](/AID/issues/AID-189) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-2.md),
-report/evidence **5c6e9b4fcd9e1bf0adff89da8d93a5146e804953**. Partial label/token
-redaction leaves Basic credentials, later cookies and quoted multiword values.
-Synthetic real registered/ORM/provider/public-read probes have13 expected-feature
-failures/one passed; no actual owner-key disclosure. R2-R4/C2-C4 and isolated D3
-migration pass. D1/D2/D4/C1 and acceptance D5/C5 FAIL. Product/tests stay off main.
+**p2-02 review3 FAIL accepted:** [Coding AID-190](/AID/issues/AID-190) FINAL
+**21d273fec6ce8bf00a533634d685edfb42431b05**, freeze374c158b, received actual
+[independent QA AID-191](/AID/issues/AID-191) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-3.md),
+report/evidence **8d7e5c5182d200a24b103f660f082f5844469739**. Explicit prefixed
+credential assignments survive actual provider/registered/ORM/stored reads:
+20 expected-feature failures. Initial four failures/24 covered-form passes remain.
+No real key read/disclosure. R2-R4/C2-C4 and isolated D3 pass at reviewed source;
+D1/D2/D4/C1/S1/S2 and acceptance fail. Product/tests remain off main.
 
-**Next: [correction2](tasks/p2-02-resource-record/repair-round-2.md)** and separate
-exact delivery QA3. Two rejected deliveries, original four P1 findings with R1
-unresolved; kickoff1 CLEAR/taskc43339e4/repair1b3d649dc unchanged. Producer retains
-ownership and native Coding -> QA -> Producer continuation. No routine owner gate,
-new spec ambiguity, phase-order/scope/architecture or artistic decision.
+**Third-rejection threshold reached and reassessed.** Producer retains the
+single-row design/passing R2-R4 and adopts consistent recognition of credential
+keys and complete assignment labels, including prefixes. [Correction3](tasks/p2-02-resource-record/repair-round-3.md)
+then exact independent QA4 proceed under unchanged task/repairs/kickoff1CLEAR.
+Report the reassessment/adopted option; no scope/order/architecture/Not now change
+or routine owner gate. One original unresolved finding, not a new owner requirement.
 
-Rejected-source QA Backend2083/124 existing skips, MCP666/four, restored105,
-fresh producers93/readers73/standing412/wait12/provider19, schema2 and13 effective
-mutants/43 assertions remain attributed; they do not remove the independent REDs.
-Producer verifies10 official uploads,159/131 payloads160/132 members,157/129 exact
-Git bodies,2889/2941/3069 fingerprints,both bundle/patch restorations/fsck. No new
-Producer product suite/key/provider/service/restart/model/Gallery-byte action.
-All22 registry contracts, old raw evidence and13 memory bodies/private data stay
-preserved. [Resource decision](decisions/civitai-resource-record.md) applies complete
-value exclusion within the existing contract, with readable immutable old rows.
-Remaining jobs/budgets/hash/search/MCP/defaults/removals and actual Phase2 three
-zero-fix sentences/fresh checkpoint+LoRA/CTY image demo/exit remain pending.
+QA rejected-source Backend2200/124 existing skips,MCP666/four,restored222,
+fresh93/73/412/12/19/schema2,17 distinct mutants/18 invocations/158 assertion failures
+remain evidence, not acceptance or qualification of changed software. Producer
+verifies24 official uploads including superseded package bytes/eight base chunks,
+current337/155payloads338/156members327/152Gitbodies,3271/3390/3541 fingerprints,
+exact official base and independent bundle/per-commit-patch/fsck restorations.
+No new Producer product suite/key/provider/service/restart/model/Gallery-byte action.
+All22 registry rows, old evidence and13 memory bodies/private runtime/data preserved.
+Remaining Phase2 jobs/budgets/hash/search/MCP/defaults/removals/three zero-fix
+sentences/freshcheckpoint+LoRA/CTY demo/exit remain pending. Source is not deployment.
 
 Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
 replacement, automatic defaults/workflows and proven removals remain separate.

@@ -66,16 +66,14 @@ before download-job/reservation persistence, following the joint intake and
 independent [kickoff1 CLEAR](../tasks/p2-02-resource-record/kickoff-review.md)
 (14b4c98a, fixed f8d3143/unchanged taskc43339e4) permits separate Coding and
 exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementation-handoff.md).
-Actual [delivery1 FAIL](../tasks/p2-02-resource-record/review-round-1.md) identified
-four P1 gaps. [Review2 FAIL](../tasks/p2-02-resource-record/review-round-2.md)
-(5c6e9b4f, candidate6fbcb246) confirms R2-R4 pass but R1 complete-value secrecy
-incomplete. [Correction2](../tasks/p2-02-resource-record/repair-round-2.md) and fresh
-exact QA3 proceed under unchanged kickoff1CLEAR/task and original repair1. Two
-rejections; no threshold of three yet, no owner boundary question or routine gate.
-Producer adopts conservative complete-value removal/rejection within the current
-contract; preserve safe useful metadata, readable old records and passing R2-R4.
-Rejected product stays off main; Producer retains native coordination/ownership.
-No scope/order/Not now/architecture/phase-exit change.
+Actual [review3 FAIL](../tasks/p2-02-resource-record/review-round-3.md) at FINAL21d273fe
+(report8d7e5c51) leaves original R1 incomplete; R2-R4 pass. The three-rejection
+threshold is reached and reassessed. Producer retains the single-row design,
+adopts consistent credential key/assignment-label recognition including prefixes
+under [correction3](../tasks/p2-02-resource-record/repair-round-3.md), reports the
+threshold/options/results and continues to exact independent QA4. Task/earlier
+repairs/kickoff1 CLEAR are unchanged; rejected product remains off main. No owner
+boundary question, routine approval gate or phase scope/order/Not now change.
 
 Exit: from one sentence, an agent finds a checkpoint and a LoRA on Civitai, registers them and gets back an image that used the LoRA's trigger words, in 3 consecutive real runs with zero manual fixes. The three runs use three different sentences; at least one downloads both a new checkpoint and a new LoRA, and the others may reuse resources the agent finds in the resource record.
 Demo: give an agent one sentence; show the Civitai search, the download job, the resource records, the selected workflow, the applied trigger words and parameters, the image and its Gallery record. CTY judges the image.
@@ -132,6 +130,14 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-26 — Third p2-02 delivery rejection: actual review3 R1 incomplete, while
+  R2-R4 pass. Threshold reassessment retains current resource identity and adopts
+  one credential key/assignment recognition policy with prefix-class guards;
+  correction3 and independent exact review4 remain inside the approved contract.
+  Report the threshold and adopted option under current delegation; no boundary
+  change or Phase2 exit ([decision](../decisions/civitai-resource-record.md),
+  [repair](../tasks/p2-02-resource-record/repair-round-3.md)).
 
 - 2026-11-26 — Producer accepts p2-01 exact delivery review2 PASS after one R1 correction. Within the active Phase2 intake, establish existing resource-row metadata/identity before persistent download accounting; source aliases describe images and stay preserved pending dependency-proven removal. Scope/order/Not now and exit unchanged; fresh kickoff for p2-02. This is an in-phase sequencing review, not Phase2 close ([decision](../decisions/civitai-resource-record.md)).
 

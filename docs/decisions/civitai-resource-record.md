@@ -23,6 +23,24 @@
 
 ## Log
 
+### 2026-11-26 · Share recognition for credential keys and assignment labels
+
+- Decision: apply one documented credential-label policy to dictionary keys and
+  parsed assignment/header identifiers, including prefixed identifiers. Keep
+  complete-value exclusion and read-only old-record visibility; preserve unrelated
+  safe metadata. This is a small correction inside the current shared boundary.
+- Why: regex word boundaries treat underscore as part of a word, so an explicit
+  prefixed assignment can evade a recognizer that handles the same credential key.
+  Idempotence and complete-value removal do not establish recognition coverage.
+- Reassessment: after three p2-02 delivery rejections, retain the single-row
+  design/passing R2-R4 and replace the inconsistent label assumption. No phase
+  scope/order/architecture/Not now change is required. CTY's current delegation
+  permits adoption and continued independent QA; report the threshold with results.
+- Evidence: [actual review3](../tasks/p2-02-resource-record/review-round-3.md) and
+  [correction3](../tasks/p2-02-resource-record/repair-round-3.md). This is Producer's
+  application/reassessment, not a new owner quote or accepted product behavior.
+
+
 ### 2026-11-26 · Exclude complete recognizable credential values
 
 - Decision: treat a recognizable credential-bearing free-text value as a complete

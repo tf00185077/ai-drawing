@@ -49,23 +49,24 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 review2 FAIL](tasks/p2-02-resource-record/review-round-2.md), actual QA
-AID-189 **5c6e9b4f** at corrected Coding **6fbcb246**/freeze42e6812e, leaves
-original R1/P1 incomplete. R2-R4 pass; complete Basic/cookie/quoted-value secrecy
-fails13 independent expected-feature cases (one other case passes) through actual
-registered publication/provider/ORM/stored reads. Two delivery rejections; original
-four P1 findings, one unresolved; kickoff1CLEAR/task unchanged. [Correction2](tasks/p2-02-resource-record/repair-round-2.md)
-and exact independent QA3 follow; rejected product/tests remain off main.
+[p2-02 review3 FAIL](tasks/p2-02-resource-record/review-round-3.md), QA8d7e5c51
+at actual Coding FINAL21d273fe/freeze374c158b, leaves R1/P1 incomplete: explicit
+prefixed credential assignment values persist/project.20 independent feature REDs;
+initial4RED/24 covered-form passes retained. R2-R4 pass at that exact source;
+D1/D2/D4/C1/S1/S2 and acceptance fail. Three rejections reach the roadmap threshold.
+Producer reassesses, retains current identity design/passing R2-R4 and adopts
+consistent key/assignment label recognition with prefix-class regression coverage.
+[Correction3](tasks/p2-02-resource-record/repair-round-3.md) and exact independent
+QA4 follow unchanged task/CLEAR. Report results; no routine gate/boundary change.
 
-Current rejected-source QA Backend2083/124 existing skips,MCP666/four,105 restored
-feature cases,13 meaningful mutants/43 assertion failures,fresh93/73/412/12/19
-standing checks/schema2 remain evidence, not acceptance. Producer verifies10uploads,
-159/131payloads160/132members157/129Gitbodies,2889/2941/3069 fingerprints,both
-bundle/patch restorations/fsck; no new product suite or live key/provider/runtime/
-model/Gallery action. Original first FAIL, correction1 manifest/raw histories and
-new review2 FAIL stay immutable;22 registry rows/13 shared memory bodies preserved.
-Passing R2-R4 and isolated D3 do not overwrite original review1 or qualify future
-changed code. Remaining Phase2 flow/exit and CTY aesthetics remain pending.
+Rejected-source QA Backend2200/124 skips,MCP666/four,222 restored feature cases,
+17 mutants/18 invocations/158 assertion failures,fresh93/73/412/12/19/schema2 stay
+attributed. Producer verifies24 uploads/eight official base chunks/current492
+payloads479Gitbodies/3271-3390-3541 fingerprints/both exact restorations/fsck.
+No extra product suite/live action. Original first/review2/review3 FAIL and raw
+histories stay immutable;22 contracts/13 memory bodies/private runtime/data kept.
+No complete Phase2 automation/three different zero-fix sentences/newcheckpoint+
+LoRA qualification/CTY image demo/exit. Main product remains accepted p2-01.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
