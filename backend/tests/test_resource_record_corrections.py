@@ -179,6 +179,7 @@ def test_retained_background_notes_exact_and_current_error_truth(boundary,outcom
     if outcome=='success':
         assert summary['error'] is None
     else:
+        assert isinstance(summary['error'],dict),summary
         assert summary['error']['code']==('unauthorized' if outcome=='refused' else 'civitai_credentials_unavailable')
         assert summary['error']['message'] and summary['error']['hint']
     with database.SessionLocal() as db:
