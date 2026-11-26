@@ -23,6 +23,26 @@
 
 ## Log
 
+### 2026-11-26 · Resolve representation before associating credential delimiters
+
+- Decision: account for relevant once-serialized assignment text before matching
+  its quoted label to its delimiter, with or without outer JSON string quotes.
+  Apply the common label policy to bounded recognition views; exclude the complete
+  affected original value. Useful safe output retains its original representation.
+- Why: decoding only an already-found label is too late when serialized quote
+  escapes hid the label/delimiter relationship. Key removal, literal-label guards
+  and safe cursor progress can all pass while serialized value text still leaks.
+- Reassessment: the sixth rejection leaves original R1 incomplete for this class;
+  R5 is resolved for checked bounds and R2-R4 pass. Retain the monotonic scanner
+  and identity work; correct representation handling without wholesale public-data
+  unescaping, unbounded recursive decoding or new format/size exclusions. This
+  stays approved task/CLEAR; report the adopted option under current delegation.
+- Evidence: [actual review6](../tasks/p2-02-resource-record/review-round-6.md),
+  [full boundary trace](../tasks/p2-02-resource-record/review-round-6-evidence/independent_serialized_boundary.py)
+  and [correction6](../tasks/p2-02-resource-record/repair-round-6.md). This is a
+  Producer application, not a new owner quotation or accepted product behavior.
+
+
 ### 2026-11-26 · Give quoted scanning an explicit terminal-escape rule
 
 - Decision: retain complete credential-label semantics while making quote/escape

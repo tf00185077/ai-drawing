@@ -50,7 +50,7 @@ def credential_label(label: str) -> bool:
     return bool(_SENSITIVE.search(label))
 
 
-def _credential_assignment(value: str) -> bool:
+def _assignment_in_view(value: str) -> bool:
     # Decode serialized labels once, as lexical string content. Literal tabs and
     # other Unicode whitespace already have their ordinary key-policy meaning.
     def decode(match):
@@ -90,6 +90,31 @@ def _credential_assignment(value: str) -> bool:
     # Maximal token runs prevent retrying long ordinary prose at every word.
     return any(match['delimiter'] and credential_label(match['label'])
                for match in _ASSIGNMENT_LABEL.finditer(value))
+
+
+def _credential_assignment(value: str) -> bool:
+    """Recognize raw and once-serialized text without rewriting public values.
+
+    Whole JSON strings lose their envelope before scanning. Escaped content
+    without an envelope gets the same single lexical decoding pass. Neither view
+    is decoded recursively; quote traversal remains monotonic in each view.
+    """
+    if _assignment_in_view(value):
+        return True
+    if "\\" not in value:
+        return False
+    decoded = None
+    if value.lstrip().startswith('"'):
+        try:
+            decoded = json.loads(value)
+        except ValueError:
+            pass
+    if not isinstance(decoded, str):
+        def decode(match):
+            escape = match[1]
+            return chr(int(escape[1:], 16)) if escape.startswith('u') else _LABEL_ESCAPES[escape]
+        decoded = _LABEL_ESCAPE.sub(decode, value)
+    return decoded != value and _assignment_in_view(decoded)
 
 
 def workflow_family(label: Any) -> str | None:
