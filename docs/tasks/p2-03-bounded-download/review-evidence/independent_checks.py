@@ -108,8 +108,8 @@ def test_independent_publication_collision_guard(tmp_path, small_policy):
         target.write_bytes(b'concurrent prior data')
         yield b'cdef'
     result=safe_download(meta(), target, transport=Transport(body()))
-    assert result.status=='failed' and result.diagnostics['code']=='civitai_target_exists'
     assert target.read_bytes()==b'concurrent prior data' and result.actual_sha256 is None
+    assert result.status=='failed' and result.diagnostics['code']=='civitai_target_exists'
 
 
 @pytest.mark.parametrize('body', [b'abcde', b'xxxxxx'])
