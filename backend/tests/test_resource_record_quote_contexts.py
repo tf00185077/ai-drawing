@@ -70,7 +70,31 @@ def test_quote_context_safe_original(client, text):
 @pytest.mark.parametrize('quote', ['"', "'"])
 @pytest.mark.parametrize('representation', ['literal', 'serialized', 'escaped'])
 def test_dense_odd_quote_description_retains_content(client, quote, representation):
-    raw = quote + (quote + 'ordinary description ') * 4000 + '\\'
+    raw = quote + (quote + 'ordinary description  ') * 4000
+    raw = raw[:-1] + '\\'
+    assert len(raw) == 92001
     text = raw if representation == 'literal' else json.dumps(raw)
     if representation == 'escaped': text = text[1:-1]
     safe_original_guard(client, text)
+
+
+# The JSON-unit view joins a once-encoded identifier fragment to its surrounding
+# unquoted identifier. Raw/lexical views retain that unit's envelope quotes.
+UNIT_LABELS = ['HTTP_AUTH"\\u004f"RIZATION',
+               'CIVITAI_API_"\\u004b"EY', 'vendor.api."\\u006b"ey']
+UNIT_ATTACKS = [label + ' = "' + SECRET + '"' for label in UNIT_LABELS]
+UNIT_CONTROLS = [label + ' = "' + SECRET + '"'
+                 for label in ['HTTP_AUTHORIZATION', 'CIVITAI_API_KEY', 'vendor.api.key']]
+
+@pytest.mark.parametrize('text', UNIT_ATTACKS + UNIT_CONTROLS)
+def test_json_unit_publication(client, text):
+    values.test_complete_value_direct_publication_commit_reload_and_idempotence(client, text)
+
+@pytest.mark.parametrize('text', UNIT_ATTACKS + UNIT_CONTROLS)
+def test_json_unit_provider(boundary, text):
+    values.test_complete_value_real_provider_inspect_select_acquire_background(boundary, text)
+
+@pytest.mark.parametrize('text', UNIT_ATTACKS + UNIT_CONTROLS)
+@pytest.mark.parametrize('field', values.FIELDS)
+def test_json_unit_old_reads_finally(client, tmp_path, monkeypatch, field, text):
+    old_read_guard(client, tmp_path, monkeypatch, field, text)
