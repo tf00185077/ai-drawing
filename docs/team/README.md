@@ -58,3 +58,9 @@ limit remains unverified. `job_status` and LoRA status remain separate reads.
 The [p1-04 acceptance](../tasks/p1-04-mcp-health-and-workers/acceptance.md) records
 independent exact-commit PASS and integration. Source availability does not
 establish deployment or real-run proof.
+
+Accepted [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) adds optional
+bounded canonical PNG bytes to the existing Gallery read and the strict Mac
+SDK driver, preserving all 31 names/risks. Exact QA, three real zero-fix flows
+and native fixed-demo owner acceptance are recorded separately; phase-close
+roadmap review still precedes Phase 2. Preserve runtime-source and data boundaries.

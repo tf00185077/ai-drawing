@@ -1,6 +1,6 @@
 # Progress
 
-Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-25). Current state in one screen: [CURRENT](CURRENT.md).
+Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` (2026-11-26). Current state in one screen: [CURRENT](CURRENT.md).
 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
@@ -32,7 +32,7 @@ Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests on
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
 | `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
 | `health` / `list_workers`, additive configured-worker status | Done, p1-04 accepted | `tools/health.py`, `api/workers.py` | Real route/client and registered mocked-HTTP checks; independent 51 calls/107 GETs, ten detected faults; Backend 1916/124 Windows skips, MCP 606/2 | Offline only; no real worker readiness claim |
-| End-to-end smoke script against real ComfyUI | Unmerged; corrected D1–D3 PASS, D4 pending | Corrected `91d6e37`, outside main | Review 2 actual signal regression PASS; MCP 672/4, Backend 1916/124 | Fresh three pairs/six MCP PNGs and persisted lineage independently corroborated |
+| End-to-end smoke script against real ComfyUI | Done, p1-05 accepted after exact QA and native owner demo acceptance | Corrected `91d6e37`, reviewed source integrated | Review 2 actual signal regression PASS; MCP 672/4, Backend 1916/124 | Fresh three pairs/six MCP PNGs and persisted lineage independently corroborated |
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 
@@ -612,3 +612,37 @@ new exact QA and applicable qualification. After actual demo acceptance and
 feature publication, Producer separately asks for phase-close roadmap review
 before activating Phase 2. No aesthetic/phase-close decision inferred. Existing
 decisions/runtime/lineage memory cover durable rules; no duplicate memory receipt.
+
+## 2026-11-26 — p1-05 owner accepted; reviewed feature integrated
+
+The responsible authenticated Board user **local-board** accepted human-only
+confirmation **11ecc66e-6688-4174-a94a-6825d0b512f5** at
+**2026-11-26T01:29:16.989Z**, targeting the unchanged six-image/Gallery demo
+revision **3e6ae2db-b6ae-4353-af52-d505fbbae4bd**. The fixed question explicitly
+authorizes D4 recording and exact-candidate merge; [actual owner response](requests/2026-11-26-p1-05-demo-acceptance.md)
+is preserved with resolver/policy/result/target. Source is native Board acceptance;
+no separate Discord reply, verified six-file delivery or additional artistic
+statement is claimed. No duplicate demo confirmation is requested.
+
+[Acceptance](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) integrates actual
+Coding **91d6e3790ecbb258b1a079395a1156912d090b62** after independent QA
+**ade78141f693a6ff1259d8b61d883e77434b2ccd** D1–D3 PASS and this actual owner
+response. Reviewed product/tests/raw evidence/report/18-row registry remain exact.
+Only CURRENT/PROGRESS conflicted; later Producer history plus this acceptance
+is retained, without changing source or raw evidence. All prior task/clarification/
+repair/decision hashes, historical first FAIL/manifest and baseline remain.
+One kickoff ambiguity/two P1 findings/clarification 1/kickoff 2 CLEAR; one first
+implementation rejection/R5-1/correction 1/review 2 PASS are preserved.
+
+- **Offline:** QA fresh Backend 1916 passed/124 existing platform skips, restored MCP plus six QA cases 672 passed/four existing optional skips, fresh HTTP/persistence export one/current cross-layer seven passed, old signal RED/corrected GREEN and five independent faults/restoration. Exact integrated inputs preserve applicability and attribution; Producer records five affected documentation/registration guards passed (1.53s), 291 frozen fingerprints and all 2,070 reviewed-file comparisons, plus byte/tree/ancestry/publication checks, with no unnecessary full-suite repeat. A run-owned frozen-lock Python 3.11 environment leaves canonical environments unchanged; an earlier separate sync observed canonical MCP Python 3.10 and was not called the QA environment.
+- **Running services:** no Producer product probe/restart/deployment. Prior Coding/QA recorded process/source/import/settings/schema/old-value corroboration remains the actual evidence. Preserve AID-171 runtime/private config/backups, AID-151 snapshots, canonical venvs and all data; publication does not deploy or attest a loaded service.
+- **Real generation:** accepted corrected-source attempts 1–3, six new uncached samplers, 24 flow calls, no flow fix/retry/recovery. No replacement generation/training/resource download/worker dispatch by Producer.
+- **Artifact retrieval:** six actual MCP PNGs 3872→3873, 3874→3875, 3876→3877 plus new-session/persisted lineage corroboration. Producer's prior official-copy review stays separate from a live Gallery read; no new live retrieval. Original baseline 23/eight incidents, old 81, corrected Coding 36 and separate QA 15 retain honest totals; only qualifying flows are zero.
+
+[Phase-exit evidence and roadmap proposal](tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md)
+is now concrete for a separate native owner interaction/Hermes question. Recommend
+Phase 1 close, retain roadmap order/scope/Not now and activate Phase 2 at its
+existing real Civitai First check. Phase 2 remains inactive before that response.
+The accepted demo itself did not close the phase. Existing memory covers durable
+rules; owner response/results/verification stay in task/request records. Thirteen
+concurrent memory edits in shared main are preserved and excluded from this merge.

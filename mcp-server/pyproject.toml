@@ -12,7 +12,8 @@ description = "MCP Server for AI 自動化出圖系統"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2",
+    "Pillow>=10.0.0,<13",
     "httpx>=0.26.0",
 ]
 

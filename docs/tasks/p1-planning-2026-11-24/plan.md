@@ -1,6 +1,6 @@
 # Phase 1 execution plan — 2026-11-24
 
-Status: **p1-00/00a and p1-01–04 accepted/published; p1-05 correction 1 exact-commit D1–D3 technical PASS; reviewed six-image demo awaits CTY’s explicit reply before feature merge, with phase close separate**.
+Status: **p1-00/00a and p1-01–04 accepted/published; p1-05 exact QA PASS and native owner demo accepted, reviewed feature integrated; separate Phase 1 close/roadmap review pending before Phase 2**.
 Planning/coordinating issue: [AID-141](/AID/issues/AID-141).
 [Initial request](../../requests/2026-11-24-fresh-producer-planning.md) ·
 [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md).
@@ -630,3 +630,21 @@ implementation rejection/correction 1/review 2 technical PASS retains all kickof
 and earlier task histories. Preserve concurrent shared-main memory edits,
 AID-171 runtime/private settings/backups, AID-151 snapshots, canonical venvs and
 all data. Existing decisions/memory cover durable rules; results stay in task docs.
+
+## p1-05 owner acceptance and integration; separate roadmap close review
+
+[Actual responsible Board acceptance](../../requests/2026-11-26-p1-05-demo-acceptance.md),
+2026-11-26T01:29:16.989Z, human-only fixed demo confirmation, explicitly authorizes
+D4 recording and exact-candidate merge. The source is native Board, no separate
+Discord reply or verified six-image attachment delivery asserted. [Accepted feature](../p1-05-mcp-e2e-smoke-mac/acceptance.md)
+integrates actual 91d6e379 and independent QA ade78141 product/tests/report/raw
+evidence/18-row registry unchanged. Only current/status/topic/owner/acceptance
+records differ; all earlier histories/counts/cleared hashes remain. Producer
+checks integration identity/documentation/publication, no new live product,
+generation or live Gallery read, no redundant full suite on identical inputs.
+
+[Phase-exit evidence/roadmap proposal](../p1-05-mcp-e2e-smoke-mac/phase-exit.md)
+is a separate owner decision: recommend Phase 1 close, unchanged roadmap
+order/scope/Not now and Phase 2 at the existing real Civitai First check. Keep
+Phase 2 inactive until that response; no new implementation task starts here.
+Preserve all runtime/private config/venvs/data and concurrent shared-main edits.

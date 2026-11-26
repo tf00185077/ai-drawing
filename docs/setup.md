@@ -91,8 +91,12 @@ Python import path. Record the full source SHA, relevant file fingerprints,
 process identity and non-secret effective settings. Compare the live OpenAPI
 contract and a persisted generation round trip; `/health` or cwd alone cannot
 identify loaded source. [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/manifest.md)
-records the bounded Mac relaunch, private configuration locations and verification.
-Its worktree remains the running source until a reviewed deployment replaces it.
+records the historical bounded Mac relaunch and preservation rules. The later
+[p1-05 acceptance](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) identifies AID-171's
+persistent runtime/private configuration/backups and retained AID-151 snapshots.
+Preserve them until a controlled replacement. Publication of the reviewed MCP
+read/driver does not restart or attest the currently loaded service; verify
+actual identity/imports/settings/jobs before future work.
 
 ## Data and backups
 

@@ -1,19 +1,19 @@
 # Current
 
-2026-11-25 · `main` · Phase 0 done · Active: **Phase 1 — MCP that agents use smoothly**, p1-05 technical PASS; CTY reviewed-demo reply pending ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 done · **Phase 1 exit and demo accepted; phase-close roadmap review pending**, Phase 2 inactive ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | p1-05 candidate: real MCP bytes/lineage and three pairs corroborated by QA | Corrected candidate D1–D3 PASS; CTY demo reply and phase-close review pending |
+| 1. MCP for agents | Mostly | Accepted p1-05: three real MCP byte/lineage pairs with zero flow interventions | Separate phase-close roadmap review before Phase 2 |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
 | 5. LoRA training | Mostly | No | No real training run yet; cannot run on a worker |
 | 6. Prompt dashboard | Mostly | Not end-to-end | Combinations hold prompt text only, not template/models |
 
-Built on main: common MCP envelopes and **31 intent tools**, including health/configured-worker visibility ([p1-04 acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md), feature `72f4834`, independent PASS `3422ccd`), plus bounded wait/results ([p1-03 acceptance](tasks/p1-03-mcp-wait-and-result/acceptance.md), feature `77e3e3c`, independent PASS `d088c32`); the earlier 29-tool consolidation ([combined acceptance](tasks/p1-01-mcp-response-envelope/acceptance.md), integration `7ba2059f7e46920eaf860e19e61aa84bae8bf02c`); naming and per-run folders for LoRA, smoke tracking, revision context on generation, Gallery seed precision and routing fixes (integrated in `32b59fd`). Details per goal: [mcp](mcp.md), [prompt dashboard](prompt-dashboard.md), [Windows worker](windows-worker.md), [LoRA training](lora-training.md), [architecture limits](ARCHITECTURE.md#known-limitations-to-optimize).
+Built on main: bounded canonical PNG retrieval and the strict Mac smoke driver ([p1-05 acceptance](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md), feature `91d6e37`, independent PASS `ade7814`, native owner demo accepted 2026-11-26); common MCP envelopes and **31 intent tools**, including health/configured-worker visibility ([p1-04 acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md), feature `72f4834`, independent PASS `3422ccd`), plus bounded wait/results ([p1-03 acceptance](tasks/p1-03-mcp-wait-and-result/acceptance.md), feature `77e3e3c`, independent PASS `d088c32`); the earlier 29-tool consolidation ([combined acceptance](tasks/p1-01-mcp-response-envelope/acceptance.md), integration `7ba2059f7e46920eaf860e19e61aa84bae8bf02c`); naming and per-run folders for LoRA, smoke tracking, revision context on generation, Gallery seed precision and routing fixes (integrated in `32b59fd`). Details per goal: [mcp](mcp.md), [prompt dashboard](prompt-dashboard.md), [Windows worker](windows-worker.md), [LoRA training](lora-training.md), [architecture limits](ARCHITECTURE.md#known-limitations-to-optimize).
 
 ## Tests
 
@@ -110,59 +110,59 @@ safely, but streak remains 1 after attempt-2 interruption and its call/end ledge
 is incomplete. One implementation rejection/correction 1/next delivery review 2
 is now recorded separately from the unchanged kickoff history.
 
-[Coding AID-174](/AID/issues/AID-174) delivered corrected exact candidate
-**91d6e3790ecbb258b1a079395a1156912d090b62**, freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**.
-[Independent QA AID-175](/AID/issues/AID-175) completed delivery review 2 with
-**technical D1–D3 PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**.
-Producer accepts that limited result after reading actual source/reports/evidence,
-verifying 22 official uploads, all 1,897 Coding/680 QA indexed payloads, exact
-patches/trees and independent bundle fetches, matching 291 frozen fingerprints,
-24 flow calls and six MCP byte payloads/lineages, and viewing all six official
-images. [Technical acceptance](tasks/p1-05-mcp-e2e-smoke-mac/technical-review-acceptance.md).
-R5-1 is resolved: three actual CLI signal cases reproduce old RED then corrected
-GREEN, and five independent faults fail/restoration before complete MCP GREEN.
-History remains first delivery FAIL/one implementation rejection/correction 1/
-review 2 technical PASS, separately from the unchanged kickoff/earlier histories.
+[p1-05 is accepted and integrated](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md):
+[Coding AID-174](/AID/issues/AID-174) **91d6e3790ecbb258b1a079395a1156912d090b62**,
+freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**, after [QA AID-175](/AID/issues/AID-175)
+**D1–D3 PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**.
+Responsible Board user **local-board** accepted the human-only fixed-demo
+confirmation **11ecc66e-6688-4174-a94a-6825d0b512f5** at
+**2026-11-26T01:29:16.989Z**. Its question explicitly authorizes recording D4
+and merging this exact candidate; [actual native owner response](requests/2026-11-26-p1-05-demo-acceptance.md)
+is the source. No separate Discord reply or verified six-attachment delivery
+is invented. Independent report/manifest pending-owner wording remains a
+historical delivery snapshot, followed by actual acceptance. Main integrates
+reviewed product/tests/raw evidence and the exact 18-row registry unchanged.
 
-Fresh attempts 1–3 qualify on corrected frozen software: **3872→3873,
-3874→3875, 3876→3877**. QA independently corroborates six distinct uncached
-samplers, actual MCP-returned PNGs and persisted parent/job/request/brief, with
-new SDK sessions. Fresh independent Backend **1916 passed/124 existing platform
-skips**, complete MCP plus six QA cases **672 passed/four existing optional
-skips**, fresh export **one passed**, current cross-layer **seven passed**.
-QA preserves 16 prior registry rows and certifies D1/D3, 18 in its reviewed tree;
-main's registry/product source stay unchanged before owner acceptance.
+Fresh corrected frozen attempts 1–3: **3872→3873, 3874→3875, 3876→3877**,
+six distinct uncached samplers, real MCP PNG bytes and persisted parent/job/
+request/brief, each pair exactly eight calls and zero flow fixes/retries.
+[All images/Gallery records](tasks/p1-05-mcp-e2e-smoke-mac/demo.md) retain their
+fixed reviewed bytes. QA freshly records Backend **1916 passed/124 existing
+platform skips**, complete MCP plus six cases **672 passed/four existing optional
+skips**, fresh export **one passed**, current cross-layer **seven passed**;
+old signal RED/corrected GREEN and five effective faults/restoration resolve R5-1.
+Producer verifies identical integrated source/tests/report/evidence, applicable
+documentation guards and publication, without repeating full suites on unchanged
+reviewed inputs. [Publication ledger](/AID/issues/AID-146#document-publication).
 
-**Next: CTY reviews [all six images and Gallery records](tasks/p1-05-mcp-e2e-smoke-mac/demo.md)
-and explicitly replies in the project channel**, tracked by AID-146's native
-owner interaction and paperclip-hermes-notify. D4 stays unchecked. Producer's
-recommendation is to accept this technical demo and then integrate the exact
-reviewed feature/evidence. Main receives only presentation/status/integrity docs
-at this stage; feature merge/push waits for actual CTY acceptance. A technical
-PASS, send receipt or silence cannot fill D4. Later roadmap phase-close review
-is separate before Phase 2, which stays inactive.
+Original baseline **23 units/eight incidents** and historical first delivery
+**81** remain unchanged. Corrected Coding **22+0+0+14=36**, QA separately
+**2+0+0+13=15**; only qualifying request-to-result flows are zero. No whole-round
+zero or lower-total claim. One kickoff ambiguity/two P1 findings/clarification
+1/kickoff 2 CLEAR; first delivery FAIL/one rejection/R5-1; correction 1/review 2
+PASS retained. Prior full integrity checks cover 22 uploads, 1,897/680 payloads,
+exact patches/trees/bundles and 291 freeze hashes, with no duplicate uploads.
 
-Original baseline stays **23 units/eight incidents**; old rejected delivery
-**81** stays historical. New Coding totals **22 preparation + 0 attempt
-interventions + 0 recovery + 14 audits = 36**, QA separately **2+0+0+13=15**.
-Zero applies only inside qualifying request-to-result flows; no whole-round-zero
-or below-baseline claim. Producer makes no new product probe/restart/generation
-or live Gallery-byte read; official-copy presentation is separate coordination.
+**Next: CTY reviews the [Phase 1 exit / roadmap proposal](tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md)**
+through a separate native owner interaction and paperclip-hermes-notify. Recommend
+closing Phase 1 with unchanged roadmap order/scope and starting Phase 2 at its
+existing real Civitai First check. **Phase 2 remains inactive until that response.**
+The accepted demo did not close the phase or authorize next-phase work.
 
-Retain AID-171's runtime/private configuration/backups, AID-151 snapshots,
-canonical venvs and all data. Coding/QA corroborate the existing PID/source/
-imports/settings/schema/old values read-only; no restart for this correction.
-Historical reviewed PIDs 99953/99952 do not replace future live identity/job
-checks. No restart for docs SHA. One Mac/checkpoint/template/static-PNG scope,
-50-second wait fallback/65-second SDK guard and unverified actual caller limit
-retain their limits; CTY alone judges aesthetics.
+Preserve AID-171 runtime/private configuration/backups, AID-151 snapshots,
+canonical environments and all models/datasets/outputs/Gallery data. Integration
+performs no product probe/restart/deployment/generation/live Gallery-byte read.
+Recorded actual runtime/generation/retrieval evidence stays attributed; Git HEAD
+cannot identify a loaded service. One Mac/checkpoint/template/static-PNG limit,
+unverified actual caller limit, 50-second wait fallback and 65-second SDK guard
+remain. Existing decisions/runtime/lineage memory cover enduring rules; receipts
+stay in task records. Concurrent shared-main memory edits are preserved.
 
 ## Team
 
-Coding and independent technical QA completed their recipient-owned cards.
-Producer owns the concrete reviewed demo, CTY's actual reply, later exact-source
-integration/acceptance and separate phase-close review. The native human-only
-interaction carries the waiting path. Shared main's concurrent memory edits and
-all active runtime/private configuration/data are preserved. Other production
-specialists remain paused. This Producer round publishes presentation/status/
-integrity documents only.
+Coding and independent QA completed their recipient-owned cards. Producer owns
+accepted integration/publication and the separate phase-close owner review.
+AID-146 keeps a real human-only interaction path while awaiting that decision;
+no Phase 2 software card or real resource action is dispatched before approval.
+Other production specialists remain paused; retained runtime/worktrees/data and
+concurrent shared-main edits are preserved.
