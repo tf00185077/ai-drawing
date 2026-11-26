@@ -31,7 +31,7 @@ from app.db.database import SessionLocal
 from app.db.models import DownloadedResource
 from app.services.civitai_acquisition import AcquisitionError, parse_civitai_locator, redact_secrets
 from app.services.civitai_safe_download import (CivitaiFileMetadata, safe_download, preflight_download, verified_existing, _matches)
-from app.services.resource_records import download_context, publish_download_state, resource_admission
+from app.services.resource_records import download_context, publish_download_state, bounded_resource_admission
 from app.services.civitai_download_policy import DownloadPolicy, selected_size, download_error
 
 _CLEAN_SCAN_STATUSES = frozenset({"success", "clean", "passed"})
@@ -386,7 +386,7 @@ def start_acquisition(
         policy.validate(chosen["size_bytes"], chosen["sha256"])
         policy.validate_format(comp_type, chosen["name"])
 
-    with resource_admission:
+    with ProviderOperation('download', settings=settings) as admission, bounded_resource_admission(admission):
         version_id = version.get("id")
         model_id = version.get("modelId") or (model or {}).get("id")
         existing = (
@@ -401,19 +401,20 @@ def start_acquisition(
         roots = _storage_roots(settings)
         adoptions = {}
         # Destination-space/partial/identity admission is package-wide and read-only.
-        with ProviderOperation('download', settings=settings) as admission:
-            for chosen, comp_root, comp_type in components:
-                matched = next((row for row in existing if row.resource_name == chosen["name"] or
-                               (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
-                if matched is not None and matched.status in _ACTIVE_STATUSES:
-                    continue
-                target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
-                metadata = CivitaiFileMetadata(chosen["download_url"], chosen["sha256"], chosen["size_bytes"], scan_status=chosen["scan_status"])
-                if os.path.lexists(target):
-                    _, _, adoptions[str(target)] = verified_existing(target, metadata, admission)
-                else:
-                    association, resume = download_context(matched, metadata.size, metadata.sha256) if matched else (None, None)
-                    preflight_download(metadata, target, policy, association=association, resume=resume, operation=admission)
+        for chosen, comp_root, comp_type in components:
+            matched = next((row for row in existing if row.resource_name == chosen["name"] or
+                           (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
+            if matched is not None and matched.status in _ACTIVE_STATUSES:
+                continue
+            target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
+            metadata = CivitaiFileMetadata(chosen["download_url"], chosen["sha256"], chosen["size_bytes"], scan_status=chosen["scan_status"])
+            if os.path.lexists(target):
+                _, _, adoptions[str(target)] = verified_existing(target, metadata, admission)
+            else:
+                association, resume = download_context(matched, metadata.size, metadata.sha256) if matched else (None, None)
+                preflight_download(metadata, target, policy, association=association, resume=resume, operation=admission)
+
+        admission.remaining()
 
         common_notes = {
             "base_model": base_model,

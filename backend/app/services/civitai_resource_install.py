@@ -24,7 +24,7 @@ from app.services.civitai_safe_download import (CivitaiFileMetadata, safe_downlo
     verified_existing, remove_owned_publication, _matches)
 from app.services.civitai_download_policy import DownloadPolicy, download_error
 from app.services.civitai_provider import CivitaiProviderError
-from app.services.resource_records import download_context, publish_download_state, resource_admission
+from app.services.resource_records import download_context, publish_download_state, bounded_resource_admission
 
 _ALLOWED_KINDS = frozenset({"checkpoint", "lora", "vae", "embedding", "controlnet", "upscaler"})
 _CLEAN = frozenset({"clean", "success", "passed"})
@@ -423,6 +423,7 @@ def install_civitai_resource(
     metadata = CivitaiFileMetadata(descriptor["download_url_identity"], descriptor["sha256"], descriptor["byte_size"],
         scan_status=descriptor["scan_status"], license=descriptor["license"], usage=descriptor["usage_restrictions"])
     adoption = None
+    existing = None
     try:
         policy = policy if policy is not None else DownloadPolicy.from_settings()
         policy.validate(metadata.size, metadata.sha256)
@@ -434,14 +435,18 @@ def install_civitai_resource(
         if os.path.lexists(target):
             try:
                 adoption = verified_existing(target, metadata, operation)
-            except (OSError, CivitaiProviderError):
+            except CivitaiProviderError as exc:
+                if exc.code == "civitai_timeout":
+                    raise
+                return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
+            except OSError:
                 return {"status": "blocked", "diagnostic": {"code": "already_exists"}}
         else:
             association, resume = download_context(existing, metadata.size, metadata.sha256) if existing else (None, None)
             preflight_download(metadata, target, policy, association=association, resume=resume, operation=operation)
         # Claim even an adoption before installed-state publication. Retain
         # this known ID if a later commit/deadline/path check fails.
-        with resource_admission:
+        with bounded_resource_admission(operation):
             if operation is not None: operation.remaining()
             row = _admit_install(descriptor, storage_root, target, db=db)
     except _ActiveInstall as exc:
@@ -451,6 +456,9 @@ def install_civitai_resource(
             "hint": "Inspect the same resource ID and wait for its current operation before retrying."}}
     except (CivitaiProviderError, OSError) as exc:
         diagnostic = exc.to_dict() if isinstance(exc, CivitaiProviderError) else {"code": "civitai_download_failed"}
+        if existing is not None:
+            diagnostic = {**diagnostic, "resource_id": existing.id}
+            return {"status": "blocked", "ledger_id": existing.id, "diagnostic": diagnostic}
         return {"status": "blocked", "diagnostic": diagnostic}
     except Exception:
         db.rollback()

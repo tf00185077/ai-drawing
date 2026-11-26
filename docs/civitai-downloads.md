@@ -142,3 +142,15 @@ synthetic Settings/HTTP/ORM/filesystem fixtures are separate from running-servic
 real generation, live model/Gallery retrieval and artistic/Phase 2 acceptance.
 No production key/configuration, data, runtime, model or environment changes are
 needed by this task. Native Windows behavior requires its own platform run.
+
+Admission contention consumes the applicable existing download deadline. Acquisition
+creates its admission ProviderOperation before waiting; retained install passes its
+already-started route operation. Both acquire the same reentrant lock with the
+remaining time, check expiration after entry and release only a successfully
+acquired level in `finally`. Expired or timed-out competitors publish no row, body,
+partial or owner-state changes. Retained refusal reports `civitai_timeout` with the
+known resource ID and recovery hint when preflight already found that identity. An
+expired existing-file observation preserves the timeout reason. Legacy direct
+service calls without an operation may acquire immediately but cannot wait without
+a budget. Following admission and inactive retry/reuse remain available. This is
+process-local coordination, without a queue or cross-process reservation.

@@ -180,5 +180,11 @@ def test_acquisition_retains_known_storage_when_configured_root_changes(boundary
         row=db.get(DownloadedResource,rid)
         assert row.status=='installed' and row.local_path==str(old)
         assert project_resource(row).sha256_verified is True
-    assert old.read_bytes()==b.body and old.stat()==old_info
-    assert foreign.read_bytes()==b'foreign model at new root' and foreign.stat()==before
+    # Read preservation stats before our own byte read can update access time.
+    # Production hashing may also read the old final; atime is not ownership.
+    fields = ('st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
+              'st_size', 'st_mtime_ns', 'st_ctime_ns')
+    assert tuple(getattr(old.stat(), k) for k in fields) == tuple(getattr(old_info, k) for k in fields)
+    assert tuple(getattr(foreign.stat(), k) for k in fields) == tuple(getattr(before, k) for k in fields)
+    assert old.read_bytes() == b.body
+    assert foreign.read_bytes() == b'foreign model at new root'

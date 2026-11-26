@@ -4,6 +4,7 @@ Identity, path, hash and status remain authoritative ORM columns. Verification
 is evidence bound to those columns and a measured file stat, never a second ID.
 """
 from __future__ import annotations
+from contextlib import contextmanager
 import base64
 import json
 import math
@@ -22,6 +23,25 @@ from app.services.civitai_acquisition import redact_secrets
 # row owns subsequent work; this lock only serializes inspection/claim, never
 # a model-body download. It is not a durable or cross-process reservation.
 resource_admission = RLock()
+
+
+@contextmanager
+def bounded_resource_admission(operation):
+    """Wait only within the caller's existing budget; release only our level.
+
+    Direct legacy service calls without an operation can enter an available lock
+    immediately, but cannot wait without an applicable absolute deadline.
+    """
+    from app.services.civitai_provider import _timeout_error
+    remaining = operation.remaining() if operation is not None else 0
+    if not resource_admission.acquire(timeout=remaining):
+        raise _timeout_error()
+    try:
+        if operation is not None:
+            operation.remaining()
+        yield
+    finally:
+        resource_admission.release()
 
 # The sole Phase 2 inference table. Recipe/Anima adapters are explicitly legacy.
 WORKFLOW_FAMILIES = {'sdxl 1.0':'sdxl', 'illustrious':'sdxl', 'pony':'sdxl', 'noobai':'sdxl'}
