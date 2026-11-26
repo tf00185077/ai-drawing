@@ -25,7 +25,7 @@ SHA256 = re.compile(r'^[0-9a-fA-F]{64}$')
 # boundaries cannot identify the end of cookies, quoted values or auth schemes.
 _ASSIGNMENT_LABEL = re.compile(
     r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>[\w.-]+(?:\s+[\w.-]+)*)"
-    r"(?P=quote)\s*[:=]",
+    r"(?P=quote)\s*(?P<delimiter>[:=]?)",
 )
 _BEARER_AUTH = re.compile(r'\bbearer\s+\S', re.I)
 _BASIC_AUTH = re.compile(r'\bbasic\s+([A-Za-z0-9+/]+={0,2})(?=$|[\s,;])', re.I)
@@ -61,7 +61,9 @@ def safe_text(value: str) -> str:
             return '[redacted locator]'
     value = re.sub(r'https?://[^\s<>"\']+', locator, value, flags=re.I)
     # Credentials in free-form nested strings are not necessarily URL queries.
-    if (any(credential_label(match['label']) for match in _ASSIGNMENT_LABEL.finditer(value))
+    # Consume ordinary token runs too: requiring a delimiter in the regex would
+    # retry a long unassigned description at every word. Only assignments count.
+    if (any(match['delimiter'] and credential_label(match['label']) for match in _ASSIGNMENT_LABEL.finditer(value))
             or _BEARER_AUTH.search(value)):
         return '[redacted credential]'
     # A bare Basic scheme is recognizable when its base64 contains user:password;

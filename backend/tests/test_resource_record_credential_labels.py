@@ -113,3 +113,17 @@ def test_credential_failure_keeps_actionable_hint_through_background_and_status(
     assert resource['status']=='failed' and resource['error']['code']=='civitai_credentials_unavailable'
     hint=resource['error']['hint']
     assert 'CIVITAI_API_KEY_FILE' in hint and 'readable regular UTF-8 file' in hint and '64 KiB' in hint
+
+
+@pytest.mark.timeout(3)
+def test_long_unassigned_description_publishes_and_reads_without_parser_retry(client):
+    description='ordinary description '*4000
+    data=provider_snapshot({'baseModel':'Pony','trainedWords':['allowed']},None,{}).model_dump()
+    data['source_evidence']={'description':description,'hash':values.SAFE_HASH}
+    with database.SessionLocal() as db:
+        row=DownloadedResource(resource_name='long ordinary description',resource_type='lora',source_url='unknown',status='planned')
+        db.add(row);db.flush();id=row.id
+        publish_metadata(row,ResourceMetadata.model_validate(data));db.commit()
+        assert json.loads(row.metadata_json)['source_evidence']['description']==description
+    response=client.get('/api/resources/'+str(id));assert response.status_code==200,response.text
+    assert response.json()['source_evidence']=={'description':description,'hash':values.SAFE_HASH}
