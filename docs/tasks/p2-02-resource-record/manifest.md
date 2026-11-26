@@ -141,6 +141,13 @@ existing scan/performance/portability limits; this is no database redesign.
   cleanup. Validation order is restored with all original assertions unchanged.
   Affected167 then pass. Current full/standing/fault/schema qualification is all
   repeated on final374c158; old green suites do not qualify it.
+- Initial official package1546ecd restored the bundle and the final patch tree,
+  but patch fsck failed because raw intermediate headers referenced absent trees.
+  This packaging attempt and all its official uploads/index are preserved. The
+  replacement adds every per-commit binary patch, rebuilding intermediate objects
+  from the official base without importing the candidate bundle. This is a
+  report/package correction; the qualified product/tests/replay helpers remain
+  byte-exact at374c158. It adds no QA rejection or product-test skip.
 - All18 current fault invocations fail on observable feature assertions, never
   setup/import/fingerprint/SQL errors. Original13 now yield42 failures; descriptor
   input normalization provides overlapping protection for one old bypass case.
@@ -163,9 +170,11 @@ no external Git server or old workspace is needed. It is not a pre-boundary
 history backup. Fetch uses --update-shallow and an explicit prerequisite ref.
 
 The candidate delta bundle and full-index binary patch each restore FINAL from
-that base in separate bare stores. Raw commit bodies in the evidence archive
-allow exact commit restoration after patch application; both trees/commits and
-fsck are checked. Official uploaded bytes/readback/restoration and final artifact
+that base in separate bare stores. The evidence archive includes every per-commit full-index binary patch and raw
+commit body. Applying those patches in ancestry order reconstructs intermediate
+trees/blobs as well as FINAL; raw headers then restore exact commit identities.
+The single base-to-FINAL patch is independently checked against the same final
+tree. Both trees/commits and fsck are checked. Official uploaded bytes/readback/restoration and final artifact
 hashes are recorded in the native delivery/index/integrity receipt after FINAL
 is known, avoiding circular committed hashes.
 
