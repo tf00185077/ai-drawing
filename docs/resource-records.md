@@ -88,8 +88,13 @@ lexical units before recognition, including leading/trailing inner spaces, tabs
 and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
 their lexical meaning. Ordinary quoted values do not hide inner assignments;
 each quote kind scans independently, including opposite-quote labels inside
-ordinary quoted values. Maximal ordinary runs and one-time consumption of unmatched
-quoted tails keep long-description scanning bounded, including escaped quotes.
+ordinary quoted values. Each quote kind traverses forward with one cursor. An escape consumes its next
+character, or end of input when the backslash is terminal; an unmatched tail ends
+that pass. Closed labels alone reach one-time escape decoding and the common key
+policy when followed by an explicit delimiter. No failed suffix is retried at its
+inner quotes. Together with maximal ordinary runs, this bounds traversal work by
+the complete input length, including odd/even terminal escapes, while retaining
+full ordinary values without truncation or a new format/size restriction.
 Identifier components use whitespace,
 underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
 component ending in `token`, `secret`, `authorization`, `password`, `credential`,

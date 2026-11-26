@@ -23,6 +23,27 @@
 
 ## Log
 
+### 2026-11-26 · Give quoted scanning an explicit terminal-escape rule
+
+- Decision: retain complete credential-label semantics while making quote/escape
+  traversal advance monotonically, including a lone escape at end of input. An
+  unmatched tail must not trigger repeated growing suffix scans. Keep both quote
+  kinds, opposite-quote recognition and useful ordinary metadata intact.
+- Why: a repeated regex branch requiring a character after each backslash can
+  prevent its end-of-input alternative from matching. Search then retries at each
+  quote. Small positive cases and green secrecy suites miss quadratic work on
+  valid ordinary provider/stored descriptions; SQL pagination cannot bound it.
+- Reassessment: the fifth delivery rejection changes the open finding: current
+  tested R1-R4 cases pass, while new R5 violates existing provider/read bounds.
+  Retain identity and secrecy work; correct bounded progress without raising
+  timeouts, truncating/hiding safe data or imposing new format exclusions. This
+  remains approved scope/CLEAR; report the adopted option under current delegation.
+- Evidence: [actual review5](../tasks/p2-02-resource-record/review-round-5.md),
+  [registered latency probes](../tasks/p2-02-resource-record/review-round-5-evidence/independent_read_latency.py)
+  and [correction5](../tasks/p2-02-resource-record/repair-round-5.md). This is a
+  Producer application, not a new owner quote or accepted product behavior.
+
+
 ### 2026-11-26 · Parse complete quoted labels before credential recognition
 
 - Decision: consume a matching quoted assignment/header label as a complete unit,
