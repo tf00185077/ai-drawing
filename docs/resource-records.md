@@ -12,7 +12,13 @@ service, implement search/download jobs/defaults, or establish Phase 2 exit.
 Exact optional filters are `resource_type`, `provider`, raw `base_model`,
 `model_family` (`sdxl` only), `status` and a case-insensitive 64-hex `sha256`.
 Strings are trimmed, including outer Unicode whitespace. All filters combine;
-total is counted before SQL pagination. Unsupported valid values return no items;
+total is counted before SQL pagination. Connection-local deterministic SQLite
+scalars use the projection's complete typed metadata parser and the sole family
+mapping, including legacy notes fallback and Unicode case folding. Invalid typed
+JSON/version/nested fields have null base/family for both filtering and projection;
+they do not fall back to notes. SQL counts and bounds the query before ORM row
+materialization; there is no whole-table or already-paged Python post-filter.
+Unsupported valid values return no items;
 malformed selectors return 422. `GET /api/resources/{resource_id}` returns the same
 projection, or 404 `resource_not_found` with a recovery hint. OpenAPI describes
 both typed responses. Unknown query parameters are rejected.
@@ -39,8 +45,18 @@ inspect/select/install/adoption. Strict descriptors carry an optional typed
 `resource_metadata` snapshot of the actually selected version/file. Historical
 inputs without it retain unknown triggers/recommendations. Repeated identical
 publication retains IDs and evidence; conflicting known immutable identities are
-refused. Empty identity fields may be filled after the complete conflict check.
-A failed acquisition retry reuses its same row. Legacy acquisition/status responses
+refused. Empty identity fields may be filled after the complete conflict check. An omitted
+optional identity, including AIR, preserves the known column rather than clearing
+it. Non-null conflicting identities are still refused before assignments.
+A failed acquisition retry reuses its same row. All preexisting notes, including
+null, empty, malformed and whitespace-bearing bodies, remain byte-for-byte through
+success, failed-result and exception branches. Current operation status and
+sanitized errors live under metadata `source_evidence.acquisition`; status responses
+read that outcome instead of a stale legacy-note error. A retry clears the current
+error on admission/success without changing the old note. This reserved field is
+written only by internal operation publication and retained across ordinary provider
+snapshot refreshes; a supplied snapshot cannot replace it. Newly created rows keep
+the established generated notes/file-identity/error behavior. Legacy acquisition/status responses
 keep their established IDs and enums; no MCP tool name or risk changes.
 
 Snapshots keep ordered unique trimmed trainedWords, diagnose invalid entries,
@@ -54,7 +70,15 @@ parameters stay absent; sample-image prompts provide no defaults. Safe source
 metadata remains opaque evidence. License permissions and optional explicit model/
 file license evidence are stored without a commercial-use filter; missing and
 invalid permission fields are explicit. Provider credentials and URL queries are
-excluded. Original notes are never returned as diagnostics.
+excluded. Every typed nested field passes shared safe normalization at provider
+snapshot construction, publication and public projection: license values and keys,
+missing-field strings, diagnostics, trigger words, recommendation values/source
+fields, raw labels and opaque evidence. HTTP locators lose userinfo, queries and
+fragments; recognizable credential text and sensitive evidence keys are removed.
+Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
+are normalized for reads without repair writes. Invalid typed snapshots remain
+readable as incomplete; supplied verification never establishes measured evidence.
+Original notes are never returned as diagnostics.
 
 Normal startup adds the nullable column only. Explicit backfill is a caller-owned
 maintenance operation, separate from startup/read routes:

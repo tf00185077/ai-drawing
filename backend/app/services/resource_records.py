@@ -35,7 +35,10 @@ def safe_text(value: str) -> str:
             return urlunsplit((p.scheme,host,p.path,'',''))
         except ValueError:
             return '[redacted locator]'
-    return redact_secrets(re.sub(r'https?://[^\s<>"\']+',locator,value))
+    value = re.sub(r'https?://[^\s<>"\']+', locator, value, flags=re.I)
+    # Credentials in free-form nested strings are not necessarily URL queries.
+    value = re.sub(r'(?i)\b(?:bearer\s+[^\s,;]+|(?:authorization|proxy-authorization|cookie|set-cookie|api[_ -]?key|access[_ -]?token|token|secret|password|credential|signature)\s*[:=]\s*(?:bearer\s+)?[^\s,;]+)', '[redacted credential]', value)
+    return redact_secrets(value)
 
 
 def safe_evidence(value: Any) -> Any:
@@ -47,6 +50,16 @@ def safe_evidence(value: Any) -> Any:
     if isinstance(value,float) and not math.isfinite(value): return None
     if value is None or isinstance(value,(bool,int,float)): return value
     return None
+
+
+def normalize_metadata(snapshot: ResourceMetadata) -> ResourceMetadata:
+    """Validate and sanitize every nested value, including keys and diagnostics.
+
+    Typed client input and old stored snapshots have the same secrecy boundary.
+    Ordinary hashes and safe opaque evidence retain their values. Revalidation
+    fails closed if normalization cannot preserve the typed contract.
+    """
+    return ResourceMetadata.model_validate(safe_evidence(snapshot.model_dump(mode='json')))
 
 
 def diagnostic(code: str, field: str) -> MetadataDiagnostic:
@@ -106,9 +119,9 @@ def provider_snapshot(version: dict, model: dict | None, file: dict) -> Resource
     if type(size) in {int,float} and math.isfinite(size) and size>=0: size=int(round(size))
     else:
         size=None; errors.append(diagnostic('invalid_declared_size' if ('size' in file or 'sizeKB' in file) else 'missing_declared_size','declared_size_bytes'))
-    return ResourceMetadata(origin='civitai_provider',base_model=safe_text(label) if isinstance(label,str) else None,
+    return normalize_metadata(ResourceMetadata(origin='civitai_provider',base_model=safe_text(label) if isinstance(label,str) else None,
         declared_size_bytes=size,trigger_words=words,recommended_parameters=params,
-        license=LicenseSnapshot(values=license_values,missing_fields=missing),source_evidence=opaque,diagnostics=errors)
+        license=LicenseSnapshot(values=license_values,missing_fields=missing),source_evidence=opaque,diagnostics=errors))
 
 
 class ResourceIdentityConflict(ValueError):
@@ -130,15 +143,25 @@ def measured_evidence(path: Path, size: int, sha256: str) -> MeasuredEvidence:
 
 
 def publish_metadata(row: DownloadedResource, snapshot: ResourceMetadata, *, identity: dict | None=None,
-                     measured: MeasuredEvidence | None=None) -> None:
+                     measured: MeasuredEvidence | None=None, operation: dict | None=None) -> None:
     """Augment this row only; caller owns its transaction and identity columns."""
+    snapshot = normalize_metadata(snapshot)
     assert_identity(row,identity or {})
     if measured is not None:
         assert_identity(row,{'sha256':measured.sha256})
         if row.file_size!=measured.size_bytes: raise ResourceIdentityConflict('resource_identity_conflict')
-    elif row.metadata_json:
-        try: measured=ResourceMetadata.model_validate_json(row.metadata_json).verification
+    previous = None
+    if row.metadata_json:
+        try: previous = normalize_metadata(ResourceMetadata.model_validate_json(row.metadata_json))
         except ValidationError: pass
+    if measured is None and previous is not None:
+        measured = previous.verification
+    evidence = {k:v for k,v in snapshot.source_evidence.items() if k != 'acquisition'}
+    if previous is not None and 'acquisition' in previous.source_evidence:
+        evidence['acquisition'] = previous.source_evidence['acquisition']
+    if operation is not None:
+        evidence['acquisition'] = safe_evidence(operation)
+    snapshot = snapshot.model_copy(update={'source_evidence': evidence})
     for field, value in (identity or {}).items():
         if getattr(row,field) is None and value is not None: setattr(row,field,value)
     value=snapshot.model_copy(update={'verification':measured}).model_dump_json()
@@ -173,8 +196,18 @@ def legacy_metadata(row: DownloadedResource) -> ResourceMetadata | None:
 
 def metadata_for(row: DownloadedResource) -> tuple[ResourceMetadata | None,list[MetadataDiagnostic]]:
     if row.metadata_json is None: return legacy_metadata(row),[]
-    try: return ResourceMetadata.model_validate_json(row.metadata_json),[]
+    try: return normalize_metadata(ResourceMetadata.model_validate_json(row.metadata_json)),[]
     except ValidationError: return None,[diagnostic('invalid_metadata','metadata')]
+
+
+def canonical_base_model(metadata_json: str | None, notes: str | None) -> str | None:
+    """Pure SQLite scalar: use the projection's typed parser before SQL paging.
+
+    This transient object is never attached to a session; parsing reads no DB,
+    provider or model file. Invalid typed metadata never falls back to notes.
+    """
+    snapshot, _ = metadata_for(DownloadedResource(metadata_json=metadata_json, notes=notes))
+    return snapshot.base_model if snapshot else None
 
 
 def project_resource(row: DownloadedResource) -> ResourceRecord:

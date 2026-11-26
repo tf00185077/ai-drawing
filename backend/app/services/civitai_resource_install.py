@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.db.models import DownloadedResource
 from app.schemas.resources import ResourceMetadata
 from app.services.resource_records import (assert_identity, measured_evidence, metadata_for,
-    provider_snapshot, publish_metadata, ResourceIdentityConflict)
+    normalize_metadata, provider_snapshot, publish_metadata, ResourceIdentityConflict)
 from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_safe_download import CivitaiFileMetadata, safe_download
 
@@ -250,7 +250,7 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
             snapshot = ResourceMetadata.model_validate(descriptor["resource_metadata"])
             if snapshot.base_model != descriptor.get("model_family") or snapshot.verification is not None:
                 return None, "invalid_selected_descriptor"
-            descriptor["resource_metadata"] = snapshot.model_dump(mode="json")
+            descriptor["resource_metadata"] = normalize_metadata(snapshot).model_dump(mode="json")
         except ValueError:
             return None, "invalid_selected_descriptor"
     if descriptor.get("resource_kind") not in _ALLOWED_KINDS:
@@ -338,6 +338,8 @@ def _persist_ledger_identity(
         db.add(row)
     else:
         for key, value in values.items():
+            if key in {"provider", "resource_type", "model_id", "version_id", "civitai_file_id", "sha256", "air"} and value is None:
+                continue  # unknown incoming identity cannot erase known evidence
             setattr(row, key, value)
     snapshot = (ResourceMetadata.model_validate(descriptor["resource_metadata"])
                 if descriptor.get("resource_metadata") is not None else metadata_for(row)[0])

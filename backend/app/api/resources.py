@@ -5,12 +5,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from pydantic import BeforeValidator, Field
-from sqlalchemy import case, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import DownloadedResource
 from app.schemas.resources import ResourceList, ResourceRecord
-from app.services.resource_records import WORKFLOW_FAMILIES, project_resource
+from app.services.resource_records import canonical_base_model, project_resource, workflow_family
 
 
 class ResourceValidationRoute(APIRoute):
@@ -47,22 +47,14 @@ FamilyFilter=Annotated[Literal['sdxl'],BeforeValidator(trim)]
 HashFilter=Annotated[str,BeforeValidator(trim),Field(pattern=r'^[0-9a-fA-F]{64}$')]
 
 
-def _json_object(column):
-    # Malformed legacy JSON is readable as incomplete, never a SQL error/repair.
-    return case((func.json_valid(column)==1,column),else_='{}')
-
-
-def _base_expression():
-    resource=DownloadedResource
-    legacy=_json_object(resource.notes)
-    metadata=_json_object(resource.metadata_json)
-    raw=case((resource.metadata_json.is_not(None),func.json_extract(metadata,'$.base_model')),
-             else_=case((func.json_type(legacy,'$.base_model').is_not(None),func.json_extract(legacy,'$.base_model')),
-                        else_=func.json_extract(legacy,'$.model_family')))
-    raw_type=case((resource.metadata_json.is_not(None),func.json_type(metadata,'$.base_model')),
-                  else_=case((func.json_type(legacy,'$.base_model').is_not(None),func.json_type(legacy,'$.base_model')),
-                             else_=func.json_type(legacy,'$.model_family')))
-    return case((raw_type=='text',raw),else_=None)
+def _base_expression(db: Session):
+    # Connection-local, deterministic scalar functions share the exact typed
+    # parser/mapping with detail. SQL still counts and pages before materializing
+    # ORM rows; no second validation table or whole-table Python post-filter.
+    connection = db.connection().connection.driver_connection
+    connection.create_function('resource_base_model', 2, canonical_base_model, deterministic=True)
+    connection.create_function('resource_workflow_family', 1, workflow_family, deterministic=True)
+    return func.resource_base_model(DownloadedResource.metadata_json, DownloadedResource.notes)
 
 
 @router.get('',response_model=ResourceList)
@@ -84,10 +76,10 @@ def list_resources(request: Request,
     for column,value in [(DownloadedResource.resource_type,resource_type),(DownloadedResource.provider,provider),
                          (DownloadedResource.status,status)]:
         if value is not None: query=query.filter(func.trim(column,_OUTER_WHITESPACE)==value)
-    base=_base_expression()
+    base=_base_expression(db)
     if base_model is not None: query=query.filter(func.trim(base,_OUTER_WHITESPACE)==base_model)
     if model_family is not None:
-        query=query.filter(func.lower(func.trim(base,_OUTER_WHITESPACE)).in_(tuple(WORKFLOW_FAMILIES)))
+        query=query.filter(func.resource_workflow_family(base)==model_family)
     if sha256 is not None: query=query.filter(func.lower(DownloadedResource.sha256)==sha256.lower())
     total=query.count()
     rows=query.order_by(DownloadedResource.id.asc()).limit(limit).offset(offset).all()

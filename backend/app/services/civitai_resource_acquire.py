@@ -70,7 +70,8 @@ class _StreamingDownloadTransport(ProviderDownloadTransport):
 
 # Public import retained for frozen recipe/AIR callers and Anima package routing.
 from app.services.civitai_resource_legacy import normalize_model_family
-from app.services.resource_records import (assert_identity, measured_evidence, publish_metadata,
+from app.schemas.resources import ResourceMetadata
+from app.services.resource_records import (assert_identity, measured_evidence, metadata_for, publish_metadata,
     provider_snapshot, ResourceIdentityConflict)
 
 
@@ -287,6 +288,9 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
                 notes = parsed
         except ValueError:
             pass
+    snapshot, _ = metadata_for(row)
+    operation = snapshot.source_evidence.get("acquisition") if snapshot else None
+    current_error = operation.get("error") if isinstance(operation, dict) else notes.get("error")
     total = row.file_size or notes.get("expected_size_bytes")
     progress: dict[str, Any] = {}
     if row.status in _ACTIVE_STATUSES and row.local_path:
@@ -309,7 +313,7 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
         "base_model": notes.get("base_model"),
         "license": notes.get("license"),
         "progress": progress or None,
-        "error": notes.get("error"),
+        "error": current_error,
     })
 
 
@@ -424,7 +428,9 @@ def start_acquisition(
             row.status = "downloading"
         publish_metadata(row, snapshot, identity=identity)
         db.add(row)
-        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity})
+        _publish_acquisition_outcome(row, "downloading")
+        jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity,
+                     "preserve_notes": matched is not None})
 
     if not jobs:
         db.commit()
@@ -447,6 +453,7 @@ def start_acquisition(
         {
             "acquisition_id": job["acquisition_id"],
             "identity": job["identity"],
+            "preserve_notes": job["preserve_notes"],
             "target": job["target"],
             "notes": job["notes"],
             "metadata": CivitaiFileMetadata(
@@ -502,6 +509,13 @@ def start_acquisition(
     }
 
 
+def _publish_acquisition_outcome(row: DownloadedResource, status: str, error: Any = None, *, measured=None) -> None:
+    """Current operation state augments metadata; historical notes stay evidence."""
+    snapshot, _ = metadata_for(row)
+    snapshot = snapshot or ResourceMetadata(origin="legacy_notes")
+    publish_metadata(row, snapshot, measured=measured, operation={"status": status, "error": error})
+
+
 def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings: Any) -> None:
     """Download one file and record the outcome; never let one failure stop the batch."""
     acquisition_id = spec["acquisition_id"]
@@ -520,23 +534,25 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
             fresh.file_size = result.bytes
             fresh.sha256 = result.actual_sha256
             fresh.downloaded_at = datetime.utcnow()
-            from app.services.resource_records import metadata_for
-            snapshot, _ = metadata_for(fresh)
-            if snapshot is not None:
-                publish_metadata(fresh, snapshot, measured=measured_evidence(Path(result.final_path), result.bytes, result.actual_sha256))
+            _publish_acquisition_outcome(fresh, "installed", measured=measured_evidence(Path(result.final_path), result.bytes, result.actual_sha256))
         else:
             fresh.status = "failed"
             fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
             if result.diagnostics.get("code"):
                 fresh_notes["error"] = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
-        fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
+            _publish_acquisition_outcome(fresh, "failed", fresh_notes["error"])
+        if not spec.get("preserve_notes", False):
+            fresh.notes = json.dumps(redact_secrets(fresh_notes), ensure_ascii=False)
         session.commit()
     except Exception as exc:  # noqa: BLE001 — the thread must record any failure
         session.rollback()
         try:
             fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
             fresh.status = "failed"
-            fresh.notes = json.dumps(redact_secrets({**notes, "error": exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}}), ensure_ascii=False)
+            error = exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}
+            _publish_acquisition_outcome(fresh, "failed", error)
+            if not spec.get("preserve_notes", False):
+                fresh.notes = json.dumps(redact_secrets({**notes, "error": error}), ensure_ascii=False)
             session.commit()
         except Exception:
             session.rollback()
