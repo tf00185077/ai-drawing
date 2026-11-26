@@ -244,7 +244,7 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
     """Require exactly the inspect-produced canonical descriptor before transport."""
     if set(selected) - {"resource_metadata"} != _DESCRIPTOR_FIELDS:
         return None, "invalid_selected_descriptor"
-    descriptor = safe_evidence(dict(selected))
+    descriptor = dict(selected)
     if descriptor.get("resource_metadata") is not None:
         try:
             snapshot = ResourceMetadata.model_validate(descriptor["resource_metadata"])
@@ -270,7 +270,9 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
         return None, "invalid_selected_descriptor"
     if descriptor.get("model_family") is not None and not isinstance(descriptor["model_family"], str):
         return None, "invalid_selected_descriptor"
-    return descriptor, ""
+    # Canonical identity/locator gates must run on the supplied input; cleaning
+    # a forged locator first would turn a refusal into an accepted descriptor.
+    return safe_evidence(descriptor), ""
 
 
 def _stream_file_identity(path: Path) -> tuple[int, str]:
