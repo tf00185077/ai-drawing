@@ -52,7 +52,7 @@ class CivitaiProviderError(Exception):
 def _credential_error() -> CivitaiProviderError:
     return CivitaiProviderError(
         "civitai_credentials_unavailable", "Civitai credentials are unavailable",
-        "Check CIVITAI_API_KEY_FILE: use a readable regular UTF-8 file containing one key (at most 64 KiB); no fallback is used when configured.",
+        "Check the CIVITAI_API_KEY_FILE setting. Use a readable regular UTF-8 file containing one key (at most 64 KiB); no fallback is used when configured.",
     )
 
 

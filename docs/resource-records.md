@@ -97,7 +97,9 @@ Trailing letters are significant: `tokenizer`, `api_keyboard`, `secretariat` and
 documentation” is retained. This is recognizable labelled metadata treatment,
 not arbitrary unlabelled secret discovery or a list of app environment settings.
 Bare Basic text is recognized only with a decodable user:password value;
-ordinary text such as “basic painting” remains useful. Bare Bearer treatment and
+ordinary text such as “basic painting” remains useful. Credential-resolution
+recovery guidance uses sentence syntax so the setting and file requirements stay
+actionable through the same metadata normalization. Bare Bearer treatment and
 URL exclusion keep their established behavior. Sensitive evidence keys are removed.
 Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
 are normalized for reads without repair writes. Invalid typed snapshots remain

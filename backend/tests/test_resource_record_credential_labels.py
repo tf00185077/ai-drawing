@@ -101,3 +101,15 @@ def test_near_neighbor_metadata_and_keys_remain_useful(client, safe):
 @pytest.mark.parametrize('field', ['license_key','recommendation_key','evidence_key'])
 def test_prefixed_label_keys_in_old_storage_readonly(client, tmp_path, monkeypatch, field, label):
     values.test_complete_value_old_storage_detail_list_ledger_readonly(client, tmp_path, monkeypatch, field, label)
+
+
+def test_credential_failure_keeps_actionable_hint_through_background_and_status(boundary):
+    from tests.test_resource_record_writers import acquire_http
+    b=boundary;admitted=acquire_http(b);assert admitted.status_code==202,admitted.text
+    id=admitted.json()['resource']['acquisition_id']
+    (b.tmp/'synthetic-key').write_text('')
+    b.pending.pop()()
+    resource=b.client.get('/api/civitai/resources/status',params={'acquisition_id':id}).json()['resources'][0]
+    assert resource['status']=='failed' and resource['error']['code']=='civitai_credentials_unavailable'
+    hint=resource['error']['hint']
+    assert 'CIVITAI_API_KEY_FILE' in hint and 'readable regular UTF-8 file' in hint and '64 KiB' in hint
