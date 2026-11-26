@@ -161,7 +161,6 @@ def test_complete_value_old_storage_detail_list_ledger_readonly(client,tmp_path,
         item=detail.json()
         assert page.json()['items']==[item] and page.json()['total']==1
         assert ledger.json()['entries'][0]['diagnostics']['resource_record']==item
-        expected=ResourceMetadata.model_validate(data).model_dump()
         # Exact complete redaction, not absence of a hand-picked marker/suffix.
         if field.endswith('_key'):
             for container in [item['license']['values'],item['recommended_parameters'],item['source_evidence']]:
@@ -213,7 +212,13 @@ def test_complete_value_real_provider_inspect_select_acquire_background(boundary
     b.version['meta'].update(sampler=text,description=text)
     # These model permission strings also appear in legacy acquisition status.
     b.model['allowCommercialUse']=['None',text]
-    selected=inspected(b)
+    inspection=b.client.post('/api/civitai-recipes/resource-inspect',json={'locator':'https://civitai.com/models/10?modelVersionId=21'})
+    assert inspection.status_code==200,inspection.json()
+    assert inspection.json()['candidates'][-1]['license']['description']==REDACTED
+    assert inspection.json()['candidates'][-1]['usage_restrictions']['description']==REDACTED
+    selection=b.client.post('/api/civitai-recipes/resource-select',json={'inspect':inspection.json(),'selectors':{'civitai_file_id':32}})
+    assert selection.status_code==200,selection.json()
+    selected=selection.json()['selected']
     assert selected['license']['description']==REDACTED
     assert selected['usage_restrictions']['description']==REDACTED
     assert selected['resource_metadata']['trigger_words']==['allowed',REDACTED]
