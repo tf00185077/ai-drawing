@@ -56,36 +56,30 @@ def _assignment_in_view(value: str) -> bool:
     def decode(match):
         escape = match[1]
         return chr(int(escape[1:], 16)) if escape.startswith('u') else _LABEL_ESCAPES[escape]
-    # Each quote kind has its own forward-only cursor, so opposite-quote labels
-    # inside ordinary quoted values remain visible. Every escape consumes its
-    # following character, or EOF itself for a terminal solitary backslash.
-    # An unmatched tail ends that pass; it is never retried at inner quotes.
+    # Adjacent same-kind quote boundaries are local label candidates, independent
+    # of any enclosing prose pairing. A closing quote also remains the next
+    # possible opener; unrelated prose cannot consume a real label's boundary.
+    # Each escape consumes its next character or EOF. Candidate spans between
+    # adjacent quotes, and delimiter-whitespace lookaheads, do not overlap.
     length = len(value)
     for quote in ('"', "'"):
+        start = None
         position = 0
         while position < length:
-            start = value.find(quote, position)
-            if start < 0:
-                break
-            position = start + 1
-            while position < length:
-                char = value[position]
-                if char == "\\":
-                    position = min(position + 2, length)
-                elif char == quote:
-                    break
-                else:
-                    position += 1
-            if position == length:
-                break
-            end = position
+            char = value[position]
+            if char == "\\":
+                position = min(position + 2, length)
+                continue
+            if char == quote:
+                delimiter = position + 1
+                while delimiter < length and value[delimiter].isspace():
+                    delimiter += 1
+                if start is not None and delimiter < length and value[delimiter] in ':=':
+                    label = _LABEL_ESCAPE.sub(decode, value[start + 1:position])
+                    if credential_label(label):
+                        return True
+                start = position
             position += 1
-            while position < length and value[position].isspace():
-                position += 1
-            if position < length and value[position] in ':=':
-                label = _LABEL_ESCAPE.sub(decode, value[start + 1:end])
-                if credential_label(label):
-                    return True
     # Inspect unquoted assignments too, including those inside a quoted value.
     # Maximal token runs prevent retrying long ordinary prose at every word.
     return any(match['delimiter'] and credential_label(match['label'])

@@ -88,13 +88,14 @@ lexical units before recognition, including leading/trailing inner spaces, tabs
 and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
 their lexical meaning. Ordinary quoted values do not hide inner assignments;
 each quote kind scans independently, including opposite-quote labels inside
-ordinary quoted values. Each quote kind traverses forward with one cursor. An escape consumes its next
-character, or end of input when the backslash is terminal; an unmatched tail ends
-that pass. Closed labels alone reach one-time escape decoding and the common key
-policy when followed by an explicit delimiter. No failed suffix is retried at its
-inner quotes. Together with maximal ordinary runs, this bounds traversal work by
-the complete input length, including odd/even terminal escapes, while retaining
-full ordinary values without truncation or a new format/size restriction.
+ordinary quoted values. Adjacent same-kind quotes form local candidate boundaries;
+every quote remains a possible opener even after ending the preceding candidate.
+A delimiter after a quote therefore checks the immediately preceding boundary
+independently of unrelated prose pairing. Candidate spans and whitespace after
+quotes do not overlap, so extraction and common-policy work remain linear in the
+input length. Escapes consume their next character or end of input explicitly.
+No all-pairs scan, growing suffix retry, truncation or format/size restriction is
+needed; ordinary unmatched/odd quote contexts retain their useful original text.
 Recognition checks raw text and bounded once-serialized views before associating
 quoted labels with delimiters. A forward-only cursor decodes closed, disjoint JSON
 string units, including units embedded in ordinary prose. A separate lexical
