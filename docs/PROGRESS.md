@@ -5,6 +5,28 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-03 kickoff CLEAR; implementation dispatched
+
+Actual [QA AID-207](/AID/issues/AID-207) [kickoff1 CLEAR](tasks/p2-03-bounded-download/kickoff-review.md)
+at fixed86837c7/unchanged task285af6d1, report/evidence9dfdf9f1. No blocking
+ambiguity or owner-boundary question. Source/registered-path observations identify
+both callers' policy/size gates, partial association/range/ownership, retained
+install admission/failure/compensation and deadline work within the existing
+D1–D5 contract. [Implementation handoff](tasks/p2-03-bounded-download/implementation-handoff.md)
+records concrete old assertions and their feature replacements. No task/product/
+test/registry change, new skip or future delivery PASS. Separate Coding and
+independent exact-final-commit QA use native Coding → Review → Producer blockers.
+
+QA fresh unchanged-source Backend7043/124 existing skips,MCP666/four,standing25
+pass; nine bounded observations confirm present gaps, not future safety guards.
+All8128 original files/72 registry rows/current14 dirty memory bodies remain exact.
+Producer verifies3 official uploads/46 members/42 Git bodies, complete fingerprints,
+independent bundle FINAL/tree and patch tree, both fsck0. Original raw-log packaging
+omission/correction and Producer's guessed-branch/actual-HEAD recovery remain
+honest history. No new Producer full suite/private key/live provider/service/model/
+generation/Gallery-byte action. Durable jobs/aggregate reservations and remaining
+Phase2 flow/qualification/CTY aesthetics stay open. Publication is not deployment.
+
 ## 2026-11-27 — p2-02 accepted; bounded download execution enters kickoff
 
 [Actual acceptance](tasks/p2-02-resource-record/acceptance.md): Codingc705d211,
@@ -133,7 +155,8 @@ reads. No running-Backend deployment, model-body/Gallery retrieval or generation
 
 [p2-02 is accepted](tasks/p2-02-resource-record/acceptance.md) after exact review10
 PASS; its Backend row/metadata/migration/reads are built. [p2-03](tasks/p2-03-bounded-download/task.md)
-now enters independent kickoff for bounded stock execution. Persistent download
+has actual kickoff1 CLEAR and proceeds to Coding/exact delivery QA for bounded
+stock execution. Persistent download
 jobs/budgets, new search/MCP/defaults and whole Phase2 qualification remain open.
 
 | Capability | Status | Code | Tests | Real run |

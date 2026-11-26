@@ -50,3 +50,17 @@ ProviderOperation. See [p2-03](../tasks/p2-03-bounded-download/task.md) and
 Fresh independent kickoff and exact delivery review apply. No owner boundary
 change, live provider/key/model action, runtime deployment or new architecture is
 needed. This records adopted scope, not implemented or accepted future behavior.
+
+## 2026-11-27 application after independent CLEAR
+
+Actual [kickoff1 CLEAR](../tasks/p2-03-bounded-download/kickoff-review.md) confirms
+the unchanged bounded task. Apply the same ownership contract through retained
+install's post-publication compensation as through download cleanup: an earlier
+absence check does not prove a final is still this invocation's file. Likewise,
+post-admission failure/current outcome applies to both callers on the existing
+resource authority, not just background acquisition. The source's size rounding/
+truncation disagreement needs one explicit selected-size interpretation, not an
+unreported metadata change. See [handoff](../tasks/p2-03-bounded-download/implementation-handoff.md)
+for source evidence and compatibility feature replacements. These are applications
+of existing D1–D5, not a task/specification or project-boundary change. Actual
+implementation and exact independent delivery QA remain required.

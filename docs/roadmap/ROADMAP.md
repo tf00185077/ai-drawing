@@ -70,9 +70,10 @@ exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementat
 independent exact review10 PASSa94324fe. All D–Z items pass; nine earlier delivery
 rejections/five historical P1 findings remain. Source publication integrates the
 Backend foundation and exact72-row QA registry, without runtime deployment.
-Next [p2-03](../tasks/p2-03-bounded-download/task.md) independently clears stock
-byte/space/format/resume/no-overwrite limits before durable attempts and aggregate
-reservations. These are in-phase dependency refinements under current delegation,
+[p2-03](../tasks/p2-03-bounded-download/task.md) has actual independent
+[kickoff1 CLEAR](../tasks/p2-03-bounded-download/kickoff-review.md) at86837c7/task285af6d1,
+report9dfdf9f1. Unchanged byte/space/format/resume/no-overwrite limits proceed to
+separate Coding/exact delivery QA before durable attempts and aggregate reservations. These are in-phase dependency refinements under current delegation,
 not a change to owner scope/order/architecture/Not now. Search/hash lookup/newMCP/
 defaults/proven removals and real qualification remain pending.
 
@@ -131,6 +132,13 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-27 — Accept actual p2-03 kickoff1 CLEAR9dfdf9f1 at fixed86837c7 and
+  unchanged task285af6d1. Both-caller admission/failure/ownership and selected-size
+  work apply the current contract, with explicit feature-preserving replacements
+  for obsolete assertions. Dispatch separate Coding/exact delivery QA. No scope/
+  order/architecture/Not now change or owner gate; baseline tests are not delivery
+  or phase exit ([handoff](../tasks/p2-03-bounded-download/implementation-handoff.md)).
 
 - 2026-11-27 — Accept p2-02 exact review10 PASS atc705d211/reporta94324fe, with
   nine previous rejections/five P1 histories preserved. Next bound stock download

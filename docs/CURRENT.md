@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 accepted; p2-03 bounded-download kickoff next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 kickoff CLEAR; Coding and exact delivery QA next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -111,8 +111,12 @@ independent exact declared-shallow restores. All 14 current shared memory bodies
 statuses are preserved. No new Producer key/provider/service/restart/download/
 register/generation/live Gallery-byte result; publication is not deployment.
 
-**Next: [p2-03 stock download execution limits](tasks/p2-03-bounded-download/task.md)**,
-with a fresh independent kickoff before Coding and separate exact delivery QA.
+**Current: [p2-03 stock download execution limits](tasks/p2-03-bounded-download/task.md)**,
+with actual independent [kickoff1 CLEAR](tasks/p2-03-bounded-download/kickoff-review.md)
+at fixed86837c7/task285af6d1, report/evidence9dfdf9f1. No blocking ambiguity or
+owner question. The unchanged task now proceeds under the [implementation handoff](tasks/p2-03-bounded-download/implementation-handoff.md)
+to separate Coding and exact-final-commit delivery QA. Producer retains ownership
+and waits on actual delivery QA, not a completion-only or self-PASS claim.
 Adopt configurable8GiB/file and20GiB destination free-space floor, actual streamed
 byte checks/valid resume, safetensors checkpoint/LoRA selection and no-overwrite
 publication. These are delegated in-boundary choices, not implemented results.
