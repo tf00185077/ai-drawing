@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.db.models import DownloadedResource
 from app.schemas.resources import ResourceMetadata
 from app.services.resource_records import (assert_identity, measured_evidence, metadata_for,
-    normalize_metadata, provider_snapshot, publish_metadata, ResourceIdentityConflict)
+    normalize_metadata, provider_snapshot, publish_metadata, ResourceIdentityConflict, safe_evidence)
 from app.services.civitai_acquisition import redact_secrets
 from app.services.civitai_safe_download import CivitaiFileMetadata, safe_download
 
@@ -167,17 +167,17 @@ def inspect_civitai_resource(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "model_family": version.get("baseModel") or payload.get("baseModel"),
                 "resource_metadata": provider_snapshot(dict(version), dict(payload) if is_model_payload else None, dict(file)).model_dump(mode="json"),
             }
-            candidates.append(redact_secrets(candidate))
+            candidates.append(safe_evidence(redact_secrets(candidate)))
     candidates.sort(key=lambda item: (
         item["civitai_model_id"] or 0, item["civitai_model_version_id"] or 0,
         item["civitai_file_id"] or 0, item["name"],
     ))
-    return redact_secrets({
+    return safe_evidence(redact_secrets({
         "status": "completed",
         "source": {"provider": "civitai", "civitai_model_id": declared_model_id},
         "model_family": payload.get("baseModel"),
         "candidates": candidates,
-    })
+    }))
 
 
 def _safe(candidate: Mapping[str, Any]) -> bool:
@@ -244,7 +244,7 @@ def _validated_descriptor(selected: Mapping[str, Any]) -> tuple[dict[str, Any] |
     """Require exactly the inspect-produced canonical descriptor before transport."""
     if set(selected) - {"resource_metadata"} != _DESCRIPTOR_FIELDS:
         return None, "invalid_selected_descriptor"
-    descriptor = dict(selected)
+    descriptor = safe_evidence(dict(selected))
     if descriptor.get("resource_metadata") is not None:
         try:
             snapshot = ResourceMetadata.model_validate(descriptor["resource_metadata"])

@@ -23,6 +23,22 @@
 
 ## Log
 
+### 2026-11-26 · Exclude complete recognizable credential values
+
+- Decision: treat a recognizable credential-bearing free-text value as a complete
+  safety unit. Remove/redact the complete affected value, or refuse unsafe input
+  before publication if a typed contract cannot survive; safe public reads of old
+  snapshots stay read-only and retain the resource. Keep unrelated safe fields and
+  ordinary hashes. Test full values across actual writers/readers, not only URLs.
+- Why: removing only a label/scheme or the first token leaves a secret suffix;
+  repeated normalization then loses the evidence needed to recognize it. Basic
+  auth, later cookies and quoted multiword values demonstrate this boundary.
+- Provenance: Producer's application of existing R1/C1 after independent
+  [review2](../tasks/p2-02-resource-record/review-round-2.md), not a new owner quote,
+  requirement or scope. [Correction2](../tasks/p2-02-resource-record/repair-round-2.md)
+  retains the passing R2-R4 obligations and requires fresh exact delivery QA.
+
+
 ### 2026-11-26 · Keep validation and preservation at every resource boundary
 
 - Decision: apply the existing secrecy policy to complete typed snapshots at

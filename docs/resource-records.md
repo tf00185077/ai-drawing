@@ -74,7 +74,14 @@ excluded. Every typed nested field passes shared safe normalization at provider
 snapshot construction, publication and public projection: license values and keys,
 missing-field strings, diagnostics, trigger words, recommendation values/source
 fields, raw labels and opaque evidence. HTTP locators lose userinfo, queries and
-fragments; recognizable credential text and sensitive evidence keys are removed.
+fragments. A recognizable credential-bearing free-text string is redacted in
+full, including Basic/Proxy-Authorization schemes, later cookies, quoted multiword
+values, compound labels, whitespace and delimiters. Token-by-token removal cannot
+safely locate their ends. The same normalization covers retained descriptor
+license/usage fields and newly generated acquisition license snapshots. Credential
+keys are excluded before renaming so repeated normalization is idempotent. Bare
+Basic text is recognized only with a decodable user:password value; ordinary text
+such as “basic painting” remains useful. Sensitive evidence keys are removed.
 Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
 are normalized for reads without repair writes. Invalid typed snapshots remain
 readable as incomplete; supplied verification never establishes measured evidence.

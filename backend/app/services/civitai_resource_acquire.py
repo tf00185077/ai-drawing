@@ -71,7 +71,7 @@ class _StreamingDownloadTransport(ProviderDownloadTransport):
 # Public import retained for frozen recipe/AIR callers and Anima package routing.
 from app.services.civitai_resource_legacy import normalize_model_family
 from app.schemas.resources import ResourceMetadata
-from app.services.resource_records import (assert_identity, measured_evidence, metadata_for, publish_metadata,
+from app.services.resource_records import (assert_identity, measured_evidence, metadata_for, publish_metadata, safe_evidence,
     provider_snapshot, ResourceIdentityConflict)
 
 
@@ -261,7 +261,7 @@ def license_snapshot(model_payload: dict[str, Any] | None) -> tuple[dict[str, An
             "模型授權欄位不完整（缺 " + ", ".join(missing) + "）；已照常下載並標記 license_verified=false，"
             "若要商用或公開發布請先自行到模型頁確認授權"
         )
-    return snapshot, warnings
+    return safe_evidence(snapshot), warnings
 
 
 def _storage_roots(settings: Any) -> dict[str, Path]:

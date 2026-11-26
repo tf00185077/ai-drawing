@@ -4,6 +4,7 @@ Identity, path, hash and status remain authoritative ORM columns. Verification
 is evidence bound to those columns and a measured file stat, never a second ID.
 """
 from __future__ import annotations
+import base64
 import json
 import math
 from pathlib import Path
@@ -20,6 +21,14 @@ from app.services.civitai_acquisition import redact_secrets
 WORKFLOW_FAMILIES = {'sdxl 1.0':'sdxl', 'illustrious':'sdxl', 'pony':'sdxl', 'noobai':'sdxl'}
 LICENSE_FIELDS = ('allowNoCredit','allowCommercialUse','allowDerivatives','allowDifferentLicense')
 SHA256 = re.compile(r'^[0-9a-fA-F]{64}$')
+# A recognizable credential-bearing string is a complete safety unit. Token
+# boundaries cannot identify the end of cookies, quoted values or auth schemes.
+_CREDENTIAL_TEXT = re.compile(
+    r"\b(?:(?:(?:proxy[\s_-]*)?authorization|(?:set[\s_-]*)?cookie|"
+    r"api[\s_-]*key|access[\s_-]*token|token|secret|password|credential|signature)"
+    r"[\"']?\s*[:=]|bearer\s+\S)", re.I,
+)
+_BASIC_AUTH = re.compile(r'\bbasic\s+([A-Za-z0-9+/]+={0,2})(?=$|[\s,;])', re.I)
 _SENSITIVE = re.compile(r'token|secret|authorization|password|credential|signature|cookie|api.?key',re.I)
 
 
@@ -37,14 +46,23 @@ def safe_text(value: str) -> str:
             return '[redacted locator]'
     value = re.sub(r'https?://[^\s<>"\']+', locator, value, flags=re.I)
     # Credentials in free-form nested strings are not necessarily URL queries.
-    value = re.sub(r'(?i)\b(?:bearer\s+[^\s,;]+|(?:authorization|proxy-authorization|cookie|set-cookie|api[_ -]?key|access[_ -]?token|token|secret|password|credential|signature)\s*[:=]\s*(?:bearer\s+)?[^\s,;]+)', '[redacted credential]', value)
+    if _CREDENTIAL_TEXT.search(value):
+        return '[redacted credential]'
+    # A bare Basic scheme is recognizable when its base64 contains user:password;
+    # natural language such as "basic painting" is ordinary metadata.
+    for match in _BASIC_AUTH.finditer(value):
+        try:
+            if b':' in base64.b64decode(match[1], validate=True):
+                return '[redacted credential]'
+        except ValueError:
+            pass
     return redact_secrets(value)
 
 
 def safe_evidence(value: Any) -> Any:
     if isinstance(value,dict):
         return {safe_text(k):safe_evidence(v) for k,v in value.items()
-                if isinstance(k,str) and not _SENSITIVE.search(k)}
+                if isinstance(k,str) and not _SENSITIVE.search(k) and safe_text(k) != '[redacted credential]'}
     if isinstance(value,list): return [safe_evidence(v) for v in value]
     if isinstance(value,str): return safe_text(value)
     if isinstance(value,float) and not math.isfinite(value): return None
