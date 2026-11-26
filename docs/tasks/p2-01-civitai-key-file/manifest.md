@@ -1,148 +1,145 @@
-# p2-01 Coding delivery
+# p2-01 Coding correction 1 delivery
 
-Issue: [Coding AID-181](/AID/issues/AID-181). Independent delivery review:
-[QA AID-182](/AID/issues/AID-182); coordination: [Producer AID-146](/AID/issues/AID-146).
-This is a Coding delivery, not independent PASS, integration, deployment or Phase 2 exit.
+Coding [AID-183](/AID/issues/AID-183), coordinated by [Producer AID-146](/AID/issues/AID-146).
+This is a delivery for independent review round 2, not a self-PASS, integration,
+deployment or Phase 2 exit. The actual first [FAIL R1/P1/D3](review-round-1.md),
+[old manifest](manifest-round-1.md), original evidence/ and review-evidence/ remain
+exact. The historical adverse cookie tests still describe a defect; their green
+results are not security certification.
 
-Implementation is frozen at **8a77b9079ed4d60c9a7784713cc3525def3fdadf**, tree
-**82ef1bb63cce947d378ee9cc4f84d016ba8233f5**, based on fixed published
-**b49bdc6695277b4c53ab50b973abbbd79a415316**. Final candidate SHA/tree are in the
-native delivery receipt and official artifact index (a file cannot contain its
-own commit hash). Later changes add only this manifest and evidence. Worktree:
-`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-181-key-file`,
-branch `aid-181-p2-01-key-file`; retained with its ignored test environment/evidence.
+Fixed base: **301c5dee6f35d5bad9fa0fe51799b24c56f35a5e**. Imported only the four
+named repair/decision/mirror files from supplement
+**e2e6ee52022de188c003c0dcd056c649297d090c**. Unchanged task hash:
+`bd291da2897099b84fd743dcd384ea7812105ec96e74ad7501d76c9d28784850`.
+Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-183-cookie-boundary`,
+branch `aid-183-p2-01-cookie-boundary`; its ignored test environment is retained.
 
-## Implementation
+Corrected software is frozen at **2491ceb7555fe49e3f6a1261113a3e6398185743**,
+tree **7bcadfb7b75568c7e5c7a2d12ad397f6040b422d**. Final candidate SHA/tree appear
+in the native delivery receipt and uploaded artifact index, avoiding a circular
+self-hash. Subsequent changes are this manifest and correction evidence, including
+a test-guard supplement; Backend/MCP product/tests and live probe are unchanged.
 
-`civitai_provider.py` owns the private UTF-8 file resolver, one credential snapshot,
-exact-origin policy, explicit redirect loop and absolute transport deadline.
-Existing synchronous service adapters drive cancellable HTTPX async reads on a
-private loop. This internal bridge is necessary because finite inactivity
-timeouts alone cannot stop a slow-drip stream within the operation total. It adds
-no endpoint, scheduler, job schema, resource registry or dependency.
+## Change and scope
 
-Ordinary registered MCP acquisition still posts through the existing Backend
-route. Nested version/model reads share a 20-second metadata operation. Each
-background file execution resolves a fresh snapshot and shares its 900-second
-bound across its existing retries/backoff/stream. The retained resource-inspect
-and resource-install adapters use the same policy. File rotation is observed by
-the next operation; cached Settings do not cache key contents.
+`civitai_provider.py` adds a rejecting CookieJar policy and enforces credential
+channels after HTTPX build_request on every initial request and redirect. It
+removes implicit/caller Cookie, Proxy-Authorization and Authorization, then adds
+only the Backend snapshot's permitted Authorization. Cookies are neither accepted
+from provider responses nor retained for replay. Canonical Authorization remains
+available for same-origin requests and stays stripped through cross-origin return
+hops. The correction adds no dependency, endpoint, registry or scheduler.
 
-Configured bad files fail before provider traffic, without legacy/anonymous
-fallback. Exact HTTPS canonical/www/b2 hosts and default port are validated at
-initial request and every redirect; credentials go only to canonical origin and
-stay stripped after an origin change. Responses close even if never consumed.
-Stable errors survive catch-all/background status and MCP projection. HTTP logs,
-stored provider URLs, metadata and diagnostics redact actual credentials and
-signed query values, retaining ordinary source/tokenizer/model hashes. Raw signed
-download locators are ephemeral internal inputs until consumed by the policy;
-public inspect descriptors and durable records carry sanitized canonical identity.
+Seven positive feature cases observe final HTTPX wire requests: domain/path/secure
+and host-only cookies, canonical same-origin → www → b2 → canonical return hops,
+repeated requests in one operation, implicit client headers/cookies, and registered
+MCP → Backend → ORM admission → actual background download → status/installed bytes
+for both b2 and www. Only external HTTP is replaced; Settings, file resolver,
+request/cookie preparation, registered routes, records and byte verification are
+real. Scheduling is deferred for deterministic background execution as before.
+All original feature functions/fixtures remain exact; no test deletion/new skip.
 
-Existing byte verification, scanning, partial-file behavior, adoption/dedupe and
-record IDs remain. No broader pre-existing no-overwrite guarantee is claimed.
-The old image/recipe import transport is outside this retained resource-file
-contract; it was not redesigned or revived. No MCP name, risk or envelope changed.
-Current configuration/limits are in [the credential guide](../../civitai-credentials.md)
-and [setup guide](../../setup.md).
+Only the shared provider boundary changed in product code. Existing URL validation,
+five redirects, snapshot/rotation, deadlines/retries, closures, sanitized failures,
+acquisition/resource IDs, scanning/hash/size/adoption/dedupe and partial-file behavior
+are exercised by current original tests. The 31-intent catalog and all 18 existing
+registry rows are unchanged. The credential guide documents the stateless policy;
+the imported Producer decision remains verbatim.
 
-## Done when evidence
+## D1–D5 evidence for independent review
 
-| Item | Check / level | Evidence and layer | Real boundary / substitutes |
+| Item | Check / level | Current evidence and layer | Real boundary / substitute |
 |---|---|---|---|
-| D1 | test / P1 | `backend/tests/test_civitai_provider.py`: precedence, trim/rotation, legacy/anonymous, bad files, FIFO, unreadable and exact 64 KiB | Real Settings/environment and local fixture files; only OS permission denial is simulated. No key/settings bridge. |
-| D2 | test / P1 | Registered MCP admission/status/reuse and retained inspect/select/install route tests in the same file | Real registration/common envelopes, HTTP Backend client, FastAPI routes, resolver, ORM, safe byte publication and status. External HTTP only is replaced. DB/storage isolated. Background scheduling is deferred deterministically; actual `_run`/`_run_one` execute. |
-| D3 | test / P1 | Same file: origin headers, initial/hop denial, five-hop limit, total across nested reads/retries/backoff, actual async slow drip, unconsumed/error/interruption closure, 401/403/429/network, signed logs/storage; [faults](evidence/faults.json) | Real HTTPX factories/request objects and response streams against HTTP fixtures. Synthetic clock for exact 20/900 totals; real async cancellation under a shortened deadline for slow drip. Actual production mutations fail then restore. |
-| D4 | manual / P1 | [Live comparison](evidence/live.json), [frozen inventory](evidence/source-inventory.json), [verification](evidence/verification.json) | Actual configured-file resolver and production request machinery, no transport/key injection. Two ephemeral processes; HEAD same known version 1843039/file 1743033. Read-only profiler observes real HTTPX responses. |
-| D5 | test + deliverable / P1 | Full suites, affected checks, registry guards, this manifest, official hashed/read-back uploads and Git bundle in native receipt | Exact frozen source plus evidence descendants. Existing 18 registry rows unchanged; only independent QA may certify additions. |
+| D1 | test / P1 | Original configuration cases in backend/tests/test_civitai_provider.py; guarded restored-feature and final Backend full; precedence fault | Real environment/Settings and synthetic local files; only OS denial fixture is simulated. No settings/key injection. |
+| D2 | test / P1 | Original registered/inspect/install cases plus new registered cookie cases; final Backend full and guarded MCP | Real MCP/HTTP Backend/ORM/resolver/factories/background/status and synthetic file publication. Only external HTTP and thread scheduling are fixtures; DB/storage isolated. |
+| D3 | test / P1 | guarded/old-boundary-red.log, guarded/restored-feature.log, guarded/faults.json and final Backend full | Exact old provider fails seven current wire guards; cookie replay fails six, implicit headers/header/precedence/total faults each fail one. Exact source restored in finally before GREEN. |
+| D4 | manual / P1 | live.json, live_probe.py, freeze.json, source-inventory.json | Fresh bounded actual anonymous/configured-file HEAD on version 1843039/file 1743033 after product freeze. No transport/key injection. Loaded unwrapped request and policy code match compiled exact source. |
+| D5 | test + delivery / P1 | This manifest; guarded current suites/exports/readers/registry; verification.json; uploaded full Git bundle/evidence/index/readback | Exact candidate and source fingerprints, preserved histories and existing contracts. Producer's dependent independent QA owns the verdict. |
 
-## Actual verification
+Evidence links are relative to [correction-1-evidence/](correction-1-evidence/).
+The [command guide](correction-1-evidence/verification-commands.md) explains
+reproduction, harness provenance and failed attempts. The runner and observer
+reuse prior QA tooling; their inherited descriptions do not make these Coding
+checks an independent QA review.
 
-Commands are reproducible through `python3 -B docs/tasks/p2-01-civitai-key-file/evidence/run_checks.py <label>`.
-Exact argv, timestamps, interpreter, isolated root and results are in the
-corresponding JSON/log files. All long suites use `--timeout=60`. The dedicated
-ignored `.venv` references existing read-only Backend/QA site-packages and exports
-this worktree's Backend/MCP source. Its child-inherited [guard](evidence/test_guard.py)
-denies private .env/key access, remote traffic, live service ports and writes/DBs
-outside the run scratch; existing ephemeral loopback/stdio fixtures are permitted.
-Canonical environments were not installed into or changed.
+## Current verification
 
-| Command label | Result |
+All pytest commands use --timeout=60, unique PAPERCLIP_RUN_SCRATCH_DIR roots,
+pinned worktree Backend/MCP imports, no cache and a dedicated venv referencing
+existing dependency sites read-only. Explicit .pth loading installs the child
+private-file/remote-DNS/network/write audit hook. Its active-denial probes and
+per-child receipts are retained. The final Backend guard handles macOS dir_fd
+cleanup correctly and records zero blocked events. Canonical environments were
+not installed into or modified.
+
+| Current guarded command label | Result |
 |---|---|
-| `restored` (55 new feature cases, after all three faults) | **55 passed** |
-| `backend` (affected acquisition/install/download/redactor/recipe/ledger) | **203 passed** |
-| `mcp` (Civitai/client/catalog/stdio) | **31 passed** |
-| `backend-full backend/tests` | **1,971 passed, 124 skipped**, 76 deprecation warnings |
-| `mcp-full mcp-server/tests` | **666 passed, four skipped** |
-| `registry` (named existing guards plus independent PNG tests) | **427 passed, one existing skip** |
-| `check_faults.py` | Header leakage, precedence bypass and removed total bound each: **one meaningful failed test**; exact source restore and **55 passed** |
-| `verify_delivery.py`, `git diff --check` | Private-value exclusion, 18 registry rows, task/p2-00/memory preservation and exact source checks; whitespace clean |
+| old-boundary-red | **7 failed**, expected final-wire cookie/implicit-header failures against exact rejected provider; 55 deselected |
+| five actual production faults | Cookie replay **6 failed**; implicit prepared headers, Authorization leakage, file precedence and total bound **1 failed each**, expected |
+| restored-feature | **62 passed** after all faults, source restored exactly |
+| backend-full-dirfd backend/tests | **1,978 passed, 124 existing skips**, 76 deprecation warnings, 44.47 s |
+| mcp-full mcp-server/tests | **666 passed, four existing optional export skips**, 73.61 s |
+| export | **93 passed**, fresh Backend revision/multi-LoRA/lifecycle/health exports |
+| cross-layer | **73 passed**, separate MCP reader process, current exports bound |
+| registry-mcp | **412 passed**, separate MCP registry/PNG guards, current lifecycle export bound |
+| fresh-wait | **12 passed**, fresh Backend exporter child and registered MCP consumers |
+| scratch registry rebuild; audit_source.py; git diff --check | All 18 rows exact; histories/task/mirrors/source/secrecy verified; whitespace clean |
 
-Full suites were run because the shared redactor has many retained consumers and
-two existing registry rows name full suites. No frontend code changed; its suite
-and build were not repeated. No test was deleted or newly skipped. All original
-skip counts remain. Windows was not exercised. Dependency/API deprecation
-warnings are disclosed; these checks do not certify Windows behavior.
+These are current changed-source results; old round-1 totals are not substituted.
+Full suites were repeated because the existing registry includes them. Backend
+health guards also run in full/93-case producers. Guard v2 changes only resolution
+of relative dir_fd filesystem paths; prior guarded feature/fault/MCP/export results
+remain applicable to unchanged product and unchanged credential/network policies.
+No further full-suite repetition adds coverage after evidence-only edits.
+Frontend is unchanged and was not retested. Windows was not exercised.
 
-**Live source component:** anonymous HEAD **401**; configured-file HEAD **307 →
-200** on the allowed credential-free CDN. Every observed response closed, zero
-model-body bytes read/saved, no GET fallback. The production file total remains
-900 seconds; this probe shortened it to a 20-second cap, with finite phase
-limits. The file opened independently as a readable regular file, its content
-and permissions stayed unchanged. No private value/digest/length was emitted.
-All loaded module paths/hashes and selected loaded code-object hashes match the
-frozen source. The complete frozen inventory covers **2,298 tracked files**,
-including ordinary tokenizer/source hashes. This never reconstructs the First
-check's five missing historical tokenizer fingerprints.
+## Fresh bounded live source result
 
-**Running service:** not probed, restarted or redeployed. **Generation/model
-acquisition:** none for delivery. **Retrieval:** no Gallery/model bytes fetched;
-official delivery attachments are separately verified by byte readback. No
-Phase 2 automation, zero-fix exit or aesthetic verdict is claimed.
+Anonymous HEAD returned **401**. Configured-file HEAD returned **307 → 200**,
+canonical civitai.com → b2.civitai.com. Authorization was present only on the
+canonical keyed request. Every final request had no Cookie/Proxy-Authorization,
+no configured key in another header or URL; all responses closed. The profiler
+observed no response body-method call; **zero model-body bytes read/saved**, no
+GET fallback, registration, generation or target change. The probe shortened the
+900-second production total to 20 seconds and retained finite phase limits.
 
-## Failures, deviations and limits
+The private regular file was read locally; in-memory content/permission comparison
+confirmed preservation. No private value/digest/length was emitted or hashed.
+Loaded resolver, deadline runner, unwrapped request generator and cookie policy
+code objects equal compiled exact frozen source. Complete ordinary source
+fingerprints cover **2,436 frozen tracked files**. The uploaded candidate inventory
+also covers every final blob. This does not reconstruct p2-00's five missing
+historical tokenizer hashes and does not identify a deployed Backend.
 
-Test log trailing whitespace is normalized for Git; diagnostic text is retained.
-[Normalization hashes](evidence/log-normalization.json) identify original and saved
-bytes; raw logs remain in the retained ignored worktree.
+## Failed attempts, deviations and limits
 
-- No pre-existing product test failure is asserted. The first canonical test
-  interpreter lacked `pytest-timeout`; it collected no tests. Existing prepared
-  sites supplied it without a canonical environment change.
-- Initial feature RED observations cover file precedence/invalid-file admission,
-  stream deadline/error preservation, network retry count and HTTPX log leakage;
-  fixture-only [initial RED logs](evidence/red-d1.log), [request RED logs](evidence/red-d3.log)
-  and [log leakage RED](evidence/red-logs2.log) are retained.
-- Required obsolete assertion update:
-  `test_civitai_download_transport_follows_redirects_and_streams` no longer asserts
-  `follow_redirects is True`. It now observes an actual explicit 307→b2 stream,
-  bytes and response closure. The neighboring model-version permission test's
-  old `httpx.get` fake was also moved below the real AsyncClient to preserve its
-  original authoritative-model selection check. These are the only existing
-  tests edited; neither was deleted or skipped.
-- An early unguarded affected-suite invocation still had those obsolete mocks.
-  It unintentionally made anonymous requests to their old provider fixture
-  targets; the file request stopped at a denied redirect, with no model body
-  read or saved and no configured credential. Its temporary raw signed-URL log
-  was not promoted into artifacts. All subsequent regression runs used external
-  network/private-file guards. These requests are not D4 evidence.
-- The strict repository runner blocked existing stdio/loopback registry fixtures
-  (three MCP failures and 20 registry setup errors). Switching to the isolated
-  guarded environment restored the real feature tests without source edits.
-- Initial full Backend result: 23 failures caused by removing the `httpx` module
-  export used by existing no-side-effect bombs; restored that export, then full
-  green. Initial full MCP result: 75 setup errors because the new runner had not
-  created its scratch parent; fixed the runner, then full green. Both initial
-  command/result/log pairs are retained. No new skips or test removals mask them.
-- A repeated strict-run scratch path triggered pytest cleanup errors; unique
-  scratch roots prevent reuse. This was a harness setup failure, not a provider
-  outcome. Source faults always restored in `finally`, including that attempt.
-- Abandoned: inactivity-timeout-only sync streaming cannot enforce the required
-  total against slow drip. The shared cancellable async boundary replaces the
-  two duplicated retained transports; existing services/public APIs remain sync.
-- The key-file locator is configured in ephemeral probe processes only. Existing
-  private settings, runtime roots/worktrees/backups/snapshots and every model,
-  dataset, output and Gallery record were preserved. Shared main's concurrent
-  memory edits were not staged, reset, stashed or copied. No merge/push occurred.
+- Initial cookie-red failed before collection because pytest-timeout was absent.
+  Adding the existing AID-175 read-only dependency site resolved it.
+- Top-level offline logs record real observations but lack this run's audit-hook
+  receipts: Homebrew's sitecustomize shadowed the environment file. They are
+  superseded for isolation claims by guarded/. The explicit .pth hook was tested
+  with actual denied private-file and remote-DNS operations before rerunning exact
+  old RED, all faults, restored feature, full suites and fresh exports/readers.
+- First explicitly guarded Backend full: **4 failed, 1,974 passed, 124 skips**.
+  The original guard treated shutil.rmtree relative dir_fd paths as repository
+  paths. Correcting only that test harness permits scratch cleanup while denying
+  non-scratch dir_fd writes/private reads; final full Backend is green above.
+  No product/test change or skip masks the four harness failures.
+- The first wait-export retention command found both pytest's current symlink and
+  numbered path. Resolving them identifies one payload; the retry succeeded.
+- New runner logs normalize trailing whitespace, retaining raw/saved hashes and
+  diagnostic text. New pre-normalization byte copies are not separately retained.
+  Original Coding/QA raw logs and worktrees remain untouched. Failed attempts and
+  adverse historical assertions remain attributed, never rebranded as acceptance.
+- No specification/interface deviation, broad refactor or abandoned product
+  alternative. The two existing test edits already disclosed in round 1 remain
+  historical; this correction changes none of those functions.
 
-Independent QA should pin the actual final delivery receipt SHA and assess this
-implementation and evidence. Producer owns subsequent findings and integration.
+**Running service:** no probe, restart, deployment or reconfiguration.
+**Generation:** none. **Retrieval:** synthetic fixture bytes and official delivery
+attachment readback only; no live Gallery/model-body bytes. Broader provider
+rate-limit/Early Access/cancellation behavior and Windows are unverified.
+Shared main and concurrent memory edits, prior private snapshots/runtime/backups/
+venvs and every model/dataset/output/Gallery record are preserved. No parent
+owner/status write, merge or push. Producer reads independent exact review 2 and
+owns acceptance/integration. Changed product source requires new exact review.
