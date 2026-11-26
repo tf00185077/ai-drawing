@@ -229,3 +229,16 @@ def test_source_derived_package_warnings_use_complete_policy(boundary,monkeypatc
     rid=admitted.json()['resource']['acquisition_id']
     b.pending.pop()()
     for phase in views(b,rid):assert_excluded(phase)
+
+@pytest.mark.parametrize('text',TEXTS)
+def test_selected_provider_legacy_license_snapshot_contract(boundary,text):
+    # This retained adapter is independently safe even though persistence and
+    # public DTO normalization now also protect its downstream consumers.
+    from app.services.civitai_resource_acquire import resolve_version_metadata,license_snapshot
+    b=boundary;b.model['allowCommercialUse']=['None',text]
+    resolved=resolve_version_metadata('https://civitai.com/models/10?modelVersionId=21')
+    snapshot,warnings=license_snapshot(resolved['model'])
+    assert snapshot['allowCommercialUse'][0]=='None'
+    assert snapshot['license_verified'] is True and warnings==[]
+    assert_excluded(snapshot)
+    assert b.seen and all(auth=='Bearer resource-fixture-key' for _,auth in b.seen)
