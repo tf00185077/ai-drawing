@@ -99,3 +99,14 @@ after entry, drop synchronization or create a scheduler/attempt architecture.
 remain unchanged task/CLEAR/current delegation. Two delivery rejections/three P1s;
 R3 unresolved, no scope/order/Not now or artistic-authority change. Report actual
 results without a routine owner gate or Phase2 acceptance.
+
+## 2026-11-27 acceptance and next dependency
+
+Actual [review3 PASS](../tasks/p2-03-bounded-download/review-round-3.md) accepts all
+D/C/E at4cd3c042/report3e440ef1. R1/R2/R3 resolved in checked scope; prior two
+rejections/three historical findings remain. [Acceptance](../tasks/p2-03-bounded-download/acceptance.md)
+records exact-source limits. Next establish [persisted download operations/status/wait](civitai-download-jobs.md)
+before aggregate budgets/reservations, using the existing Backend/resource authority.
+This refines the earlier "next task" accounting statement into bounded dependencies;
+no numeric total quota, generation-queue rewrite or owner-boundary change. Fresh
+independent kickoff applies; source acceptance does not deploy or close Phase2.

@@ -4,11 +4,13 @@ Identity, path, hash and status remain authoritative ORM columns. Verification
 is evidence bound to those columns and a measured file stat, never a second ID.
 """
 from __future__ import annotations
+from contextlib import contextmanager
 import base64
 import json
 import math
 from pathlib import Path
 import re
+from threading import RLock
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 from pydantic import ValidationError
@@ -16,6 +18,30 @@ from app.db.models import DownloadedResource
 from app.schemas.resources import (LicenseSnapshot, MeasuredEvidence, MetadataDiagnostic,
     Recommendation, ResourceMetadata, ResourceRecord)
 from app.services.civitai_acquisition import redact_secrets
+
+# Both stock callers share this Backend's admission boundary. The committed
+# row owns subsequent work; this lock only serializes inspection/claim, never
+# a model-body download. It is not a durable or cross-process reservation.
+resource_admission = RLock()
+
+
+@contextmanager
+def bounded_resource_admission(operation):
+    """Wait only within the caller's existing budget; release only our level.
+
+    Direct legacy service calls without an operation can enter an available lock
+    immediately, but cannot wait without an applicable absolute deadline.
+    """
+    from app.services.civitai_provider import _timeout_error
+    remaining = operation.remaining() if operation is not None else 0
+    if not resource_admission.acquire(timeout=remaining):
+        raise _timeout_error()
+    try:
+        if operation is not None:
+            operation.remaining()
+        yield
+    finally:
+        resource_admission.release()
 
 # The sole Phase 2 inference table. Recipe/Anima adapters are explicitly legacy.
 WORKFLOW_FAMILIES = {'sdxl 1.0':'sdxl', 'illustrious':'sdxl', 'pony':'sdxl', 'noobai':'sdxl'}
@@ -267,12 +293,10 @@ def provider_snapshot(version: dict, model: dict | None, file: dict) -> Resource
     if model.get('license') is not None: license_values['model_license']=safe_evidence(model['license'])
     missing=[k for k in LICENSE_FIELDS if k not in license_values]
     if missing: errors.append(diagnostic('license_incomplete','license'))
-    size=file.get('size')
-    if size is None and type(file.get('sizeKB')) in {int,float}:
-        size=file['sizeKB']*1024
-    if type(size) in {int,float} and math.isfinite(size) and size>=0: size=int(round(size))
-    else:
-        size=None; errors.append(diagnostic('invalid_declared_size' if ('size' in file or 'sizeKB' in file) else 'missing_declared_size','declared_size_bytes'))
+    from app.services.civitai_download_policy import selected_size
+    size=selected_size(file)
+    if size is None:
+        errors.append(diagnostic('invalid_declared_size' if ('size' in file or 'sizeKB' in file) else 'missing_declared_size','declared_size_bytes'))
     return normalize_metadata(ResourceMetadata(origin='civitai_provider',base_model=safe_text(label) if isinstance(label,str) else None,
         declared_size_bytes=size,trigger_words=words,recommended_parameters=params,
         license=LicenseSnapshot(values=license_values,missing_fields=missing),source_evidence=opaque,diagnostics=errors))
@@ -290,8 +314,13 @@ def assert_identity(row: DownloadedResource, identity: dict[str,Any]) -> None:
             if a!=b: raise ResourceIdentityConflict('resource_identity_conflict')
 
 
-def measured_evidence(path: Path, size: int, sha256: str) -> MeasuredEvidence:
+def measured_evidence(path: Path, size: int, sha256: str, *, identity=None) -> MeasuredEvidence:
     stat=path.stat()
+    if identity is not None:
+        from app.services.civitai_safe_download import file_identity, _matches
+        if file_identity(stat)!=identity or not _matches(path, identity):
+            from app.services.civitai_download_policy import download_error
+            raise download_error('civitai_file_changed', 'Final changed while recording measured evidence')
     if stat.st_size!=size: raise ValueError('measured_size_conflict')
     return MeasuredEvidence(sha256=sha256.lower(),size_bytes=size,mtime_ns=stat.st_mtime_ns,inode=stat.st_ino)
 
@@ -403,3 +432,29 @@ def project_resource(row: DownloadedResource) -> ResourceRecord:
         license=snap.license if snap else LicenseSnapshot(missing_fields=list(LICENSE_FIELDS)),
         metadata_origin=snap.origin if snap else None,metadata_version=snap.version if snap else None,
         source_evidence=safe_evidence(snap.source_evidence) if snap else {},diagnostics=errors)
+
+
+_PARTIAL_UNSET = object()
+
+
+def download_context(row, size, sha256):
+    """Resume authority is the existing resource row, never public path text."""
+    association = {'provider': row.provider, 'model_id': row.model_id, 'version_id': row.version_id,
+                   'file_id': row.civitai_file_id, 'resource_id': row.id,
+                   'size': size, 'sha256': sha256.lower()}
+    snapshot, _ = metadata_for(row)
+    outcome = snapshot.source_evidence.get('acquisition') if snapshot else None
+    partial = outcome.get('partial') if isinstance(outcome, dict) else None
+    return association, partial
+
+
+def publish_download_state(row, status, error=None, *, measured=None, partial=_PARTIAL_UNSET):
+    snapshot, _ = metadata_for(row)
+    snapshot = snapshot or ResourceMetadata(origin='legacy_notes')
+    previous = snapshot.source_evidence.get('acquisition')
+    if partial is _PARTIAL_UNSET:
+        partial = previous.get('partial') if isinstance(previous, dict) else None
+    operation = {'status': status, 'error': error}
+    if partial is not None and status != 'installed':
+        operation['partial'] = partial
+    publish_metadata(row, snapshot, measured=measured, operation=operation)

@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 review2 FAIL; correction2 and exact delivery QA3 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 accepted; durable download jobs enter independent kickoff** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -111,29 +111,29 @@ independent exact declared-shallow restores. All 14 current shared memory bodies
 statuses are preserved. No new Producer key/provider/service/restart/download/
 register/generation/live Gallery-byte result; publication is not deployment.
 
-**Current: [p2-03 review2 FAIL](tasks/p2-03-bounded-download/review-round-2.md)** at
-Coding33b920fd/report7b37b8c8. Original R1/R2 pass in checked scope; new R3/P1 is
-unbounded admission-lock contention outside the existing absolute deadline.
-Registered0.15s remaining call is still blocked at0.6s, returning civitai_timeout
-only after the original owner releases. Original owner/ID/bytes survive. Two
-rejections/three distinct P1s; complete independent scope1FAIL/232PASS.
-[Correction2](tasks/p2-03-bounded-download/repair-round-2.md) applies bounded existing
-admission within D4/C3, preserving synchronization/reuse/retry. Original task285af6d1/
-kickoff1CLEAR/correction1 unchanged; Coding then new independent exact delivery QA3.
-Producer owns findings/acceptance; rejected product/tests stay off main, registry72.
+**Accepted: [p2-03 bounded stock downloads](tasks/p2-03-bounded-download/acceptance.md)**,
+Coding4cd3c042/independent review3 PASS3e440ef1. All D/C/E pass: strict8GiB/file,
+observed20GiB destination floor, safetensors/size/hash, associated resume, owned
+no-overwrite publication and truthful current status through both callers. R1/R2
+post-commit failure/active owner and R3 admission deadline pass. Two earlier rejected
+deliveries/three P1 histories remain. Exact registry87 retains prior72 plus15 certified
+items. Independent Backend7174/124 existing skips,MCP666/four,affected492,current260,
+14faults/15invocations/32assertions/restoration,fresh93/73/standing412/provider19/wait12.
+[Integrity](tasks/p2-03-bounded-download/producer-acceptance-integrity.json) checks24 uploads,
+112/135 members,111/134 Git bodies,8705/8837 fingerprints and official-only exact
+bundle/patch restores/fsck0. Source/tests integrate exact; no new Producer full
+product suite/key/provider/runtime/model/generation/Gallery-byte action. Current14
+shared memory edits preserved; source is not deployed.
 
-Rejected-source Backend7158/124 existing skips,MCP666/four,affected-repeat476,
-fresh93/73/standing412/provider19/wait12 remain attributed. Ten faults/21 assertions
-and narrower232GREEN do not remove R3. Initial affected1FAIL/475PASS/access-time
-fixture diagnosis, all31 attempts/32 raw logs and packaging failures stay intact.
-[Integrity](tasks/p2-03-bounded-download/producer-correction2-integrity.json):26 uploads
-(Coding17 payloads+index,QA7+index),108/117 members,106/115 Git bodies,8487/8601 full
-fingerprints; official ten-part prerequisite pack plus bundles/independent patches
-restore exact finals/trees/fsck0. All7394 prior task bodies/modes and72 registry items
-stay exact;14 shared memory edits preserved. No new Producer product suite/private
-key/provider/runtime/model/generation/liveGallery-byte action; source is not deployment.
-Durable jobs/aggregate accounting and remaining Phase2 real flow/CTY demo/exit stay
-pending, no routine owner question or boundary change.
+**Next: [p2-04 persisted download jobs/status/wait](tasks/p2-04-durable-download-jobs/task.md)**
+under a fresh independent kickoff. Current daemon-thread resource IDs are not durable
+jobs. Adopt additive operation history linked to existing resources, idempotent/
+atomic ownership, honest interruption without auto-replay and existing wait intent
+with authoritative download resources/no fake Gallery output. [Decision](decisions/civitai-download-jobs.md)
+keeps generation queue unchanged; aggregate quota/reservations follow separately.
+No p2-04 implementation/CLEAR is implied. Search/hash/newMCP/defaults/removals/three
+different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/Phase2exit remain pending;
+no routine owner question, boundary change or artistic acceptance.
 
 ## Team
 

@@ -499,6 +499,8 @@ def acquire_env(tmp_path, monkeypatch):
     )}
     settings = SimpleNamespace(
         civitai_authorization=None,
+        civitai_download_max_bytes=8589934592,
+        civitai_download_free_space_floor_bytes=21474836480,
         file_digest_cache_path=str(tmp_path / "digests.json"),
         **{f"comfyui_{key}_dir": str(path) for key, path in roots.items()},
     )
@@ -699,3 +701,26 @@ def test_start_acquisition_records_failure_on_sha_mismatch(acquire_env) -> None:
     status = acquisition_status(session, acquisition_id=result["resource"]["acquisition_id"])
     assert status["resources"][0]["status"] == "failed"
     session.close()
+
+
+@pytest.mark.parametrize('fault',['cap','space'])
+def test_anima_package_checks_every_component_before_any_admission(acquire_env,monkeypatch,fault):
+    import shutil
+    settings=acquire.get_settings();settings.civitai_download_max_bytes=8
+    settings.civitai_download_free_space_floor_bytes=10
+    bodies={'fileId=1':b'd'*2,'fileId=2':b't'*2,'fileId=3':b'v'*(9 if fault=='cap' else 2)}
+    version={'id':999001,'modelId':888001,'baseModel':'Anima','model':{'type':'Checkpoint'},'files':[
+        _anima_file(1,'anima_base.safetensors',bodies['fileId=1']),
+        _anima_file(2,'anima_base_txt.bin',bodies['fileId=2']),
+        _anima_file(3,'qwen_image_vae.pt',bodies['fileId=3'])]}
+    transport=_FakeJsonTransport({'model-versions/999001':(200,version),'models/888001':(200,{'id':888001,'type':'Checkpoint'})})
+    for root in ('diffusion_models','text_encoders','vae'):(acquire_env.tmp_path/root).mkdir()
+    monkeypatch.setattr(shutil,'disk_usage',lambda p:SimpleNamespace(free=0 if fault=='space' and Path(p).name=='vae' else 100))
+    class NoBody:
+        def get(self,*a,**kw):raise AssertionError('package policy must precede model traffic')
+    with acquire_env.session_factory() as db:
+        with pytest.raises(acquire.AcquireError) as error:
+            start_acquisition('999001',db=db,metadata_transport=transport,download_transport=NoBody(),run_in_background=False,session_factory=acquire_env.session_factory)
+        assert error.value.code==('civitai_byte_limit_exceeded' if fault=='cap' else 'civitai_insufficient_space')
+        assert db.query(DownloadedResource).count()==0
+    assert all(not list((acquire_env.tmp_path/root).iterdir()) for root in ('diffusion_models','text_encoders','vae'))

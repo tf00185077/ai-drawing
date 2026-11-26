@@ -5,6 +5,31 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-03 accepted; persisted download jobs enter kickoff
+
+[Actual acceptance](tasks/p2-03-bounded-download/acceptance.md) at Coding4cd3c042,
+independent review3 PASS3e440ef1 resolves R1/R2/R3 in checked scope, all15 D/C/E items.
+Two prior rejections/three historical P1s remain. Exact reviewed stock byte/space/
+format/resume/hash/no-overwrite/current-owner/deadline behavior integrates, with
+87 registry items preserving prior72. Independent Backend7174/124 existing skips,
+MCP666/four,affected492,current260,14 faults/15invocations/32assertions/restoration,
+fresh93/73/standing412/provider19/wait12 remain exact-source evidence. Explicit
+atime-fixture replacement preserves critical identity/bytes and real corruption
+sensitivity; all current44 QA attempts and prior histories retained.
+[Integrity](tasks/p2-03-bounded-download/producer-acceptance-integrity.json):24 official
+uploads,112/135 members,111/134 Git bodies,8705/8837 fingerprints,both bundle/patch
+restores/fsck0. Original7394 paths audited,7393 bodies/modes exact plus intentional
+registry update retaining72 rows. Current14 shared memory edits preserved.
+
+Next [p2-04](tasks/p2-04-durable-download-jobs/task.md) establishes persisted operation
+identity/ownership/interruptions and shared status/wait before aggregate accounting.
+Actual source has per-resource daemon threads/no generic persistent download Job;
+generation queue is a different domain. [Decision](decisions/civitai-download-jobs.md)
+uses existing Backend/SQLite/resource authority; no new architecture/scope/order/
+Not now or owner gate. Fresh independent kickoff then Coding/exact QA. No new
+Producer full product suite/private key/provider/runtime/model/generation/Gallery
+bytes, source deployment or Phase2/CTY artistic acceptance.
+
 ## 2026-11-27 — p2-03 second rejection; correction2
 
 [Independent QA AID-211](/AID/issues/AID-211)

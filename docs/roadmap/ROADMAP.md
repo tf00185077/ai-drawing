@@ -72,11 +72,13 @@ rejections/five historical P1 findings remain. Source publication integrates the
 Backend foundation and exact72-row QA registry, without runtime deployment.
 [p2-03](../tasks/p2-03-bounded-download/task.md) has actual independent
 [kickoff1 CLEAR](../tasks/p2-03-bounded-download/kickoff-review.md) at86837c7/task285af6d1,
-report9dfdf9f1. [Delivery review2 FAIL](../tasks/p2-03-bounded-download/review-round-2.md) at33b920fd/report7b37b8c8
-passes R1/R2 in checked scope; new R3/P1 waits beyond the existing operation deadline
-at admission. [Correction2](../tasks/p2-03-bounded-download/repair-round-2.md) and new
-exact QA3 apply unchanged D4/C3; two rejections/three findings, rejected product/tests
-off main. Durable attempts and aggregate reservations remain subsequent work. These are in-phase dependency refinements under current delegation,
+report9dfdf9f1. [p2-03 is accepted](../tasks/p2-03-bounded-download/acceptance.md) at4cd3c042/report3e440ef1,
+independent review3 PASS/all15 D/C/E; two earlier rejections/three historical P1s
+remain. Bounded stock execution and exact87-row registry integrate without runtime
+deployment. Next [p2-04 persisted download operations/status/wait](../tasks/p2-04-durable-download-jobs/task.md)
+receives fresh independent kickoff before Coding/exact delivery QA. Aggregate quota/
+reservations follow operation identity; generation-queue durability stays Phase3.
+These are in-phase dependency refinements under current delegation,
 not a change to owner scope/order/architecture/Not now. Search/hash lookup/newMCP/
 defaults/proven removals and real qualification remain pending.
 
@@ -135,6 +137,16 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-27 — Accept p2-03 actual review3 PASS4cd3c042/report3e440ef1, all D/C/E,
+  retaining two rejected deliveries/three P1 histories and87 registry items. Adopt
+  persisted download-operation identity/interruption/shared status-wait next, then
+  aggregate accounting against that authority. Source has no generic download Job;
+  use existing Backend/SQLite, preserve resource/generation domains. Fresh p2-04
+  kickoff/exact QA, no scope/order/Not now change or Phase2/artistic acceptance
+  ([acceptance](../tasks/p2-03-bounded-download/acceptance.md),
+  [decision](../decisions/civitai-download-jobs.md)).
+
 
 - 2026-11-27 — p2-03 review2 FAIL: original R1/R2 pass in checked scope, new R3
   lets admission contention exceed the existing operation deadline. Adopt bounded

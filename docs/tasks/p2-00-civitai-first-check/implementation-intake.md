@@ -52,3 +52,14 @@ queue rewrite or second resource authority. This split does not claim order2 is
 done; the old acquisition thread/resourceID remains distinct from a durable job.
 Fresh independent kickoff precedes implementation. Owner phase scope/order/Not now,
 three different zero-fix sentences/fresh checkpoint+LoRA and CTY demo remain.
+
+## 2026-11-27 sequencing after p2-03 acceptance
+
+[p2-03](../p2-03-bounded-download/acceptance.md) is accepted at exact review3 PASS.
+Next [p2-04](../p2-04-durable-download-jobs/task.md) establishes persisted operation
+identity/atomic ownership/interruption evidence and shared status/wait, with no
+auto-replay and no generation-queue rewrite. Aggregate quota/reservation detail
+follows this stable operation authority. This bounded split advances order2 while
+preserving one resource record/current stack/owner phase order and exits. No current
+async daemon-thread/resourceID or observed disk floor is relabelled durable accounting.
+Fresh independent kickoff applies before implementation; remaining intake stays ranked.
