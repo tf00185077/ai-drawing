@@ -1,286 +1,303 @@
 # p2-02 independent delivery review
 
 Verdict: FAIL
-Review round: 8
-Issue: [QA AID-202](/AID/issues/AID-202)
-Coding: [AID-201](/AID/issues/AID-201)
+Review round: 9
+Issue: [QA AID-204](/AID/issues/AID-204)
+Coding: [AID-203](/AID/issues/AID-203)
 Producer: [AID-146](/AID/issues/AID-146)
 Date: 2026-11-27
 
-Reviewed ACTUAL NEW FINAL: **1d5e63afee426ebd6f0f1f58ea03fe08b823e23d**.
-Reviewed tree: **74c70f55c707085783561889e002e38d7ef23899**.
-Coding product/tests/replay freeze: **4436943033b70f838646f12d51b25e71167e5f62**.
-Fixed implementation base: **5388e08dee72af39b38d766db40823d77ed80322**.
+Reviewed ACTUAL NEW FINAL: **c01730db22cc91d64aa779550313c3125fd66355**.
+Reviewed tree: **28c9a63d852c4a4ae179a1f2b45a52757e604ffe**.
+Coding product/tests/replay/topic freeze: **5baa7cfa451d6048d1edad1c94663750c33591e2**.
+Fixed implementation base: **7ebf45d5a83b8bc0977a1f502b64b79bd35b22c5**.
 
-I read the official [correction7 manifest](manifest-correction-7.md), verified its
-24,094 bytes and SHA256 `e0f4981455fa9b66b5794a58de077fda1131ad6ea09620d74ac10418b97119ba`
-against FINAL, and pinned the full FINAL/tree on this card before substantive review.
-[Pin receipt](review-round-8-evidence/pin-receipt.json). Neither the freeze ancestor
-nor the moving Coding worktree was the target. Own report commit/tree and official
-QA delivery receipts follow the report commit on the card, avoiding circular hashes.
+I read the official [correction8 manifest](manifest-correction-8.md), verified its
+18,497 bytes and SHA256 `fdaaf840bd2ac1a29abd34d16f43bc791130dd27140dd8a32bd5b82dd4b75a53`
+against FINAL, and pinned the full FINAL/tree on my own card before substantive
+review. [Pin receipt](review-round-9-evidence/pin-receipt.json). The freeze ancestor
+and moving Coding directory were not the review target. Own report commit/tree and
+official artifacts follow the report commit on AID-204, avoiding circular hashes.
 
-**The supplied review7 examples are corrected. Original R1/P1 remains incomplete:**
-preceding prose quotes can still disable a supported JSON-unit label representation,
-and ordinary quoted raw base labels leak through acquisition's new notes and legacy
-admission/status responses. R2–R4 and checked R5 bounds pass. Current full suites pass;
-the independent complete-value failures block acceptance. All values are synthetic.
-No actual owner key was read or disclosed. QA made no product repair, existing-test
-change, assertion relaxation, deletion, new skip, registry addition, feature push or merge.
+**The supplied review8 representation and new-note/status failures are corrected.
+Original R1/P1 remains incomplete:** the outer local-ledger DTO still exports raw
+provider-derived AIR and local paths through the weaker redactor, although its
+nested typed resource record is safe. Eight independent full-trace feature failures
+repeat in confirmation; two useful safe controls pass. R2-R4 and checked R5 bounds
+pass. Full Backend/MCP pass, but those results do not override this public disclosure.
+All values are synthetic. No actual owner key was read or disclosed. QA made no
+product repair, existing-test change, assertion relaxation/deletion, new skip,
+registry addition, feature push/merge, or parent/owner mutation.
 
-## Finding: original R1 / P1 remains incomplete
+## Finding: original R1 / P1 remains incomplete at the outer local ledger
 
-### Supported representation candidates still depend on enclosing prose quotes
+The [independent probe](review-round-9-evidence/independent_ledger_surfaces.py)
+supplies an explicit quoted credential assignment as either the selected provider
+file's `air` or a filename ending in `.safetensors`. It covers plain, once-serialized,
+preceding-prose and supported JSON-unit-fragment contexts. For example:
 
-`resource_records.py:109–141` retains disjoint quote pairing in `_json_string_view`.
-A preceding double prose quote consumes the opening quote of an intended JSON string
-unit. The corrected local assignment scanner never receives the decoded unit needed
-to recognize the complete identifier. Its literal/escape-aware passes cannot recover
-that omitted representation candidate.
+```text
+" CIVITAI_API_KEY " = "QA9 complete raw-identity synthetic value; retained suffix"
+```
 
-Coding explicitly added `test_json_unit_*` publication/provider/all-field guards and
-plain controls to preserve this view's distinct meaning. The supported plain control
-`HTTP_AUTH"\u004f"RIZATION = "synthetic value"` is recognized after one JSON-unit
-decode. Adding ordinary `ordinary "unfinished; ` disables recognition of the otherwise
-unchanged control. Equivalent `CIVITAI_API_"\u004b"EY` and `vendor.api."\u006b"ey`
-cases also fail. No nested serialization, recursive decoding or arbitrary unlabelled
-secret discovery is required by these adverse inputs. This applies X1's harmless
-context invariant to the implementation's own supported representation.
+The filename case appends `.safetensors`; the AIR case supplies that string as the
+provider AIR value. A stable safe refusal before publication is allowed by the
+probe, but all eight operations instead return admission 202, run the actual
+background target and reach installed state. These are recognizable labelled
+values under the existing policy, including a unit representation already supported
+by this implementation. No recursive decoding or arbitrary unlabelled-secret
+recognition is requested.
 
-Independent exact-FINAL evidence, initially and in confirmation:
+The public `GET /api/civitai-recipes/local-ledger` response exposes the complete
+synthetic value in **outer `entries[].air` or `entries[].local_path`**, both after
+admission and after completed installation. In the same response,
+`entries[].diagnostics.resource_record` is safe. Admission, typed admitted/completed
+metadata, new notes, acquisition/status, canonical detail/list and family/count/page
+responses are also safe. This isolates another public surface that cannot be
+certified by checking only the typed record or the repaired acquisition summary.
 
-- [Context/nested cases](review-round-8-evidence/independent_unit_contexts_final.py):
-  **54 feature failures /54 passing controls** per run. Real shared publication,
-  provider/registered inspect/select/acquire/background, edited install and all12
-  old-field/key classes are exercised. All12 classes fail for each of three adverse
-  inputs; their36 plain-control counterparts pass. Screen and writer failures are
-  separate cases. The initial simpler helper has the same54/54 outcome.
-- [Complete phase traces](review-round-8-evidence/independent_unit_boundary.py):
-  **nine feature failures /nine passing controls** per run. The full synthetic value
-  appears in successful inspect/select, install's committed metadata/new-row notes,
-  acquisition admission/background metadata and detail/list/local-ledger.
-- All72 enhanced old-field traces collect detail/list/ledger and canonical family
-  count/page observations before secrecy assertions. Safe IDs/hashes/triggers remain;
-  normalization idempotence is checked. SQL writes/provider/publication/backfill/model
-  body access are denied, and exact `metadata_json`/notes are checked in finally even
-  on failure. Complete phase traces retain `STORAGE_EXACT=true` observations.
-- [12 new safe unit neighbors](review-round-8-evidence/independent_safe_units.py) and
-  all24 immutable QA7 useful originals pass, retaining their original representations.
+Exact source trace:
 
-Settings, environment-selected synthetic-file resolver, ProviderOperation machinery,
-strict descriptors, registered HTTP, domain writers and ORM commit/reload are real.
-Only external HTTP and deterministic thread scheduling substitute behavior. The
-[progress analysis](review-round-8-evidence/source-progress-analysis.md) distinguishes
-bounded traversal from complete candidate coverage.
+- [Acquisition](../../../backend/app/services/civitai_resource_acquire.py), lines
+  394-399 and 434, carries the provider AIR through shared identity publication;
+  lines 419-424 retain the selected filename and actual target path on the row.
+- [Local ledger](../../../backend/app/services/civitai_local_identity_ledger.py),
+  lines 69-91, builds a safe typed diagnostic record while separately copying raw
+  `local_path` and `air` into `LocalResourceLedgerEntry`.
+- The same file's `ledger_payload`, lines 141-156, copies those outer fields and
+  returns `redact_secrets(...)`, rather than the shared complete-value policy.
+  [The registered router](../../../backend/app/api/civitai_recipes.py), line 624,
+  returns that payload. Repeated use of the weaker redactor does not establish
+  complete-value exclusion.
+- Coding's [publication inventory](correction-8-evidence/publication-inventory.md)
+  identifies local-ledger diagnostics but does not account for these raw outer
+  fields. Internal locator/identity use and safe public projection remain separate
+  concerns; retaining valid AIRs and real paths does not require exposing affected
+  credential-bearing values.
 
-### Raw provider labels bypass complete-value normalization in new notes/status
+[Phase audit](review-round-9-evidence/ledger-phase-audit.json): **eight failures/two
+safe controls**, initially and in final confirmation. Each attack collects all13
+phases before the secrecy assertion: **104 observations**, with16 exposed ledger
+phases. All eight complete synthetic installations. Settings, environment-selected
+synthetic-file resolver, ProviderOperation, selected non-first version/file,
+registered HTTP, actual background target, shared publication and ORM commit/reload
+are real. Only external HTTP and deterministic scheduling substitute behavior.
 
-The [raw-label trace](review-round-8-evidence/independent_raw_label_notes.py) supplies
-an ordinary quoted `CIVITAI_API_KEY` assignment as the selected provider baseModel,
-in plain, once-serialized and preceding-prose forms. **Three feature failures** repeat
-in confirmation. This is an explicit labelled value, without the unit-fragment form.
+Completed reads deny SQL writes, provider/publication/backfill and model-body
+access. Every original ORM column, including `metadata_json`, notes, identity,
+status and measured facts, is checked byte-exact in finally even on adverse failure.
+Safe IDs/hashes/triggers and canonical family pages remain visible. Both controls
+retain a valid AIR, original useful path and verified hash in outer and typed views.
+The public failure does not require changing old storage or hiding a whole resource.
 
-At `civitai_resource_acquire.py:363–370`, `common_notes` keeps the raw base label.
-Admission and `_run_one` persist those new notes through `redact_secrets`; the legacy
-summary at `:282–317` applies that same narrower redactor to `notes.base_model`.
-All three complete traces show the full synthetic value in **admission response,
-admitted new-row notes, completed new-row notes and status**. In the same traces,
-typed admitted/completed metadata and detail/list/ledger are safely normalized.
-Every phase is collected before the final secrecy assertion, including family reads.
-This directly checks the required raw labels, new-row notes and retained responses.
-Retained-row note preservation remains a separate passing obligation; QA did not
-rewrite old notes to repair this new-row/public-response gap.
+This is the unresolved original R1, not a sixth distinct historical finding or a
+new kickoff ambiguity. Producer owns correction, reassessment and acceptance.
 
-Both locations are the unresolved original R1, not new finding numbers or a new R5
-bounds regression. P1 remains appropriate because complete recognizable credential
-values persist or appear in successful public operations. Producer owns reassessment,
-correction and acceptance; this report proposes no product patch.
+## Y1-Y5 assessment
 
-## D/C/S/T/U/V/W/X assessment
-
-All levels remain P1. PASS below states the checked component meaning at this exact
-candidate; combined acceptance gates fail where R1 contradicts their contract.
+All levels remain P1. A component PASS describes its checked meaning at this exact
+candidate; combined acceptance fails wherever complete public exclusion is required.
 
 | Item | Verdict | Independent evidence |
 |---|---|---|
-| D1 | FAIL | Identity/map/typed and declared/measured facts pass; complete snapshot secrecy fails. |
-| D2 | FAIL | Real registered writers/background/ORM run; both writers persist adverse unit values and acquire exposes raw labels. |
-| D3 | PASS, isolated | Complete old-schema/value/notes/alias/history/file/startup/backfill audit; no production migration. |
-| D4 | FAIL | Routes/OpenAPI/bounds/filter/count/page/read-only checks pass; public reads expose adverse unit values. |
-| D5 | FAIL, acceptance | Exact review/fault/restoration/full/package evidence exists; secrecy remains violated. |
-| C1 | FAIL | Prior cases pass; new nested recognized-value representations persist and are public. |
-| C2 | PASS | Canonical validity/filter/count/page agreement; raw-JSON fault fails9 assertions. |
-| C3 | PASS | Known identity/AIR/ID/hash/measured facts survive omission/augmentation; conflicts refused; clearing fault fails2. |
-| C4 | PASS | Retained notes stay exact on success/refusal/exception; current recovery truthful; overwrite/error faults fail12/8. |
-| C5 | FAIL, combined | Current full/standing GREEN does not override R1. |
-| S1 | FAIL | Complete adverse values survive successful publication/descriptors. |
-| S2 | FAIL | Useful read-only old resources expose complete adverse values across all12 fields/keys. |
-| S3 | PASS | Partial-value mutation fails20 writer/36 reader assertions; exact restoration. |
-| S4 | FAIL, combined | Original complete-value obligation remains violated. |
+| Y1 | FAIL, complete pipeline | Supplied108 context/18 phase/12 safe-unit cases and495 additional positives pass. Candidate extraction is corrected in checked contexts; supported unit text still appears through outer ledger AIR/path fields. |
+| Y2 | FAIL, public-surface coverage | New-note admission/background, refusal/exception, seeded old-note summaries and retained reuse/retry checks pass. The outer legacy DTO retains another weaker public projection; safe typed metadata cannot certify it. |
+| Y3 | PASS |29 distinct production mutations/39 invocations,1577 feature assertion failures and20 actual3s timeouts; representation63/252, notes45, summaries60, refusal5 and warnings5; exact restoration. |
+| Y4 | FAIL, combined | Current affected/full/standing/immutable/schema/progress checks pass and22 prior rows remain exact; the independent public-value failures block acceptance. |
+| Y5 | PASS, reviewability | Actual FINAL/tree pinned first; complete ordinary inventories, attempts, official bytes and two independently seeded declared-shallow restorations verified. |
+
+## Retained D/C/S/T/U/V/W/X assessment
+
+The rows distinguish canonical typed-route checks from the additional unsafe outer
+ledger surface. Combined FAIL rows do not count as additional findings.
+
+| Item | Verdict | Independent evidence |
+|---|---|---|
+| D1 | PASS, typed component | One row/ID authority, exact mapping, selected metadata, unknown/invalid cases and declared/measured facts pass; this does not certify outer DTO copies. |
+| D2 | FAIL | Real acquire/install/background/ORM execute, but the retained ledger publishes a weaker representation outside its safe typed diagnostic. |
+| D3 | PASS, isolated | Whole16-table/value/notes/alias/history/file/startup/backfill and prior-schema audits pass. |
+| D4 | PASS, canonical routes | New list/detail/OpenAPI, bounded SQL filters/counts/pages/errors and no-write/no-provider/no-body checks pass; the failing retained ledger is separately identified. |
+| D5 | FAIL, acceptance | Exact review/fault/restoration/package evidence exists; complete public secrecy still fails. |
+| C1 | FAIL, complete public R1 | Typed/shared/descriptor normalization passes; the outer ledger still exposes recognizable affected values. |
+| C2 | PASS | Canonical validity/filter/count/page agreement; raw-JSON mutation fails9 assertions. |
+| C3 | PASS | Omitted/same/augmenting/conflicting AIR preserves ID/hash/measured evidence; clearing mutation fails2. |
+| C4 | PASS | Retained notes exact on success/refusal/exception and current recovery truthful; overwrite/error mutations fail12/8. |
+| C5 | FAIL, combined | Full GREEN does not override remaining R1. |
+| S1 | PASS, typed writers | Complete-value metadata and strict descriptor guards, including original Basic/cookie/quoted forms, pass. |
+| S2 | FAIL, whole ledger result | All12 nested snapshot fields/keys pass; successful persisted-row ledger reads can still expose complete values in outer identity/path fields. |
+| S3 | PASS | One-token mutation fails20 writer/36 reader assertions; exact restoration. |
+| S4 | FAIL, combined | Current standing/full/schema evidence passes; public R1 remains incomplete. |
 | S5 | PASS, reviewability | Official manifest/bytes/fingerprints and independent restorations checked. |
-| T1 | FAIL, complete classes | Old prefixed forms pass; supported prefixed representations/raw labels remain unsafe in demonstrated paths. |
-| T2 | FAIL | Both value/key contexts fail complete exclusion; useful immutable reads remain. |
-| T3 | PASS | Word-boundary fault fails40 writer/provider and195 reader assertions. |
-| T4 | FAIL, combined | Fresh contracts/schema/source evidence cannot establish complete secrecy. |
-| T5 | PASS, reviewability | Actual FINAL pinned before review; immutable history/prerequisites verified. |
-| U1 | FAIL, complete boundaries | Quoted label suites pass, but raw quoted labels leak through acquire notes/admission/status. |
-| U2 | FAIL | Relevant old nested/key/raw-label contexts expose complete values without storage mutation. |
-| U3 | PASS | Quoted-parser fault fails70 writer/provider,318 reader and12 key/text assertions. |
-| U4 | FAIL, combined | Description bounds/recovery guidance pass; R1 remains incomplete. |
-| U5 | PASS, reviewability | Frozen source/helpers and complete official package verified. |
-| V1 | PASS, checked bounds | Real92001-character raw/serialized/dense provider/publication/HTTP/ledger features meet unchanged3s marks. |
-| V2 | FAIL, complete secrecy | Earlier probes and R2–R4 pass; new observations disprove complete exclusion. |
-| V3 | PASS | Exact old scanner yields8 provider/publication and12 old-read3s timeout failures; exact restoration then3808 passes. |
-| V4 | FAIL, combined | Fresh full/standing/schema/22 contracts pass; R1 blocks acceptance. |
-| V5 | PASS, reviewability | Ordinary inventories/official bytes/bundle and aggregate/per-commit/raw-commit restorations/fsck checked. |
-| W1 | FAIL, complete boundaries | Supplied serialized cases pass; supported unit contexts and raw once-serialized labels remain unsafe. |
-| W2 | FAIL | All12 old fields/keys run, with canonical phases and exact finally storage; complete values leak. |
-| W3 | PASS | All-view omission fails14/36 writer-reader assertions; JSON-unit-only omission fails6/36; plain controls retain meaning. |
-| W4 | FAIL, combined | All requested current old suites pass; original R1 still fails. |
-| W5 | PASS, reviewability | Exact FINAL/manifest, failures/fingerprints and official restoration access verified. |
-| X1 | FAIL | Unrelated preceding quotes disable supported unit controls at real writer/provider boundaries; raw new notes also leak. |
-| X2 | FAIL | All12 field/key contexts leak; useful IDs/hashes/triggers, canonical pages and exact storage remain. |
-| X3 | PASS | Reviewed candidate omission fails68 writer/provider and135 old-read assertions; literal-boundary omission fails16/72. |
-| X4 | FAIL, combined | Frozen full/affected/immutable/standing/schema/bounds checks pass; complete original secrecy remains violated. |
-| X5 | PASS, reviewability | Full FINAL/tree pinned, all attempts/history preserved, official bytes and two independent restorations checked. |
+| T1 | PASS, tested typed classes | Prefixed assignments and applicable provider/strict descriptor/nested publication classes pass. |
+| T2 | FAIL, complete read output | Nested key/text policy and useful immutable reads pass; outer ledger copies remain unsafe. |
+| T3 | PASS | Word-boundary mutation fails40 writer/provider and195 reader assertions. |
+| T4 | FAIL, combined | Fresh qualification does not establish whole-surface secrecy. |
+| T5 | PASS, reviewability | Actual FINAL pinned before review; source/history/prerequisites verified. |
+| U1 | FAIL, full public boundary | Quoted-label guards pass, but ordinary quoted assignments in provider AIR/filename appear in successful ledger data. |
+| U2 | FAIL | Twelve nested classes pass; outer ledger values remain exposed without storage repair. |
+| U3 | PASS | Quoted-parser mutation fails70 writer/provider,318 reader and12 key/text assertions. |
+| U4 | FAIL, combined | Bounds and recovery guidance pass; R1 still blocks acceptance. |
+| U5 | PASS, reviewability | Frozen helpers/source and complete official package checked. |
+| V1 | PASS, checked bounds | Real92001-character raw/serialized/dense provider/publication/HTTP/ledger/notes/summary features retain3s and full useful content. |
+| V2 | FAIL, complete secrecy | Earlier forms and R2-R4 pass; unsafe outer ledger values contradict complete exclusion. |
+| V3 | PASS | Exact rejected scanner yields8 provider/publication and12 old-read3s timeout failures; restoration then4796 affected passes. |
+| V4 | FAIL, combined | Full/standing/schema/registry evidence passes; original R1 persists. |
+| V5 | PASS, reviewability | Ordinary inventories, official bytes and both restoration paths/fsck checked. |
+| W1 | FAIL, complete boundaries | Supplied serialized writers/descriptors/new notes pass; once-serialized values still reach public outer ledger fields after actual acquisition. |
+| W2 | FAIL | All12 nested fields/keys are safe; the whole ledger result is not. Exact storage and canonical reads remain intact. |
+| W3 | PASS | All-view omission fails14/36 writer-reader assertions; JSON-unit-only omission6/36; plain controls keep their meaning. |
+| W4 | FAIL, combined | All requested current historical/standing checks pass; public R1 is unresolved. |
+| W5 | PASS, reviewability | Exact FINAL/manifest, attempts/fingerprints and official restoration access checked. |
+| X1 | FAIL, full pipeline | Supplied preceding-quote cases pass; equivalent supported unit/prose values still escape through the unnormalized outer DTO. |
+| X2 | FAIL | Nested context classes, counts/pages and storage preservation pass; raw outer ledger fields expose complete values. |
+| X3 | PASS | Reviewed assignment omission fails54 writer/provider and135 readers; literal-boundary omission16/72. All prior meanings retained. |
+| X4 | FAIL, combined | Frozen current suites/bounds pass; complete public exclusion does not. |
+| X5 | PASS, reviewability | Full FINAL/tree pin, complete attempts/concurrency/history and official restorations verified. |
 
 ## Commands and actual results
 
-Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-202-qa`,
-branch `aid-202-exact-review`. New evidence is only in
-[review-round-8-evidence/](review-round-8-evidence/). The [replay guide](review-round-8-evidence/verification-commands.md)
-and [verification index](review-round-8-evidence/verification.json) retain argv/cwd,
-allowlisted environment, roots, imports, durations, exits and readable/raw-gzip hashes.
-Expected adverse exit1 is a failing feature observation, not product GREEN.
+Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-204-qa`,
+branch `aid-204-exact-review`. New evidence is in
+[review-round-9-evidence/](review-round-9-evidence/). The
+[replay guide](review-round-9-evidence/verification-commands.md),
+[verification index](review-round-9-evidence/verification.json) and individual runner
+JSON/log/raw-gzip files retain commands, argv/cwd, allowlisted environment, roots,
+imports, durations and exits. Expected adverse exit1 is a failing feature observation.
 
-| Check | Actual result |
+| Check | Actual independent result |
 |---|---|
-| Exact rejected42775d8 archived QA7 screen/nested/complete traces |38 failed/212 controls;44 failed/40;12 failed/6 |
-| Current immutable original/QA2/QA3 prefix/QA3 initial |4/14/20/28 passed |
-| Current QA4 labels/real key controls/QA5 lexical |78/3/130 passed |
-| Current QA5 trailing/registered latency |4/6 passed; unchanged3s marks |
-| Current QA6 terminal/serialized/complete traces |360/42/3 passed |
-| Current immutable QA7 screen/nested/traces/safe originals |250/84/18/24 passed |
-| New context/nested guard, initial and confirmation | Each54 failed/54 controls; all12 old fields/keys |
-| New complete phase traces, initial and confirmation | Each9 failed/9 controls |
-| New raw-label traces, initial and confirmation | Each3 feature failures |
-| New safe unit neighbors |12 passed |
-| Restored affected suite |**3808 passed**,100.78s |
-| Full Backend |**5786 passed/124 existing skips**,76 warnings,142.65s |
-| Full MCP |**666 passed/4 existing skips**,73.09s |
-| Fresh producers/separate readers |**93/73 passed**,19 JSON exports retained; repeated only for scratch-loss recovery |
-| Standing MCP/PNG/stdio/content/smoke |**412 passed**,71.98s |
-| Fresh wait/retained provider guards |**12/19 passed** |
-| Whole/prior-schema audit |**Two passed**, complete synthetic payload retained |
-| Increasing-size progress |**Seven passed**,72 observations, three samples each |
-| Registry rebuild |All22 prior rows exact; no additions/deletions/supersessions |
-| Coding frozen/FINAL inventories |5984/6193 ordinary fingerprints;492 protected source/test/replay/topic bodies exact |
+| Exact rejected review8, initial and confirmation | Each54 failures/54 controls; nine/nine phase cases; three raw-label failures;12 safe controls pass |
+| Current original /QA2 /QA3 prefix /QA3 initial |4 /14 /20 /28 passed |
+| Current QA4 labels /real key controls /QA5 lexical |78 /3 /130 passed |
+| Current QA5 trailing /registered latency |4 /6 passed, unchanged3s limits |
+| Current QA6 terminal /serialized /full phases |360 /42 /3 passed |
+| Current QA7 screen /nested /full phases /safe originals |250 /84 /18 /24 passed |
+| Current QA8 contexts /full phases /raw-label notes /safe units |108 /18 /3 /12 passed |
+| Additional mixed-context/real-boundary positives |495 passed in final confirmation |
+| New outer-ledger adverse, initial and confirmation | Each8 feature failures /two useful safe controls |
+| Restored affected |**4796 passed**,110.28s |
+| Full Backend |**6774 passed/124 existing skips**,76 warnings,158.52s |
+| Full MCP |**666 passed/four existing skips**,73.54s |
+| Fresh producers /separate readers |**93 /73 passed**,19 fresh JSON exports retained |
+| Standing MCP/PNG/stdio/content/smoke |**412 passed**,71.32s |
+| Fresh wait /retained provider guards |**12 /19 passed** |
+| Whole /prior-schema audits |**Two passed**, complete synthetic audit payload retained |
+| Increasing-size progress |**25 passed**,180 observations with three samples each |
+| Registry | All22 prior rows exact; no additions/deletions/supersessions |
 
-The QA executable sequence was frozen at **c57bd13c65026b43b59145e2a94980d0e51d6525**
-before fresh full qualification. The earlier mutation runner/helper freeze is recorded
-in attempts.json; later QA commits add helpers/reporting only. Delivered product/tests
-and Coding replay bodies remain exact. All33 fault identities match Coding's current
-production mutations, but QA executed and inspected them independently.
+The mutation runner/helpers were frozen at **16b02a9487ccbc568177af1ee7c0b31ce05cc92e**.
+The added outer-ledger probe and final executable QA sequence were frozen at
+**f9ca38b3618bde61827a8358554d64dccb117114** before fresh full/standing/historical
+qualification and final confirmations. Product/tests/Coding replay bodies never
+changed from reviewed FINAL. Later changes add reporting/evidence only.
+[Freeze/restoration receipt](review-round-9-evidence/freeze-and-restoration.json).
 
-Before tests, actual private/.env/non-scratch DB/model/write/DNS denials activated
-without opening private inputs; all six were reactivated on resume. Python and child
-interpreters are3.11.15. The ignored venv references three existing dependency sites
-read-only; no canonical installation/repair. **176 ordinary guard receipts across73
-runner records** have zero blocked events and intended current/archived imports pinned.
-Long suites retain --timeout=60; ordinary-description features retain3s. Exact raw
-logs accompany readable logs whose only normalization removes trailing whitespace.
+Before new tests, six actual private/.env/non-scratch DB/model/write/DNS denials
+activated without opening private inputs. Python and children are3.11.15. The ignored
+QA venv references three existing dependency sites read-only; no canonical install
+or repair. **84 runner records/186 ordinary guard receipts** have zero blocked events
+and intended current/archived imports pinned. Long suites retain `--timeout=60`;
+description/progress features retain3s. Readable logs trim trailing whitespace only;
+exact raw-gzip logs and both hashes are retained.
 
-[Fault audit](review-round-8-evidence/fault-audit.json): **24 distinct production
-mutations/33 invocations/1176 feature assertion failures plus20 actual3s timeout
-failures**. All22 prior/29 invocation meanings remain. Mutations run sequentially;
-exact bytes restore in finally before affected/full qualification. Setup/import/SQL/
-fingerprint/audit errors and adverse baseline failures are excluded from sensitivity.
-No test or fingerprint audit ran concurrently with active mutations. The unchanged
-old serialization assertions now overlap with literal-boundary recognition; retained
-unit-specific cases preserve each omitted view's independent meaning. Counts match
-Coding's explained current1176/20 without deleting or relaxing old assertions.
+[Fault audit](review-round-9-evidence/fault-audit.json): **29 distinct production
+mutations/39 invocations/1577 feature assertion failures plus20 actual3s timeouts**.
+All24/33 retained meanings persist. Representation-candidate omission fails63
+writer/provider and252 old-read assertions; new-note bypass45 while typed metadata
+and DTO checks pass; legacy-summary bypass60 with exact storage; refusal/warnings5
+each. Assignment overlap54 rather than68 and the five selected-provider license
+assertions have the same explanation as the delivered manifest: independent new
+protection overlaps14 old assignment cases, and downstream summaries protect all20
+old license response cases. No old selection/assertion is removed or relaxed.
+Mutations run sequentially and restore exact bytes in finally. No test/fingerprint
+audit ran concurrently with active mutations. Setup/import/SQL/audit/recorder errors
+and the new adverse baseline failures are excluded from sensitivity counts.
 
-The [progress data](review-round-8-evidence/progress-measurements.json) and source
-analysis support constant forward passes, terminal EOF handling and bounded independent
-views, without proving candidate completeness. Terminal raw92001/184001 medians are
-0.03141/0.06243s for double quotes and0.02832/0.05656s for single quotes; serialized
-medians are0.04733/0.09419s and0.04577/0.09176s. Dense contexts also retain full useful
-output across six sizes/both quotes/three representations. These are local observations,
-not universal performance guarantees. No timeout increase/truncation/format restriction.
+The [progress data](review-round-9-evidence/progress-measurements.json) and
+[source analysis](review-round-9-evidence/source-progress-analysis.md) cover fixed
+views, monotonic escape/EOF traversal, representation candidates and notes/summary
+paths. Checked raw/serialized/dense92001-character features retain complete useful
+output under3s. Increasing sizes support the documented bounded progress locally;
+they do not prove universal timing or complete output-surface coverage. No timeout
+increase, truncation or new format/size exclusion is used.
 
-## Preservation, restoration and attempts
+## Preservation, official restoration and attempts
 
-D3 covers all16 tables including sqlite_sequence, eight resource rows, five populated
+D3 audits all16 tables including sqlite_sequence, eight resource rows, five populated
 alias/history tables, every old column/value/note/ID/count and synthetic file body.
-Startup adds nullable metadata_json only; explicit backfill changes only that field,
-remains idempotent and diagnoses malformed/conflicting/duplicate/unsupported/missing/
-offline cases. Retry-note/current-error checks separately exercise real background
-branches. Legacy/First-check inventories establish usage/dependencies, not removal
-permission. No new cancellation/accounting or live artifact claim follows from them.
+Startup adds nullable metadata_json only; backfill changes only that field and is
+idempotent, with malformed/conflicting/duplicate/unsupported/missing/offline cases
+diagnosed. Retry-note/current-error guards separately exercise actual background
+success/refusal/exception. Dependency inventories establish usage, not removal
+permission. No new cancellation/job-accounting feature or live retrieval is inferred.
 
-[Preservation](review-round-8-evidence/preservation.json) verifies3145 prior task bodies,
-244 existing test/MCP/registry bodies, all four authorized imports from fc9cce5b, and
-unchanged task/repairs1–6. Task SHA256 remains
-`c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`;
-repair7 remains `97e18e11b0d36628455546133160fc9cca8274bae3e8dbc09c00be5111d8b7b6`.
-All6193 candidate bodies were exact after restoration; only the current review is
-intentionally replaced with this actual verdict. Its previous body remains exact as
-review-round-7.md. All31 MCP intents/risks,22 registry contracts and frozen recipe/AIR/
-Anima/alias behavior remain unchanged. FAIL adds no new certification.
+[Preservation](review-round-9-evidence/preservation.json) verifies4366 prior task
+bodies and247 candidate Backend-test/MCP bodies exact, plus the four authorized
+supplement imports. The original task and repairs1-8 hashes remain exact; task SHA256
+is `c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`, repair8
+`abcd8be84dab3444f5e5987b2b942ffef598176b00236da148535202e91ba8d4`.
+All6966 candidate bodies were byte-exact after restoration and before replacing the
+current report. Its old body remains exact as review-round-8.md. All6713 Coding
+freeze fingerprints/509 protected bodies and7090 QA freeze fingerprints/19 QA replay
+helpers verify. Ordinary pathname/hash suppression is empty. All31 intents/risks,
+22 prior contracts and frozen recipe/AIR/Anima/alias behavior remain unchanged.
+FAIL adds no registry certification.
 
-This run independently pinned14 shared-main memory bodies/statuses, which matched
-its completed preservation observation. Final concurrency receipt records the actual
-later workspace observation separately. QA never staged/stashed/reset/restored/edited
-or copied those bodies. Review7's distinct initial13-body pin, external change and
-fourteenth-path history remains immutable, separate from Producer's14-body baseline.
+This run pins14 shared-main memory bodies/statuses. Its completed preservation
+observation matches that baseline, with zero observed external changes. Prior
+13-body/external-change/fourteenth-path observations, Producer's separate14-body
+baseline and QA8's interruption after completed tests/recreated guard/exports/base
+prerequisites remain distinct immutable records. QA did not stage, stash, reset,
+restore, edit or copy shared memory. Later concurrency observations are separate.
 
-[Official Coding integrity](review-round-8-evidence/coding-integrity.json) independently
-verifies all15 uploads,6193 ordinary fingerprints,469 indexed payloads/470 members/
-457 exact Git bodies and five binary/full-index patch/raw-commit pairs. Nine official
-base parts combine to**70,813,780 bytes**, SHA256
-`2dbe1848f008f5885622911a758ff48c464a1b1e6e1c03f5e36038ab8fbc1da6`.
-Two fresh bare stores seed only those official bytes, with declared shallow boundary
-`b4e71d18ba4600ad7e053274b90b45ffdfbce87b` written before fetch --update-shallow
-and explicit base ref `refs/heads/aid-199-exact-review`. Bundle restoration and the
-independent aggregate/per-commit-patch/raw-commit chain reproduce every intermediate
-identity and exact FINAL/tree; both fsck --full exit0, no alternates/local candidate
-seeding. This is usable declared-shallow restoration, not pre-boundary history backup.
-Git bundle/update-shallow/binary apply and Python standard-library orchestration are
-prerequisites. Own QA official artifacts/restoration receipts follow the report commit.
+[Official Coding integrity](review-round-9-evidence/coding-integrity.json) verifies
+all15 uploads,6966 ordinary fingerprints,503 indexed payloads/504 archive members/
+493 exact Git bodies and four per-commit binary/full-index patch/raw-commit pairs.
+Nine official base parts combine to **72,061,453 bytes**, SHA256
+`9a32f83637e59b1e5d1358b0e079edd98337da458b2c22d53adbdb76f2bf951a`.
+Two fresh bare stores seed only those independently downloaded official base bytes,
+write declared shallow boundary `b4e71d18ba4600ad7e053274b90b45ffdfbce87b` before
+fetch `--update-shallow`, and use explicit base ref `refs/heads/aid-202-exact-review`.
+One imports the official candidate bundle; the other independently applies the
+aggregate patch then every per-commit patch/raw commit without local/candidate-object
+seeding or alternates. Every intermediate identity/tree and FINAL/tree match in both
+stores, with both `fsck --full` exits0. The
+[history readback](review-round-9-evidence/restoration-history-verification.json)
+checks all eight intermediate store observations. This is declared-shallow
+restoration, not pre-boundary backup. Git bundle/update-shallow/binary apply and
+Python standard-library orchestration are explicit prerequisites. Own official QA
+report/evidence/index/bundle/patch/readback receipts follow the report commit on AID-204.
 
-[Attempts](review-round-8-evidence/attempts.json) retain the initial generic adverse
-expected0/actual1 wrapper mismatch, nonexistent new audit-helper read, and enhanced
-helper's sibling-import collection failure. The corrected helper executes all108
-cases without collection errors. A reporting parser initially missed pytest-dot-prefixed
-progress markers; its72-observation audit failed, then the exact-marker correction
-passed without changing logs/assertions. No sensitivity is attributed to these errors.
-Coding's failed internal expectations/freezes/scope corrections and all historical
-interrupted/failed audits remain unchanged in their original directories.
-
-The heartbeat was interrupted after all tests and final confirmation records had
-completed. No matching test process or active mutant remained; all33 mutations had
-restored. Old scratch was removed. [Recovery](review-round-8-evidence/interruption-recovery.json)
-reactivates six guards and recreates only fresh producer/reader exports and official
-base prerequisites needed for delivery. Completed full/fault/standing/confirmation
-checks were preserved, not rerun. Recovered93/73 exports pass and all19 JSON files
-are retained; prerequisite size/hash readback is independently repeated. This interruption
-adds no feature result and does not erase review7's separately attributed interruption.
+[Attempts](review-round-9-evidence/attempts.json) preserve the first QA screen's
+Settings-before-bootstrap collection error, corrected by importing test bootstrap
+first. An initial combined writer probe incorrectly shared one fixture database
+between independent row-count assertions: three fixture-count failures/486 passes.
+Separating those cases with the same assertions gives495 passes. Initial helper
+bodies/logs remain. Neither error is a product defect or mutation sensitivity.
+The unset Git identity discovery and initial read of the preserved historical
+manifest are recorded; the actual correction8 manifest was verified before pinning.
+All Coding failed internal expectations and older QA failed/interrupted/recovery
+attempts remain immutable. No task-owned interruption or partial fault invocation
+occurred in this review.
 
 ## Limits and disposition
 
 **Offline:** exact-source synthetic Settings/resolver/provider/strict-schema/
-registered HTTP/background/ORM, historical/adverse/fault/restored/full/standing/schema
-checks and official artifacts. **Running service:** no production probe/start/restart/
-deployment/backfill. **Provider/generation:** no actual owner-key read, live provider
-request, real acquisition/registration or generation. **Retrieval:** synthetic installed
-bytes and Paperclip artifacts only; no live model/Gallery bytes. Frontend/native
-Windows unrun;124 Backend platform skips and four optional MCP-export skips remain
-unchanged. Private settings/key/runtime/DB/snapshots/backups/canonical environments,
-retained worktrees and model/dataset/output/Gallery data are outside QA mutations.
+registered HTTP/background/ORM, adverse/fault/restored/full/standing/schema/bounds
+checks and official artifacts. **Running service:** no production probe/start/
+restart/deployment/backfill. **Provider/generation:** no actual owner-key read,
+live provider request, real model acquisition/registration or generation.
+**Retrieval:** synthetic installed bytes and Paperclip artifacts only; no live
+model/Gallery bytes. Frontend/native Windows unrun;124 Backend platform skips and
+four optional MCP-export skips remain, with fresh applicable exports/readers tested.
+Private settings/key/runtime/DB/snapshots/backups/canonical environments/retained
+worktrees and all model/dataset/output/Gallery records remain outside QA mutations.
 
-History: kickoff1 CLEAR; seven earlier delivery FAILs; **this review8 FAIL**, with
-original R1 incomplete and five distinct historical P1 findings. No new kickoff
-ambiguity or routine owner gate. QA completes only AID-202 with this actual verdict.
-Producer AID-146 owns findings/reassessment/correction/acceptance. Changed code needs
-another exact FINAL review; no feature merge/push before independent PASS. No parent/
-owner mutation, Phase2 jobs/budgets/hash/search/MCP/defaults/removal acceptance, three
-different zero-fix sentences, fresh checkpoint+LoRA/CTY demo/exit or aesthetic judgment.
+History: kickoff1 CLEAR; eight earlier delivery FAILs; **this review9 FAIL**, with
+original R1 incomplete and five distinct historical P1 findings. No new owner
+question or kickoff ambiguity. QA completes only AID-204 with this actual verdict.
+Producer AID-146 owns findings/reassessment/correction/acceptance. Changed code
+requires another exact independent review; no feature merge/push before PASS.
+No Phase2 jobs/budgets/hash/search/MCP/default/removal acceptance, automatic chain,
+three different zero-fix sentences, fresh checkpoint+LoRA/CTY demo/exit or aesthetic
+judgment is claimed. Source availability is not deployment.
