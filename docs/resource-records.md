@@ -87,7 +87,9 @@ and Unicode whitespace are accepted. Matching quoted labels are consumed as comp
 lexical units before recognition, including leading/trailing inner spaces, tabs
 and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
 their lexical meaning. Ordinary quoted values do not hide inner assignments;
-maximal ordinary runs and quoted units keep long-description scanning bounded.
+each quote kind scans independently, including opposite-quote labels inside
+ordinary quoted values. Maximal ordinary runs and one-time consumption of unmatched
+quoted tails keep long-description scanning bounded, including escaped quotes.
 Identifier components use whitespace,
 underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
 component ending in `token`, `secret`, `authorization`, `password`, `credential`,

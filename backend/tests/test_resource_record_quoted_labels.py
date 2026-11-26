@@ -91,3 +91,18 @@ def test_quoted_safe_neighbors_retain_useful_metadata(client, text):
 @pytest.mark.parametrize('fragment', ['ordinary description ', '"ordinary description" ', '"unterminated ordinary description '])
 def test_quoted_long_descriptions_have_bounded_scanning(client, fragment):
     labels.test_near_neighbor_metadata_and_keys_remain_useful(client, (fragment*4000).rstrip())
+
+
+@pytest.mark.timeout(3)
+@pytest.mark.parametrize('quote', ['"', "'"])
+def test_escaped_unmatched_long_description_consumes_tail_once(client, quote):
+    labels.test_near_neighbor_metadata_and_keys_remain_useful(
+        client, ('\\'+quote+'ordinary description ')*4000+'tail')
+
+
+@pytest.mark.parametrize('text', [
+    '\"ordinary prefix; \' HTTP_AUTHORIZATION \' = Basic b3BhcXVlUUEx\"',
+    "'ordinary prefix; \" CIVITAI_API_KEY \" = synthetic full value; later suffix'",
+])
+def test_nested_opposite_quote_label_publication(client, text):
+    values.test_complete_value_direct_publication_commit_reload_and_idempotence(client, text)

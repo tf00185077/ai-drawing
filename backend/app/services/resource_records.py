@@ -27,12 +27,12 @@ _ASSIGNMENT_LABEL = re.compile(
     r"(?<![\w.-])(?P<quote>[\"']?)(?P<label>[\w.-]+(?:\s+[\w.-]+)*)"
     r"(?P=quote)\s*(?P<delimiter>[:=]?)",
 )
-# Consume each matching quoted unit once, including inner whitespace and escaped
-# quotes. Delimiters are optional while scanning so ordinary quoted values keep
-# their lexical boundaries; only units followed by colon/equal are labels.
-_QUOTED_LABEL = re.compile(
-    r'''(?P<label>"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\s*(?P<delimiter>[:=]?)''',
-    re.S,
+# Scan each quote kind independently, including nested opposite-quote labels.
+# Consume an unmatched tail once too; otherwise escaped quotes in ordinary prose
+# can cause a failed match to retry the remaining tail at every inner quote.
+_QUOTED_LABELS = (
+    re.compile(r'(?P<label>"(?:[^"\\]|\\.)*)(?P<close>"|\Z)\s*(?P<delimiter>[:=]?)', re.S),
+    re.compile(r"(?P<label>'(?:[^'\\]|\\.)*)(?P<close>'|\Z)\s*(?P<delimiter>[:=]?)", re.S),
 )
 _LABEL_ESCAPE = re.compile(r'\\(u[0-9a-fA-F]{4}|["\'\\/bfnrt])')
 _LABEL_ESCAPES = {'"':'"', "'":"'", '\\':'\\', '/':'/', 'b':'\b',
@@ -63,11 +63,12 @@ def _credential_assignment(value: str) -> bool:
     def decode(match):
         escape = match[1]
         return chr(int(escape[1:], 16)) if escape.startswith('u') else _LABEL_ESCAPES[escape]
-    for match in _QUOTED_LABEL.finditer(value):
-        if match['delimiter']:
-            label = _LABEL_ESCAPE.sub(decode, match['label'][1:-1])
-            if credential_label(label):
-                return True
+    for pattern in _QUOTED_LABELS:
+        for match in pattern.finditer(value):
+            if match['close'] and match['delimiter']:
+                label = _LABEL_ESCAPE.sub(decode, match['label'][1:])
+                if credential_label(label):
+                    return True
     # Inspect unquoted assignments too, including those inside a quoted value.
     # Maximal token runs prevent retrying long ordinary prose at every word.
     return any(match['delimiter'] and credential_label(match['label'])
