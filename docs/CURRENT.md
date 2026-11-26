@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review6 FAIL (serialized R1); correction6 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 review8 FAIL (original R1); correction8 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,47 +90,45 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review7 FAIL accepted:** [Coding AID-198](/AID/issues/AID-198) FINAL
-**42775d8fdf488011198267077634ca951b8885b7**, freeze4a9fa13e, received actual
-[independent QA AID-199](/AID/issues/AID-199) [original R1 incomplete](tasks/p2-02-resource-record/review-round-7.md),
-report/evidence **5388e08dee72af39b38d766db40823d77ed80322**. Supplied QA6
-serialized cases now pass; R5 checked bounds and R2-R4 remain passing. Ordinary
-same-kind prose quotes consume the following explicit label's opening boundary,
-so complete synthetic values persist and appear publicly: screen38 failures/212
-controls, nested44/40 and full traces12/six, each initially and in confirmation.
-Inspect/select/install/acquire/background/new notes/detail/list/ledger are real;
-old storage remains exact/useful. No actual owner-key read/disclosure. Seven
-rejected deliveries/five distinct P1 findings; original R1 still blocks D1/D2/D4
-and combined acceptance. Rejected product/tests stay off main.
+**p2-02 review8 FAIL accepted:** [Coding AID-201](/AID/issues/AID-201) FINAL
+**1d5e63afee426ebd6f0f1f58ea03fe08b823e23d**, freeze44369430, received actual
+[independent QA AID-202](/AID/issues/AID-202) [original R1 incomplete](tasks/p2-02-resource-record/review-round-8.md),
+report/evidence **7ebf45d5a83b8bc0977a1f502b64b79bd35b22c5**. Supplied review7
+examples pass; checked R5 bounds and R2-R4 pass. Two remaining R1 paths fail:
+preceding prose quotes suppress supported JSON-unit label candidates (54 failures/
+54 controls and nine phase failures/nine controls, each twice); raw provider base
+labels survive acquisition admission, admitted/completed new notes and status
+(three full-trace failures twice), even while typed metadata/detail/list/ledger
+are safe. All12 old nested fields/keys run; old storage/useful records stay exact.
+No actual owner-key read/disclosure. Eight rejected deliveries/five distinct P1
+findings; D1/D2/D4 and combined acceptance fail. Product/tests remain off main.
 
-**Seventh-result reassessment:** retain identity, bounded views and monotonic
-escape/EOF progress, but reject disjoint outer-prose pairing as the sole label
-candidate authority. Adopt delimiter-associated local candidates independently
-of unrelated prose quotes, with bounded per-character work and complete original
-value exclusion. No all-pairs/suffix rescanning, timeout increase, safe-value
-rewriting or new format restriction. [Correction7](tasks/p2-02-resource-record/repair-round-7.md)
-and independent exact QA8 follow unchanged task/repairs1-6/kickoff1CLEAR. Current
-delegation permits this in-boundary option; report actual results, no routine
-owner gate or new architecture/phase boundary.
+**Eighth-result reassessment:** make supported representation candidates independent
+of outer prose quote pairing as well as assignment candidates. Use the shared
+complete-value policy at source-derived new-note persistence and existing public
+acquisition/status projections, preserving retained old note bytes. Keep identity,
+safe original output and monotonic bounded one-level work. No recursive/all-pairs/
+growing-suffix work, timeout increase or format restriction. [Correction8](tasks/p2-02-resource-record/repair-round-8.md)
+and independent exact QA9 follow unchanged task/repairs1-7/kickoff1CLEAR. Current
+delegation permits the in-boundary option; report results, no routine owner gate,
+new finding number or project boundary/architecture change.
 
-QA rejected-source Backend3864/124 existing skips,MCP666/four,restored1886,
-immutable original/QA2-6 plus360 terminal cases,24 safe neighbors,fresh93/73/412/
-12/19/schema2 and22 distinct mutations/29 invocations/952 assertions plus20
-feature timeouts remain attributed,not R1 acceptance/future-source qualification.
-The interrupted partial fault/restoration/guard reactivation/three resumed checks
-and failed audits stay recorded. Producer verifies21 official uploads/nine base
-parts,1066 indexed payloads/1068 members/1046 exact Git bodies,5142/5484/5739
-complete inventories and both official declared-shallow exact bundle/patch chains/
-fsck. Existing catalog documentation guard and publication checks are recorded
-with integrity. No new Producer product suite/private key/provider/service/restart/
-model/live Gallery-byte result. All22 contracts and raw histories remain.
-
-Shared memory is concurrent: QA retained its initial13-body pin and later external
-change/fourteenth-path observations; it did not restore shared state. Producer
-preserves the separate current14-body/status baseline. Private runtime/data stays
-intact. Remaining jobs/budgets/hash/search/MCP/defaults/removals/three different
-zero-fix sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit pending. Source is not
-deployment.
+QA rejected-source Backend5786/124 existing skips,MCP666/four,restored3808,
+immutable original/QA2-7 plus360 terminal cases,12 safe units/24 prior originals,
+fresh93/73/412/12/19/schema2,seven progress checks/72 observations and24 distinct
+mutations/33 invocations/1176 assertions plus20 feature timeouts remain attributed,
+not R1 acceptance/future-source qualification. The interruption after completed
+tests, fresh guard/export/prerequisite recovery and failed audits remain recorded.
+Producer verifies21 official uploads,1236 indexed payloads/1238 members/1200 exact
+Git bodies,5984/6193/6478 complete inventories and two independent official
+declared-shallow exact bundle/aggregate/per-commit/raw-commit restorations/fsck.
+All22 contracts/raw histories and the current14 shared memory bodies/statuses
+stay exact; distinct prior concurrency pins remain separate. Existing catalog
+documentation guard and publication checks are recorded with integrity. No new
+Producer product suite/key/provider/service/restart/model/live Gallery-byte result.
+Source publication is not deployment or Phase2 exit. Remaining jobs/budgets/hash/
+search/MCP/defaults/removals/three different zero-fix sentences/fresh checkpoint+
+LoRA/CTY demo/Phase2 exit remain pending.
 
 Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
 replacement, automatic defaults/workflows and proven removals remain separate.

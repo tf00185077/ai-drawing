@@ -23,6 +23,24 @@ declared-shallow restorations. Concurrent memory observations are retained;
 Producer's current14 bodies/statuses are separate from QA's initial13 pin.
 No new Producer product suite/live product/provider/model/Gallery-byte action.
 
+## 2026-11-27 — p2-02 eighth rejection and correction8
+
+Actual [review8](tasks/p2-02-resource-record/review-round-8.md) at1d5e63af,
+report7ebf45d5, is FAIL/original R1 incomplete: supported JSON-unit candidates
+remain context-dependent (54/54,nine/nine failures/controls twice), and raw model
+labels leak in new notes/admission/status (three traces twice). Supplied review7
+cases, R2-R4 and checked R5 bounds pass. Eight rejections/five distinct P1 findings;
+Backend5786/124,MCP666/four,restored3808 do not override the defect.
+[Eighth-result reassessment/correction8](tasks/p2-02-resource-record/repair-round-8.md)
+adopts bounded representation coverage and the shared complete-value policy at
+new-note/public-response seams, preserving old storage. Independent exact QA9
+follows unchanged task/CLEAR/current delegation; no routine owner gate/new finding
+or architecture change. Product/tests stay off main. [Integrity](tasks/p2-02-resource-record/producer-correction8-integrity.json)
+records21 official uploads/1236 payloads/1200 Git bodies and two exact declared-shallow
+restorations. Current14 shared memory bodies/statuses and prior concurrency records
+remain separate and preserved. CURRENT's stale review6 headline is corrected to
+actual review8. No new Producer product suite/live product/provider/model/Gallery-byte action.
+
 ## Phase 0 — Clean foundation (done 2026-11-24)
 
 | Item | Status |

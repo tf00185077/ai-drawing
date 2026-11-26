@@ -66,15 +66,16 @@ before download-job/reservation persistence, following the joint intake and
 independent [kickoff1 CLEAR](../tasks/p2-02-resource-record/kickoff-review.md)
 (14b4c98a, fixed f8d3143/unchanged taskc43339e4) permits separate Coding and
 exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementation-handoff.md).
-Actual [review7 FAIL](../tasks/p2-02-resource-record/review-round-7.md) at FINAL42775d8f
-(report5388e08d) corrects supplied serialized cases and retains R5 checked bounds,
-but original R1 fails when preceding ordinary quotes hide explicit assignments.
-Seventh-result reassessment retains identity/bounded views and adopts complete
-delimiter-associated candidate recognition independent of enclosing prose pairing,
-under [correction7](../tasks/p2-02-resource-record/repair-round-7.md) and exact QA8.
-Task/repairs1-6/CLEAR and bounds stay unchanged. Report the adopted option under
-current delegation; no boundary/routine owner gate, scope/order/architecture/
-Not now change or Phase2 exit. Rejected product/tests remain off main.
+Actual [review8 FAIL](../tasks/p2-02-resource-record/review-round-8.md) at FINAL1d5e63af
+(report7ebf45d5) corrects supplied review7 cases and retains checked R5 bounds/R2-R4,
+but original R1 remains incomplete for context-hidden JSON units and raw labels in
+acquisition new notes/admission/status. Eighth-result reassessment adopts bounded
+representation candidate coverage plus the shared complete-value policy at all
+new-note/public-response seams, preserving old storage and useful safe output.
+[Correction8](../tasks/p2-02-resource-record/repair-round-8.md) and exact QA9 retain
+unchanged task/repairs1-7/CLEAR/bounds. Report the in-boundary option under current
+delegation; no routine owner gate, new finding/scope/order/architecture/Not now
+change or Phase2 exit. Rejected product/tests remain off main.
 
 Exit: from one sentence, an agent finds a checkpoint and a LoRA on Civitai, registers them and gets back an image that used the LoRA's trigger words, in 3 consecutive real runs with zero manual fixes. The three runs use three different sentences; at least one downloads both a new checkpoint and a new LoRA, and the others may reuse resources the agent finds in the resource record.
 Demo: give an agent one sentence; show the Civitai search, the download job, the resource records, the selected workflow, the applied trigger words and parameters, the image and its Gallery record. CTY judges the image.
@@ -131,6 +132,16 @@ Demo: CTY builds a recipe in the Workbench, then an agent generates from it by I
 Report and reassess after 3 tasks in a row that do not advance the active milestone, a blocker longer than 2 days, or 3 review rejections of one task. Under CTY's current delegation, Producer adopts an in-boundary recommendation and continues; ask CTY when resolution requires a project-boundary decision.
 
 ## Review history
+
+- 2026-11-27 — Eighth p2-02 rejection: supplied review7 cases/R5 checked bounds
+  pass, but original R1 remains at context-dependent JSON-unit extraction and
+  narrower new-note/legacy-response redaction. Reassess the complete pipeline;
+  adopt bounded representation candidates and the shared complete-value policy
+  on new-note/public-response seams while preserving old storage. Correction8 and
+  exact QA9 remain unchanged task/CLEAR; report results under current delegation,
+  no boundary/architecture change or phase exit
+  ([decision](../decisions/civitai-resource-record.md),
+  [repair](../tasks/p2-02-resource-record/repair-round-8.md)).
 
 - 2026-11-27 — Seventh p2-02 rejection: review7 leaves original R1 incomplete
   because preceding prose quotes hide complete explicit assignments. Supplied
