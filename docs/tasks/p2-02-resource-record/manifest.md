@@ -1,173 +1,193 @@
-# p2-02 Coding delivery
+# p2-02 Coding correction1 delivery
 
-Coding [AID-186](/AID/issues/AID-186) delivers the cleared Backend resource-record
-foundation for independent [QA AID-187](/AID/issues/AID-187).
+Coding [AID-188](/AID/issues/AID-188) delivers the bounded R1–R4 corrections for
+independent [QA AID-189](/AID/issues/AID-189) delivery review2.
 [Producer AID-146](/AID/issues/AID-146) owns acceptance. This is Coding evidence,
-not a self-PASS, integration, deployment or Phase 2 exit.
+not a self-PASS, product merge/push, deployment or Phase2 exit.
 
-Base: **a8e57d90e4678565baec8cd4638c350c8dd11deb**, tree
-**a0115c2286b76bbd07676bdc45cba6e0686fb97c**. Actual kickoff
-[AID-185](/AID/issues/AID-185) round1 CLEAR/report14b4c98 remains unchanged.
-Task SHA-256: `c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`.
+Fixed implementation base: **4b95c7a74c032d092ac86b53b657bd107bdfcb3e**, tree
+**ea786f4650fd47b78cfaeabb6eddb68cbf66dd1c**. Its product/tests are byte-identical
+to rejected **9abe3d1c3237791b684e3b9f5a692879df747361**. Imported only repair,
+resource decision and the two original exact mirrors from fixed supplement
+**2471ef8157e009aca70596abc27774f34c028a96**. Original kickoff1 CLEAR is unchanged.
+Task SHA256: `c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`.
+Repair SHA256: `b3d649dcd8e60217b6581d1bdf8ca34db5f22ad0c71f5efd31c1449390b06977`.
 
-Final software/tests/replay-helper freeze:
-**17e90a65b0b227900956e20b36d6ae8d3a8e4048**, tree
-**2e46b02baf41f4d6e53addef888214298a865492**. Initial implementation commit
-63044d5e6ae3f4c4cccbd62b6a17d11d9568feff precedes fixture/adapter whitespace
-normalization and the source/registry replay helpers. The final full suites use
-the final freeze. No later product/test/helper change is part of delivery.
+Final software/tests/test-replay-helper freeze:
+**42e6812e846754ea31f32573d4ef66a8af3f2d47**, tree
+**b8770633de2b9be61296bea4c1cf66bdf420e8ff**. Initial implementation47eac3a is
+retained; the freeze adds an explicit error assertion and complete evidence.
+All current complete suites run on this final freeze after exact restoration.
+Later commits contain reporting/evidence only, with product/tests/helpers exact.
 
-The **final delivery candidate full SHA/tree** is pinned in the official uploaded
-`delivery-index.json` and this card's post-commit delivery receipt. This manifest
-is itself in that candidate, so it references the post-commit receipt to avoid a
-circular self-hash. QA must review that final SHA, not the freeze ancestor or a
-moving branch. The official delta bundle and full-index patch declare the fixed
-published base above as their restoration prerequisite and are verified by actual
-readback/reconstruction. Source publication does not identify a loaded service.
+The **final full candidate SHA/tree** is pinned in the official uploaded
+`delivery-index.json` and native post-commit delivery receipt, avoiding a circular
+self-hash in this committed manifest. Review that exact final candidate, not a
+moving branch or the freeze ancestor. The official manifest bytes equal this
+candidate's Git body. The final index fingerprints every ordinary final blob.
 
 Persistent worktree:
-`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-186-resource-record`;
-branch `aid-186-p2-02-resource-record`. All commits carry the required Paperclip
-co-author. Shared main and its 13 concurrent memory edits were never staged,
-stashed, reset or copied. No canonical/private environment or data was mutated.
+`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-188-resource-correction`,
+branch `aid-188-p2-02-correction1`; its dedicated ignored Python3.11 environment
+and history remain. All commits have the required Paperclip co-author.
+Shared main, its13 memory edits, canonical environments, runtime/private settings,
+key/snapshots/backups, retained worktrees and model/dataset/output/Gallery data
+were not staged, stashed, reset, copied as implementation, or changed.
 
-## Implementation
+## Corrections
 
-One nullable versioned metadata field augments DownloadedResource. Existing
-integer IDs, identity/path/hash/status columns remain authoritative. Typed
-provider snapshots preserve the selected version/file's raw label, ordered
-triggers, finite recommendations and their origin fields, safe opaque metadata,
-license permissions/gaps and explicit diagnostics. Actual measured hash/size/stat
-evidence remains separate from provider declaration and historical status.
+**R1:** complete shared normalization applies to provider snapshots, typed client
+publication and stored-snapshot projection. Every nested key/string is covered,
+including license, diagnostics, triggers, recommendations/origins, raw labels and
+opaque evidence. URLs lose userinfo/query/fragment, recognizable credential text
+is removed, and sensitive evidence keys are excluded. Typed safe values and
+ordinary hashes remain. Revalidation fails closed if safety cannot retain the
+schema. Supplied verification never becomes measured evidence. Unsafe old storage
+projects safely without writes; no whole-resource hiding or serializer-only fix.
 
-Both actual acquisition/background and retained inspect/select/install/adoption
-paths publish through the same service. Strict schemas carry the selected
-snapshot; legacy descriptors without it keep unknown triggers/recommendations.
-Identity conflicts are refused before reuse/rebinding; identical publication,
-retry and reuse retain IDs. Background completion rechecks admitted immutable
-identity. Original notes remain source evidence; recipe enum/AIR/Anima behavior
-stays behind a frozen legacy adapter. The local ledger derives its typed record
-from the shared projection. No new model registry, lifecycle schema or MCP intent.
+**R2:** deterministic connection-local SQLite scalars call the projection's actual
+complete typed parser and sole exact workflow mapping inside SQL. Filtered count
+and ordered LIMIT/OFFSET use that validity before ORM materialization. Invalid
+versions/nested types/JSON do not borrow a valid label or fall back to notes;
+legacy incomplete rows retain their canonical meaning. Unicode trim/case folding
+and raw-label behavior agree. No whole-table loading or limited-page post-filter,
+second registry/schema, new dependency or generalized database framework.
 
-Normal startup is additive only. Explicit idempotent backfill preserves old
-columns/values/notes/aliases/history/files, diagnoses incomplete/conflicting/
-duplicate rows, and never hashes models or guesses image-alias model identities.
-Registered read routes use SQL filters/count/pagination and the same projection.
-They expose stable errors/OpenAPI and perform no writes, repairs, provider calls
-or model-body reads. [Backend topic contract](../../resource-records.md) and
-[legacy inventory](legacy-inventory.md) document choices and retained limits.
+**R3:** install still checks all known immutable identities before assigning.
+Unknown incoming identity is omitted from assignment; known AIR survives omission,
+missing fields can be augmented, and real non-null conflicts remain refused on
+the same ID. Registered acquire/install combinations retain hash/measured evidence.
 
-## D1–D5 evidence matrix
+**R4:** retained rows preserve every original note body exactly through success,
+provider refusal/failed result and credential-resolution exception. Current
+sanitized operation/error state augments existing metadata under reserved
+`source_evidence.acquisition`; status responses read it instead of stale note
+errors. Admission/success clears current errors while old notes stay evidence.
+Ordinary provider publication preserves that field; supplied snapshots cannot
+replace it. Newly created-row generated notes/file identity/error behavior remains.
+No cloned row, job/lifecycle/budget table or lost status/recovery reporting.
 
-| Item | Check / level | Evidence / layer | Real boundary and fixtures |
-|---|---|---|---|
-| D1 | test / P1 | backend/tests/test_resource_records.py; schemas/resources.py; service resource_records.py; current full Backend; wrong-map and fabricated-verification faults | Real ORM round trips, all four exact labels/case/outer whitespace and unsupported/malformed/absent cases, raw label retention, invalid/conflicting recommendations, missing/invalid licenses/IDs, declared versus measured evidence, stat staleness, same-row publication/conflicts. Synthetic rows/files only. |
-| D2 | test / P1 | backend/tests/test_resource_record_writers.py; current retained acquire/install/ledger/provider files; split-acquire and split-install faults | Actual registered HTTP, Settings/file resolver, version resolver, strict inspect/select/install, SQLAlchemy and actual background target. Non-first version/file, measured synthetic bytes, failed/same-ID retry/reuse/conflicts/AIR/publication-time and local-ledger projection. Only external HTTP and thread scheduling substitute operations; DB/path/key inputs are synthetic. |
-| D3 | test / P1 | backend/tests/test_resource_record_migration.py; fixtures/resources/previous-schema.sql; evidence/schema-audit-data.json; legacy-inventory.md / legacy-callers.json; destructive-backfill fault | Real previous-schema SQLite copy, normal init_db and explicit backfill. Whole old schema/values, all alias/history sentinels, duplicates/conflicts/malformed/unsupported/offline rows, repeat startup/backfill and denied model-body/network/write boundaries. No production DB/snapshot. |
-| D4 | test / P1 | backend/tests/test_resource_record_reads.py; real main/router/OpenAPI; unbounded-list and writing-list faults | Actual HTTP/ORM list/detail, all exact filters, filtered totals/order/bounds/errors/old+new rows, whitespace agreement, invalid selectors, secrecy and SQL/body/provider/repair denial. Offline service fixtures; no production service claim. |
-| D5 | test + delivery / P1 | evidence/freeze.json, source-inventory.json, faults.json, verification.json, command JSON/logs, child-guards.json; manifest and official exact candidate/index/bundle/patch | Seven meaningful faults, exact restoration, final full Backend/MCP, fresh standing-contract producers/readers, 22 exact retained registry rows and complete ordinary source hashes. Independent QA owns any verdict/certification. |
+The [Backend topic](../../resource-records.md) explains these boundaries. Frozen
+recipe/AIR/Anima and source-alias adapters and all31 MCP names/risks are unchanged.
+The original legacy inventory remains source/caller evidence, not removal proof.
 
-Every feature file exists in the candidate, with **61 new feature cases**. Initial
-REDs, intervening failed attempts and final GREENs are retained. The
-[reproduction guide](evidence/verification-commands.md) enumerates fixtures,
-commands, actual import/root/guard identities and restoration rules. The
-[source inventory](evidence/source-inventory.json) fingerprints **2,603** frozen
-tracked blobs, including every ordinary token-named path; none is suppressed.
-The official final candidate index additionally fingerprints every final blob.
-All four faulted source files restore byte-for-byte and match both source commits.
+## D1–D5 and C1–C5 matrix
+
+All entries are test/P1, with D5/C5 additionally delivery evidence. Paths below
+refer to [correction-1-evidence/](correction-1-evidence/) unless stated otherwise.
+
+| Item | Evidence/layer | Real boundary and substitutes |
+|---|---|---|
+| D1 | Original test_resource_records.py plus new test_resource_record_corrections.py; full Backend; wrong-map/fabricated-verification and snapshot/filter/identity faults | Real ORM typed round trips, all four exact labels, unsupported/malformed/absent cases, finite values, license gaps and measured/declaration distinction. Synthetic rows/files only. |
+| D2 | Original test_resource_record_writers.py plus44 new correction cases; full Backend/MCP; split-writer and preservation faults | Real registered inspect/select/install/acquire, Settings/file resolver/provider machinery, strict resolution, SQLAlchemy, actual background targets/status/local ledger. Only external HTTP and deterministic scheduling substitute domain execution; paths/keys/bytes/DBs synthetic. |
+| D3 | schema-audit.json/log/data, test_resource_record_migration.py and unchanged qa-evidence/test_baseline_schema.py; destructive-backfill fault | Exact pre-task ORM schema authority and full16-table old-schema/value/sequence/resource/alias-history/file audit. Normal startup adds only nullable metadata_json; explicit backfill changes that field only and repeats idempotently. No private DB/backfill. |
+| D4 | Original test_resource_record_reads.py plus complete unsafe-storage and mixed-validity HTTP tests; raw-JSON/pagination/write faults | Registered HTTP/OpenAPI/ORM exact filters, pre-page totals, ascending SQL bounds, stable422/404/hints, list/detail agreement, unsafe stored metadata, no SQL writes/provider/body/repair. Offline service fixtures only. |
+| D5 | Exact freeze/source-inventory, faults.json, error-fault-assertion.json, verification.json, current full suites/standing exports/readers, preservation and official final index/bundle/patch/readback | Current code qualifies against all original guards plus corrections; exact fault restoration, all22 standing contracts byte-exact, full ordinary fingerprints and usable restoration prerequisites. Independent QA alone supplies verdict/certification. |
+| C1 | rejected-source-r1-r4.log four REDs; c1-green, expanded/restored-feature and complete/stored snapshot bypass faults | Edited actual inspect/select/install typed input, direct typed publication, real provider fixture and ORM, unsafe old stored metadata through list/detail/local ledger. Valid permissions/trigger/hash retention and no repair writes. |
+| C2 | Nine mixed malformed/valid/legacy HTTP/ORM parameter cases, retained read cases, raw-json-filter fault | Typed version999, license/triggers/recommendations/verification/evidence types, bad JSON/list/null, mixed valid/unsupported legacy rows, exact filtered totals/pages/raw filters/unfiltered/detail truth and SQL bounds. |
+| C3 |16 registered acquire/install combinations plus retained conflict/background guards; clear-omitted-identity fault | Acquire→install and repeated acquire/install, omitted/same/conflicting/previously absent AIR, same row/count/hash/measured facts and conflict rollback. |
+| C4 |12 retained-note outcome cases, three new-row/retry cases and supplied-operation guard; overwrite/error faults | Exact whitespace/unknown fields/malformed/empty/null notes across success, real403 refusal and real empty synthetic key exception. Same-ID current status/error/code/message/hint and retry recovery. |
+| C5 |105 restored feature cases; original four probes GREEN on corrected source under new labels; full current Backend/MCP; fresh93/73/412/12/19 standing checks; schema2; final package | All original histories and exact mirrors retained, no old green substituted, no test deletion/edit/relaxation/new skip, no registry addition/supersession. Exact-final independent review2 is next. |
 
 ## Current verification
 
-All long suites use isolated roots and per-test **--timeout=60**. A dedicated
-Python 3.11 environment references existing dependency sites read-only. The
-explicit .pth audit hook denies private-file access, remote/live-service network
-and writes outside run scratch; activation is tested before probing. Test child
-receipts have zero blocked events and pin actual imported component paths.
-Nested child receipts and fresh exported shapes are retained separately.
+[Command guide](correction-1-evidence/verification-commands.md), individual command
+JSONs and [verification summary](correction-1-evidence/verification.json) record
+actual argv/cwd/imports/roots/allowlisted environment/guard identities, fixtures,
+failed attempts and results. Python3.11.15 venv references three existing dependency
+sites read-only; no install into canonical environments. Every long pytest run
+uses **--timeout=60**, unique run-owned scratch, no cache/bytecode and pinned
+Backend/MCP child interpreters. .pth guard activation precedes all new tests and
+denies private key/.env/non-scratch DB/model reads, remote DNS/network/live ports
+and non-scratch writes. No private bytes, values/digests/length were read/emitted.
+140 nested/top-level guard receipts include two separate deliberate activation
+receipts; all ordinary test receipts have zero blocked events and pinned imports.
+The repository's existing offline guard covers isolated -I/-S child fixtures.
 
-| Command label / scope | Result |
+| Current command label/scope | Result |
 |---|---|
-| baseline-corrected / retained acquire/install/ledger | 93 passed |
-| prefreeze-feature / new and affected retained features | 216 passed |
-| restored-feature / all new D1–D4 cases after faults | 61 passed |
-| backend-full / backend/tests at final freeze | **2,039 passed, 124 existing Windows skips**, 76 existing deprecation warnings, 45.88 s |
-| mcp-full / mcp-server/tests at final freeze | **666 passed, four existing optional-export skips**, 72.66 s |
-| export / current Backend revision/multi-LoRA/lifecycle/health producers | 93 passed |
-| cross-layer / separate MCP consumers of current exports | 73 passed |
-| registry-mcp / standing MCP/PNG/stdio/smoke/independent-content consumers | 412 passed |
-| fresh-wait / separate current Backend child and registered wait | 12 passed |
-| retained-provider-guards / unchanged prior independent positive credential tests | 19 passed, run here as Coding regressions |
-| schema-audit / full synthetic old-schema preservation | one passed |
-| scratch registry rebuild | all **22** prior rows exact; canonical registry unchanged |
-| source inventory/restoration; final diff whitespace check | exact protected source, no suppressed ordinary hashes; clean after documented normalization |
+| rejected-source-r1-r4 / unchanged original QA probes | **4 failed**, expected-feature RED at exact rejected software; retained raw history |
+| corrections-red-collected / new regressions before product changes | **23 failed,17 passed**, expected boundary failures |
+| corrected-original-adverse / original probes on corrected source | **4 passed**, separate new evidence, no old file rewritten |
+| restored-feature-assertion / final original+correction feature files | **105 passed**, after exact fault restoration |
+| backend-full / backend/tests at final freeze | **2,083 passed,124 existing skips**,76 warnings,47.25s |
+| mcp-full / mcp-server/tests at final freeze | **666 passed,four existing skips**,71.34s |
+| export / fresh Backend producers | **93 passed** |
+| cross-layer / separate MCP readers of fresh exports | **73 passed** |
+| registry-mcp / standing MCP/PNG/stdio/smoke guards | **412 passed** |
+| fresh-wait / fresh current Backend child and registered reader | **12 passed** |
+| retained-provider-guards / unchanged prior credential guards | **19 passed**, Coding regressions rather than a new QA verdict |
+| schema-audit / full migration plus exact pre-task schema authority | **2 passed**; full synthetic audit payload retained |
+| scratch registry rebuild | All **22** prior rows byte-identical; no additions/deletions/supersession |
+| source/restoration audit | All **2,889** frozen ordinary blob fingerprints; **420** protected source/test/helper bodies exact; final index covers every final blob |
 
-The 124 Backend skips remain Windows-only; four full MCP skips require explicitly
-exported fixtures, exercised by the current export/reader commands above. No new
-skip, deleted feature test, assertion relaxation or registry supersession.
-Frontend is unchanged and not rerun. Windows is not exercised. Prior p2-01 test
-results are historical, not used to qualify changed source.
+The124 Backend skips require Windows; four MCP skips require optional explicit
+exports, exercised separately above with20 current payloads retained. No new skip
+or changed existing test;44 new cases add feature coverage. Existing deprecation
+warnings remain. Frontend unchanged/unrun; native Windows unrun.
 
-| Deliberate product fault | Observed relevant failures |
-|---|---|
-| NoobAI mapped to null | one mapping case fails |
-| Missing evidence fabricated as verified | two honesty guards fail |
-| Acquire bypasses canonical publication | registered acquire snapshot guard fails |
-| Install bypasses canonical publication | registered non-first install snapshot guard fails |
-| Backfill destroys original notes | whole old-value guard fails |
-| List loses SQL bounds | pagination and read-query guards fail |
-| List issues UPDATE | actual SQL write-denial guard fails |
+## Fault sensitivity
 
-Each mutant exits 1 at an observable feature assertion. Exact bytes restore in
-finally before the 61-case GREEN; complete final suites follow restored freeze.
-The seven mutants produce nine relevant failures, not an independent QA verdict.
+Faults ran sequentially in this isolated worktree, with no overlapping suite or
+registry against mutant source. Every file restores exact bytes in finally.
+Seven original faults give nine relevant failures; six correction faults give34
+more, total43. The missing-error fault's focused explicit-assertion replacement
+also gives eight failures and restores105 GREEN. No import/setup/fingerprint/SQL
+error is counted as a feature-assertion sensitivity result.
 
-## Failed attempts, deviations and limits
+| Fault | Relevant failures |
+|---|---:|
+| Wrong NoobAI map; fabricated verification |1;2|
+| Bypass acquire; bypass install publication |1;1|
+| Destructive backfill; unbounded list; writing list |1;2;1|
+| Bypass complete normalization; bypass stored projection |2;1|
+| Raw JSON family filter; clearing omitted identity |9;2|
+| Overwrite retained notes |12|
+| Drop current errors / focused explicit-assertion replacement |8 /8|
 
-- First environment setup used system python3 (3.9) and stopped when the expected
-  Python3.11 site path did not exist. Its following runner invocation found no
-  driver file. Explicit python3.11 fixed setup. The first baseline then failed
-  before collection because the timeout dependency path used an incorrect old
-  worktree name; using the existing aid-175-qa site resolved it without install.
-  Guessed nonexistent source/test filenames were resolved with rg --files.
-- D1 initial RED: 24 missing-feature failures. D2 initial RED: four. D3 initial
-  RED: missing backfill. D4 initial RED: 25 absent-route cases. These expected
-  failures precede their implementations and remain in evidence.
-- First combined D2 GREEN attempt: **two failed, 181 passed**. Planned rows must
-  allow a stale path/absent identity to be filled while refusing conflicting
-  known identity. The legacy Illustrious lock fixture now sets baseModel before
-  inspection, keeping its snapshot consistent. Both original lock assertions are
-  unchanged; this fixture-only compatibility change is the only existing-test
-  edit. No existing test function is removed or skipped.
-- First D3 GREEN attempt failed on a synthetic alias-history CHECK constraint.
-  Correct table names and valid operation/hash sentinels fixed the fixture; no
-  product relaxation. First D4 GREEN attempt: **one failed, 24 passed** because
-  validator ordering hid OpenAPI maximum/minimum keywords. Reordering annotations
-  preserves validation and publishes the actual bounds.
-- Three edge REDs exposed recommendation conflict reapplication, missing-ID
-  augmentation and conflicting legacy family diagnostics. Two later edge REDs
-  exposed invalid IDs/licenses and repeated installation time/AIR preservation.
-  A registered Unicode-whitespace RED exposed SQL/Python trimming disagreement;
-  a background identity RED exposed possible completion-time hash rebinding.
-  Minimal fixes precede current GREENs/full suites; none is an abandoned feature.
-- Initial staged whitespace check reported generated SQL trailing spaces and a
-  legacy adapter EOF blank line. The shell command lacked fail-fast and still
-  created initial source commit63044d5. A separate, retained commit normalizes
-  only that whitespace and adds replay helpers; its check is clean and the final
-  full suites use freeze17e90a6. History is not amended or hidden.
-- Internal representation choices stay within the cleared contract. No broad
-  replacement, specification change, routine owner question, new architecture,
-  lifecycle/MCP feature or new alias feature. Metadata recommendation sources
-  are deliberately limited to explicit version.meta/file.metadata; unfamiliar
-  safe fields are opaque evidence. Legacy install safety/enum/package behavior
-  and stat-evidence limits are documented in the Backend topic.
+## Attempts, preservation and limits
 
-**Offline:** the tests above, synthetic byte verification and restoration/package
-checks only. **Running service:** no probe, startup, restart or deployment of a
-production service. **Provider/generation:** no real key read, live provider
-traffic, model download, registration or generation. **Retrieval:** synthetic
-fixture bytes and official attachment readback only; no live model/Gallery bytes.
-No completed record/search/download-job/default flow, fresh checkpoint+LoRA
-qualification, phase exit or CTY aesthetic acceptance is claimed. First check and
-p2-01 histories remain attributed unchanged. Independent AID-187 pins the final
-candidate and supplies its own actual verdict; Producer handles acceptance or
-correction. No feature push, merge, parent status/owner write or owner gate.
+- Initial correction test collection failed because a new fixture import omitted
+  the tests package under pytest importlib mode. The preserved replacement reaches
+  23 actual expected-feature failures. No product code preceded that collected RED.
+- Initial c4-green was1 failed/13 passed: an existing idempotence test caught the
+  new operation evidence being discarded by provider refresh. Shared publication
+  now preserves that reserved state; all existing assertions remain unchanged.
+- The first missing-error mutant observed None and raised TypeError at the intended
+  error check. A post-fault checker required literal AssertionError and failed;
+  its non-fail-fast shell still committed initial47eac3a. No mutant survived and
+  history is not amended. An explicit dict assertion now produces eight observable
+  assertion failures on that fault; restored105 and full suites use final42e6812.
+  This failed checker and focused replacement are documented, not silently omitted.
+- A few guessed source/reference names were absent; tracked rg inventory resolved
+  the actual files. Those read errors are not test or product results. Logs retain
+  normalized readable bodies and byte-exact deterministic-gzip raw bodies/hashes.
+- Both old raw directories and mirrors match fixed source exactly; imported
+  supplement bodies match2471ef8. No Producer status/placeholder topic is imported
+  as product. Current source publication identifies no loaded Backend service.
+- SQLite scalar validation is intentionally tied to the existing SQLite stack;
+  filtered counts may scan matching rows, but ORM materialization is SQL-bounded.
+  No new DB portability/performance certification or mutable read repair is claimed.
+- The delta bundle/full-index patch requires exact published report base4b95c7a
+  as an explicit seed ref and the existing shallow boundary
+  b4e71d18ba4600ad7e053274b90b45ffdfbce87b. Use --update-shallow; it is not a
+  standalone pre-boundary history backup. Uploaded-byte/readback/restoration/fsck
+  and complete final source/payload identity are recorded in the native delivery
+  receipt and official index/integrity artifact after the final commit is known.
+
+**Offline:** current real source/ORM/registered HTTP/provider machinery with
+synthetic wire/key/model/DB fixtures, faults/restoration, full suites and schema
+checks. **Running service:** no production probe/start/restart/deploy/backfill.
+**Provider/generation:** no actual owner key read, live provider, real model
+acquisition/registration or generation. **Retrieval:** synthetic installed bytes
+and official Paperclip attachments only; no live model/Gallery bytes.
+
+History remains p2-02 kickoff1 CLEAR/delivery1 FAIL/fourP1s/one rejection/
+correction1/next independent review2; p2-01 R1 FAIL/correction1/review2 PASS stays
+separate. First check remains one bridged chain/20 interventions/77 overlapping
+units/five missing earlier hashes. No complete Phase2 automation, three different
+zero-fix sentences, fresh checkpoint+LoRA qualification, phase exit or CTY artistic
+acceptance is inferred. Coding completes only its delivery card; QA independently
+pins the exact final candidate and Producer owns findings/acceptance. Any later
+product change requires another exact review. No self-delegation or parent/owner
+status write.
