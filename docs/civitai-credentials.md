@@ -62,3 +62,16 @@ read-only authentication comparison.
 fixes this locator and authorizes continued execution within the accepted roadmap.
 The [Phase 2 roadmap](roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26)
 and [operating policy](OPERATING-POLICY.md) govern the work.
+
+## Current p2-01 delivery boundary
+
+The first candidate 160681d1 was rejected by independent review 301c5dee with
+R1/P1/D3: an implicit HTTPX cookie jar can replay a canonical credential cookie
+to b2 despite removing Authorization. The [actual report](tasks/p2-01-civitai-key-file/review-round-1.md)
+uses synthetic configured-file credentials; selected live HEADs had no cookies.
+No actual owner-key disclosure or secure-boundary PASS is inferred.
+[Correction 1](tasks/p2-01-civitai-key-file/repair-round-1.md) enforces the existing
+Authorization-only policy at the final outgoing request and blocks cookie
+acceptance/persistence/replay. This is [the technical transport decision](decisions/civitai-credentials.md),
+not implemented/deployed behavior on main. Changed code requires fresh frozen
+source evidence and independent exact delivery review before integration.

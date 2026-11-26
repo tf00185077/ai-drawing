@@ -40,11 +40,15 @@ The real [First check is accepted](tasks/p2-00-civitai-first-check/acceptance.md
 with 20 manual interventions and its five missing historical source hashes
 retained. [p2-01](tasks/p2-01-civitai-key-file/task.md) private key-file/loading
 and credential-safe requests now have [independent kickoff CLEAR](tasks/p2-01-civitai-key-file/kickoff-review.md),
-round 1, report 04629d2b. Separate Coding and exact-commit delivery QA follow the
-[handoff](tasks/p2-01-civitai-key-file/implementation-handoff.md). Product behavior
-is not implemented by this report/status publication; the 18-row registry and
-all existing product/test trees are unchanged. No new provider/runtime/generation
-or live artifact result is added by this Producer round.
+round 1, report 04629d2b. Actual candidate 160681d1/freeze 8a77b907 received
+[delivery review 1 FAIL](tasks/p2-01-civitai-key-file/review-round-1.md), report
+301c5dee: one P1/D3 cookie credential replay defect. Factory and registered
+acquisition fixtures reproduce it; live HEADs observed no cookies.
+[Correction 1](tasks/p2-01-civitai-key-file/repair-round-1.md) and separate exact
+delivery review 2 follow. First rejection/one finding are retained; unchanged
+CLEAR and all 18 registry contracts remain. Product/test source stays off main.
+Producer publishes actual reports/evidence/status only, with no new provider/
+runtime/generation/live artifact result.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
