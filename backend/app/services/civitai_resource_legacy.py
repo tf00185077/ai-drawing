@@ -13,4 +13,3 @@ def normalize_model_family(base_model: Any) -> str | None:
     if "anima" in lowered:
         return "anima"
     return None
-
