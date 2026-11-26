@@ -39,6 +39,23 @@ with this known path rather than asking for a location already supplied. Free-ke
 restrictions, Early Access refusal and rate limits remain real outcomes; the key
 does not authorize paid access or expand the approved project boundary.
 
+## First check evidence and current next task
+
+The [accepted real First check](tasks/p2-00-civitai-first-check/acceptance.md)
+demonstrates one selected login-required free-key file: anonymous same-file
+HEAD/GET 401, credentialed route 307, credential-free CDN 200, exact downloaded
+bytes/hash and completed local checkpoint+LoRA image. Seven in-process key bridges
+were counted; private on-disk settings were preserved. This proves that selected
+access case, not an implemented/deployed file reader, every restricted resource,
+Early Access or sustained rate-limit capacity. Key presence is still a separate
+observation from authentication.
+
+[p2-01](tasks/p2-01-civitai-key-file/task.md) specifies production file loading and
+credential-safe retained request paths. It requires its own actual CLEAR and
+exact delivery QA; source publication/specification is not implementation or
+runtime deployment. No new acquisition/generation is needed for its bounded
+read-only authentication comparison.
+
 ## Authority
 
 [CTY's Phase 2 start and key-file direction](requests/2026-11-26-phase-2-start-and-key-file.md)

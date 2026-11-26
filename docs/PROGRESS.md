@@ -707,3 +707,47 @@ Existing durable rules are already in roadmap/credential/runtime/loader topics;
 concrete access/dispatch/errors stay in task records, not duplicate memory.
 All 13 concurrent shared-memory edits and all model/dataset/output/Gallery data
 are preserved. No Phase 1 raw evidence/QA report/registry or product/test changes.
+
+
+## 2026-11-26 — Real Phase 2 First check accepted; credential task enters kickoff
+
+Producer read actual kickoff CLEAR `4702a662`, Coding `0d571b7d` manifest/ledger/
+used-service inventory/raw observations and independent QA `9caf92fe` D1–D5
+observation PASS. [Acceptance](tasks/p2-00-civitai-first-check/acceptance.md)
+preserves all original records. One login-required LoRA download (anonymous
+401 vs credentialed 307/credential-free CDN 200), resource 80/new LoRA and
+81/adopted hash-matched checkpoint, one local default_lora job and original
+MCP/Gallery PNG complete the manually bridged chain. Job da6a825f, image 4463,
+artifact 3878, 333,502-byte image; real LoRA/trigger/parameter/history/persistence
+proof. No fresh checkpoint download or automated flow is claimed.
+
+Counts: 15 capability + five recovery = **20 interventions**; 64 instrumented
+observations + seven prep/audit + six completed delivery blocks = **77 work
+units**, overlapping classifications not added again. Provider 14 requests
+(10×200, 2×401, 2×307), one submit/one wait/42 same-ID status reads; seven used
+modules including a value type, 12 operationally untouched. Failed imports,
+launcher/quota/hash/accounting attempts are retained. No pending measured job.
+These units differ from the original Phase 1 baseline; no improvement claim.
+
+- Offline: QA fresh Backend 1916 passed/124 existing skips; MCP 666/four; separate PNG six; frontend 226/one/build passed; 18 original registry rows retained. Coding evidence replay 23/QA audit 37 pass. Producer verifies all 14 official uploads/three receipts, indexed packet hashes/bytes/Git (79/90/119 payloads), exact reports, three independently fetched prerequisite bundles, exact kickoff patch tree and 147 source fingerprints. Initial bare fetch needed --update-shallow before bundle verification; no source or raw evidence was changed. Raw-log whitespace retained. No redundant full product-suite repeat.
+- Running service/provider: original runtime/source/schema/process/root/call proof, plus QA's four local read-only product GETs and actual model/old-row checks. 9,218 pre-existing rows/15 tables/schema preserved, exactly two resources/one image/one artifact added. No Producer product/provider probe/restart/deployment; source publication never attests a later loaded process.
+- Real download/generation: one selected free-key login-required LoRA and one actual local checkpoint+LoRA job; no QA/Producer replacement work. No paid access, broad rate-limit, Early Access/refusal/cancellation conclusion.
+- Retrieval: original new-session MCP canonical bytes and QA local HTTP re-read agree; Producer rehashes/views official copies, no new live Gallery-byte read. Technical image content is a blue cup on a table, no people; CTY alone judges aesthetics.
+
+Accept QA's **P2 evidence-usability limit**: five Comfy tokenizer before-run
+hashes were over-redacted; other 787 Comfy and 137 Backend hashes/current Git
+checks cannot recreate missing original measurements. [Evidence decision](decisions/evidence.md)
+records future exact credential-field redaction without masking ordinary source
+paths. Keep original packets unchanged. No P0/P1 finding, no task rejection or
+repair cycle; observation PASS differs from software/phase/aesthetic acceptance.
+
+[Implementation intake](tasks/p2-00-civitai-first-check/implementation-intake.md)
+ranks the observed gaps. [p2-01](tasks/p2-01-civitai-key-file/task.md) is the first
+bounded software specification: Backend private key-file loading, active caller
+wiring, origin-bound credentials/finite redirects and request deadlines, truthful
+errors/private evidence. Existing intents/records stay; budgets/async jobs/single
+record/search/defaults/removals remain later tasks. Fresh independent kickoff is
+required; no unreviewed product code or routine owner question. AID-146 keeps
+coordination/native reviewer dependencies. Preserve all 13 concurrent memory
+edits, AID-178 private snapshot and prior runtime/config/venvs/models/data.
+Phase 2 exit remains unmet; scope/order/Not now unchanged.

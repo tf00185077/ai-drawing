@@ -48,41 +48,52 @@ Removed research data (`experiments/`, `research/`, `model_benchmarks/`); eviden
 
 ## Next work
 
-**Phase 2 (active 2026-11-26).** The real First check is dispatched under
-[Producer AID-146](/AID/issues/AID-146), which retains ownership after native
-rejection of a redundant Producer child. [QA AID-177](/AID/issues/AID-177) owns
-fresh independent kickoff at fixed published `2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`;
-[Coding AID-178](/AID/issues/AID-178) is natively blocked on kickoff and must
-read actual **CLEAR** before any provider/model/runtime action. It then executes
-safe Civitai search → keyed safe download → current registration → explicit
-Mac `default_lora` checkpoint+LoRA image attempt, with actual bytes/graph/records
-or the precise failing stage. [Independent QA AID-179](/AID/issues/AID-179)
-natively waits on Coding, pins its actual final evidence commit and completes
-an adverse report too. AID-146 natively waits on that actual review, then ranks
-observed failures and used services before detailed software specs. No routine
-owner/start/resource question is pending. [Operating brief](tasks/p2-00-civitai-first-check/task.md)
-is measurement, not implementation; all later product changes retain CLEAR and
-exact-commit QA. Native task completion alone is never acceptance.
+**Phase 2 (active).** The [real First check is accepted](tasks/p2-00-civitai-first-check/acceptance.md)
+after [AID-177 CLEAR](/AID/issues/AID-177), actual [Coding AID-178](/AID/issues/AID-178)
+`0d571b7d571561ebdea34c959ed6f16e2db06953` and independent [QA AID-179](/AID/issues/AID-179)
+`9caf92fefac6f30255bac528e3f4292f2c1bddf6` D1–D5 observation PASS. One safe
+selected-version search → login-required free-key LoRA download → current
+registration → Mac checkpoint+LoRA default_lora image completed. Resource 80
+is the new 228,518,900-byte LoRA; 81 adopts the hash-matched existing Illustrious
+checkpoint, without redownload/rename/overwrite. Job da6a825f, image 4463,
+artifact **3878**; original [PNG](tasks/p2-00-civitai-first-check/evidence/original.png)
+333,502 bytes, decoded MCP/Gallery proof and persisted/PNG/history graphs agree.
+Actual triggers/manual parameters and nonzero LoRA loading are preserved.
 
-Producer independently verified the authorized key file readable/nonempty/0600,
-without emitting its value. Use [credential guidance](civitai-credentials.md):
-planned `CIVITAI_API_KEY_FILE` differs from existing authorization, and any manual
-bridge counts. Adopted references are safe still life, explicit local target,
-identity-verified Illustrious checkpoint reuse plus a newly searched compatible
-safe LoRA, actual trigger/recommended parameters and temporary 8 GiB/file,
-10 GiB/new-download, 20 GiB/free-space guards. These are bounded First check
-choices, not implemented product guarantees. SDXL-group mapping is unchanged;
-licenses are recorded without a commercial-use permission filter.
+This is **20 interventions**, not automated Phase 2 acceptance: 15 capability +
+five recovery; separately 77 observation/work-block units with overlap explained.
+14 provider requests, one submit, one wait, 42 same-ID status GETs; seven used
+Civitai modules including a value type and 12 uncalled. Preserve all failed
+operations. QA P2: five tokenizer before-run hashes were masked; other 787
+Comfy and 137 Backend hashes/current-Git corroboration do not reconstruct them.
+[Evidence decision](decisions/evidence.md) preserves ordinary source-path hashes
+in future helpers. Baseline units differ from Phase 1's 23/eight incidents.
 
-[Phase 1 closeout reconciliation](tasks/p1-05-mcp-e2e-smoke-mac/closeout-reconciliation.md)
-records the older native proposal **withdrawn as superseded**, not accepted
-unchanged. CTY's published revised roadmap and later execution direction govern.
-No authenticated Civitai/provider/download/generation/live Gallery-byte result
-is claimed from this Producer handoff. One affected existing documentation guard
-passes (0.20s); no product suite repeated. Full original assignments/owner sources
-were saved in all three recipients' initial native plans and read back exactly.
-Actual runtime/API/model/image results and every intervention await the First
-check; they are separate from a key-access or dispatch receipt.
+**Next: [p2-01 private key-file loading/credential-safe requests](tasks/p2-01-civitai-key-file/task.md)**,
+with its own fresh independent CLEAR kickoff before Coding and exact-final-commit
+QA before integration. AID-146 retains Producer ownership and native continuation;
+no new routine owner confirmation. [Ranked intake](tasks/p2-00-civitai-first-check/implementation-intake.md)
+keeps stock download budgets/async jobs, one resource record/SDXL mapping, safe
+search/MCP replacement, automatic defaults/workflows and proven removals separate.
+The owner-authorized key file stays private, current product still uses legacy
+authorization and manual bridging; this spec/publication is not implemented or
+deployed file loading. Scope/order/Not now and CTY artistic judgment remain.
+
+QA fresh offline Backend 1916/124 existing skips, MCP 666/four skips, registered
+PNG six passed, frontend 226/one skip/build passed; 18 registry rows unchanged.
+Coding 23 saved-evidence assertions/QA 37 checks pass. QA added four local GETs,
+no provider/download/generation. Producer verifies all 14 official deliveries,
+79/90/119 packet payloads, bundles/patch/Git and 147 source fingerprints, and
+views the verified image; no new product/provider probe/restart/download/
+generation/live Gallery-byte read. Exact raw evidence stays unchanged, including
+five-hash limitation and log whitespace. All 9,218 prior rows/schema preserved;
+retain private before snapshot, runtime/config/backups/venvs and all data.
+
+Phase 2's automatic chain, three different zero-fix sentences, at least one
+fresh checkpoint+LoRA download and CTY image demo remain unmet. Selected version
+NSFW level 1 versus model aggregate 23 despite nsfw=false remains a search-design
+input, not a promise that the current API filters every result safely. No broad
+rate-limit/refusal/Early Access/cancellation outcome is inferred.
 
 Phase 1 history:
 

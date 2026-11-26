@@ -27,6 +27,15 @@ review remains separate before Phase 2. Historical p1-00a bytes were fetched
 outside MCP and never substitute for this qualification. Source integration
 performs no runtime/client deployment or new generation.
 
+The [Phase 2 First check](tasks/p2-00-civitai-first-check/acceptance.md) is accepted
+as one manually bridged login-required LoRA/download/registration/default_lora
+image observation. It used current MCP reads/generation plus counted direct
+provider/key/transport/record/default bridges; it does not add tools or automatic
+Phase 2 behavior. All 31 intent names/risks remain. [p2-01](tasks/p2-01-civitai-key-file/task.md)
+enters fresh kickoff for private key-file/credential-safe request behavior;
+provider search, unified records, generic download jobs and automatic defaults
+remain later implementation tasks.
+
 ## Install
 
 Python 3.10+.
