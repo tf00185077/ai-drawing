@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review3 FAIL; correction3 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review4 FAIL; correction4 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,32 +90,37 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review3 FAIL accepted:** [Coding AID-190](/AID/issues/AID-190) FINAL
-**21d273fec6ce8bf00a533634d685edfb42431b05**, freeze374c158b, received actual
-[independent QA AID-191](/AID/issues/AID-191) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-3.md),
-report/evidence **8d7e5c5182d200a24b103f660f082f5844469739**. Explicit prefixed
-credential assignments survive actual provider/registered/ORM/stored reads:
-20 expected-feature failures. Initial four failures/24 covered-form passes remain.
-No real key read/disclosure. R2-R4/C2-C4 and isolated D3 pass at reviewed source;
-D1/D2/D4/C1/S1/S2 and acceptance fail. Product/tests remain off main.
+**p2-02 review4 FAIL accepted:** [Coding AID-192](/AID/issues/AID-192) FINAL
+**bff2fb127d4ab5de69fe2124e9efc54cad0fd59a**, freezeaffcd947, received actual
+[independent QA AID-193](/AID/issues/AID-193) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-4.md),
+report/evidence **5d6542607cd2384bb6b86f2e2126512836bba46c**. Matching quoted
+credential labels with internal whitespace escape text parsing although the same
+keys are removed. Actual registered/provider/ORM/old-read probes twice yield33
+feature failures/45 passes; three real key controls pass. Synthetic only; no actual
+key read/disclosure. R2-R4 and isolated D3 pass at that source; acceptance fails.
+Rejected product/tests stay off main.
 
-**Third-rejection threshold reached and reassessed.** Producer retains the
-single-row design/passing R2-R4 and adopts consistent recognition of credential
-keys and complete assignment labels, including prefixes. [Correction3](tasks/p2-02-resource-record/repair-round-3.md)
-then exact independent QA4 proceed under unchanged task/repairs/kickoff1CLEAR.
-Report the reassessment/adopted option; no scope/order/architecture/Not now change
-or routine owner gate. One original unresolved finding, not a new owner requirement.
+**Fourth rejection reassessed after the already-reported third-rejection threshold.**
+Retain single-row identity, complete-value exclusion and passing R2-R4. Adopt
+complete matching quoted-label parsing before the common key/assignment policy,
+with whitespace/serialization consistency, positive neighbors and real parsing
+fault coverage. [Correction4](tasks/p2-02-resource-record/repair-round-4.md) and
+independent exact QA5 continue under unchanged task/repairs1-3/kickoff1CLEAR.
+Report actual results/options under current delegation; no project boundary change
+or routine owner gate. One unresolved original finding remains.
 
-QA rejected-source Backend2200/124 existing skips,MCP666/four,restored222,
-fresh93/73/412/12/19/schema2,17 distinct mutants/18 invocations/158 assertion failures
-remain evidence, not acceptance or qualification of changed software. Producer
-verifies24 official uploads including superseded package bytes/eight base chunks,
-current337/155payloads338/156members327/152Gitbodies,3271/3390/3541 fingerprints,
-exact official base and independent bundle/per-commit-patch/fsck restorations.
+QA rejected-source Backend2696/124 existing skips,MCP666/four,restored718,
+fresh93/73/412/12/19/schema2 and18 distinct faults/20 invocations/393 assertion
+failures remain attributed evidence, not qualification of changed software.
+Producer verifies20 official uploads/nine base chunks,559payloads/561members/
+545Gitbodies,3789/3917/4081 fingerprints and both independent exact bundle/patch
+chains/fsck with declared shallow metadata;1492 exact task bodies preserved.
+One existing catalog documentation guard is recorded with publication evidence.
 No new Producer product suite/key/provider/service/restart/model/Gallery-byte action.
-All22 registry rows, old evidence and13 memory bodies/private runtime/data preserved.
-Remaining Phase2 jobs/budgets/hash/search/MCP/defaults/removals/three zero-fix
-sentences/freshcheckpoint+LoRA/CTY demo/exit remain pending. Source is not deployment.
+All22 registry rows, prior raw evidence,13 memory bodies/private runtime/data retained.
+Remaining jobs/budgets/hash/search/MCP/defaults/removals/three different zero-fix
+sentences/fresh checkpoint+LoRA/CTY demo/Phase2 exit remain pending. Source is not
+deployment.
 
 Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
 replacement, automatic defaults/workflows and proven removals remain separate.

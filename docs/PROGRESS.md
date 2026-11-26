@@ -49,24 +49,26 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 review3 FAIL](tasks/p2-02-resource-record/review-round-3.md), QA8d7e5c51
-at actual Coding FINAL21d273fe/freeze374c158b, leaves R1/P1 incomplete: explicit
-prefixed credential assignment values persist/project.20 independent feature REDs;
-initial4RED/24 covered-form passes retained. R2-R4 pass at that exact source;
-D1/D2/D4/C1/S1/S2 and acceptance fail. Three rejections reach the roadmap threshold.
-Producer reassesses, retains current identity design/passing R2-R4 and adopts
-consistent key/assignment label recognition with prefix-class regression coverage.
-[Correction3](tasks/p2-02-resource-record/repair-round-3.md) and exact independent
-QA4 follow unchanged task/CLEAR. Report results; no routine gate/boundary change.
+[p2-02 review4 FAIL](tasks/p2-02-resource-record/review-round-4.md), QA5d654260
+at Coding FINALbff2fb12/freezeaffcd947, leaves original R1/P1 incomplete: complete
+quoted labels with internal whitespace evade text extraction despite equivalent
+key removal.33 independent feature failures/45 passes twice; three real key
+controls pass. R2-R4 and isolated D3 pass at that source. Four rejected deliveries;
+original four findings/one unresolved. Earlier threshold reassessment is extended:
+retain current identity/complete-value design and adopt complete quoted-label
+parsing with shared normalization/class/fault coverage. [Correction4](tasks/p2-02-resource-record/repair-round-4.md)
+and independent exact QA5 follow unchanged task/repairs1-3/kickoffCLEAR. Report
+results; no boundary change or routine owner gate. Product/tests remain off main.
 
-Rejected-source QA Backend2200/124 skips,MCP666/four,222 restored feature cases,
-17 mutants/18 invocations/158 assertion failures,fresh93/73/412/12/19/schema2 stay
-attributed. Producer verifies24 uploads/eight official base chunks/current492
-payloads479Gitbodies/3271-3390-3541 fingerprints/both exact restorations/fsck.
-No extra product suite/live action. Original first/review2/review3 FAIL and raw
-histories stay immutable;22 contracts/13 memory bodies/private runtime/data kept.
-No complete Phase2 automation/three different zero-fix sentences/newcheckpoint+
-LoRA qualification/CTY image demo/exit. Main product remains accepted p2-01.
+Rejected-source QA Backend2696/124 existing skips,MCP666/four,718 restored,
+18 faults/20 invocations/393 assertion failures,fresh93/73/412/12/19/schema2 remain
+attributed. Producer verifies20 uploads/nine base chunks/559 indexed payloads/
+545 Git bodies/3789-3917-4081 fingerprints and both exact restorations/fsck;
+1492 QA task bodies and all earlier raw histories/mirrors preserved. One existing
+catalog documentation guard is recorded with publication evidence. No extra
+product suite/key/provider/service/generation/live Gallery-byte result.22 contracts/
+13 memory bodies/private runtime/data remain intact. No full Phase2 automation/
+three different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/exit acceptance.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
