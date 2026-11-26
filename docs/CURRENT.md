@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 review8 FAIL (original R1); correction8 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02 review9 FAIL (outer ledger R1); correction9 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,177 +90,38 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 review8 FAIL accepted:** [Coding AID-201](/AID/issues/AID-201) FINAL
-**1d5e63afee426ebd6f0f1f58ea03fe08b823e23d**, freeze44369430, received actual
-[independent QA AID-202](/AID/issues/AID-202) [original R1 incomplete](tasks/p2-02-resource-record/review-round-8.md),
-report/evidence **7ebf45d5a83b8bc0977a1f502b64b79bd35b22c5**. Supplied review7
-examples pass; checked R5 bounds and R2-R4 pass. Two remaining R1 paths fail:
-preceding prose quotes suppress supported JSON-unit label candidates (54 failures/
-54 controls and nine phase failures/nine controls, each twice); raw provider base
-labels survive acquisition admission, admitted/completed new notes and status
-(three full-trace failures twice), even while typed metadata/detail/list/ledger
-are safe. All12 old nested fields/keys run; old storage/useful records stay exact.
-No actual owner-key read/disclosure. Eight rejected deliveries/five distinct P1
-findings; D1/D2/D4 and combined acceptance fail. Product/tests remain off main.
+**p2-02 review9 FAIL accepted:** [Coding AID-203](/AID/issues/AID-203) FINAL
+**c01730db22cc91d64aa779550313c3125fd66355**, freeze5baa7cfa, received actual
+[independent QA AID-204](/AID/issues/AID-204) [original R1 incomplete](tasks/p2-02-resource-record/review-round-9.md),
+report/evidence **b58b6d2cd82a9b72b7c1d536c563e6052f38bef9**. Supplied QA8
+unit/new-note/status cases now pass; R2-R4 and checked R5 bounds pass. The whole
+public local ledger still exposes selected-provider AIR/filename assignments in
+outer `air`/`local_path`, beside safe typed diagnostics. Eight complete traces
+fail initially/confirmation; two useful controls pass,104 observations/16 exposed
+phases. Exact old columns/metadata/notes remain. All synthetic, no actual key read.
 
-**Eighth-result reassessment:** make supported representation candidates independent
-of outer prose quote pairing as well as assignment candidates. Use the shared
-complete-value policy at source-derived new-note persistence and existing public
-acquisition/status projections, preserving retained old note bytes. Keep identity,
-safe original output and monotonic bounded one-level work. No recursive/all-pairs/
-growing-suffix work, timeout increase or format restriction. [Correction8](tasks/p2-02-resource-record/repair-round-8.md)
-and independent exact QA9 follow unchanged task/repairs1-7/kickoff1CLEAR. Current
-delegation permits the in-boundary option; report results, no routine owner gate,
-new finding number or project boundary/architecture change.
+Nine rejected deliveries/five distinct historical P1 findings/original R1 open.
+[Correction9 reassessment](tasks/p2-02-resource-record/repair-round-9.md) retains
+single-row/internal matching/path semantics, applies the shared complete-value
+policy to the entire public ledger, and audits raw outer fields/actual consumers.
+Real whole-response/fault/old-storage guards precede another delivery. Original
+task/repairs1-8/CLEAR/bounds/current delegation stay unchanged; no routine owner
+question or architecture/scope change. Separate Coding and exact QA10 follow;
+Producer handles findings/acceptance, no product merge before independent PASS.
 
-QA rejected-source Backend5786/124 existing skips,MCP666/four,restored3808,
-immutable original/QA2-7 plus360 terminal cases,12 safe units/24 prior originals,
-fresh93/73/412/12/19/schema2,seven progress checks/72 observations and24 distinct
-mutations/33 invocations/1176 assertions plus20 feature timeouts remain attributed,
-not R1 acceptance/future-source qualification. The interruption after completed
-tests, fresh guard/export/prerequisite recovery and failed audits remain recorded.
-Producer verifies21 official uploads,1236 indexed payloads/1238 members/1200 exact
-Git bodies,5984/6193/6478 complete inventories and two independent official
-declared-shallow exact bundle/aggregate/per-commit/raw-commit restorations/fsck.
-All22 contracts/raw histories and the current14 shared memory bodies/statuses
-stay exact; distinct prior concurrency pins remain separate. Existing catalog
-documentation guard and publication checks are recorded with integrity. No new
-Producer product suite/key/provider/service/restart/model/live Gallery-byte result.
-Source publication is not deployment or Phase2 exit. Remaining jobs/budgets/hash/
-search/MCP/defaults/removals/three different zero-fix sentences/fresh checkpoint+
-LoRA/CTY demo/Phase2 exit remain pending.
-
-Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
-replacement, automatic defaults/workflows and proven removals remain separate.
-
-QA fresh offline Backend 1916/124 existing skips, MCP 666/four skips, registered
-PNG six passed, frontend 226/one skip/build passed; 18 registry rows unchanged.
-Coding 23 saved-evidence assertions/QA 37 checks pass. QA added four local GETs,
-no provider/download/generation. Producer verifies all 14 official deliveries,
-79/90/119 packet payloads, bundles/patch/Git and 147 source fingerprints, and
-views the verified image; no new product/provider probe/restart/download/
-generation/live Gallery-byte read. Exact raw evidence stays unchanged, including
-five-hash limitation and log whitespace. All 9,218 prior rows/schema preserved;
-retain private before snapshot, runtime/config/backups/venvs and all data.
-
-Phase 2's automatic chain, three different zero-fix sentences, at least one
-fresh checkpoint+LoRA download and CTY image demo remain unmet. Selected version
-NSFW level 1 versus model aggregate 23 despite nsfw=false remains a search-design
-input, not a promise that the current API filters every result safely. No broad
-rate-limit/refusal/Early Access/cancellation outcome is inferred.
-
-Phase 1 history:
-
-[Execution plan and native backlog](tasks/p1-planning-2026-11-24/plan.md), [AID-141](/AID/issues/AID-141). CTY's [later instruction](requests/2026-11-24-proceed-within-project-boundaries.md) authorizes executable work inside existing boundaries and delegates routine reference choices; no ordinary-choice confirmation is pending.
-
-Producer adopted `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, local target for p1-00/p1-05. The exact small baseline model/graph/parameter combination completed a real local original; broader compatibility is unverified.
-
-[Coding AID-148](/AID/issues/AID-148) delivered no-repair evidence commit `3081952`; [QA AID-149](/AID/issues/AID-149) independently returned [PASS for that evidence-only record](tasks/p1-00-mcp-friction-run-mac/review.md). Producer accepted that unchanged record plus QA's report/registry `c377a02`. Baseline remains **23 intervention units across eight incidents**, one completed original and Gallery metadata only. At measurement time the relative URL failed locally before HTTP and the old Backend lacked the revision contract; its loaded commit remains unknown. Later repair evidence does not rewrite that no-repair result.
-
-[AID-142](/AID/issues/AID-142) accepts the bounded [p1-00a repair](tasks/p1-00a-mac-runtime-and-retrieval/acceptance.md) at **`b6d5846`** after [QA AID-154](/AID/issues/AID-154)'s independent [D1-D5 PASS](tasks/p1-00a-mac-runtime-and-retrieval/review.md). [Kickoff AID-150](/AID/issues/AID-150) cleared fixed spec `4ac3d56`; one [round-1 rejection](tasks/p1-00a-mac-runtime-and-retrieval/review-round-1.md) remains recorded. [Coding AID-153](/AID/issues/AID-153) corrected the complete startup-schema inventory, and QA repeated its read-only audit: all old values preserved, added training fields NULL, reservation table empty. Corrected delivery and QA report/evidence/registry `3d5d890` are integrated unchanged. No product/test source changed.
-
-The identified Backend and configured Mac client completed a fresh original/revision pair with persisted canonical lineage and decoded bytes from unchanged returned host paths. The original used ComfyUI cache; proof is one colocated-client pair, with byte reads outside MCP disclosed. F4/F5/F8 are resolved for that boundary. F1/F2 environment binding, F3 response parsing, F6 polling and F7 visibility remain mapped to later Phase 1 work. No three-run exit or aesthetic/demo acceptance.
-
-[QA AID-156](/AID/issues/AID-156) returned fresh [p1-01 CLEAR](tasks/p1-01-mcp-response-envelope/kickoff-review.md) and [p1-02 CLEAR](tasks/p1-02-mcp-tool-consolidation/kickoff-review.md) at fixed specification/source `496cee2`, report commit `9d79d20`. [AID-143](/AID/issues/AID-143) read the actual reports and verified all four official uploads, 29 indexed archive members, fixed snapshots and exact Git bytes. K2-1 is resolved at specification level: read-only composition rejects legacy `save_as`; returned fragments are saved through `prompt_write(save)` with existing concurrency/provenance. The [first ambiguity](tasks/p1-02-mcp-tool-consolidation/kickoff-review-round-1.md) and [clarification 1](tasks/p1-02-mcp-tool-consolidation/kickoff-clarification-1.md) remain intact. Accounting remains one kickoff ambiguity/clarification round 1/kickoff round 2; the first implementation delivery result is recorded below.
-
-[Coding AID-157](/AID/issues/AID-157) delivered combined candidate `b1082a855a66eedba6a4f11fbd4fcec0e9e867ab`. [Independent QA AID-158](/AID/issues/AID-158) returned **p1-01 PASS / p1-02 FAIL**, exact report/evidence commit `1001586`. F2-1 (P1, D2) is a demonstrated test gap: the correct ComfyUI admin label can be changed to read while the full suite stays green and registered restart still sends its mocked HTTP request. Producer read both actual manifests/reports and mutation evidence, verified the official packages/Git identities and accepts the adverse finding. That first candidate was withheld pending correction; its exact historical reports/evidence remain in the accepted delivery.
-
-[Coding AID-159](/AID/issues/AID-159) delivered [correction round 1](tasks/p1-02-mcp-tool-consolidation/repair-round-1.md) at **`616f67ff68fc27070e85861e94d70de1baf5082a`**. [Independent QA AID-160](/AID/issues/AID-160) returned fresh **p1-01 PASS / p1-02 PASS**, report/evidence/registry `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`. The independent literal all-29 risk map now catches the demonstrated false label in catalog and real discovery. Producer read both actual manifests/verdicts and mutation/restoration proof, verified all official packages and integrates reviewed source/evidence unchanged. [Combined acceptance](tasks/p1-01-mcp-response-envelope/acceptance.md) records feature integration **`7ba2059f7e46920eaf860e19e61aa84bae8bf02c`**; [AID-143's publication ledger](/AID/issues/AID-143#document-plan) pins final published main. Cleared tasks/decisions stay unchanged; one p1-02 delivery rejection/correction round 1/review round 2 PASS is retained separately from kickoff/p1-00a history.
-
-[QA AID-161](/AID/issues/AID-161) returned **p1-03 kickoff AMBIGUITY K3-1** at fixed `7a46cb7`, exact [report/evidence](tasks/p1-03-mcp-wait-and-result/kickoff-review-round-1.md) `b3276dc`. Producer verified the actual report/uploads/source shapes and adopted [clarification 1](tasks/p1-03-mcp-wait-and-result/kickoff-clarification-1.md): preserve real canonical identities and separate legacy image IDs; return a recoverable locator-unavailable error when generation cannot supply supported Gallery locators, retaining completed Backend status. Training output/smoke state stays truthful and separate. Original specification/report/evidence are preserved; one kickoff ambiguity is not an implementation rejection.
-
-[QA AID-162](/AID/issues/AID-162) returned independent **p1-03 kickoff round-2 CLEAR** for fixed `522c2f10b550d90f7b88ab1a3c9d1f6352439c8e`, exact [report/evidence](tasks/p1-03-mcp-wait-and-result/kickoff-review.md) `3bbcb9cdd30397c497c71da50ce83482642302e7`. K3-1 is resolved at specification level; all five requirements are implementable/testable. Producer read the actual report and verified five official uploads, binary patch/bundle and 90 indexed payloads/92 archive members against hashes/Git. Clarified task SHA-256 remains `0d25f752ed4f17b28a01109c10c163e57532ae4b7e11832b8361f63a67af6688`; normative decision, original task/report/evidence and nine standing registry items are unchanged. QA's selected Backend 3 passed/one warning, MCP 19 passed and expanded isolated shape probe are source-contract evidence, not wait implementation or live proof.
-
-[Coding AID-163](/AID/issues/AID-163) delivered exact `77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`; [QA AID-164](/AID/issues/AID-164) independently returned [D1-D5 PASS](tasks/p1-03-mcp-wait-and-result/review.md), report/evidence/registry `d088c3258ab782623631d60daaaccc8ce6fcb6dc`. Producer read the actual manifest/report and verified ten official uploads, both binary patches/bundles and 465 indexed payloads against hashes/Git. Reviewed product/tests/manifest/evidence and QA report/registry are integrated unchanged; [acceptance](tasks/p1-03-mcp-wait-and-result/acceptance.md) and [publication ledger](/AID/issues/AID-144#document-plan) record the final main identity. One kickoff ambiguity/clarification 1/kickoff 2 CLEAR and delivery review 1 PASS with zero delivery rejections are preserved.
-
-[QA AID-165](/AID/issues/AID-165) returned p1-04 kickoff **AMBIGUITY K4-1** at fixed `c70162d`, exact [report/evidence](tasks/p1-04-mcp-health-and-workers/kickoff-review-round-1.md) `3a980ec`. Producer read the actual report and verified all five official uploads and 59 indexed payloads against Git/hashes. [Clarification 1](tasks/p1-04-mcp-health-and-workers/kickoff-clarification-1.md) permits an additive extension of existing worker status and separates configured/expected identity from nullable current observations. Configured-down stays one entry; Backend-read failure is an error, never an inferred empty list. Original task/report/evidence remain intact. One kickoff ambiguity/clarification 1/next round 2 is separate from delivery rejections (zero).
-
-[QA AID-166](/AID/issues/AID-166) returned independent **kickoff round-2 CLEAR** at fixed `5cf158b65d924a9508a3b5bfb7b47adb92eff7a1`, exact [report/evidence](tasks/p1-04-mcp-health-and-workers/kickoff-review.md) `e75a94ec63a507bac194b702a87eb369ea1ccb20`. K4-1 is resolved at specification level; all four requirements are implementable/testable. Producer read the actual report and verified five official uploads, exact patch/bundle and 78 indexed payloads/80 members against pinned Git. Cleared task/decision/clarification and original task/report/evidence remain unchanged; one kickoff ambiguity/clarification 1/round-2 CLEAR and zero implementation delivery rejections are retained. Fresh selected Backend 10/one warning, catalog 14 and 11-case/12-GET existing-route probe are offline source-contract evidence, not feature acceptance.
-
-[Coding AID-167](/AID/issues/AID-167) delivered exact **72f483418524a613fb104b92ab483e39f7432bfc**; [QA AID-168](/AID/issues/AID-168) returned independent **D1-D4 PASS**, report/evidence/registry **3422ccda7a66514fe7dadf7d3c8785a5718ba472**. Producer read both actual deliverables and verified ten official uploads, both binary patches/bundles and all 455 indexed payloads against immutable Git. Reviewed product/tests/manifest/evidence and QA registry are integrated unchanged; [acceptance](tasks/p1-04-mcp-health-and-workers/acceptance.md) records behavior, tests and limits, and [AID-145's publication ledger](/AID/issues/AID-145#document-plan) pins final main. One kickoff ambiguity/clarification 1/round-2 CLEAR and delivery review 1 PASS with zero rejections remain.
-
-[QA AID-169](/AID/issues/AID-169) completed p1-05 kickoff **AMBIGUITY** for fixed
-`d95f1a3`, actual [report/evidence](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review-round-1.md)
-`039c0aee181b2a78588f7b02cb89b575157c581f`. K5-1 identifies missing actual MCP
-bytes; K5-2 identifies wait/preparation/zero-retry accounting. Producer read the
-full report, verified five official uploads and all 83 indexed payloads/84 members,
-and adopts [clarification 1](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
-under delegated technical authority: bounded canonical static-PNG content on the
-existing Gallery read intent, strict one submit/one bounded wait per image,
-reset on every timeout/retry, and complete preparation/recovery/audit ledgers.
-No owner rule or phase boundary is relaxed. Original task/report/evidence and
-16 registry rows are preserved. One kickoff ambiguity event/two P1 findings,
-clarification 1/next kickoff round 2; zero implementation delivery rejections.
-
-[QA AID-170](/AID/issues/AID-170) returned independent **kickoff round-2 CLEAR**
-for fixed `4fc3ff25eb95e191ec45432c11f82055b914dae5`, actual [report/evidence](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review.md)
-`a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the full report and
-verified five official uploads, all 93 indexed payloads/94 members, exact patch/
-tree and independently fetched bundle. [Kickoff acceptance](tasks/p1-05-mcp-e2e-smoke-mac/kickoff-acceptance.md)
-records K5-1/K5-2 resolved at specification level. Cleared task/clarification/
-decision and original task/report/evidence stay unchanged; 16 registry rows and
-23-unit/eight-incident baseline stay. One ambiguity event/two findings,
-clarification 1/round-2 CLEAR and zero implementation rejections remain.
-
-[Coding AID-171](/AID/issues/AID-171) delivered exact candidate
-**873629869dce8935d68daa8236f0aaf8eb1b553a**, software frozen at `6bcb402`.
-[QA AID-172](/AID/issues/AID-172) completed independent delivery review 1
-**FAIL R5-1 (P1, D3)**, report/evidence **f510a0afde938671f43b590c66d9885507dd7046**.
-Producer read actual reports/source/reproduction and verified all 16 official
-uploads, 133 Coding/206 QA indexed payloads, exact patches/trees and independent
-bundle fetches. Cancellation bypasses the call/attempt handlers: exit 2 stops
-safely, but streak remains 1 after attempt-2 interruption and its call/end ledger
-is incomplete. One implementation rejection/correction 1/next delivery review 2
-is now recorded separately from the unchanged kickoff history.
-
-[p1-05 is accepted and integrated](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md):
-[Coding AID-174](/AID/issues/AID-174) **91d6e3790ecbb258b1a079395a1156912d090b62**,
-freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**, after [QA AID-175](/AID/issues/AID-175)
-**D1–D3 PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**.
-Responsible Board user **local-board** accepted the human-only fixed-demo
-confirmation **11ecc66e-6688-4174-a94a-6825d0b512f5** at
-**2026-11-26T01:29:16.989Z**. Its question explicitly authorizes recording D4
-and merging this exact candidate; [actual native owner response](requests/2026-11-26-p1-05-demo-acceptance.md)
-is the source. No separate Discord reply or verified six-attachment delivery
-is invented. Independent report/manifest pending-owner wording remains a
-historical delivery snapshot, followed by actual acceptance. Main integrates
-reviewed product/tests/raw evidence and the exact 18-row registry unchanged.
-
-Fresh corrected frozen attempts 1–3: **3872→3873, 3874→3875, 3876→3877**,
-six distinct uncached samplers, real MCP PNG bytes and persisted parent/job/
-request/brief, each pair exactly eight calls and zero flow fixes/retries.
-[All images/Gallery records](tasks/p1-05-mcp-e2e-smoke-mac/demo.md) retain their
-fixed reviewed bytes. QA freshly records Backend **1916 passed/124 existing
-platform skips**, complete MCP plus six cases **672 passed/four existing optional
-skips**, fresh export **one passed**, current cross-layer **seven passed**;
-old signal RED/corrected GREEN and five effective faults/restoration resolve R5-1.
-Producer verifies identical integrated source/tests/report/evidence, applicable
-documentation guards and publication, without repeating full suites on unchanged
-reviewed inputs. [Publication ledger](/AID/issues/AID-146#document-publication).
-
-Original baseline **23 units/eight incidents** and historical first delivery
-**81** remain unchanged. Corrected Coding **22+0+0+14=36**, QA separately
-**2+0+0+13=15**; only qualifying request-to-result flows are zero. No whole-round
-zero or lower-total claim. One kickoff ambiguity/two P1 findings/clarification
-1/kickoff 2 CLEAR; first delivery FAIL/one rejection/R5-1; correction 1/review 2
-PASS retained. Prior full integrity checks cover 22 uploads, 1,897/680 payloads,
-exact patches/trees/bundles and 291 freeze hashes, with no duplicate uploads.
-
-**Phase 1 close is resolved:** CTY's later published
-[roadmap review](requests/2026-11-26-phase-1-close-and-phase-2-review.md) closes
-Phase 1 and activates the revised Phase 2; the [original proposal](tasks/p1-05-mcp-e2e-smoke-mac/phase-exit.md)
-remains historical. The subsequent [start direction](requests/2026-11-26-phase-2-start-and-key-file.md)
-supplies the concrete key-file path and continuing authority. Reconcile the older
-native proposal against those newer sources instead of waiting on its old scope.
-
-Preserve AID-171 runtime/private configuration/backups, AID-151 snapshots,
-canonical environments and all models/datasets/outputs/Gallery data. Integration
-performs no product probe/restart/deployment/generation/live Gallery-byte read.
-Recorded actual runtime/generation/retrieval evidence stays attributed; Git HEAD
-cannot identify a loaded service. One Mac/checkpoint/template/static-PNG limit,
-unverified actual caller limit, 50-second wait fallback and 65-second SDK guard
-remain. Existing decisions/runtime/lineage memory cover enduring rules; receipts
-stay in task records. Concurrent shared-main memory edits are preserved.
+Rejected-source independent Backend6774/124 existing skips,MCP666/four,restored
+4796,495 additional positives,fresh93/73/412/12/19/schema2 and25 progress cases/
+180 observations pass.29 mutations/39 invocations/1577 feature assertions plus20
+actual3s timeouts restore exactly. These are current-source observations, not
+R1 acceptance or changed-source qualification. QA9's initial archive422/partial
+saved uploads/verified original parts and corrected report packaging remain.
+[Producer integrity](tasks/p2-02-resource-record/producer-correction9-integrity.json)
+records28 official uploads and both exact declared-shallow restorations; current
+14 shared memory bodies/statuses and distinct prior pins remain preserved.
+Product/tests stay off main. No new Producer product suite/key/provider/service/
+restart/download/register/generation/live Gallery bytes; remaining Phase2
+jobs/budgets/hash/search/MCP/defaults/removals/automatic three different sentences/
+fresh checkpoint+LoRA/CTY demo/exit remain pending. Source is not deployment.
 
 ## Team
 

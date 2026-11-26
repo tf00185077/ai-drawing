@@ -5,6 +5,29 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-02 ninth rejection and correction9
+
+Actual [review9](tasks/p2-02-resource-record/review-round-9.md) atc01730db,
+reportb58b6d2c, is FAIL/original R1 incomplete: selected-provider AIR/filename
+assignments survive raw outer ledger fields beside safe typed diagnostics.
+Eight complete traces fail twice/two useful controls pass,104 observations/16
+exposed phases, exact old storage. Supplied QA8 unit/new-note/status cases,R2-R4
+and checked R5 bounds pass. Nine rejections/five historical P1 findings;
+Backend6774/124,MCP666/four,restored4796 do not override the public defect.
+[Ninth-result reassessment/correction9](tasks/p2-02-resource-record/repair-round-9.md)
+retains single-row/internal identity/path semantics and applies the shared policy
+to the whole public ledger, with raw-field/consumer inventory and actual wrapper
+fault sensitivity. Independent exact QA10 follows unchanged task/CLEAR/current
+delegation; no routine owner gate,new finding or architecture change. Rejected
+product/tests stay off main. [Integrity](tasks/p2-02-resource-record/producer-correction9-integrity.json)
+records28 official uploads,1332 current payloads/1304 Git bodies and two exact
+declared-shallow restorations. QA9 partial upload422,three saved uploads,original
+verified archive parts and new report packaging remain honest history. Current14
+shared memory bodies/statuses and earlier distinct observations stay preserved.
+The Phase2 current summary is updated from its stale review6 paragraph to review9;
+older detailed raw/report histories remain exact. No new Producer product suite/
+key/provider/service/restart/download/register/generation/live Gallery-byte action.
+
 ## 2026-11-27 — p2-02 seventh rejection and correction7
 
 Actual [review7](tasks/p2-02-resource-record/review-round-7.md) at42775d8f,
@@ -85,28 +108,13 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 review6 FAIL](tasks/p2-02-resource-record/review-round-6.md), QAae24638a
-at Coding FINALafe9d694/freeze02e21afc, leaves original R1 incomplete for quoted
-assignments serialized once as JSON text.22 feature failures/20 controls twice;
-three complete writer/old-read trace failures twice expose full synthetic values.
-No actual owner-key disclosure. R5 bounds resolved for checked meanings, R2-R4 and
-earlier R1 forms pass; D1/D2/D4 and combined gates fail. Six rejections/five distinct
-P1 findings/R1 unresolved. Reassess representation handling before label/delimiter
-association, retain monotonic scanning/useful safe output and all identity behavior.
-[Correction6](tasks/p2-02-resource-record/repair-round-6.md) plus independent exact
-QA7 follow unchanged task/repairs1-5/CLEAR and existing bounds. Report results;
-no new boundary/routine owner gate or feature acceptance.
-
-Rejected-source QA Backend3476/124 existing skips,MCP666/four,1498 restored,
-360 independent terminal cases,20 faults/25 invocations/902 assertions plus20
-feature timeouts,fresh93/73/412/12/19/schema2 remain attributed. Producer verifies20
-uploads/nine base chunks/520 indexed payloads/508 Git bodies/4682-4878-5092
-fingerprints and both exact official restorations/fsck;2501 exact QA task bodies,
-all old histories/mirrors preserved. Existing catalog doc guard/publication checks
-recorded with integrity. No new product suite/private/live action.22 contracts/
-13 memory bodies/status/private runtime/data retained. No full Phase2 automation/
-three different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/exit acceptance.
-Main product remains accepted p2-01; rejected p2-02 product/tests stay off main.
+[p2-02 review9 FAIL](tasks/p2-02-resource-record/review-round-9.md) remains the
+current rejected delivery; see the dated ninth-result record above. Supplied QA8
+cases/R2-R4/checked R5 bounds pass, while outer ledger AIR/path exposes synthetic
+labelled values. Correction9/exact QA10 retain original task/CLEAR/current
+delegation and all preservation obligations. Main product remains accepted p2-01;
+no p2-02 feature, automatic chain/three sentences/freshcheckpoint+LoRA/CTY demo/
+phase exit is accepted.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|
