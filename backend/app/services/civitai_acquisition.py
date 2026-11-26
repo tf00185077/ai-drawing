@@ -14,7 +14,7 @@ import json
 import re
 import time
 from typing import Any, Callable, Mapping, Protocol
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse, unquote_plus
 
 from app.schemas.generation_recipe import (
     EvidenceRecord,
@@ -51,10 +51,16 @@ _SENSITIVE_KEYS = {
     "secret",
     "password",
 }
-_SENSITIVE_QUERY_VALUE = re.compile(
-    r"([?&](?:authorization|api_key|apikey|access_token|token|secret|password)=)[^&#\s]*",
-    re.IGNORECASE,
-)
+_QUERY_VALUE = re.compile(r"([?&])([^=&#\s]+)=([^&#\s]*)")
+
+
+def _redact_query(match: re.Match[str]) -> str:
+    key = unquote_plus(match[2]).lower().replace('-', '_')
+    sensitive = key in _SENSITIVE_KEYS or key in {
+        'signature', 'sig', 'policy', 'key_pair_id', 'expires', 'awsaccesskeyid', 'credential',
+    } or key.startswith(('x_amz_', 'x_goog_', 'x_bz_'))
+    return f"{match[1]}{match[2]}=[REDACTED]" if sensitive else match[0]
+
 
 
 class CivitaiTransport(Protocol):
@@ -167,7 +173,7 @@ def redact_secrets(value: Any, *, secrets: tuple[str, ...] = ()) -> Any:
         for secret in secrets:
             if secret:
                 redacted = redacted.replace(secret, "[REDACTED]")
-        return _SENSITIVE_QUERY_VALUE.sub(r"\1[REDACTED]", redacted)
+        return _QUERY_VALUE.sub(_redact_query, redacted)
     return value
 
 

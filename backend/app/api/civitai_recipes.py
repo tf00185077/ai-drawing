@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import httpx
+import httpx  # retained module export used by existing no-side-effect guards
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -63,7 +63,8 @@ from app.db.database import get_db
 from app.services.civitai_local_identity_ledger import ledger_payload, local_identity_ledger
 from app.services.civitai_acquisition import AcquisitionError, redact_secrets, parse_civitai_locator
 from app.services.civitai_resource_install import inspect_civitai_resource, select_civitai_resource, install_civitai_resource
-from app.services.civitai_safe_download import DownloadResponse
+from app.services.civitai_provider import CivitaiProviderError, ProviderOperation, ProviderDownloadTransport
+from app.services.civitai_resource_acquire import _fetch_json, _JsonTransport
 from app.config import get_settings
 from app.services.civitai_recipe_gallery import ProvenanceValidationError, build_recipe_provenance_bundle
 from app.services.civitai_recipe_pipeline import (
@@ -285,12 +286,9 @@ def inspect_civitai_resource_route(request: CivitaiResourceInspectRequest) -> di
             if locator.model_id is not None
             else f"https://civitai.com/api/v1/model-versions/{locator.model_version_id}"
         )
-        headers = {"Authorization": get_settings().civitai_authorization} if get_settings().civitai_authorization else {}
-        response = httpx.get(endpoint, headers=headers, timeout=30.0)
-        if response.status_code == 404:
-            raise AcquisitionError("not_found", "Civitai resource was not found")
-        response.raise_for_status()
-        payload = response.json()
+        with ProviderOperation('metadata', settings=get_settings()) as operation:
+            payload = _fetch_json(_JsonTransport(operation), endpoint, operation.headers)
+            payload = operation.sanitize(payload)
         if locator.model_id is not None and locator.model_version_id is not None:
             if not isinstance(payload, dict) or not isinstance(payload.get("modelVersions"), list):
                 raise AcquisitionError("unsafe_metadata", "Civitai model metadata is incomplete")
@@ -302,10 +300,12 @@ def inspect_civitai_resource_route(request: CivitaiResourceInspectRequest) -> di
                 raise AcquisitionError("not_found", "Civitai model version was not found")
             payload = {**payload, "modelVersions": matching_versions}
         return inspect_civitai_resource(payload)
+    except CivitaiProviderError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_dict()) from None
     except AcquisitionError as exc:
         raise HTTPException(status_code=422, detail=_detail(exc.code, str(exc), provenance=exc.provenance)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=_detail("resource_inspect_failed", exc.__class__.__name__)) from exc
+    except Exception:
+        raise HTTPException(status_code=422, detail=_detail("resource_inspect_failed", "Civitai resource inspection failed")) from None
 
 
 @router.post("/resource-select")
@@ -316,27 +316,8 @@ def select_civitai_resource_route(request: CivitaiResourceSelectRequest) -> dict
     return result
 
 
-class _CivitaiDownloadTransport:
-    def get(self, url: str, *, headers: dict[str, str] | None = None) -> Any:
-        stream = httpx.stream(
-            "GET",
-            url,
-            headers=headers,
-            timeout=httpx.Timeout(connect=60.0, read=None, write=60.0, pool=60.0),
-            follow_redirects=True,
-        )
-        response = stream.__enter__()
-        if not 200 <= response.status_code < 300:
-            stream.__exit__(None, None, None)
-            return DownloadResponse(response.status_code, b"", dict(response.headers))
-
-        def chunks():
-            try:
-                yield from response.iter_bytes(chunk_size=1024 * 1024)
-            finally:
-                stream.__exit__(None, None, None)
-
-        return DownloadResponse(response.status_code, chunks(), dict(response.headers))
+class _CivitaiDownloadTransport(ProviderDownloadTransport):
+    pass
 
 
 @router.post("/resource-install")
@@ -349,7 +330,11 @@ def install_civitai_resource_route(request: CivitaiResourceInstallRequest, db: S
         "vae": Path(settings.comfyui_vae_dir.split(",")[0]), "embeddings": Path(settings.comfyui_embeddings_dir.split(",")[0]),
         "controlnet": Path(settings.comfyui_controlnet_dir.split(",")[0]), "upscale_models": Path(settings.comfyui_upscale_models_dir.split(",")[0]),
     }
-    result = install_civitai_resource(request.selected.model_dump(), request.storage_root, db=db, storage_roots=roots, transport=_CivitaiDownloadTransport(), authorization=settings.civitai_authorization)
+    try:
+        with ProviderOperation('download', settings=settings) as operation:
+            result = install_civitai_resource(request.selected.model_dump(), request.storage_root, db=db, storage_roots=roots, transport=_CivitaiDownloadTransport(operation), authorization=operation.authorization, operation=operation)
+    except CivitaiProviderError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_dict()) from None
     if result["status"] != "completed":
         raise HTTPException(status_code=409 if result["status"] == "blocked" else 500, detail=_detail(result.get("diagnostic", {}).get("code", "resource_install_failed"), "resource installation did not complete", diagnostic=result.get("diagnostic", {})))
     return redact_secrets(result)

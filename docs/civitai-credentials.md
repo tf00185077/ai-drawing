@@ -26,18 +26,43 @@ Use this absolute host path in private configuration. A container or a different
 machine needs an explicitly mapped readable private path; the host path does not
 prove access there. Do not copy the key into a repository or an artifact bundle.
 
-The pre-Phase-2 Backend currently reads `CIVITAI_AUTHORIZATION`; this documentation
-change does not implement or deploy a `CIVITAI_API_KEY_FILE` reader. Producer must
-trace the actual authentication path during the First check, record any manual
-in-process credential bridge as an intervention, and route the planned file reader
-through Coding and independent exact-commit QA. A readable file is not evidence
-that Civitai accepts the key or that a running Backend has loaded it. Preserve
-existing private configuration, running jobs and all model/output data.
+The p2-01 candidate source implements this setting on ordinary resource
+acquisition and the retained resource-inspect/resource-install adapters. It is
+awaiting independent delivery QA and integration; this does not establish that
+the running Backend has loaded the reader. No private on-disk setting is rewritten
+by loading credentials. Launcher `setup`/`reconfigure` still rebuilds its fixed
+settings list; preserve private custom settings before using those commands.
 
-If the file becomes missing, unreadable or empty, report that concrete failure
-with this known path rather than asking for a location already supplied. Free-key
-restrictions, Early Access refusal and rate limits remain real outcomes; the key
-does not authorize paid access or expand the approved project boundary.
+A nonblank file setting takes precedence over `CIVITAI_AUTHORIZATION`. The Backend
+reads at most 64 KiB of UTF-8, trims outer whitespace, and requires one token.
+Missing, unreadable, nonregular, empty, invalid UTF-8, oversized, header/JSON or
+control-bearing contents fail with `civitai_credentials_unavailable` before
+provider traffic. A configured file failure never falls back. Loading changes
+neither content nor permissions. An unset/blank file setting preserves legacy raw
+key/Bearer behavior; neither credential setting permits anonymous requests.
+
+Each metadata/inspect operation has one credential snapshot and a total 20-second
+HTTP deadline across nested reads (connect at most 5 seconds, read at most 10).
+Each file's acquisition/install execution gets a fresh snapshot and a total
+900-second transport deadline spanning redirects, retries/backoff and streaming
+(connect at most 10 seconds, read at most 30). File rotation affects the next
+operation. These are policy limits, not measured performance or MCP caller-wait
+guarantees. The private key remains only in operation memory; Python memory
+zeroing is not promised.
+
+Requests permit exact HTTPS `civitai.com`, `www.civitai.com` and `b2.civitai.com`
+hosts, default port, no userinfo, and at most five explicit redirects. Authorization
+is sent only to the canonical `civitai.com` origin and stays stripped after an
+origin change, including a redirect back. Other destinations produce
+`civitai_redirect_blocked`; new CDN hosts require a separately reviewed policy
+change. Streams close on completion, refusal, deadline or interruption.
+
+Provider 401/403 remain refusals, and 429/provider/network errors remain failures
+with recovery hints. `civitai_timeout` describes a transport/deadline outcome.
+After a caller timeout inspect the existing acquisition ID before resubmitting.
+Do not put credentials or signed query values in logs, metadata, records, MCP
+results or evidence; ordinary source/model hashes remain available. Authentication
+can still fail for provider access restrictions or rate limits.
 
 ## First check evidence and current next task
 

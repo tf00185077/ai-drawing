@@ -82,6 +82,7 @@ class Settings(BaseSettings):
     comfyui_text_encoders_dir: str = "D:/AI/ComfyUI/models/text_encoders"
     comfyui_vae_dir: str = "D:/AI/ComfyUI/models/vae"
     # CIV-V-D backend-only resource installation settings. Never accepted from MCP.
+    civitai_api_key_file: str | None = None
     civitai_authorization: str | None = None
     comfyui_embeddings_dir: str = "D:/AI/ComfyUI/models/embeddings"
     comfyui_controlnet_dir: str = "D:/AI/ComfyUI/models/controlnet"
