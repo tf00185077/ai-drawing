@@ -6,6 +6,8 @@
 - Phase order: MCP basics → one-sentence image flow → LAN Windows workers → image-to-video clip → LoRA training → prompt dashboard · why: core before support, support before add-ons; video and LoRA need the NVIDIA worker · owner-confirmed
 - Layers: core = MCP, Civitai tools and resource record, workflow selection, fixed image-to-video, LoRA training; support = Windows workers (Mac too slow); add-on = prompt dashboard · owner-confirmed
 - This project provides Civitai search, download and registration tools through MCP, using the free public API; the agent decides what to search for · owner-confirmed
+- Civitai API key: a free key in a local file outside the repo, path in Backend private configuration; never committed, logged or returned · owner-confirmed · 2026-11-26
+- Use is personal and non-commercial: no commercial-use license filter; licenses are still recorded · owner-confirmed · 2026-11-26
 - Video scope: one fixed image-to-video workflow with frame interpolation · owner-confirmed
 - Phase 0 (clean foundation) comes first · why: integration was frozen and docs were unusable · owner-confirmed
 - Docs are English only and rebuilt from scratch · why: owner preference; AI translates on demand · owner-confirmed
@@ -21,6 +23,13 @@
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-26 · Phase 1 closed; Phase 2 scope sharpened
+- Decision: close Phase 1 and activate Phase 2 with the order unchanged. Phase 2 adds: a base-model mapping table (only the SDXL group — `SDXL 1.0`, `Illustrious`, `Pony`, `NoobAI` — maps to `sdxl`; other bases return "no matching workflow"); downloads as Backend jobs followed with `wait_for_job`, `.safetensors` only, hash-verified, with a per-file size limit and a disk budget; search results carry base model, downloads, rating, size, NSFW level and license, with safe content by default; the Civitai API key read from a local file whose path is in Backend private configuration (`CIVITAI_API_KEY_FILE`), never committed, logged or returned; one Backend resource record that replaces the local identity ledger and source aliases; `generate` applies trigger words and recommended parameters from the record by default, overridable; no commercial-use license filter (personal use), license still recorded; Remove names recipe import, variants, variation sets, generate-like and every service the First check does not touch; `default_lora` checkpoint + LoRA output added as the second unknown; exit uses three different sentences, at least one with a fresh checkpoint and LoRA download, and the image must use the LoRA trigger words.
+- Why: the original Phase 2 left the Civitai-to-workflow mapping, long downloads against the MCP call limit, trigger-word ownership, the overlapping records and the meaning of "3 consecutive runs" undefined, and the checkpoint + LoRA template has never produced a verified image.
+- Supersedes: the 2026-11-24 Phase 2 text (API key "from the environment", "about 20 services" Remove, single-sentence exit).
+- Provenance: owner-confirmed@"我要關閉Phase 1進到phase2了，但交給AI前，我想確定phase 2的roadmap有沒有需要補充或修改的" · @"不要使用商用的，另外API KEY我有免費的，我會放在電腦某個位置讓AI去讀取" · license meaning chosen as "personal use, no filtering"; the other additions are the recommended options CTY saw and accepted in the same session.
+- Link: [request](../requests/2026-11-26-phase-1-close-and-phase-2-review.md), [ROADMAP Phase 2](../roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26)
 
 ### 2026-11-24 · Continue executable work after planning
 - Decision: proceed with the existing Phase 1 scope and adopt routine reference options; preserve CLEAR kickoff and independent exact-commit delivery review. Boundary changes still go to CTY.

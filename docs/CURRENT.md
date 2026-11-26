@@ -1,12 +1,12 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 done · **Phase 1 exit and demo accepted; phase-close roadmap review pending**, Phase 2 inactive ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): next step is its First check hand run** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
 | Goal | Built | Verified in a real run | Biggest gap |
 |---|---|---|---|
-| 1. MCP for agents | Mostly | Accepted p1-05: three real MCP byte/lineage pairs with zero flow interventions | Separate phase-close roadmap review before Phase 2 |
+| 1. MCP for agents | Mostly | Accepted p1-05: three real MCP byte/lineage pairs with zero flow interventions | Phase 1 closed 2026-11-26; client call limit still unverified (50 s fallback) |
 | 2. One-sentence image flow | Partly | No | No Civitai search tool; no agent-facing resource record; no workflow selection |
 | 3. LAN Windows workers | Partly | No | One URL; no auth; no same-project check; serial in-memory queue |
 | 4. Image-to-video clip | Partly (frozen Wan/Argus code) | No | No single image-to-video + interpolation tool; needs the NVIDIA worker |
@@ -47,6 +47,10 @@ Done 2026-11-24 (`1898378`).
 Removed research data (`experiments/`, `research/`, `model_benchmarks/`); evidence will be rebuilt by testing after the code changes.
 
 ## Next work
+
+**Phase 2 (active 2026-11-26).** First check: one hand run of Civitai search → download with the owner's key file → register → `default_lora` generate on the Mac, recording every failure and the Civitai services it touched, before any Phase 2 task spec ([ROADMAP](roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26), [request](requests/2026-11-26-phase-1-close-and-phase-2-review.md)). The key file location comes from CTY; if it is missing, that is the run's first recorded failure.
+
+Phase 1 history:
 
 [Execution plan and native backlog](tasks/p1-planning-2026-11-24/plan.md), [AID-141](/AID/issues/AID-141). CTY's [later instruction](requests/2026-11-24-proceed-within-project-boundaries.md) authorizes executable work inside existing boundaries and delegates routine reference choices; no ordinary-choice confirmation is pending.
 

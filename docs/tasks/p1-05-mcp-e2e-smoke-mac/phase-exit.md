@@ -2,7 +2,9 @@
 
 2026-11-26. Producer [AID-146](/AID/issues/AID-146).
 
-**Review pending:** approve Phase 1 close and review roadmap order/scope/next
+**Resolved 2026-11-26:** CTY closed Phase 1 and activated Phase 2 with its scope revised ([request](../../requests/2026-11-26-phase-1-close-and-phase-2-review.md)). Original proposal text follows.
+
+**Review pending (at submission):** approve Phase 1 close and review roadmap order/scope/next
 phase before Phase 2 activation. [p1-05 acceptance](acceptance.md) records exact
 QA PASS, fresh real proof and the actual native owner demo decision. This proposal
 is separate from that accepted demo; it does not itself activate Phase 2.
