@@ -664,3 +664,46 @@ documentation and native-coordination handoff, not a new authenticated Civitai
 result, deployed file reader, download, generation or artifact-retrieval proof.
 The real search/keyed-download/register/`default_lora` First check is the next
 Producer-owned execution before detailed Phase 2 specifications.
+
+
+## 2026-11-26 — Phase 1 native closeout reconciled; real Phase 2 First check dispatched
+
+Producer read CTY's actual published revised-roadmap closure/start direction and
+the native owner-direction record. Old human-only phase-close proposal
+`bd03d201-5a02-4985-8c51-7fcb7e14a5bd` is cancelled/withdrawn as superseded,
+not accepted unchanged. Phase 1 source/evidence/demo acceptance and all counts
+remain; Phase 2 is active under the updated scope and delegated ordinary choices.
+
+Published [First check operating brief](tasks/p2-00-civitai-first-check/task.md)
+`2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`, task SHA-256
+`dfb23f60ecbd18bd8f8e481dc725406f2bfa07653f2172b5efcadd44748e6777`.
+AID-146 retains Producer ownership. A new Producer child creation first failed
+schema validation (initialPlan must be a string), then native delegation-cycle
+validation. That write stopped after two consecutive failures; no alternate
+self-delegation was attempted. Current work stays on AID-146 as the native error
+advised. This is coordination history, not a measured product failure.
+
+[QA AID-177](/AID/issues/AID-177) owns independent kickoff; [Coding AID-178](/AID/issues/AID-178)
+is natively blocked on it and must read actual CLEAR before execution. [QA AID-179](/AID/issues/AID-179)
+then pins the actual final evidence-only commit and independently reviews the
+real observations, including adverse/untested stages. AID-146 natively waits on
+AID-179, reads actual results and continues bounded implementation intake. Full
+self-contained assignments, verbatim brief/current owner sources were saved in
+all three recipients' initial plans at creation and read back exactly. No
+routine owner choice/start/resource/phase-close confirmation was opened.
+
+- Offline: source/contract/native-state/documentation/publication checks only; one affected existing doc guard passed in 0.20s. No full product suite repeated or new software behavior implemented.
+- Local access: Producer independently read/trimmed the authorized private key file in-process and verified readable/nonempty/0600, without emitting its value/hash/length. This does not prove API authentication or runtime loading.
+- Running service/provider: no new Producer product probe/restart or authenticated Civitai call. Coding must verify actual runtime/jobs/roots and its own file access after CLEAR; preserve private configuration/canonical environments/retained runtime worktrees.
+- Real download/generation/retrieval: none by Producer in this handoff. First check must actually attempt safe provider search/keyed guarded download/current registration/default_lora, prove original bytes/LoRA graph/persistent records on success and preserve exact failures/manual bridges/used services on failure. All manual operations count; no Phase 2 zero-fix exit or CTY artistic acceptance is inferred.
+
+Adopted in-boundary references: safe blue-cup still life; explicit Mac/local;
+identity-verified existing Illustrious checkpoint plus newly searched compatible
+safe LoRA; actual trigger/recommended parameter values; temporary 8 GiB/file,
+10 GiB/new-download, 20 GiB/free-space measurement guards. Future single-record,
+file-reader/defaults/async-search/download improvements remain unimplemented
+until the First check supplies evidence for detailed software specifications.
+Existing durable rules are already in roadmap/credential/runtime/loader topics;
+concrete access/dispatch/errors stay in task records, not duplicate memory.
+All 13 concurrent shared-memory edits and all model/dataset/output/Gallery data
+are preserved. No Phase 1 raw evidence/QA report/registry or product/test changes.

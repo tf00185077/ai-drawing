@@ -48,7 +48,41 @@ Removed research data (`experiments/`, `research/`, `model_benchmarks/`); eviden
 
 ## Next work
 
-**Phase 2 (active 2026-11-26).** First check: one hand run of Civitai search → download with the owner's key file → register → `default_lora` generate on the Mac, recording every failure and the Civitai services it touched, before any Phase 2 task spec ([ROADMAP](roadmap/ROADMAP.md#phase-2--one-sentence-flow-resources--workflow--image-active-2026-11-26), [request](requests/2026-11-26-phase-1-close-and-phase-2-review.md)). The authorized key file is `/Users/tf00185088/Desktop/civitai.txt`; use [credential guidance](civitai-credentials.md), including the planned `CIVITAI_API_KEY_FILE` reader versus existing runtime authorization. A missing/unreadable file is a concrete failure at this known path, not an outstanding request for its location. CTY's [current execution direction](requests/2026-11-26-phase-2-start-and-key-file.md) delegates routine choices and roadmap-permitted progression to Producer; report adopted choices with results and ask about project-boundary changes.
+**Phase 2 (active 2026-11-26).** The real First check is dispatched under
+[Producer AID-146](/AID/issues/AID-146), which retains ownership after native
+rejection of a redundant Producer child. [QA AID-177](/AID/issues/AID-177) owns
+fresh independent kickoff at fixed published `2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`;
+[Coding AID-178](/AID/issues/AID-178) is natively blocked on kickoff and must
+read actual **CLEAR** before any provider/model/runtime action. It then executes
+safe Civitai search → keyed safe download → current registration → explicit
+Mac `default_lora` checkpoint+LoRA image attempt, with actual bytes/graph/records
+or the precise failing stage. [Independent QA AID-179](/AID/issues/AID-179)
+natively waits on Coding, pins its actual final evidence commit and completes
+an adverse report too. AID-146 natively waits on that actual review, then ranks
+observed failures and used services before detailed software specs. No routine
+owner/start/resource question is pending. [Operating brief](tasks/p2-00-civitai-first-check/task.md)
+is measurement, not implementation; all later product changes retain CLEAR and
+exact-commit QA. Native task completion alone is never acceptance.
+
+Producer independently verified the authorized key file readable/nonempty/0600,
+without emitting its value. Use [credential guidance](civitai-credentials.md):
+planned `CIVITAI_API_KEY_FILE` differs from existing authorization, and any manual
+bridge counts. Adopted references are safe still life, explicit local target,
+identity-verified Illustrious checkpoint reuse plus a newly searched compatible
+safe LoRA, actual trigger/recommended parameters and temporary 8 GiB/file,
+10 GiB/new-download, 20 GiB/free-space guards. These are bounded First check
+choices, not implemented product guarantees. SDXL-group mapping is unchanged;
+licenses are recorded without a commercial-use permission filter.
+
+[Phase 1 closeout reconciliation](tasks/p1-05-mcp-e2e-smoke-mac/closeout-reconciliation.md)
+records the older native proposal **withdrawn as superseded**, not accepted
+unchanged. CTY's published revised roadmap and later execution direction govern.
+No authenticated Civitai/provider/download/generation/live Gallery-byte result
+is claimed from this Producer handoff. One affected existing documentation guard
+passes (0.20s); no product suite repeated. Full original assignments/owner sources
+were saved in all three recipients' initial native plans and read back exactly.
+Actual runtime/API/model/image results and every intervention await the First
+check; they are separate from a key-access or dispatch receipt.
 
 Phase 1 history:
 
