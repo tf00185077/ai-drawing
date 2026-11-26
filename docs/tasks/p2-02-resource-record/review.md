@@ -1,263 +1,270 @@
 # p2-02 independent delivery review
 
 Verdict: FAIL
-Review round: 4
-Issue: [QA AID-193](/AID/issues/AID-193)
-Coding: [AID-192](/AID/issues/AID-192)
+Review round: 5
+Issue: [QA AID-195](/AID/issues/AID-195)
+Coding: [AID-194](/AID/issues/AID-194)
 Producer: [AID-146](/AID/issues/AID-146)
 Date: 2026-11-26
 
-Reviewed ACTUAL NEW FINAL: **bff2fb127d4ab5de69fe2124e9efc54cad0fd59a**.
-Reviewed tree: **47e415fead18dedeb7c50caa0c931a01994ad1c8**.
-Software/tests/test-replay freeze: **affcd94714b61b96326d11ac80c39c2aadd52462**.
-Fixed implementation base: **8d7e5c5182d200a24b103f660f082f5844469739**.
-The actual correction3 [manifest](manifest-correction-3.md) and Coding native
-receipt were read before the FINAL was pinned on this card, before substantive
-review: [pin receipt](review-round-4-evidence/pin-receipt.json). The official
-manifest equals its FINAL Git body. This report's commit/tree and official
-artifacts are published in the post-commit receipt.
+Reviewed ACTUAL NEW FINAL: **690d5ab04a3d864e9d36decbb4748f05045845a5**.
+Reviewed tree: **160ca4a667a32a7e1f05d4b709187d866d40e4b0**.
+Software/tests/replay freeze: **3caeebd68461422b71086eba7715b375f57205ed**.
+Fixed correction base: **5d6542607cd2384bb6b86f2e2126512836bba46c**.
 
-**Original R1/P1 remains incomplete.** The two demonstrated prefixed assignments
-and earlier complete-value forms now pass. Matching quoted credential labels
-with whitespace inside their quotes still disclose their complete values through
-writers and old reads, despite being recognized as dictionary credential keys.
-R2–R4 remain passing. This is the existing shared-recognition/secrecy obligation,
-not arbitrary unlabelled secret discovery or a new owner decision. No product
-repair, merge, assertion relaxation, test deletion, new skip or registry addition
-was made. Ordinary green suites do not override the observed disclosures.
+I read Coding194's actual official [correction4 manifest](manifest-correction-4.md),
+verified its bytes against FINAL, and pinned this full FINAL/tree on this card
+before substantive review: [pin receipt](review-round-5-evidence/pin-receipt.json).
+This report's commit/tree and official artifacts are recorded in its post-commit
+receipt. The review target is FINAL, not the freeze ancestor or a moving branch.
+
+The demonstrated original R1 quoted-label disclosures now pass, as do the earlier
+R1 probes and R2-R4 regressions. No current credential disclosure was demonstrated
+by this review. **New R5/P1 blocks acceptance:** the added quoted-label scanner
+has quadratic behavior on ordinary descriptions ending in a single backslash.
+Actual registered provider/read paths exceed the existing three-second feature
+bound. Green full suites do not override that adverse result. QA made no product
+repair, assertion relaxation, test deletion, new skip, registry addition or merge.
 
 ## Finding
 
-### R1 remains / P1 / D1,D2,D4,C1,S1,S2,T1,T2: quoted-label parsing disagrees with keys
+### R5 / P1 / D2,D4,U4: terminal backslash defeats bounded quoted-tail scanning
 
-In `backend/app/services/resource_records.py:26–28`, `_ASSIGNMENT_LABEL` requires
-its captured label to start with a word/dot/hyphen and the closing quote to follow
-the last such character immediately. It cannot consume whitespace just inside
-the enclosing quotes. Its unquoted fallback matches the inner identifier without
-an assignment delimiter, so `safe_text` at line 66 does not call the common
-recognizer for that assignment. Conversely, `credential_label` at line 45 trims
-outer whitespace, and dictionary normalization recognizes/removes those keys.
-The Basic fallback does not repair recognition for a labelled opaque auth value.
+`backend/app/services/resource_records.py:33-36` adds two `_QUOTED_LABELS`
+patterns. Their repeated content branch consumes a non-quote/non-backslash
+character or a backslash followed by another character. A final solitary
+backslash fits neither branch. Consequently the unmatched-tail `\Z` alternative
+cannot be reached. At `:67`, `finditer` retries the failed long suffix at each
+later quote, including quotes preceded by backslashes. This defeats the stated
+one-time unmatched-tail consumption. Both quote kinds exhibit the defect.
 
-These synthetic free-text values survive byte-for-byte, including the secret:
+Reproducer, with entirely ordinary synthetic metadata:
 
-| Supplied text | Persisted/public observation |
-|---|---|
-| `" CIVITAI_API_KEY " = "QA4 unique complete value"` | Complete assignment retained |
-| `' HTTP_AUTHORIZATION ' : Basic b3BhcXVlUUEx` | Complete header/value retained |
-| `"provider\tapi\tkey " : "QA4 unique complete value"` (literal tabs) | Complete assignment retained |
+```python
+text = ('\\' + quote + 'ordinary description ') * 4000 + '\\'
+# quote is either a single or double quote; len(text) == 92001
+```
 
-The labels have the documented prefix/separator/case meaning, matching quotes,
-and explicit colon/equal delimiters. The labels inside the quotes are also actual
-credential keys under this candidate's own policy. Surrounding label whitespace
-does not make the explicit value unlabelled. No claim is made that the app loads
-these environment variables. No actual owner key was read or disclosed.
+This is a valid JSON string value after normal serialization. It has no credential
+label or secret. The useful value should remain readable within the established
+bounded-description contract. A safe input ending in `tail` is the positive
+neighbor; only the final suffix changes.
 
-[Independent probe](review-round-4-evidence/independent_label_classes.py), initial
-[log](review-round-4-evidence/independent-label-classes.log) and final
-[log](review-round-4-evidence/independent-label-classes-final.log): both runs exit 1,
-**33 failed / 45 passed**, all failures on feature assertions, no setup/import
-errors. Thirty failures cover three inputs across these real boundaries:
+Independent evidence:
 
-- Shared typed publication commits/reloads the complete unsafe string with ORM;
-  repeated normalization is idempotent but unsafe. Ordinary hash/trigger neighbors
-  remain present.
-- Registered inspect/select followed by edited typed install returns 200, keeps
-  the measured hash and same row, persists the string, then detail/list/local-ledger
-  return it. This is an unsafe success, not an allowed refusal.
-- Synthetic external HTTP supplies each value through real Settings/file resolver,
-  provider machinery, registered inspect/select and actual acquire/background.
-  Acquisition succeeds and persists the value.
-- Twenty-one old-storage cases span license, diagnostic field, trigger,
-  recommendation value/origin, opaque evidence and raw base label. Registered
-  detail/list/local-ledger disclose it. SQL writes, provider operations,
-  publication/backfill and model-body reads are denied. Before the final secrecy
-  assertion, old metadata_json/notes are verified byte-exact and the visible
-  resource retains its safe hash/license data. No whole-resource hiding occurs.
+- [Trailing-escape feature checks](review-round-5-evidence/independent_trailing_escape.py)
+  run the existing real provider-snapshot/shared-publication/ORM/detail feature
+  helper with the new input. Initial and final runs each give **two timeout
+  failures / two passing controls**, exit 1. Failures occur in actual
+  `_QUOTED_LABELS.finditer`, before publication; they are feature timeouts rather
+  than collection/import failures. [Initial log](review-round-5-evidence/independent-trailing-escape.log),
+  [final log](review-round-5-evidence/independent-trailing-escape-final.log).
+- [Registered latency checks](review-round-5-evidence/independent_read_latency.py)
+  place the value directly into a real ORM old snapshot, then call actual HTTP
+  detail for both quotes, list and local-ledger. They also call registered
+  provider inspect with real Settings/file resolver/provider machinery and
+  synthetic external HTTP. **Five feature timeout failures / one passing scaling
+  observation**, exit 1, 64.71 seconds total. Each failed test has the existing
+  three-second bound. The provider and old-read failures reach production parsing;
+  no domain parser is stubbed. [Log](review-round-5-evidence/independent-registered-latency.log).
+- The old-read checks deny SQL writes, provider operations, publication/backfill
+  and model-body access, retain the visible resource's useful metadata assertions,
+  and check byte-exact original notes/metadata in `finally`. The input does not
+  depend on a write-on-read or a private database.
+- Actual `safe_text` timings at 5,751 / 11,501 / 23,001 / 46,001 characters are
+  **0.022 / 0.088 / 0.339 / 1.398 seconds** for double quotes and
+  **0.023 / 0.092 / 0.357 / 1.383 seconds** for single quotes. Doubling input
+  produces approximately four times the work. The same exact-input source checks
+  on rejected FINAL **bff2fb127d4ab5de69fe2124e9efc54cad0fd59a** give four
+  feature passes in 0.88 seconds and six registered/scaling passes in 0.74 seconds;
+  its 46,001-character scans take about 0.0026 seconds. These comparisons isolate
+  the newly added scanner. They do not certify the older source's secrecy.
+  [Previous feature log](review-round-5-evidence/previous-source-trailing-escape.log),
+  [previous registered log](review-round-5-evidence/previous-source-registered-latency.log).
 
-The remaining three failures directly contrast recognized credential keys with
-unchanged quoted assignment text. Separate [real ORM/HTTP key controls](review-round-4-evidence/independent_key_controls.py)
-pass **three** cases: those exact literal keys are removed from nested license,
-recommendation and evidence dictionaries at publication and all three public reads,
-while safe neighbors remain. These controls isolate parsing inconsistency from
-missing writer wiring. The 45 positive cases cover additional numeric/camel/dot/
-Unicode/header classes plus safe near-neighbors; they do not certify the failing
-quoted forms.
-
-Expected under the unchanged complete-value/shared-recognition contract: exclude
-the complete recognizable credential-bearing value, or safely refuse before
-publication; old reads exclude it without writes or hiding the resource. Observed:
-successful publication and read-only projection retain it. Producer owns findings
-and any subsequent correction. QA has not repaired product or product tests.
+P1 is retained because bounded ordinary-description scanning is an explicit U4/P1
+requirement, and an untrusted provider or persisted description can stall real
+provider and resource-read paths with a 92 KB value. The measured scaling also
+shows that SQL pagination cannot bound parsing cost per returned record. This is
+a new regression in correction4, distinct from claiming that the old quoted-label
+secrecy demonstrations still leak. Producer owns the correction and acceptance;
+QA has not altered the production parser.
 
 ## Acceptance items
 
-All items retain their assigned P1 level.
+All assigned levels remain P1. PASS entries describe the checked feature meaning
+at this exact source; combined acceptance gates remain FAIL because of R5.
 
 | Item | Verdict | Independent evidence |
 |---|---|---|
-| D1 | FAIL | Typed ORM/mapping/verification distinctions pass; complete secrecy fails. |
-| D2 | FAIL | Real registered/provider/resolver/background/ORM and same-ID behavior pass; unsafe strings still publish. |
-| D3 | PASS in isolated fixtures | Full old-schema/value/notes/alias-history/file/startup/backfill audit and exact previous-schema authority pass. |
-| D4 | FAIL | HTTP/OpenAPI/filters/pagination/errors/read-only guards pass; old snapshots still disclose explicit credential values. |
-| D5 | FAIL as acceptance gate | Exact independent review, faults/restoration/full/standing/packages reproduced; feature failures remain. |
-| C1 | FAIL | Original signed-URL and old credential probes pass; quoted prefixed assignments remain unsafe. |
-| C2 | PASS | Nine canonical validity/filter/count/page cases; raw-JSON filter mutation causes nine feature failures. |
-| C3 | PASS | Omitted/same/augmenting/conflicting AIR on registered writers preserves ID/hash/measured facts; clearing mutation fails two cases. |
-| C4 | PASS | Original notes exact across success/refusal/exception, truthful same-ID errors/recovery and new-row behavior; overwrite/error mutations fail 12/eight. |
-| C5 | FAIL as acceptance gate | Current full/standing/preservation succeed; C1 remains unmet. |
-| S1 | FAIL | Earlier complete Basic/cookie/quoted/Digest/access-token forms pass; new explicit labelled strings persist. |
-| S2 | FAIL | Delivered all-nested stored-read cases pass; independent old reads disclose padded quoted labels without writes. |
-| S3 | PASS for tested sensitivity | Actual one-token production defect fails 20 writer/36 stored-reader assertions; original fault meanings retained. |
-| S4 | FAIL as combined acceptance | Current full/standing/schema checks pass; D1/D2/D4/C1 remain violated. |
-| S5 | PASS for reviewability | Exact source/official bytes/fingerprints and both independent restorations usable; no correctness certification. |
-| T1 | FAIL | Exact old 20 REDs reproduced and now pass; independent quoted-label provider/writer/ORM cases fail. |
-| T2 | FAIL | Dictionary keys and quoted assignment text disagree; read-only old resources expose complete values. |
-| T3 | PASS for tested sensitivity | Reviewed word-boundary production mutation fails 40 writer/provider and 195 old-read assertions, with exact restoration. |
-| T4 | FAIL as combined acceptance | New source passes current full/standing/22-contract/preservation checks; original secrecy obligations remain unmet. |
-| T5 | PASS for reviewability | FINAL pinned, immutable history, complete evidence and official shallow-aware bundle/patch prerequisites verified independently. |
+| D1 | PASS for checked semantics | Typed ORM, exact four-label map, unknown/malformed metadata, selected provenance and measured-versus-declared evidence; snapshot secrecy probes now pass. |
+| D2 | FAIL | Registered writers, same-row identity, resolver/provider/background and retries pass ordinary guards; R5 stalls actual provider inspect on valid ordinary metadata. |
+| D3 | PASS in isolated fixtures | Complete old-schema/value/notes/alias-history/file/startup/backfill audit plus previous-schema authority; no production migration. |
+| D4 | FAIL | HTTP/OpenAPI/validation/filter/pagination/read-only semantics pass; R5 stalls detail/list/local-ledger normalization. |
+| D5 | FAIL as acceptance gate | Exact review, meaningful faults/restoration/full/standing/packages reproduced; adverse feature failures remain. |
+| C1 | PASS for tested secrecy | Original four/review2 fourteen/review3 twenty plus twenty-eight/review4 seventy-eight plus three key controls; new quoted and independent lexical cases pass. |
+| C2 | PASS | Canonical validation/filter/count/page agreement; raw-JSON filter mutation fails nine feature assertions. |
+| C3 | PASS | Omitted/same/augmenting/conflicting AIR keeps same ID/hash/measured facts; clearing mutation fails two assertions. |
+| C4 | PASS | Exact old notes across success/refusal/exception with truthful same-ID errors; overwrite/error faults fail twelve/eight assertions. |
+| C5 | FAIL as acceptance gate | Current full/standing/preservation checks pass; R5 blocks the corrected whole-task contract. |
+| S1 | PASS for tested complete values | Basic/proxy/cookie/quoted/Digest/access-token and current label classes pass real provider/writer/ORM guards. |
+| S2 | PASS for tested secrecy/read semantics | All nested unsafe old snapshot values are safely projected without repair writes or hiding resources; R5 bounds are assessed separately. |
+| S3 | PASS for sensitivity | Actual one-token production defect fails twenty writer and thirty-six stored-reader assertions. |
+| S4 | FAIL as combined gate | Full/standing/schema checks pass, but bounded actual provider/read operation is violated. |
+| S5 | PASS for reviewability | Official bytes, complete fingerprints, exact source and two independent restorations verified. |
+| T1 | PASS for tested label classes | Current immutable prefixed probes and full new quoted guards pass registered/provider/shared/ORM boundaries. |
+| T2 | PASS for tested secrecy/read semantics | Key/text policy, nested fields/keys, old-storage identity and useful neighbors pass; R5 remains a separate bounds defect. |
+| T3 | PASS for sensitivity | Reviewed word-boundary mutation fails forty writer/provider and 195 old-read assertions; all prior fault meanings retained. |
+| T4 | FAIL as combined gate | Current contracts and preservation pass; the new bounded-scanning regression blocks the combined requirement. |
+| T5 | PASS for reviewability | Actual FINAL pinned before review; immutable histories and complete official restoration prerequisites usable. |
+| U1 | PASS for tested quoted secrecy | Exact previous 33 RED/45 controls and three key passes reproduced; current immutable 78+3 and new 706 guards pass; independent 130 lexical/boundary cases pass. |
+| U2 | PASS for tested quoted secrecy/read semantics | All nested fields/keys, actual detail/list/ledger, canonical counts/pages, immutable old storage and useful neighbors pass; ordinary-description bounds fail under U4. |
+| U3 | PASS for sensitivity | Reviewed quoted-extractor mutation fails 86 writer/provider, 411 old-read and twelve key/text assertions; exact restoration. |
+| U4 | FAIL | R5: valid ordinary descriptions with a terminal backslash cause quadratic scanning and registered provider/read timeouts. |
+| U5 | PASS for reviewability | Exact frozen software and FINAL/evidence/official bytes, full inventories and independent bundle/patch-history restoration verified. |
 
-## Independent commands and results
+## Independent verification
 
 Persistent isolated worktree:
-`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-193-qa`,
-branch `aid-193-exact-review`. Evidence is exclusively in
-[review-round-4-evidence/](review-round-4-evidence/).
-[Replay guide](review-round-4-evidence/verification-commands.md) and
-[verification.json](review-round-4-evidence/verification.json) record 38 pytest
-command records with exact argv/cwd/allowlisted environment/roots/imports, timing,
-exit and saved/raw log hashes. Expected historical/adverse exit 1 remains actual
-pytest failure, not product PASS.
+`/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-195-qa`,
+branch `aid-195-exact-review`. New evidence is exclusively in
+[review-round-5-evidence/](review-round-5-evidence/). The
+[replay guide](review-round-5-evidence/verification-commands.md) and
+[verification index](review-round-5-evidence/verification.json) record exact
+argv/cwd/environment, roots/imports, timing, exits and raw/saved log hashes.
+Expected exit 1 remains an actual failed feature observation, not product PASS.
 
-| Scope / label | Actual result |
+| Scope | Actual result |
 |---|---|
-| rejected-review3-prefixed, exact21d273fe | 20 expected-feature failures, unchanged historical helper |
-| rejected-review3-initial, exact21d273fe | Four expected-feature failures / 24 positive passes |
-| current-original-probes / current-review2-probes | Four / 14 passed, unchanged helpers |
-| current-review3-prefixed / current-review3-initial | 20 / 28 passed, unchanged complete helpers; no deselection |
-| independent-label-classes / independent-label-classes-final | Both 33 failed / 45 passed |
-| independent-key-controls | Three passed on actual shared ORM/HTTP paths |
-| qa4-restored-feature | 718 passed after exact fault restoration |
-| qa4-backend-full | **2,696 passed / 124 existing skips**, 76 warnings, 59.13s |
-| qa4-mcp-full | **666 passed / four existing skips**, 73.06s |
-| export-qa4 / cross-layer-qa4 | Fresh 93 Backend producers / 73 separate MCP readers |
-| registry-mcp-qa4 | 412 standing MCP/PNG/stdio/smoke/content cases passed |
-| fresh-wait-qa4 / retained-provider-guards-qa4 | 12 / 19 passed |
-| schema-audit-qa4 | Two passed; full synthetic before/startup/backfill audit retained |
-| source/restoration | 3,917 ordinary FINAL fingerprints; 437 selected protected source/test/helpers exact; every candidate body except the replaced current review remains exact |
-| registry | All 22 previous rows exact; no additions/deletions/supersession |
+| Rejected exact bff2fb12, immutable QA4 helpers | 33 feature failures /45 controls; three real key controls pass |
+| Current unchanged old QA probes | 4 /14 /20 /28 /78 /3 passed; complete helpers, no deselection |
+| Independent quoted lexical/boundary cases | 130 passed, including Unicode/escaped labels, literal backslashes, nested opposite quotes, both delimiters and useful safe neighbors |
+| Trailing-escape adverse, initial and final | Each two timeout failures /two controls passed |
+| Registered latency adverse | Five timeout failures /one scaling observation passed |
+| Previous-source latency controls | Four feature and six registered/scaling cases pass; performance comparison only |
+| qa5-restored-feature | **1,424 passed** after exact restoration of all required faults |
+| qa5-backend-full | **3,402 passed /124 existing skips**, 76 warnings, 77.06 seconds |
+| qa5-mcp-full | **666 passed /four existing skips**, 72.97 seconds |
+| Fresh Backend producers /separate MCP readers | **93 /73 passed**, 19 fresh JSON exports retained |
+| Standing MCP/PNG/stdio/content/smoke | **412 passed** |
+| Fresh wait /retained provider guards | **12 /19 passed** |
+| Full old-schema audit /baseline authority | **Two passed**; full before/startup/backfill schema/value payload retained |
+| Registry | All **22** previous rows exact; no additions/deletions/supersession |
+| Source | **4,399** complete ordinary FINAL fingerprints; 449 protected source/test/helpers exact |
 
-The ignored Python3.11.15 venv references three existing dependency sites read-only;
-no installation in canonical environments. Before tests the guard actually denied
+The ignored Python3.11.15 venv references only three existing dependency sites
+read-only; no canonical installation. Before new tests the guard actually denied
 six private-file/.env/non-scratch DB/model/write/DNS actions without opening private
-inputs. All 140 ordinary pytest guard receipts have zero blocked events and imports
-pinned to intended resolved current/archived roots. Nested isolated children retain
-the established repository guard. Long suites use `--timeout=60`, unique run-owned
-scratch, no cache/bytecode and pinned Backend/MCP child interpreters. Stat remains
-allowed; feature guards separately deny model-body access. The long ordinary-text
-feature also passes with its stricter three-second bound. Raw logs are retained
-byte-exact in deterministic gzip; readable logs trim trailing whitespace only.
+inputs. All **148** ordinary guard receipts across **46** runner records have zero
+blocked events and imports pinned to intended resolved current/archived roots.
+Nested isolated children retain the established repository guard. Each command
+has unique Paperclip-owned scratch, no cache/bytecode and pinned Backend/MCP child
+interpreters. All long suites use `--timeout=60`; description features use the
+existing stricter three-second bound. Raw logs are retained byte-exact in
+`.raw.log.gz`; readable logs trim trailing whitespace only. No canonical model,
+private file, production database or runtime source was opened by the tests.
 
-### Fault sensitivity
+### Fault sensitivity and exact restoration
 
-QA inspected and ran the production mutations sequentially, without an overlapping
-suite or source-fingerprint reader. Files restore exact bytes in finally before
-718 feature GREEN and fresh full/standing suites. [Fault audit](review-round-4-evidence/fault-audit.json):
-**20 invocations / 18 distinct production mutations / 393 feature assertion failures**.
-Every counted failure is an observable assertion, never collection/import/SQL/
-fingerprint setup failure. The previous 17 distinct/18 invocation meanings remain.
+QA inspected and executed the production mutations sequentially with no overlapping
+suite or source-fingerprint reader. Files restore exact bytes in `finally` before
+1,424 feature GREEN and fresh full/standing qualification. The
+[fault audit](review-round-5-evidence/fault-audit.json) records **19 distinct
+production mutations /23 invocations /902 feature assertion failures**. All
+previous 18 distinct faults/20 invocations retain their feature meaning. Counted
+failures are observable assertions, never setup/import/SQL/fingerprint failures.
 
-| Mutation | Feature failures |
+| Mutation | Feature assertion failures |
 |---|---:|
-| Wrong map / fabricated verification | 1 / 2 |
-| Split acquire / install publication | 1 / 1 |
-| Destructive backfill / unbounded list / writing list | 1 / 2 / 1 |
-| Complete normalization / stored projection bypass | 1 / 1 |
-| Raw-JSON filter / clear omitted identity | 9 / 2 |
-| Overwrite retained notes / lose current error | 12 / 8 |
-| One-token redaction: writer / old reader | 20 / 36 |
-| Inspect descriptor / supplied descriptor / legacy-license bypass | 20 / 20 / 20 |
-| Reviewed word-boundary recognition: writer-provider / old reader | 40 / 195 |
+| Wrong map /fabricated verification | 1 /2 |
+| Split acquire /install writer | 1 /1 |
+| Destructive backfill /unbounded list /writing list | 1 /2 /1 |
+| Complete normalization /stored projection bypass | 1 /1 |
+| Raw-JSON filter /clear omitted identity | 9 /2 |
+| Overwrite retained notes /lose current error | 12 /8 |
+| One-token redaction, writer /old reader | 20 /36 |
+| Inspect descriptor /supplied descriptor /legacy-license bypass | 20 /20 /20 |
+| Reviewed word-boundary recognition, writer-provider /old reader | 40 /195 |
+| Reviewed quoted extractor, writer-provider /old reader /key-text | 86 /411 /12 |
 
-These sensitivity results do not negate the separate current RED inputs.
+The separate seven current latency failures are not counted among these 902
+mutation assertions. Exact restoration does not remove the actual FINAL defect.
+No full-suite result is presented as overriding it.
 
 ## Preservation and delivery integrity
 
-The real synthetic boundaries include Settings/environment-selected file resolver,
-provider request machinery, selected version/file, strict schemas, shared typed
-publication/projection, SQLite/ORM, registered HTTP/OpenAPI and actual background
-targets with measured tiny files. Only external HTTP and scheduling substitute
-production behavior. No Settings/resolver/domain injection is presented as proof
-of loading. Current provider guards retain prepared-header/origin/cookie/deadline
-protections. Retained duplicate/retry/same-ID error recovery, wait/interruption,
-PNG bytes and stdio contracts pass; no new cancellation or job API is introduced.
+The real fixtures use Settings/environment-selected synthetic key file resolver,
+provider request machinery, selected non-first version/file, strict schemas,
+shared typed publication/projection, real SQLite/ORM, registered HTTP/OpenAPI and
+actual background targets with measured tiny synthetic files. Only external HTTP
+and scheduling substitute production behavior. Retained duplicate/same-ID retry,
+truthful errors/recovery, wait/interruption, PNG bytes and stdio contracts pass.
+No new cancellation or persistent download-job API is inferred.
 
-D3 audits 16 tables including sqlite_sequence, eight resource rows and five
+D3 audits all 16 tables including sqlite_sequence, eight resource rows and five
 populated alias/history tables. Startup adds nullable metadata_json only; explicit
-backfill changes that field only and remains idempotent. Old columns/values/notes,
-IDs/counts, aliases/history and synthetic file bytes remain exact. Duplicate,
-conflicting, malformed, unsupported and offline cases have diagnostics. The
-pre-task schema authority does not load Settings. Retry-note preservation is
-separately tested; an isolated migration result alone does not establish it.
-Legacy caller/alias inventories remain source evidence, not removability proof.
+backfill changes only that field and is idempotent. Every preexisting column/value,
+notes, ID/count, alias/history row and synthetic file body remains exact. Malformed,
+conflicting, duplicate, unsupported and missing/offline cases retain diagnostics.
+The pre-task schema authority does not load Settings. Retry-note preservation is
+checked separately from migration. Legacy/alias inventories remain evidence of
+callers, not permission or proof to remove them.
 
-[Preservation](review-round-4-evidence/preservation.json) verifies the four exact
-authorized supplement imports, task/repair hashes, 240 existing Backend-test/MCP/
-registry bodies, 952 old task bodies at their original paths and the previous
-current report preserved verbatim in review-round-3.md. All 3,916 candidate bodies
-other than this intentionally replaced review.md remain exact. The original task
-SHA256 is `c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda`;
-repairs1/2/3 retain their authorized hashes. Two application services, one new test
-and the technical topic differ from the fixed correction base; old product tests
-are unchanged. No Backend/MCP change follows the affcd94 software freeze. All 31
-MCP names/risks, frozen recipe/AIR/Anima/alias behavior and 22 prior contracts remain.
-All 13 shared-main memory bodies match preserved hashes. No staging/stashing/reset
-or copying of those edits, private settings or runtime data occurred.
+[Preservation](review-round-5-evidence/preservation.json) verifies four exact
+authorized imports from fixed860f99aa, task/repairs1-4 hashes, 241 existing
+Backend-test/MCP/registry bodies, 1,490 historical task bodies plus the previous
+current report preserved verbatim as review-round-4.md, and all 4,398 candidate
+bodies other than the intentionally replaced current review. The original task
+hash remains c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda;
+repair4 remains6306d155719910649cf4fc54392ece138fed4f6821a399b314458579528b0155.
+No original task/repair/probe/raw log/mirror is rewritten. One application service,
+one new test and the topic differ from the correction base. The 31 MCP names/risks,
+frozen recipe/AIR/Anima/alias behavior and all22 contracts remain exact. All13
+shared-main memory bodies retain their hashes; no staging/stashing/reset/copying
+of those edits, private inputs or runtime data occurred.
 
-QA independently downloaded **all 15 Coding uploads**. All sizes/SHA256 match
-both official indexes/receipts. [Coding integrity](review-round-4-evidence/coding-integrity.json)
-checks 3,917 ordinary fingerprints, 390 indexed payloads/391 archive members/
-380 exact Git bodies and four raw commit/per-commit patch pairs. The nine official
-base parts combine to **67,480,250 bytes**, SHA256
-`5776e99dfa619adb6bb3363196a80d01f8b4ce5ea2555eb8dbcc31524d8a5a92`.
-Separate fresh bundle and patch/history stores reproduce exact FINAL/tree and
-both `git fsck --full` exit 0 using only official bytes. The patch store imports
-no candidate/local objects. Both write declared shallow boundary
-`b4e71d18ba4600ad7e053274b90b45ffdfbce87b` before fetching with `--update-shallow`
-and explicit prerequisite ref `refs/heads/aid-191-exact-review`. This is a usable
-declared-shallow restoration, not a pre-boundary history backup.
+QA independently downloaded all **15 Coding uploads** and checked every indexed
+size/SHA256 and manifest equality. [Coding integrity](review-round-5-evidence/coding-integrity.json)
+verifies 4,399 ordinary fingerprints, 329 indexed payloads/330 archive members/
+321 exact Git bodies and all three raw commit/per-commit patch pairs. Nine official
+base parts combine to **68,272,163 bytes**, SHA256
+c6f82ae8886ec77ca662867bfdc73516bd2caf122c87e2da43b115cf4e7d1e94.
+Two fresh stores seeded only from those official bytes reproduce exact FINAL/tree
+and `git fsck --full` exit0. The patch store imports no candidate/local objects.
+Both write declared shallow boundary b4e71d18ba4600ad7e053274b90b45ffdfbce87b before
+fetching with `--update-shallow` and explicit prerequisite ref
+`refs/heads/aid-193-exact-review`. The patch store independently applies the gzip
+aggregate patch and every binary/full-index history patch, reconstructing exact
+intermediate trees and raw commit identities. This is usable declared-shallow
+restoration, not a pre-boundary history backup.
 
-The first adverse command expected exit 0 and therefore also reported an
-orchestration mismatch after its 33 actual feature failures; both the original
-record and later explicit expected-exit-1 replay are preserved. An administrative
-integrity summary called getmembers after closing a tar file; the failed helper
-and attempt record remain. A corrected helper repeats official-byte verification
-and both restorations in fresh stores. Neither checker failure counts as feature
-sensitivity. One guessed evidence-decision filename was absent and resolved to
-tracked decisions/evidence.md. No failed attempt is hidden by a product change.
-
-QA's report commit/tree, uploaded artifacts, exact readback and independent bundle/
-patch report restorations are published on this card after commit. The report-only
-delta declares the verified official Coding FINAL prerequisite and its complete
-access paths. QA completes its own card with this FAIL; Producer handles findings,
-threshold reporting and acceptance. Any changed software requires another exact
-FINAL review. No feature push/merge, parent/owner write or routine owner gate.
+All this QA run's failed feature observations are retained, including both latency
+runs and historical expected failures. The immutable QA4 historical helpers missing
+from the older source are copied byte-exact into its scratch archive at their
+original relative paths; no historical product body changes. No orchestration or
+setup failure is used as sensitivity. The current registry builder runs against
+scratch copies of the actual review files and compares all22 rows without changing
+the canonical registry after FAIL. Official QA report/bundle/evidence/index and
+integrity uploads, byte readback and both report restorations follow the report
+commit and are recorded on this card.
 
 ## Limits and disposition
 
-**Offline:** pinned source, guarded real synthetic provider/ORM/HTTP/background,
-adverse/fault/restored/full/standing/schema tests and official attachments.
-**Running service:** no production probe/start/restart/deploy/backfill.
-**Provider/generation:** no actual owner key read, live provider request, real model
+**Offline:** exact source, guarded real synthetic provider/resolver/HTTP/background/
+ORM, historical/adverse/fault/restored/full/standing/schema checks and official
+attachments. **Running service:** no production probe/start/restart/deploy/backfill.
+**Provider/generation:** no actual owner-key read, live provider request, real model
 acquisition/registration or generation. **Retrieval:** synthetic installed bytes
-and Paperclip attachments only; no live Gallery/model bytes. Frontend and native
-Windows unrun. The 124 Backend skips require Windows; four optional MCP exports
-are separately covered by fresh producers/readers.
+and Paperclip attachments only; no live model/Gallery bytes. Frontend and native
+Windows are unrun. The124 Backend skips remain Windows-only; the four optional
+MCP exports are independently covered by fresh current producers/readers.
 
-History remains kickoff1 CLEAR, delivery1 FAIL/four P1s, review2 FAIL/R1 incomplete,
-review3 FAIL/R1 incomplete, then **this review4 FAIL/R1 incomplete**: four rejected
-deliveries, one unresolved original finding. Producer's already-recorded
-three-rejection threshold reassessment/adopted shared-recognition option stays
-attributed; this result is not acceptance of that implementation. R2–R4 pass at
-this exact source. No Phase2 automated flow, three zero-fix sentences, fresh
-checkpoint-plus-LoRA qualification, phase exit or CTY aesthetic verdict is claimed.
+History remains kickoff1 CLEAR and four prior rejected deliveries, followed by
+**this review5 FAIL**. The earlier R1 demonstrations now pass; new R5/P1 prevents
+accepting the quoted-parser correction. This is the fifth rejected delivery, not
+a new kickoff ambiguity or routine owner gate. Producer owns findings, further
+reassessment/reporting and acceptance. QA completes only this card with its actual
+verdict. Changed software needs a new exact FINAL review; no feature merge/push or
+parent/owner mutation occurs here. No new registry item is certified. No Phase2
+full automation, three zero-fix sentences, fresh checkpoint-plus-LoRA qualification,
+CTY demo, phase exit or aesthetic acceptance is claimed.
