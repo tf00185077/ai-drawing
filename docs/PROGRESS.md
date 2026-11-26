@@ -49,23 +49,23 @@ meaningful faults demonstrate sensitivity. Fresh source HEADs observe anonymous
 401 versus configured-file307→200, no cookies/proxy credentials and zero body
 reads. No running-Backend deployment, model-body/Gallery retrieval or generation.
 
-[p2-02 delivery1](tasks/p2-02-resource-record/manifest-round-1.md), candidate
-9abe3d1c/freeze17e90a65, received [independent review1 FAIL](tasks/p2-02-resource-record/review-round-1.md)
-4b95c7a7 with four P1 findings: unsafe typed metadata exposure, malformed family
-filter mismatch, known AIR erasure and original retry-note loss. D1/D2/D4 fail,
-isolated D3 migration passes; D5 acceptance remains FAIL despite ordinary green
-suites. One rejected delivery/four findings; original kickoff1CLEAR/task unchanged.
-[Correction1](tasks/p2-02-resource-record/repair-round-1.md) and new exact delivery
-QA2 follow; no owner/specification gate or rejected product/test merge.
+[p2-02 review2 FAIL](tasks/p2-02-resource-record/review-round-2.md), actual QA
+AID-189 **5c6e9b4f** at corrected Coding **6fbcb246**/freeze42e6812e, leaves
+original R1/P1 incomplete. R2-R4 pass; complete Basic/cookie/quoted-value secrecy
+fails13 independent expected-feature cases (one other case passes) through actual
+registered publication/provider/ORM/stored reads. Two delivery rejections; original
+four P1 findings, one unresolved; kickoff1CLEAR/task unchanged. [Correction2](tasks/p2-02-resource-record/repair-round-2.md)
+and exact independent QA3 follow; rejected product/tests remain off main.
 
-Actual QA rejected-source Backend2039/124 existing skips, MCP666/four, fresh
-producers93/readers73/standing412/wait12/provider19, seven faults/nine failures
-and restored61 feature cases are retained. Four independent expected-feature
-probes remain RED. Producer verifies8uploads/139+86payloads/136+83Git bodies,
-2603/2710/2793 fingerprints, both bundle/patch restorations and fsck; no new
-product suite/provider/service/model/Gallery action. All22 registry contracts,
-13 shared memory bodies/private runtime/data preserved. Scope/order/Not now,
-remaining Phase2 automation/download/search/defaults/removal/exit unchanged.
+Current rejected-source QA Backend2083/124 existing skips,MCP666/four,105 restored
+feature cases,13 meaningful mutants/43 assertion failures,fresh93/73/412/12/19
+standing checks/schema2 remain evidence, not acceptance. Producer verifies10uploads,
+159/131payloads160/132members157/129Gitbodies,2889/2941/3069 fingerprints,both
+bundle/patch restorations/fsck; no new product suite or live key/provider/runtime/
+model/Gallery action. Original first FAIL, correction1 manifest/raw histories and
+new review2 FAIL stay immutable;22 registry rows/13 shared memory bodies preserved.
+Passing R2-R4 and isolated D3 do not overwrite original review1 or qualify future
+changed code. Remaining Phase2 flow/exit and CTY aesthetics remain pending.
 
 | Capability | Status | Code | Tests | Real run |
 |---|---|---|---|---|

@@ -1,6 +1,6 @@
 # Current
 
-2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review1 FAIL; correction1 next** ([roadmap](roadmap/ROADMAP.md))
+2026-11-26 · `main` · Phase 0 and Phase 1 done · **Phase 2 active (2026-11-26): p2-02 review2 FAIL; correction2 next** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -90,34 +90,32 @@ live provider/service probe/restart/download/generation/live Gallery-byte read.
 Failed attempts remain attributed in actual reports; no new skips or product fix
 by QA/Producer. Preserve all runtime/private config/data and 13 memory edits.
 
-**p2-02 delivery review1 FAIL accepted:** [Coding AID-186](/AID/issues/AID-186)
-**9abe3d1c3237791b684e3b9f5a692879df747361**, frozen17e90a65, received actual
-[independent QA AID-187](/AID/issues/AID-187) [four P1 findings](tasks/p2-02-resource-record/review-round-1.md),
-report/evidence **4b95c7a74c032d092ac86b53b657bd107bdfcb3e**. R1 typed snapshot
-secrecy, R2 filter/projection disagreement, R3 omitted AIR erasure and R4 retained
-retry notes overwrite are reproduced with synthetic registered/ORM fixtures.
-No real credential disclosure is claimed. D1/D2/D4 and delivery acceptance fail;
-isolated D3 migration passes. The rejected product/tests stay off main.
+**p2-02 review2 FAIL accepted:** corrected [Coding AID-188](/AID/issues/AID-188)
+**6fbcb24602e23d72363834cc9437a4a14f216386**, freeze42e6812e, receives actual
+[independent QA AID-189](/AID/issues/AID-189) [R1/P1 incomplete](tasks/p2-02-resource-record/review-round-2.md),
+report/evidence **5c6e9b4fcd9e1bf0adff89da8d93a5146e804953**. Partial label/token
+redaction leaves Basic credentials, later cookies and quoted multiword values.
+Synthetic real registered/ORM/provider/public-read probes have13 expected-feature
+failures/one passed; no actual owner-key disclosure. R2-R4/C2-C4 and isolated D3
+migration pass. D1/D2/D4/C1 and acceptance D5/C5 FAIL. Product/tests stay off main.
 
-**Next: [correction1](tasks/p2-02-resource-record/repair-round-1.md)** and separate
-exact-final-commit delivery QA2 under unchanged task/c43339e4 and kickoff1CLEAR.
-One rejected delivery/four P1 findings, zero kickoff ambiguities or owner questions.
-Producer accepts demonstrated defects, retains ownership and native Coding→QA→
-Producer dependencies; no routine owner confirmation or new kickoff is needed.
-[Resource decision](decisions/civitai-resource-record.md) applies existing secrecy,
-canonical validation, known-identity and immutable-note rules to every writer/read.
-No new registry, job schema, scope/order/architecture or artistic decision.
+**Next: [correction2](tasks/p2-02-resource-record/repair-round-2.md)** and separate
+exact delivery QA3. Two rejected deliveries, original four P1 findings with R1
+unresolved; kickoff1 CLEAR/taskc43339e4/repair1b3d649dc unchanged. Producer retains
+ownership and native Coding -> QA -> Producer continuation. No routine owner gate,
+new spec ambiguity, phase-order/scope/architecture or artistic decision.
 
-Producer verifies eight official uploads,139/86 indexed archive payloads140/87
-members,136/83 exact Git bodies,2603 frozen/2710 Coding/2793 QA fingerprints,
-both independently fetched bundles/exact patch trees/fsck. Original manifests,
-FAIL and all raw evidence remain exact. QA fresh rejected-source Backend2039/124
-existing skips, MCP666/four, producers93/readers73/standing412/wait12/provider19,
-seven effective faults/nine failures/restored61 feature cases stay attributed;
-four adverse expected-feature failures prevent acceptance. Producer adds document/
-source/artifact verification only, no product suite, private key/provider/service
-probe/restart/download/register/generation/live Gallery-byte action. Preserve13
-memory edits, all runtime/private config/environments/worktrees/data.
+Rejected-source QA Backend2083/124 existing skips, MCP666/four, restored105,
+fresh producers93/readers73/standing412/wait12/provider19, schema2 and13 effective
+mutants/43 assertions remain attributed; they do not remove the independent REDs.
+Producer verifies10 official uploads,159/131 payloads160/132 members,157/129 exact
+Git bodies,2889/2941/3069 fingerprints,both bundle/patch restorations/fsck. No new
+Producer product suite/key/provider/service/restart/model/Gallery-byte action.
+All22 registry contracts, old raw evidence and13 memory bodies/private data stay
+preserved. [Resource decision](decisions/civitai-resource-record.md) applies complete
+value exclusion within the existing contract, with readable immutable old rows.
+Remaining jobs/budgets/hash/search/MCP/defaults/removals and actual Phase2 three
+zero-fix sentences/fresh checkpoint+LoRA/CTY image demo/exit remain pending.
 
 Stock safe downloads/jobs/budgets, unknown-local identification, safe search/MCP
 replacement, automatic defaults/workflows and proven removals remain separate.

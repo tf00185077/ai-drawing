@@ -1,22 +1,24 @@
 # Resource record foundation
 
-The [p2-02 task](tasks/p2-02-resource-record/task.md) specifies one Backend row
-authority, typed resource metadata, the SDXL mapping and bounded read/list routes.
-The current main product remains the accepted p2-01 source. p2-02 candidate
-**9abe3d1c3237791b684e3b9f5a692879df747361** received independent review1
-**FAIL** with four P1 findings; its new resource API/schema implementation has
-not been integrated. See [the actual report](tasks/p2-02-resource-record/review-round-1.md)
-and [correction1](tasks/p2-02-resource-record/repair-round-1.md).
+The [p2-02 task](tasks/p2-02-resource-record/task.md) specifies existing-row
+metadata authority, one SDXL mapping and bounded reads. Main's product remains
+accepted p2-01; p2-02 product/tests remain unintegrated.
 
-The original rejected-candidate [technical topic snapshot](tasks/p2-02-resource-record/resource-records-round-1.md)
-is retained verbatim with its manifest/evidence. It describes that delivery's
-implementation and limits, not accepted main behavior. Correction Coding and
-independent exact-commit QA must resolve the actual findings before Producer
-integrates the feature and updates this topic to match accepted source.
+Original candidate9abe3d1c received [review1 FAIL](tasks/p2-02-resource-record/review-round-1.md)
+with four P1 findings. Corrected candidate **6fbcb24602e23d72363834cc9437a4a14f216386**
+received [review2 FAIL](tasks/p2-02-resource-record/review-round-2.md): R2-R4 pass,
+but R1 complete credential-value secrecy remains incomplete. This is two rejected
+deliveries and one unresolved original finding. [Correction2](tasks/p2-02-resource-record/repair-round-2.md)
+proceeds under unchanged kickoff CLEAR/task, then independent exact delivery QA3.
 
-The [resource identity decision](decisions/civitai-resource-record.md) and
-[owner roadmap](roadmap/ROADMAP.md) govern the contract. Preserve stable resource
-IDs, immutable old evidence, private configuration and all models/data. Download
-jobs/budgets, unknown-local hash lookup, search/MCP replacement and automatic
-generation defaults remain separate tasks. No live deployment or Phase2 exit is
-claimed by specification or report publication.
+The [original technical topic](tasks/p2-02-resource-record/resource-records-round-1.md)
+and [correction1 technical topic](tasks/p2-02-resource-record/resource-records-correction-1.md)
+are immutable implementation snapshots with their reports/manifests/evidence;
+they describe rejected deliveries, not accepted main behavior. Producer updates
+this topic to current implemented behavior only after independent PASS/integration.
+
+The [resource decision](decisions/civitai-resource-record.md) and
+[roadmap](roadmap/ROADMAP.md) govern the contract. Preserve stable IDs, old evidence,
+private settings/runtime and all models/data. Download jobs/budgets, hash lookup,
+search/MCP replacement and generation defaults remain later tasks. No deployment,
+complete Phase2 flow, phase exit or CTY aesthetic verdict is claimed here.

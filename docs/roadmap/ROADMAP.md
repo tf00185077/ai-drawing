@@ -66,12 +66,16 @@ before download-job/reservation persistence, following the joint intake and
 independent [kickoff1 CLEAR](../tasks/p2-02-resource-record/kickoff-review.md)
 (14b4c98a, fixed f8d3143/unchanged taskc43339e4) permits separate Coding and
 exact delivery QA under [the handoff](../tasks/p2-02-resource-record/implementation-handoff.md).
-Actual [delivery1 review FAIL](../tasks/p2-02-resource-record/review-round-1.md)
-(4b95c7a7, candidate9abe3d1c) identifies four P1 gaps in secrecy/filter/identity/
-notes preservation. [Correction1](../tasks/p2-02-resource-record/repair-round-1.md)
-and fresh exact delivery review2 proceed under unchanged kickoff1CLEAR/task;
-rejected product stays off main. Producer AID-146 retains coordination, no
-routine owner confirmation, scope/order/Not now change or phase-exit claim.
+Actual [delivery1 FAIL](../tasks/p2-02-resource-record/review-round-1.md) identified
+four P1 gaps. [Review2 FAIL](../tasks/p2-02-resource-record/review-round-2.md)
+(5c6e9b4f, candidate6fbcb246) confirms R2-R4 pass but R1 complete-value secrecy
+incomplete. [Correction2](../tasks/p2-02-resource-record/repair-round-2.md) and fresh
+exact QA3 proceed under unchanged kickoff1CLEAR/task and original repair1. Two
+rejections; no threshold of three yet, no owner boundary question or routine gate.
+Producer adopts conservative complete-value removal/rejection within the current
+contract; preserve safe useful metadata, readable old records and passing R2-R4.
+Rejected product stays off main; Producer retains native coordination/ownership.
+No scope/order/Not now/architecture/phase-exit change.
 
 Exit: from one sentence, an agent finds a checkpoint and a LoRA on Civitai, registers them and gets back an image that used the LoRA's trigger words, in 3 consecutive real runs with zero manual fixes. The three runs use three different sentences; at least one downloads both a new checkpoint and a new LoRA, and the others may reuse resources the agent finds in the resource record.
 Demo: give an agent one sentence; show the Civitai search, the download job, the resource records, the selected workflow, the applied trigger words and parameters, the image and its Gallery record. CTY judges the image.
