@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a allowlist spec ready; p2-04 respecified; both need kickoff** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a independent kickoff dispatched; revised p2-04 follows its acceptance** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -33,11 +33,19 @@ Done 2026-11-24 (`531a68d`). Research data removed (`experiments/`, `research/`,
 ## Next work
 
 1. **Read first: [verification scope](decisions/verification-scope.md)** (owner-directed 2026-11-27). Public resource metadata becomes a typed allowlist; committed evidence is capped at 2 MB per task; Git SHAs are the source identity; correction rounds are bounded.
-2. **[p2-02a: allowlist projection](tasks/p2-02a-allowlist-projection/task.md)** (spec ready, kickoff next). Replaces the free-text credential recognizer in `resource_records.py` with a typed allowlist and a bounded secret check, and deletes its tests.
+2. **[p2-02a: allowlist projection](tasks/p2-02a-allowlist-projection/task.md)** — independent kickoff assigned to [QA AID-218](/AID/issues/AID-218), fixed source `1f8e1155b3426d62e101e802b564ca761ff9f026`. Producer reads the actual verdict before dispatching Coding and independent exact-commit delivery QA. No product delivery or acceptance yet. Replaces the free-text credential recognizer in `resource_records.py` with a typed allowlist and a bounded secret check, and deletes its tests.
 3. **[p2-04: durable download jobs](tasks/p2-04-durable-download-jobs/task.md)** (respecified 2026-11-27, fresh kickoff after p2-02a). Continues from the [owner-requested partial implementation](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main, which is unfinished and unreviewed.
 4. **Then the agent-facing part of Phase 2:** Civitai search + inspect, record list/reuse through MCP, workflow selection, trigger words and recommended parameters, removals, and three real one-sentence runs.
 
 Settled 2026-11-27: 3 review rejections of one task pause it for a CTY decision ([thresholds](roadmap/ROADMAP.md#thresholds)). Still a proposal: the `reviewspec-review` skill change in the verification-scope decision.
+
+[Fresh Producer AID-217](/AID/issues/AID-217) continues under the
+[verbatim owner instruction](requests/2026-11-27-fresh-producer-continuation.md).
+Old p2-04 cards' descriptions and current native plans are superseded; their work
+and prior plan revisions remain. They are still held blocked: the server refused
+two cancellation writes because prerequisites are unresolved. Producer stopped
+those retries and must retire the obsolete prerequisites before eventual closure.
+No old Coding run, product acceptance or rejection-count reset is authorized.
 
 ## Team
 

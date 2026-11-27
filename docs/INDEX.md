@@ -24,7 +24,7 @@
 | Phase 2 download limits | [topic](civitai-downloads.md), [decision](decisions/civitai-download-limits.md), [acceptance](tasks/p2-03-bounded-download/acceptance.md) | exact review3 PASS; bounded stock execution accepted |
 | Verification scope | [decision](decisions/verification-scope.md), [request](requests/2026-11-27-verification-reassessment.md) | owner-directed 2026-11-27; allowlist metadata, capped evidence |
 | Phase 2 download jobs | [decision](decisions/civitai-download-jobs.md), [task](tasks/p2-04-durable-download-jobs/task.md), [owner checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) | respecified 2026-11-27; fresh kickoff after p2-02a |
-| Allowlist projection | [task](tasks/p2-02a-allowlist-projection/task.md) | spec ready; kickoff next |
+| Allowlist projection | [task](tasks/p2-02a-allowlist-projection/task.md) | independent kickoff dispatched to [QA AID-218](/AID/issues/AID-218) |
 | MCP server | [mcp.md](mcp.md) | current |
 | Prompt dashboard | [prompt-dashboard.md](prompt-dashboard.md) | current |
 | Windows worker | [windows-worker.md](windows-worker.md) | current |
