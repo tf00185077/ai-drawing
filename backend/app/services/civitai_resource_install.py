@@ -24,6 +24,7 @@ from app.services.civitai_safe_download import (CivitaiFileMetadata, safe_downlo
     verified_existing, remove_owned_publication, _matches)
 from app.services.civitai_download_policy import DownloadPolicy, download_error
 from app.services.civitai_provider import CivitaiProviderError
+from app.services import download_jobs as durable
 from app.services.resource_records import download_context, publish_download_state, bounded_resource_admission
 
 _ALLOWED_KINDS = frozenset({"checkpoint", "lora", "vae", "embedding", "controlnet", "upscaler"})
@@ -352,16 +353,13 @@ def _persist_ledger_identity(
     if operation is not None: operation.remaining()
     publish_metadata(row, snapshot, measured=measured_evidence(target, byte_size, sha256, identity=identity))
     publish_download_state(row, "installed")
-    db.commit()
-    if operation is not None: operation.remaining()
-    if identity is not None and not _matches(target, identity):
-        raise download_error("civitai_file_changed", "Final changed during ledger publication")
     return row.id
 
 
 class _ActiveInstall(Exception):
-    def __init__(self, resource_id):
+    def __init__(self, resource_id, job_id=None):
         self.resource_id = resource_id
+        self.job_id = job_id
 
 
 def _install_row(descriptor, *, db):
@@ -373,8 +371,11 @@ def _install_row(descriptor, *, db):
 
 
 def _require_inactive(row):
-    if row is not None and row.status == "downloading":
-        raise _ActiveInstall(row.id)
+    if row is not None:
+        from sqlalchemy import inspect
+        claim = inspect(row).session.query(durable.DownloadClaim).filter_by(resource_id=row.id).first()
+        if claim is not None or row.status == "downloading":
+            raise _ActiveInstall(row.id, claim.job_id if claim else None)
 
 
 def _admit_install(descriptor, storage_root, target, *, db):
@@ -391,6 +392,7 @@ def _admit_install(descriptor, storage_root, target, *, db):
                 "model_family": descriptor["model_family"]}), sort_keys=True))
         db.add(row)
     row.status = "downloading"
+    row.file_size = descriptor["byte_size"]
     snapshot = (ResourceMetadata.model_validate(descriptor["resource_metadata"])
                 if descriptor.get("resource_metadata") is not None else metadata_for(row)[0])
     publish_metadata(row, snapshot or ResourceMetadata(origin="legacy_notes"), identity={
@@ -399,7 +401,7 @@ def _admit_install(descriptor, storage_root, target, *, db):
         "civitai_file_id": str(descriptor["civitai_file_id"]), "sha256": descriptor["sha256"], "air": descriptor["air"],
     })
     publish_download_state(row, "downloading")
-    db.commit()
+    db.flush()
     return row
 
 
@@ -428,6 +430,7 @@ def install_civitai_resource(
         policy = policy if policy is not None else DownloadPolicy.from_settings()
         policy.validate(metadata.size, metadata.sha256)
         policy.validate_format(descriptor["resource_kind"], descriptor["name"])
+        token = durable.owner_for(db.get_bind(), operation)
         existing = _install_row(descriptor, db=db)
         _require_inactive(existing)
         if _has_conflicting_ledger_identity(descriptor, target, db=db):
@@ -446,12 +449,24 @@ def install_civitai_resource(
             preflight_download(metadata, target, policy, association=association, resume=resume, operation=operation)
         # Claim even an adoption before installed-state publication. Retain
         # this known ID if a later commit/deadline/path check fails.
-        with bounded_resource_admission(operation):
+        with bounded_resource_admission(operation), durable.transaction(db, operation):
             if operation is not None: operation.remaining()
+            identity = {"provider": "civitai", "resource_type": descriptor["resource_kind"],
+                "model_id": str(descriptor["civitai_model_id"]), "version_id": str(descriptor["civitai_model_version_id"]),
+                "civitai_file_id": str(descriptor["civitai_file_id"]), "sha256": descriptor["sha256"],
+                "size": descriptor["byte_size"], "air": descriptor["air"]}
+            selection = durable.selection_digest([{**identity, "destination": str(target)}])
+            known = durable.active_claim(db, durable.claim_keys(identity, target), selection)
+            if known is not None:
+                component = db.query(durable.DownloadComponent).filter_by(job_id=known.id).first()
+                raise _ActiveInstall(component.resource_id, known.id)
             row = _admit_install(descriptor, storage_root, target, db=db)
+            public_job = durable.admit(db, selection=selection, key=None, token=token, policy=policy,
+                rows=[(row, identity, target, False)])
+            job_id = public_job.id
     except _ActiveInstall as exc:
-        return {"status": "blocked", "ledger_id": exc.resource_id, "diagnostic": {
-            "code": "civitai_resource_active", "resource_id": exc.resource_id,
+        return {"status": "blocked", "ledger_id": exc.resource_id, "job_id": exc.job_id, "diagnostic": {
+            "code": "civitai_resource_active", "resource_id": exc.resource_id, "job_id": exc.job_id,
             "message": "The resource already has an active download owner",
             "hint": "Inspect the same resource ID and wait for its current operation before retrying."}}
     except (CivitaiProviderError, OSError) as exc:
@@ -469,20 +484,21 @@ def install_civitai_resource(
 
     def failure(diagnostic):
         db.rollback()
-        current = db.get(DownloadedResource, resource_id)
-        if current is not None:
-            current.status = "failed"
-            publish_download_state(current, "failed", diagnostic)
-            db.commit()
-        return {"status": "failed", "ledger_id": resource_id, "final_path": str(target),
+        durable.terminal_component(db, job_id, resource_id, token, reason=diagnostic)
+        return {"status": "failed", "job_id": job_id, "ledger_id": resource_id, "final_path": str(target),
                 "byte_size": result.bytes if result else 0, "sha256": None,
-                "diagnostic": {**diagnostic, "resource_id": resource_id}}
+                "diagnostic": {**diagnostic, "resource_id": resource_id, "job_id": job_id}}
 
     def record_partial(proof):
-        publish_download_state(row, "downloading", partial=proof)
-        db.commit()
+        with durable.publication(db, job_id, resource_id, token, operation) as (current, component):
+            measured = proof["identity"]["size"]
+            if not 0 <= measured <= component.selected_size:
+                raise download_error("download_invalid_progress", "Measured progress exceeds selected size")
+            component.downloaded_bytes = measured
+            publish_download_state(current, "downloading", partial=proof)
 
     try:
+        durable.begin_component(db, job_id, resource_id, token, operation)
         if adoption is not None:
             byte_size, sha256, identity = adoption
         else:
@@ -494,8 +510,15 @@ def install_civitai_resource(
         if operation is not None: operation.remaining()
         if not _matches(target, identity):
             raise download_error("civitai_file_changed", "Final changed before ledger publication")
-        ledger_id = _persist_ledger_identity(descriptor, storage_root, target, byte_size, sha256,
-                                            db=db, authorization=authorization, identity=identity, operation=operation)
+        with durable.publication(db, job_id, resource_id, token, operation):
+            ledger_id = _persist_ledger_identity(descriptor, storage_root, target, byte_size, sha256,
+                db=db, authorization=authorization, identity=identity, operation=operation)
+        if operation is not None: operation.remaining()
+        if not _matches(target, identity):
+            raise download_error("civitai_file_changed", "Final changed during ledger publication")
+        durable.terminal_component(db, job_id, resource_id, token, result={
+            "code": "adopted_existing" if adoption is not None else "download_verified",
+            "byte_size": byte_size, "sha256": sha256})
     except BaseException as exc:
         # A racing replacement is never this invocation's compensation target.
         if result is not None:
@@ -505,10 +528,10 @@ def install_civitai_resource(
             outcome = failure(diagnostic)
         except Exception:
             db.rollback()
-            outcome = {"status": "failed", "ledger_id": resource_id, "diagnostic": {**diagnostic, "resource_id": resource_id}}
+            outcome = {"status": "failed", "job_id": job_id, "ledger_id": resource_id, "diagnostic": {**diagnostic, "resource_id": resource_id, "job_id": job_id}}
         if not isinstance(exc, Exception):
             raise
         return outcome
-    return redact_secrets({"status": "completed", "final_path": str(target), "byte_size": byte_size,
+    return safe_evidence(redact_secrets({"status": "completed", "job_id": job_id, "final_path": str(target), "byte_size": byte_size,
         "sha256": sha256, "ledger_id": ledger_id,
-        "diagnostic": {"code": "adopted_existing"} if adoption is not None else result.diagnostics}, secrets=tuple((authorization or "").split()))
+        "diagnostic": {"code": "adopted_existing"} if adoption is not None else result.diagnostics}, secrets=tuple((authorization or "").split())))

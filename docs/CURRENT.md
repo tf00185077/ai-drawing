@@ -1,6 +1,8 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-04 kickoff CLEAR; durable download jobs enter implementation** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-04 unfinished owner-requested checkpoint; independent delivery review pending** ([roadmap](roadmap/ROADMAP.md))
+
+[Owner-requested checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md): current local memory edits and the partial AID-215 implementation were captured at 08:31:39 Asia/Taipei for publication to main before completion. This is not a delivery PASS or deployment. Captured full diagnostics include Backend exit -15 and MCP exit 1; no passing full-suite result is claimed for this snapshot. Coding continues toward an exact final candidate and independent QA.
 
 ## Goals at a glance
 
@@ -132,8 +134,10 @@ unchanged task `49a73639`. No blocking ambiguity or owner question. The
 [implementation handoff](tasks/p2-04-durable-download-jobs/implementation-handoff.md)
 requires durable atomic claims through all callers, fenced callbacks, actual dead/
 live lifecycle proof, DB-only status and direct download wait routing. Separate
-Coding and exact-final-commit QA follow. No p2-04 behavior is implemented or certified
-by kickoff. Its Backend 94 / MCP 85 baseline passes omit 12 fresh-export consumers;
+Coding and exact-final-commit QA follow. The owner-requested unfinished checkpoint
+now preserves the partial AID-215 implementation on main; it is not a delivery
+PASS or accepted D1–D5 behavior. Kickoff itself implemented or certified no p2-04
+behavior. Its Backend 94 / MCP 85 baseline passes omit 12 fresh-export consumers;
 three Backend/one MCP guard denials, including two unlocalized Backend requests,
 remain explicit limits. Full changed-source qualification is still required.
 

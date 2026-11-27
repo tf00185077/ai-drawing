@@ -5,6 +5,21 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — owner-requested unfinished local checkpoint
+
+CTY explicitly requested committing and pushing the current results, including
+unfinished local modifications, to remote main. [Request](requests/2026-11-27-publish-current-wip.md)
+and [checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md)
+record the source attribution and **08:31:39 Asia/Taipei** cutoff. Fourteen existing
+memory edits and forty active AID-215 changed/new files are preserved exactly;
+the running Coding worktree and index are untouched. Partial Backend/MCP code,
+tests, planning and diagnostic attempts are a WIP snapshot, not independent
+p2-04 PASS, Producer acceptance, deployment or Phase 2 exit. Captured full-suite
+diagnostics retain Backend exit -15 and MCP exit 1. Hermes's Python/JSON parsing,
+credential-pattern and documentation checks are static publication checks only.
+Actual Coding final qualification, exact independent QA and Producer handling
+continue through AID-215 → AID-216 → AID-146.
+
 ## 2026-11-27 — p2-04 kickoff CLEAR; implementation handoff
 
 Actual [independent QA AID-214](/AID/issues/AID-214)

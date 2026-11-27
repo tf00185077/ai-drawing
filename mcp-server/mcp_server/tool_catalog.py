@@ -38,7 +38,7 @@ INTENDED_TOOLS: tuple[ToolCatalogEntry, ...] = (
     ToolCatalogEntry('civitai_resource_status', 'mcp_server.tools.civitai', 'civitai_resource_status', 'read', ('GET /api/civitai/resources/status',)),
     ToolCatalogEntry('generate', 'mcp_server.tools.intents', 'generate', 'mutate', ('POST /api/generate/', 'POST /api/generate/custom')),
     ToolCatalogEntry('job_status', 'mcp_server.tools.generate', 'get_generation_status', 'read', ('GET /api/generate/job/{job_id}',)),
-    ToolCatalogEntry('wait_for_job', 'mcp_server.tools.wait_for_job', 'wait_for_job', 'read', ('GET /api/generate/job/{job_id}', 'GET /api/lora-train/jobs/{job_id}', 'GET /api/gallery/artifacts/{artifact_id}', 'GET /api/gallery/{image_id}')),
+    ToolCatalogEntry('wait_for_job', 'mcp_server.tools.wait_for_job', 'wait_for_job', 'read', ('GET /api/generate/job/{job_id}', 'GET /api/lora-train/jobs/{job_id}', 'GET /api/civitai/download-jobs/{job_id}', 'GET /api/gallery/artifacts/{artifact_id}', 'GET /api/gallery/{image_id}')),
     ToolCatalogEntry('cancel_job', 'mcp_server.tools.generate', 'cancel_job', 'mutate', ('DELETE /api/generate/queue/{job_id}',)),
     ToolCatalogEntry('list_resources', 'mcp_server.tools.generate', 'list_available_resources', 'read', ('GET /api/generate/available-resources', 'GET /api/workflow-catalog/generation-forms')),
     ToolCatalogEntry('deliver_to_discord', 'mcp_server.tools.discord_delivery', 'deliver_generation_result_to_discord', 'mutate', ('POST <DiscordBot>/operator/v1/deliver-result',)),

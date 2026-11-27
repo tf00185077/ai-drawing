@@ -31,8 +31,14 @@ def check(path, write=False):
     if p == Path('/dev/null') and not write: return
     if p.name == '.env' or not inside(p, [STATE.parent] if write else allowed):
         events['blocked'].append('filesystem')
+        frames = []
+        frame = sys._getframe(1)
+        while frame is not None and len(frames) < 10:
+            frames.append({'file': frame.f_code.co_filename, 'line': frame.f_lineno, 'function': frame.f_code.co_name})
+            frame = frame.f_back
+        events['blocked_details'].append({'path': str(p), 'write': bool(write), 'frames': frames})
         raise PermissionError('offline filesystem boundary')
-events = {"sqlite": [], "blocked": []}
+events = {"sqlite": [], "blocked": [], "blocked_details": []}
 def audit(event, args):
     if event == 'open':
         mode, flags = args[1:3]

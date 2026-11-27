@@ -9,16 +9,38 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.routing import APIRoute
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.queue import QueueFullError
 from app.db.database import get_db
 from app.services.civitai_easy import EasyGenerateError, generate_like, source_info
 from app.services.civitai_resource_acquire import AcquireError, acquisition_status, start_acquisition
 from app.services.resource_records import safe_evidence
+from app.services import download_jobs
 
-router = APIRouter(prefix="/api/civitai", tags=["civitai-easy"])
+class _PrivateValidationRoute(APIRoute):
+    def get_route_handler(self):
+        original = super().get_route_handler()
+        async def handler(request):
+            try:
+                return await original(request)
+            except RequestValidationError as exc:
+                if request.url.path != '/api/civitai/resources/acquire':
+                    raise
+                # Pydantic's default validation includes the rejected raw input.
+                # An idempotency key is private even when its format is invalid.
+                return JSONResponse(status_code=422, content=safe_evidence({'detail': [
+                    {key: value for key, value in issue.items() if key not in {'input', 'ctx'}}
+                    for issue in exc.errors()]}))
+        return handler
+
+
+router = APIRouter(prefix="/api/civitai", tags=["civitai-easy"], route_class=_PrivateValidationRoute)
 
 
 class GenerateLikeRequest(BaseModel):
@@ -40,6 +62,7 @@ class GenerateLikeRequest(BaseModel):
 
 class AcquireRequest(BaseModel):
     locator: int | str = Field(description="Civitai 模型頁連結、模型 ID 或 model-version ID")
+    idempotency_key: str | None = Field(default=None, strict=True, min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$")
 
 
 def _easy_error(exc: EasyGenerateError) -> HTTPException:
@@ -47,8 +70,12 @@ def _easy_error(exc: EasyGenerateError) -> HTTPException:
 
 
 def _acquire_error(exc: AcquireError) -> HTTPException:
-    status = 404 if exc.code == "not_found" else 422
-    return HTTPException(status_code=status, detail=safe_evidence(exc.to_dict()))
+    status = 404 if exc.code in {"not_found", "download_job_not_found"} else 409 if exc.code in {"download_idempotency_conflict", "civitai_resource_active", "download_owner_live_or_uncertain", "download_legacy_untracked", "download_database_busy"} else 422
+    detail = exc.to_dict()
+    for key in ("job_id", "resource_id"):
+        if getattr(exc, key, None) is not None:
+            detail[key] = getattr(exc, key)
+    return HTTPException(status_code=status, detail=safe_evidence(detail))
 
 
 @router.get("/source-info")
@@ -93,9 +120,27 @@ def post_generate_like(request: GenerateLikeRequest, db: Session = Depends(get_d
 def post_acquire_resource(request: AcquireRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
     """下載一個 Civitai 模型到外接硬碟並登記到本地帳本（背景執行）。"""
     try:
-        return start_acquisition(request.locator, db=db)
+        return start_acquisition(request.locator, db=db, idempotency_key=request.idempotency_key)
     except AcquireError as exc:
         raise _acquire_error(exc) from exc
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail={"code": "download_persistence_unavailable",
+            "message": "Download admission persistence is unavailable",
+            "hint": "Inspect an already known download job before making another request."}) from None
+
+
+@router.get("/download-jobs/{job_id}")
+def get_download_job(job_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """Read one persisted download operation; no filesystem or provider work."""
+    try:
+        return download_jobs.status(db, job_id)
+    except AcquireError as exc:
+        raise _acquire_error(exc) from exc
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=503, detail={"code": "download_status_unavailable",
+            "message": "Download status persistence is unavailable", "hint": "Read the same download job again."}) from None
 
 
 @router.get("/resources/status")

@@ -32,6 +32,7 @@ from app.db.models import DownloadedResource
 from app.services.civitai_acquisition import AcquisitionError, parse_civitai_locator, redact_secrets
 from app.services.civitai_safe_download import (CivitaiFileMetadata, safe_download, preflight_download, verified_existing, _matches)
 from app.services.resource_records import download_context, publish_download_state, bounded_resource_admission
+from app.services import download_jobs as durable
 from app.services.civitai_download_policy import DownloadPolicy, selected_size, download_error
 
 _CLEAN_SCAN_STATUSES = frozenset({"success", "clean", "passed"})
@@ -295,6 +296,9 @@ def _storage_roots(settings: Any) -> dict[str, Path]:
 
 
 def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
+    from sqlalchemy import inspect
+    session = inspect(row).session
+    linkage = durable.resource_link(session, row.id) if session is not None else {"job_id": None}
     notes: dict[str, Any] = {}
     if row.notes:
         try:
@@ -308,13 +312,9 @@ def _resource_summary(row: DownloadedResource) -> dict[str, Any]:
     current_error = operation.get("error") if isinstance(operation, dict) else notes.get("error")
     total = row.file_size or notes.get("expected_size_bytes")
     progress: dict[str, Any] = {}
-    if row.status in _ACTIVE_STATUSES and row.local_path:
-        part = Path(row.local_path + ".part")
-        downloaded = part.stat().st_size if part.exists() else 0
-        progress = {"downloaded_bytes": downloaded, "total_bytes": total}
-        if isinstance(total, int) and total > 0:
-            progress["percent"] = round(downloaded * 100 / total, 1)
+    progress = linkage.get("progress") or {}
     return safe_evidence({
+        **linkage,
         "acquisition_id": row.id,
         "resource_name": row.resource_name,
         "resource_type": row.resource_type,
@@ -341,6 +341,7 @@ def start_acquisition(
     locator: int | str,
     *,
     db: Session,
+    idempotency_key: str | None = None,
     metadata_transport: Any | None = None,
     download_transport: Any | None = None,
     thread_factory: Callable[..., threading.Thread] | None = None,
@@ -352,6 +353,7 @@ def start_acquisition(
     Returns immediately with an acquisition_id; the download continues in a
     background thread and progress is visible via ``acquisition_status``.
     """
+    key = durable.key_digest(idempotency_key)
     settings = get_settings()
     policy = DownloadPolicy.from_settings(settings)
     resolved = resolve_version_metadata(locator, transport=metadata_transport)
@@ -387,6 +389,7 @@ def start_acquisition(
         policy.validate_format(comp_type, chosen["name"])
 
     with ProviderOperation('download', settings=settings) as admission, bounded_resource_admission(admission):
+        token = durable.owner_for(db.get_bind(), admission)
         version_id = version.get("id")
         model_id = version.get("modelId") or (model or {}).get("id")
         existing = (
@@ -399,13 +402,39 @@ def start_acquisition(
         )
 
         roots = _storage_roots(settings)
+        selected = []
+        keys = []
+        for chosen, comp_root, comp_type in components:
+            identity = {"provider": "civitai", "resource_type": comp_type,
+                "model_id": str(model_id) if model_id is not None else None,
+                "version_id": str(version_id) if version_id is not None else None,
+                "civitai_file_id": str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+                "sha256": chosen["sha256"], "size": chosen["size_bytes"],
+                "air": chosen["provider_file"].get("air") or version.get("air")}
+            # Bind the effective configured destination as well as the retained
+            # authority path; changing either must not silently rebind a key.
+            selected.append({**identity, "destination": str(roots[comp_root] / chosen["name"])})
+            matched = next((row for row in existing if row.resource_name == chosen["name"] or
+                (row.civitai_file_id is not None and row.civitai_file_id == identity["civitai_file_id"])), None)
+            target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
+            keys.extend(durable.claim_keys(identity, target))
+        selection = durable.selection_digest(selected)
+        known = durable.replay(db, selection, key)
+        if known is None:
+            known = durable.active_claim(db, keys, selection)
+            if known is not None and key is not None:
+                raise durable.error("civitai_resource_active", "This selection already has an active download job", job_id=known.id)
+        if known is not None:
+            return _operation_response(db, known.id, warnings=warnings, replay=True)
+        if len(components) > durable.MAX_COMPONENTS:
+            raise durable.error("download_package_limit", "Selected package exceeds the bounded component limit")
         adoptions = {}
         # Destination-space/partial/identity admission is package-wide and read-only.
         for chosen, comp_root, comp_type in components:
             matched = next((row for row in existing if row.resource_name == chosen["name"] or
                            (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
             if matched is not None and matched.status in _ACTIVE_STATUSES:
-                continue
+                raise durable.error("download_legacy_untracked", "The resource has legacy downloading state without a durable operation", resource_id=matched.id)
             target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
             metadata = CivitaiFileMetadata(chosen["download_url"], chosen["sha256"], chosen["size_bytes"], scan_status=chosen["scan_status"])
             if os.path.lexists(target):
@@ -416,87 +445,93 @@ def start_acquisition(
 
         admission.remaining()
 
-        common_notes = {
-            "base_model": base_model,
-            "model_family": family,
-            "license": license_info,
-            "version_name": version.get("name"),
-            "model_name": (model or {}).get("name") or (version.get("model") or {}).get("name"),
-        }
-        done_rows: list[DownloadedResource] = []
-        active_rows: list[DownloadedResource] = []
-        jobs: list[dict[str, Any]] = []
+        with durable.transaction(db, admission):
+            existing = (db.query(DownloadedResource).filter_by(provider="civitai", version_id=str(version_id))
+                        .populate_existing().order_by(DownloadedResource.id.desc()).all())
+            known = durable.replay(db, selection, key) or durable.active_claim(db, keys, selection)
+            if known is not None:
+                if key is not None and known.idempotency_digest != key:
+                    raise durable.error("civitai_resource_active", "This selection already has an active download job", job_id=known.id)
+                return _operation_response(db, known.id, warnings=warnings, replay=True)
+            common_notes = {
+                "base_model": base_model,
+                "model_family": family,
+                "license": license_info,
+                "version_name": version.get("name"),
+                "model_name": (model or {}).get("name") or (version.get("model") or {}).get("name"),
+            }
+            done_rows: list[DownloadedResource] = []
+            active_rows: list[DownloadedResource] = []
+            jobs: list[dict[str, Any]] = []
+            operation_rows = []
 
-        for chosen, comp_root, comp_type in components:
-            matched = next((row for row in existing if row.resource_name == chosen["name"] or
-                            (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
-            snapshot = provider_snapshot(version, model, chosen["provider_file"])
-            identity = {"provider": "civitai", "resource_type": comp_type,
-                        "model_id": str(model_id) if model_id is not None else None,
-                        "version_id": str(version_id) if version_id is not None else None,
-                        "civitai_file_id": str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
-                        "sha256": chosen["sha256"],
-                        "air": chosen["provider_file"].get("air") or version.get("air")}
-            if matched is not None:
-                try:
-                    assert_identity(matched, identity)
-                    if matched.status not in _ACTIVE_STATUSES:
-                        publish_metadata(matched, snapshot, identity=identity)
-                except ResourceIdentityConflict:
-                    db.rollback()
-                    raise AcquireError("resource_identity_conflict", "Recorded resource identity conflicts with the selected provider file",
-                                       hint="Inspect the existing resource ID; choose a distinct provider file without rebinding it.") from None
-            if matched is not None and matched.status in _INSTALLED_STATUSES and matched.local_path and Path(matched.local_path).is_file():
-                done_rows.append(matched)
-                continue
-            if matched is not None and matched.status in _ACTIVE_STATUSES:
-                active_rows.append(matched)
-                continue
-            notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
-            target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
-            row = matched or DownloadedResource(
-                resource_name=chosen["name"],
-                resource_type=comp_type,
-                provider="civitai",
-                source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
-                resolved_download_url=redact_secrets(chosen["download_url"]),
-                local_path=str(target),
-                storage_root=comp_root,
-                file_size=chosen["size_bytes"],
-                sha256=chosen["sha256"],
-                model_id=str(model_id) if model_id is not None else None,
-                version_id=str(version_id) if version_id is not None else None,
-                civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
-                status="downloading",
-                notes=_new_notes_json(notes),
-            )
-            if matched is not None:
-                row.status = "downloading"
-            publish_metadata(row, snapshot, identity=identity)
-            db.add(row)
-            _publish_acquisition_outcome(row, "downloading")
-            jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity,
-                         "preserve_notes": matched is not None})
+            for chosen, comp_root, comp_type in components:
+                matched = next((row for row in existing if row.resource_name == chosen["name"] or
+                                (row.civitai_file_id is not None and row.civitai_file_id == str(chosen["civitai_file_id"]))), None)
+                snapshot = provider_snapshot(version, model, chosen["provider_file"])
+                identity = {"provider": "civitai", "resource_type": comp_type,
+                            "model_id": str(model_id) if model_id is not None else None,
+                            "version_id": str(version_id) if version_id is not None else None,
+                            "civitai_file_id": str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+                            "sha256": chosen["sha256"],
+                            "air": chosen["provider_file"].get("air") or version.get("air")}
+                if matched is not None:
+                    try:
+                        assert_identity(matched, identity)
+                        if matched.status not in _ACTIVE_STATUSES:
+                            publish_metadata(matched, snapshot, identity=identity)
+                    except ResourceIdentityConflict:
+                        db.rollback()
+                        raise AcquireError("resource_identity_conflict", "Recorded resource identity conflicts with the selected provider file",
+                                           hint="Inspect the existing resource ID; choose a distinct provider file without rebinding it.") from None
+                if matched is not None and matched.status in _INSTALLED_STATUSES and matched.local_path and Path(matched.local_path).is_file():
+                    done_rows.append(matched)
+                    operation_rows.append((matched, identity, Path(matched.local_path), True))
+                    continue
+                if matched is not None and matched.status in _ACTIVE_STATUSES:
+                    active_rows.append(matched)
+                    continue
+                notes = {**common_notes, "expected_size_bytes": chosen["size_bytes"]}
+                target = Path(matched.local_path) if matched is not None and matched.local_path else roots[comp_root] / chosen["name"]
+                row = matched or DownloadedResource(
+                    resource_name=chosen["name"],
+                    resource_type=comp_type,
+                    provider="civitai",
+                    source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
+                    resolved_download_url=redact_secrets(chosen["download_url"]),
+                    local_path=str(target),
+                    storage_root=comp_root,
+                    file_size=chosen["size_bytes"],
+                    sha256=chosen["sha256"],
+                    model_id=str(model_id) if model_id is not None else None,
+                    version_id=str(version_id) if version_id is not None else None,
+                    civitai_file_id=str(chosen["civitai_file_id"]) if chosen["civitai_file_id"] is not None else None,
+                    status="downloading",
+                    notes=_new_notes_json(notes),
+                )
+                if matched is not None:
+                    row.status = "downloading"
+                publish_metadata(row, snapshot, identity=identity)
+                db.add(row)
+                _publish_acquisition_outcome(row, "downloading")
+                operation_rows.append((row, identity, target, False))
+                jobs.append({"chosen": chosen, "target": target, "notes": notes, "row": row, "identity": identity,
+                             "preserve_notes": matched is not None})
 
-        if not jobs:
-            db.commit()
-            rows = done_rows + active_rows
-            status = "downloading" if active_rows else "already_installed"
-            return safe_evidence({
-                "status": status,
-                "resource": _resource_summary(rows[0]),
-                "resources": [_resource_summary(row) for row in rows],
-                "warnings": warnings,
-            })
+            public_job = durable.admit(db, selection=selection, key=key, token=token, policy=policy, rows=operation_rows)
+            public_job_id = public_job.id
+            db.flush()
+            for job in jobs:
+                job["acquisition_id"] = job["row"].id
 
-        db.commit()
-        for job in jobs:
-            db.refresh(job["row"])
-            job["acquisition_id"] = job["row"].id
+    # No callable is launched until the surrounding durable transaction commits.
+    if not jobs:
+        return _operation_response(db, public_job_id, warnings=warnings)
 
     transport = download_transport
     job_specs = [
         {
+            "job_id": public_job_id, "owner_token": token,
             "acquisition_id": job["acquisition_id"],
             "adoption": adoptions.get(str(job["target"])),
             "identity": job["identity"],
@@ -528,32 +563,29 @@ def start_acquisition(
 
     if run_in_background:
         factory = thread_factory or (lambda **kwargs: threading.Thread(**kwargs))
-        thread = factory(target=_run, name=f"civitai-acquire-{job_specs[0]['acquisition_id']}", daemon=True)
-        thread.start()
+        try:
+            thread = factory(target=_run, name=f"civitai-acquire-{public_job_id}", daemon=True)
+            thread.start()
+        except Exception:
+            durable.fail_unstarted(db, public_job_id, token, {"code": "download_launch_failed", "message": "The admitted worker could not start", "hint": "Read the same job before retrying."})
+            return _operation_response(db, public_job_id, warnings=warnings)
     else:
         _run()
         db.expire_all()
-        ids = [spec["acquisition_id"] for spec in job_specs]
-        fresh_rows = (
-            db.query(DownloadedResource).filter(DownloadedResource.id.in_(ids)).order_by(DownloadedResource.id).all()
-        )
-        statuses = {row.status for row in fresh_rows} | {row.status for row in done_rows}
-        status = "installed" if statuses <= _INSTALLED_STATUSES else ("failed" if "failed" in statuses else fresh_rows[0].status)
-        return safe_evidence({
-            "status": status,
-            "resource": _resource_summary(fresh_rows[0]),
-            "resources": [_resource_summary(row) for row in done_rows + fresh_rows],
-            "warnings": warnings,
-        })
+        return _operation_response(db, public_job_id, warnings=warnings)
 
-    started_rows = done_rows + active_rows + [job["row"] for job in jobs]
-    return safe_evidence({
-        "status": "downloading",
-        "resource": _resource_summary(jobs[0]["row"]),
-        "resources": [_resource_summary(row) for row in started_rows],
-        "warnings": warnings,
-        "next_step": "下載已在背景進行；用 civitai_resource_status 查進度，installed 之後即可用於生圖",
-    })
+    return _operation_response(db, public_job_id, warnings=warnings)
+
+
+def _operation_response(db, job_id, *, warnings=(), replay=False):
+    value = durable.status(db, job_id)
+    rows = [db.get(DownloadedResource, rid) for rid in value["resource_ids"]]
+    state = value["status"]
+    legacy = "already_installed" if state == "completed" and (replay or all(c["result"] and c["result"].get("code") == "verified_existing" for c in value["components"])) else ("installed" if state == "completed" else "failed" if state == "failed" else "downloading")
+    return safe_evidence({"job_id": job_id, "job_domain": "download", "job_status": state,
+        "status": legacy, "resource": _resource_summary(rows[0]),
+        "resources": [_resource_summary(row) for row in rows], "warnings": list(warnings),
+        "next_step": f"Read download job {job_id} with wait_for_job; resource IDs still identify resources."})
 
 
 def _publish_acquisition_outcome(row: DownloadedResource, status: str, error: Any = None, *, measured=None) -> None:
@@ -565,13 +597,19 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
     """Download one file and record the outcome; never let one failure stop the batch."""
     acquisition_id = spec["acquisition_id"]
     notes = spec["notes"]
+    job_id, token = spec["job_id"], spec["owner_token"]
     try:
-        fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
-        association, resume = download_context(fresh, spec["metadata"].size, spec["metadata"].sha256)
-        def record_partial(proof):
-            publish_download_state(fresh, "downloading", partial=proof)
-            session.commit()
         with ProviderOperation('download', settings=settings) as operation:
+            durable.begin_component(session, job_id, acquisition_id, token, operation)
+            fresh = session.get(DownloadedResource, acquisition_id)
+            association, resume = download_context(fresh, spec["metadata"].size, spec["metadata"].sha256)
+            def record_partial(proof):
+                with durable.publication(session, job_id, acquisition_id, token, operation) as (current, component):
+                    measured = proof["identity"]["size"]
+                    if not 0 <= measured <= component.selected_size:
+                        raise download_error("download_invalid_progress", "Measured progress exceeds the selected size")
+                    component.downloaded_bytes = measured
+                    publish_download_state(current, "downloading", partial=proof)
             assert_identity(fresh, spec["identity"])
             if spec.get("adoption") is not None:
                 if not _matches(spec["target"], spec["adoption"]):
@@ -581,45 +619,44 @@ def _run_one(session: Session, spec: dict[str, Any], *, transport: Any, settings
                 result = DownloadResult("completed", str(spec["target"]), sha, size, False, {"code": "adopted_existing"}, owned)
             else:
                 result = safe_download(spec["metadata"], spec["target"], transport=transport or _StreamingDownloadTransport(operation),
-                                       authorization=operation.authorization, operation=operation, policy=DownloadPolicy.from_settings(settings),
-                                       association=association, resume=resume, record_partial=record_partial)
-            if result.status == "completed" and not _matches(Path(result.final_path), result.publication):
+                    authorization=operation.authorization, operation=operation, policy=DownloadPolicy.from_settings(settings),
+                    association=association, resume=resume, record_partial=record_partial)
+            if result.status != "completed":
+                reason = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
+                if not reason:
+                    reason = {"code": "civitai_download_failed", "message": "Download failed"}
+                with durable.publication(session, job_id, acquisition_id, token, operation) as (fresh, component):
+                    if not spec.get("preserve_notes", False):
+                        fresh.notes = _new_notes_json({**notes, "error": reason})
+                durable.terminal_component(session, job_id, acquisition_id, token, reason=reason)
+                return
+            if not _matches(Path(result.final_path), result.publication):
                 raise download_error("civitai_file_changed", "Final changed before resource publication")
-            operation.remaining()
-            fresh_notes = dict(notes)
-            if result.status == "completed":
+            with durable.publication(session, job_id, acquisition_id, token, operation) as (fresh, component):
                 assert_identity(fresh, spec["identity"])
                 stat = Path(result.final_path).stat()
-                fresh_notes["file_identity"] = {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}
                 fresh.status = "installed"
                 fresh.local_path = result.final_path
                 fresh.file_size = result.bytes
                 fresh.sha256 = result.actual_sha256
                 fresh.downloaded_at = datetime.utcnow()
                 _publish_acquisition_outcome(fresh, "installed", measured=measured_evidence(Path(result.final_path), result.bytes, result.actual_sha256, identity=result.publication))
-            else:
-                fresh.status = "failed"
-                fresh_notes["error"] = result.diagnostics.get("reason") or f"download {result.status}"
-                if result.diagnostics.get("code"):
-                    fresh_notes["error"] = {key: result.diagnostics[key] for key in ("code", "message", "hint") if key in result.diagnostics}
-                _publish_acquisition_outcome(fresh, "failed", fresh_notes["error"])
-            if not spec.get("preserve_notes", False):
-                fresh.notes = _new_notes_json(fresh_notes)
+                if not spec.get("preserve_notes", False):
+                    fresh.notes = _new_notes_json({**notes, "file_identity": {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns, "inode": stat.st_ino}})
             operation.remaining()
-            session.commit()
-            operation.remaining()
-            if result.status == "completed" and not _matches(Path(result.final_path), result.publication):
+            if not _matches(Path(result.final_path), result.publication):
                 raise download_error("civitai_file_changed", "Final changed during resource publication")
-    except BaseException as exc:  # record interruption too, then propagate it
+            durable.terminal_component(session, job_id, acquisition_id, token, result={
+                "code": result.diagnostics.get("code", "download_verified"), "byte_size": result.bytes,
+                "sha256": result.actual_sha256, "resume_used": result.resume_used})
+    except BaseException as exc:
         session.rollback()
         try:
-            fresh = session.query(DownloadedResource).filter(DownloadedResource.id == acquisition_id).one()
-            fresh.status = "failed"
-            error = exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Inspect this acquisition ID before retrying."}
-            _publish_acquisition_outcome(fresh, "failed", error)
-            if not spec.get("preserve_notes", False):
-                fresh.notes = _new_notes_json({**notes, "error": error})
-            session.commit()
+            reason = exc.to_dict() if isinstance(exc, AcquireError) else {"code": "civitai_download_failed", "message": "Civitai download failed", "hint": "Read the same download job before retrying."}
+            with durable.publication(session, job_id, acquisition_id, token) as (fresh, component):
+                if not spec.get("preserve_notes", False):
+                    fresh.notes = _new_notes_json({**notes, "error": reason})
+            durable.terminal_component(session, job_id, acquisition_id, token, reason=reason)
         except Exception:
             session.rollback()
         if not isinstance(exc, Exception):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Annotated, Any
 from urllib.parse import quote
@@ -49,8 +50,8 @@ def _terminal_failure(state: dict) -> dict:
                       state.get('error_message') or 'Backend reported a training failure.',
                       (state.get('error_details') or {}).get('hint') or 'Inspect the safe training failure code and same job state.', state)
     error = state.get('error')
-    return _error((error.get('code') if isinstance(error, dict) else None) or state.get('failure_code') or 'generation_failed',
-                  str((error.get('message') if isinstance(error, dict) else error) or 'Backend generation failed.'),
+    return _error((error.get('code') if isinstance(error, dict) else None) or state.get('failure_code') or ('download_failed' if state['job_domain'] == 'download' else 'generation_failed'),
+                  str((error.get('message') if isinstance(error, dict) else error) or 'Backend job failed.'),
                   (error.get('hint') if isinstance(error, dict) else None) or 'Inspect this job and its node/recording diagnostics before deciding on a corrected request.', state)
 
 
@@ -58,7 +59,7 @@ async def wait_for_job(
     job_id: Annotated[str, Field(min_length=1)],
     timeout_seconds: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 50.0,
 ) -> dict[str, Any]:
-    """Wait for generation or LoRA training and return existing result locators.
+    """Wait for generation, training or a persisted download operation.
 
     One overall timeout (default/max 50 seconds; client limit unverified) covers
     domain lookup, status/body reads, Gallery enrichment and polling. Timeout
@@ -72,8 +73,13 @@ async def wait_for_job(
     client = get_backend_client()
     settings = get_mcp_settings()
     encoded_id = quote(job_id, safe='')
-    domain = None
-    read_domain = 'generation'
+    domain = 'download' if job_id.startswith('dl_') else None
+    read_domain = domain or 'generation'
+    if domain == 'download':
+        if re.fullmatch(r'dl_[0-9a-f]{32}', job_id) is None:
+            return _error('download_invalid_job_id', 'Invalid download job ID.',
+                          'Use the exact download job ID returned by acquisition.', {'job_domain': 'download', 'status': 'unknown'})
+        state['job_domain'] = 'download'
 
     def check_deadline():
         if time.monotonic() >= deadline:
@@ -142,9 +148,18 @@ async def wait_for_job(
                             return prepare(_error('job_not_found', 'Neither Backend job domain contains this ID.',
                                                   f'Check the existing job ID {job_id} before submitting another request.', state))
                 else:
-                    route = 'generate/job' if domain == 'generation' else 'lora-train/jobs'
+                    route = 'civitai/download-jobs' if domain == 'download' else 'generate/job' if domain == 'generation' else 'lora-train/jobs'
                     payload = await client.get_async(f'{route}/{encoded_id}')
-                if domain == 'training':
+                if domain == 'download':
+                    if (not isinstance(payload, dict) or payload.get('job_id') != job_id
+                            or payload.get('job_domain') != 'download'
+                            or payload.get('status') not in {'queued', 'running', 'completed', 'failed'}
+                            or not isinstance(payload.get('resource_ids'), list)
+                            or not all(type(rid) is int and rid > 0 for rid in payload['resource_ids'])):
+                        return prepare(_error('download_status_invalid', 'Backend download status identity or shape is invalid.',
+                                              f'Read the same download job {job_id}.', state))
+                    state = {**payload, 'artifacts': [], 'images': []}
+                elif domain == 'training':
                     public = _strict_backend_result('wait_for_job', payload, _STATUS_SUCCESS_FIELDS)
                     if public.get('ok') is False:
                         public['error']['details'].update(state, job_domain='training')

@@ -11,7 +11,8 @@ The backend owns all state; these tools only pass locators, prompts, and IDs.
 """
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
+from pydantic import Field
 
 import httpx
 
@@ -92,7 +93,7 @@ def civitai_generate_like(
         return _error(tool, exc)
 
 
-def civitai_resource_acquire(source: str) -> dict[str, Any]:
+def civitai_resource_acquire(source: str, idempotency_key: Annotated[str | None, Field(strict=True, min_length=1, max_length=128, pattern=r'^[A-Za-z0-9._:-]+$')] = None) -> dict[str, Any]:
     """Download a Civitai model/LoRA to the local model library (external disk).
 
     source: a civitai.com/models/<id> URL (optionally with modelVersionId), a
@@ -102,11 +103,16 @@ def civitai_resource_acquire(source: str) -> dict[str, Any]:
     blocker. Files are routed to the right ComfyUI directory automatically;
     Anima split packages (diffusion / _txt text encoder / VAE published as one
     "checkpoint") are downloaded as a whole set in one call, each file to its
-    own directory. Returns acquisition_id(s) — poll civitai_resource_status.
+    own directory. Returns a durable dl_ job_id for wait_for_job plus unchanged
+    integer acquisition/resource IDs. An optional key binds one operation;
+    replaying that key never starts another body, including after completion.
     """
     tool = "civitai_resource_acquire"
     try:
-        return _result(tool, _get_client().post("civitai/resources/acquire", json={"locator": source}))
+        body = {"locator": source}
+        if idempotency_key is not None:
+            body['idempotency_key'] = idempotency_key
+        return _result(tool, _get_client().post("civitai/resources/acquire", json=body))
     except Exception as exc:
         return _error(tool, exc)
 

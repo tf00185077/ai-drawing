@@ -44,6 +44,9 @@ else:
         try:
             from app.db.database import init_db
             init_db()
+            from app.db import database as _database
+            from app.services.download_jobs import owner_for
+            owner_for(_database.engine)
             lora_trainer.register_on_complete(_on_lora_complete)
             lora_trainer.ensure_worker()
             start_watching()

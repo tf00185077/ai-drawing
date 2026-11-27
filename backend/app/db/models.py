@@ -383,6 +383,43 @@ class DownloadedResource(Base):
     metadata_json = Column(Text, nullable=True)
 
 
+class DownloadJob(Base):
+    """An immutable selected operation; resources remain the model authority."""
+    __tablename__ = "download_jobs"
+    id = Column(String(35), primary_key=True)
+    selection_digest = Column(String(64), nullable=False, index=True)
+    idempotency_digest = Column(String(64), nullable=True, unique=True)
+    owner_token = Column(String(32), nullable=False)
+    status = Column(String(16), nullable=False, index=True)
+    policy_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
+    error_json = Column(Text, nullable=True)
+
+
+class DownloadComponent(Base):
+    __tablename__ = "download_components"
+    job_id = Column(String(35), primary_key=True)
+    ordinal = Column(Integer, primary_key=True)
+    resource_id = Column(Integer, nullable=False, index=True)
+    status = Column(String(16), nullable=False)
+    selected_size = Column(BigInteger, nullable=False)
+    downloaded_bytes = Column(BigInteger, nullable=False, default=0)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    result_json = Column(Text, nullable=True)
+    error_json = Column(Text, nullable=True)
+
+
+class DownloadClaim(Base):
+    """Unique active file and destination claims, released only at termination."""
+    __tablename__ = "download_claims"
+    claim_key = Column(String(80), primary_key=True)
+    job_id = Column(String(35), nullable=False, index=True)
+    resource_id = Column(Integer, nullable=False, index=True)
+
+
 class LoraOutputReservation(Base):
     """Append-only consumed names; failure/cancellation never returns a serial."""
     __tablename__ = "lora_output_reservations"
