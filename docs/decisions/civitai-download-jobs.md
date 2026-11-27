@@ -48,3 +48,18 @@ Actual p2-03 [acceptance](../tasks/p2-03-bounded-download/acceptance.md),
 Firstcheck intake, current owner request/ROADMAP and actual current acquire/install/
 models/lifespan/wait sources. This decision records adopted scope, not implemented
 p2-04 behavior, runtime deployment or Phase2 acceptance.
+
+## Kickoff application
+
+Independent kickoff 1 CLEAR at fixed `f87b6ce4` / task `49a73639`, report
+`8622d261`, finds no material owner/roadmap difference. Apply unchanged D1–D5
+through every retained caller and database callback, with atomic claims before
+body launch, applicable deadlines during database contention, real dead/live
+lifecycle evidence and DB-only job/resource status. Existing filesystem-observing
+resource projections cannot implement the new status by delegation. Direct download
+wait routing returns resource outcomes and preserves old domains. These are
+implementation obligations, while concrete schema/prefix/error/cadence/fencing
+choices remain delegated. No new architecture, scope/order/Not now or owner gate.
+The [cleared handoff](../tasks/p2-04-durable-download-jobs/implementation-handoff.md)
+retains kickoff guard-denial/qualification limits; changed source needs current
+qualification and independent exact delivery QA before feature publication.

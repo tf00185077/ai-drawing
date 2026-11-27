@@ -76,8 +76,12 @@ report9dfdf9f1. [p2-03 is accepted](../tasks/p2-03-bounded-download/acceptance.m
 independent review3 PASS/all15 D/C/E; two earlier rejections/three historical P1s
 remain. Bounded stock execution and exact87-row registry integrate without runtime
 deployment. Next [p2-04 persisted download operations/status/wait](../tasks/p2-04-durable-download-jobs/task.md)
-receives fresh independent kickoff before Coding/exact delivery QA. Aggregate quota/
-reservations follow operation identity; generation-queue durability stays Phase3.
+has actual [kickoff 1 CLEAR](../tasks/p2-04-durable-download-jobs/kickoff-review.md)
+from QA AID-214 at fixed `f87b6ce4` / task `49a73639`, report `8622d261`.
+[Implementation handoff](../tasks/p2-04-durable-download-jobs/implementation-handoff.md)
+then separate Coding/exact-final-commit delivery QA follow; no implemented job or
+delivery acceptance is implied. Aggregate quota/reservations follow operation
+identity separately; generation-queue durability stays Phase 3.
 These are in-phase dependency refinements under current delegation,
 not a change to owner scope/order/architecture/Not now. Search/hash lookup/newMCP/
 defaults/proven removals and real qualification remain pending.

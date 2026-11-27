@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-03 accepted; durable download jobs enter independent kickoff** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-04 kickoff CLEAR; durable download jobs enter implementation** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -125,15 +125,26 @@ bundle/patch restores/fsck0. Source/tests integrate exact; no new Producer full
 product suite/key/provider/runtime/model/generation/Gallery-byte action. Current14
 shared memory edits preserved; source is not deployed.
 
-**Next: [p2-04 persisted download jobs/status/wait](tasks/p2-04-durable-download-jobs/task.md)**
-under a fresh independent kickoff. Current daemon-thread resource IDs are not durable
-jobs. Adopt additive operation history linked to existing resources, idempotent/
-atomic ownership, honest interruption without auto-replay and existing wait intent
-with authoritative download resources/no fake Gallery output. [Decision](decisions/civitai-download-jobs.md)
-keeps generation queue unchanged; aggregate quota/reservations follow separately.
-No p2-04 implementation/CLEAR is implied. Search/hash/newMCP/defaults/removals/three
-different zero-fix sentences/freshcheckpoint+LoRA/CTY demo/Phase2exit remain pending;
-no routine owner question, boundary change or artistic acceptance.
+**Active: [p2-04 persisted download jobs/status/wait](tasks/p2-04-durable-download-jobs/task.md)**,
+actual [kickoff round 1 CLEAR](tasks/p2-04-durable-download-jobs/kickoff-review.md)
+from [QA AID-214](/AID/issues/AID-214), report `8622d261` at fixed `f87b6ce4` /
+unchanged task `49a73639`. No blocking ambiguity or owner question. The
+[implementation handoff](tasks/p2-04-durable-download-jobs/implementation-handoff.md)
+requires durable atomic claims through all callers, fenced callbacks, actual dead/
+live lifecycle proof, DB-only status and direct download wait routing. Separate
+Coding and exact-final-commit QA follow. No p2-04 behavior is implemented or certified
+by kickoff. Its Backend 94 / MCP 85 baseline passes omit 12 fresh-export consumers;
+three Backend/one MCP guard denials, including two unlocalized Backend requests,
+remain explicit limits. Full changed-source qualification is still required.
+
+Current daemon-thread resource IDs are not durable jobs. [Decision](decisions/civitai-download-jobs.md)
+keeps the existing Backend/SQLite and resource authority, generation queue unchanged;
+aggregate quota/reservations follow operation identity separately. The 87 registry
+items and all old evidence stay exact. Search/hash/new MCP/defaults/removals/three
+different zero-fix sentences/new checkpoint plus LoRA/CTY demo/Phase 2 exit remain
+pending. Current 14 shared memory edits preserved; no new Producer full suite/private
+key/provider/runtime/model/generation/live Gallery result or source deployment.
+No routine owner confirmation, scope/order/Not now change or artistic acceptance.
 
 ## Team
 

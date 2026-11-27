@@ -5,6 +5,30 @@ Progress against the [roadmap](roadmap/ROADMAP.md), based on the code on `main` 
 Status: **Done** = in code with tests · **Partial** = some of it in code · **Not started** = not in code.
 Real run: **Yes** = seen working against a real ComfyUI/GPU · **No** = tests only.
 
+## 2026-11-27 — p2-04 kickoff CLEAR; implementation handoff
+
+Actual [independent QA AID-214](/AID/issues/AID-214)
+[kickoff round 1 CLEAR](tasks/p2-04-durable-download-jobs/kickoff-review.md), report
+`8622d2617ee879a86872785c50a45eb5dd643993`, fixed source `f87b6ce4` and unchanged
+task `49a73639`. No demonstrated P0/P1 ambiguity or owner-boundary question.
+[Handoff](tasks/p2-04-durable-download-jobs/implementation-handoff.md) applies existing
+D1–D5 to all real callers, atomic durable claims, fenced callbacks, proven dead/live
+lifecycle, DB-only status and direct download wait routing. Coding then independent
+exact-final-commit delivery QA use native prerequisites; no implementation PASS.
+
+QA baseline Backend 94 / MCP 85 passed, 12 fresh-export consumers explicitly
+omitted; diagnostic repeats 94/85. Strict guard observed three Backend/one MCP
+filesystem denials, two Backend requests unlocalized. These limits/raw attempts,
+ignored-log correction and Apple 3.9 archive-filter failure remain. No full suites,
+fresh exports/stdio/frontend/native Windows or p2-04 runtime qualification. Producer
+verifies ten official uploads, 29 exact evidence files, all 8,891 snapshot paths /
+8,862 unchanged base bodies/modes/fingerprints and exact 87-row registry; official
+self-contained source and independent base-only patch restores pass fsck. Actual
+public commit/remote-body/shared-preservation results are recorded natively. No new
+Producer full product suite/private key/provider/runtime/model/generation/Gallery
+result. Source is not deployed. Existing scope/order/Not now/artistic authority
+stay; aggregate accounting and the rest of Phase 2 remain pending.
+
 ## 2026-11-27 — p2-03 accepted; persisted download jobs enter kickoff
 
 [Actual acceptance](tasks/p2-03-bounded-download/acceptance.md) at Coding4cd3c042,
