@@ -1,136 +1,148 @@
-# p2-02a independent delivery review
+# p2-02a independent correction review
 
-Verdict: FAIL
-Review round: 1
+Verdict: PASS
+Review round: 2
 
-Reviewed 2026-11-27 for [QA AID-220](/AID/issues/AID-220), coordinated by
-[Producer AID-217](/AID/issues/AID-217). Actual [Coding delivery](/AID/issues/AID-219#comment-40414ef8-c5f1-47b1-ad3c-6e4eecf13c04)
-was read before review. Reviewed full candidate: **`8d5f29686555119b1cbcc934cbb38af9d6edaafc`**,
-branch `coding/aid219-p202a-allowlist`; independent worktree `aid-220-qa`,
-review branch `qa/aid220-p202a-review`. Starting source:
-`05da4bb981b4b8e44e991720093c9127509abc80`. No moving checkout was reviewed.
+Reviewed 2026-11-27 for [QA AID-222](/AID/issues/AID-222), coordinated by
+[Producer AID-217](/AID/issues/AID-217). Read actual [Coding delivery](/AID/issues/AID-221#comment-4c311459-80eb-409e-b16b-13fdd47eec7c)
+and its complete manifest before review. Exact candidate: **`3e70e04c5bb8fb104bcf0324d19d99629741cd4c`**,
+branch `coding/aid221-p202a-correction1`, based on `39737296217ec1bb8f14df2744b85a0530d4b0c0`.
+Independent worktree `aid-222-qa`, report branch `qa/aid222-p202a-review`.
+The rejected candidate and rewritten main were not substituted for this correction.
 
 ## Findings
 
-**R1 / D2 / P1 — a valid apostrophe in a provider download query leaves the signature in storage.**
-The new assignment at `backend/app/services/civitai_resource_acquire.py:501` calls
-`safe_evidence` for the provider's `downloadUrl`. Its URL match at
-`backend/app/services/resource_records.py:86` ends at an apostrophe, sanitizes only
-that prefix, then leaves the suffix unchanged with `redact_query=False`.
-Through the registered acquisition route, the provider URL
-`https://civitai.com/api/download/models/21?filename=O'Reilly.safetensors&X-Amz-Signature=SIGNED_DOWNLOAD`
-is accepted (202), and the committed resource row's `resolved_download_url` is
-`https://civitai.com/api/download/models/21'Reilly.safetensors&X-Amz-Signature=SIGNED_DOWNLOAD`.
-The entire synthetic signature value reaches storage. This is a received download
-locator, within the held-secret boundary; no credential-looking prose is involved.
-The same reproduction **passes on the starting source and fails on the candidate**.
+**R1 / D2 / P1 resolved.** The received provider locator containing
+`?filename=O'Reilly.safetensors&X-Amz-Signature=SIGNED_DOWNLOAD` is stripped before
+commit. An independent registered-acquisition reproduction checks every stored column
+and exact `resolved_download_url == 'https://civitai.com/api/download/models/21'`: pass.
+The permanent real-caller `apostrophe-query` guard also passes through admission,
+background install, stored notes/metadata, list/detail/status/ledger and captured logs.
+Only external HTTP and scheduling are mocked; settings, key-file loading, provider
+caller, registered routes, SQLite commit and background target are real.
 
-Minimal reproduction, saved only in run scratch (the fixture mocks HTTP and thread
-scheduling; settings, provider caller, route, admission and SQLite commit are real):
+Sensitivity: temporarily restored only the rejected URL-string branch, adapting its
+callback to the candidate interface. Command: `AI_DRAWING_TEST_ROOT="$PAPERCLIP_SCRATCH_DIR/r1-sensitivity" "$QUAL_PY" -m pytest -c pytest.ini -q --timeout=60 'backend/tests/test_resource_record_held_secrets.py::test_acquisition_held_key_signed_urls_transport_absent_every_phase[apostrophe-query]'`.
+Result: **1 failed**, exit 1, on `SIGNED_DOWNLOAD` in committed columns. Candidate
+bytes were restored in `finally`; `git diff --exit-code HEAD -- backend mcp-server`
+passed before the final combined run. Prior D1/D3/D4 sensitivity results remain
+attributed to round 1; no repeated fault catalog or full suite was run.
 
-```python
-import json
-from tests.conftest import client, isolated_database, isolated_worker_admission
-from tests.test_resource_record_writers import boundary, acquire_http
-from app.db import database
-from app.db.models import DownloadedResource
-
-def test_provider_signed_query_with_apostrophe_is_absent_from_storage(boundary):
-    b = boundary
-    b.file['downloadUrl'] = "https://civitai.com/api/download/models/21?filename=O'Reilly.safetensors&X-Amz-Signature=SIGNED_DOWNLOAD"
-    response = acquire_http(b)
-    assert response.status_code == 202, response.text
-    rid = response.json()['resource']['acquisition_id']
-    with database.SessionLocal() as db:
-        row = db.get(DownloadedResource, rid)
-        stored = {c.name: getattr(row, c.name) for c in row.__table__.columns}
-        assert 'SIGNED_DOWNLOAD' not in json.dumps(stored, default=str)
-```
-
-Command: `AI_DRAWING_TEST_ROOT="$PAPERCLIP_SCRATCH_DIR/url-query-final" "$QUAL_PY" -m pytest -c pytest.ini -q --timeout=60 "$PAPERCLIP_SCRATCH_DIR/test_url_query.py"`.
-Result: **1 failed** on the signature assertion. Same command from an archived
-starting-source checkout, with a separate test root: **1 passed**.
-Correction should strip the whole received URL query before storage and add this
-case to the real-caller D2 test in `test_resource_record_held_secrets.py`; retain the
-bounded URL policy, without introducing credential-label recognition. That guard
-is currently absent. QA made no product repair.
-
-## Done-when assessment
-
-| Item | Level | Observed boundary and result |
-|---|---|---|
-| D1 | P1 | Registered list/detail/OpenAPI tests, rich/malformed metadata, recommendation/license/diagnostic bounds, filters, pagination, 404/422: pass. Public evidence removed, canonical URL rebuilt. |
-| D2 | P1 | Delivered real-caller raw/encoded configured-key, signed-URL and transport tests pass; R1 independently demonstrates a signed-query storage regression. **FAIL.** |
-| D3 | P2 | Real old-schema startup/backfill, exact legacy columns/notes/files, repeated idempotence and denied-write reads: pass. Internal acquisition state remains readable. |
-| D4 | P2 | Named recognizer code and eight specified test files absent; every deleted function is listed in manifest. Retained partial-module feature cases remain. Final Backend/MCP suites pass with the skips below. |
+No new blocking finding in the correction. Whole locator parsing and embedded URL
+handling remove userinfo/query/fragment while retaining surrounding creator text.
+Raw/URL-encoded configured-key replacement, exact transport keys, non-finite values,
+public credential-looking prose, typed projection and internal state checks pass.
 
 ## Commands and results
 
-`QUAL_PY="$PAPERCLIP_SCRATCH_DIR/qualification-venv/bin/python"` is Python 3.11.15,
-with existing Backend packages, MCP 1.26.0 and pytest-timeout 2.4.0. Shared environments
-were not changed. `AI_DRAWING_TEST_SITES` points to the Backend's existing Python
-3.11 site-packages for guarded `-I -S` fixture children. All state is below run scratch.
+Run-owned Python 3.11.15 uses the existing Backend package versions plus MCP 1.26.0
+and pytest-timeout 2.4.0; shared environments are unchanged. `QUAL_PY` is
+`$PAPERCLIP_SCRATCH_DIR/qualification-venv/bin/python`; export `MCP_TEST_PYTHON="$QUAL_PY"`
+and `AI_DRAWING_TEST_SITES="$PAPERCLIP_SCRATCH_DIR/qualification-venv/lib/python3.11/site-packages"`.
+One pytest invocation selects the manifest's 27 retained REGISTRY modules, unioned
+with its 15 affected modules and the independent reproduction (35 unique modules):
 
-- Backend: `AI_DRAWING_TEST_ROOT="$PAPERCLIP_SCRATCH_DIR/backend-qualified" MCP_TEST_PYTHON="$QUAL_PY" "$QUAL_PY" -m pytest -c pytest.ini backend/tests -q --timeout=60` — **2340 passed, 125 skipped**, exit 0, 61.94 s.
-- MCP: `AI_DRAWING_TEST_ROOT="$PAPERCLIP_SCRATCH_DIR/mcp-full" MCP_TEST_PYTHON="$QUAL_PY" "$QUAL_PY" -m pytest -c pytest.ini mcp-server/tests -q --timeout=60` — **672 passed, 4 skipped**, exit 0, 66.34 s.
-- Frontend: with `AI_DRAWING_TEST_ROOT`, `AI_DRAWING_TEST_SITES`, `BACKEND_TEST_PYTHON="$QUAL_PY"`, worktree-local `AI_DRAWING_VITE_CACHE`, `cd frontend && npm test` — **226 passed, 1 skipped**; `npm run build` — exit 0.
-- Setup attempts are not product failures: initial Backend run had 2338 pass / 125 skip and two child-import failures (`sqlalchemy` absent under `-S`); explicit sites fixed them (2 passed), then final qualification above passed. Initial frontend attempts lacked its interpreter/test-root settings; the configured run above passed. No source was changed to resolve these.
-- Backend skips: 124 Windows-only and one documented pre-existing immediate-install-deadline diagnostic case linked to p2-04. MCP's four and frontend's one are existing optional skips. Windows was not run.
+```python
+import ast, os, re, subprocess
+from pathlib import Path
+files = set()
+for row in Path('docs/tasks/REGISTRY.md').read_text().splitlines():
+    if not row.startswith('| ') or re.match(r'\| p2-02-resource-record/[S-Z][1-5] \|', row):
+        continue
+    for name in re.findall(r'(?:backend|mcp-server|docs)/[\w./-]+\.py', row):
+        p = Path(name)
+        if p.is_file() and any(isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith('test_') for n in ast.walk(ast.parse(p.read_text()))):
+            files.add(name)
+files.update(str(p) for p in Path('backend/tests').glob('test_resource_record*.py'))
+files.update('backend/tests/'+n+'.py' for n in ('test_civitai_acquisition','test_civitai_provider','test_civitai_resource_install_api','test_civitai_easy','test_civitai_admission_deadline','test_civitai_safe_download'))
+os.environ['AI_DRAWING_TEST_ROOT'] = os.environ['PAPERCLIP_SCRATCH_DIR']+'/combined-review2'
+subprocess.run([os.environ['QUAL_PY'], '-m', 'pytest', '-c', 'pytest.ini', '-q', '-ra', '--timeout=60', '--junitxml='+os.environ['PAPERCLIP_SCRATCH_DIR']+'/review2.xml', *sorted(files), os.environ['PAPERCLIP_SCRATCH_DIR']+'/test_review2_query.py'], check=True)
+```
 
-One smallest production fault per test item was applied sequentially, followed by
-byte restoration. Related tests only, never a full suite per fault:
+Result: **1071 passed, 3 skipped, 7 existing warnings**, exit 0, 77.39 s.
+JUnit subsets: affected **436 passed / 1 skipped**; REGISTRY **877 passed / 3 skipped**;
+independent R1 **1 passed**. Subsets overlap; they are not additive.
+Scratch reproduction uses the unchanged round-1 reproduction with the exact-locator
+assertion above. Raw logs, JUnit and helpers remain disposable run scratch only.
+Suite-directory rows reuse earlier qualification; historical non-test fault/artifact
+packagers were inspected, not executed. No new full Backend/MCP/Frontend run.
 
-| Item | Temporary production fault | Test selector | Result |
-|---|---|---|---|
-| D1 | Steps maximum 150 → 151 in `resource_public_metadata.py` | `backend/tests/test_resource_record_allowlist.py::test_registered_recommendation_bounds[steps-151-150]` | 1 failed |
-| D2 | Remove encoded variants from exact-secret replacements in `civitai_acquisition.py` | `backend/tests/test_resource_record_held_secrets.py::test_acquisition_held_key_signed_urls_transport_absent_every_phase` | 1 failed |
-| D3 | Clear retained notes during backfill | `backend/tests/test_resource_record_migration.py` | 1 failed |
-| D4 | Reintroduce a Bearer free-text recognizer in `safe_evidence` | `backend/tests/test_resource_record_held_secrets.py::test_shared_filter_only_urls_exact_transport_keys_and_held_secrets` | 1 failed |
+The sole new quarantine is `review-3-evidence/deadline_checks.py::test_real_callers_return_before_held_owner_releases[-0.01-install]`
+under p2-03. Its reason names `docs/tasks/p2-04-durable-download-jobs/task.md` for fix
+and re-enable. Independent baseline reproduction is in unchanged round 1. Assertions
+are unchanged; **all five other parameters pass**. Its p2-03 D4/E1/E2/E3 feature rows
+remain active. Other skips: inherited Backend immediate-deadline case (same task)
+and existing optional MCP lifecycle-export case. No new p2-04 product change.
 
-Each command was `AI_DRAWING_TEST_ROOT=<separate scratch root> "$QUAL_PY" -m pytest -c pytest.ini -q --timeout=60 <selector>`.
-Restored selectors in one invocation: **4 passed**. `git diff --exit-code HEAD -- backend mcp-server`
-passed after restoration. Deletion-manifest inspection found eight deleted files and
-zero omitted test-function names. No new recognizer class, recipe, MCP, UI or p2-04
-product change is made by QA.
+Earlier complete independent qualifications belong **only to rejected `8d5f29686555119b1cbcc934cbb38af9d6edaafc`**,
+reported by [QA AID-220](/AID/issues/AID-220) at `35976f6f183336e67a923df55c15ad2883435928`:
+Backend **2340 passed / 125 skipped**, MCP **672 / 4**, Frontend **226 / 1**, build exit 0.
+This bounded correction PASS reuses that attributed evidence under the settled rule;
+it does not relabel those full-suite runs as qualification of the corrected SHA.
 
-## Standing guards and supersession
+## Coverage
 
-One REGISTRY pytest invocation ran 27 unique test modules: existing modules
-referenced by retained items and the behavioral deadline module referenced by
-historical fault runners: **877 passed, 1 failed, 2 skipped**, 76.59 s. Suite-directory rows are
-covered by the full qualifications above; historical non-test fault/artifact
-packagers were inspected, not executed. No evidence inventories/bundles were made.
-The module selection was the REGISTRY's `backend/`, `mcp-server/` and `docs/` Python
-paths containing test functions, excluding the approved obsolete S–Z families;
-`docs/tasks/p2-03-bounded-download/review-3-evidence/deadline_checks.py` was added
-because the historical fault runner references its behavioral tests.
+| item | level | guarding_test | status |
+|------|-------|---------------|--------|
+| D1 | P1 | backend/tests/test_resource_record_allowlist.py; backend/tests/test_resource_record_reads.py | active |
+| D2 | P1 | backend/tests/test_resource_record_held_secrets.py; backend/tests/test_resource_record_writers.py | active |
+| D3 | P2 | backend/tests/test_resource_record_migration.py; backend/tests/test_resource_record_reads.py; backend/tests/test_resource_record_acquisition_notes.py; backend/tests/test_resource_record_ledger_projection.py | active |
+| D4 | P2 | backend/tests/test_resource_record_held_secrets.py; backend/tests/test_resource_records.py (bounded correction; inherited full suites attributed above) | active |
+| p2-02-resource-record/S1 | P1 | — | superseded |
+| p2-02-resource-record/S2 | P1 | — | superseded |
+| p2-02-resource-record/S3 | P1 | — | superseded |
+| p2-02-resource-record/S4 | P1 | — | superseded |
+| p2-02-resource-record/S5 | P1 | — | superseded |
+| p2-02-resource-record/T1 | P1 | — | superseded |
+| p2-02-resource-record/T2 | P1 | — | superseded |
+| p2-02-resource-record/T3 | P1 | — | superseded |
+| p2-02-resource-record/T4 | P1 | — | superseded |
+| p2-02-resource-record/T5 | P1 | — | superseded |
+| p2-02-resource-record/U1 | P1 | — | superseded |
+| p2-02-resource-record/U2 | P1 | — | superseded |
+| p2-02-resource-record/U3 | P1 | — | superseded |
+| p2-02-resource-record/U4 | P1 | — | superseded |
+| p2-02-resource-record/U5 | P1 | — | superseded |
+| p2-02-resource-record/V1 | P1 | — | superseded |
+| p2-02-resource-record/V2 | P1 | — | superseded |
+| p2-02-resource-record/V3 | P1 | — | superseded |
+| p2-02-resource-record/V4 | P1 | — | superseded |
+| p2-02-resource-record/V5 | P1 | — | superseded |
+| p2-02-resource-record/W1 | P1 | — | superseded |
+| p2-02-resource-record/W2 | P1 | — | superseded |
+| p2-02-resource-record/W3 | P1 | — | superseded |
+| p2-02-resource-record/W4 | P1 | — | superseded |
+| p2-02-resource-record/W5 | P1 | — | superseded |
+| p2-02-resource-record/X1 | P1 | — | superseded |
+| p2-02-resource-record/X2 | P1 | — | superseded |
+| p2-02-resource-record/X3 | P1 | — | superseded |
+| p2-02-resource-record/X4 | P1 | — | superseded |
+| p2-02-resource-record/X5 | P1 | — | superseded |
+| p2-02-resource-record/Y1 | P1 | — | superseded |
+| p2-02-resource-record/Y2 | P1 | — | superseded |
+| p2-02-resource-record/Y3 | P1 | — | superseded |
+| p2-02-resource-record/Y4 | P1 | — | superseded |
+| p2-02-resource-record/Y5 | P1 | — | superseded |
+| p2-02-resource-record/Z1 | P1 | — | superseded |
+| p2-02-resource-record/Z2 | P1 | — | superseded |
+| p2-02-resource-record/Z3 | P1 | — | superseded |
+| p2-02-resource-record/Z4 | P1 | — | superseded |
+| p2-02-resource-record/Z5 | P1 | — | superseded |
 
-The failing guard is
-`docs/tasks/p2-03-bounded-download/review-3-evidence/deadline_checks.py::test_real_callers_return_before_held_owner_releases[-0.01-install]`:
-`KeyError: resource_id`. One independent run on starting source reproduces **1 failed**
-with the same error; the install production file is unchanged. The caller returns
-within budget and preserves files/owner; its immediate-expiry diagnostic lacks the
-resource ID. This is the manifest's known p2-04 limitation, not a new p2-02a finding.
-It remains active and was not hidden, superseded or weakened by QA. Producer owns
-its handling with the separate p2-04 work.
+## Notes and disposition
 
-Owner-approved recognizer-only supersession scope: `p2-02-resource-record/S1–S5`,
-`T1–T5`, `U1–U5`, `V1–V5`, `W1–W5`, `X1–X5`, `Y1–Y5`, `Z1–Z5` (40 items).
-Their retained preservation/identity/error behavior is still exercised by C1–C5,
-D1–D5 and this task's D3 tests. No other guard is approved for supersession.
-`build_registry.py` was rerun: exit 0, 87 active, no structural problems. It derives
-certifications/supersessions only from PASS reports, so this rejected candidate
-cannot retire those 40 standing rows yet; apply them in the corrected PASS review.
-Historical review files and acceptance/rejection counts are untouched.
-
-## Disposition and limits
-
-This is p2-02a's **first rejected delivery** (one P1 finding). Producer owns the
-correction/acceptance decision. Counts carry across cards/runs; after a second
-rejection a further same-class finding is AMBIGUITY; three total rejections stop
-for CTY before another correction. No gate, ROADMAP threshold or owner-library edit.
-
-Offline tests: as above. Running service: not deployed or probed. Real generation:
-not run. Artifact retrieval: synthetic fixture files only; no live model/Gallery
-retrieval. No owner key, live database, models, outputs or Gallery records were used.
-No product PASS, acceptance, main merge or Phase 2 exit is implied.
+Only the 40 approved recognizer meanings are superseded. Retained p2-02 C1–C5 and
+D1–D5 remain active; D3 above also guards old-note/column/file preservation, read-only
+projection and idempotent migration, including retained meanings of S4/V4/W4/X4/Y4/Z4.
+Eight deleted modules and all **58** deleted test-function names match the manifest;
+named recognizer identifiers are absent. No owner-library edit or product repair.
+Registry command: `python3 <reviewspec-review>/scripts/build_registry.py` — exit 0,
+**51 active, 40 superseded**, no structural problems (87 - 40 + 4).
+Unchanged round-1 report, cleared task/kickoff/handoff, historical p2-02/p2-03 acceptance
+and ROADMAP were checked byte-for-byte against the assigned rewritten main.
+Rejections remain **1** across all cards/runs; this PASS adds none. Thresholds remain
+verbatim: after rejection 2 another same-class finding is AMBIGUITY; at 3 stop for
+CTY before another correction. Producer owns acceptance, integration and continuation.
+Offline tests: above. Running service: not deployed/probed. Real generation: not run.
+Artifact retrieval: synthetic fixtures only; no live model/Gallery retrieval. Windows
+was not run. No main merge, deployment, artistic verdict or phase exit is implied.

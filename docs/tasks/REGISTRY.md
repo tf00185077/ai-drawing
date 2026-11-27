@@ -39,46 +39,10 @@
 | p2-02-resource-record/D3 | P1 | backend/tests/test_resource_record_migration.py | docs/tasks/p2-02-resource-record/review.md |
 | p2-02-resource-record/D4 | P1 | backend/tests/test_resource_record_reads.py | docs/tasks/p2-02-resource-record/review.md |
 | p2-02-resource-record/D5 | P1 | backend/tests/test_resource_records.py; backend/tests/test_resource_record_writers.py; backend/tests/test_resource_record_migration.py; backend/tests/test_resource_record_reads.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/S1 | P1 | backend/tests/test_resource_record_credential_values.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/S2 | P1 | backend/tests/test_resource_record_credential_values.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/S3 | P1 | backend/tests/test_resource_record_credential_values.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/S4 | P1 | backend/tests/test_resource_record_corrections.py; backend/tests/test_resource_record_migration.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/S5 | P1 | backend/tests/test_resource_record_credential_values.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/T1 | P1 | backend/tests/test_resource_record_credential_labels.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/T2 | P1 | backend/tests/test_resource_record_credential_labels.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/T3 | P1 | backend/tests/test_resource_record_credential_labels.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/T4 | P1 | backend/tests/test_resource_record_credential_labels.py; backend/tests/test_resource_record_migration.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/T5 | P1 | backend/tests/test_resource_record_credential_labels.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/U1 | P1 | backend/tests/test_resource_record_quoted_labels.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/U2 | P1 | backend/tests/test_resource_record_quoted_labels.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/U3 | P1 | backend/tests/test_resource_record_quoted_labels.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/U4 | P1 | backend/tests/test_resource_record_quoted_labels.py; backend/tests/test_resource_record_terminal_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/U5 | P1 | backend/tests/test_resource_record_quoted_labels.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/V1 | P1 | backend/tests/test_resource_record_terminal_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/V2 | P1 | backend/tests/test_resource_record_terminal_escapes.py; backend/tests/test_resource_record_corrections.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/V3 | P1 | backend/tests/test_resource_record_terminal_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/V4 | P1 | backend/tests/test_resource_record_terminal_escapes.py; backend/tests/test_resource_record_migration.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/V5 | P1 | backend/tests/test_resource_record_terminal_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/W1 | P1 | backend/tests/test_resource_record_serialized_assignments.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/W2 | P1 | backend/tests/test_resource_record_serialized_assignments.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/W3 | P1 | backend/tests/test_resource_record_serialized_assignments.py; backend/tests/test_resource_record_quote_contexts.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/W4 | P1 | backend/tests/test_resource_record_serialized_assignments.py; backend/tests/test_resource_record_terminal_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/W5 | P1 | backend/tests/test_resource_record_serialized_assignments.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/X1 | P1 | backend/tests/test_resource_record_quote_contexts.py; backend/tests/test_resource_record_quote_prefix_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/X2 | P1 | backend/tests/test_resource_record_quote_contexts.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/X3 | P1 | backend/tests/test_resource_record_quote_contexts.py; backend/tests/test_resource_record_quote_prefix_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/X4 | P1 | backend/tests/test_resource_record_quote_contexts.py; backend/tests/test_resource_record_quote_prefix_escapes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/X5 | P1 | backend/tests/test_resource_record_quote_contexts.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Y1 | P1 | backend/tests/test_resource_record_representation_contexts.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Y2 | P1 | backend/tests/test_resource_record_acquisition_notes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Y3 | P1 | backend/tests/test_resource_record_representation_contexts.py; backend/tests/test_resource_record_acquisition_notes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Y4 | P1 | backend/tests/test_resource_record_representation_contexts.py; backend/tests/test_resource_record_acquisition_notes.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Y5 | P1 | backend/tests/test_resource_record_representation_contexts.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Z1 | P1 | backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Z2 | P1 | backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Z3 | P1 | backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Z4 | P1 | backend/tests/test_resource_record_ledger_projection.py; backend/tests/test_resource_record_migration.py | docs/tasks/p2-02-resource-record/review.md |
-| p2-02-resource-record/Z5 | P1 | backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02-resource-record/review.md |
+| p2-02a-allowlist-projection/D1 | P1 | backend/tests/test_resource_record_allowlist.py; backend/tests/test_resource_record_reads.py | docs/tasks/p2-02a-allowlist-projection/review.md |
+| p2-02a-allowlist-projection/D2 | P1 | backend/tests/test_resource_record_held_secrets.py; backend/tests/test_resource_record_writers.py | docs/tasks/p2-02a-allowlist-projection/review.md |
+| p2-02a-allowlist-projection/D3 | P2 | backend/tests/test_resource_record_migration.py; backend/tests/test_resource_record_reads.py; backend/tests/test_resource_record_acquisition_notes.py; backend/tests/test_resource_record_ledger_projection.py | docs/tasks/p2-02a-allowlist-projection/review.md |
+| p2-02a-allowlist-projection/D4 | P2 | backend/tests/test_resource_record_held_secrets.py; backend/tests/test_resource_records.py (bounded correction; inherited full suites attributed above) | docs/tasks/p2-02a-allowlist-projection/review.md |
 | p2-03-bounded-download/C1 | P1 | docs/tasks/p2-03-bounded-download/review-2-evidence/independent_checks.py::test_committed_adoption_reports_actual_current_reason_and_keeps_history; backend/tests/test_civitai_download_correction.py | docs/tasks/p2-03-bounded-download/review.md |
 | p2-03-bounded-download/C2 | P1 | docs/tasks/p2-03-bounded-download/review-2-evidence/independent_checks.py; backend/tests/test_civitai_download_correction.py | docs/tasks/p2-03-bounded-download/review.md |
 | p2-03-bounded-download/C3 | P1 | docs/tasks/p2-03-bounded-download/review-evidence/independent_checks.py; backend/tests/test_civitai_download_callers.py; backend/tests/test_civitai_provider.py | docs/tasks/p2-03-bounded-download/review.md |
@@ -95,5 +59,50 @@
 | p2-03-bounded-download/E4 | P1 | docs/tasks/p2-03-bounded-download/review-3-evidence/independent_faults.py; docs/tasks/p2-03-bounded-download/review-3-evidence/supplemental_deadline_fault.py | docs/tasks/p2-03-bounded-download/review.md |
 | p2-03-bounded-download/E5 | P1 | docs/tasks/p2-03-bounded-download/review-3-evidence/independent_faults.py; backend/tests and mcp-server/tests with --timeout=60; docs/tasks/p2-03-bounded-download/review-3-evidence/artifact_checks.py | docs/tasks/p2-03-bounded-download/review.md |
 
-**Active items: 87.** Review confirms each still has a passing test; a lost or failing guarding test is a regression, unless the owner changed that behavior (superseded).
+**Active items: 51.** Review confirms each still has a passing test; a lost or failing guarding test is a regression, unless the owner changed that behavior (superseded).
+
+## Superseded items
+
+| key | level | review |
+|-----|------|--------|
+| p2-02-resource-record/S1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/S2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/S3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/S4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/S5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/T1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/T2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/T3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/T4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/T5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/U1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/U2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/U3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/U4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/U5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/V1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/V2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/V3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/V4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/V5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/W1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/W2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/W3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/W4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/W5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/X1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/X2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/X3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/X4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/X5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Y1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Y2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Y3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Y4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Y5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Z1 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Z2 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Z3 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Z4 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
+| p2-02-resource-record/Z5 | P1 | docs/tasks/p2-02-resource-record/review.md (superseded by docs/tasks/p2-02a-allowlist-projection/review.md) |
 
