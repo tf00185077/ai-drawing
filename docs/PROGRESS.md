@@ -24,28 +24,34 @@ was removed on 2026-11-27 and remains in Git history.
 | [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `24dad88` | 1 | Backend reads the private key file; credentials only on the final request |
 | [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
 | [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
-| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | 1 | [Review 1 FAIL](tasks/p2-02a-allowlist-projection/review-round-1.md), candidate `8d5f2968` unmerged: received signed-URL query survives an apostrophe. [Correction 1 handoff](tasks/p2-02a-allowlist-projection/implementation-handoff.md); native Coding → QA continuation under [AID-217](/AID/issues/AID-217). No product acceptance |
+| [p2-02a](tasks/p2-02a-allowlist-projection/acceptance.md) | 11-27 | `3e70e04c` | 1 | Typed public allowlist and held-secret filtering; apostrophe-query correction accepted after independent review 2 PASS; merged `1bbeb166`, 51 active / 40 superseded REGISTRY items |
 | [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Original kickoff/handoff withdrawn; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; revised spec needs fresh kickoff after p2-02a acceptance |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
 free-text credential recognition and evidence packaging. The
 [2026-11-27 reassessment](decisions/verification-scope.md) replaces that with a typed
-allowlist (next task p2-02a) and capped evidence.
+allowlist (accepted p2-02a) and capped evidence.
 
 The [fresh owner continuation](requests/2026-11-27-fresh-producer-continuation.md)
 preserves the three-rejection owner stop gate and delegates ordinary recommendations.
 [Producer AID-217](/AID/issues/AID-217) read the actual first delivery FAIL and
-checked the reported URL-filter mechanism. The original task stays unchanged;
-correction 1 removes the complete received query and adds the real-caller guard.
-Only the known pre-existing immediate-install-deadline test parameter is quarantined
-with a p2-04 link under AGENTS; its product fix stays with p2-04. Other deadline
-guards remain. New cards carry the same one-rejection count.
+then independent [review 2 PASS](tasks/p2-02a-allowlist-projection/review.md) for
+`3e70e04c5bb8fb104bcf0324d19d99629741cd4c`. Producer integrated the exact candidate
+and QA report at `1bbeb166020a70c5f47997e55b063ce84d1a383c`; both changed-path diffs
+exit 0. The original task and first rejection remain unchanged. Complete received
+query removal now has a real-caller guard. The two known immediate-expiry install
+quarantines retain their p2-04 fix/re-enable links; all other deadline guards remain.
+The accepted task retains one rejection across all cards/runs. Routine continuation
+adopted: fresh revised p2-04 kickoff next; old kickoff CLEAR is superseded.
 
 Independent results on the rejected candidate: Backend 2340 passed / 125 skipped,
 MCP 672 / 4, frontend 226 / 1 and build passed; the additional R1 reproduction
 failed. Standing guards were 877 passed / 1 baseline p2-04 failure / 2 skipped.
-These are branch results, not main qualification or acceptance. No running-service,
-real-generation or live model/Gallery artifact-retrieval result was added.
+These full runs remain attributed to the rejected branch. Corrected candidate QA
+ran one bounded invocation: **1071 passed / 3 skipped**, exit 0; overlapping affected
+436 / 1, REGISTRY 877 / 3, independent R1 1 passed. No repeated full suites or
+relabelling of their source. No running-service, real-generation or live model/Gallery
+artifact-retrieval result was added. Accepted p2-02 and p2-03 histories are unchanged.
 
 ## Phase 0 — Clean foundation (done 2026-11-24)
 
@@ -79,7 +85,7 @@ real-generation or live model/Gallery artifact-retrieval result was added.
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 
 Accepted so far: real First check (p2-00), private key file (p2-01), Backend
-resource record (p2-02) and bounded downloads (p2-03). Nothing agent-facing is new
+resource record (p2-02), bounded downloads (p2-03) and allowlist projection (p2-02a). Nothing agent-facing is new
 yet: search, MCP record/reuse, workflow selection and defaults are still open.
 
 | Capability | Status | Code | Tests | Real run |
@@ -89,6 +95,7 @@ yet: search, MCP record/reuse, workflow selection and defaults are still open.
 | Backend private key-file and bounded credential-safe retained provider paths | Done, p2-01 accepted | `services/civitai_provider.py` and retained callers | Exact review 2 D1–D5 PASS; fresh full/fault/registered-path proof | Read-only source HEAD auth comparison; no runtime deployment |
 | Civitai model search by text, type and base model (MCP) | Not started | — | — | — |
 | Resource row, typed metadata/mapping and bounded Backend reads | Done, p2-02 accepted; new MCP/unknown-local hash lookup pending | `services/resource_records.py`, `api/resources.py`, compatible writers | Exact review10 D–Z PASS, full suites and fault-sensitive guards | Offline fixtures only |
+| Typed public resource projection and exact held-secret filtering | Done, p2-02a accepted | `services/resource_public_metadata.py`, `services/resource_records.py`, `schemas/resources.py` | Independent review 2: 1071 passed / 3 skipped; source and limits in acceptance | Offline fixtures only |
 | Workflow selection from chosen resources | Partial (manifest match exists) | `core/workflow_manifest.py`, `api/workflow_catalog.py` | `test_workflow_match.py` | No |
 | End-to-end one-sentence run | Not started | — | — | — |
 

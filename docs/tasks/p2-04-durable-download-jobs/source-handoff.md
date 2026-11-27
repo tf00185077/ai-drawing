@@ -8,6 +8,30 @@ identifier is sufficient for the revised restart contract, and source identity i
 the Git SHA without inventories. A fresh kickoff follows p2-02a acceptance. Do not
 resume the old native Coding assignment from this discovery note.
 
+## Current starting inputs — after p2-02a acceptance
+
+[p2-02a acceptance](../p2-02a-allowlist-projection/acceptance.md) integrates corrected
+candidate `3e70e04c5bb8fb104bcf0324d19d99629741cd4c`, independently PASS at
+`28df4bcf165f2cfd2136a00b0e1b46fd77267175`. Use its shared public projection and
+held-value/locator filtering; no credential recognizer or new filter framework.
+
+Two pre-existing immediate-expiry install cases are quarantined with this task as
+their fix/re-enable owner. Preserve their same-ID diagnostic and bounded contention
+requirements while completing the revised lifecycle integration; fix the missing
+`resource_id` diagnostic and remove both skips before delivery:
+
+- `backend/tests/test_civitai_admission_deadline.py::test_registered_contender_times_out_before_original_owner_releases[-0.01-install]`
+- `docs/tasks/p2-03-bounded-download/review-3-evidence/deadline_checks.py::test_real_callers_return_before_held_owner_releases[-0.01-install]`
+
+The baseline finding and exact quarantine approval are preserved in p2-02a's
+[first review](../p2-02a-allowlist-projection/review-round-1.md) and
+[correction handoff](../p2-02a-allowlist-projection/implementation-handoff.md).
+All other deadline parameters and p2-03 feature/REGISTRY rows stay active. These
+are retained compatibility obligations, not a new p2-04 Done-when item or a p2-02a
+rejection. Fresh kickoff checks this input against the revised task and current WIP.
+
+## Historical discovery
+
 Fixed accepted product inputs: p2-03 Coding0508ac43, independent PASS1e69e9c6;
 full hashes, freeze, evidence and limits are in [acceptance](../p2-03-bounded-download/acceptance.md).
 Fresh kickoff pins the actual published full source/tree and task hash from its
