@@ -113,6 +113,6 @@ added in that form. Pruning it is a separate owner decision.
 
 ### 2026-11-27 · History rewritten to drop removed evidence and research data
 
-- Decision: owner-approved rewrite of `main` that removes the deleted per-round evidence under `docs/tasks` and the Phase 0 `experiments/`, `research/`, `model_benchmarks/` data from every commit, followed by a force push and deletion of 15 stale remote branches. The pack size went from 76.7 MB to 8.6 MB; the final tree is unchanged.
+- Decision: owner-approved rewrite of `main` that removes the deleted per-round evidence under `docs/tasks` and the Phase 0 `experiments/`, `research/`, `model_benchmarks/` data from every commit, followed by a force push and deletion of 14 stale remote branches. The pack size went from 76.7 MB to 8.6 MB; the final tree is unchanged.
 - Effect: commit SHAs from 2026-07-02 on changed. Commit SHAs cited in docs were remapped to the new history; quoted tree hashes and SHAs inside commit messages still refer to the old history. Existing clones and worktrees must re-clone or reset to the new `main`.
 - Backup: a full bundle of the old history is kept outside the repo on the owner's Windows machine (`C:\tmp\ai-drawing-pre-rewrite-2026-11-27.bundle`).
