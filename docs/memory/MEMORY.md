@@ -17,3 +17,4 @@
 - [Worker PowerShell control](worker-powershell-control.md) — before running, updating or redeploying the Windows worker.
 - [Discord bot config and ledger](discord-bot-config-and-ledger.md) — before starting or reconfiguring the Discord bot.
 - [Paperclip question cards](native-interaction-card-lineage.md) — before asking CTY several questions in Paperclip.
+- [Paperclip handoff retirement](native-handoff-retirement.md) — before closing withdrawn cards that still have native prerequisites.
