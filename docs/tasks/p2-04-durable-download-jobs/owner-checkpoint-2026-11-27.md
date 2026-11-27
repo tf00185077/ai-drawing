@@ -7,8 +7,8 @@ This is an unfinished preservation snapshot requested directly by CTY, not an in
 ## Captured state
 
 - Cutoff: **2026-11-27 08:31:39 +08:00**.
-- Both source worktrees had HEAD `148d501557d7649f50be24440b856f5d327228de`.
-- Shared main: **14** modified memory documents, preserved exactly in commit `64a27eaf76dac6aa381170e5d7890b3bee22a213`.
+- Both source worktrees had HEAD `b35950fc647ef343516253c78fc762f7fb406754`.
+- Shared main: **14** modified memory documents, preserved exactly in commit `18c522066c4e095cc51d8f2bcc7cb26964664b2e`.
 - AID-215: **40** Git-visible changed/new files, including Backend models/startup/acquisition/install/status, a new download-operation service, MCP acquisition/status/wait changes, tests, the offline runner adjustment, the implementation plan and recorded diagnostic attempts.
 - The manifest pins all **54** captured bodies, sizes and modes. It describes captured inputs, not a complete independent QA delivery package. Ignored raw/runtime outputs are not silently certified or reconstructed.
 - Capture checked the selected path set, HEADs, bodies and modes twice before saving. Work continued in the original AID-215 worktree; it was neither reset nor checked out to this snapshot.

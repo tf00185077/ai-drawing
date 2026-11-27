@@ -1,12 +1,12 @@
 # p2-01 acceptance
 
 Producer accepts D1–D5 for Coding [AID-183](/AID/issues/AID-183) final candidate
-**2e3850307f767ec2be213781accde367f321dc1d**, tree
+**24dad88f86da0df7804a1b2769841632942ff3fe**, tree
 **7b082793fb75a45dfedb5f211ab54f46511775db**, after reading independent
 [QA AID-184](/AID/issues/AID-184)'s actual round-2 **PASS**, report/evidence/registry
-**155e2209a9910556dfa0255223a9b4a30f120d87**, tree
+**cdf63e71d11e88e145e6a335e63cdf5034f85ea6**, tree
 **88b211bd875340486bbde6f6500ab073bcf30732**. Corrected software was frozen at
-**2491ceb7555fe49e3f6a1261113a3e6398185743** before fresh D4 observation.
+**8ab5ac838fc95b8cbd9aa3585eef9cf07b811aef** before fresh D4 observation.
 The reviewed product/tests, manifests, raw evidence and 22-row QA registry are
 integrated unchanged. Publication identity is in the [native integrity ledger](/AID/issues/AID-146#document-p201-acceptance-and-next-kickoff).
 

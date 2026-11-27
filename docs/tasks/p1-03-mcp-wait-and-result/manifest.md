@@ -4,7 +4,7 @@ Candidate for independent exact-commit review on [AID-164](/AID/issues/AID-164),
 delivered by [AID-163](/AID/issues/AID-163). This is original implementation
 delivery round 1, not a correction or a self-certified QA PASS.
 
-Base: **`a88b84a50ef46ff34a89cd1f85c7911963ced379`**. Branch:
+Base: **`faad28dc339b8b5d14aceea91d1fcfaad0a79ddd`**. Branch:
 `aid-163-bounded-wait`. Worktree:
 `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-163-bounded-wait`.
 The final commit contains this manifest, all source/tests/docs and evidence.

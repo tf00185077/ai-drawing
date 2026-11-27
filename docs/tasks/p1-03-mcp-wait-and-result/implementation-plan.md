@@ -1,7 +1,7 @@
 # Bounded wait implementation plan
 
 Goal: deliver the cleared D1–D5 in [task.md](task.md), based on
-`a88b84a50ef46ff34a89cd1f85c7911963ced379`. Execution is authorized inline by
+`faad28dc339b8b5d14aceea91d1fcfaad0a79ddd`. Execution is authorized inline by
 AID-163; independent delivery QA is AID-164. No routine approval is pending.
 
 Architecture: one async read intent, real existing Backend HTTP readers, and

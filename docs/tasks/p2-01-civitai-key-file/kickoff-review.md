@@ -4,7 +4,7 @@ Verdict: CLEAR
 Review round: 1
 Issue: [AID-180](/AID/issues/AID-180)
 Producer: [AID-146](/AID/issues/AID-146)
-Fixed source: `316327d0992f4f6ebe5d912c3b5ef8d215deba81`
+Fixed source: `1cc4d8d53ee4cc9b2181f64a4b239c18c256092e`
 Fixed tree: `1b53d0cfe696e71d3f1ed1ca04a2b40559579b36`
 Task SHA-256: `bd291da2897099b84fd743dcd384ea7812105ec96e74ad7501d76c9d28784850`
 Date: 2026-11-26
@@ -132,7 +132,7 @@ settings, environments or p2-00 evidence were edited.
   this is not a whole-disk or loaded-runtime inventory.
 - Git object comparison confirms Backend application/tests/workflows, MCP
   implementation/tests, frontend and the registry are identical to accepted
-  First check QA `9caf92fefac6f30255bac528e3f4292f2c1bddf6`. Its recorded Backend
+  First check QA `cec8087e2812ef29fdd0f4bdd70223deb796e9c0`. Its recorded Backend
   1,916 passed/124 skipped, MCP 666/four skipped, separate PNG six passed and
   frontend 226/one skipped/build results are historical context on unchanged
   product trees. They are not fresh p2-01 tests or proof of a new file reader.

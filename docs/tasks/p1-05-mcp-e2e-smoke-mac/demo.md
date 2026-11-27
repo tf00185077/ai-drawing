@@ -1,9 +1,9 @@
 # p1-05 reviewed Mac demo — awaiting CTY
 
 **Decision pending.** Independent [QA AID-175](/AID/issues/AID-175) passes D1–D3
-for candidate **91d6e3790ecbb258b1a079395a1156912d090b62** (software freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**).
+for candidate **411544f36f54627258bd076f501e40ddb9d33f97** (software freeze **76452a6134c8d1ec16aabcb51ccc88da49b754a8**).
 [Actual independent report](/api/attachments/acdf3498-3dc7-427d-9327-f591bca9cbfe/content),
-report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**; [actual Coding manifest](/api/attachments/505ea4b5-d718-4792-a384-053de085f25d/content).
+report/evidence **8389445197a8c26e1ae8ff2099d4b6b386821876**; [actual Coding manifest](/api/attachments/505ea4b5-d718-4792-a384-053de085f25d/content).
 D4 stays **unchecked, awaiting CTY's explicit project-channel reply to this demo**.
 The feature is not merged/pushed; Phase 1 is not closed and Phase 2 is inactive.
 

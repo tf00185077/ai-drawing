@@ -7,13 +7,13 @@ Coding: [AID-205](/AID/issues/AID-205)
 Producer: [AID-146](/AID/issues/AID-146)
 Date: 2026-11-27
 
-Reviewed ACTUAL NEW FINAL: **c705d211f64497df7190120d46f94d94b785d24b**.
+Reviewed ACTUAL NEW FINAL: **211208ad2e0667ba9524a8c3c4395a4c4d5f71a7**.
 
 Reviewed tree: **6881bfab08490ae6f1d9134cc9cb9bd7315b44f0**.
 
-Coding product/tests/feature-replay/topic freeze: **1edcf82555431e42443bce53651d03dad9890b23**.
+Coding product/tests/feature-replay/topic freeze: **211208ad2e0667ba9524a8c3c4395a4c4d5f71a7**.
 
-Fixed implementation base: **b58b6d2cd82a9b72b7c1d536c563e6052f38bef9**.
+Fixed implementation base: **d9a923928b74a26b43f8e018b116623141f9ded2**.
 
 I read the actual official correction9 manifest, verified 21,625 bytes and SHA256 `c81b20c1c79f4c54c4ee5e0f82b4072c942b2d0cf570eeced59283b83328e3c5` against FINAL, and pinned full FINAL/tree on my own card before substantive review. Pin receipt. Neither the freeze ancestor nor a moving directory is the target. Own report commit/tree and official access follow the report commit on AID-206, avoiding circular hashes.
 
@@ -25,7 +25,7 @@ No blocking finding. Original R1-R4 and checked R5 meanings pass at this exact s
 
 The independent probe adds 267 cases with Authorization/Proxy-Authorization/cookie, quoted labels, neighboring prose/escapes, supported units and once-serialized/bare forms. Real registered acquisition/background/provider/ORM, seeded old reads, raw resolution, variants, easy plans and mixed rows execute. It reuses real boundary/trace drivers with new inputs and adds a mixed-row filter/order/count/storage guard. Only external HTTP and deterministic scheduling substitute behavior; no fake DTO or detector-only proof.
 
-The initial and confirmation rejected-source replays each reproduce **eight feature failures/two useful controls**,104 observations/16 exposed ledger phases at exact c01730db. At reviewed FINAL, the immutable ten cases pass with 104 observations/zero exposures. The expanded Coding module passes 269 cases:12 acquisitions/156 observations and 192 old-row six-phase cases/1152 observations. Independent current probes add 24 acquisitions/312 observations,144 old-row cases/864 observations and mixed safe/affected rows. All collected acquisitions reach installed; full phases precede secrecy assertions. Phase audit.
+The initial and confirmation rejected-source replays each reproduce **eight feature failures/two useful controls**,104 observations/16 exposed ledger phases at exact 5810d17d. At reviewed FINAL, the immutable ten cases pass with 104 observations/zero exposures. The expanded Coding module passes 269 cases:12 acquisitions/156 observations and 192 old-row six-phase cases/1152 observations. Independent current probes add 24 acquisitions/312 observations,144 old-row cases/864 observations and mixed safe/affected rows. All collected acquisitions reach installed; full phases precede secrecy assertions. Phase audit.
 
 All original row columns, including AIR/path/metadata_json/notes/status/measured facts, are checked exact in finally even on adverse/mutant failure. Ordinary reads deny SQL writes/provider/publication/backfill/model-body effects. Safe IDs/AIRs/paths/hashes/triggers/license/state/count/order remain useful. Exact raw AIR filters and internal resolution consume original values; public normalization never becomes a locator or a storage repair.
 
@@ -134,7 +134,7 @@ Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees
 - `final-qa10-review8-notes`: 3 passed, 1 warning in 0.78s.
 - `final-qa10-review8-safe`: 12 passed, 1 warning in 0.77s.
 
-QA feature/replay helpers froze at **53f16b8d5fc1a4bb055f307bc700b1953721c11c** before qualification. Product/tests/Coding replay bodies never changed from reviewed FINAL. Later additions are reporting/registry/packaging only. Freeze/restoration receipt.
+QA feature/replay helpers froze at **211208ad2e0667ba9524a8c3c4395a4c4d5f71a7** before qualification. Product/tests/Coding replay bodies never changed from reviewed FINAL. Later additions are reporting/registry/packaging only. Freeze/restoration receipt.
 
 Six actual private/.env/non-scratchDB/model/write/DNS attempts deny before new tests without opening private inputs. Python/children are 3.11.15; the ignored venv references three existing dependency sites read-only, with no canonical install/repair. **88 runner records/190 ordinary guard receipts** have zero blocked events and pinned current/archive/child imports. Long suites use 60s per-test limits; description/progress features retain 3s. Nineteen fresh JSON exports and separate readers are preserved. Exact raw-gzip logs and readable hashes verify; readable normalization trims trailing whitespace only.
 
@@ -148,7 +148,7 @@ Before the report replaces review.md, **all 7773 candidate bodies** match FINAL 
 
 This run pins14 shared-main memory bodies/statuses and observes no external change at its preservation checks. It never edits/stages/stashes/resets/restores/copies shared memory. Prior13-body/external-change/fourteenth-path observations, Producer's separate14-body pin, Coding interruption/recovery/partial invocation, QA8 recovery and QA9 attachment422/three completed uploads/original verified parts remain distinct immutable history.
 
-Official Coding integrity independently verifies15 official uploads,7773 ordinary fingerprints/modes,505 indexed payloads/506 members/497 exact Git bodies. Nine official base parts combine73,923,914 bytes, SHA256 `64b40ff18959a9fabfd9a1d77ddb193013db091609223271fa4c76fb429fd68d`. Two fresh bare stores seed only independently downloaded official base bytes, write shallow boundary `b4e71d18ba4600ad7e053274b90b45ffdfbce87b` BEFORE fetch --update-shallow and use explicit base ref refs/heads/aid-204-exact-review. Bundle and independent aggregate/per-commit binary/full-index patch/raw-commit histories reproduce all three intermediate identities/trees and FINAL/tree, both fsck0, with no local/candidate seed or alternates. This is declared-shallow restoration, not pre-boundary backup. Git bundle/update-shallow/binary apply and Python standard library are explicit prerequisites. Own official report/evidence/index/bundle/patch/readback receipts follow this report commit on AID-206.
+Official Coding integrity independently verifies15 official uploads,7773 ordinary fingerprints/modes,505 indexed payloads/506 members/497 exact Git bodies. Nine official base parts combine73,923,914 bytes, SHA256 `64b40ff18959a9fabfd9a1d77ddb193013db091609223271fa4c76fb429fd68d`. Two fresh bare stores seed only independently downloaded official base bytes, write shallow boundary `65688d84904b4bae639caf8f1a8d1825f78304b8` BEFORE fetch --update-shallow and use explicit base ref refs/heads/aid-204-exact-review. Bundle and independent aggregate/per-commit binary/full-index patch/raw-commit histories reproduce all three intermediate identities/trees and FINAL/tree, both fsck0, with no local/candidate seed or alternates. This is declared-shallow restoration, not pre-boundary backup. Git bundle/update-shallow/binary apply and Python standard library are explicit prerequisites. Own official report/evidence/index/bundle/patch/readback receipts follow this report commit on AID-206.
 
 The attempt record preserves two QA-only setup mistakes: Settings-before-bootstrap collection error, then267 missing-client fixture errors after importing bootstrap without exposing fixtures. Original helper bodies/logs remain. Importing the actual client/autouse fixtures makes the same267 assertions/inputs pass; final confirmation also passes. Neither attempt is a product defect or fault sensitivity. An initial staged whitespace check flagged six Markdown hard-break lines in the report/generator; reporting-only formatting removed those spaces. The initial bodies remain in hash-indexed lossless gzip archives; both formatting-check attempts are recorded. No task-owned interruption or partial mutation occurred. All inherited Coding and QA failed/interrupted/publication attempts remain exact.
 

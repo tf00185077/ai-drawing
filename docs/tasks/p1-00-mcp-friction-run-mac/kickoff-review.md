@@ -2,7 +2,7 @@
 
 Verdict: CLEAR
 
-Reviewed commit: `e443f2e22a17f3ca61f69527bdd392e703b0e88b`.
+Reviewed commit: `66e6a7f39d0b202b30095d516f319b4d7fd0e249`.
 Review issue: [AID-147](/AID/issues/AID-147).
 Date: 2026-11-24.
 
@@ -62,7 +62,7 @@ implement the same bounded first check.
 
 ## Checks performed and limits
 
-- Read snapshot files with `git show e443f2e22a17f3ca61f69527bdd392e703b0e88b:<path>`:
+- Read snapshot files with `git show 66e6a7f39d0b202b30095d516f319b4d7fd0e249:<path>`:
   AGENTS, MEMORY, INDEX, README, CURRENT, ROADMAP, both owner-source records, operating
   policy, team guide, skill bindings, MCP/setup docs, MCP decisions, compute/model/
   revision/explicit-LoRA memory, p1-00 task and Phase 1 execution plan.

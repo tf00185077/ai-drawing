@@ -7,12 +7,12 @@ Coding correction: [AID-183](/AID/issues/AID-183)
 Producer: [AID-146](/AID/issues/AID-146)
 Date: 2026-11-26
 
-Reviewed final candidate: **2e3850307f767ec2be213781accde367f321dc1d**
+Reviewed final candidate: **24dad88f86da0df7804a1b2769841632942ff3fe**
 Reviewed tree: **7b082793fb75a45dfedb5f211ab54f46511775db**
-Corrected software freeze: **2491ceb7555fe49e3f6a1261113a3e6398185743**,
+Corrected software freeze: **8ab5ac838fc95b8cbd9aa3585eef9cf07b811aef**,
 tree **7bcadfb7b75568c7e5c7a2d12ad397f6040b422d**.
-Correction base: **301c5dee6f35d5bad9fa0fe51799b24c56f35a5e**;
-fixed specification supplement: **e2e6ee52022de188c003c0dcd056c649297d090c**.
+Correction base: **8609ba340026e69fb97e595edd7a9fad16d1e57a**;
+fixed specification supplement: **02e7cf0394c17c326765c4e42b51d2bf15af5ec1**.
 The final report/evidence commit and tree are recorded in the native post-commit
 receipt, avoiding a circular self-hash.
 

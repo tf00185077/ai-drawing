@@ -1,6 +1,6 @@
 # Health and configured worker implementation plan
 
-Implements the cleared [task](task.md) and configured-worker decision at fixed base b075f36c0eec532071e11328eb4f2b21b52e1c0f. Execution is inline; the existing native independent QA card reviews the final immutable commit. The assignment expressly authorizes execution without another confirmation.
+Implements the cleared [task](task.md) and configured-worker decision at fixed base b06e3109e0ef1740bb0f0ad920d1b7cbae64887c. Execution is inline; the existing native independent QA card reviews the final immutable commit. The assignment expressly authorizes execution without another confirmation.
 
 - [x] D2: Add real worker route/client tests first, then additive configuration/current observation fields in backend/app/api/workers.py. Keep discovery/cache/identity validation unchanged; take resolved_url only after the current health call succeeds.
 - [x] D1/D3: Add registered MCP HTTP transport tests and fresh Backend route exports; add tools/health.py, replace ping with health and list_workers in catalog, use HttpBackendClient and common envelopes. Validate Backend statuses, retain three health entries on all read failures and return a list error when configuration is unknown.

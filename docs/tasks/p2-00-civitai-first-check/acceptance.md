@@ -1,10 +1,10 @@
 # Accepted Phase 2 First check observation
 
 Producer [AID-146](/AID/issues/AID-146) accepts exact [Coding AID-178](/AID/issues/AID-178)
-`0d571b7d571561ebdea34c959ed6f16e2db06953` after actual independent [QA AID-179](/AID/issues/AID-179)
-D1–D5 observation **PASS**, report/evidence `9caf92fefac6f30255bac528e3f4292f2c1bddf6`.
+`a9de23389fb29ce4f6f8191184c9279670201abf` after actual independent [QA AID-179](/AID/issues/AID-179)
+D1–D5 observation **PASS**, report/evidence `cec8087e2812ef29fdd0f4bdd70223deb796e9c0`.
 Actual kickoff [AID-177](/AID/issues/AID-177) is round-1 **CLEAR** at unchanged brief
-`2d2a0b1`, report `4702a662a88bf5611dcee9c5da1964a21a41aa74`. No kickoff ambiguity,
+`0ccf65c`, report `4702a662a88bf5611dcee9c5da1964a21a41aa74`. No kickoff ambiguity,
 implementation rejection or repair is introduced by this evidence-only task.
 Original [manifest](manifest.md), [independent report](review.md), [ledger](friction-ledger.md)
 and raw evidence remain unchanged; their pending-acceptance wording is historical.

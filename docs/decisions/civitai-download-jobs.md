@@ -51,4 +51,4 @@ p2-04 behavior, runtime deployment or Phase2 acceptance.
 
 ## Kickoff application
 
-Kickoff 1 CLEAR (report `8622d261`) applied to the original spec. p2-04 is being respecified under [verification scope](verification-scope.md) and needs a fresh kickoff.
+Kickoff 1 CLEAR (report `c1d5ffc0`) applied to the original spec. p2-04 is being respecified under [verification scope](verification-scope.md) and needs a fresh kickoff.

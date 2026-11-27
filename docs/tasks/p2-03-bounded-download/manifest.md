@@ -10,11 +10,11 @@ PASS, accepted main, a feature push/merge, deployment or Phase2 exit.
 
 | Input | Identity |
 |---|---|
-| Fixed report-only QA base | `7b37b8c87e222eaadcb42d22286951c19e9e6ecc` |
+| Fixed report-only QA base | `20289afcf73e7010de737db7bee79c986e2de3c3` |
 | Base tree | `5042d00d491b7348071aa6dfb1ebcb02f0dcde3d` |
-| Authorized five-path supplement | `2624d13da93fbcbeb4d0a37bf4f80be0e3fa2d11` |
+| Authorized five-path supplement | `6fe1ced9c9199e2964843a22d9722d6c6f16d972` |
 | Unchanged task SHA-256 | `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0` |
-| Product/tests/helpers/topic freeze | `3209a712330b8beb948199dfeca75ae9f8f71b7d` |
+| Product/tests/helpers/topic freeze | `4b756f2ac3685a18a672a8d6336a31a1ed6abcc1` |
 | Freeze tree | `9eddd0fb7149234eb7f2d8ef22def3290b3d655b` |
 | Persistent branch | `aid-212-p203-correction2` |
 | Persistent isolated worktree | `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-212-download-correction` |
@@ -168,7 +168,7 @@ Replay specifies the guarded commands and official
 restoration sequence. Ten uploaded/read-back prerequisite-only parts reconstruct
 78,887,056 bytes, SHA-256
 `f177e368dbe7732ab71c138b5e8169b1c2e027a4c28e7ac6098eb8b882395a61`, with declared
-shallow cutoff `b4e71d18ba4600ad7e053274b90b45ffdfbce87b`. Two empty stores are seeded
+shallow cutoff `65688d84904b4bae639caf8f1a8d1825f78304b8`. Two empty stores are seeded
 only from those official bytes, with candidate absence and no alternates before
 import. The official post-commit index binds actual FINAL/tree, full ordinary
 fingerprints/modes, exact Git payload archive, incremental bundle, independent

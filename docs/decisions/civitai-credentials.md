@@ -30,7 +30,7 @@
   cookie-setting fixtures and prove fault sensitivity. Keep old adverse evidence
   immutable; original selected live HEADs observed no cookies, so no actual
   owner-key disclosure is inferred. Correction 1
-  is accepted at exact 2e385030 after independent review 2 PASS 155e2209;
+  is accepted at exact 24dad88f after independent review 2 PASS cdf63e71;
   [acceptance](../tasks/p2-01-civitai-key-file/acceptance.md) preserves fault and
   fresh source evidence. Source publication is not running-Backend deployment.
 

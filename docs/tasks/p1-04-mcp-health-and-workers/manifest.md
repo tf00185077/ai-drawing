@@ -3,7 +3,7 @@
 Implementation delivery round 1 for [Coding AID-167](/AID/issues/AID-167).
 Feature branch `aid-167-health-workers`, isolated worktree
 `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-167-health-workers`.
-Base: **`b075f36c0eec532071e11328eb4f2b21b52e1c0f`**.
+Base: **`b06e3109e0ef1740bb0f0ad920d1b7cbae64887c`**.
 This manifest belongs to the final immutable feature commit. Its full SHA is
 pinned in the Coding completion comment and external integrity receipt because
 a commit cannot contain its own SHA. [QA AID-168](/AID/issues/AID-168) owns the

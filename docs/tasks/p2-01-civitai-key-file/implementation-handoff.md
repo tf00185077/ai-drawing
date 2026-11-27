@@ -3,10 +3,10 @@
 ## Accepted independent kickoff
 
 Producer read [QA AID-180](/AID/issues/AID-180)'s actual round-1 **CLEAR** at
-fixed source **316327d0992f4f6ebe5d912c3b5ef8d215deba81**, task SHA-256
+fixed source **1cc4d8d53ee4cc9b2181f64a4b239c18c256092e**, task SHA-256
 **bd291da2897099b84fd743dcd384ea7812105ec96e74ad7501d76c9d28784850**.
 The unchanged [full report](kickoff-review.md), report/evidence commit
-**04629d2b25600348424fb9c7d12f9e41efc3c13f**, tree
+**3af463715083eea896352246a10b1bcd84f70f31**, tree
 **1d7adaba5de51c9a20236187459c5d685e13fafe**, clears the current [task](task.md)
 without a specification change. No kickoff ambiguity, owner question or delivery
 rejection is recorded for p2-01. This is specification acceptance, not a software

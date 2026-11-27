@@ -1,10 +1,10 @@
 # p2-03 implementation and exact delivery-review handoff
 
 Producer accepts actual [QA AID-207](/AID/issues/AID-207) **kickoff1 CLEAR** at
-published source `86837c724d0887d03c24e7d0c94c3b62d803ba9f`, tree
+published source `804366195a51ca2a54982400043d572cbc4f0df0`, tree
 `8513654d554bab9a0626ba7ed21c1944642b4c6b`. The [task](task.md) remains byte-exact,
 SHA-256 `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0`.
-Actual report/evidence FINAL `9dfdf9f175a1ea130bdb66c2aa561caebf8d4c42`, tree
+Actual report/evidence FINAL `8931b9c2ff7363b50b402a05008fc0e2253f853f`, tree
 `5065490af6b16fefa97438cd2dd5acbb1f1a6c8d`; [report](kickoff-review.md),
 official manifest, integrity.
 No P0/P1 ambiguity, clarification or owner question; no p2-03 delivery rejection

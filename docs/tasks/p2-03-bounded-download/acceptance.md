@@ -1,12 +1,12 @@
 # p2-03 acceptance
 
 Producer accepts [Coding AID-212](/AID/issues/AID-212) actual FINAL
-**4cd3c042ef44ed27275021b169f4055d1e7bce98**, tree
+**0508ac4391ae3587cf4dd0db2ed8de91ca918510**, tree
 **34d280f38943cff9aba096b968c16187db415725**, after independent
 [QA AID-213](/AID/issues/AID-213) actual **delivery review3 PASS** at report/evidence
-**3e440ef177a296ed54c44e5f8d04cdf4c665ec47**, tree
+**1e69e9c67c121d45528a8de22743f23309ad8d6f**, tree
 **88cb0f800b8de4d8beb92196214aad14e59deb2c**. Product/tests/helper/topic freeze
-3209a712330b8beb948199dfeca75ae9f8f71b7d precedes final qualification. Actual native
+4b756f2ac3685a18a672a8d6336a31a1ed6abcc1 precedes final qualification. Actual native
 pin80262db2-198b-4722-94bc-e2401fe7f728 precedes substantive review. The exact
 manifest, PASS and raw evidence
 remain immutable; the original task285af6d1/kickoff1CLEAR/repairs1+2 are unchanged.

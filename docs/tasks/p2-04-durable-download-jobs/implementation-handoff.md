@@ -1,11 +1,11 @@
 # p2-04 cleared implementation handoff
 
 Independent [QA AID-214](/AID/issues/AID-214) returned **kickoff round 1 CLEAR** at
-fixed source **f87b6ce44815e118202fcf5f44fc5198dd82e1d7**, tree
+fixed source **11b4326d78a47939b3844d27ef07266f112eef7c**, tree
 **cec7472536c5b64b5ff9affb0fe7370781cfb3a9**. The unchanged [task](task.md) is
 11,573 bytes, SHA-256 `49a73639bc1eef1655ef8e07f5b1add5e9199abdeedfddea30498c2b4e35b565`.
 Actual [report](kickoff-review.md) and evidence FINAL
-**8622d2617ee879a86872785c50a45eb5dd643993**, tree
+**c1d5ffc0da7f77428a9a3f7d35ad7574f594eb2a**, tree
 **68063955e6b7f3f8f1f1a6adac124cb2ce116bce**, follow the native pre-review pin
 `5b616b63-6090-459f-8ab6-ee6d2135440a`. No blocking ambiguity or owner-boundary
 question was found. This clears the specification; no D1–D5 implementation or

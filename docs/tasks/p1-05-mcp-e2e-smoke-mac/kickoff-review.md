@@ -1,7 +1,7 @@
 Verdict: CLEAR
 Review round: 2 (specification and implementability only)
 
-Reviewed source: **`4fc3ff25eb95e191ec45432c11f82055b914dae5`**.
+Reviewed source: **`f80ff514490c2e3a24ecfccc1fd5db55b9e8e9a1`**.
 Task SHA-256: **`c8bbbe8215f440e8859a5bc0bedf3febf4686f42ea0178fc82da871b041b8698`**.
 Clarification 1 SHA-256: **`f172d2098b69308b62a7cff7dc9c9cba7ed6bc71b3161a08b86ed9e9aa20e859`**.
 Full MCP decision SHA-256: **`bf94f8b4277e7a264770b4788d2facfa2fbcdd7ec216538c429865b6c693e395`**.
@@ -155,10 +155,10 @@ source. Their limits remain unchanged:
 | Input | Accepted evidence and retained limit |
 |---|---|
 | p1-00 | 23 units/eight incidents; original completed, metadata only, relative-URL client fetch failed before HTTP; revision not submitted and live context null. No-repair baseline stays immutable. |
-| p1-00a | Corrected b6d5846 / QA 3d5d890: identified launch, original/revision lineage and decoded colocated host paths. Original used deterministic cache; byte reads were outside MCP. One prior rejection/correction 1/review 2 stays separate. |
-| p1-01/02 | 616f67f / QA 28cd451: common envelopes, literal risks, intent/mode/capability/namespace preservation. One p1-02 delivery rejection and separate kickoff history stay intact. |
-| p1-03 | 77e3e3c / QA d088c32: bounded read-only wait, truthful terminal/timeout/identity/locators; client limit unverified, 50-second fallback. No real wait/byte proof. |
-| p1-04 | 72f4834 / QA 3422ccd: 31 intents, configured/expected/current worker identity distinct and unknown reads not empty. Health is reachability with sequential five-second reads, not loaded-source/readiness proof. No live Windows worker is required for this local task. |
+| p1-00a | Corrected ad2458e / QA 33ea410: identified launch, original/revision lineage and decoded colocated host paths. Original used deterministic cache; byte reads were outside MCP. One prior rejection/correction 1/review 2 stays separate. |
+| p1-01/02 | ef8302c / QA 1ad2836: common envelopes, literal risks, intent/mode/capability/namespace preservation. One p1-02 delivery rejection and separate kickoff history stay intact. |
+| p1-03 | 10d4593 / QA 7ca903f: bounded read-only wait, truthful terminal/timeout/identity/locators; client limit unverified, 50-second fallback. No real wait/byte proof. |
+| p1-04 | c5e10eb / QA 1eb8688: 31 intents, configured/expected/current worker identity distinct and unknown reads not empty. Health is reachability with sequential five-second reads, not loaded-source/readiness proof. No live Windows worker is required for this local task. |
 
 The F1–F8 comparison remains explicit, with original units **1,1,1,6,1,11,1,1 =
 23**. F1 test/dependency setup and F2 client/source/root binding are preparation;

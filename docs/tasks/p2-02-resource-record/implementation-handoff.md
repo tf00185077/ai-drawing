@@ -1,10 +1,10 @@
 # p2-02 implementation handoff
 
 Producer accepts actual [independent QA AID-185](/AID/issues/AID-185) kickoff
-round 1 **CLEAR**, report/evidence **14b4c98aa1c80c1ab8646b600af14a63ac925c02**,
+round 1 **CLEAR**, report/evidence **c8e9b3ba881a9917d287d4b2c639781172e2e394**,
 tree **40bae0e5da966eeabaebd904a335d81dd305579c**, after reading the full
 [report](kickoff-review.md) and verifying the official package. Reviewed fixed
-source **f8d3143a7ab5a0f2c8c2c9955817276aa5bcff7a**; unchanged [task](task.md)
+source **d255d9aaf3f80f1d2191b2502f17c6821b5ac448**; unchanged [task](task.md)
 SHA-256 **c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda**.
 There is no p2-02 specification correction, ambiguity, owner gate or software PASS.
 This publication integrates report/status only; product/tests/22-row registry

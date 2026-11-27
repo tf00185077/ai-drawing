@@ -1,11 +1,11 @@
 Verdict: PASS
 Review round: 2
 
-Reviewed commit: `b6d58468147e11a21b3d7a26ea25ed4353a28a28`
+Reviewed commit: `ad2458e8a76f8060b4173ff4b3f2fc85b1ecee10`
 Prior delivery rejections: **1**. Correction round: **1**.
-Rejected round-1 candidate: `00ebb4d73edf3efe54943f3e2d784200e3023cab`.
-Fixed cleared specification: `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`.
-Runtime launch source: `eaf11b8f75fb573db3d0a4e858973d59385b5087`.
+Rejected round-1 candidate: `f0c3caf8c2a4bd4b2bb94209494f1efe2aaa67b3`.
+Fixed cleared specification: `edc91b096965f5c05ed58705441b96e143132bbf`.
+Runtime launch source: `96a0ffce435cae786f4ac043c5a31bb616e574b3`.
 Review date: 2026-11-24 UTC. QA: [AID-154](/AID/issues/AID-154); corrected delivery: [AID-153](/AID/issues/AID-153).
 
 All original D1–D5 pass at this exact candidate. The correction closes F-QA1 by accounting for the complete observed startup schema footprint and distinguishing preservation of old values from additive schema changes. D1–D4 reuse applicable independent round-1 evidence; this review repeats the read-only schema audit, applicability and delivery-integrity checks. No software suite, restart or generation was repeated. Producer on [AID-142](/AID/issues/AID-142) owns acceptance, integration and dependent release.
@@ -16,7 +16,7 @@ The [round-1 FAIL report](/api/attachments/eeb8dc51-4575-4b5c-896e-590710bdfba2/
 
 No blocking defect found. **F-QA1, P1/D5: resolved at the reviewed candidate.** Both the manifest and intervention inventory now name the image revision column, all eight nullable training columns, the new reservation table and its five indexes, their observed state, audit time and existing-source cause. Neither asserts unchanged training schema. The original narrower persistence evidence remains intact and is explicitly identified as an old-column value comparison.
 
-The bounded correction changes 18 task-document/evidence files, with parent exactly `00ebb4d73edf3efe54943f3e2d784200e3023cab`. No product, test, workflow, dependency or topic-doc change is introduced by correction. The original task remains byte-identical to the cleared specification; correction assignment `c41815c25d2e6139f65c058ab1a8750bbecc6659` was read as a fixed Git object. No scope expansion or unexpected source/runtime/data change was observed.
+The bounded correction changes 18 task-document/evidence files, with parent exactly `f0c3caf8c2a4bd4b2bb94209494f1efe2aaa67b3`. No product, test, workflow, dependency or topic-doc change is introduced by correction. The original task remains byte-identical to the cleared specification; correction assignment `5870f332f8c1923736cb1a3b51d228ddea4c5298` was read as a fixed Git object. No scope expansion or unexpected source/runtime/data change was observed.
 
 ## Done when outcomes
 

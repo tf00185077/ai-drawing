@@ -3,7 +3,7 @@ Review round: 2
 
 Independent QA [AID-175](/AID/issues/AID-175), 2026-11-24 UTC. **Technical PASS for original D1–D3 and correction 1 only. D4 is UNCHECKED / pending Producer and CTY owner-demo.** This is not whole-task acceptance, aesthetic approval, Phase 1 closure or Phase 2 activation.
 
-Reviewed full immutable candidate **91d6e3790ecbb258b1a079395a1156912d090b62**, tree **967e24606eb257b51c859fe1fd3c42a6597bdc4d**, against repair base **f510a0afde938671f43b590c66d9885507dd7046**, tree **5518a4351e056150a67ba42c26b7c8b56add0b5c**. Software frozen before renewed qualification: **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**. All 291 frozen source fingerprints equal the final candidate. Candidate and cleared hashes were pinned on the card before substantive review: pin receipt. QA used its own persistent `aid-175-exact-review` worktree at `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-175-qa`.
+Reviewed full immutable candidate **411544f36f54627258bd076f501e40ddb9d33f97**, tree **967e24606eb257b51c859fe1fd3c42a6597bdc4d**, against repair base **75b7570e708fec5df0f99f507bf9b5d1d92ee327**, tree **5518a4351e056150a67ba42c26b7c8b56add0b5c**. Software frozen before renewed qualification: **76452a6134c8d1ec16aabcb51ccc88da49b754a8**. All 291 frozen source fingerprints equal the final candidate. Candidate and cleared hashes were pinned on the card before substantive review: pin receipt. QA used its own persistent `aid-175-exact-review` worktree at `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-175-qa`.
 
 ## Findings
 
@@ -22,7 +22,7 @@ Correction C1–C3 pass the actual-boundary, regression, compatibility, renewed 
 
 ## Interruption and sensitivity
 
-QA temporarily substituted **only the exact old 8736298 driver bytes** in its isolated tree and ran the three signal cases with the actual production MCP server and SDK. All three produced expected feature failures. After one qualifying fixture pair, SIGINT at attempt-2 health, an admitted original's wait, or an uncertain submit left streak 1, omitted the interrupted call, and left the active attempt without its end/count/streak. A safe nonzero exit was never mistaken for a compliant reset.
+QA temporarily substituted **only the exact old c22f231 driver bytes** in its isolated tree and ran the three signal cases with the actual production MCP server and SDK. All three produced expected feature failures. After one qualifying fixture pair, SIGINT at attempt-2 health, an admitted original's wait, or an uncertain submit left streak 1, omitted the interrupted call, and left the active attempt without its end/count/streak. A safe nonzero exit was never mistaken for a compliant reset.
 
 After exact corrected bytes were restored, all three cases pass. The actual CLI subprocess receives SIGINT while actual SDK/product MCP awaits a lower HTTP fixture response. No driver/tool/SDK callable or signal handler is patched. Health has nine sent calls/nine call records and two submits; admitted-wait has twelve/twelve and three submits; uncertain-submit has eleven/eleven and three submits. Each retains arguments/start/end/duration/interruption, no received result for the final sent request, zero streak, a reason and exactly one nonqualifying attempt-ending event. Independent computation matches every call's arguments and timestamp interval to sent SDK traffic.
 

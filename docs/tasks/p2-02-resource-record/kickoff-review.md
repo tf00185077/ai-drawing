@@ -5,7 +5,7 @@ Review round: 1
 Assignment: AID-185; Producer AID-146.
 Date: 2026-11-26
 
-Reviewed source: **f8d3143a7ab5a0f2c8c2c9955817276aa5bcff7a**.
+Reviewed source: **d255d9aaf3f80f1d2191b2502f17c6821b5ac448**.
 Reviewed tree: **a634ce583d387dd1849978f3f47055d07b71e515**.
 Task SHA-256: **c43339e42ff1a160cfb87cf9742e53606db17c37ffe12439745b115ca6a8beda**.
 The report commit/tree and official attachments are recorded after commit on
@@ -55,9 +55,9 @@ five missing historical source hashes remain unchanged.
 I read the actual [p2-01 manifest](../p2-01-civitai-key-file/manifest.md),
 [round-2 independent PASS](../p2-01-civitai-key-file/review.md) and
 [acceptance](../p2-01-civitai-key-file/acceptance.md). Candidate
-2e3850307f767ec2be213781accde367f321dc1d and QA report
-155e2209a9910556dfa0255223a9b4a30f120d87 resolve the cookie-channel defect after
-freeze 2491ceb7555fe49e3f6a1261113a3e6398185743. History stays kickoff 1 CLEAR,
+24dad88f86da0df7804a1b2769841632942ff3fe and QA report
+cdf63e71d11e88e145e6a335e63cdf5034f85ea6 resolve the cookie-channel defect after
+freeze 8ab5ac838fc95b8cbd9aa3585eef9cf07b811aef. History stays kickoff 1 CLEAR,
 delivery 1 FAIL, one P1 R1/one implementation rejection, correction 1, delivery
 review 2 PASS. The 22 standing contracts are not replaced or re-certified here.
 
@@ -134,7 +134,7 @@ main's 13 concurrent memory edits were not staged, stashed, reset or copied.
   hashes are suppressed by token-like path names. The first run passed 234 checks
   on 207 files; adding four review inputs produced the final 238/211 audit.
 - Product/tests/workflows, MCP implementation/tests, frontend and the registry
-  have exactly the accepted p2-01 QA tree objects at 155e2209. Its recorded full
+  have exactly the accepted p2-01 QA tree objects at cdf63e71. Its recorded full
   suites remain historical context: Backend 1,978 passed/124 skips and MCP
   666 passed/four skips. No fresh product test result is claimed here.
 - `git diff --cached --check`: passed for the staged report/evidence, the

@@ -5,11 +5,11 @@ the actual Coding manifest and independent same-candidate PASS report.
 
 ## Accepted identity
 
-- Final feature: **`72f483418524a613fb104b92ab483e39f7432bfc`**, delivered by
+- Final feature: **`c5e10ebc55405ff36ea4ef9943ed9566d272ea29`**, delivered by
   [Coding AID-167](/AID/issues/AID-167), based on published
-  `b075f36c0eec532071e11328eb4f2b21b52e1c0f`.
+  `b06e3109e0ef1740bb0f0ad920d1b7cbae64887c`.
 - Independent delivery review 1: [QA AID-168](/AID/issues/AID-168), **D1-D4 PASS**,
-  exact report/evidence/registry **`3422ccda7a66514fe7dadf7d3c8785a5718ba472`**.
+  exact report/evidence/registry **`1eb8688a066d94ffb694d751c5de4dff610ed158`**.
 - Reviewed product/tests/manifest/evidence and QA report/registry are integrated
   unchanged. The final published main SHA and local/fetched/advertised equality
   receipt are in [the native publication ledger](/AID/issues/AID-145#document-plan).
@@ -20,7 +20,7 @@ the actual Coding manifest and independent same-candidate PASS report.
   `d477af0600efb30ec35eccd9173e82ec01732294b8cc9257905208d1f345c7e0`;
   clarification 1 remains
   `8fc12d877dc004dddf4dbf09177ffcc7b2d7c98ee3ce91bf84aa3ac06768670f`.
-  Kickoff round-2 CLEAR reviewed fixed `5cf158b`, report `e75a94e`.
+  Kickoff round-2 CLEAR reviewed fixed `c589f33`, report `8f5c50b`.
   Original task/report/evidence and author manifest remain immutable snapshots;
   this acceptance records the actual later PASS/publication gate.
 

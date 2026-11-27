@@ -5,17 +5,17 @@ both actual manifests and independent same-candidate PASS reports.
 
 ## Accepted identity
 
-- Corrected combined feature: **`616f67ff68fc27070e85861e94d70de1baf5082a`**,
+- Corrected combined feature: **`ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`**,
   delivered by [Coding AID-159](/AID/issues/AID-159).
 - Independent delivery review round 2: [QA AID-160](/AID/issues/AID-160),
-  exact report/evidence/registry **`28cd4512b8ec7d6594ec972ab81161b8c2d09d03`**.
-- Integration: **`7ba2059f7e46920eaf860e19e61aa84bae8bf02c`**. Reviewed product/tests, both manifests,
+  exact report/evidence/registry **`1ad28363f7e8eb53af471b494f362ab4c27c2882`**.
+- Integration: **`c5b50cadbdb1bcb6a5482791941675a23afc1d33`**. Reviewed product/tests, both manifests,
   reports, historical mirrors, evidence and registry are integrated unchanged.
   The final published main SHA and remote equality receipt are recorded in
   [AID-143's plan](/AID/issues/AID-143#document-plan). Subsequent acceptance/status
   changes are documentation only; they do not relabel the reviewed candidate.
 - Original tasks/decisions remain independently CLEAR at
-  `496cee2f842dc9386d336afb237075bf952271ce`, actual kickoff reports `9d79d20`.
+  `abe1272802bdead00ef0a9bf51d8709b58eb27d7`, actual kickoff reports `e2d3211`.
   [p1-01 manifest](manifest.md), [p1-02 manifest](../p1-02-mcp-tool-consolidation/manifest.md),
   [p1-01 PASS](review.md), [p1-02 PASS](../p1-02-mcp-tool-consolidation/review.md).
   Author manifests remain immutable delivery snapshots; this acceptance records
@@ -85,7 +85,7 @@ records. Inspect an existing job after timeout before resubmission.
 
 ## History and continuation
 
-First candidate `b1082a8` was p1-01 PASS / p1-02 FAIL F2-1. The exact
+First candidate `9a5e55a` was p1-01 PASS / p1-02 FAIL F2-1. The exact
 p1-01 round-1 PASS,
 p1-02 round-1 FAIL and original
 QA evidence remain intact. Keep **one p1-02 delivery rejection / correction

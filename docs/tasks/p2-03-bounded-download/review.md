@@ -15,16 +15,16 @@ This review makes no product repair, feature merge or Phase2/artistic decision.
 
 | Input | Identity |
 |---|---|
-| Actual Coding FINAL | `4cd3c042ef44ed27275021b169f4055d1e7bce98` |
+| Actual Coding FINAL | `0508ac4391ae3587cf4dd0db2ed8de91ca918510` |
 | Coding tree | `34d280f38943cff9aba096b968c16187db415725` |
-| Coding product/tests/helpers/topic freeze | `3209a712330b8beb948199dfeca75ae9f8f71b7d` |
-| Fixed correction2 base | `7b37b8c87e222eaadcb42d22286951c19e9e6ecc` |
+| Coding product/tests/helpers/topic freeze | `4b756f2ac3685a18a672a8d6336a31a1ed6abcc1` |
+| Fixed correction2 base | `20289afcf73e7010de737db7bee79c986e2de3c3` |
 | Task SHA-256 | `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0` |
 | Exact manifest SHA-256 / bytes | `98b2dbe11e3f01930566c279bc313037ef943d9b49a37a43fadfbdfc6abc9a45` /15874 |
 | Native pre-review pin | comment `80262db2-198b-4722-94bc-e2401fe7f728` |
-| Independent deadline/fault guard freeze | `53cc9e5b2553ee457f167c4f3462ecc393a26bc0` |
-| Artifact helper freeze | `6f2961432b88f14dd8a04350248658c7e9fa65ef` |
-| Final supplementary helper freeze | `7a620e96d62731fd7a9b6f61beac8f6aa848599b` |
+| Independent deadline/fault guard freeze | `f54c84f08cee739eeba2c4640354c3530e63601d` |
+| Artifact helper freeze | `399bc3c55fe2c8df2f810949ace8988a1c0010ab` |
+| Final supplementary helper freeze | `02961028b061af4867acc0000e28526c0565ef63` |
 | QA worktree / branch | `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-213-qa` / `qa/aid213-p203-review3` |
 
 The actual Coding final comment `75c1d96b-6d02-41ca-a817-facff35a088d`, official
@@ -138,7 +138,7 @@ behavior. Complete current260 passes after all current fault restoration.
 
 Both empty stores seed only the official ten-part78,887,056-byte prerequisite,
 SHA-256 `f177e368dbe7732ab71c138b5e8169b1c2e027a4c28e7ac6098eb8b882395a61`, with
-declared shallow cutoff `b4e71d18ba4600ad7e053274b90b45ffdfbce87b`. Candidate absence
+declared shallow cutoff `65688d84904b4bae639caf8f1a8d1825f78304b8`. Candidate absence
 and no alternates are checked before import. Official bundle restores exact FINAL/
 tree; an independently applied full-index patch restores the same tree; both
 fsck exit0. All8705 ordinary fingerprints/modes,112 archive members/111 exact Git

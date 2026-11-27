@@ -26,7 +26,7 @@ Read [current roadmap](../../roadmap/ROADMAP.md), [owner review](../../requests/
 [LoRA list semantics](../../memory/explicit-lora-list-semantics.md),
 [resource/target scope](../../memory/compute-target-and-resource-scope.md), and
 [prior runtime preservation/real evidence](../p1-05-mcp-e2e-smoke-mac/acceptance.md).
-Current source input is `1666ffb9d264946e2fb7bbffb583f6180f6d8722` plus this
+Current source input is `5608e1443978d04c3a2d67aff4a86adb747ce793` plus this
 brief's fixed publication. Pin actual source, imports, graph/meta, interpreter,
 package versions, existing runtime identity/jobs and data roots before action.
 Health or checkout HEAD does not identify loaded service behavior. Preserve

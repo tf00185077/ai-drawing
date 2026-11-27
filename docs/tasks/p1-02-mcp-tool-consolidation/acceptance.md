@@ -1,9 +1,9 @@
 # p1-02 — Producer acceptance
 
 Accepted together with p1-01 at corrected combined feature
-**`616f67ff68fc27070e85861e94d70de1baf5082a`** after
+**`ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`** after
 [QA AID-160](/AID/issues/AID-160)'s independent [round-2 PASS](review.md)
-for all five original items. Exact QA report/evidence/registry: `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`.
+for all five original items. Exact QA report/evidence/registry: `1ad28363f7e8eb53af471b494f362ab4c27c2882`.
 
 The [combined acceptance](../p1-01-mcp-response-envelope/acceptance.md) records
 integration/publication identity, all evidence, verification limits and the

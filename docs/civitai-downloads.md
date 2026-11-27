@@ -157,8 +157,8 @@ process-local coordination, without a queue or cross-process reservation.
 
 ## Producer acceptance
 
-[p2-03](tasks/p2-03-bounded-download/acceptance.md) is accepted at exact Coding4cd3c042
-and independent review3 PASS3e440ef1. All D/C/E checks pass; two earlier rejections/
+[p2-03](tasks/p2-03-bounded-download/acceptance.md) is accepted at exact Coding0508ac43
+and independent review3 PASS1e69e9c6. All D/C/E checks pass; two earlier rejections/
 three historical P1s remain. Published source is not runtime deployment. Durable
 operation identity/shared wait follows in [p2-04](tasks/p2-04-durable-download-jobs/task.md);
 aggregate quota/reservations are subsequent work, with no current guarantee inferred.

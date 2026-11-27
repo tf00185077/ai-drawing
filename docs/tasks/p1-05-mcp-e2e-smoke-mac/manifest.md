@@ -6,13 +6,13 @@ Technical candidate from [Coding AID-174](/AID/issues/AID-174) for native depend
 No independent PASS, owner aesthetic decision, feature merge/push, whole-task
 acceptance, phase closure or Phase 2 activation is claimed.
 
-Implementation base: **f510a0afde938671f43b590c66d9885507dd7046**. This report-only
+Implementation base: **75b7570e708fec5df0f99f507bf9b5d1d92ee327**. This report-only
 QA descendant has identical product bytes to reviewed
-**873629869dce8935d68daa8236f0aaf8eb1b553a**. Persistent branch/worktree:
+**c22f2311c88c049fd66ddf60e913c4c0139d5d67**. Persistent branch/worktree:
 `aid-174-interruption`,
 `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-174-interruption`.
 Software freeze before qualification:
-**e7819bcc02ceadc0dafad6d77a634618b5bfc02f**. Later changes contain only reports,
+**76452a6134c8d1ec16aabcb51ccc88da49b754a8**. Later changes contain only reports,
 audit helpers and evidence. The external integrity receipt and completion pin
 the exact full final SHA/tree; a commit cannot contain its own SHA.
 
@@ -187,7 +187,7 @@ An initial protected-hash check overlooked QA's existing registry generated-date
 change; corrected check proves 727 original bodies plus all original registry
 rows unchanged, and registry bytes equal the required QA base. A separate bundle
 verifier first imported the earlier e540 base; reading the actual QA bundle
-header identified required 8736298, then successful independent import/fetch
+header identified required c22f231, then successful independent import/fetch
 proved f510's exact tree. A final report check also rejected an assumed exact log-line count: tqdm repeats
 completion lines (26 matches). The report now uses distinct prompt histories as
 the job count and treats log progress only as corroboration. These are retained

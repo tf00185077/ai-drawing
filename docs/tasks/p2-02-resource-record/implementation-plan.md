@@ -1,6 +1,6 @@
 # Resource record implementation plan
 
-Spec: [cleared task](task.md); base a8e57d90e4678565baec8cd4638c350c8dd11deb.
+Spec: [cleared task](task.md); base 7f1967742007fa1e6f271b856cdbdeabaa6d761d.
 Native execution under explicit in-boundary delegation; separate independent QA follows.
 
 Goal: existing resource-row authority shared by current writers/readers and bounded HTTP reads.

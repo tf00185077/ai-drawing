@@ -1,8 +1,8 @@
 Verdict: PASS
 Review round: 1
 
-Reviewed commit: `3081952e0ba12a339ab7e60b8081ede61a131b7f`
-Approved specification / direct parent: `e443f2e22a17f3ca61f69527bdd392e703b0e88b`
+Reviewed commit: `c02ebe75a25b949ca3408b5f5bfb0569225832cc`
+Approved specification / direct parent: `66e6a7f39d0b202b30095d516f319b4d7fd0e249`
 Review date: 2026-11-24 (UTC)
 QA issue: [AID-149](/AID/issues/AID-149)
 

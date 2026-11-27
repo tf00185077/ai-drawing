@@ -13,7 +13,7 @@ This is specification clearance, not delivery PASS, deployed behavior or Phase 2
 
 | Input | Identity |
 |---|---|
-| Published source | `f87b6ce44815e118202fcf5f44fc5198dd82e1d7` |
+| Published source | `11b4326d78a47939b3844d27ef07266f112eef7c` |
 | Source tree | `cec7472536c5b64b5ff9affb0fe7370781cfb3a9` |
 | Task SHA-256 / bytes | `49a73639bc1eef1655ef8e07f5b1add5e9199abdeedfddea30498c2b4e35b565` / 11573 |
 | Native pre-review pin | `5b616b63-6090-459f-8ab6-ee6d2135440a` |
@@ -24,8 +24,8 @@ This is specification clearance, not delivery PASS, deployed behavior or Phase 2
 The pin receipt precedes substantive review.
 The native plan, owner words, source handoff, adopted decision, p2-01/p2-02
 acceptances and actual p2-03 review3 PASS were read with their limits. Accepted
-p2-03 is Coding `4cd3c042ef44ed27275021b169f4055d1e7bce98`, independent report
-`3e440ef177a296ed54c44e5f8d04cdf4c665ec47`. Its earlier rejections remain evidence.
+p2-03 is Coding `0508ac4391ae3587cf4dd0db2ed8de91ca918510`, independent report
+`1e69e9c67c121d45528a8de22743f23309ad8d6f`. Its earlier rejections remain evidence.
 The 14 dirty shared-main memory files are excluded; this worktree uses committed
 memory at the fixed source. No existing tracked source, test, registry or historical
 evidence file is changed by this review.

@@ -1,6 +1,6 @@
 Verdict: CLEAR
 
-Reviewed specification/source: `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`
+Reviewed specification/source: `edc91b096965f5c05ed58705441b96e143132bbf`
 Task SHA-256: `be8814ca4f3bbaaa16e14f8a7b236a1fd5c34d0d1cd4a2ee88570631bea06359`
 Review date: 2026-11-24 (UTC)
 QA card: [AID-150](/AID/issues/AID-150)
@@ -12,7 +12,7 @@ This clears the fixed specification for Coding dispatch. It does not accept a re
 
 I first read AGENTS, memory/index, README, the active roadmap/CURRENT, team and operating rules, and both owner source records: [fresh planning](../../requests/2026-11-24-fresh-producer-planning.md) and [follow-through](../../requests/2026-11-24-proceed-within-project-boundaries.md). I also read the authenticated `local-board` comment `afe71bd8-7e9e-434b-af00-813f94c8d131` on [the source issue](/AID/issues/AID-141#comment-afe71bd8-7e9e-434b-af00-813f94c8d131). The initial exact owner quotation requests a new run; broader initial planning language is Hermes intake. The later comment explicitly relays CTY's instruction to proceed within existing boundaries and adopt ordinary reference choices. These sources must not be collapsed into a claim that CTY individually chose a checkpoint or accepted aesthetics.
 
-I then read the accepted baseline manifest, raw stdio, flow/count evidence, QA report and Producer acceptance: execution `3081952e0ba12a339ab7e60b8081ede61a131b7f`, independent review/registry `c377a02c808589b225a6d5f386d7e47cc865b939`, and acceptance at the fixed specification snapshot. Relevant memory covers runtime-source verification, ordinary revision lineage, compute scope and explicit empty LoRAs.
+I then read the accepted baseline manifest, raw stdio, flow/count evidence, QA report and Producer acceptance: execution `c02ebe75a25b949ca3408b5f5bfb0569225832cc`, independent review/registry `37f016135388a7c49a6445077b64751ab78f767f`, and acceptance at the fixed specification snapshot. Relevant memory covers runtime-source verification, ordinary revision lineage, compute scope and explicit empty LoRAs.
 
 My expectation from those sources: repair the two demonstrated boundaries with existing mechanisms, identify the source actually loaded by the Backend, provide a locator the intended client consumes, and prove one fresh original plus one new generate-based revision with decoded bytes and persisted canonical-artifact lineage. Runtime/configuration/docs can suffice; product source changes need a demonstrated reason, meaningful regression coverage and independent exact-commit review. Preserve existing configuration, database/Gallery locations, all data and the original no-repair accounting. Keep later Phase 1 redesign and the three-run exit separate.
 

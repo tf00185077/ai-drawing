@@ -54,7 +54,7 @@ needed. This records adopted scope, not implemented or accepted future behavior.
 ## 2026-11-27 acceptance and next dependency
 
 Actual review3 PASS accepts all
-D/C/E at4cd3c042/report3e440ef1. R1/R2/R3 resolved in checked scope; prior two
+D/C/E at0508ac43/report1e69e9c6. R1/R2/R3 resolved in checked scope; prior two
 rejections/three historical findings remain. [Acceptance](../tasks/p2-03-bounded-download/acceptance.md)
 records exact-source limits. Next establish [persisted download operations/status/wait](civitai-download-jobs.md)
 before aggregate budgets/reservations, using the existing Backend/resource authority.

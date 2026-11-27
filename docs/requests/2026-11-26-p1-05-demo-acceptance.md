@@ -7,8 +7,8 @@ confirmation **11ecc66e-6688-4174-a94a-6825d0b512f5** at
 **2026-11-26T01:29:16.989Z**. No resolving agent/run is recorded. It targets the
 unchanged [six-image demo](/AID/issues/AID-146#document-demo), native revision
 **3e6ae2db-b6ae-4353-af52-d505fbbae4bd**, candidate
-**91d6e3790ecbb258b1a079395a1156912d090b62** and independent QA
-**ade78141f693a6ff1259d8b61d883e77434b2ccd**.
+**411544f36f54627258bd076f501e40ddb9d33f97** and independent QA
+**8389445197a8c26e1ae8ff2099d4b6b386821876**.
 
 Verbatim recorded response:
 

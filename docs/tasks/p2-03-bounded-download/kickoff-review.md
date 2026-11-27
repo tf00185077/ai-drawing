@@ -10,7 +10,7 @@ This is a specification verdict, not delivery PASS or certification of D1–D5.
 
 | Input | Identity |
 |---|---|
-| Published source | `86837c724d0887d03c24e7d0c94c3b62d803ba9f` |
+| Published source | `804366195a51ca2a54982400043d572cbc4f0df0` |
 | Source tree | `8513654d554bab9a0626ba7ed21c1944642b4c6b` |
 | Task SHA-256 | `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0` |
 | Branch | `qa/aid207-p203-kickoff` |
@@ -34,8 +34,8 @@ contained the verbatim task, so this was not a blinded reading; the separate
 scope note records that limitation.
 
 Accepted p2-02 is an actual prerequisite: [acceptance](../p2-02-resource-record/acceptance.md)
-names Coding `c705d211f64497df7190120d46f94d94b785d24b` and independent review10
-PASS `a94324fef3f264fb361c9761af0ff828eeb77e81`, with 72 active registry rows.
+names Coding `211208ad2e0667ba9524a8c3c4395a4c4d5f71a7` and independent review10
+PASS `92c111e68393c29d964e4d600e6e959d17912493`, with 72 active registry rows.
 That foundation is present in this pinned source. Its nine rejected deliveries,
 five historical P1 findings and earlier records remain unchanged. The accepted
 First check still means one bridged chain, 20 interventions, 77 overlapping units

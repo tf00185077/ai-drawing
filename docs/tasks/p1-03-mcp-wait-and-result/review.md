@@ -1,9 +1,9 @@
 Verdict: PASS
 Review round: 1
 
-Reviewed FINAL candidate: **`77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`**.
+Reviewed FINAL candidate: **`10d45934191b5f86590aa6408feae170ee3bb9df`**.
 Candidate tree: `157863e18d212a2c93d06a32b4322609ff00e60b`.
-Base: `a88b84a50ef46ff34a89cd1f85c7911963ced379`.
+Base: `faad28dc339b8b5d14aceea91d1fcfaad0a79ddd`.
 Task SHA-256: `0d25f752ed4f17b28a01109c10c163e57532ae4b7e11832b8361f63a67af6688`.
 Decision SHA-256: `7e91e4392ccab45af01c16db6781a36345e711e0722b9c1260cdb3df6a76e065`.
 Date: 2026-11-24 UTC. Independent QA: [AID-164](/AID/issues/AID-164).
@@ -50,8 +50,8 @@ moving branch supplied the reviewed source.
   fetches the full named candidate in that scratch repository.
 - All 40 audited inherited p1-03 task/kickoff/evidence and decision/registry
   paths audited against the base remain unchanged. The task and full decision
-  have the approved hashes above. Accepted p1-01/02 feature `616f67f`, actual QA
-  `28cd451` and kickoff report `3bbcb9c` are ancestors. I read the actual accepted
+  have the approved hashes above. Accepted p1-01/02 feature `ef8302c`, actual QA
+  `1ad2836` and kickoff report `c5d85f6` are ancestors. I read the actual accepted
   manifests, reports, acceptance, cleared kickoff and normative decision.
 - The independent literal policy retains every previous label and adds only
   `wait_for_job: read`. Existing ComfyUI admin stays admin. Exactly 30 names are

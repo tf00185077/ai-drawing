@@ -2,7 +2,7 @@
 
 ## Source
 
-CTY, in a Claude Code review session on `main` at `148d5015`, 2026-11-27, after
+CTY, in a Claude Code review session on `main` at `b35950fc`, 2026-11-27, after
 reviewing why Phase 2 tasks needed up to ten review rounds and about 420 MB of
 committed evidence.
 

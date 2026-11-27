@@ -10,7 +10,7 @@ software acceptance or self-PASS is claimed.
 
 - Coding: [AID-178](/AID/issues/AID-178); dependent exact-evidence review: [AID-179](/AID/issues/AID-179).
 - Actual [AID-177](/AID/issues/AID-177) full kickoff report read: **CLEAR**, commit `4702a662a88bf5611dcee9c5da1964a21a41aa74`.
-- Fixed publication/base: `2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`; owner handoff `1666ffb9d264946e2fb7bbffb583f6180f6d8722`.
+- Fixed publication/base: `0ccf65cade2d773db03f06a12efd53a6396862ac`; owner handoff `5608e1443978d04c3a2d67aff4a86adb747ce793`.
 - Task SHA-256: `dfb23f60ecbd18bd8f8e481dc725406f2bfa07653f2172b5efcadd44748e6777`.
 - Persistent isolated worktree `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-178-first-check`, branch `aid-178-first-check`.
 - This manifest is included in the exact evidence commit. Its full final commit/tree and official artifact hashes are pinned in AID-178's post-commit delivery receipt; no circular self-SHA is embedded here. The branch is not merged or pushed.

@@ -82,8 +82,8 @@ Early Access or sustained rate-limit capacity. Key presence is still a separate
 observation from authentication.
 
 [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) accepts production file loading
-and credential-safe retained request paths at corrected candidate 2e385030,
-independent review 155e2209. Fresh anonymous/configured-file source HEADs observe
+and credential-safe retained request paths at corrected candidate 24dad88f,
+independent review cdf63e71. Fresh anonymous/configured-file source HEADs observe
 401 versus 307→200 with no body-method calls; no new acquisition/generation or
 running-Backend deployment is claimed. Next is the
 [resource-record foundation](tasks/p2-02-resource-record/task.md), under a fresh
@@ -98,7 +98,7 @@ and [operating policy](OPERATING-POLICY.md) govern the work.
 
 ## Current p2-01 delivery boundary
 
-The first candidate 160681d1 was rejected by independent review 301c5dee with
+The first candidate 098120f8 was rejected by independent review 8609ba34 with
 R1/P1/D3: an implicit HTTPX cookie jar can replay a canonical credential cookie
 to b2 despite removing Authorization. The actual report
 uses synthetic configured-file credentials; selected live HEADs had no cookies.

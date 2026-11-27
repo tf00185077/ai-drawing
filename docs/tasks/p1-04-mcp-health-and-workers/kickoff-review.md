@@ -1,7 +1,7 @@
 Verdict: CLEAR
 Kickoff round: 2
 
-Reviewed published source: **`5cf158b65d924a9508a3b5bfb7b47adb92eff7a1`**.
+Reviewed published source: **`c589f33c82ce69a1fe7ad6e05641f369b78eca94`**.
 Source tree: `19fbeb931a89f67afc991ec0cd37c94d624be1c7`.
 [Task](task.md) SHA-256:
 **`28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`**.
@@ -41,7 +41,7 @@ acceptance, deployment, a readiness certification or Phase 1 exit proof.
 
 **Resolved at specification level.** The actual round-1 result remains
 AMBIGUITY, report/evidence commit
-`3a980ec557e5ab23a91e917491b13c947587f63d`; it is not reclassified.
+`de8b00b781408c5f6e553ea8717fe32abb153bca`; it is not reclassified.
 
 The original failure scenario remains real: the current worker-status route
 returns configured/reachable/status/error_type but lacks the configured URL,
@@ -127,8 +127,8 @@ resubmit an existing job. The accepted wait behavior is unchanged.
 I read actual p1-03 [manifest](../p1-03-mcp-wait-and-result/manifest.md),
 [PASS](../p1-03-mcp-wait-and-result/review.md) and
 [acceptance](../p1-03-mcp-wait-and-result/acceptance.md). Accepted feature
-`77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce` and independent QA
-`d088c3258ab782623631d60daaaccc8ce6fcb6dc` are ancestors; their manifest/PASS
+`10d45934191b5f86590aa6408feae170ee3bb9df` and independent QA
+`7ca903fd687a9eb1c83436e132d85f6c23377776` are ancestors; their manifest/PASS
 bytes are unchanged. All 13 standing registry items remain unchanged.
 The actual client limit is still unverified; 50 seconds is policy fallback,
 not measurement. Preserve canonical/image identity separation, safe errors,

@@ -1,6 +1,6 @@
 # p2-04 source handoff
 
-Fixed accepted product inputs: p2-03 Coding4cd3c042, independent PASS3e440ef1;
+Fixed accepted product inputs: p2-03 Coding0508ac43, independent PASS1e69e9c6;
 full hashes, freeze, evidence and limits are in [acceptance](../p2-03-bounded-download/acceptance.md).
 Fresh kickoff pins the actual published full source/tree and task hash from its
 native initial plan. This file is source discovery, not independent CLEAR.

@@ -4,10 +4,10 @@ Verdict: PASS
 Review round: 1
 Issue: [AID-179](/AID/issues/AID-179)
 Coding: [AID-178](/AID/issues/AID-178)
-Exact candidate: `0d571b7d571561ebdea34c959ed6f16e2db06953`
+Exact candidate: `a9de23389fb29ce4f6f8191184c9279670201abf`
 Exact tree: `f542e7692a3b529eaa2b55d4dea1ea1df127156f`
-Base: `2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`
-Owner handoff: `1666ffb9d264946e2fb7bbffb583f6180f6d8722`
+Base: `0ccf65cade2d773db03f06a12efd53a6396862ac`
+Owner handoff: `5608e1443978d04c3a2d67aff4a86adb747ce793`
 Task SHA-256: `dfb23f60ecbd18bd8f8e481dc725406f2bfa07653f2172b5efcadd44748e6777`
 
 PASS applies to this **observation record** against D1–D5. The record also

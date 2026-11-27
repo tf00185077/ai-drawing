@@ -4,7 +4,7 @@
 
 CTY's current message in the AI Drawing Discord project channel
 `1562710701280202813`, relayed by Hermes on 2026-11-26. CTY points to their
-published `main` update `9e2d175d956dc8aa3fec0dee8e534cc724af2aa5`, which already
+published `main` update `6cbfdc67ca0e71092ad52072b5b6a83b046b4171`, which already
 closes Phase 1 and activates the sharpened Phase 2. This is a new owner direction,
 not a claim that the earlier native proposal was accepted unchanged.
 
@@ -34,7 +34,7 @@ The supplied key's value is deliberately omitted. The saved file is
   order, architecture or constraints still requires CTY. This does not fabricate an
   artistic verdict or waive concrete required verification.
 
-The earlier native Phase 1 close proposal refers to the pre-`9e2d175` roadmap.
+The earlier native Phase 1 close proposal refers to the pre-`6cbfdc6` roadmap.
 Reconcile it as superseded by this explicit direction and the published owner
 review; do not approve its older scope as though unchanged. Producer owns native
 closeout reconciliation and the real Phase 2 First check, then actionable work

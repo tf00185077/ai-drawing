@@ -1,10 +1,10 @@
 Verdict: PASS
 Review round: 2
 
-Reviewed commit: `616f67ff68fc27070e85861e94d70de1baf5082a`.
+Reviewed commit: `ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`.
 Review date: 2026-11-24 UTC. QA: [AID-160](/AID/issues/AID-160).
 Coding: [AID-159](/AID/issues/AID-159#comment-20fdc35f-8488-40c7-a6c9-a2c526affa8b).
-Cleared specification: `496cee2f842dc9386d336afb237075bf952271ce`.
+Cleared specification: `abe1272802bdead00ef0a9bf51d8709b58eb27d7`.
 Task SHA-256: `3b1cc30be86041c671627bb29720d4c973c8c5a7712b339437f94a3bb1ccd6a6`.
 
 This is a fresh same-candidate assessment of all four original acceptance items.
@@ -33,7 +33,7 @@ Before substantive review I pinned the full SHA on AID-160 in
 then created `ai-drawing-worktrees/aid-160-qa`, branch `aid-160-exact-review`,
 at that immutable commit. Seven official Coding uploads match sizes/hashes;
 both manifests equal Git; combined/correction patches equal raw binary diffs
-from `cee10138db8e6e944409701cdae6fb9cfe55c74f` / rejected `b1082a8`;
+from `c5991c50c0d0da400df565b1893ad663e412152d` / rejected `9a5e55a`;
 the bundle verifies and names the candidate. All 147 archive members match the
 inventory and named Git objects where applicable. Eight archived prior official
 artifacts were also downloaded independently and compared byte-for-byte.
@@ -42,7 +42,7 @@ See identity audit.
 The scope audit
 confirms all production code, dependencies, other component inputs, original
 Coding evidence and every existing catalog test function are unchanged from
-`b1082a8`. The only test delta is the two added policy tests. All temporary
+`9a5e55a`. The only test delta is the two added policy tests. All temporary
 mutations were restored byte-for-byte; QA delivers reports/evidence/registry
 only. Main and the AID-151 runtime were untouched.
 

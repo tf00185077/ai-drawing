@@ -13,18 +13,18 @@ was removed on 2026-11-27 and remains in Git history.
 
 | Task | Accepted | Feature commit | Rejected deliveries | Result |
 |---|---|---|---|---|
-| [p0-01](tasks/p0-01-windows-utf8-lora-files/task.md) | 11-24 | `1898378` | 0 | LoRA run files read as UTF-8 on Windows |
-| [p1-00](tasks/p1-00-mcp-friction-run-mac/acceptance.md) | 11-24 | `3081952` | 0 | Mac friction baseline with today's tools; macOS Backend suite 1900 passed |
-| [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/acceptance.md) | 11-24 | `b6d5846` | 1 | Mac runtime and image retrieval repair |
-| [p1-01](tasks/p1-01-mcp-response-envelope/acceptance.md) + [p1-02](tasks/p1-02-mcp-tool-consolidation/acceptance.md) | 11-24 | `616f67f` | 1 | One envelope for every tool; one intent tool per action (29) |
-| [p1-03](tasks/p1-03-mcp-wait-and-result/acceptance.md) | 11-24 | `77e3e3c` | 0 | Bounded `wait_for_job` with result locators; 50 s fallback |
-| [p1-04](tasks/p1-04-mcp-health-and-workers/acceptance.md) | 11-24 | `72f4834` | 0 | `health` and `list_workers` (31 intents) |
-| [p1-05](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) | 11-26 | `91d6e37` | 1 | Real Mac smoke: three consecutive flows, zero manual fixes; **Phase 1 exit**, owner demo accepted |
-| [p2-00](tasks/p2-00-civitai-first-check/acceptance.md) | 11-26 | `0d571b7` | 0 | Hand run: search → key download → register → `default_lora` image 3878; 20 manual interventions ([ledger](tasks/p2-00-civitai-first-check/friction-ledger.md), [intake](tasks/p2-00-civitai-first-check/implementation-intake.md)) |
-| [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `2e38503` | 1 | Backend reads the private key file; credentials only on the final request |
-| [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `c705d21` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
-| [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `4cd3c04` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
-| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `53e7d46` (WIP) | — | Kickoff CLEAR; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; respec under the new verification scope |
+| [p0-01](tasks/p0-01-windows-utf8-lora-files/task.md) | 11-24 | `531a68d` | 0 | LoRA run files read as UTF-8 on Windows |
+| [p1-00](tasks/p1-00-mcp-friction-run-mac/acceptance.md) | 11-24 | `c02ebe7` | 0 | Mac friction baseline with today's tools; macOS Backend suite 1900 passed |
+| [p1-00a](tasks/p1-00a-mac-runtime-and-retrieval/acceptance.md) | 11-24 | `ad2458e` | 1 | Mac runtime and image retrieval repair |
+| [p1-01](tasks/p1-01-mcp-response-envelope/acceptance.md) + [p1-02](tasks/p1-02-mcp-tool-consolidation/acceptance.md) | 11-24 | `ef8302c` | 1 | One envelope for every tool; one intent tool per action (29) |
+| [p1-03](tasks/p1-03-mcp-wait-and-result/acceptance.md) | 11-24 | `10d4593` | 0 | Bounded `wait_for_job` with result locators; 50 s fallback |
+| [p1-04](tasks/p1-04-mcp-health-and-workers/acceptance.md) | 11-24 | `c5e10eb` | 0 | `health` and `list_workers` (31 intents) |
+| [p1-05](tasks/p1-05-mcp-e2e-smoke-mac/acceptance.md) | 11-26 | `411544f` | 1 | Real Mac smoke: three consecutive flows, zero manual fixes; **Phase 1 exit**, owner demo accepted |
+| [p2-00](tasks/p2-00-civitai-first-check/acceptance.md) | 11-26 | `a9de233` | 0 | Hand run: search → key download → register → `default_lora` image 3878; 20 manual interventions ([ledger](tasks/p2-00-civitai-first-check/friction-ledger.md), [intake](tasks/p2-00-civitai-first-check/implementation-intake.md)) |
+| [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `24dad88` | 1 | Backend reads the private key file; credentials only on the final request |
+| [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
+| [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
+| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Kickoff CLEAR; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; respec under the new verification scope |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
 free-text credential recognition and evidence packaging. The
@@ -35,7 +35,7 @@ allowlist (next task p2-02a) and capped evidence.
 
 | Item | Status |
 |---|---|
-| Retained work integrated into `main` (`32b59fd`) | Done |
+| Retained work integrated into `main` (`3fa5c31`) | Done |
 | Docs rebuilt in English (entry, policy, architecture, current, roadmap, topics, team, memory) | Done |
 | History, research data, OpenSpec and scratch files removed | Done |
 | Progress table based on current code | Done (this page) |
@@ -58,7 +58,7 @@ allowlist (next task p2-02a) and capped evidence.
 | Uniform success `{ok, data}` / failure `{ok: false, error}` responses | Done, p1-01 accepted | `tools/responses.py`, registration/validation boundary | Registered/stdio envelope and recovery tests; independent full MCP 460/2 | Offline only for new surface |
 | `wait_for_job` and truthful result locators | Done, p1-03 accepted | `tools/wait_for_job.py`, async GET client | 77 feature cases, fresh Backend route replays, independent 28 extra cases; full MCP 540/2 | Offline only; real wait remains p1-05 |
 | `health` / `list_workers`, additive configured-worker status | Done, p1-04 accepted | `tools/health.py`, `api/workers.py` | Real route/client and registered mocked-HTTP checks; independent 51 calls/107 GETs, ten detected faults; Backend 1916/124 Windows skips, MCP 606/2 | Offline only; no real worker readiness claim |
-| End-to-end smoke script against real ComfyUI | Done, p1-05 accepted after exact QA and native owner demo acceptance | Corrected `91d6e37`, reviewed source integrated | Review 2 actual signal regression PASS; MCP 672/4, Backend 1916/124 | Fresh three pairs/six MCP PNGs and persisted lineage independently corroborated |
+| End-to-end smoke script against real ComfyUI | Done, p1-05 accepted after exact QA and native owner demo acceptance | Corrected `411544f`, reviewed source integrated | Review 2 actual signal regression PASS; MCP 672/4, Backend 1916/124 | Fresh three pairs/six MCP PNGs and persisted lineage independently corroborated |
 
 ## Phase 2 — One-sentence image flow (resources → workflow → image)
 

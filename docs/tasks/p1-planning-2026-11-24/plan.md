@@ -22,7 +22,7 @@ project-boundary change through native interaction plus project-channel delivery
 ## Baseline and evidence
 
 Fetched published `main` matched the clean local checkout at
-`6be499f62629e6478bdb290951dbd0e6eb23c6a1`. Phase 0 remains done; Phase 1 now
+`223cf89a8c1eae79d6dc5fdef84bc2a54a3da2b5`. Phase 0 remains done; Phase 1 now
 proceeds under the later direction. This planning commit changes docs/specs only.
 
 | Area | Observed source / read-only evidence | Work consequence |
@@ -56,17 +56,17 @@ cards follow CLEAR kickoff without another routine start confirmation.
 
 | Native card / order | Work and execution owner | Native prerequisite | Observable delivery |
 |---|---|---|---|
-| [AID-147](/AID/issues/AID-147), completed | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit `e443f2e` | [CLEAR](../p1-00-mcp-friction-run-mac/kickoff-review.md); independent reading and comparison; no execution acceptance |
-| [AID-148](/AID/issues/AID-148), completed | Coding ran p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | [Evidence](../p1-00-mcp-friction-run-mac/manifest.md) `3081952`: passing Mac suite, completed original, byte retrieval/revision blocked; 23 intervention units/eight incidents |
-| [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `3081952` for D1-D4 including the documented-blocker route; report/registry `c377a02` |
-| [AID-150](/AID/issues/AID-150), completed | QA independently reviewed [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification `4ac3d56` and accepted baseline evidence | [CLEAR](../p1-00a-mac-runtime-and-retrieval/kickoff-review.md); official report/archive/patch match `9bd0029`; no specification change |
-| [AID-151](/AID/issues/AID-151), completed | Coding delivered original p1-00a candidate `00ebb4d` | AID-150 actual CLEAR read; isolated branch from published `eaf11b8`; fixed task unchanged | Runtime/client-configuration/docs-only repair; fresh pair and decoded bytes/lineage; original raw evidence retained in corrected delivery |
-| [AID-152](/AID/issues/AID-152), completed | QA independently reviewed exact candidate `00ebb4d` | AID-151 actual delivery | Historical FAIL: D1-D4 PASS, D5 incomplete runtime inventory; report `537d47f`; old values preserved |
-| [AID-153](/AID/issues/AID-153), completed | Coding corrected inventory/schema evidence under original D5 | Actual QA finding and bounded correction at `c41815c`; original CLEAR/task unchanged | [Corrected manifest](../p1-00a-mac-runtime-and-retrieval/manifest.md), exact candidate `b6d5846`; complete schema/preservation receipts; no product change/restart/new generation |
-| [AID-154](/AID/issues/AID-154), completed | QA independently reviewed exact corrected candidate `b6d5846`, round 2 | AID-153 actual delivery | [D1-D5 PASS](../p1-00a-mac-runtime-and-retrieval/review.md), report/evidence/registry `3d5d890`; applicable D1-D4 evidence reused with equivalence checks; one prior rejection retained |
+| [AID-147](/AID/issues/AID-147), completed | QA kickoff for [p1-00](../p1-00-mcp-friction-run-mac/task.md) | Published fixed planning/spec commit `66e6a7f` | [CLEAR](../p1-00-mcp-friction-run-mac/kickoff-review.md); independent reading and comparison; no execution acceptance |
+| [AID-148](/AID/issues/AID-148), completed | Coding ran p1-00 without repairs | AID-147 CLEAR read by Producer before dispatch | [Evidence](../p1-00-mcp-friction-run-mac/manifest.md) `c02ebe7`: passing Mac suite, completed original, byte retrieval/revision blocked; 23 intervention units/eight incidents |
+| [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `c02ebe7` for D1-D4 including the documented-blocker route; report/registry `37f0161` |
+| [AID-150](/AID/issues/AID-150), completed | QA independently reviewed [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification `edc91b0` and accepted baseline evidence | [CLEAR](../p1-00a-mac-runtime-and-retrieval/kickoff-review.md); official report/archive/patch match `2def851`; no specification change |
+| [AID-151](/AID/issues/AID-151), completed | Coding delivered original p1-00a candidate `f0c3caf` | AID-150 actual CLEAR read; isolated branch from published `96a0ffc`; fixed task unchanged | Runtime/client-configuration/docs-only repair; fresh pair and decoded bytes/lineage; original raw evidence retained in corrected delivery |
+| [AID-152](/AID/issues/AID-152), completed | QA independently reviewed exact candidate `f0c3caf` | AID-151 actual delivery | Historical FAIL: D1-D4 PASS, D5 incomplete runtime inventory; report `537d47f`; old values preserved |
+| [AID-153](/AID/issues/AID-153), completed | Coding corrected inventory/schema evidence under original D5 | Actual QA finding and bounded correction at `5870f33`; original CLEAR/task unchanged | [Corrected manifest](../p1-00a-mac-runtime-and-retrieval/manifest.md), exact candidate `ad2458e`; complete schema/preservation receipts; no product change/restart/new generation |
+| [AID-154](/AID/issues/AID-154), completed | QA independently reviewed exact corrected candidate `ad2458e`, round 2 | AID-153 actual delivery | [D1-D5 PASS](../p1-00a-mac-runtime-and-retrieval/review.md), report/evidence/registry `33ea410`; applicable D1-D4 evidence reused with equivalence checks; one prior rejection retained |
 | [AID-142](/AID/issues/AID-142), 1 | Producer accepted baseline and corrected repair | Actual AID-154 PASS read and official packets checked | [Acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), unchanged reviewed delivery integrated; publication/completion releases AID-143 |
-| [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `d1ffb8d` | AID-143 complete baseline/friction handoff | p1-01 CLEAR; p1-02 AMBIGUITY K2-1, report `b32ac4f`; Producer's compose/save clarification needs fresh round-2 kickoff |
-| [AID-156](/AID/issues/AID-156), completed | QA independently reviewed clarified fixed specs at `496cee2` | Actual first-round reports and Producer clarification 1 | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review.md) and [p1-02 CLEAR](../p1-02-mcp-tool-consolidation/kickoff-review.md), exact report `9d79d20`; K2-1 resolved at specification level, first-round history preserved |
+| [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `f7e5ea2` | AID-143 complete baseline/friction handoff | p1-01 CLEAR; p1-02 AMBIGUITY K2-1, report `5600745`; Producer's compose/save clarification needs fresh round-2 kickoff |
+| [AID-156](/AID/issues/AID-156), completed | QA independently reviewed clarified fixed specs at `abe1272` | Actual first-round reports and Producer clarification 1 | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review.md) and [p1-02 CLEAR](../p1-02-mcp-tool-consolidation/kickoff-review.md), exact report `e2d3211`; K2-1 resolved at specification level, first-round history preserved |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
 | [AID-145](/AID/issues/AID-145), 4 | Producer coordinates [p1-04](../p1-04-mcp-health-and-workers/task.md); Coding; QA | AID-144 accepted/published result; CLEAR kickoff | Up/down/unconfigured health; empty or one configured worker; read-only risk; existing status endpoints reused |
@@ -108,7 +108,7 @@ transition. QA must give a fresh explicit verdict for each fixed specification;
 no earlier baseline/repair clearance releases Coding for p1-01/02. The recipient
 card and current gate are linked in AID-143's native plan.
 
-AID-155 returned p1-01 CLEAR and p1-02 AMBIGUITY at `d1ffb8d`. Its actual
+AID-155 returned p1-01 CLEAR and p1-02 AMBIGUITY at `f7e5ea2`. Its actual
 reports/package were checked and preserved. Clarification 1
 settles K2-1 under the approved read/write map: composition rejects legacy
 `save_as`; returned fragments are saved through `prompt_write(save)` with
@@ -117,9 +117,9 @@ stay unchanged. Fresh independent round-2 verdicts for both fixed specs precede
 Coding. This is one kickoff ambiguity/clarification round 1, not an
 implementation delivery rejection; p1-00a accounting remains separate.
 
-AID-156 returned explicit CLEAR for both at fixed `496cee2`. Producer read both
+AID-156 returned explicit CLEAR for both at fixed `abe1272`. Producer read both
 full reports and verified official reports/archive/patch/bundle and fixed
-references against report commit `9d79d20`. This satisfies the kickoff gate;
+references against report commit `e2d3211`. This satisfies the kickoff gate;
 Coding and a separate natively dependent delivery-QA card can proceed from the
 published handoff base in AID-143's native plan. Task digests, decisions and
 historical reports remain unchanged. Future software is not accepted by this
@@ -128,7 +128,7 @@ kickoff; exact-final-commit PASS still precedes combined feature publication.
 ## First p1-01/02 delivery result and correction
 
 [Coding AID-157](/AID/issues/AID-157) delivered combined candidate
-`b1082a855a66eedba6a4f11fbd4fcec0e9e867ab`, based on `cee1013`.
+`9a5e55a7d75c7c3b0be95383a093973882a965b0`, based on `c5991c5`.
 [QA AID-158](/AID/issues/AID-158) independently returned p1-01 PASS / p1-02
 FAIL F2-1 (P1, D2), report/evidence/registry `1001586`. Producer read both actual
 manifests/verdicts and the exact mutant/discovery/request evidence. All official
@@ -153,16 +153,16 @@ No ordinary CTY confirmation or boundary/threshold escalation is needed.
 ## Accepted combined correction and next release
 
 [Coding AID-159](/AID/issues/AID-159) delivered exact corrected combined
-`616f67ff68fc27070e85861e94d70de1baf5082a`. [QA AID-160](/AID/issues/AID-160)
+`ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`. [QA AID-160](/AID/issues/AID-160)
 independently returned PASS for both original tasks at that SHA, report/evidence/
-registry `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`. Producer read both actual
+registry `1ad28363f7e8eb53af471b494f362ab4c27c2882`. Producer read both actual
 manifests and reports plus exact false-label fault/restore/GREEN evidence.
 All thirteen official uploads, exact patches/bundles and 147/123 archive entries
 match their inventories and named immutable Git references.
 
 [Combined acceptance](../p1-01-mcp-response-envelope/acceptance.md) integrates
 reviewed source/manifests/reports/history/registry unchanged at
-`7ba2059f7e46920eaf860e19e61aa84bae8bf02c`. Fresh independent QA Backend 1900/124 Windows skips,
+`c5b50cadbdb1bcb6a5482791941675a23afc1d33`. Fresh independent QA Backend 1900/124 Windows skips,
 restored MCP 460/two unchanged optional skips, parity five and additional
 boundaries 15 pass. The risk downgrade now fails both guards/full suite before
 restoration. Original task/decision bytes, 40-row mapping, all merged
@@ -184,7 +184,7 @@ No routine start/resource/plan confirmation is pending.
 ## p1-03 kickoff result and clarification
 
 [QA AID-161](/AID/issues/AID-161) independently returned **AMBIGUITY K3-1**
-at fixed published `7a46cb7`, exact report/evidence `b3276dc`. Producer read
+at fixed published `c456741`, exact report/evidence `b4b3036`. Producer read
 and verified the actual report, official uploads, archive/Git identity and
 existing Backend source shapes. The original task,
 round-1 report and evidence
@@ -211,9 +211,9 @@ new live deployment, generation or Gallery-byte retrieval.
 ## p1-03 kickoff round 2 CLEAR and execution gate
 
 [QA AID-162](/AID/issues/AID-162) returned independent **CLEAR** for all five
-clarified requirements at `522c2f10b550d90f7b88ab1a3c9d1f6352439c8e`, exact
+clarified requirements at `fe82c10a163e822de816b274ca8d322899f8251e`, exact
 [report/evidence](../p1-03-mcp-wait-and-result/kickoff-review.md)
-`3bbcb9cdd30397c497c71da50ce83482642302e7`. Producer read the actual report
+`c5d85f628de1bec1b536005fddc6e30d4ff5fba8`. Producer read the actual report
 and verified five official uploads, binary patch/bundle and all 90 indexed
 payloads/92 archive members against immutable hashes/Git. Original task/report/
 evidence, cleared task/decision and nine registry items remain unchanged.
@@ -235,9 +235,9 @@ retrieval. Historical full suites/live proof and all retained-data boundaries st
 ## Accepted p1-03 delivery and p1-04 release
 
 [Coding AID-163](/AID/issues/AID-163) delivered exact candidate
-`77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`; [QA AID-164](/AID/issues/AID-164)
+`10d45934191b5f86590aa6408feae170ee3bb9df`; [QA AID-164](/AID/issues/AID-164)
 returned independent all-D1-D5 PASS, report/evidence/registry
-`d088c3258ab782623631d60daaaccc8ce6fcb6dc`. Producer read both actual
+`7ca903fd687a9eb1c83436e132d85f6c23377776`. Producer read both actual
 manifest/report, verified ten official uploads, exact patches/bundles and all
 203/262 indexed payloads against Git/hashes. Reviewed source/tests/manifests/
 evidence and QA registry are integrated unchanged; [acceptance](../p1-03-mcp-wait-and-result/acceptance.md)
@@ -263,7 +263,7 @@ No routine owner/start/resource confirmation remains.
 ## p1-04 kickoff ambiguity and identity clarification
 
 [QA AID-165](/AID/issues/AID-165) returned **AMBIGUITY K4-1** for fixed
-`c70162d`, exact report/evidence `3a980ec`. Producer read the actual report and
+`a8ea228`, exact report/evidence `de8b00b`. Producer read the actual report and
 worker route/client/settings, and verified five official uploads, exact binary
 patch/bundle and 59 indexed payloads/61 members against pinned Git/hashes.
 D1/D3/D4 are CLEAR at specification level; D2 needs configured-versus-observed
@@ -290,8 +290,8 @@ adds no suite, live probe/restart, generation or Gallery-byte retrieval.
 ## p1-04 kickoff round 2 CLEAR and implementation handoff
 
 [QA AID-166](/AID/issues/AID-166) returned independent **CLEAR** for fixed
-`5cf158b65d924a9508a3b5bfb7b47adb92eff7a1`, exact report/evidence
-`e75a94ec63a507bac194b702a87eb369ea1ccb20`. Producer read the actual report
+`c589f33c82ce69a1fe7ad6e05641f369b78eca94`, exact report/evidence
+`8f5c50bd2f5aa1579ac47836928d1d4f6c356948`. Producer read the actual report
 and verified all five official uploads, exact binary patch/bundle and 78 indexed
 payloads/80 archive members against sizes, hashes, blob IDs and pinned Git.
 The [cleared task](../p1-04-mcp-health-and-workers/task.md) retains SHA-256
@@ -320,9 +320,9 @@ Runtime/private configuration, canonical venvs and all retained data stay intact
 ## Accepted p1-04 delivery and p1-05 release
 
 [Coding AID-167](/AID/issues/AID-167) delivered exact
-`72f483418524a613fb104b92ab483e39f7432bfc`; [QA AID-168](/AID/issues/AID-168)
+`c5e10ebc55405ff36ea4ef9943ed9566d272ea29`; [QA AID-168](/AID/issues/AID-168)
 returned independent all-D1-D4 PASS, report/evidence/registry
-`3422ccda7a66514fe7dadf7d3c8785a5718ba472`. Producer read actual manifest/
+`1eb8688a066d94ffb694d751c5de4dff610ed158`. Producer read actual manifest/
 report and verified ten official uploads, exact binary patches/bundles and all
 159 Coding/296 QA indexed payloads against sizes, hashes, blob IDs and Git.
 Reviewed product/tests/manifest/evidence and QA registry are integrated unchanged;
@@ -373,11 +373,11 @@ For p1-01/02, deliver a manifest in each task folder and review their combined
 final commit. Merge/push together only after PASS; every later software delivery
 also needs PASS. Update CURRENT/PROGRESS and continue without per-item starts.
 
-AID-147 returned CLEAR for `e443f2e`. AID-148 delivered `3081952` without repairs;
+AID-147 returned CLEAR for `66e6a7f`. AID-148 delivered `c02ebe7` without repairs;
 AID-149 returned evidence-only PASS, and Producer inspected the actual manifest,
 review, full bounded suite receipts, raw transcript and friction accounting. The
 official attachments and exact patches match Git. The original evidence and QA
-report/registry `c377a02` are integrated without changing their bytes.
+report/registry `37f0161` are integrated without changing their bytes.
 
 The full Mac Backend suite passed twice independently: 1900 passed, 124 existing
 Windows-only skips, 77 warnings; Coding 43.84s, QA 44.13s, both exit 0 with
@@ -386,15 +386,15 @@ URL failed locally before an HTTP image request; no bytes or revision were
 retrieved. The live Backend omits revision context and its loaded commit is
 unknown. This is an accepted baseline record, not a usable end-to-end journey.
 
-Producer sent p1-00a to independent fixed-commit kickoff on AID-150 at `4ac3d56`.
+Producer sent p1-00a to independent fixed-commit kickoff on AID-150 at `edc91b0`.
 QA returned CLEAR; Producer read the complete comparison and verified the official
-report/archive/patch against QA report commit `9bd0029`. Its bounded scope
+report/archive/patch against QA report commit `2def851`. Its bounded scope
 aligns the existing Backend runtime and resolves the locator/client boundary,
 then proves a fresh original/revision pair with actual bytes and persisted
 lineage. No envelope/consolidation/wait/health redesign is pulled forward. The
 original 23-unit/eight-incident no-repair baseline remains unchanged; repair
-interventions are recorded separately. Coding AID-151 delivered `00ebb4d` from
-published `eaf11b8`, with unchanged product/test source. QA AID-152 returned FAIL:
+interventions are recorded separately. Coding AID-151 delivered `f0c3caf` from
+published `96a0ffc`, with unchanged product/test source. QA AID-152 returned FAIL:
 D1-D4 pass, but D5 omits eight nullable training columns and a new empty reservation
 table from the existing startup footprint. Its read-only audit found old values
 preserved. Producer checked the official report/audit and startup source; the
@@ -403,10 +403,10 @@ first candidate was rejected and held from merge pending correction.
 Correction 1 fixes the
 inventory and schema receipts within original cleared D5. No specification change,
 product fix, restart or extra generation was needed. Coding AID-153 delivered
-`b6d5846`, a direct child of `00ebb4d`, with the complete additive schema inventory,
+`ad2458e`, a direct child of `f0c3caf`, with the complete additive schema inventory,
 reproducible read-only preservation audit and refreshed integrity packet. QA
 AID-154 independently returned D1-D5 PASS at that exact candidate; report/evidence/
-registry commit `3d5d890`. Its new schema/value audit and process/source/configuration
+registry commit `33ea410`. Its new schema/value audit and process/source/configuration
 checks support reuse of the independently passing full suites, actual returned-path
 byte reads and generation/lineage checks. One prior delivery rejection remains
 recorded; correction round 1 and review round 2 are not reset.
@@ -477,7 +477,7 @@ incident accounting stay in task evidence.
 [Producer AID-146](/AID/issues/AID-146) read the actual accepted baseline/repair
 and p1-01–04 manifests, independent PASS reports and acceptances after native
 [AID-145](/AID/issues/AID-145) completed. [QA AID-169](/AID/issues/AID-169) now owns
-the independent kickoff at fixed published `d95f1a3607709285d45ac25f6d87a3be53a7ba41`.
+the independent kickoff at fixed published `f270bf9a6d1e4232d681743f818374fd239b12e3`.
 The existing task remains unchanged at SHA-256
 `5ff74c8794101ed1dc1c1346096444d184ca0b6f999271e820ae6829fcc8ea8b`.
 Its complete self-contained assignment/verbatim task was saved in the recipient
@@ -507,7 +507,7 @@ remain unaccepted; Phase 2 stays inactive. No new memory topic is needed.
 ## p1-05 kickoff result and clarification 1
 
 [QA AID-169](/AID/issues/AID-169) completed **AMBIGUITY**, exact report/evidence
-`039c0aee181b2a78588f7b02cb89b575157c581f`. Producer read its actual report and
+`576a33394b446caea1455243f94bfb15474b0cbd`. Producer read its actual report and
 verified all five official uploads, exact patch/bundle and 83 indexed payloads/
 84 members against immutable Git/hashes. K5-1 is missing actual MCP bytes;
 K5-2 is wait/preparation/no-retry accounting. Original task/report/evidence and
@@ -543,8 +543,8 @@ decisions; no duplicate memory topic.
 
 ## p1-05 round-2 CLEAR and implementation handoff
 
-[QA AID-170](/AID/issues/AID-170) independently cleared fixed `4fc3ff2`, exact
-report/evidence `a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the actual
+[QA AID-170](/AID/issues/AID-170) independently cleared fixed `f80ff51`, exact
+report/evidence `28ce4d7b2ddb10842566e357ee85f8d09d9d8fc9`. Producer read the actual
 report and verified five official uploads, all 93 indexed payloads/94 members,
 exact patch/tree and independently fetched bundle. Kickoff acceptance
 records unchanged cleared task/clarification/decision hashes and limits. K5-1/K5-2
@@ -567,8 +567,8 @@ runtime or generation/retrieval evidence; prior tests retain their attribution.
 
 ## p1-05 delivery review 1 FAIL and correction 1
 
-Read actual Coding AID-171 candidate **873629869dce8935d68daa8236f0aaf8eb1b553a**
-and independent QA AID-172 report/evidence **f510a0afde938671f43b590c66d9885507dd7046**.
+Read actual Coding AID-171 candidate **c22f2311c88c049fd66ddf60e913c4c0139d5d67**
+and independent QA AID-172 report/evidence **75b7570e708fec5df0f99f507bf9b5d1d92ee327**.
 QA D1 and recorded D2 pass independent checks; **D3 FAIL R5-1/P1**, D4 unchecked.
 Actual SIGINT after one qualifying pair safely stops but leaves streak 1 and
 omits the interrupted call/attempt finalization. Producer verified the full
@@ -578,7 +578,7 @@ requires actual signal regressions, complete interruption/admission accounting
 and a fresh frozen real three-pair streak. Original CLEAR/task/clarification/
 decision hashes remain unchanged; no new scope or routine owner confirmation.
 
-New Coding repair starts from **f510a0afde938671f43b590c66d9885507dd7046**, a
+New Coding repair starts from **75b7570e708fec5df0f99f507bf9b5d1d92ee327**, a
 report-only descendant with product bytes equal the reviewed candidate; it uses
 a new persistent worktree and imports only the published repair supplement.
 New independent QA pins the actual final corrected SHA after Coding, checks
@@ -605,9 +605,9 @@ publication. Later phase-close roadmap review is separate before Phase 2.
 
 ## p1-05 correction 1 review 2 technical PASS; owner demo pending
 
-Producer read actual Coding AID-174 **91d6e3790ecbb258b1a079395a1156912d090b62**
+Producer read actual Coding AID-174 **411544f36f54627258bd076f501e40ddb9d33f97**
 and independent QA AID-175 **D1–D3 technical PASS**, report/evidence
-**ade78141f693a6ff1259d8b61d883e77434b2ccd**. R5-1 resolved with actual CLI
+**8389445197a8c26e1ae8ff2099d4b6b386821876**. R5-1 resolved with actual CLI
 signal-boundary RED/GREEN, five meaningful independent faults/restoration and
 fresh corrected-source three-pair evidence. Technical acceptance
 is limited to D1–D3; [all six images and Gallery records](../p1-05-mcp-e2e-smoke-mac/demo.md)
@@ -637,7 +637,7 @@ all data. Existing decisions/memory cover durable rules; results stay in task do
 2026-11-26T01:29:16.989Z, human-only fixed demo confirmation, explicitly authorizes
 D4 recording and exact-candidate merge. The source is native Board, no separate
 Discord reply or verified six-image attachment delivery asserted. [Accepted feature](../p1-05-mcp-e2e-smoke-mac/acceptance.md)
-integrates actual 91d6e379 and independent QA ade78141 product/tests/report/raw
+integrates actual 411544f3 and independent QA 83894451 product/tests/report/raw
 evidence/18-row registry unchanged. Only current/status/topic/owner/acceptance
 records differ; all earlier histories/counts/cleared hashes remain. Producer
 checks integration identity/documentation/publication, no new live product,

@@ -2,7 +2,7 @@ Verdict: CLEAR
 Review round: 2
 
 Review type: independent kickoff only, 2026-11-24. QA: [AID-156](/AID/issues/AID-156).
-Fixed specification/source: `496cee2f842dc9386d336afb237075bf952271ce`.
+Fixed specification/source: `abe1272802bdead00ef0a9bf51d8709b58eb27d7`.
 Task: `docs/tasks/p1-02-mcp-tool-consolidation/task.md`.
 Task SHA-256: `9b9540278fdf041f66ce3fd80f218e4d7260d34a002814471ff8094e62102028`.
 Done when count: **5**. [p1-01 round-2 verdict](../p1-01-mcp-response-envelope/kickoff-review.md): **CLEAR**.
@@ -158,8 +158,8 @@ fallback is introduced. Risk labels do not expand security boundaries.
 ## History, verification and handoff
 
 Round 1 was [AID-155](/AID/issues/AID-155), source
-`d1ffb8d8d9db12f728ed98704e966e76489faafb`, report commit
-`b32ac4fcabf8c57e2370aa81bb06f6708863ff22`: p1-01 CLEAR / p1-02 AMBIGUITY
+`f7e5ea2b10de0efb7ad737ed0a1adb04b75fa14a`, report commit
+`56007458d83094c0e58a38541a52f68e905b8ae2`: p1-01 CLEAR / p1-02 AMBIGUITY
 K2-1. Accounting remains one p1-02 kickoff ambiguity, clarification round 1,
 this kickoff review round 2; no p1-01/02 implementation delivery, delivery
 rejection or delivery review exists. Both `kickoff-review-round-1.md` mirrors
@@ -189,7 +189,7 @@ git diff --check
 The static audit exited 0: both digests/counts match; 40 catalog/registration/
 original-discovery names and dispositions, 29 provisional destinations, 23 units/
 eight incidents and unchanged source/evidence inputs reconcile. All 20 original
-baseline files remain equal to `3081952e0ba12a339ab7e60b8081ede61a131b7f`;
+baseline files remain equal to `c02ebe75a25b949ca3408b5f5bfb0569225832cc`;
 all 91 repair-folder files equal the first kickoff source, with corrected
 manifest/raw flow and final review also equal their named immutable commits.
 The changed specification paths are documentation only. Backend/MCP and the

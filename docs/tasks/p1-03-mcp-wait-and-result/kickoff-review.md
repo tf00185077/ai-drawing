@@ -3,7 +3,7 @@ Review round: 2
 
 Review type: independent kickoff only. Date: 2026-11-24.
 QA: [AID-162](/AID/issues/AID-162). Producer: [AID-144](/AID/issues/AID-144).
-Fixed published source: **`522c2f10b550d90f7b88ab1a3c9d1f6352439c8e`**.
+Fixed published source: **`fe82c10a163e822de816b274ca8d322899f8251e`**.
 Task: `docs/tasks/p1-03-mcp-wait-and-result/task.md`.
 Task SHA-256: **`0d25f752ed4f17b28a01109c10c163e57532ae4b7e11832b8361f63a67af6688`**.
 Done when count: **5**. No p1-03 implementation manifest exists at this source.
@@ -49,17 +49,17 @@ and Git bytes. See the identity audit
 and source index.
 
 I read both accepted p1-01/02 author manifests, later QA reports and acceptance.
-The manifests equal corrected feature `616f67ff68fc27070e85861e94d70de1baf5082a`;
-the reports equal QA `28cd4512b8ec7d6594ec972ab81161b8c2d09d03`. Their author-time
+The manifests equal corrected feature `ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`;
+the reports equal QA `1ad28363f7e8eb53af471b494f362ab4c27c2882`. Their author-time
 pending-review text is followed by actual PASS/acceptance. The 29-intent envelope
 and risk surface, separate generation/training status and image/artifact
 namespaces remain the starting contract. Adding this one approved `read` intent
 does not rename LoRA tools, restore removed video submissions or advance health.
 
-The delta from first reviewed `7a46cb70bde83ba18417620ead3759a78e3c7c14` is entirely
+The delta from first reviewed `c456741e51d52e8f3e0486715b7bd49538cb5234` is entirely
 documentation/evidence: no product, test, dependency or registry change. The
 original task mirror equals that source's task; the historical round-1 report
-and all 15 original evidence files equal QA `b3276dc0c138fea8f99fed4a19b76e3a20043781`.
+and all 15 original evidence files equal QA `b4b30362a92caee38522cacac442725058f4d3a2`.
 The nine-item registry is byte-identical and untouched. No new guard or coverage
 row is certified by this kickoff.
 

@@ -1,10 +1,10 @@
 Verdict: PASS
 Review round: 2
 
-Reviewed commit: `616f67ff68fc27070e85861e94d70de1baf5082a`.
+Reviewed commit: `ef8302c959dfc97ce7cf7f118ac31583e31fb3d4`.
 Review date: 2026-11-24 UTC. QA: [AID-160](/AID/issues/AID-160).
 Coding: [AID-159](/AID/issues/AID-159#comment-20fdc35f-8488-40c7-a6c9-a2c526affa8b).
-Cleared specification: `496cee2f842dc9386d336afb237075bf952271ce`.
+Cleared specification: `abe1272802bdead00ef0a9bf51d8709b58eb27d7`.
 Task SHA-256: `9b9540278fdf041f66ce3fd80f218e4d7260d34a002814471ff8094e62102028`.
 
 All five original acceptance items pass at this same exact combined candidate;
@@ -67,8 +67,8 @@ risk-restoration.json and qa-mcp-restored.log.
 | D4 — complete baseline friction mapping | P2 | PASS | Read F1–F8 in actual refreshed manifest against original baseline and accepted context. F3 fixed; F5/F8 preserve lineage/locators. Bootstrap, polling, visibility and future smoke remain assigned. Original 23 units/eight incidents remain intact. |
 | D5 — delivered/staged docs and full MCP | P1 | PASS | docs/mcp.md's 29-tool table, envelope/errors and executable ping/resources/generate/status/Gallery flow agree with source/discovery. Final health/resources/generate/wait/Gallery flow is explicitly staged; later tools remain absent. Restored full MCP passes 460/2. |
 
-The original task/decision/clarification bytes equal fixed `496cee2`; the
-published correction equals `1d4fb0d`. I read both actual manifests and full
+The original task/decision/clarification bytes equal fixed `abe1272`; the
+published correction equals `a9c8384`. I read both actual manifests and full
 first-round reports/mutation proof. The precise new candidate was pinned on
 AID-160 before substantive review, then reviewed in an independent immutable
 worktree. Both manifests, seven official Coding uploads, exact combined/repair
@@ -97,7 +97,7 @@ Six other faults also fail afresh: flattened envelope (29 failures), lost
 Backend code (4), compose save leak (1), lost ETag (1), wrong custom dispatch
 (1), missing catalog tool (3). All were restored. Current production,
 dependencies, other component inputs and every existing catalog test function
-equal `b1082a8`; only two policy tests were added. No guard was weakened.
+equal `9a5e55a`; only two policy tests were added. No guard was weakened.
 
 I read active topic/policy/architecture/workflow/style/team/memory updates and
 checked real wrappers/dispatch/request assertions. Preservation covers canonical

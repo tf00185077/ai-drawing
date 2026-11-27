@@ -4,11 +4,11 @@ Date: 2026-11-24. Coordinator: [AID-142](/AID/issues/AID-142).
 
 ## Decision
 
-Accept the no-repair evidence record `3081952e0ba12a339ab7e60b8081ede61a131b7f`,
+Accept the no-repair evidence record `c02ebe75a25b949ca3408b5f5bfb0569225832cc`,
 following [QA AID-149](/AID/issues/AID-149)'s independent [PASS](review.md).
 Its direct approved source/specification parent is
-`e443f2e22a17f3ca61f69527bdd392e703b0e88b`; QA's report/registry commit is
-`c377a02c808589b225a6d5f386d7e47cc865b939`. The accepted task includes an expressly
+`66e6a7f39d0b202b30095d516f319b4d7fd0e249`; QA's report/registry commit is
+`37f016135388a7c49a6445077b64751ab78f767f`. The accepted task includes an expressly
 permitted documented-blocker outcome. It does not establish an end-to-end
 generate/retrieve/revise journey or release later work.
 
@@ -45,7 +45,7 @@ generate/retrieve/revise journey or release later work.
 
 [p1-00a](../p1-00a-mac-runtime-and-retrieval/task.md) is a bounded repair inside
 Phase 1, using the delegated reference pair. [QA kickoff AID-150](/AID/issues/AID-150)
-reviews fixed published specification `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc`;
+reviews fixed published specification `edc91b096965f5c05ed58705441b96e143132bbf`;
 its saved native plan matches the assignment. AID-142 waits natively on it. Actual
 CLEAR is required before Producer creates Coding and delivery-review cards. The
 repair aligns the running Backend, provides a consumable locator and proves one

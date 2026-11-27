@@ -18,10 +18,10 @@ CATALOG_DOCS = (
 
 # Independent policy expectations, not values read from the production catalog.
 # Source: docs/decisions/mcp.md (tool map, retained intents and staged delivery),
-# cleared at 496cee2f842dc9386d336afb237075bf952271ce; p1-02 D2.
-# p1-03 adds wait=read under the cleared decision at a88b84a; all prior labels remain.
+# cleared at abe1272802bdead00ef0a9bf51d8709b58eb27d7; p1-02 D2.
+# p1-03 adds wait=read under the cleared decision at faad28d; all prior labels remain.
 # p1-04 replaces ping and adds health/list_workers=read under the cleared
-# configured-worker decision at b075f36. Preflight/compose POSTs are read intents; caption,
+# configured-worker decision at b06e310. Preflight/compose POSTs are read intents; caption,
 # acquisition, training/smoke submission and cancellation mutate persistent state.
 APPROVED_INTENT_RISKS = {
     "health": "read",

@@ -107,13 +107,13 @@ Original implementation evidence remains under p1-01/evidence. Fresh correction 
   Branch `aid-159-risk-guard`, worktree
   `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-159-risk-guard`.
 - Exact repair base: rejected combined feature
-  `b1082a855a66eedba6a4f11fbd4fcec0e9e867ab`. Original feature handoff base:
-  `cee10138db8e6e944409701cdae6fb9cfe55c74f`.
+  `9a5e55a7d75c7c3b0be95383a093973882a965b0`. Original feature handoff base:
+  `c5991c50c0d0da400df565b1893ad663e412152d`.
   Only the published correction document was imported from
-  `1d4fb0df9c6c78e38c217aefed6afb91b0576c9a`; main's old product was not imported.
+  `a9c8384f8f56c285743d1d0c5f44872879a41bf6`; main's old product was not imported.
 - Cleared task/decision/clarification bytes remain exactly
-  `496cee2f842dc9386d336afb237075bf952271ce`. Both independent kickoff reports
-  remain at `9d79d203f65cf3802651a16559da13cbcc4ba14b`.
+  `abe1272802bdead00ef0a9bf51d8709b58eb27d7`. Both independent kickoff reports
+  remain at `e2d3211f59f786029cc43a8831146061e9accf3e`.
 - **Combined candidate is the final commit containing both refreshed manifests
   on `aid-159-risk-guard`.** Resolve with `git rev-parse aid-159-risk-guard`.
   The external delivery receipt and AID-159 completion pin its one full final
@@ -215,7 +215,7 @@ whitespace validation excludes only raw `.log` evidence.
 
 Read actual [Coding AID-157](/AID/issues/AID-157) manifests and
 [QA AID-158](/AID/issues/AID-158) reports, source and mutation evidence before
-repair. Prior delivery `b1082a855a66eedba6a4f11fbd4fcec0e9e867ab` remains immutable;
+repair. Prior delivery `9a5e55a7d75c7c3b0be95383a093973882a965b0` remains immutable;
 its official manifests/archive/receipt and QA's corresponding reports/archive/
 receipt were downloaded and hash-verified. Original reports/evidence/registry
 remain QA-owned at `1001586788d89d2c346619a5c1b0ffe1390897f8`; none is overwritten

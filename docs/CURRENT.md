@@ -28,13 +28,13 @@ Windows, 2026-11-24: Backend 2018 passed, 6 skipped; MCP 314 passed, 4 skipped. 
 
 ## Phase 0
 
-Done 2026-11-24 (`1898378`). Research data removed (`experiments/`, `research/`, `model_benchmarks/`).
+Done 2026-11-24 (`531a68d`). Research data removed (`experiments/`, `research/`, `model_benchmarks/`).
 
 ## Next work
 
 1. **Read first: [verification scope](decisions/verification-scope.md)** (owner-directed 2026-11-27). Public resource metadata becomes a typed allowlist; committed evidence is capped at 2 MB per task; Git SHAs are the source identity; correction rounds are bounded.
 2. **p2-02a: allowlist projection.** A small task that replaces the free-text credential recognizer in `resource_records.py` and deletes its tests.
-3. **p2-04 respec.** Rewrite the [durable download jobs task](tasks/p2-04-durable-download-jobs/task.md) to the new rules, then re-run kickoff. A partial implementation is on main as an [owner-requested checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) (`53e7d46`, unfinished: captured Backend full run exit -15, MCP exit 1); it is not a delivery and continues under the respec. The design decision is [civitai-download-jobs](decisions/civitai-download-jobs.md).
+3. **p2-04 respec.** Rewrite the [durable download jobs task](tasks/p2-04-durable-download-jobs/task.md) to the new rules, then re-run kickoff. A partial implementation is on main as an [owner-requested checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) (`6ec6e7a`, unfinished: captured Backend full run exit -15, MCP exit 1); it is not a delivery and continues under the respec. The design decision is [civitai-download-jobs](decisions/civitai-download-jobs.md).
 4. **Then the agent-facing part of Phase 2:** Civitai search + inspect, record list/reuse through MCP, workflow selection, trigger words and recommended parameters, removals, and three real one-sentence runs.
 
 Waiting on CTY: whether 3 rejections of one task should pause it and ask CTY, and the proposed `reviewspec-review` skill change (both in the verification-scope decision).

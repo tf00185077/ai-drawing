@@ -7,14 +7,14 @@ old manifest, original evidence/ and review-evidence/ remain
 exact. The historical adverse cookie tests still describe a defect; their green
 results are not security certification.
 
-Fixed base: **301c5dee6f35d5bad9fa0fe51799b24c56f35a5e**. Imported only the four
+Fixed base: **8609ba340026e69fb97e595edd7a9fad16d1e57a**. Imported only the four
 named repair/decision/mirror files from supplement
-**e2e6ee52022de188c003c0dcd056c649297d090c**. Unchanged task hash:
+**02e7cf0394c17c326765c4e42b51d2bf15af5ec1**. Unchanged task hash:
 `bd291da2897099b84fd743dcd384ea7812105ec96e74ad7501d76c9d28784850`.
 Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-183-cookie-boundary`,
 branch `aid-183-p2-01-cookie-boundary`; its ignored test environment is retained.
 
-Corrected software is frozen at **2491ceb7555fe49e3f6a1261113a3e6398185743**,
+Corrected software is frozen at **8ab5ac838fc95b8cbd9aa3585eef9cf07b811aef**,
 tree **7bcadfb7b75568c7e5c7a2d12ad397f6040b422d**. Final candidate SHA/tree appear
 in the native delivery receipt and uploaded artifact index, avoiding a circular
 self-hash. Subsequent changes are this manifest and correction evidence, including

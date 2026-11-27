@@ -2,7 +2,7 @@ Verdict: CLEAR
 Review round: 2
 
 Review type: independent kickoff only, 2026-11-24. QA: [AID-156](/AID/issues/AID-156).
-Fixed specification/source: `496cee2f842dc9386d336afb237075bf952271ce`.
+Fixed specification/source: `abe1272802bdead00ef0a9bf51d8709b58eb27d7`.
 Task: `docs/tasks/p1-01-mcp-response-envelope/task.md`.
 Task SHA-256: `3b1cc30be86041c671627bb29720d4c973c8c5a7712b339437f94a3bb1ccd6a6`.
 Done when count: **4**. [p1-02 round-2 verdict](../p1-02-mcp-tool-consolidation/kickoff-review.md): **CLEAR**.
@@ -65,16 +65,16 @@ The shared context retains every original row unchanged:
 | F8 — byte retrieval | 1 | Preserve distinct image/artifact IDs and supported locators; accepted colocated host-path proof does not certify remote URLs. p1-03/05 retain result/retrieval obligations. |
 | Total | 23 | Eight incidents; later repair subtracts no original unit. |
 
-Accepted repair `b6d58468147e11a21b3d7a26ea25ed4353a28a28`, independent review
-`3d5d8902a89a8c3c8994ed89e944fcaee0260577`, publication
-`a963386a3141194a6a08853d89224b548d112aa2` retain their actual limited acceptance.
+Accepted repair `ad2458e8a76f8060b4173ff4b3f2fc85b1ecee10`, independent review
+`33ea41002d3fa56a413310c2f64d9660228b6613`, publication
+`e29335ae8e4782bbadfbb5d468b32f84d736e82a` retain their actual limited acceptance.
 The original unsuccessful no-repair retrieval/revision is not relabeled.
 
 ## History, verification and handoff
 
 Round 1 was [AID-155](/AID/issues/AID-155), source
-`d1ffb8d8d9db12f728ed98704e966e76489faafb`, report commit
-`b32ac4fcabf8c57e2370aa81bb06f6708863ff22`: p1-01 CLEAR / p1-02 AMBIGUITY
+`f7e5ea2b10de0efb7ad737ed0a1adb04b75fa14a`, report commit
+`56007458d83094c0e58a38541a52f68e905b8ae2`: p1-01 CLEAR / p1-02 AMBIGUITY
 K2-1. Accounting remains one p1-02 kickoff ambiguity, clarification round 1,
 this kickoff review round 2; no p1-01/02 implementation delivery, delivery
 rejection or delivery review exists. Both `kickoff-review-round-1.md` mirrors
@@ -104,7 +104,7 @@ git diff --check
 The static audit exited 0: both digests/counts match; 40 catalog/registration/
 original-discovery names and dispositions, 29 provisional destinations, 23 units/
 eight incidents and unchanged source/evidence inputs reconcile. All 20 original
-baseline files remain equal to `3081952e0ba12a339ab7e60b8081ede61a131b7f`;
+baseline files remain equal to `c02ebe75a25b949ca3408b5f5bfb0569225832cc`;
 all 91 repair-folder files equal the first kickoff source, with corrected
 manifest/raw flow and final review also equal their named immutable commits.
 The changed specification paths are documentation only. Backend/MCP and the

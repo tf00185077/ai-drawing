@@ -1,7 +1,7 @@
 # Bounded Gallery PNG and strict Mac smoke implementation plan
 
 Goal: implement cleared task/clarification D1–D3; keep D4 pending owner-demo.
-Spec: task.md and kickoff-clarification-1.md, unchanged at e540829376cc397b3dc509192643874fabad3459.
+Spec: task.md and kickoff-clarification-1.md, unchanged at a52124e256a165e74588f46616b016ecb67a1545.
 Architecture: preserve existing intent/Backend adapters. Validate canonical selectors before access; use existing locator validation plus opened-file identity/containment and bounded Pillow decoding. A separate SDK client runs the literal eight-call flow, writes append-only evidence, and stops safely on uncertain admission.
 Stack: Python, existing MCP SDK/httpx, Pillow. Canonical environments remain untouched.
 

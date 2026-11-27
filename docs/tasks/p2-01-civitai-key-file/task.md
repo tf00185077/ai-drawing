@@ -17,7 +17,7 @@ Read [CTY's current direction](../../requests/2026-11-26-phase-2-start-and-key-f
 [QA report](../p2-00-civitai-first-check/review.md) and [friction ledger](../p2-00-civitai-first-check/friction-ledger.md),
 [evidence decision](../../decisions/evidence.md), [runtime memory](../../memory/runtime-source-contract-verification.md)
 and [operating policy](../../OPERATING-POLICY.md). Measurement Coding full SHA
-0d571b7d571561ebdea34c959ed6f16e2db06953 / exact QA 9caf92fefac6f30255bac528e3f4292f2c1bddf6
+a9de23389fb29ce4f6f8191184c9279670201abf / exact QA cec8087e2812ef29fdd0f4bdd70223deb796e9c0
 are source evidence, not CLEAR for this new software task.
 
 Actual active paths include app.config settings, civitai_resource_acquire

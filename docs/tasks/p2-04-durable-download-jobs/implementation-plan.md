@@ -1,7 +1,7 @@
 # Durable download jobs implementation plan
 
 **Goal:** Implement the unchanged cleared [task](task.md) at source
-`148d501557d7649f50be24440b856f5d327228de` for independent exact-commit QA.
+`b35950fc647ef343516253c78fc762f7fb406754` for independent exact-commit QA.
 
 **Execution:** Native Coding implementation in the isolated
 `aid-215-p204-durable-download` branch. The assignment delegates concrete choices

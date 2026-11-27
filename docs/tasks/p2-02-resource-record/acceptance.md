@@ -9,12 +9,12 @@ Kickoff1 CLEAR, the original task and repairs1–9 are unchanged.
 
 | Identity | Exact value |
 |---|---|
-| Coding FINAL | `c705d211f64497df7190120d46f94d94b785d24b` |
+| Coding FINAL | `211208ad2e0667ba9524a8c3c4395a4c4d5f71a7` |
 | Coding tree | `6881bfab08490ae6f1d9134cc9cb9bd7315b44f0` |
-| Coding software/tests/replay freeze | `1edcf82555431e42443bce53651d03dad9890b23` |
-| Independent report/evidence | `a94324fef3f264fb361c9761af0ff828eeb77e81` |
+| Coding software/tests/replay freeze | `211208ad2e0667ba9524a8c3c4395a4c4d5f71a7` |
+| Independent report/evidence | `92c111e68393c29d964e4d600e6e959d17912493` |
 | QA tree | `276dbbca99f4122171bea52327df574d8f649d09` |
-| QA feature/replay freeze | `53f16b8d5fc1a4bb055f307bc700b1953721c11c` |
+| QA feature/replay freeze | `211208ad2e0667ba9524a8c3c4395a4c4d5f71a7` |
 
 The actual report, Coding manifest
 and delivered topic are immutable mirrors.

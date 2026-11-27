@@ -35,7 +35,7 @@ Where it drifted, in order:
 2. **p1-05 (11-25).** First large evidence: full SDK message and call logs (about 4.8 MB each) were committed for every attempt, including rejected ones. Folder size: 44 MB.
 3. **[evidence decision](evidence.md) after p2-00 (11-26 16:10).** One helper over-redacted five tokenizer hashes. Producer responded by requiring a separately verified "complete declared source inventory". From then on every stage committed an inventory of about 8,000 path fingerprints (about 60,000 lines each). This is the main driver of the growth from 4 MB to 275 MB per task.
 4. **p2-02 task spec (11-26).** Producer, not the owner, wrote "Diagnostics expose no raw bad notes, credentials or signed locators", applied it to the free-form `source_evidence`, license values and names, and made all five Done when items P1, including D5, which is review mechanics. No allowlist shape was specified, so the only way to pass was to recognize credentials inside arbitrary text.
-5. **p2-02 round 3 (11-26 20:48).** The three-rejection threshold was reached. The threshold text had been changed on 11-26 (`1666ffb9`) so that Producer "adopts the in-boundary recommendation" and continues. The reassessment ruled out a design change ("do not add a secrecy framework") and kept patching the recognizer. Rounds 4–9 each found a new synthetic spelling: underscore prefix, quotes, serialization, escapes, preceding prose, ledger projection. Per-round evidence grew from 2.1 MB to 37.9 MB. QA recorded that no current credential disclosure was demonstrated.
+5. **p2-02 round 3 (11-26 20:48).** The three-rejection threshold was reached. The threshold text had been changed on 11-26 (`5608e144`) so that Producer "adopts the in-boundary recommendation" and continues. The reassessment ruled out a design change ("do not add a secrecy framework") and kept patching the recognizer. Rounds 4–9 each found a new synthetic spelling: underscore prefix, quotes, serialization, escapes, preceding prose, ledger projection. Per-round evidence grew from 2.1 MB to 37.9 MB. QA recorded that no current credential disclosure was demonstrated.
 6. **p2-03 and p2-04.** The same pattern continued: five P1 items, sensitivity and adverse suites, full inventories, and in p2-04 a D-level demand for "full changed-source qualification".
 
 Root cause: nothing in the system defines what is worth protecting or when to stop.
@@ -110,3 +110,9 @@ added in that form. Pruning it is a separate owner decision.
 - Why: p2-02 took ten review rounds and 275 MB, and p2-03 took 64 MB, for about 6k lines of product code, while no agent-facing Phase 2 capability exists yet. See the diagnosis.
 - Provenance: owner-directed; the threshold and skill changes are proposed only.
 - Supersedes: the "complete declared source inventory" part of the [2026-11-26 evidence decision](evidence.md); the redaction-semantics part stays.
+
+### 2026-11-27 · History rewritten to drop removed evidence and research data
+
+- Decision: owner-approved rewrite of `main` that removes the deleted per-round evidence under `docs/tasks` and the Phase 0 `experiments/`, `research/`, `model_benchmarks/` data from every commit, followed by a force push and deletion of 15 stale remote branches. The pack size went from 76.7 MB to 8.6 MB; the final tree is unchanged.
+- Effect: commit SHAs from 2026-07-02 on changed. Commit SHAs cited in docs were remapped to the new history; quoted tree hashes and SHAs inside commit messages still refer to the old history. Existing clones and worktrees must re-clone or reset to the new `main`.
+- Backup: a full bundle of the old history is kept outside the repo on the owner's Windows machine (`C:\tmp\ai-drawing-pre-rewrite-2026-11-27.bundle`).

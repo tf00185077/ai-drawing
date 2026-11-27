@@ -5,9 +5,9 @@ Coding [AID-190](/AID/issues/AID-190) delivers correction2 for independent
 owns findings and acceptance. This manifest records Coding observations; it is
 not a self-PASS, merge, push, deployment or Phase 2 exit.
 
-Fixed implementation base **5c6e9b4fcd9e1bf0adff89da8d93a5146e804953**,
+Fixed implementation base **31d846f15c45de54d8750147829a4110950f5a73**,
 tree **9c66e1c3b9fef0b61a5095641b1101b1b050be44**. Imported only the four
-specified supplement bodies from **bd9d26d8004f741c2dc0e84053dbb2e196364c62**:
+specified supplement bodies from **0a15c49d42d1197ac33021836965c34faca569db**:
 repair-round-2, resource decision, immutable manifest-correction-1 and review-round-2.
 No Producer status wrapper or substitute resource topic was imported.
 
@@ -19,9 +19,9 @@ with two rejected deliveries and original R1 unresolved at dispatch. R2–R4
 remain regression obligations. Old manifests/reports/raw directories are unchanged.
 
 Final software/tests/replay-helper freeze:
-**374c158b58332c9f49164a478961de5e9a7b871e**, tree
+**2847ec13e86444b09455e4fa13c9a1edd87b4310**, tree
 **a0067cd1cd498af3956bb1c06f90f106c687bc8c**. All current qualification below
-follows exact restoration at this freeze. Initial fe1e07b and d4dedc8 attempts
+follows exact restoration at this freeze. Initial b7f8196 and b0e5850 attempts
 remain in history. Subsequent commits contain reporting/evidence only.
 
 The actual **FINAL full candidate SHA/tree** is in the official uploaded
@@ -125,7 +125,7 @@ existing scan/performance/portability limits; this is no database redesign.
 
 ## Attempts and preservation
 
-- Rejected exact6fbcb246 replay first referenced a QA helper absent from that older
+- Rejected exact75b63c18 replay first referenced a QA helper absent from that older
   candidate: pytest exit4/no tests. Preserved separately. The retry uses the
   unchanged later QA helper with actual archived app imports: **13 failed/one
   passed**, the expected historical feature REDs. No old probe/log was rewritten.
@@ -136,18 +136,18 @@ existing scan/performance/portability limits; this is no database redesign.
   protected the tested select result. It is preserved and **not counted** as
   sensitivity. The stronger guard observes inspect wire before selection; a
   deliberate bypass of both inspect normalizers now fails20 assertions.
-- The first full Backend at d4dedc8 observed2198 passed/two failed/124 skips: strict
+- The first full Backend at b0e5850 observed2198 passed/two failed/124 skips: strict
   descriptor tests caught forged signed locators becoming accepted after early
   cleanup. Validation order is restored with all original assertions unchanged.
   Affected167 then pass. Current full/standing/fault/schema qualification is all
-  repeated on final374c158; old green suites do not qualify it.
+  repeated on final2847ec1; old green suites do not qualify it.
 - Initial official package1546ecd restored the bundle and the final patch tree,
   but patch fsck failed because raw intermediate headers referenced absent trees.
   This packaging attempt and all its official uploads/index are preserved. The
   replacement adds every per-commit binary patch, rebuilding intermediate objects
   from the official base without importing the candidate bundle. This is a
   report/package correction; the qualified product/tests/replay helpers remain
-  byte-exact at374c158. It adds no QA rejection or product-test skip.
+  byte-exact at2847ec1. It adds no QA rejection or product-test skip.
 - All18 current fault invocations fail on observable feature assertions, never
   setup/import/fingerprint/SQL errors. Original13 now yield42 failures; descriptor
   input normalization provides overlapping protection for one old bypass case.
@@ -163,7 +163,7 @@ existing scan/performance/portability limits; this is no database redesign.
 The official delivery index identifies FINAL commit/tree and every ordinary blob,
 all payload hashes and exact attachment paths. Eight ordered official base-bundle
 chunks reconstruct **66,109,399 bytes** and the exact published prerequisite
-base5c6e9b4, including its declared **b4e71d18ba4600ad7e053274b90b45ffdfbce87b**
+base5c6e9b4, including its declared **65688d84904b4bae639caf8f1a8d1825f78304b8**
 shallow boundary. All eight were downloaded, recombined, fetched in a new bare
 store and checked with git fsck. This supplies the prerequisite bytes directly;
 no external Git server or old workspace is needed. It is not a pre-boundary

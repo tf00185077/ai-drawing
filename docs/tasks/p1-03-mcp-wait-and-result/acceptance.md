@@ -5,11 +5,11 @@ the actual Coding manifest and independent same-candidate PASS report.
 
 ## Accepted identity
 
-- Final feature: **`77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`**, delivered by
+- Final feature: **`10d45934191b5f86590aa6408feae170ee3bb9df`**, delivered by
   [Coding AID-163](/AID/issues/AID-163), based on published
-  `a88b84a50ef46ff34a89cd1f85c7911963ced379`.
+  `faad28dc339b8b5d14aceea91d1fcfaad0a79ddd`.
 - Independent delivery review 1: [QA AID-164](/AID/issues/AID-164), **D1-D5 PASS**,
-  exact report/evidence/registry **`d088c3258ab782623631d60daaaccc8ce6fcb6dc`**.
+  exact report/evidence/registry **`7ca903fd687a9eb1c83436e132d85f6c23377776`**.
 - Reviewed product/tests/manifest, source evidence and QA report/registry are
   integrated unchanged. The final published main SHA and local/fetched/advertised
   equality receipt are recorded in [the native publication ledger](/AID/issues/AID-144#document-plan).
@@ -18,7 +18,7 @@ the actual Coding manifest and independent same-candidate PASS report.
   `0d25f752ed4f17b28a01109c10c163e57532ae4b7e11832b8361f63a67af6688`;
   full normative decision hash remains
   `7e91e4392ccab45af01c16db6781a36345e711e0722b9c1260cdb3df6a76e065`.
-  Kickoff round 2 CLEAR reviewed fixed `522c2f1`, report `3bbcb9c`.
+  Kickoff round 2 CLEAR reviewed fixed `fe82c10`, report `c5d85f6`.
   [Manifest](manifest.md), [independent PASS](review.md),
   original ambiguity and
   clarification 1 retain their original bytes.

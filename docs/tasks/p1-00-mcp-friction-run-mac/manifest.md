@@ -4,7 +4,7 @@ Execution completed on 2026-11-24 for [AID-148](/AID/issues/AID-148), coordinate
 
 ## Fixed source and handoff
 
-- Approved source/specification: `e443f2e22a17f3ca61f69527bdd392e703b0e88b`.
+- Approved source/specification: `66e6a7f39d0b202b30095d516f319b4d7fd0e249`.
 - Worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-148-p1-00`.
 - Branch: `aid-148-p1-00-evidence`. The evidence commit is the commit containing this manifest; resolve with `git rev-parse aid-148-p1-00-evidence`. Its full SHA is recorded in the Coding issue completion comment and uploaded bundle receipt.
 - Shared checkout: `/Users/tf00185088/Desktop/tim-project/ai-drawing`, left on `main`. Concurrent Producer documentation edits and QA's untracked kickoff review were preserved; they were not copied into this branch.

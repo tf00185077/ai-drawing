@@ -3,8 +3,8 @@
 Verdict: CLEAR
 Review round: 1
 Issue: [AID-177](/AID/issues/AID-177)
-Reviewed publication: `2d2a0b1b46cbfe196815e21bb4aede6e87228bf6`
-Owner handoff: `1666ffb9d264946e2fb7bbffb583f6180f6d8722`
+Reviewed publication: `0ccf65cade2d773db03f06a12efd53a6396862ac`
+Owner handoff: `5608e1443978d04c3a2d67aff4a86adb747ce793`
 Task SHA-256: `dfb23f60ecbd18bd8f8e481dc725406f2bfa07653f2172b5efcadd44748e6777`
 
 ## Independent reading and comparison

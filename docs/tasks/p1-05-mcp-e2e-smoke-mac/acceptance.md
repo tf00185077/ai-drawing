@@ -1,12 +1,12 @@
 # p1-05 accepted delivery and integration
 
 Producer [AID-146](/AID/issues/AID-146) accepts actual corrected [Coding AID-174](/AID/issues/AID-174)
-**91d6e3790ecbb258b1a079395a1156912d090b62**, tree
+**411544f36f54627258bd076f501e40ddb9d33f97**, tree
 **967e24606eb257b51c859fe1fd3c42a6597bdc4d**, after independent [QA AID-175](/AID/issues/AID-175)
-**D1–D3 PASS**, report/evidence **ade78141f693a6ff1259d8b61d883e77434b2ccd**,
+**D1–D3 PASS**, report/evidence **8389445197a8c26e1ae8ff2099d4b6b386821876**,
 tree **c0c2022048322c9de5735e6043b48fdb9ce4d94a**, and actual
 [owner demo acceptance](../../requests/2026-11-26-p1-05-demo-acceptance.md).
-Software freeze **e7819bcc02ceadc0dafad6d77a634618b5bfc02f** precedes fresh
+Software freeze **76452a6134c8d1ec16aabcb51ccc88da49b754a8** precedes fresh
 qualification. Manifest/review pending-owner wording is its immutable delivery
 snapshot; this later owner response completes the acceptance record.
 

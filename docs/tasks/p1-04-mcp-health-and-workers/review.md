@@ -1,9 +1,9 @@
 Verdict: PASS
 Review round: 1
 
-Reviewed FINAL implementation: **`72f483418524a613fb104b92ab483e39f7432bfc`**.
+Reviewed FINAL implementation: **`c5e10ebc55405ff36ea4ef9943ed9566d272ea29`**.
 Candidate tree: `42e521bed0adbc7e9e1c6fe72d9c62babbec4d4e`.
-Fixed base: `b075f36c0eec532071e11328eb4f2b21b52e1c0f`.
+Fixed base: `b06e3109e0ef1740bb0f0ad920d1b7cbae64887c`.
 Task SHA-256: `28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`.
 Full MCP decision SHA-256: `d477af0600efb30ec35eccd9173e82ec01732294b8cc9257905208d1f345c7e0`.
 Clarification SHA-256: `8fc12d877dc004dddf4dbf09177ffcc7b2d7c98ee3ce91bf84aa3ac06768670f`.
@@ -43,9 +43,9 @@ supply the reviewed source.
 - All **509 inherited docs/tasks paths**, including every prior task/report,
   p1-04 kickoff/clarification/history and the 13-row registry, are unchanged
   between handoff base and candidate. Cleared task/decision/clarification hashes
-  match those above. Accepted p1-03 feature `77e3e3c1520b01cd6422e8ca2b0c0f4adb66e6ce`,
-  QA `d088c3258ab782623631d60daaaccc8ce6fcb6dc` and kickoff-2 report
-  `e75a94ec63a507bac194b702a87eb369ea1ccb20` are ancestors. I read the actual
+  match those above. Accepted p1-03 feature `10d45934191b5f86590aa6408feae170ee3bb9df`,
+  QA `7ca903fd687a9eb1c83436e132d85f6c23377776` and kickoff-2 report
+  `8f5c50bd2f5aa1579ac47836928d1d4f6c356948` are ancestors. I read the actual
   p1-03 manifest, PASS and acceptance, and the current cleared task/decision.
 - QA's separate literal 31-name risk oracle matches actual catalog and SDK
   discovery. The other 29 names/labels match the fixed accepted policy, including
