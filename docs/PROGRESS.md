@@ -24,7 +24,7 @@ was removed on 2026-11-27 and remains in Git history.
 | [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `24dad88` | 1 | Backend reads the private key file; credentials only on the final request |
 | [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
 | [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
-| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | — | Independent kickoff dispatched to [QA AID-218](/AID/issues/AID-218) at `1f8e1155`; no delivery or acceptance yet |
+| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | — | [Kickoff CLEAR](tasks/p2-02a-allowlist-projection/kickoff-review.md) at report `cfbae7d4`, merged unchanged at `05da4bb9`; [Coding AID-219](/AID/issues/AID-219) dispatched, [QA AID-220](/AID/issues/AID-220) follows its actual candidate; no delivery or acceptance yet |
 | [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Original kickoff/handoff withdrawn; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; revised spec needs fresh kickoff after p2-02a acceptance |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
@@ -34,11 +34,13 @@ allowlist (next task p2-02a) and capped evidence.
 
 The [fresh owner continuation](requests/2026-11-27-fresh-producer-continuation.md)
 preserves the three-rejection owner stop gate and delegates ordinary recommendations.
-[Producer AID-217](/AID/issues/AID-217) superseded the old p2-04 cards' operative
-descriptions/native plans and dispatched the actual p2-02a kickoff. The old cards
-remain blocked pending prerequisite retirement; two server-refused cancellation
-writes are not recorded as cancellation, product completion or delivery rejections.
-This coordination adds no product test, deployment, generation or retrieval result.
+[Producer AID-217](/AID/issues/AID-217) read the actual p2-02a kickoff CLEAR and
+integrated only its 70-line report, preserving its bytes with a changed-path diff
+(exit 0). Coding and independent exact-commit delivery QA have separate cards and
+a native prerequisite. The old p2-04 cards' operative descriptions/native plans
+remain withdrawn; their status retirement is a separate control-plane action.
+The kickoff is not product acceptance and adds no product test, deployment,
+generation or retrieval result.
 
 ## Phase 0 — Clean foundation (done 2026-11-24)
 
