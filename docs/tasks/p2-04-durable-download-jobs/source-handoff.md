@@ -1,5 +1,13 @@
 # p2-04 source handoff
 
+Historical discovery for the withdrawn original handoff. The
+[revised task](task.md) and [verification scope](../../decisions/verification-scope.md)
+supersede its implementation and review obligations. In particular, current main
+already contains the unfinished download-job checkpoint, a per-process boot
+identifier is sufficient for the revised restart contract, and source identity is
+the Git SHA without inventories. A fresh kickoff follows p2-02a acceptance. Do not
+resume the old native Coding assignment from this discovery note.
+
 Fixed accepted product inputs: p2-03 Coding0508ac43, independent PASS1e69e9c6;
 full hashes, freeze, evidence and limits are in [acceptance](../p2-03-bounded-download/acceptance.md).
 Fresh kickoff pins the actual published full source/tree and task hash from its

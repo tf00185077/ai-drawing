@@ -21,4 +21,11 @@ The captured Coding diagnostics are retained literally: `backend-full-diagnostic
 
 ## Continuation
 
-[Coding AID-215](/AID/issues/AID-215) continues its implementation and current-source qualification. [QA AID-216](/AID/issues/AID-216) still waits for the actual final candidate and must review that exact SHA/tree. [Producer AID-146](/AID/issues/AID-146) retains findings and acceptance ownership. The owner-authorized snapshot publication does not reset prior task histories, grant feature acceptance or generally waive later review gates.
+The original continuation through [Coding AID-215](/AID/issues/AID-215),
+[QA AID-216](/AID/issues/AID-216) and [Producer AID-146](/AID/issues/AID-146) is
+withdrawn by the [fresh continuation](../../requests/2026-11-27-fresh-producer-continuation.md).
+Their work and history remain preserved. [Producer AID-217](/AID/issues/AID-217)
+owns p2-02a acceptance first, then a fresh kickoff of the revised p2-04 spec and new
+Coding/delivery-review assignments from current rewritten main. The earlier kickoff
+does not clear the revised spec. The checkpoint is not delivery or acceptance, and
+neither new cards nor a new run reset the same product task's rejection history.
