@@ -72,7 +72,7 @@ def _entry_from_row(row: DownloadedResource) -> LocalResourceLedgerEntry:
         for source, target in _ID_FIELDS
     }
     model_family = _audited_model_family(row, errors)
-    diagnostics: dict[str, Any] = {"database_id": row.id, "status": row.status, "resource_record": project_resource(row).model_dump(mode="json")}
+    diagnostics: dict[str, Any] = {"database_id": row.id, "status": row.status, "resource_record": safe_evidence(project_resource(row).model_dump(mode="json"))}
     if errors:
         diagnostics["identity_errors"] = errors
     return LocalResourceLedgerEntry(

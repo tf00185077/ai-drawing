@@ -31,7 +31,12 @@ class _SafeProviderLog(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         # httpx logs full request URLs and httpcore debug logs Location headers.
         # Filter at their emitting loggers, before any application handler sees it.
-        record.msg = redact_secrets(record.getMessage(), secrets=_log_secrets.get())
+        # httpcore debug events render raw header tuples, including cookies.
+        # Do not turn transport header dumps into a free-text recognition task.
+        if record.name.startswith('httpcore.'):
+            return False
+        from app.services.resource_records import safe_text
+        record.msg = safe_text(redact_secrets(record.getMessage(), secrets=_log_secrets.get()))
         record.args = ()
         return True
 

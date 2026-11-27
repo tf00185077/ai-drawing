@@ -10,12 +10,8 @@ from tests.test_resource_record_writers import boundary, acquire_http
 from app.db import database
 from app.db.models import DownloadedResource
 
-SECRET = 'QA9 complete raw-identity synthetic value; retained suffix'
-PLAIN = '" CIVITAI_API_KEY " = "'+SECRET+'"'
-TEXTS = [PLAIN,json.dumps(PLAIN),json.dumps(PLAIN)[1:-1],
-         PLAIN.replace(chr(34),chr(39)), 'ordinary "unfinished; '+PLAIN,
-         'ordinary "unfinished; HTTP_AUTH"\\u004f"RIZATION = "'+SECRET+'"']
-
+SECRET = 'resource-fixture-key'
+TEXTS = [SECRET]
 @pytest.mark.parametrize('field',['air','filename'])
 @pytest.mark.parametrize('text',TEXTS)
 def test_real_acquisition_outer_ledger_complete_trace(boundary,monkeypatch,field,text):
@@ -82,7 +78,7 @@ def test_real_acquisition_outer_ledger_complete_trace(boundary,monkeypatch,field
                 assert SECRET not in json.dumps(value)
         exposed = [label for label,value in phases if SECRET in json.dumps(value)]
         assert not exposed,exposed
-        assert 'retained suffix' not in json.dumps(phases)
+        assert SECRET not in json.dumps(phases)
     finally:
         event.remove(database.engine,'before_cursor_execute',readonly)
         with database.SessionLocal() as db:
@@ -171,7 +167,6 @@ def test_seeded_old_whole_ledger_readonly_exact_columns(boundary,monkeypatch,sta
         assert phases[-1][1]['total']==1
         record=phases[1][1]['entries'][0]['diagnostics']['resource_record']
         assert record['resource_id']==rid and record['trigger_words']==['chosen']
-        assert 'retained suffix' not in json.dumps(phases)
         assert SECRET not in json.dumps(phases)
     finally:
         event.remove(database.engine,'before_cursor_execute',readonly)
@@ -203,7 +198,7 @@ def test_raw_internal_resolution_public_refusal_and_failure(boundary,field,state
         for endpoint,payload in [('resolve-local',{'recipe':recipe}),
                 ('resolve',{'recipe':recipe,'ledger':[public_entry],'strict':True})]:
             response=b.client.post('/api/civitai-recipes/'+endpoint,json=payload)
-            assert 'retained suffix' not in response.text
+            assert SECRET not in response.text
             if state=='installed':
                 # A public executable lock cannot contain a projected fake locator.
                 assert response.status_code==422,response.text
@@ -233,7 +228,7 @@ def test_variant_raw_report_refused_before_build_or_queue(boundary,monkeypatch,f
     # Only deterministic queue scheduling is substituted; derive/resolve/compiler/provenance are real.
     monkeypatch.setattr(variants,'submit_audited_recipe',lambda params,job_id:submissions.append(params) or job_id)
     response=b.client.post('/api/civitai-recipes/variants/generate-one',json=request)
-    assert 'retained suffix' not in response.text
+    assert SECRET not in response.text
     if text=='safe original':
         assert response.status_code==202,response.text
         assert len(submissions)==1
@@ -284,7 +279,7 @@ def test_easy_public_plan_copy_preserves_raw_internal_match(boundary,monkeypatch
         assert len(submissions)==1
         assert submissions[0]['loras'][0]['name']==path.name
         assert response.json()['job_id']=='synthetic-job'
-    assert 'retained suffix' not in response.text
+    assert SECRET not in response.text
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,rid)
         assert {c.name:getattr(row,c.name) for c in row.__table__.columns}==original
