@@ -17,12 +17,18 @@
 - A phase exit needs 3 consecutive real runs with zero manual fixes (any human action, retry, workaround or non-MCP call) · why: past runs worked only after repeated manual fixes · owner-confirmed
 - Producer reviews actual exit evidence and the accepted roadmap at phase close, records the review and proceeds when requirements are met within unchanged project boundaries; report adopted recommendations with results. CTY decides boundary changes and aesthetics · why: current owner delegation removes routine continuation waits · owner-confirmed · [current direction](../requests/2026-11-26-phase-2-start-and-key-file.md)
 - Project memory follows the `project-memory-curation` skill shape (one question per topic: Context, Why, How to apply, Evidence, `curated_on`); outdated docs are distilled into memory and then trimmed to current facts; `.codex/` removed · why: old content misled agents about the current state · owner-confirmed
-- Reassessment/reporting thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task; Producer adopts the in-boundary recommendation under current delegation and asks CTY for actual boundary decisions · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
+- Reassessment/reporting thresholds: 3 non-advancing tasks in a row, a blocker over 2 days, or 3 review rejections of one task. At 3 rejections of one task Producer pauses it and asks CTY with options before another correction; for the other thresholds Producer adopts the in-boundary recommendation under current delegation and reports it · owner-confirmed 2026-11-27 · [request](../requests/2026-11-27-verification-reassessment.md) · [ROADMAP](../roadmap/ROADMAP.md#thresholds)
 - Not now: non-Windows workers and paid cloud, workflow engines, UI redesign beyond the dashboard phase (now Phase 6) · owner-confirmed · [ROADMAP](../roadmap/ROADMAP.md#not-now)
 - No OpenSpec: task specs in `docs/tasks/<task>/task.md` are the only spec format; durable behavior rules live in the topic docs · owner-confirmed
 - Paperclip team continues in lean form; all eight roles kept; Hermes delegated-decision flow removed; any agent may update memory · owner-confirmed · [team](../team/README.md)
 
 ## Log (newest first)
+
+### 2026-11-27 · Rejection threshold stops the task
+
+- Decision: 3 review rejections of one task pause it for a CTY decision; Phase 2 resource-record scope names the allowlist and the secrets in scope.
+- Why: under the earlier wording p2-02 reached the threshold at round 3 and continued to round 10 without a design change ([verification scope](verification-scope.md)).
+- Provenance: owner-confirmed in the 2026-11-27 reassessment session.
 
 ### 2026-11-26 · Concrete key-file locator and delegated roadmap continuation
 - Decision: use `/Users/tf00185088/Desktop/civitai.txt` as the owner Mac key source, follow the published Phase 2 scope and First check, adopt Producer recommendations inside the approved project boundary, and continue when roadmap requirements are met. Producer records phase-exit/roadmap reviews and reports choices with results; CTY still decides boundary changes and aesthetics.

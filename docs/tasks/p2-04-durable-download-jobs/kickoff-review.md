@@ -1,3 +1,5 @@
+> **Superseded 2026-11-27.** This CLEAR applied to the earlier p2-04 spec. The [respecified task](task.md) needs a fresh kickoff.
+
 # p2-04 independent specification kickoff
 
 Verdict: CLEAR

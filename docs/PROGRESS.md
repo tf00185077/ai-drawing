@@ -24,7 +24,8 @@ was removed on 2026-11-27 and remains in Git history.
 | [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `24dad88` | 1 | Backend reads the private key file; credentials only on the final request |
 | [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
 | [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
-| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Kickoff CLEAR; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; respec under the new verification scope |
+| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | — | Spec ready: typed allowlist replaces the credential recognizer; kickoff next |
+| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Kickoff CLEAR; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; respecified 2026-11-27, fresh kickoff after p2-02a |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
 free-text credential recognition and evidence packaging. The

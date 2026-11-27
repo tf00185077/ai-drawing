@@ -12,6 +12,7 @@ file conflicts with an earlier task spec, handoff, repair note or
 - **Committed evidence per task is capped at 2 MB in total and 1 MB per file**; a phase-exit folder may reach 10 MB. Raw logs, full suite output and source inventories stay out of Git.
 - **Source identity is the Git commit.** The reviewed full SHA plus `git diff --exit-code <reviewed-sha> <merged-sha> -- <changed paths>` replaces freeze inventories, per-file fingerprint lists and Producer integrity JSON.
 - **Done when items describe product behavior.** Review mechanics (fault injection, registry reruns, restoration) are how QA works under `reviewspec-review`; they are not Done when items. Only items whose breakage harms the owner's use are P1.
+- **Three rejections stop the task.** At 3 rejected deliveries of one task, Producer pauses it and asks CTY with options (narrow the requirement, change the design, or continue) before another correction. Owner-confirmed 2026-11-27; see [roadmap thresholds](../roadmap/ROADMAP.md#thresholds).
 - **Correction rounds are bounded.** A correction review checks the earlier findings and regressions in the changed code. A further finding of the same class after the second rejection is an AMBIGUITY to Producer, who reshapes the design instead of patching again.
 
 ## Diagnosis: hard rule or drift?
@@ -93,13 +94,12 @@ added in that form. Pruning it is a separate owner decision.
 
 ## Follow-up work
 
-1. **p2-02a: allowlist projection (new, small, before p2-04 implementation).** Implement the table above. Delete the credential-recognition code and its tests (`test_resource_record_credential_labels.py`, `..._credential_values.py`, `..._quoted_labels.py`, `..._quote_contexts.py`, `..._quote_prefix_escapes.py`, `..._serialized_assignments.py`, `..._terminal_escapes.py`, `..._representation_contexts.py`, and the matching parts of `..._acquisition_notes.py` and `..._ledger_projection.py`). Supersede their REGISTRY rows. Add allowlist tests and the exact-key-value absence test. Done when: two P1 items (allowlist projection; key value and signed URLs absent) and one P2 item (old rows still readable).
-2. **p2-04 respec.** Producer removes D5-style review mechanics from Done when, re-levels items by owner impact and rewrites Delivery to the committed-evidence list above. Kickoff is re-run on the revised spec; it should take one round.
+1. **[p2-02a: allowlist projection](../tasks/p2-02a-allowlist-projection/task.md) (spec written; small, before p2-04).** Implement the table above. Delete the credential-recognition code and its tests (`test_resource_record_credential_labels.py`, `..._credential_values.py`, `..._quoted_labels.py`, `..._quote_contexts.py`, `..._quote_prefix_escapes.py`, `..._serialized_assignments.py`, `..._terminal_escapes.py`, `..._representation_contexts.py`, and the matching parts of `..._acquisition_notes.py` and `..._ledger_projection.py`). Supersede their REGISTRY rows. Add allowlist tests and the exact-key-value absence test. Done when: two P1 items (allowlist projection; key value and signed URLs absent) and one P2 item (old rows still readable).
+2. **[p2-04 respec](../tasks/p2-04-durable-download-jobs/task.md) (written 2026-11-27).** Removes D5-style review mechanics from Done when, re-levels items by owner impact and rewrites Delivery to the committed-evidence list above. Kickoff is re-run on the revised spec; it should take one round.
 3. **Rest of Phase 2.** After p2-04, prioritize what an agent can use: Civitai search + inspect, record list/reuse through MCP, workflow selection, defaults. Then the removals and the three real runs.
 
 ## Proposed, needs CTY confirmation
 
-- **Rejection threshold stops work.** At 3 rejections of one task, Producer pauses that task and asks CTY with options (narrow the requirement, change the design, or continue), instead of adopting a recommendation and continuing. This changes the settled threshold line in [roadmap decisions](roadmap.md).
 - **Add to the `reviewspec-review` skill** (owner library, outside this repo): "Block only on a failure reachable from a value the system actually holds or an input it actually receives; a synthetic string that merely resembles a secret is a note. After a second rejection for the same class of finding, return AMBIGUITY instead of FAIL."
 
 ## Log

@@ -17,3 +17,13 @@ allowlist, and committed evidence is cut to a fixed small set. The full diagnosi
 and the new rules are in the [verification-scope decision](../decisions/verification-scope.md).
 This changes how work is verified, not the destination, phase order, Phase 2 scope,
 Not now list or the three-consecutive-real-run exit rule.
+
+## Follow-up in the same session
+
+After the cleanup and history rewrite, CTY confirmed both proposed roadmap changes:
+
+> 照這樣做，第2點也一起補
+
+Applied: 3 review rejections of one task now pause it for a CTY decision, and the
+Phase 2 resource-record scope states the allowlist and the secrets in scope. The
+`reviewspec-review` skill change remains a proposal.

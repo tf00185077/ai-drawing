@@ -51,4 +51,4 @@ p2-04 behavior, runtime deployment or Phase2 acceptance.
 
 ## Kickoff application
 
-Kickoff 1 CLEAR (report `c1d5ffc0`) applied to the original spec. p2-04 is being respecified under [verification scope](verification-scope.md) and needs a fresh kickoff.
+Kickoff 1 CLEAR (report `c1d5ffc0`) applied to the original spec and is superseded. The [respecified task](../tasks/p2-04-durable-download-jobs/task.md) (2026-11-27) keeps this decision's design (existing Backend/SQLite, resource rows stay the model authority, single Backend process) and needs a fresh kickoff.

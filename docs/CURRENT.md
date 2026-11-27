@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: verification reassessment; p2-02a allowlist next, p2-04 respec before implementation** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a allowlist spec ready; p2-04 respecified; both need kickoff** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -33,11 +33,11 @@ Done 2026-11-24 (`531a68d`). Research data removed (`experiments/`, `research/`,
 ## Next work
 
 1. **Read first: [verification scope](decisions/verification-scope.md)** (owner-directed 2026-11-27). Public resource metadata becomes a typed allowlist; committed evidence is capped at 2 MB per task; Git SHAs are the source identity; correction rounds are bounded.
-2. **p2-02a: allowlist projection.** A small task that replaces the free-text credential recognizer in `resource_records.py` and deletes its tests.
-3. **p2-04 respec.** Rewrite the [durable download jobs task](tasks/p2-04-durable-download-jobs/task.md) to the new rules, then re-run kickoff. A partial implementation is on main as an [owner-requested checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) (`6ec6e7a`, unfinished: captured Backend full run exit -15, MCP exit 1); it is not a delivery and continues under the respec. The design decision is [civitai-download-jobs](decisions/civitai-download-jobs.md).
+2. **[p2-02a: allowlist projection](tasks/p2-02a-allowlist-projection/task.md)** (spec ready, kickoff next). Replaces the free-text credential recognizer in `resource_records.py` with a typed allowlist and a bounded secret check, and deletes its tests.
+3. **[p2-04: durable download jobs](tasks/p2-04-durable-download-jobs/task.md)** (respecified 2026-11-27, fresh kickoff after p2-02a). Continues from the [owner-requested partial implementation](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main, which is unfinished and unreviewed.
 4. **Then the agent-facing part of Phase 2:** Civitai search + inspect, record list/reuse through MCP, workflow selection, trigger words and recommended parameters, removals, and three real one-sentence runs.
 
-Waiting on CTY: whether 3 rejections of one task should pause it and ask CTY, and the proposed `reviewspec-review` skill change (both in the verification-scope decision).
+Settled 2026-11-27: 3 review rejections of one task pause it for a CTY decision ([thresholds](roadmap/ROADMAP.md#thresholds)). Still a proposal: the `reviewspec-review` skill change in the verification-scope decision.
 
 ## Team
 
