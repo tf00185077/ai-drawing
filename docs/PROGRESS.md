@@ -25,7 +25,7 @@ was removed on 2026-11-27 and remains in Git history.
 | [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
 | [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
 | [p2-02a](tasks/p2-02a-allowlist-projection/acceptance.md) | 11-27 | `3e70e04c` | 1 | Typed public allowlist and held-secret filtering; apostrophe-query correction accepted after independent review 2 PASS; merged `1bbeb166`, 51 active / 40 superseded REGISTRY items |
-| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Original kickoff/handoff withdrawn; [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) unreviewed. Fresh revised-spec [QA AID-223](/AID/issues/AID-223) kickoff running at accepted main `6b82a91e`; Producer waits through native dependency |
+| [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | [Fresh revised kickoff CLEAR](tasks/p2-04-durable-download-jobs/kickoff-review.md), report `a74501a0`, integrated `53cd0cef`; [Coding AID-224](/AID/issues/AID-224) → [QA AID-225](/AID/issues/AID-225) through native prerequisite. Partial checkpoint still unaccepted; no delivery yet |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
 free-text credential recognition and evidence packaging. The
@@ -42,11 +42,25 @@ exit 0. The original task and first rejection remain unchanged. Complete receive
 query removal now has a real-caller guard. The two known immediate-expiry install
 quarantines retain their p2-04 fix/re-enable links; all other deadline guards remain.
 The accepted task retains one rejection across all cards/runs. Routine continuation
-adopted: independent revised p2-04 kickoff dispatched on [QA AID-223](/AID/issues/AID-223)
-against fixed accepted main `6b82a91ea0974b8f069a7429530086c2997125ae`; complete
-initial plan read back exact. Producer is blocked on that real child, with native
-completion/prerequisite continuation to read CLEAR/AMBIGUITY. Old kickoff CLEAR is
-superseded. New Coding/delivery QA follow actual CLEAR, not card completion alone.
+adopted after reading actual [QA AID-223](/AID/issues/AID-223) fresh revised p2-04
+**CLEAR**: report `a74501a002d8e2f73be558468adf6b9ba5b92481`, pinned source
+`6b82a91ea0974b8f069a7429530086c2997125ae`, integrated unchanged at
+`53cd0cef8447eb77e4c9f46e3bb29222a9e99115` (report changed-path diff exit 0).
+New [Coding AID-224](/AID/issues/AID-224) implements from that published source;
+independent [QA AID-225](/AID/issues/AID-225) has Coding as native prerequisite and
+must obtain its actual final full candidate SHA. Both complete initial plans were
+read back exact. Producer waits on delivery QA via native completion/prerequisite
+continuation. Old kickoff/cards stay superseded; WIP is not product acceptance.
+
+Fresh kickoff inspected actual acquire/install/status/wait callers, 31 catalog
+names, wait risk, previous-schema fixture and known quarantines. No material
+ambiguity or owner question. Complete `resource_ids`, actual Backend subprocess
+kill/restart and Backend-route MCP wait proof remain delivery work. Preserve
+pre-admission refusals separately from admitted terminal failures and synchronous
+install's single-descriptor API. Both deadline skips must be fixed/re-enabled.
+Coding owns targeted build checks; QA owns one final-candidate full qualification
+and active REGISTRY invocation. No new product test/runtime/generation/live-artifact
+result or rejection is claimed for kickoff. Memory reviewed; no new topic.
 
 Independent results on the rejected candidate: Backend 2340 passed / 125 skipped,
 MCP 672 / 4, frontend 226 / 1 and build passed; the additional R1 reproduction
