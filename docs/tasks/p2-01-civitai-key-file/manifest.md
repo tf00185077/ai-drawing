@@ -2,8 +2,8 @@
 
 Coding [AID-183](/AID/issues/AID-183), coordinated by [Producer AID-146](/AID/issues/AID-146).
 This is a delivery for independent review round 2, not a self-PASS, integration,
-deployment or Phase 2 exit. The actual first [FAIL R1/P1/D3](review-round-1.md),
-[old manifest](manifest-round-1.md), original evidence/ and review-evidence/ remain
+deployment or Phase 2 exit. The actual first FAIL R1/P1/D3,
+old manifest, original evidence/ and review-evidence/ remain
 exact. The historical adverse cookie tests still describe a defect; their green
 results are not security certification.
 
@@ -56,8 +56,8 @@ the imported Producer decision remains verbatim.
 | D4 | manual / P1 | live.json, live_probe.py, freeze.json, source-inventory.json | Fresh bounded actual anonymous/configured-file HEAD on version 1843039/file 1743033 after product freeze. No transport/key injection. Loaded unwrapped request and policy code match compiled exact source. |
 | D5 | test + delivery / P1 | This manifest; guarded current suites/exports/readers/registry; verification.json; uploaded full Git bundle/evidence/index/readback | Exact candidate and source fingerprints, preserved histories and existing contracts. Producer's dependent independent QA owns the verdict. |
 
-Evidence links are relative to [correction-1-evidence/](correction-1-evidence/).
-The [command guide](correction-1-evidence/verification-commands.md) explains
+Evidence links are relative to correction-1-evidence/.
+The command guide explains
 reproduction, harness provenance and failed attempts. The runner and observer
 reuse prior QA tooling; their inherited descriptions do not make these Coding
 checks an independent QA review.

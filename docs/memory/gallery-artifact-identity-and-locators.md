@@ -41,4 +41,4 @@ same job and supported Gallery mapping before another read.
 - `backend/app/api/gallery.py`: `_to_image_url`, `_artifact_local_path`.
 - `backend/app/schemas/gallery.py`: nullable artifact locators.
 - `backend/app/services/lora_smoke.py`: `reference` legacy-image fallback.
-- [Independent source/fixture review](../tasks/p1-03-mcp-wait-and-result/kickoff-review-round-1.md).
+- Independent source/fixture review.

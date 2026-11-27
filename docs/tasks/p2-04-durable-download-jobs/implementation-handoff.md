@@ -83,7 +83,7 @@ Initial guessed source paths, ignored-log staging correction and Apple Python
 with the explicit 3.11.15 interpreter and official restore succeeded; no product,
 test assertion or skip was changed. Do not recast those attempts as product tests.
 
-[Producer integrity](producer-kickoff-integrity.json) verifies all ten official
+Producer integrity verifies all ten official
 uploads, 29 exact evidence payloads, all 8,891 source/report body-mode identities,
 8,862 unchanged base paths and their ordinary fingerprints, unchanged 87-row
 registry and the self-contained official snapshot plus independent full-index patch

@@ -7,7 +7,7 @@ Source tree: `19fbeb931a89f67afc991ec0cd37c94d624be1c7`.
 **`28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`**.
 [Full MCP decision](../../decisions/mcp.md) SHA-256:
 **`d477af0600efb30ec35eccd9173e82ec01732294b8cc9257905208d1f345c7e0`**.
-[Clarification 1](kickoff-clarification-1.md) SHA-256:
+Clarification 1 SHA-256:
 `8fc12d877dc004dddf4dbf09177ffcc7b2d7c98ee3ce91bf84aa3ac06768670f`.
 Independent recipient: [QA AID-166](/AID/issues/AID-166).
 Coordinator: [Producer AID-145](/AID/issues/AID-145). Date: 2026-11-24 UTC.
@@ -21,7 +21,7 @@ leave registry, heartbeat and scheduling in Phase 3. Reachability does not prove
 worker model parity, remote ComfyUI, generation readiness, loaded source or
 artifact access.
 
-I recorded [my owner reading](kickoff-2-evidence/owner-reading.md) before opening
+I recorded my owner reading before opening
 the repository task in this round. The assignment had already supplied the
 complete task/decision text; this was independent reasoning, not a blind read.
 The [later owner instruction](../../requests/2026-11-24-proceed-within-project-boundaries.md)
@@ -40,7 +40,7 @@ acceptance, deployment, a readiness certification or Phase 1 exit proof.
 ## K4-1 disposition
 
 **Resolved at specification level.** The actual round-1 result remains
-[AMBIGUITY](kickoff-review-round-1.md), report/evidence commit
+AMBIGUITY, report/evidence commit
 `3a980ec557e5ab23a91e917491b13c947587f63d`; it is not reclassified.
 
 The original failure scenario remains real: the current worker-status route
@@ -67,7 +67,7 @@ The decision now fixes each previously disputed meaning:
   Backend connection/HTTP/invalid-status failures return a common error envelope
   with stable code and safe read/configuration recovery guidance.
 
-The [new shape probe](kickoff-2-evidence/route-shapes.output.txt) independently
+The new shape probe independently
 exercises real existing routers/client validation with mocked HTTP and candidate
 selection. In its discovery case the configured address is `192.0.2.10`, while
 accepted discovery and a subsequent cached read use `192.0.2.11`. A later
@@ -136,7 +136,7 @@ nullable locators and same-ID recovery; locators prove neither bytes nor access.
 
 ## Commands, results and evidence limits
 
-[Evidence README](kickoff-2-evidence/README.md) identifies commands, full output,
+Evidence README identifies commands, full output,
 argv, cwd, selected non-secret environment, UTC start, elapsed time and exit.
 This worktree is `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-166-kickoff-review`,
 branch `aid-166-p1-04-kickoff-round-2`, created at the full reviewed SHA.

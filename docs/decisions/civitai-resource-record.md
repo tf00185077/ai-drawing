@@ -15,194 +15,17 @@
 - Old source aliases describe image/recipe evidence, not necessarily models.
   Preserve that evidence and its history. Do not invent model identity from an
   alias name, image ID, recipe hash, filename or a missing provider field.
-- Typed metadata still crosses an untrusted input boundary. Normalize every
-  persisted/public nested field under the secrecy policy, and use the same typed
-  validity for filtering/counting and projection. Unknown incoming identity does
+- Typed metadata still crosses an untrusted input boundary. Public fields follow
+  the typed allowlist in [verification scope](verification-scope.md#allowlist-for-the-resource-record),
+  and the same typed validity is used for filtering/counting and projection. Unknown incoming identity does
   not erase known identity; retained-row retries preserve original notes as well
   as backfill does. These apply the existing record contract to every writer/read.
 
 ## Log
 
-### 2026-11-27 · Accept the whole projection and preserve executable identity
+### 2026-11-27 · Free-text credential recognition superseded
 
-- Decision: accept exact Codingc705d211 after independent review10 PASSa94324fe.
-  Public normalization happens after internal matching/verification. When safety
-  changes a ready executable locator/lock, refuse before build/queue; do not
-  execute masked copies or rewrite old storage. The resource row remains the
-  authority, and safe compatibility paths retain their original locks/digests.
-- Why: whole-response safety and execution integrity are independent obligations.
-  Fixing an outer serializer cannot turn a redacted filename into a verified
-  resource. The actual consumer/fault review covers that boundary and preserves
-  old notes/IDs, typed readers and useful safe output.
-- Evidence: [acceptance](../tasks/p2-02-resource-record/acceptance.md), exact
-  [review10](../tasks/p2-02-resource-record/review-round-10.md) and current
-  [topic](../resource-records.md). Nine earlier rejections/five historical P1
-  findings are retained, not converted to prior passes. Next use the established
-  identity for [stock download limits](civitai-download-limits.md), then durable
-  attempts/aggregate accounting within the existing roadmap. No phase close or
-  aesthetic acceptance is inferred.
-
-
-### 2026-11-27 · Judge the whole public ledger independently of typed diagnostics
-
-- Decision: apply the existing complete-value policy to the entire public ledger
-  serialization, including raw outer identity/locator fields. Keep internal
-  matching/path values and stored AIR/path/metadata/notes exact; safe projection
-  cannot become an internal locator or destructive repair. Inventory row-derived
-  outer fields and actual public consumers separately from typed diagnostics.
-- Why: a safe nested resource record does not cover raw copies beside it. The
-  existing wrapper uses a weaker redactor, so selected AIR/filename assignments
-  survive real acquisition/ORM and public ledger reads despite passing canonical,
-  notes/status and parser guards. Whole-response assertions need their own fault.
-- Reassessment: nine delivery rejections/five historical P1 findings leave original
-  R1 open. Supplied QA8 cases/R2-R4/checked R5 bounds pass. Retain the single-row
-  authority and bounded scanner; correct this compatibility projection rather
-  than add a registry, new matching architecture or global secrecy framework.
-  This stays original task/CLEAR/current delegation; report the in-boundary option.
-- Evidence: [actual review9](../tasks/p2-02-resource-record/review-round-9.md),
-  [complete phase probe](../tasks/p2-02-resource-record/review-round-9-evidence/independent_ledger_surfaces.py)
-  and [correction9](../tasks/p2-02-resource-record/repair-round-9.md). This is Producer's
-  application, not a new finding number, owner quotation or accepted behavior.
-
-
-### 2026-11-27 · Complete recognition and publication across every representation seam
-
-- Decision: relevant one-level representation candidates must survive harmless
-  prose contexts before assignment detection too. Keep bounded local candidates,
-  monotonic escape/EOF work and useful original safe output. Apply the same complete
-  value policy to source-derived new notes and existing acquisition/status DTOs;
-  safely project old notes without rewriting stored history.
-- Why: a corrected assignment scanner cannot inspect a decoded unit that disjoint
-  preprocessing skipped. Safe typed metadata likewise cannot certify new-note
-  persistence or a legacy summary still using a weaker redactor. Candidate
-  coverage and whole-surface policy are distinct from progress/idempotence.
-- Reassessment: eight rejected deliveries leave original R1 incomplete at two
-  seams; supplied review7 examples, checked R5 bounds and R2-R4 pass. Retain resource
-  identity and the shared boundary, correct the remaining pipeline assumptions
-  without recursive/all-pairs work, safe-value loss, timeout increases or storage
-  repair. This stays task/CLEAR/current delegation; report the in-boundary option.
-- Evidence: [actual review8](../tasks/p2-02-resource-record/review-round-8.md),
-  [unit contexts](../tasks/p2-02-resource-record/review-round-8-evidence/independent_unit_contexts_final.py),
-  [raw-label notes/status](../tasks/p2-02-resource-record/review-round-8-evidence/independent_raw_label_notes.py)
-  and [correction8](../tasks/p2-02-resource-record/repair-round-8.md). This is a
-  Producer application, not a new finding number, owner quote or accepted behavior.
-
-
-### 2026-11-27 · Keep label candidates independent of prose quote pairing
-
-- Decision: associate explicit assignment delimiters with relevant local label
-  boundaries independently of unrelated enclosing prose quotes. A quote consumed
-  by a preceding candidate must not disappear as a possible following label
-  boundary. Use bounded candidate tracking/delimiter association in raw and
-  relevant once-serialized views; exclude the complete affected original value.
-- Why: disjoint quote pairing can be monotonic and still skip a complete label.
-  Ordinary preceding prose quotes then disable recognition while identical plain
-  controls, key removal, serialization and latency guards all pass. Progress and
-  candidate coverage are separate obligations; safe output keeps its original form.
-- Reassessment: the seventh rejection leaves original R1 incomplete; supplied
-  serialized cases and checked R5 bounds now pass, as do R2-R4. Retain resource
-  identity and bounded views; replace the incomplete candidate-selection premise
-  without all-pairs/growing-suffix work, timeout increases or format exclusions.
-  This stays unchanged task/CLEAR and current delegation; report adopted results.
-- Evidence: [actual review7](../tasks/p2-02-resource-record/review-round-7.md),
-  [quote-context phase traces](../tasks/p2-02-resource-record/review-round-7-evidence/independent_quote_context_boundary.py)
-  and [correction7](../tasks/p2-02-resource-record/repair-round-7.md). Producer's
-  application is not a new owner quote, new finding number or accepted behavior.
-
-
-### 2026-11-26 · Resolve representation before associating credential delimiters
-
-- Decision: account for relevant once-serialized assignment text before matching
-  its quoted label to its delimiter, with or without outer JSON string quotes.
-  Apply the common label policy to bounded recognition views; exclude the complete
-  affected original value. Useful safe output retains its original representation.
-- Why: decoding only an already-found label is too late when serialized quote
-  escapes hid the label/delimiter relationship. Key removal, literal-label guards
-  and safe cursor progress can all pass while serialized value text still leaks.
-- Reassessment: the sixth rejection leaves original R1 incomplete for this class;
-  R5 is resolved for checked bounds and R2-R4 pass. Retain the monotonic scanner
-  and identity work; correct representation handling without wholesale public-data
-  unescaping, unbounded recursive decoding or new format/size exclusions. This
-  stays approved task/CLEAR; report the adopted option under current delegation.
-- Evidence: [actual review6](../tasks/p2-02-resource-record/review-round-6.md),
-  [full boundary trace](../tasks/p2-02-resource-record/review-round-6-evidence/independent_serialized_boundary.py)
-  and [correction6](../tasks/p2-02-resource-record/repair-round-6.md). This is a
-  Producer application, not a new owner quotation or accepted product behavior.
-
-
-### 2026-11-26 · Give quoted scanning an explicit terminal-escape rule
-
-- Decision: retain complete credential-label semantics while making quote/escape
-  traversal advance monotonically, including a lone escape at end of input. An
-  unmatched tail must not trigger repeated growing suffix scans. Keep both quote
-  kinds, opposite-quote recognition and useful ordinary metadata intact.
-- Why: a repeated regex branch requiring a character after each backslash can
-  prevent its end-of-input alternative from matching. Search then retries at each
-  quote. Small positive cases and green secrecy suites miss quadratic work on
-  valid ordinary provider/stored descriptions; SQL pagination cannot bound it.
-- Reassessment: the fifth delivery rejection changes the open finding: current
-  tested R1-R4 cases pass, while new R5 violates existing provider/read bounds.
-  Retain identity and secrecy work; correct bounded progress without raising
-  timeouts, truncating/hiding safe data or imposing new format exclusions. This
-  remains approved scope/CLEAR; report the adopted option under current delegation.
-- Evidence: [actual review5](../tasks/p2-02-resource-record/review-round-5.md),
-  [registered latency probes](../tasks/p2-02-resource-record/review-round-5-evidence/independent_read_latency.py)
-  and [correction5](../tasks/p2-02-resource-record/repair-round-5.md). This is a
-  Producer application, not a new owner quote or accepted product behavior.
-
-
-### 2026-11-26 · Parse complete quoted labels before credential recognition
-
-- Decision: consume a matching quoted assignment/header label as a complete unit,
-  then apply the same credential identifier policy as for dictionary keys. Include
-  inner leading/trailing whitespace and the literal/serialized forms exercised by
-  actual probes; preserve safe neighbors and bounded long-description scanning.
-- Why: sharing a recognizer is insufficient when the text extractor drops a
-  recognizable quoted label or loses its delimiter during unquoted fallback.
-  Matching key controls can pass while writer and old-read text still expose values.
-- Reassessment: the fourth p2-02 rejection leaves original R1 unresolved. Retain
-  the single-row design, complete-value boundary and passing R2-R4; correct parsing
-  and add class/consistency/fault coverage under unchanged task/CLEAR. Current
-  delegation permits this in-boundary option; report it with results. No new owner
-  requirement, phase boundary change or accepted product behavior is implied.
-- Evidence: [actual review4](../tasks/p2-02-resource-record/review-round-4.md),
-  [real key controls](../tasks/p2-02-resource-record/review-round-4-evidence/independent_key_controls.py)
-  and [correction4](../tasks/p2-02-resource-record/repair-round-4.md).
-
-
-### 2026-11-26 · Share recognition for credential keys and assignment labels
-
-- Decision: apply one documented credential-label policy to dictionary keys and
-  parsed assignment/header identifiers, including prefixed identifiers. Keep
-  complete-value exclusion and read-only old-record visibility; preserve unrelated
-  safe metadata. This is a small correction inside the current shared boundary.
-- Why: regex word boundaries treat underscore as part of a word, so an explicit
-  prefixed assignment can evade a recognizer that handles the same credential key.
-  Idempotence and complete-value removal do not establish recognition coverage.
-- Reassessment: after three p2-02 delivery rejections, retain the single-row
-  design/passing R2-R4 and replace the inconsistent label assumption. No phase
-  scope/order/architecture/Not now change is required. CTY's current delegation
-  permits adoption and continued independent QA; report the threshold with results.
-- Evidence: [actual review3](../tasks/p2-02-resource-record/review-round-3.md) and
-  [correction3](../tasks/p2-02-resource-record/repair-round-3.md). This is Producer's
-  application/reassessment, not a new owner quote or accepted product behavior.
-
-
-### 2026-11-26 · Exclude complete recognizable credential values
-
-- Decision: treat a recognizable credential-bearing free-text value as a complete
-  safety unit. Remove/redact the complete affected value, or refuse unsafe input
-  before publication if a typed contract cannot survive; safe public reads of old
-  snapshots stay read-only and retain the resource. Keep unrelated safe fields and
-  ordinary hashes. Test full values across actual writers/readers, not only URLs.
-- Why: removing only a label/scheme or the first token leaves a secret suffix;
-  repeated normalization then loses the evidence needed to recognize it. Basic
-  auth, later cookies and quoted multiword values demonstrate this boundary.
-- Provenance: Producer's application of existing R1/C1 after independent
-  [review2](../tasks/p2-02-resource-record/review-round-2.md), not a new owner quote,
-  requirement or scope. [Correction2](../tasks/p2-02-resource-record/repair-round-2.md)
-  retains the passing R2-R4 obligations and requires fresh exact delivery QA.
-
+- Nine p2-02 correction rounds (2026-11-26/27) extended a recognizer for credential-looking text in metadata: complete values, shared label recognition, quoted labels, terminal escapes, serialized assignments, prose quotes and the outer ledger projection. Their decision entries were removed in the 2026-11-27 cleanup; the typed allowlist in [verification scope](verification-scope.md) replaces that approach (task p2-02a). History is in Git.
 
 ### 2026-11-26 · Keep validation and preservation at every resource boundary
 
@@ -214,8 +37,8 @@
   JSON interpretation can select a record the canonical projection rejects, and
   assignment/error branches can bypass otherwise-correct shared publication.
 - Provenance: Producer's implementation application after source and independent
-  [R1–R4 evidence](../tasks/p2-02-resource-record/review-round-1.md), not a new owner
-  quote or scope. [Correction1](../tasks/p2-02-resource-record/repair-round-1.md)
+  R1–R4 evidence, not a new owner
+  quote or scope. Correction1
   must prove these existing contract boundaries with fresh exact delivery QA.
 
 ### 2026-11-26 · Establish resource identity before download accounting

@@ -40,12 +40,12 @@ registry, scheduling, heartbeat or control capability is introduced.
 | D1 — three truthful health entries | test / P1 | mcp-server/tests/test_health_workers.py: test_health_retains_each_component_for_reported_worker_state; test_health_preserves_backend_local_comfyui_state_and_hints; test_backend_health_read_failure_keeps_dependencies_not_observed; test_partial_read_failure_does_not_invent_failed_dependency_probe; test_both_partial_reads_can_fail_without_losing_components | Real registered wrappers, validation/envelope and HTTP client. Mock only HTTP transport, with real Backend-exported bodies. Both no_models and degraded, unconfigured/down, outage, simultaneous/partial/invalid reads and exact GET paths. Faults D1-drop-components and D1-no-models-unreachable fail. |
 | D2 — authoritative configuration/current identity | test / P1 | backend/tests/test_health_worker_status.py; mcp-server/tests/test_health_workers.py: test_list_keeps_configuration_and_only_current_accepted_observations; test_unknown_worker_configuration_is_common_error_never_empty; test_inconsistent_worker_status_is_unknown_in_both_tools | Real FastAPI route, real worker factory/client identity validation and existing discovery/cache. Mock remote HTTP and candidate enumeration only; no live sockets/scans. Ten worker cases plus five real system-route states and actual /health. Registered MCP consumes fresh exports. Connection/HTTP/identity/protocol/JSON/object failures, URL-only success, distinct resolved URL and cached success then failed identity. Faults D2-backend-error-empty, D2-cache-as-current, D2-replace-configured-url and D2-skip-identity-validation fail. |
 | D3 — exactly 31 read-only discovery intents | test / P1 | mcp-server/tests/test_tool_catalog.py: test_catalog_risks_match_approved_intent_policy; test_discovered_risks_match_approved_intent_policy; test_removed_tools_and_staged_tools_are_not_registered; test_intended_catalog_matches_fastmcp_registration; test_health_workers.py request assertions; test_server.py formal stdio health call | Independent literal all-31 oracle, actual MCP discovery/registration and real client HTTP requests. Preserves the other 29 labels. Only existing GET/status paths; direct-admin host/submission/control paths cannot satisfy request assertions. Both false health=admin and existing admin=read faults fail both guards. |
-| D4 — current flow, semantics and recovery docs | manual source/discovery comparison / P2 | [docs/mcp.md](../../mcp.md), [worker topic](../../windows-worker.md), [team guide](../../team/README.md); [recorded requests/envelopes/discovery](delivery-1-evidence/recorded-mcp-samples.output.txt) | Author checked active table, source schemas, recorded registration/response examples, unknown/error recovery, Backend-local vs direct-admin configuration and wait/artifact/deployment limits. Catalog documentation guard passes. No product operation or independent QA certification is implied. |
+| D4 — current flow, semantics and recovery docs | manual source/discovery comparison / P2 | [docs/mcp.md](../../mcp.md), [worker topic](../../windows-worker.md), [team guide](../../team/README.md); recorded requests/envelopes/discovery | Author checked active table, source schemas, recorded registration/response examples, unknown/error recovery, Backend-local vs direct-admin configuration and wait/artifact/deployment limits. Catalog documentation guard passes. No product operation or independent QA certification is implied. |
 
 The 16 new Backend and 64 new registered MCP tests are feature checks. Each
 new feature group was observed RED before implementation, then GREEN. Production
 faults are recorded with exact patches, failed pytest output, exits and restoration
-hashes in [mutation-summary.json](delivery-1-evidence/mutation-summary.json).
+hashes in mutation-summary.json.
 No new test makes a broken implementation pass by replacing its tool callable.
 
 ## Final verification
@@ -53,7 +53,7 @@ No new test makes a broken implementation pass by replacing its tool callable.
 All pytest runs use canonical component interpreters, explicit worktree
 PYTHONPATH, fresh isolated AI_DRAWING_TEST_ROOT below run-owned TMPDIR and
 **--timeout=60**. Full argv/cwd/environment/UTC/elapsed/exit/output receipts are
-in [delivery-1-evidence](delivery-1-evidence/README.md). No canonical venv was
+in delivery-1-evidence. No canonical venv was
 replaced or installed into; pytest-timeout==2.4.0 is scratch-only tooling.
 
 | Scope | Exact interpreter arguments (from worktree root) | Final result |

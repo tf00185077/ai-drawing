@@ -22,7 +22,7 @@ stream closure, sanitized errors and complete ordinary source fingerprints.
 R1/P1/D3 is resolved at this exact candidate: the HTTPX cookie jar rejects provider
 cookies, and each final prepared request removes Cookie/Proxy-Authorization and
 implicit Authorization before applying only permitted Backend snapshot auth.
-The [original FAIL](review-round-1.md), [first manifest](manifest-round-1.md),
+The original FAIL, first manifest,
 original evidence/ and review-evidence/ remain immutable. Historical adverse
 cookie tests reproduce the rejected defect; green adverse results are not secure
 guards. Original selected live HEADs contained no cookies; no actual owner-key

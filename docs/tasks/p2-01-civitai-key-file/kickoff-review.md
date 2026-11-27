@@ -64,7 +64,7 @@ remain separate.
 
 ## Trace against the fixed production source
 
-The [static audit](kickoff-evidence/static-audit.json) records symbol line spans,
+The static audit records symbol line spans,
 the catalog and registry rows. These observations describe the baseline that
 Coding must change, not newly passing feature tests.
 
@@ -127,7 +127,7 @@ settings, environments or p2-00 evidence were edited.
 - `python3 -B docs/tasks/p2-01-civitai-key-file/kickoff-evidence/check_source.py`:
   **36 static source/identity assertions passed**; all **202** tracked files in
   the declared inventory match their fixed Git blobs. See the complete
-  [source inventory](kickoff-evidence/source-inventory.json). The declared scopes
+  source inventory. The declared scopes
   are Backend application/workflows, MCP implementation and listed review inputs;
   this is not a whole-disk or loaded-runtime inventory.
 - Git object comparison confirms Backend application/tests/workflows, MCP

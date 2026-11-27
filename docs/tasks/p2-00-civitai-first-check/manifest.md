@@ -65,7 +65,7 @@ absent, so the brief's fallback settings were used. Actual LoRA tensor metadata
 says `stable-diffusion-xl-v1-base/lora`, and current loader options contain both
 files. The compiled graph links LoRA output to sampler and both text encoders.
 
-The [original PNG](evidence/original.png) was retrieved through a new actual MCP
+The original PNG was retrieved through a new actual MCP
 SDK session's canonical Gallery read, then base64-validated, hashed and fully
 decoded: one frame, **333,502 bytes**, SHA-256
 `8268b9571b8b9535b9500994a021919de317f84b1fbb36d9b74468d969ca3673`.
@@ -78,10 +78,10 @@ execution, not an isolated GPU-inference-time measurement. No aesthetic verdict.
 
 | Item | Check / level | Evidence | Actual boundary / result |
 |---|---|---|---|
-| D1 — actual baseline bound | manual / P1 | [preflight](evidence/preflight.json), [runtime supplement](evidence/runtime-supplement.json), [selection](evidence/selection.json), [guard](evidence/acquisition-guard.json) | Actual owner Mac key access, source/import/interpreter/packages/schema/process/jobs/roots/disk and real candidate metadata. No mock. |
-| D2 — real provider/download observation | manual / P1 | [search](evidence/search-watercolor.json), [version](evidence/version-1843039.json), [access probes](evidence/download-preflight.json), [anonymous GET](evidence/anonymous-get-confirmation.json), [acquisition](evidence/acquisition-final.json), [bytes](evidence/lora-bytes.json) | Real Civitai/credential route/CDN/actual bytes/current acquisition ledger. One new LoRA; checkpoint reused by real provider hash. No mock. |
-| D3 — registration/image observation | manual / P1 | [registration](evidence/checkpoint-registration.json), [request](evidence/generation-request.json), [submit](evidence/generation-submit-response.json), [records](evidence/persisted-records.json), [graph check](evidence/graph-verification.json), [retrieval](evidence/retrieved-image.json), [PNG](evidence/original.png) | Actual current installer, Backend queue, local ComfyUI, persisted Gallery and original canonical MCP bytes. No mock or replacement image. |
-| D4 — friction/service account | inspection / P1 | [friction ledger](friction-ledger.md), [events](evidence/operations.jsonl), [service inventory](evidence/service-inventory.json), [preservation](evidence/preservation.json) | 14 provider requests, one acquisition/submit, full same-ID status accounting, 20 interventions; seven called modules including one value type, 12 operationally untouched; no pending job. |
+| D1 — actual baseline bound | manual / P1 | preflight, runtime supplement, selection, guard | Actual owner Mac key access, source/import/interpreter/packages/schema/process/jobs/roots/disk and real candidate metadata. No mock. |
+| D2 — real provider/download observation | manual / P1 | search, version, access probes, anonymous GET, acquisition, bytes | Real Civitai/credential route/CDN/actual bytes/current acquisition ledger. One new LoRA; checkpoint reused by real provider hash. No mock. |
+| D3 — registration/image observation | manual / P1 | registration, request, submit, records, graph check, retrieval, PNG | Actual current installer, Backend queue, local ComfyUI, persisted Gallery and original canonical MCP bytes. No mock or replacement image. |
+| D4 — friction/service account | inspection / P1 | [friction ledger](friction-ledger.md), events, service inventory, preservation | 14 provider requests, one acquisition/submit, full same-ID status accounting, 20 interventions; seven called modules including one value type, 12 operationally untouched; no pending job. |
 | D5 — independent reviewable delivery | delivery + independent review / P1 | This manifest, evidence index/offline verification, native full commit/tree and downloadable package/bundle/PNG delivery receipt on AID-178 | Coding freezes and uploads actual evidence; AID-179 pins and independently reviews that exact commit. QA verdict is pending and belongs to QA. |
 
 ## Verification and preservation

@@ -21,7 +21,7 @@ This is specification clearance, not delivery PASS, deployed behavior or Phase 2
 | QA branch | `qa/aid214-p204-kickoff` |
 | Manifest at source | Absent; no Coding delivery exists for this task |
 
-The [pin receipt](kickoff-evidence/source-pin.json) precedes substantive review.
+The pin receipt precedes substantive review.
 The native plan, owner words, source handoff, adopted decision, p2-01/p2-02
 acceptances and actual p2-03 review3 PASS were read with their limits. Accepted
 p2-03 is Coding `4cd3c042ef44ed27275021b169f4055d1e7bce98`, independent report
@@ -36,7 +36,7 @@ My reading: CTY directs continued executable Phase 2 work inside the accepted
 boundary without routine start/design approvals. The roadmap explicitly requires
 large downloads to be Backend jobs followed through status/wait, one Backend
 resource authority, verified safe files, private credentials and preserved data.
-The [independent reading](kickoff-evidence/owner-reading.md) was recorded before
+The independent reading was recorded before
 opening task.md in this worktree; the native assignment already supplied the task
 verbatim, so this was not a blinded review.
 
@@ -50,7 +50,7 @@ No owner question or project-boundary change is demonstrated.
 
 ## Source audit and falsification
 
-The [observation](kickoff-evidence/source-observation.json) records current import
+The observation records current import
 paths/hashes, all 15 registered ORM tables, effective policy, the 31-tool catalog,
 87 active registry rows and function line ranges. SQLite's implicit sequence table
 is outside that count. Source review covered these actual boundaries:
@@ -101,7 +101,7 @@ none is marked implemented or certified by these baseline observations.
 
 ## Commands and actual results
 
-[Runner](kickoff-evidence/run_checks.py) uses Python 3.11.15 with `-I -S -B`, the
+Runner uses Python 3.11.15 with `-I -S -B`, the
 fixed source's `tools/offline_pytest.py`, read-only dependency sites, allowlisted
 environment and run-owned scratch/test roots. Both pytest commands use
 `-p pytest_timeout --timeout=60 -q`, disabled plugin autoload and a 180-second
@@ -133,7 +133,7 @@ corrected it before publication. The first archive extraction then failed becaus
 default python3 was Apple 3.9.6, whose tarfile API lacks filter. The actual 3.11.15
 interpreter supports it; the repeat uses that interpreter without changing product
 or test code. The full captured error and incomplete archive fingerprint are in
-[package attempt 1](kickoff-evidence/package-attempt-1.json).
+package attempt 1.
 
 The strict runner records three denied filesystem requests during the Backend
 run and one during MCP/source observation. A read-only observer identified the

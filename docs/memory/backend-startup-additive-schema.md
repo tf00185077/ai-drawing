@@ -22,4 +22,4 @@ Preserve a private prelaunch snapshot, then compare the complete table/column sc
 ## Evidence
 
 - [Database startup](../../backend/app/db/database.py): `init_db`, `_ADDITIVE_COLUMNS` and `Base.metadata.create_all`.
-- [p1-00a review round 1](../tasks/p1-00a-mac-runtime-and-retrieval/review-round-1.md#findings): independent schema and old-value preservation audits.
+- p1-00a review round 1: independent schema and old-value preservation audits.

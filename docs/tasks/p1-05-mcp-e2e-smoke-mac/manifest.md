@@ -23,9 +23,9 @@ Rows below describe Coding evidence, not independent certification.
 
 | Original item | Check / level | Evidence | Boundary and fixtures |
 |---|---|---|---|
-| D1 — bounded canonical static PNG read | test + inspection / P1 | [Complete restored MCP checks](repair-round-1-evidence/coding/mcp-restored-full.json), [output](repair-round-1-evidence/coding/mcp-restored-full.txt), unchanged content/security source and tests | Actual registration, SDK stdio, HTTP client, file containment/open and full PNG decoding. Lower HTTP/storage fixtures only for offline tests. Includes six retained independent QA content cases. Gallery implementation, Backend, risk labels and 31-intent catalog unchanged. |
-| D2 — three consecutive real pairs | manual + independent evidence computation / P1 | [Fresh invocation](repair-round-1-evidence/coding/real-invocation-1/summary.json), [calls](repair-round-1-evidence/coding/real-invocation-1/calls.jsonl), [SDK messages](repair-round-1-evidence/coding/real-invocation-1/sdk-messages.jsonl), [corroboration](repair-round-1-evidence/coding/post-result-audit.json) | Six actual Mac Backend/ComfyUI jobs; six MCP-returned static PNGs, persisted lineage, new-session reads and new distinct uncached KSampler histories. No synthetic generation substitutes. |
-| D3 — strict interruption/reset/no-retry/accounting | test + manual / P1 | [Signal tests](../../../mcp-server/tests/test_smoke_interruption.py), [RED](repair-round-1-evidence/coding/signals-red.txt), [GREEN](repair-round-1-evidence/coding/signals-green.txt), [fault/restoration](repair-round-1-evidence/coding/fault-restoration.json), [friction](repair-round-1-evidence/coding/friction-ledger.json) | Actual CLI subprocess receives SIGINT while actual SDK/product MCP awaits lower HTTP fixture response. Health, admitted wait and uncertain submit covered; no patched driver/tool/SDK callable. All earlier error/finite-budget/byte/lineage/recovery tests rerun. |
+| D1 — bounded canonical static PNG read | test + inspection / P1 | Complete restored MCP checks, output, unchanged content/security source and tests | Actual registration, SDK stdio, HTTP client, file containment/open and full PNG decoding. Lower HTTP/storage fixtures only for offline tests. Includes six retained independent QA content cases. Gallery implementation, Backend, risk labels and 31-intent catalog unchanged. |
+| D2 — three consecutive real pairs | manual + independent evidence computation / P1 | Fresh invocation, calls, SDK messages, corroboration | Six actual Mac Backend/ComfyUI jobs; six MCP-returned static PNGs, persisted lineage, new-session reads and new distinct uncached KSampler histories. No synthetic generation substitutes. |
+| D3 — strict interruption/reset/no-retry/accounting | test + manual / P1 | [Signal tests](../../../mcp-server/tests/test_smoke_interruption.py), RED, GREEN, fault/restoration, friction | Actual CLI subprocess receives SIGINT while actual SDK/product MCP awaits lower HTTP fixture response. Health, admitted wait and uncertain submit covered; no patched driver/tool/SDK callable. All earlier error/finite-budget/byte/lineage/recovery tests rerun. |
 | D4 — explicit reviewed-demo reply | owner-demo / P1 | **Unchecked / pending Producer/CTY** | Producer presents the independently reviewed candidate's images and Gallery records. Only CTY's actual explicit reply satisfies this gate; later roadmap phase-close review is separate. |
 
 | Correction item | Check / level | Candidate evidence / state |
@@ -65,7 +65,7 @@ is the Mac signal boundary. No new macOS skip or weakened existing test.
 
 Every pytest receipt records actual argv, cwd, UTC, duration, exit and isolated
 `AI_DRAWING_TEST_ROOT` below run-owned `TMPDIR`; all use `--timeout=60`.
-[Actual operator commands and full output](repair-round-1-evidence/coding/operator-commands.jsonl)
+Actual operator commands and full output
 retain early failures and diagnostic work as well as successful commands.
 
 | Check | Actual result |
@@ -82,11 +82,11 @@ retain early failures and diagnostic work as well as successful commands.
 
 The task-owned Python 3.11 venv pins MCP 1.26.0/Pillow 12.2.0 and prior QA package
 versions; candidate imports use explicit PYTHONPATH, with no editable install.
-[Task environment](repair-round-1-evidence/coding/task-environment.json) and
-[requirements](repair-round-1-evidence/coding/task-requirements.txt) pin all packages.
+Task environment and
+requirements pin all packages.
 The full Backend suite uses the unchanged canonical Backend interpreter, candidate
 source imports and a run-owned copy of the timeout plugin, recorded in
-[Backend test environment](repair-round-1-evidence/coding/backend-test-environment.json).
+Backend test environment.
 Canonical environments are unchanged. The cross-layer tests consume a fresh
 revision export and the retained accepted p1-04 LoRA lifecycle fixture; this is
 reused unchanged test input, not a reused result. Two optional export checks are
@@ -96,10 +96,10 @@ No Frontend/build/Windows/worker/training result is claimed.
 
 ## Live runtime and preservation
 
-[Initial current-job/process check](repair-round-1-evidence/coding/initial-live-check.json),
-[preflight](repair-round-1-evidence/coding/preflight.json),
-[Comfy supplement](repair-round-1-evidence/coding/preflight-comfy-supplement.json)
-and [immediate idle/seed check](repair-round-1-evidence/coding/declaration-and-idle.json)
+Initial current-job/process check,
+preflight,
+Comfy supplement
+and immediate idle/seed check
 corroborate actual Backend PID **99953** and ComfyUI PID **99952**, their creation
 times/executables/commands/cwd against the deployed launch receipts. Equivalent
 interpreter probes under their actual environments corroborate import origins
@@ -121,9 +121,9 @@ No models/datasets/outputs/Gallery records were removed.
 
 The twelve unique 48-bit seeds/six request references were declared once with
 `secrets.randbits(48)`, checked against stored image seeds before qualification.
-[Input file](repair-round-1-evidence/coding/qualification-inputs.json) SHA-256:
+Input file SHA-256:
 **5298bdb0cd115b04511a2ea85737b522ceb45e50dd84845743119a5396af1873**.
-[Frozen source/config/packages](repair-round-1-evidence/coding/real-invocation-1/frozen.json)
+Frozen source/config/packages
 identifies the freeze above. Fixed Illustrious/default/local/empty LoRA list,
 512×512/batch 1/four steps/CFG 7/Euler/normal, original red and changed blue prompts
 are unchanged. Actual client application limit is unverified; 50 seconds is the
@@ -138,7 +138,7 @@ tool fallback and 65 seconds the SDK guard, neither a performance guarantee.
 Attempts 4–6 are unused. Each pair has exactly eight calls, one submit and one
 bounded wait per image; no timeout, retry, recovery, manual fix or external
 product operation occurred during qualification. All six jobs are completed.
-[Full stdout/command](repair-round-1-evidence/coding/real-qualification.json),
+Full stdout/command,
 its `.txt`, SDK messages, calls, events and session stderr retain the full run.
 The post-result audit reconciles every SDK tools/call ID, arguments, result and
 structured/text envelope, then reads the canonical rows/compiled graphs and
@@ -153,8 +153,8 @@ job/request/brief fields agree with current canonical DB rows, the driver's new
 session and a separate fresh audit SDK session. Image IDs are 4457–4462, a
 separate namespace from canonical artifacts 3872–3877. Full job/prompt IDs,
 canonical contexts and raw query/HTTP/SDK responses are retained in
-[post-result audit](repair-round-1-evidence/coding/post-result-audit.json) and
-[audit rows](repair-round-1-evidence/coding/audit-requested-rows.json).
+post-result audit and
+audit rows.
 
 | Artifact | Bytes | Exact MCP byte SHA-256 |
 |---|---:|---|
@@ -171,7 +171,7 @@ Original baseline remains **23 units/eight incidents**, F1–F8 =
 **1,1,1,6,1,11,1,1**. The old seven sampled jobs, three pairs/six PNGs and
 **53 preparation + 0 attempts + 1 recovery + 27 audit = 81** units are historical
 and never qualify this corrected software. New
-[ledger](repair-round-1-evidence/coding/friction-ledger.json):
+ledger:
 **22 preparation + 0 attempt interventions + 0 recovery + 14 audit = 36 units**.
 Only qualifying request-to-result flows have zero interventions. The complete
 round is nonzero and exceeds the original baseline; no whole-round improvement
@@ -197,14 +197,14 @@ or unresolved feature failure remains in the candidate; QA still decides.
 History stays **one kickoff ambiguity event/two P1 findings; clarification 1 /
 kickoff 2 CLEAR; delivery review 1 FAIL / first implementation rejection /
 one P1 R5-1; correction 1 / delivery review 2 next**. Earlier task histories stay
-separate. [First manifest](manifest-delivery-1.md) and [FAIL](review-round-1.md)
+separate. First manifest and FAIL
 are byte-identical mirrors; old `delivery-evidence/` and `review-evidence/` remain
 unchanged. `review.md` remains QA's earlier report until QA replaces its own
 current report. Only the pinned Producer repair document was imported, with its
 verified SHA-256. Original task/clarification/MCP-decision hashes and all 16
-registry rows retain integrity; [receipt](repair-round-1-evidence/coding/history-and-freeze-check.json).
+registry rows retain integrity; receipt.
 The official first manifest/report and all 206 QA indexed payloads were fully
-downloaded/read back against Git; [receipt](repair-round-1-evidence/coding/prior-official-readback.json).
+downloaded/read back against Git; receipt.
 
 Official AID-174 delivery includes this manifest; full candidate source/evidence/
 PNG indexed packet; exact base-to-final binary/full-index patch; prerequisite Git

@@ -86,8 +86,8 @@ records. Inspect an existing job after timeout before resubmission.
 ## History and continuation
 
 First candidate `b1082a8` was p1-01 PASS / p1-02 FAIL F2-1. The exact
-[p1-01 round-1 PASS](review-round-1.md),
-[p1-02 round-1 FAIL](../p1-02-mcp-tool-consolidation/review-round-1.md) and original
+p1-01 round-1 PASS,
+p1-02 round-1 FAIL and original
 QA evidence remain intact. Keep **one p1-02 delivery rejection / correction
 round 1 / delivery review round 2**, now PASS. Kickoff K2-1/clarification round
 1/kickoff round 2 CLEAR and p1-00a's separate history are not reset or combined.

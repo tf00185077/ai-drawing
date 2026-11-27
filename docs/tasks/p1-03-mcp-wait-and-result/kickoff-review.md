@@ -25,7 +25,7 @@ cancellation or resubmission. Common envelopes, one risk per intent, phase order
 and CTY's aesthetic/phase-close authority remain. Unsupported historic locators
 must be explained without inventing data, changing storage or exposing new files.
 
-I recorded this [reading](kickoff-round-2-evidence/owner-reading.md) before
+I recorded this reading before
 opening the worktree task; the inline assignment had already exposed its text.
 I read the preserved owner request, roadmap/current plan and later independently
 fetched the exact [board comment](/AID/issues/AID-141#comment-afe71bd8-7e9e-434b-af00-813f94c8d131).
@@ -43,10 +43,10 @@ Producer's assertion that K3-1 was settled.
 
 The isolated worktree is `ai-drawing-worktrees/aid-162-kickoff-review`, branch
 `aid-162-p1-03-kickoff-round-2`, based exactly on the full source above.
-[Pre-review pin](kickoff-round-2-evidence/source-pin.json) records the source and
+Pre-review pin records the source and
 task digest. All **17 supplied immutable reference hashes match** checked-out
-and Git bytes. See the [identity audit](kickoff-round-2-evidence/identity-and-preservation.json)
-and [source index](kickoff-round-2-evidence/source-reference-index.json).
+and Git bytes. See the identity audit
+and source index.
 
 I read both accepted p1-01/02 author manifests, later QA reports and acceptance.
 The manifests equal corrected feature `616f67ff68fc27070e85861e94d70de1baf5082a`;
@@ -65,7 +65,7 @@ row is certified by this kickoff.
 
 ## K3-1 resolution against actual readers
 
-The original [adverse report](kickoff-review-round-1.md) identified two real
+The original adverse report identified two real
 source shapes. Both are still supported; the clarification now states what
 wait must return instead of requiring nonexistent metadata:
 
@@ -88,9 +88,9 @@ wait must return instead of requiring nonexistent metadata:
   `artifact_unavailable` smoke, retaining safe code/hint. Training completion
   therefore need not fabricate media or await/resubmit its separate smoke job.
 
-[Full responses](kickoff-round-2-evidence/backend-shape-probe.log),
-[compact shapes](kickoff-round-2-evidence/shape-summary.json) and the
-[reproducer](kickoff-round-2-evidence/backend-shape-probe.py.txt) substantiate
+Full responses,
+compact shapes and the
+reproducer substantiate
 these source cases. They use real HTTP routes and SQLite in memory, mocked queue
 observations and scratch fixture bytes, with no app lifespan or product service.
 Historical first-round results were inspected and preserved, not relabeled
@@ -115,7 +115,7 @@ Delivery still needs an exact final commit, manifest and independent PASS.
 
 The reviewed tracked client/server/configuration/wrappers do not establish the
 actual calling client's enforced limit. The normative decision still lists it
-as unknown. [Search evidence](kickoff-round-2-evidence/client-limit-source-search.json)
+as unknown. Search evidence
 records the **unverified client limit / 50-second overall fallback**; 50 is
 approved policy, not a measured client timeout. Coding must first record any
 additional client-limit source it finds, or retain this explicit unknown.
@@ -153,7 +153,7 @@ worker exposure, automatic retry or phase-boundary decision is required.
 ## Checks, results and limits
 
 Exact command arrays, isolated root environments, elapsed times, exits and raw
-output are in the [evidence index](kickoff-round-2-evidence/README.md).
+output are in the evidence index.
 Fresh checks, all exit 0:
 
 - Source/task pin; 17 supplied reference hashes; accepted manifest/report

@@ -6,7 +6,7 @@ published source `86837c724d0887d03c24e7d0c94c3b62d803ba9f`, tree
 SHA-256 `285af6d1419f70e9c5e3b4a7d86f64f5913e6dfebb24e0897d3a67fb21ca32f0`.
 Actual report/evidence FINAL `9dfdf9f175a1ea130bdb66c2aa561caebf8d4c42`, tree
 `5065490af6b16fefa97438cd2dd5acbb1f1a6c8d`; [report](kickoff-review.md),
-[official manifest](kickoff-delivery-manifest.json), [integrity](producer-kickoff-integrity.json).
+official manifest, integrity.
 No P0/P1 ambiguity, clarification or owner question; no p2-03 delivery rejection
 or implemented feature is inferred. p2-02's nine earlier rejections/five historical
 P1 findings and actual review10 acceptance remain a separate task history.
@@ -53,8 +53,8 @@ neither revise the task nor approve a new architecture or future schema.
   deadline. Isolated external HTTP fixtures are allowed; manual key/transport
   injection cannot certify production caller wiring or configured-file loading.
 
-These observations are confirmed in the [source inventory](kickoff-evidence/reviewed-source-inventory.json)
-and [nine bounded stock cases](kickoff-evidence/stock-observations.log). The stock
+These observations are confirmed in the source inventory
+and nine bounded stock cases. The stock
 observer intentionally asserts the old defects. Keep its exact historical inputs
 and results; do not run it as a future passing safety guard on changed source.
 New positive/negative feature guards and meaningful production faults establish

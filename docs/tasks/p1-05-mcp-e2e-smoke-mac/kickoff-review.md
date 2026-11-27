@@ -27,7 +27,7 @@ attempt, preparation, recovery and audit remains visible under the original
 delegated. CTY explicitly replies to the reviewed demo and alone judges
 aesthetics; a later roadmap review precedes Phase 2.
 
-The [owner reading](kickoff-round-2-evidence/owner-reading.json) was recorded from
+The owner reading was recorded from
 the actual owner request, roadmap, team rules and prior adverse report before
 opening the repository task. The authenticated wake already supplied the task
 and clarification; this is not a blind-reading claim. I read the complete task,
@@ -45,7 +45,7 @@ transfer aesthetic/phase-close authority to QA.
 
 I reviewed my own run-scratch worktree on `aid-170-p1-05-kickoff-round-2`, pinned
 to the full source above. Shared main and AID-151's runtime/private configuration
-were untouched. The [source audit](kickoff-round-2-evidence/source-audit.json)
+were untouched. The source audit
 pins the relevant Git blobs and byte hashes. It verifies the 25-file publication
 commit is documents only; the 26-file delta from round-1 source also includes
 the earlier kickoff handoff. All tracked non-document inputs are unchanged.
@@ -54,7 +54,7 @@ the earlier kickoff handoff. All tracked non-document inputs are unchanged.
 
 ### K5-1 — resolved by a bounded canonical-artifact PNG read
 
-The actual [round-1 report](kickoff-review-round-1.md), also read back from its
+The actual round-1 report, also read back from its
 [official AID-169 upload](/api/attachments/69962b71-71e0-4605-a241-b78410dc0390/content),
 found a missing means of actual MCP retrieval. The refreshed task now explicitly
 includes that missing feature. Current `tools/intents.py::gallery_get` still has
@@ -179,8 +179,8 @@ rejections**. Earlier tasks' histories remain separate.
 
 ## Checks actually performed and limits
 
-The new [verification command](kickoff-round-2-evidence/verification-command.json)
-and [full output](kickoff-round-2-evidence/verification-command.log) record UTC,
+The new verification command
+and full output record UTC,
 argv, cwd, duration and exit **0** for `python -B .../verify-inputs.py.txt`.
 The audit checks pinned hashes, fixed Git/AST/source contracts, input equality,
 prior official report readback, preserved history and baseline/registry counts.

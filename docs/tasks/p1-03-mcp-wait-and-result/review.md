@@ -57,9 +57,9 @@ moving branch supplied the reviewed source.
   `wait_for_job: read`. Existing ComfyUI admin stays admin. Exactly 30 names are
   discovered, with one label each; ping remains and health/workers stay absent.
 
-See [candidate integrity](qa-delivery-1-evidence/candidate-integrity.json),
-[source/policy audit](qa-delivery-1-evidence/source-policy-audit.json) and the
-[official upload metadata](qa-delivery-1-evidence/official-coding-attachments.json).
+See candidate integrity,
+source/policy audit and the
+official upload metadata.
 Shared main, the active AID-151 runtime/private configuration, real data and
 canonical component environments were untouched.
 
@@ -82,7 +82,7 @@ claim follows from it.
 
 Full argv, cwd, selected non-secret environment, UTC start, process duration,
 exit and complete raw output are retained for each command in
-[QA evidence](qa-delivery-1-evidence/README.md). Pytest uses isolated scratch
+QA evidence. Pytest uses isolated scratch
 roots and `--timeout=60`. Canonical interpreters are used unchanged; only
 `pytest-timeout==2.4.0` was installed into run-owned scratch. Explicit
 PYTHONPATH/pytest binding and import-origin assertions resolve this QA worktree,
@@ -125,7 +125,7 @@ For each automated acceptance item I independently changed production in the
 pinned QA worktree, ran the related real registered tests, and restored exact
 original bytes in `finally`. No test oracle or tool callable was substituted.
 Exact deltas, argv, failures and restoration hashes are retained in
-[fault-restoration.json](qa-delivery-1-evidence/fault-restoration.json) and paired
+fault-restoration.json and paired
 fault patch/log/receipt files.
 
 | Deliberate fault | Observed RED |

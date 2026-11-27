@@ -12,7 +12,7 @@ intent/risk/mode map, original baseline accounting and historical reports remain
 unchanged. F2-1 is resolved by independent all-29 policy guards and actual
 false-label failure followed by restored full MCP GREEN.
 
-Keep [first-round FAIL](review-round-1.md), one delivery rejection, correction
+Keep first-round FAIL, one delivery rejection, correction
 round 1 and delivery review round 2 PASS. Kickoff and p1-00a history remain
 separate. Source publication does not establish new running-service, generation,
 Gallery-byte, aesthetic or phase-exit proof.

@@ -22,7 +22,7 @@ registry/auth/concurrency, video, training or UI redesign is added.
 
 The seven used Civitai modules include a value type and preparation reads;
 12 uncalled modules have not had their removal safety certified. The full
-[service inventory](evidence/service-inventory.json) and retained failure ledger
+service inventory and retained failure ledger
 govern later explicit removal specifications. Do not revive recipe/generate-like
 features as incidental work. No provider preview or explicit content is needed.
 

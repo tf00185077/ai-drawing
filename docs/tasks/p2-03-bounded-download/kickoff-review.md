@@ -31,7 +31,7 @@ Difference: none requiring a scope, order, architecture or constraint change.
 No owner question is required. The task narrows the next execution increment;
 it does not declare the download-job/Phase 2 exit complete. The wake already
 contained the verbatim task, so this was not a blinded reading; the separate
-[scope note](kickoff-evidence/owner-reading.md) records that limitation.
+scope note records that limitation.
 
 Accepted p2-02 is an actual prerequisite: [acceptance](../p2-02-resource-record/acceptance.md)
 names Coding `c705d211f64497df7190120d46f94d94b785d24b` and independent review10
@@ -44,7 +44,7 @@ and five missing historical hashes; it supplies neither this feature nor exit pr
 ## Findings
 
 No demonstrated P0/P1 specification defect. CLEAR covers the complete published
-[task](task.md), [handoff](kickoff-handoff.md), and recipient plan/verbatim inputs
+[task](task.md), handoff, and recipient plan/verbatim inputs
 as a kickoff only. The source defects below are the work this task explicitly
 requests, rather than grounds to reject a coherent repair specification.
 
@@ -58,7 +58,7 @@ requests, rather than grounds to reject a coherent repair specification.
 | D4 / P1 | Observable and feasible. Both registered paths use the real `ProviderOperation` and `ProviderDownloadTransport`, with configured-file snapshot, final prepared-header isolation, allowed origins/redirects and cancellable HTTP. Preserve these paths. The new disk/hash/publication work must check the same absolute deadline; `_file_digest` currently has no deadline checks. Closure must cover refusal before iterator advancement, midstream abort and all new cap/space/range/collision exits, including backoff. |
 | D5 / P1 | Coherent future delivery gate. Independent QA must pin actual final SHA/tree, mutate real production boundaries for all five named faults, retain raw RED results, restore exact bytes, then run affected/full Backend/MCP and fresh exports/consumers. This kickoff neither performs those future mutations nor certifies the new behavior. The registry remains byte-exact with 72 active rows; no new coverage or supersession is recorded here. |
 
-The [source observations](kickoff-evidence/stock-observations.log) independently
+The source observations independently
 reproduce nine bounded cases: existing final replaced; missing/wrong-start/
 wrong-total ranges accepted; unassociated partial restarted; four bytes written
 against a two-byte declaration; a foreign partial symlink removed; inconsistent
@@ -106,7 +106,7 @@ lines 113–120, 243–275, 313–431;
 lines 126–206, 208–278, 281–332;
 [resource publication](../../../backend/app/services/resource_records.py)
 lines 270–278, 285–322. Ordinary source body hashes are indexed in
-[reviewed-source-inventory.json](kickoff-evidence/reviewed-source-inventory.json).
+reviewed-source-inventory.json.
 
 ## Bounded implementation and delivery notes
 
@@ -148,7 +148,7 @@ needs renewed kickoff, and every changed delivery needs exact-commit QA.
 
 ## Verification and limits
 
-See [verification.md](kickoff-evidence/verification.md) for fresh commands/results,
+See verification.md for fresh commands/results,
 guard receipts, environment and failed-attempt accounting. All original tracked
 source bodies and the registry are checked against the pinned Git tree. Shared
 main's 14 dirty memory body hashes/statuses are separately preserved; no private

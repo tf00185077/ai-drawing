@@ -10,7 +10,7 @@ Review date: 2026-11-24 UTC. QA: [AID-154](/AID/issues/AID-154); corrected deliv
 
 All original D1–D5 pass at this exact candidate. The correction closes F-QA1 by accounting for the complete observed startup schema footprint and distinguishing preservation of old values from additive schema changes. D1–D4 reuse applicable independent round-1 evidence; this review repeats the read-only schema audit, applicability and delivery-integrity checks. No software suite, restart or generation was repeated. Producer on [AID-142](/AID/issues/AID-142) owns acceptance, integration and dependent release.
 
-The [round-1 FAIL report](/api/attachments/eeb8dc51-4575-4b5c-896e-590710bdfba2/content), [original independent archive](/api/attachments/e2e83594-d20b-4576-981f-5f31587a738f/content) and report commit `537d47f8194c306b54c61fe2eacdae262afeece0` remain unchanged on [AID-152](/AID/issues/AID-152). PASS here does not reset that rejection history. The new [QA receipts](evidence/qa-round-2/) record the checks below; the same files are supplied in the AID-154 upload.
+The [round-1 FAIL report](/api/attachments/eeb8dc51-4575-4b5c-896e-590710bdfba2/content), [original independent archive](/api/attachments/e2e83594-d20b-4576-981f-5f31587a738f/content) and report commit `537d47f8194c306b54c61fe2eacdae262afeece0` remain unchanged on [AID-152](/AID/issues/AID-152). PASS here does not reset that rejection history. The new QA receipts record the checks below; the same files are supplied in the AID-154 upload.
 
 ## Findings
 

@@ -61,11 +61,11 @@ cards follow CLEAR kickoff without another routine start confirmation.
 | [AID-149](/AID/issues/AID-149), completed | QA independently reviewed p1-00 evidence | AID-148 exact delivery | [PASS](../p1-00-mcp-friction-run-mac/review.md) at `3081952` for D1-D4 including the documented-blocker route; report/registry `c377a02` |
 | [AID-150](/AID/issues/AID-150), completed | QA independently reviewed [bounded Mac runtime/retrieval repair](../p1-00a-mac-runtime-and-retrieval/task.md) | Published fixed specification `4ac3d56` and accepted baseline evidence | [CLEAR](../p1-00a-mac-runtime-and-retrieval/kickoff-review.md); official report/archive/patch match `9bd0029`; no specification change |
 | [AID-151](/AID/issues/AID-151), completed | Coding delivered original p1-00a candidate `00ebb4d` | AID-150 actual CLEAR read; isolated branch from published `eaf11b8`; fixed task unchanged | Runtime/client-configuration/docs-only repair; fresh pair and decoded bytes/lineage; original raw evidence retained in corrected delivery |
-| [AID-152](/AID/issues/AID-152), completed | QA independently reviewed exact candidate `00ebb4d` | AID-151 actual delivery | Historical [FAIL](../p1-00a-mac-runtime-and-retrieval/review-round-1.md): D1-D4 PASS, D5 incomplete runtime inventory; report `537d47f`; old values preserved |
-| [AID-153](/AID/issues/AID-153), completed | Coding corrected inventory/schema evidence under original D5 | Actual QA finding and [bounded correction](../p1-00a-mac-runtime-and-retrieval/repair-round-1.md) at `c41815c`; original CLEAR/task unchanged | [Corrected manifest](../p1-00a-mac-runtime-and-retrieval/manifest.md), exact candidate `b6d5846`; complete schema/preservation receipts; no product change/restart/new generation |
+| [AID-152](/AID/issues/AID-152), completed | QA independently reviewed exact candidate `00ebb4d` | AID-151 actual delivery | Historical FAIL: D1-D4 PASS, D5 incomplete runtime inventory; report `537d47f`; old values preserved |
+| [AID-153](/AID/issues/AID-153), completed | Coding corrected inventory/schema evidence under original D5 | Actual QA finding and bounded correction at `c41815c`; original CLEAR/task unchanged | [Corrected manifest](../p1-00a-mac-runtime-and-retrieval/manifest.md), exact candidate `b6d5846`; complete schema/preservation receipts; no product change/restart/new generation |
 | [AID-154](/AID/issues/AID-154), completed | QA independently reviewed exact corrected candidate `b6d5846`, round 2 | AID-153 actual delivery | [D1-D5 PASS](../p1-00a-mac-runtime-and-retrieval/review.md), report/evidence/registry `3d5d890`; applicable D1-D4 evidence reused with equivalence checks; one prior rejection retained |
 | [AID-142](/AID/issues/AID-142), 1 | Producer accepted baseline and corrected repair | Actual AID-154 PASS read and official packets checked | [Acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), unchanged reviewed delivery integrated; publication/completion releases AID-143 |
-| [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `d1ffb8d` | AID-143 complete baseline/friction handoff | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review-round-1.md); [p1-02 AMBIGUITY K2-1](../p1-02-mcp-tool-consolidation/kickoff-review-round-1.md), report `b32ac4f`; Producer's compose/save clarification needs fresh round-2 kickoff |
+| [AID-155](/AID/issues/AID-155), completed | QA independently reviewed both p1-01/02 fixed specifications at `d1ffb8d` | AID-143 complete baseline/friction handoff | p1-01 CLEAR; p1-02 AMBIGUITY K2-1, report `b32ac4f`; Producer's compose/save clarification needs fresh round-2 kickoff |
 | [AID-156](/AID/issues/AID-156), completed | QA independently reviewed clarified fixed specs at `496cee2` | Actual first-round reports and Producer clarification 1 | [p1-01 CLEAR](../p1-01-mcp-response-envelope/kickoff-review.md) and [p1-02 CLEAR](../p1-02-mcp-tool-consolidation/kickoff-review.md), exact report `9d79d20`; K2-1 resolved at specification level, first-round history preserved |
 | [AID-143](/AID/issues/AID-143), 2 | Producer coordinates [p1-01](../p1-01-mcp-response-envelope/task.md) + [p1-02](../p1-02-mcp-tool-consolidation/task.md); Coding; QA | AID-142 accepted usable baseline, plus newly CLEAR specs informed by its log | Uniform success/failure envelopes; catalog/intent/risk/mode coverage; docs and MCP suite; both changes published together at one reviewed final commit |
 | [AID-144](/AID/issues/AID-144), 3 | Producer coordinates [p1-03](../p1-03-mcp-wait-and-result/task.md); Coding; QA | AID-143 accepted/published result; CLEAR kickoff | Complete/failed/timed-out generation/training jobs; truthful artifact/output locators; bounded calls, no timeout resubmission; sourced limit or explicit fallback |
@@ -100,7 +100,7 @@ QA independently reviews these points. A demonstrated spec defect is repaired or
 escalated according to its actual effect on boundaries, not automatically sent
 back to CTY as a routine technical option.
 
-AID-143's [baseline-informed kickoff context](../p1-01-mcp-response-envelope/kickoff-context.md)
+AID-143's baseline-informed kickoff context
 maps all eight original incidents without changing the 23-unit baseline or
 overstating the accepted Mac repair. It clarifies MCP-path validation/error
 coverage, all 40 old-tool dispositions and the staged `mcp_ping` → `health`
@@ -109,7 +109,7 @@ no earlier baseline/repair clearance releases Coding for p1-01/02. The recipient
 card and current gate are linked in AID-143's native plan.
 
 AID-155 returned p1-01 CLEAR and p1-02 AMBIGUITY at `d1ffb8d`. Its actual
-reports/package were checked and preserved. [Clarification 1](../p1-02-mcp-tool-consolidation/kickoff-clarification-1.md)
+reports/package were checked and preserved. Clarification 1
 settles K2-1 under the approved read/write map: composition rejects legacy
 `save_as`; returned fragments are saved through `prompt_write(save)` with
 existing concurrency/provenance semantics. Backend APIs and p1-01 task bytes
@@ -136,7 +136,7 @@ uploads, raw Git diffs, bundles and indexed archive contents match immutable Git
 Correct catalog labels are delivered, but the automated test uses the same
 catalog as its oracle; a ComfyUI admin-to-read mutation remains fully green.
 
-[Correction round 1](../p1-02-mcp-tool-consolidation/repair-round-1.md) repairs
+Correction round 1 repairs
 this already cleared test-checked D2 without changing specifications or product
 behavior. Coding must independently assert all 29 policy risks against catalog
 and discovery, show false-admin-read fails, restore source and pass the full
@@ -186,11 +186,11 @@ No routine start/resource/plan confirmation is pending.
 [QA AID-161](/AID/issues/AID-161) independently returned **AMBIGUITY K3-1**
 at fixed published `7a46cb7`, exact report/evidence `b3276dc`. Producer read
 and verified the actual report, official uploads, archive/Git identity and
-existing Backend source shapes. The [original task](../p1-03-mcp-wait-and-result/task-kickoff-round-1.md),
-[round-1 report](../p1-03-mcp-wait-and-result/kickoff-review-round-1.md) and evidence
+existing Backend source shapes. The original task,
+round-1 report and evidence
 remain unchanged. One kickoff ambiguity is separate from delivery rejections.
 
-[Clarification 1](../p1-03-mcp-wait-and-result/kickoff-clarification-1.md) resolves
+Clarification 1 resolves
 the locator disposition under the delegated technical-choice rule: return real
 canonical artifact identities and supported Gallery locators, preserve legacy
 image-only results separately, and return a recoverable locator error with the
@@ -269,7 +269,7 @@ patch/bundle and 59 indexed payloads/61 members against pinned Git/hashes.
 D1/D3/D4 are CLEAR at specification level; D2 needs configured-versus-observed
 identity semantics for failed and URL-only probes.
 
-[Clarification 1](../p1-04-mcp-health-and-workers/kickoff-clarification-1.md)
+Clarification 1
 adopts a minimal additive extension of existing worker status. Configured URL
 and expected identity remain distinct from nullable current observed identity
 and validated resolved endpoint; failed probes retain one entry and safe current
@@ -400,7 +400,7 @@ table from the existing startup footprint. Its read-only audit found old values
 preserved. Producer checked the official report/audit and startup source; the
 first candidate was rejected and held from merge pending correction.
 
-[Correction 1](../p1-00a-mac-runtime-and-retrieval/repair-round-1.md) fixes the
+Correction 1 fixes the
 inventory and schema receipts within original cleared D5. No specification change,
 product fix, restart or extra generation was needed. Coding AID-153 delivered
 `b6d5846`, a direct child of `00ebb4d`, with the complete additive schema inventory,
@@ -485,7 +485,7 @@ card's native plan at creation and read back exactly. AID-146 depends on that
 actual verdict; no earlier CLEAR transfers to p1-05 and no Coding or delivery-QA
 card is dispatched before its own CLEAR.
 
-The [handoff](../p1-05-mcp-e2e-smoke-mac/kickoff-handoff.md) records accepted
+The handoff records accepted
 identities and the independent review's concrete boundaries: retrieved bytes
 versus locators/outside-MCP file reads, bounded same-ID wait/counting, runtime
 preparation/source identity, real versus cached generation, three-run resets,
@@ -515,7 +515,7 @@ all 16 registry rows remain unchanged in historical mirrors. Preserve one kickof
 ambiguity event/two P1 findings, clarification 1/next round 2, zero delivery
 rejections; earlier histories stay separate.
 
-Adopt [clarification 1](../p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md) under
+Adopt clarification 1 under
 delegated in-boundary technical authority. The [refreshed task](../p1-05-mcp-e2e-smoke-mac/task.md)
 includes the bounded canonical PNG content option on existing Gallery read
 (2 MiB, dimensions up to 2048, common envelope/digest, authoritative safe Gallery
@@ -546,7 +546,7 @@ decisions; no duplicate memory topic.
 [QA AID-170](/AID/issues/AID-170) independently cleared fixed `4fc3ff2`, exact
 report/evidence `a745998382a17e818f8588e2cdfb421f77c3f124`. Producer read the actual
 report and verified five official uploads, all 93 indexed payloads/94 members,
-exact patch/tree and independently fetched bundle. [Kickoff acceptance](../p1-05-mcp-e2e-smoke-mac/kickoff-acceptance.md)
+exact patch/tree and independently fetched bundle. Kickoff acceptance
 records unchanged cleared task/clarification/decision hashes and limits. K5-1/K5-2
 are resolved at specification level; one ambiguity event/two findings,
 clarification 1/round-2 CLEAR and zero implementation rejections are preserved.
@@ -573,7 +573,7 @@ QA D1 and recorded D2 pass independent checks; **D3 FAIL R5-1/P1**, D4 unchecked
 Actual SIGINT after one qualifying pair safely stops but leaves streak 1 and
 omits the interrupted call/attempt finalization. Producer verified the full
 reports/source/reproduction, all 16 official uploads, all 133/206 indexed payloads,
-exact patches/trees and independent bundles. [Correction 1](../p1-05-mcp-e2e-smoke-mac/repair-round-1.md)
+exact patches/trees and independent bundles. Correction 1
 requires actual signal regressions, complete interruption/admission accounting
 and a fresh frozen real three-pair streak. Original CLEAR/task/clarification/
 decision hashes remain unchanged; no new scope or routine owner confirmation.
@@ -609,7 +609,7 @@ Producer read actual Coding AID-174 **91d6e3790ecbb258b1a079395a1156912d090b62**
 and independent QA AID-175 **D1–D3 technical PASS**, report/evidence
 **ade78141f693a6ff1259d8b61d883e77434b2ccd**. R5-1 resolved with actual CLI
 signal-boundary RED/GREEN, five meaningful independent faults/restoration and
-fresh corrected-source three-pair evidence. [Technical acceptance](../p1-05-mcp-e2e-smoke-mac/technical-review-acceptance.md)
+fresh corrected-source three-pair evidence. Technical acceptance
 is limited to D1–D3; [all six images and Gallery records](../p1-05-mcp-e2e-smoke-mac/demo.md)
 are ready for CTY's explicit project-channel reply under unchanged D4. Native
 human-only owner interaction on AID-146 carries the waiting path, delivered by

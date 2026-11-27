@@ -18,4 +18,4 @@ Hermes captured the shared main's 14 pending memory documents and the active AID
 
 The existing memory edits are committed separately. The active partial implementation and this publication record form a second, explicitly unfinished snapshot. Neither the running Coding worktree nor its index is rewritten; later worker changes remain there for the actual delivery.
 
-See the [checkpoint record](../tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) and [captured-file manifest](../tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.json). Exact publication and native readbacks belong to AID-146 and AID-215, avoiding a circular commit hash in this document.
+See the [checkpoint record](../tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) and captured-file manifest. Exact publication and native readbacks belong to AID-146 and AID-215, avoiding a circular commit hash in this document.

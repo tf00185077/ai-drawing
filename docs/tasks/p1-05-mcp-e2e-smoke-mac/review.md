@@ -3,11 +3,11 @@ Review round: 2
 
 Independent QA [AID-175](/AID/issues/AID-175), 2026-11-24 UTC. **Technical PASS for original D1–D3 and correction 1 only. D4 is UNCHECKED / pending Producer and CTY owner-demo.** This is not whole-task acceptance, aesthetic approval, Phase 1 closure or Phase 2 activation.
 
-Reviewed full immutable candidate **91d6e3790ecbb258b1a079395a1156912d090b62**, tree **967e24606eb257b51c859fe1fd3c42a6597bdc4d**, against repair base **f510a0afde938671f43b590c66d9885507dd7046**, tree **5518a4351e056150a67ba42c26b7c8b56add0b5c**. Software frozen before renewed qualification: **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**. All 291 frozen source fingerprints equal the final candidate. Candidate and cleared hashes were pinned on the card before substantive review: [pin receipt](repair-round-1-evidence/qa/pin.json). QA used its own persistent `aid-175-exact-review` worktree at `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-175-qa`.
+Reviewed full immutable candidate **91d6e3790ecbb258b1a079395a1156912d090b62**, tree **967e24606eb257b51c859fe1fd3c42a6597bdc4d**, against repair base **f510a0afde938671f43b590c66d9885507dd7046**, tree **5518a4351e056150a67ba42c26b7c8b56add0b5c**. Software frozen before renewed qualification: **e7819bcc02ceadc0dafad6d77a634618b5bfc02f**. All 291 frozen source fingerprints equal the final candidate. Candidate and cleared hashes were pinned on the card before substantive review: pin receipt. QA used its own persistent `aid-175-exact-review` worktree at `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-175-qa`.
 
 ## Findings
 
-No blocking defect demonstrated in the reviewed candidate. **R5-1 / P1 / D3 is resolved at this SHA.** The prior FAIL remains valid for its old candidate; [review-round-1.md](review-round-1.md) and [manifest-delivery-1.md](manifest-delivery-1.md) are byte-identical historical mirrors. QA made no product repair.
+No blocking defect demonstrated in the reviewed candidate. **R5-1 / P1 / D3 is resolved at this SHA.** The prior FAIL remains valid for its old candidate; review-round-1.md and manifest-delivery-1.md are byte-identical historical mirrors. QA made no product repair.
 
 ## Done when assessment
 
@@ -28,23 +28,23 @@ After exact corrected bytes were restored, all three cases pass. The actual CLI 
 
 The admitted job retains its known ID and last observed **queued** state; it is never called failed. The withheld submit response remains unknown admission, and its lower-fixture job ID is not invented as client knowledge. Earlier jobs remain completed. No recovery/audit/next attempt follows SIGINT, no extra submit or target fallback occurs, and reusing the output directory fails before another request. These lower HTTP/storage fixtures do not qualify as real-image evidence.
 
-[Old RED receipt](repair-round-1-evidence/qa/old-signals-red.json), [corrected GREEN](repair-round-1-evidence/qa/signals-green.json), [independent traffic/state analysis](repair-round-1-evidence/qa/independent-signal-analysis.json). Complete fixture configs, payloads, lower exchanges, stdout/stderr, SDK/call/event/summary evidence are in adjacent `old-signals-red/` and `signals-green/` directories.
+Old RED receipt, corrected GREEN, independent traffic/state analysis. Complete fixture configs, payloads, lower exchanges, stdout/stderr, SDK/call/event/summary evidence are in adjacent `old-signals-red/` and `signals-green/` directories.
 
-Five independent production mutations each fail the targeted feature check: remove cancellation call capture; write stale attempt streak despite a zero summary; discard observed queued/running state; skip full pixel loading; remove both actual-open containment/identity guards. Each is restored byte-for-byte. [Edits/results/restoration hashes](repair-round-1-evidence/qa/fault-restoration.json). This detects incomplete attempt accounting hidden by a summary-only reset. Final complete MCP checks run after all restoration. Raw pytest RED tracebacks retain original trailing whitespace; the full diff whitespace check reports those evidence-only lines. Source/report/JSON checks pass without rewriting raw output.
+Five independent production mutations each fail the targeted feature check: remove cancellation call capture; write stale attempt streak despite a zero summary; discard observed queued/running state; skip full pixel loading; remove both actual-open containment/identity guards. Each is restored byte-for-byte. Edits/results/restoration hashes. This detects incomplete attempt accounting hidden by a summary-only reset. Final complete MCP checks run after all restoration. Raw pytest RED tracebacks retain original trailing whitespace; the full diff whitespace check reports those evidence-only lines. Source/report/JSON checks pass without rewriting raw output.
 
 ## Independent offline checks
 
-Own Python 3.11 venv, pinned MCP 1.26.0/Pillow 12.2.0 and all task package versions, explicit candidate imports, no editable install. Canonical environments were unchanged. Backend uses its canonical interpreter, candidate imports and a separate timeout-plugin copy. [QA environment](repair-round-1-evidence/qa/environment.json), [Backend environment](repair-round-1-evidence/qa/backend-environment.json). All pytest runs use isolated roots below run-owned TMPDIR and `--timeout=60`; receipts retain exact argv/cwd/environment/UTC/duration/exit/full output.
+Own Python 3.11 venv, pinned MCP 1.26.0/Pillow 12.2.0 and all task package versions, explicit candidate imports, no editable install. Canonical environments were unchanged. Backend uses its canonical interpreter, candidate imports and a separate timeout-plugin copy. QA environment, Backend environment. All pytest runs use isolated roots below run-owned TMPDIR and `--timeout=60`; receipts retain exact argv/cwd/environment/UTC/duration/exit/full output.
 
 | Check | Actual result |
 |---|---|
 | Old driver, actual three SIGINT boundaries | **3 expected failures**, 14.21s, exit 1 |
 | Corrected driver, same boundaries | **3 passed**, 12.53s, exit 0 |
 | Five independent deliberate faults | **Each expected RED**, exact restoration |
-| Final restored complete MCP + six independent content cases | **672 passed, 4 existing optional skips**, 60.49s, exit 0; [receipt](repair-round-1-evidence/qa/mcp-full.json), [output](repair-round-1-evidence/qa/mcp-full.txt) |
-| Fresh complete Backend | **1916 passed, 124 existing platform skips**, 42.34s, exit 0; [receipt](repair-round-1-evidence/qa/backend-full.json), [output](repair-round-1-evidence/qa/backend-full.txt) |
-| Fresh actual Backend HTTP/persistence revision export | **1 passed**, 0.49s, exit 0; [receipt](repair-round-1-evidence/qa/fresh-revision-export.json) |
-| Fresh revision export + retained accepted LoRA cross-layer consumers | **7 passed**, 0.17s, exit 0; [receipt](repair-round-1-evidence/qa/cross-layer.json) |
+| Final restored complete MCP + six independent content cases | **672 passed, 4 existing optional skips**, 60.49s, exit 0; receipt, output |
+| Fresh complete Backend | **1916 passed, 124 existing platform skips**, 42.34s, exit 0; receipt, output |
+| Fresh actual Backend HTTP/persistence revision export | **1 passed**, 0.49s, exit 0; receipt |
+| Fresh revision export + retained accepted LoRA cross-layer consumers | **7 passed**, 0.17s, exit 0; receipt |
 
 No prior full-suite result is reused as QA's result. The unchanged accepted LoRA export is an explicit reused input; its current consumers run freshly. Two optional export cases execute separately; two old smoke exports remain skipped. Existing warnings/platform skips remain; the new POSIX signal test's Windows skip links this Mac task. No new macOS skip or changed existing test. All 16 standing guards run in these suites; no unrelated Frontend/build/Windows result is claimed.
 
@@ -52,7 +52,7 @@ D1 source inspection confirms one read bounded to 2,097,153 bytes, 2 MiB content
 
 ## Running services, real generation and retrieval
 
-[Independent audit](repair-round-1-evidence/qa/independent-audit.json), [read-only audit source](repair-round-1-evidence/qa/independent_audit.py), [fresh QA SDK results](repair-round-1-evidence/qa/qa-sdk-results.jsonl), [current canonical rows](repair-round-1-evidence/qa/live-canonical-rows.json).
+Independent audit, read-only audit source, fresh QA SDK results, current canonical rows.
 
 **Running services:** live Backend PID 99953 and ComfyUI PID 99952 match recorded creation times, executable/cwd/full commands; unchanged deployed source, all 840 ComfyUI fingerprints/private configuration, equivalent-interpreter imports/settings/roots and live OpenAPI are corroborated. This is recorded-source corroboration, not general in-process attestation. Current Backend/ComfyUI queues are empty and trainer idle. No restart/deployment/configuration/resource/worker/training action occurred. Complete current SQLite schema and every pre-existing value equal the private pre-qualification snapshot; exactly six image and six artifact rows were added. The snapshot remains private and its digest matches. AID-171 runtime/private configuration/backups and AID-151 snapshots were retained; QA removed no data/outputs.
 
@@ -64,7 +64,7 @@ All six recorded waits and recorded Backend audit responses say completed. Curre
 
 ## Integrity, history and accounting
 
-[Independent official integrity](repair-round-1-evidence/qa/coding-official-integrity.json): all **16 uploads**, **1,897 indexed payloads / 1,898 archive members**, lengths/digests/Git blob/body equivalence, split reconstruction, exact binary/full-index patch and reconstructed candidate tree verified. The downloaded prerequisite bundle independently verifies/fetches in a separate bare repository to the same SHA/tree. Manifest equals committed bytes. The 909 protected historical task bodies checked against the repair base are unchanged, including old evidence directories; current manifest/report have byte-identical first-delivery mirrors. Original protected-input list: 727 exact bodies plus the original 16 registry rows (earlier generated date alone differs). All accepted p1-00/00a/p1-01–04 histories and prior official-readback evidence remain.
+Independent official integrity: all **16 uploads**, **1,897 indexed payloads / 1,898 archive members**, lengths/digests/Git blob/body equivalence, split reconstruction, exact binary/full-index patch and reconstructed candidate tree verified. The downloaded prerequisite bundle independently verifies/fetches in a separate bare repository to the same SHA/tree. Manifest equals committed bytes. The 909 protected historical task bodies checked against the repair base are unchanged, including old evidence directories; current manifest/report have byte-identical first-delivery mirrors. Original protected-input list: 727 exact bodies plus the original 16 registry rows (earlier generated date alone differs). All accepted p1-00/00a/p1-01–04 histories and prior official-readback evidence remain.
 
 Cleared SHA-256 identities remain:
 
@@ -75,7 +75,7 @@ Cleared SHA-256 identities remain:
 
 Original baseline remains **23 units/eight incidents**, F1–F8 **1,1,1,6,1,11,1,1**. Old seven jobs/six PNGs/**81 units** remain historical and never qualify corrected source. New Coding ledger reconciles to **22 preparation + 0 attempt interventions + 0 recovery + 14 audit = 36**. All 71 pre-packaging operator outcomes, failed file/environment reads, RED tests, earlier registry/bundle assumptions and progress-count correction remain disclosed. Two DB connections in the audit's single bundled receipt are expanded to two baseline units. Only qualifying request-to-result flows are zero; the whole round is nonzero and exceeds baseline.
 
-[History/accounting checks](repair-round-1-evidence/qa/history-and-accounting.json), [QA separate ledger](repair-round-1-evidence/qa/qa-ledger.json). QA's own environment/client preparation and 13 audit units are separate, including the stopped config inspection and resumed inspection. The QA tool initially treated a stored digest string as an object; failed receipt/source are retained. Resume reused completed process/import evidence, fixed only the audit tool and completed all checks. Offline fixtures never count as real qualification. Source reading, packaging and control-plane work remain separate overhead. No clean-first-try or whole-round-zero claim.
+History/accounting checks, QA separate ledger. QA's own environment/client preparation and 13 audit units are separate, including the stopped config inspection and resumed inspection. The QA tool initially treated a stored digest string as an object; failed receipt/source are retained. Resume reused completed process/import evidence, fixed only the audit tool and completed all checks. Offline fixtures never count as real qualification. Source reading, packaging and control-plane work remain separate overhead. No clean-first-try or whole-round-zero claim.
 
 History: **one kickoff ambiguity event/two P1 findings; clarification 1/kickoff 2 CLEAR; delivery review 1 FAIL/first implementation rejection/one P1 R5-1; correction 1/delivery review 2 technical PASS**. Earlier histories remain separate. Registry regeneration preserves all 16 standing rows; the two automated original items below are newly certified after actual feature/sensitivity evidence. D2 remains manual; D4 remains pending.
 

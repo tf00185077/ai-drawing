@@ -51,7 +51,7 @@ reused only after component-tree and exact-input equality checks.
 
 ## Baseline and friction preservation
 
-The [shared context](kickoff-context.md) retains every original row unchanged:
+The shared context retains every original row unchanged:
 
 | Item | Units | Obligation and remaining boundary |
 |---|---:|---|

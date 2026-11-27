@@ -46,7 +46,7 @@ decision remains attributed to Producer rather than presented as an owner quote.
 
 The accepted real First check precedes this software specification. Its
 [friction ledger](../p2-00-civitai-first-check/friction-ledger.md) records manually
-assembled resources, family selection and defaults; its [service inventory](../p2-00-civitai-first-check/evidence/service-inventory.json)
+assembled resources, family selection and defaults; its service inventory
 distinguishes seven touched modules, including one value type, from 12 modules
 without operational invocation. That evidence supports foundation work, not
 deletion of the latter modules. The 20 interventions, 77 overlapping units and
@@ -70,7 +70,7 @@ fresh model qualification, a zero-fix Phase 2 exit, or CTY's aesthetic verdict.
 ## Fixed-source trace
 
 Paths and line spans below refer to the reviewed source, not a later checkout.
-The [static audit](kickoff-evidence/static-audit.json) records exact symbol spans,
+The static audit records exact symbol spans,
 constructor sites, direct import dependencies, catalog and registry rows.
 
 | Boundary | Baseline evidence | Assessment against the task |
@@ -128,7 +128,7 @@ main's 13 concurrent memory edits were not staged, stashed, reset or copied.
 - `shasum -a 256 docs/tasks/p2-02-resource-record/task.md` matches the assigned hash.
 - `python3 -B docs/tasks/p2-02-resource-record/kickoff-evidence/check_source.py`:
   **238 static checks passed**, including **211** tracked inventory files matched
-  byte-for-byte to fixed Git blobs. The [inventory](kickoff-evidence/source-inventory.json)
+  byte-for-byte to fixed Git blobs. The inventory
   covers all tracked Backend app/workflows and MCP implementation, plus the
   explicitly listed review documents and relevant tests. No ordinary source
   hashes are suppressed by token-like path names. The first run passed 234 checks

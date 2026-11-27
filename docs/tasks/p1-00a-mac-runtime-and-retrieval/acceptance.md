@@ -10,7 +10,7 @@ independent [round-2 PASS](review.md) on original D1-D5. QA report/evidence/regi
 commit: `3d5d8902a89a8c3c8994ed89e944fcaee0260577`. Original specification remains
 `4ac3d5653d7bffee2698809d32d0f5ea0f506cbc` with [CLEAR kickoff](kickoff-review.md).
 
-The [first FAIL](review-round-1.md) at `00ebb4d73edf3efe54943f3e2d784200e3023cab`
+The first FAIL at `00ebb4d73edf3efe54943f3e2d784200e3023cab`
 and its official [AID-152](/AID/issues/AID-152) artifacts remain preserved.
 Accounting stays one delivery rejection, correction round 1, delivery review
 round 2. The corrected inventory resolves F-QA1; it adds no product behavior.

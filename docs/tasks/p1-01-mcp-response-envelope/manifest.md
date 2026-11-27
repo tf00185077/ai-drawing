@@ -12,8 +12,8 @@ candidate was p1-01 PASS / p1-02 FAIL; this candidate awaits independent review 
 |---|---|---|---|---|
 | D1 — every registered success/failure envelope | test | P1 | test_intent_boundary.py::test_catalog_registered_success_failure_envelope (29 × success/HTTP/connection), test_pre_body_validation_is_enveloped_and_no_http, test_prompt_compose_legacy_save_presence_rejected_before_http, test_lora_start_unknown_field_is_validated_before_http; test_server.py::test_stdio_envelope_success_and_non_lora_validation_before_http | Real catalog registration, SDK validation and actual adapters/HttpBackendClient. Only HTTP transport is replaced; formal stdio uses a separate test HTTP server. No replacement tool callable/stub. |
 | D2 — retain code/hint/details and HTTP status/recovery | test | P1 | test_structured_backend_code_hint_details_preserved; test_compose_then_write_preserves_fragments_metadata_provenance_and_conflict; test_lora_uncertain_admission_keeps_canonical_job_and_no_resubmit; catalog unknown HTTP 598 cases; existing test_revision_parent_errors.py and LoRA safe projection tests | Real registered HTTP path plus existing domain projections. Canonical hints remain safe; uncertain-admission ID/classification and generation node/recording context survive in error.details. No retry/fallback. |
-| D3 — envelope/error list documented | manual | P2 | [Response contract](../../mcp.md#response-envelope), [error codes](../../mcp.md#error-codes-and-recovery), [restored discovery](../p1-02-mcp-tool-consolidation/correction-1-evidence/restored-discovery-restart.json) | Author compared prose with responses.py, registration and real call assertions; independent QA reads actual docs. |
-| D4 — full MCP suite, no new failures | test | P1 | [Corrected MCP log](../p1-02-mcp-tool-consolidation/correction-1-evidence/final-mcp.log), [receipt](../p1-02-mcp-tool-consolidation/correction-1-evidence/final-mcp.json); 460 passed / 2 unchanged optional export skips | Full separate MCP interpreter; isolated scratch; --timeout=60. Fresh Backend exports strengthen the registered cross-layer checks. |
+| D3 — envelope/error list documented | manual | P2 | [Response contract](../../mcp.md#response-envelope), [error codes](../../mcp.md#error-codes-and-recovery), restored discovery | Author compared prose with responses.py, registration and real call assertions; independent QA reads actual docs. |
+| D4 — full MCP suite, no new failures | test | P1 | Corrected MCP log, receipt; 460 passed / 2 unchanged optional export skips | Full separate MCP interpreter; isolated scratch; --timeout=60. Fresh Backend exports strengthen the registered cross-layer checks. |
 
 Implementation: tools/responses.py handles shared HTTP/connection projection and
 one success/error shape at registration. ContractFastMCP covers pre-body SDK
@@ -21,10 +21,10 @@ argument validation for every registered tool, retaining LoRA's migration and
 safe diagnostics. Failures retain prior context in error.details; successful
 fields live under data. Catalog response_category is now always envelope.
 
-Original implementation evidence (immutable at b1082a8; fresh correction evidence below): [source/spec/catalog audit](evidence/source-audit.json),
-[Backend log](evidence/final-backend.log)/[receipt](evidence/final-backend.json),
-[parity](evidence/final-parity.log), [mutations](evidence/mutation-results.json),
-[initial RED](evidence/red.log), [baseline](evidence/baseline-mcp.log).
+Original implementation evidence (immutable at b1082a8; fresh correction evidence below): source/spec/catalog audit,
+Backend log/receipt,
+parity, mutations,
+initial RED, baseline.
 Evidence helpers are retained as text in this directory. Source and snapshot
 checks exclude manifests/evidence themselves to avoid self-reference; final
 external receipts hash the complete exact package.
@@ -77,7 +77,7 @@ in the full suite. No wrapper, registration, description, label, Backend API,
 product dependency or other behavior changed. No new task-spec deviation.
 
 Fresh evidence is in
-[correction-1-evidence](../p1-02-mcp-tool-consolidation/correction-1-evidence/README.md),
+correction-1-evidence,
 separate from immutable original AID-157 `evidence/` and AID-158 `qa-evidence/`.
 Full argument arrays, allowlisted environments, UTC times, exits and logs are
 retained for each command. The helpers are saved as `.py.txt`; all HTTP is

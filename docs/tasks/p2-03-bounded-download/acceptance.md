@@ -8,7 +8,7 @@ Producer accepts [Coding AID-212](/AID/issues/AID-212) actual FINAL
 **88cb0f800b8de4d8beb92196214aad14e59deb2c**. Product/tests/helper/topic freeze
 3209a712330b8beb948199dfeca75ae9f8f71b7d precedes final qualification. Actual native
 pin80262db2-198b-4722-94bc-e2401fe7f728 precedes substantive review. The exact
-[manifest](manifest-correction-2.md), [PASS](review-round-3.md) and raw evidence
+manifest, PASS and raw evidence
 remain immutable; the original task285af6d1/kickoff1CLEAR/repairs1+2 are unchanged.
 
 ## Accepted outcome
@@ -50,7 +50,7 @@ prior registry rows survive;15 independently checked D/C/E additions give87 acti
 no supersession. Full original7394 task paths are audited:7393 bodies/modes exact,
 with the intentional registry-file update retaining its72 prior rows. This makes
 explicit the registry exception to the report's compressed preservation wording.
-[Producer integrity](producer-acceptance-integrity.json) verifies24 official uploads,
+Producer integrity verifies24 official uploads,
 112/135 members,111/134 exact Git payloads,8705/8837 fingerprints/modes,584 protected
 candidate-vs-QA bodies and both official bundle/exact-FINAL and independent patch-tree
 restores/fsck0. Ten official prerequisite parts reconstruct78887056bytes with declared

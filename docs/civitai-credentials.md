@@ -100,10 +100,10 @@ and [operating policy](OPERATING-POLICY.md) govern the work.
 
 The first candidate 160681d1 was rejected by independent review 301c5dee with
 R1/P1/D3: an implicit HTTPX cookie jar can replay a canonical credential cookie
-to b2 despite removing Authorization. The [actual report](tasks/p2-01-civitai-key-file/review-round-1.md)
+to b2 despite removing Authorization. The actual report
 uses synthetic configured-file credentials; selected live HEADs had no cookies.
 No actual owner-key disclosure is inferred from that original observation.
-[Correction 1](tasks/p2-01-civitai-key-file/repair-round-1.md) enforces the existing
+Correction 1 enforces the existing
 Authorization-only policy at the final outgoing request and blocks cookie
 acceptance/persistence/replay. This is [the technical transport decision](decisions/civitai-credentials.md),
 implemented in the accepted exact source after fresh frozen evidence and

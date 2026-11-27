@@ -68,7 +68,7 @@ remain source evidence, not a removal certificate. No large replacement is made.
 ## D1–D5, C1–C5 and S1–S5 evidence
 
 Every item is test/P1; D5/C5/S5 also require delivery evidence and independent QA.
-Paths below are in [correction-2-evidence/](correction-2-evidence/) unless specified.
+Paths below are in correction-2-evidence/ unless specified.
 
 | Item | Evidence and layer | Real boundary / substitutes |
 |---|---|---|
@@ -90,8 +90,8 @@ Paths below are in [correction-2-evidence/](correction-2-evidence/) unless speci
 
 ## Current qualification
 
-[Replay guide](correction-2-evidence/verification-commands.md), individual command
-JSONs/logs and [verification.json](correction-2-evidence/verification.json) record
+Replay guide, individual command
+JSONs/logs and verification.json record
 exact argv/cwd/allowlisted environment/actual imports/roots/guard identities,
 start/duration/exit and raw/saved hashes. Logs retain byte-exact deterministic
 `.raw.log.gz`; readable `.log` only trims trailing whitespace.

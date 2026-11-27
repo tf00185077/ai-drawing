@@ -37,7 +37,7 @@ this report to its actual report FINAL/tree without a circular self-hash.
 ## Findings and admission audit
 
 No demonstrated blocking defect remains in the checked scope. The
-[independent audit](review-3-evidence/admission-audit.md) inventories both actual
+independent audit inventories both actual
 entry sites and the shared context manager. The applicable operation exists
 before timed acquire, expiration is checked again after entry, and finally releases
 exactly one acquired reentrant level. False acquisition never releases the owner.
@@ -89,7 +89,7 @@ environment, source hashes, current imports/SQLite paths, timing, exits and raw-
 hashes. Tests use QA-owned Python3.11.15, read-only installed dependency sites,
 isolated scratch/test/model/DB roots, disabled plugin autoload, per-test
 `--timeout=60` and600s outer limits. Guard activation demonstrates six denials;
-qualification has zero unexpected denials. [Settings receipt](review-3-evidence/qa3-settings.log)
+qualification has zero unexpected denials. Settings receipt
 independently observes8589934592/21474836480-byte defaults and isolated roots,
 without a credential value. Broad input inventories include auxiliary scripts;
 adding an unloaded artifact/supplement script does not change previously qualified
@@ -106,16 +106,16 @@ helper freeze and last production restoration.
 | `registry-qa3` (standing MCP/PNG/stdio/content/smoke) | 412 passed;84.82s |
 | `qa3-provider-corrected` / `fresh-wait-qa3` | 19 /12 passed |
 
-Every command/attempt is in [verification.json](review-3-evidence/verification.json),
+Every command/attempt is in verification.json,
 with actual raw logs and receipts. All19 fresh export bodies/hashes remain in
-[fresh-exports](review-3-evidence/fresh-exports/). Existing optional/platform skips
+fresh-exports. Existing optional/platform skips
 are unchanged. Existing provider/helper interruption and closure tests run; this
 review adds no cancellation API or restart-recovery claim.
 
 Faults run sequentially while no other tests run in this worktree. The
 [driver](review-3-evidence/independent_faults.py),
-[audit](review-3-evidence/final-fault-audit.json) and
-[supplement](review-3-evidence/supplemental-deadline-fault.json) retain exact
+audit and
+supplement retain exact
 substitutions, original/mutated/finally-restored hashes and assertion selectors.
 
 | Production fault | Intended assertions in final replay |
@@ -142,7 +142,7 @@ declared shallow cutoff `b4e71d18ba4600ad7e053274b90b45ffdfbce87b`. Candidate ab
 and no alternates are checked before import. Official bundle restores exact FINAL/
 tree; an independently applied full-index patch restores the same tree; both
 fsck exit0. All8705 ordinary fingerprints/modes,112 archive members/111 exact Git
-payloads and manifest agree. See [independent restore](review-3-evidence/independent-coding-restore.json)
+payloads and manifest agree. See independent restore
 and retained official index/metadata. No local candidate/cache is a prerequisite seed.
 
 All7394 original task bodies/modes,7835 fixed-base task paths at the candidate (apart from the
@@ -160,7 +160,7 @@ size/mtime/ctime. The corruption fault fails both variants, confirming preserved
 feature sensitivity. Review2's original self-read diagnosis/failures/repeat remain
 unchanged; this review adds no silent test removal, skip or weakened byte check.
 
-[Attempt ledger](review-3-evidence/attempt-ledger.json) retains QA setup/reporting
+Attempt ledger retains QA setup/reporting
 limitations. The first entry-expiration fault correctly failed via `pytest.fail`,
 but the driver required an explicit AssertionError and stopped before its last
 fault/GREEN. That attempt is not counted as completed sensitivity; replacing the

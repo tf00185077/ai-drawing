@@ -6,7 +6,7 @@ Prove the Phase 1 exit on the Mac: retrieve an original and its traceable revisi
 ## Purpose
 The accepted p1-01–04 source contracts need real execution proof. The original
 [p1-00 baseline](../p1-00-mcp-friction-run-mac/manifest.md) remains 23 intervention
-units/eight incidents. [Kickoff round 1](kickoff-review-round-1.md) found that
+units/eight incidents. Kickoff round 1 found that
 metadata-only Gallery and unspecified wait/preparation accounting cannot prove
 the existing [Phase 1 exit](../../roadmap/ROADMAP.md). Deliver the missing bounded
 Gallery content read and repeatable smoke driver, preserving that owner gate.
@@ -18,7 +18,7 @@ CTY sees the reviewed demo/images/Gallery records and explicitly replies. This
 technical task does not itself close Phase 1 or activate Phase 2.
 
 ## Scope
-Included: the normative [clarification 1](kickoff-clarification-1.md); a bounded
+Included: the normative clarification 1; a bounded
 `gallery_get(artifact_id=..., include_content=true)` PNG byte-read option retaining
 the metadata default and existing read risk/31-intent catalog; a repeatable
 SDK stdio driver under `scripts/`; focused content/driver tests; a short run guide
@@ -40,7 +40,7 @@ phase-close decisions. Do not weaken MCP-only, no-retry or real-run rules.
 
 Open questions: K5-1/K5-2 have a normative resolution in clarification 1;
 fresh independent kickoff round-2 CLEAR is required before Coding.
-Read first: the original [task](task-kickoff-round-1.md), actual kickoff report,
+Read first: the original task, actual kickoff report,
 accepted p1-00/p1-00a and p1-01–04 manifests/reviews/acceptances,
 [MCP decisions](../../decisions/mcp.md), [MCP guide](../../mcp.md),
 [setup](../../setup.md), [runtime-source memory](../../memory/runtime-source-contract-verification.md),

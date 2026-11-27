@@ -15,7 +15,7 @@ PASS, loaded-file-reader claim or Phase 2 exit.
 Producer verified all four official uploads, the 12 indexed payloads/13 archive
 members, exact report/Git bodies, 202 declared source/input fingerprints and a
 bundle independently fetched into a fresh bare store initially lacking the
-report commit. [Verification record](kickoff-acceptance-evidence.json) keeps the
+report commit. Verification record keeps the
 artifact identities and practical limits. The 36 static QA checks and 18 existing
 registry rows remain attributed; no unchanged product suite is repeated here.
 

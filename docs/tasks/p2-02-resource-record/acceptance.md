@@ -16,8 +16,8 @@ Kickoff1 CLEAR, the original task and repairs1–9 are unchanged.
 | QA tree | `276dbbca99f4122171bea52327df574d8f649d09` |
 | QA feature/replay freeze | `53f16b8d5fc1a4bb055f307bc700b1953721c11c` |
 
-The [actual report](review-round-10.md), [Coding manifest](manifest-correction-9.md)
-and [delivered topic](resource-records-correction-9.md) are immutable mirrors.
+The actual report, Coding manifest
+and delivered topic are immutable mirrors.
 QA pinned the actual complete FINAL SHA/tree before independent review. Its only
 non-task-specific change after Coding FINAL is the certified registry: all 22
 prior rows survive, 50 sensitivity-qualified additions yield **72 active items**,
@@ -74,7 +74,7 @@ parts reconstruct 73,923,914 bytes (SHA-256
 Independent official declared-shallow bundle and aggregate/per-commit-patch/raw
 commit stores restore both exact finals/trees and all five intermediate identities;
 both fsck checks exit 0 without local/candidate-object seeding. See the
-[integrity record](producer-acceptance-integrity.json). Official manifest/report,
+integrity record. Official manifest/report,
 archive bodies and Git agree. Shared main's current 14 dirty memory bodies/statuses
 are preserved separately from earlier concurrency observations.
 
@@ -93,8 +93,8 @@ decision/topic documents differ. All product/tests, manifest/raw report bodies
 and the 72-row registry are exact. 4476 earlier task bodies and 18 main-only history
 paths survive unchanged. All 233 authored local links, English/whitespace and five
 new Done items check; two affected catalog/document guards pass in 0.30 seconds
-with an outer 60-second process limit. [Integration checks](producer-integration-checks.json)
-and [actual guard log](producer-documentation-guards.txt) retain the results.
+with an outer 60-second process limit. Integration checks
+and actual guard log retain the results.
 
 ## Roadmap review and continuation
 

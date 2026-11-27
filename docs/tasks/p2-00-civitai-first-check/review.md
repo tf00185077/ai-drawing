@@ -21,7 +21,7 @@ download or CTY's aesthetic acceptance.
 No P0/P1 defect found in the delivered observation. No product repair was made.
 
 **P2 — five supplemental ComfyUI source fingerprints were over-redacted.**
-In [runtime-supplement](evidence/runtime-supplement.json), five dictionary paths
+In runtime-supplement, five dictionary paths
 containing `tokenizer` have `[REDACTED]` instead of a hash. The measurement helper's
 `common.clean` treats the substring `token` in any dictionary key as sensitive.
 An initial QA supplemental all-hashes assertion exposed the masking rather than
@@ -32,7 +32,7 @@ also equal their Git objects at the recorded ComfyUI commit
 cannot be reconstructed as original measurements. This is an evidence-usability
 limit, not a demonstrated execution failure; the graph, original bytes, preserved
 process identities and retained source binding support this bounded observation.
-See [source check](review-evidence/runtime-source-check.json). For future evidence
+See source check. For future evidence
 helpers, redact credential fields without masking ordinary source-path keys.
 Keep this original record unchanged.
 
@@ -46,9 +46,9 @@ Keep this original record unchanged.
 | D4 / P1 | PASS — friction/service account | Counts independently reconcile to 64 events, 14 provider HTTP requests, one admitted acquisition, one generation submit, one wait and 42 same-ID status reads. Fifteen capability plus five execution/recovery interventions are disclosed; seven preparation/audit and six delivery blocks account for the remaining work. Used/untouched services are distinguished, with value-type-only use labeled. Original failures remain; no pending measured job or hidden worker fallback is evidenced. |
 | D5 / P1 | PASS — exact reviewable delivery | The native Coding done receipt names the actual full commit/tree, not a future self-SHA. All 89 candidate changes are confined to this task's evidence/docs. QA downloaded the four official payloads plus receipt; hashes agree, all 90 ZIP payloads equal frozen Git bodies, and the bundle verifies/names the exact commit. This independent report is delivered on QA's own card. |
 
-Detailed QA assertions are in [independent audit](review-evidence/independent-audit.json)
-and [official artifact integrity](review-evidence/official-integrity.json).
-The actual [kickoff report](evidence/kickoff-report-input.md) equals the report at
+Detailed QA assertions are in independent audit
+and official artifact integrity.
+The actual kickoff report equals the report at
 `4702a662a88bf5611dcee9c5da1964a21a41aa74`; it clears the unchanged operating
 brief, including counted manual bridges and truthful adverse outcomes.
 
@@ -112,8 +112,8 @@ family `Illustrious` and manually selected workflow family `sdxl` remain distinc
 Actual LoRA tensor metadata identifies SDXL and the actual `LoraLoader` patches
 both model and CLIP; both text encoders and sampler consume its outputs.
 
-The [original PNG](evidence/original.png) and
-[QA's independently retrieved bytes](review-evidence/qa-original.png) are both
+The original PNG and
+QA's independently retrieved bytes are both
 **333,502 bytes**, SHA-256
 `8268b9571b8b9535b9500994a021919de317f84b1fbb36d9b74468d969ca3673`.
 Both decode to one 512×512 frame. Visual inspection shows the prompted blue cup
@@ -183,17 +183,17 @@ Actual commands are captured in the per-case JSON receipts and complete raw logs
 
 | Check | Command / evidence | Fresh result |
 |---|---|---|
-| Backend full suite | `python3 .../review-evidence/run_review_checks.py backend`; [command](review-evidence/backend.json), [log](review-evidence/backend.log) | **1,916 passed; 124 skipped** |
-| MCP full suite | `python3 .../review-evidence/run_review_checks.py mcp`; [command](review-evidence/mcp.json), [log](review-evidence/mcp.log) | **666 passed; four skipped** |
-| Separate registered PNG guard | `python3 .../review-evidence/run_review_checks.py registry`; [command](review-evidence/registry.json), [log](review-evidence/registry.log) | **Six passed** |
-| Frontend full suite | `python3 .../review-evidence/run_review_checks.py frontend`; [command](review-evidence/frontend.json), [log](review-evidence/frontend.log) | **226 passed; one skipped; 23 files passed** |
-| Production build | `python3 .../review-evidence/run_review_checks.py build`; [command](review-evidence/build.json), [log](review-evidence/build.log) | **Passed** |
-| Coding saved-evidence replay | `verify-evidence.py`, without `--record`; [receipt](review-evidence/coding-verifier-replay.json) | **23 assertions passed** |
-| Independent bytes/records/graph/accounting/live audit | `.../aid-175-qa/.venv/bin/python -B .../review-evidence/independent_audit.py`, with existing Backend site-packages; [result](review-evidence/independent-audit.json) | **37 checks passed** |
-| Official payload readback | `python3 .../review-evidence/verify_official.py`; [result](review-evidence/official-integrity.json) | **Four payloads plus receipt verified; 90 exact Git ZIP payloads / 91 members; bundle verified** |
+| Backend full suite | `python3 .../review-evidence/run_review_checks.py backend`; command, log | **1,916 passed; 124 skipped** |
+| MCP full suite | `python3 .../review-evidence/run_review_checks.py mcp`; command, log | **666 passed; four skipped** |
+| Separate registered PNG guard | `python3 .../review-evidence/run_review_checks.py registry`; command, log | **Six passed** |
+| Frontend full suite | `python3 .../review-evidence/run_review_checks.py frontend`; command, log | **226 passed; one skipped; 23 files passed** |
+| Production build | `python3 .../review-evidence/run_review_checks.py build`; command, log | **Passed** |
+| Coding saved-evidence replay | `verify-evidence.py`, without `--record`; receipt | **23 assertions passed** |
+| Independent bytes/records/graph/accounting/live audit | `.../aid-175-qa/.venv/bin/python -B .../review-evidence/independent_audit.py`, with existing Backend site-packages; result | **37 checks passed** |
+| Official payload readback | `python3 .../review-evidence/verify_official.py`; result | **Four payloads plus receipt verified; 90 exact Git ZIP payloads / 91 members; bundle verified** |
 
 The registry's 18 active contracts are covered by the two full Python suites and
-the separate PNG guard. [Registry regeneration](review-evidence/registry-check.json) completed cleanly
+the separate PNG guard. Registry regeneration completed cleanly
 with identical existing row bodies; no new automated product contract or
 supersession is created. All new
 D1–D5 checks here are manual/inspection/delivery evidence, so mutation testing a

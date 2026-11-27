@@ -37,7 +37,7 @@ judges whether the demo is acceptable. This is not a speed or quality benchmark.
 Canonical artifact IDs and separate image IDs are distinct namespaces. These
 are the original qualified Gallery record fields, corroborated by later SDK
 sessions and QA's read-only persistence audit. Full values/digests are retained
-in [the machine-readable projection](demo-evidence/bundle-and-real-evidence.json).
+in the machine-readable projection.
 Each pair shares the exact request_ref shown below. All static PNGs are 512×512.
 
 ### Pair 1 — 3872 → 3873
@@ -136,7 +136,7 @@ separate coordination overhead, not hidden generation calls.
 Producer verifies all 22 official uploads, 1,897 Coding/680 QA indexed payloads
 (1,898/681 members), exact reconstructed patches/trees, independent bundle fetches,
 291 frozen source fingerprints, the 24 flow calls and six original payloads/
-lineages. [Integrity evidence](demo-evidence/integrity-verification.json).
+lineages. Integrity evidence.
 One kickoff ambiguity event/two P1 findings, clarification 1/kickoff 2 CLEAR,
 first delivery FAIL/one implementation rejection/R5-1, correction 1/review 2
 technical PASS remain distinct and unchanged.

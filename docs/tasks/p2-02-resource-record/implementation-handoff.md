@@ -61,7 +61,7 @@ archive members** (216 exact Git bodies and two delivery metadata/patch payloads
 the full official report, **211** source fingerprints, independently fetched bundle
 and reconstructed full-index patch tree. Static audit reproduced **238 checks**
 in a fresh isolated worktree without changed outputs. Five QA report/evidence
-paths remain exact; [integrity receipt](kickoff-integrity.json).
+paths remain exact; integrity receipt.
 
 This is static/specification evidence. Previous p2-01 full Backend1978/124 and
 MCP666/four remain attributed results, not fresh suites here. Producer runs only

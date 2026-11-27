@@ -10,11 +10,11 @@ candidate was p1-01 PASS / p1-02 FAIL; this candidate awaits independent review 
 
 | Item | Check | Level | Result / evidence | Layer and real boundary |
 |---|---|---|---|---|
-| D1 — registration/catalog and complete old capabilities | test + manual | P1 | test_tool_catalog.py::test_intended_catalog_matches_fastmcp_registration, test_removed_tools_and_staged_tools_are_not_registered; exact 40-row map below; [parameter migration audit](../p1-01-mcp-response-envelope/evidence/capability-audit.json); [discovery](../p1-01-mcp-response-envelope/evidence/discovery.json) and [static audit](../p1-01-mcp-response-envelope/evidence/source-audit.json) | 40 baseline rows → 29 delivered names with unchanged retained LoRA/Civitai names; Backend implementations unchanged. Manual optional-capability review accompanies metadata tests. |
+| D1 — registration/catalog and complete old capabilities | test + manual | P1 | test_tool_catalog.py::test_intended_catalog_matches_fastmcp_registration, test_removed_tools_and_staged_tools_are_not_registered; exact 40-row map below; parameter migration audit; discovery and static audit | 40 baseline rows → 29 delivered names with unchanged retained LoRA/Civitai names; Backend implementations unchanged. Manual optional-capability review accompanies metadata tests. |
 | D2 — one truthful risk per tool | test | P1 | test_catalog_risks_match_approved_intent_policy; test_discovered_risks_match_approved_intent_policy; existing envelope/compose schema/rejection and all 29 HTTP-transport cases | Independent approved 29-intent risk map checks exact catalog and real SDK discovery, including exactly one label. Exact false-admin-read fault fails both guards/full suite. Read compose exposes no save field and rejects all legacy presence before any Backend call. |
 | D3 — every merged branch; compose/write concurrency | test | P1 | test_merged_modes_forward_exact_requests (14 cases); compose legacy-save cases (empty dict/string, null, populated); test_compose_then_write_preserves_fragments_metadata_provenance_and_conflict; test_generate_preserves_omitted_empty_ordered_loras_and_graph_defaults; test_gallery_keeps_namespaces_locators_metadata_and_lineage; saved replay, prompt locators, Discord and worker-timeout cases | Real registered wrappers, mode/action dispatch, adapters and HTTP client. Tests replace HTTP transport only and assert actual path/body/call counts; Backend fixture consumers also traverse registration. |
 | D4 — complete p1-00 friction dispositions | manual | P2 | F1–F8 table below, preserving all 23 units/eight original incidents | Author reconciled shared kickoff context, no-repair baseline and accepted repair. No new live journey or reduced baseline count is claimed. |
-| D5 — current/staged flow/docs and full MCP | test + manual | P1 | [Current and staged flows](../../mcp.md#common-flows), tool table/error contract, test_catalog_docs_list_active_tools; [corrected MCP receipt](correction-1-evidence/final-mcp.json), 460 passed / 2 unchanged optional export skips | Fresh full offline MCP with isolated root/timeout; author document review pending independent exact-commit QA. |
+| D5 — current/staged flow/docs and full MCP | test + manual | P1 | [Current and staged flows](../../mcp.md#common-flows), tool table/error contract, test_catalog_docs_list_active_tools; corrected MCP receipt, 460 passed / 2 unchanged optional export skips | Fresh full offline MCP with isolated root/timeout; author document review pending independent exact-commit QA. |
 
 ## Old-to-new capability map
 
@@ -99,7 +99,7 @@ later health/list_resources/generate/wait_for_job/gallery_get flow is labeled
 staged. Internal next-step guidance names delivered intents and local ComfyUI
 restart guidance follows the existing operating policy.
 
-Original implementation evidence remains under [p1-01/evidence](../p1-01-mcp-response-envelope/evidence/). Fresh correction evidence is linked below.
+Original implementation evidence remains under p1-01/evidence. Fresh correction evidence is linked below.
 
 ## Correction delivery identity and review gate
 
@@ -149,7 +149,7 @@ in the full suite. No wrapper, registration, description, label, Backend API,
 product dependency or other behavior changed. No new task-spec deviation.
 
 Fresh evidence is in
-[correction-1-evidence](../p1-02-mcp-tool-consolidation/correction-1-evidence/README.md),
+correction-1-evidence,
 separate from immutable original AID-157 `evidence/` and AID-158 `qa-evidence/`.
 Full argument arrays, allowlisted environments, UTC times, exits and logs are
 retained for each command. The helpers are saved as `.py.txt`; all HTTP is

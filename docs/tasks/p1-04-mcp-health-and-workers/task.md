@@ -12,7 +12,7 @@ An agent calls `health` to learn whether the Backend, local ComfyUI and the work
 ## Scope
 Included: `health` reports Backend, Backend-local ComfyUI (via `/api/system/status`) and worker reachability. `list_workers` returns the existing configured worker with configured URL/expected identity separate from nullable current observed identity, reachability and current error, under the [configured-worker contract](../../decisions/mcp.md#configured-worker-health-and-identity). Reuse `/health`, `/api/system/status` and `/api/workers/status`; an additive read-only extension of the existing worker-status response is permitted to expose those fields while preserving its existing flags and nested worker response. No second status endpoint is needed.
 Excluded: multi-worker registry, heartbeat and scheduling (Phase 3).
-Open questions: none after [clarification 1](kickoff-clarification-1.md); fresh independent kickoff is still required.
+Open questions: none after clarification 1; fresh independent kickoff is still required.
 Read first: [Windows worker](../../windows-worker.md), [configured-worker contract](../../decisions/mcp.md#configured-worker-health-and-identity), [resource-scope memory](../../memory/compute-target-and-resource-scope.md), `backend/app/api/workers.py`, `backend/app/api/system.py`, `backend/app/services/nvidia_worker.py`.
 
 ## Done when

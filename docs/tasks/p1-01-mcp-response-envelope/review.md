@@ -37,9 +37,9 @@ from `cee10138db8e6e944409701cdae6fb9cfe55c74f` / rejected `b1082a8`;
 the bundle verifies and names the candidate. All 147 archive members match the
 inventory and named Git objects where applicable. Eight archived prior official
 artifacts were also downloaded independently and compared byte-for-byte.
-See [identity audit](../p1-02-mcp-tool-consolidation/qa-round-2-evidence/identity-audit.json).
+See identity audit.
 
-The [scope audit](../p1-02-mcp-tool-consolidation/qa-round-2-evidence/scope-audit.json)
+The scope audit
 confirms all production code, dependencies, other component inputs, original
 Coding evidence and every existing catalog test function are unchanged from
 `b1082a8`. The only test delta is the two added policy tests. All temporary
@@ -55,7 +55,7 @@ only. Main and the AID-151 runtime were untouched.
 | D3 — envelope/error list documented | P2 | PASS | Read docs/mcp.md response-envelope and error-code sections against responses.py, ContractFastMCP validation, real discovery and domain projections. Success has data; failures have code/message/hint and preserved safe context. |
 | D4 — full MCP suite | P1 | PASS | After all faults were restored: 460 passed, 2 unchanged optional export skips, exit 0; isolated roots and --timeout=60. Fresh full Backend and all standing guards also pass. |
 
-The [new independent static audit](../p1-02-mcp-tool-consolidation/qa-round-2-evidence/qa-static-audit.json)
+The new independent static audit
 checks all 29 risks/registrations, 40 old-name dispositions and retained arguments.
 Registered request coverage preserves revision_context/canonical parent IDs,
 image/artifact namespaces and locators, precise seeds, omitted/empty/ordered
@@ -66,7 +66,7 @@ local admin operations and distinct generation/training status/cancel paths.
 
 All commands ran independently from the pinned QA worktree. Full argument arrays,
 allowlisted environments, UTC times, exits and complete output are retained in
-[round-2 evidence](../p1-02-mcp-tool-consolidation/qa-round-2-evidence/README.md).
+round-2 evidence.
 Full suites use per-test timeout 60 and isolated roots below TMPDIR, with
 pytest-timeout 2.4.0 installed in run scratch only. Canonical venvs were unchanged.
 MCP consumed fresh revision, multi-LoRA and lifecycle exports from this QA run.
@@ -100,8 +100,8 @@ dependencies and cross-layer inputs are unchanged; this is a macOS review.
 
 ## Preserved history and limits
 
-[Round-1 report](review-round-1.md) is byte-identical to `1001586`; the complete
-original shared [QA evidence](qa-evidence/README.md), including official archive
+Round-1 report is byte-identical to `1001586`; the complete
+original shared QA evidence, including official archive
 logs, is retained unchanged. Historical p1-01 PASS / p1-02 FAIL F2-1 and one
 p1-02 delivery rejection remain recorded. This is correction round 1 / delivery
 review round 2. Kickoff K2-1, clarification round 1, kickoff round 2 CLEAR and

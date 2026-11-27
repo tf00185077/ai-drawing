@@ -72,9 +72,9 @@ real elapsed time. Nothing patches the wait callable.
 
 | Item | Check | Level | Result / evidence | Layer and proof boundary |
 |---|---|---|---|---|
-| D1 — truthful complete generation/media | test | P1 | Mixed image/video/order/lineage, 106-artifact no-cap, supported URL/absolute mappings, legacy images, 20 unsafe/missing locator classes, symlink escape, mixed unavailable results, separate legacy failures, identity mismatch, partial available host path; 12 real-route export replays. [Final wait log](delivery-1-evidence/wait-shapes-green.log), [mutation summary](delivery-1-evidence/mutation-summary.json). | Registered MCP → real client → mocked HTTP. Fresh real Backend routes + SQLite produce the replay fixture. IDs/metadata are verified, not live Gallery bytes. |
+| D1 — truthful complete generation/media | test | P1 | Mixed image/video/order/lineage, 106-artifact no-cap, supported URL/absolute mappings, legacy images, 20 unsafe/missing locator classes, symlink escape, mixed unavailable results, separate legacy failures, identity mismatch, partial available host path; 12 real-route export replays. Final wait log, mutation summary. | Registered MCP → real client → mocked HTTP. Fresh real Backend routes + SQLite produce the replay fixture. IDs/metadata are verified, not live Gallery bytes. |
 | D2 — failed/cancelled jobs | test | P1 | `test_terminal_failure_cancellation_and_safe_training_projection` (both domains); read/enrichment failures retain target and safe recovery. Terminal-success fault fails all four cases. | Real registered error envelope retains node/recording/revision context and public training output; transport replaced only. |
-| D3 — bounded overall wait/recovery | test + manual | P1 | Five deadline stages, streamed-body close, high clamp, last-known/unknown status, response-preparation/non-yielding checks, queued/running same-ID recovery for both domains. [Timing log](delivery-1-evidence/wait-shapes-green.log); removing overall abortion fails the four slow-request stages (the last-known sleep case still passes). | Actual monotonic time, async HTTP transport and cancellation. 70 ms budget observed about 72–73 ms including SDK/setup overhead; 400 ms mocked reads aborted. No Backend job cancellation/submission. Manual source/limit review below. |
+| D3 — bounded overall wait/recovery | test + manual | P1 | Five deadline stages, streamed-body close, high clamp, last-known/unknown status, response-preparation/non-yielding checks, queued/running same-ID recovery for both domains. Timing log; removing overall abortion fails the four slow-request stages (the last-known sleep case still passes). | Actual monotonic time, async HTTP transport and cancellation. 70 ms budget observed about 72–73 ms including SDK/setup overhead; 400 ms mocked reads aborted. No Backend job cancellation/submission. Manual source/limit review below. |
 | D4 — training and independent smoke | test | P1 | Completed/failed/cancelled/queued/running training; absent/real/legacy/queued/running/failed/cancelled/unavailable smoke, nullable canonical artifact and real image IDs. Fresh route replays assert safe public fields. Borrowing smoke image ID as artifact ID fails. | Existing public projection; real route/SQLite fixture plus registered mocked-HTTP consumer. Training completion performs exactly generation lookup + training status read; no smoke request. No real training. |
 | D5 — documentation/current flow | manual + test | P2 | [MCP documentation](../../mcp.md#bounded-wait-and-results), [team current flow](../../team/README.md#mcp-calls), discovery/schema and existing catalog-doc guard. Author compared timeout/error/success/host/URL/legacy namespaces against delivered source and tests. | Offline author review and real SDK discovery, pending independent QA. Runtime, health/workers and remote retrieval are not claimed. |
 
@@ -86,11 +86,11 @@ none identifies/configures that client's enforced limit. The approved
 **50-second overall fallback is policy, not a measurement**. The existing
 Backend client default remains 60 seconds per request for other consumers;
 AnyIO's overall scope, rather than that inactivity default, bounds wait reads.
-See [pre-implementation source pin](delivery-1-evidence/source-pin.json),
+See pre-implementation source pin,
 [implementation plan](implementation-plan.md) and actual timing receipts.
 
 Each command has argv, cwd, selected non-secret environment, elapsed seconds,
-exit and complete output in [delivery-1-evidence](delivery-1-evidence/README.md).
+exit and complete output in delivery-1-evidence.
 All pytest commands use isolated roots and `--timeout=60`:
 
 | Check | Exact command suffix after the interpreter | Exit / result |
@@ -102,12 +102,12 @@ All pytest commands use isolated roots and `--timeout=60`:
 | Final targeted wait/timing | `-m pytest -c pytest.ini mcp-server/tests/test_wait_for_job.py -q --timeout=60 -s` | 0; 77 passed in 1.04s. Recorded elapsed times and request counts. |
 | Platform-aware fixture paths + registered boundary | `-m pytest -c pytest.ini mcp-server/tests/test_wait_for_job.py mcp-server/tests/test_intent_boundary.py -q --timeout=60` | 0; 221 passed in 1.42s. Native Windows itself not executed. |
 | Fresh Backend shape export | `docs/tasks/p1-03-mcp-wait-and-result/delivery-1-evidence/backend-shape-export.py.txt` | 0; 0.56s process, real HTTP routes/in-memory SQLite; queue observations mocked, fixture PNGs only, no lifespan/service/trainer. |
-| Seven production faults | [Exact mutations and test argv](delivery-1-evidence/mutation-summary.json), paired `.patch`/`.json`/`.log` files | All expected exit 1; media omission 1 failure, hidden locator errors 20, ignored terminal failures 4, missing overall abortion 4 (1 passed), borrowed smoke ID 7 (1 passed), false wait risk 2, false existing admin risk 2. Every source restored before final GREEN. |
+| Seven production faults | Exact mutations and test argv, paired `.patch`/`.json`/`.log` files | All expected exit 1; media omission 1 failure, hidden locator errors 20, ignored terminal failures 4, missing overall abortion 4 (1 passed), borrowed smoke ID 7 (1 passed), false wait risk 2, false existing admin risk 2. Every source restored before final GREEN. |
 
 MCP interpreter is canonical Python 3.10.20 (MCP 1.26.0 / httpx 0.28.1 /
 AnyIO 4.12.1); Backend interpreter is canonical Python 3.11.15. Imports are
 explicitly bound to this worktree through cwd/pytest.ini/PYTHONPATH, including
-cross-layer helpers; [import receipts](delivery-1-evidence/mcp-imports.log) retain
+cross-layer helpers; import receipts retain
 the paths and package versions. No canonical venv was changed. Scratch-only
 `pytest-timeout==2.4.0` was installed with `uv pip install --target ... --no-deps`.
 No product dependency or lockfile changed; AnyIO already belongs to the MCP stack.
@@ -122,7 +122,7 @@ not repeated for later MCP-only test/fixture/doc changes.
 
 ## Preservation, deviations and earlier failures
 
-[Preservation audit](delivery-1-evidence/preservation-audit.json) compares all
+Preservation audit compares all
 1032 baseline tracked files: only six existing files changed, plus the new
 implementation/tests/fixture/engineering evidence. Backend, Frontend, worker,
 bot, launcher, authored data and dependencies are unchanged. All inherited

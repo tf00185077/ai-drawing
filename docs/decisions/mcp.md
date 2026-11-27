@@ -1,7 +1,7 @@
 # Decisions · mcp
 
 ## Settled
-- p1-05 actual retrieval uses a bounded static-PNG content option on the existing Gallery read intent; qualification keeps one submit/one bounded wait per image and resets on any client retry/timeout, with complete preparation/recovery/audit accounting · Producer adopts K5-1/K5-2 recommendations under delegated authority; target specification only, fresh kickoff CLEAR required · [contract](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md)
+- p1-05 actual retrieval uses a bounded static-PNG content option on the existing Gallery read intent; qualification keeps one submit/one bounded wait per image and resets on any client retry/timeout, with complete preparation/recovery/audit accounting · Producer adopts K5-1/K5-2 recommendations under delegated authority; target specification only, fresh kickoff CLEAR required · contract
 - Mac baseline/smoke pair: `Illustrious-XL-v2.0.safetensors` + `default`, no LoRA, explicit local target · why: listed by Backend and Mac ComfyUI, matching checkpoint-loader family and no new resource dependency · Producer-selected under the owner's delegated routine-choice instruction; runtime compatibility still checked by p1-00 · [request](../requests/2026-11-24-proceed-within-project-boundaries.md)
 - Every MCP tool returns one envelope: `{ok, data}` on success, `{ok: false, error: {code, message, hint}}` on failure · why: agents learn one shape · owner-confirmed
 - Tools are consolidated to one tool per intent, each with exactly one risk label · why: a smaller surface is easier for agents to choose from · owner-confirmed · [tool map](#tool-map)
@@ -17,25 +17,25 @@
 ## Log (newest first)
 
 ### 2026-11-24 · Retrieve actual MCP bytes and retain strict zero-retry qualification
-- Decision: scope `gallery_get(artifact_id=..., include_content=true)` as a bounded canonical static-PNG read, retaining metadata default, Backend identity/root authority, read risk and 31 intents. Adopt the exact byte/pixel/payload/error limits and strict finite attempt/recovery/preparation/audit policy in [p1-05 clarification 1](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-clarification-1.md).
+- Decision: scope `gallery_get(artifact_id=..., include_content=true)` as a bounded canonical static-PNG read, retaining metadata default, Backend identity/root authority, read risk and 31 intents. Adopt the exact byte/pixel/payload/error limits and strict finite attempt/recovery/preparation/audit policy in p1-05 clarification 1.
 - Why: metadata and host paths cannot satisfy actual retrieval through MCP. A client file/HTTP fetch would violate the existing gate; hidden repeats after a 50-second wait would misstate zero retries. Deliver the missing read within MCP and honestly reset qualification on a timeout without declaring the job failed.
 - Supersedes: p1-05's incomplete script-only means and unspecified attempt/accounting contract, not the owner retrieval/three-real-run/no-fix rule, accepted wait behavior or historical 23-unit/eight-incident baseline. Default Gallery metadata remains the currently delivered behavior until implementation is reviewed.
 - Provenance: Producer read actual [QA AID-169](/AID/issues/AID-169) AMBIGUITY at `039c0aee181b2a78588f7b02cb89b575157c581f`, verified five official uploads and all 83 indexed payloads/84 archive members against hashes/Git, and adopts its bounded recommendations under [CTY's delegated instruction](../requests/2026-11-24-proceed-within-project-boundaries.md). This preserves the current stack, phase boundaries, CTY aesthetics/demo and phase-close authority. No new routine owner confirmation.
-- Link: [refreshed task](../tasks/p1-05-mcp-e2e-smoke-mac/task.md), [original task](../tasks/p1-05-mcp-e2e-smoke-mac/task-kickoff-round-1.md), [original report](../tasks/p1-05-mcp-e2e-smoke-mac/kickoff-review-round-1.md). One kickoff ambiguity event/two P1 findings, clarification 1 and next round 2; no implementation rejection. Fresh independent CLEAR precedes Coding; later exact-commit technical PASS and actual CTY demo reply precede whole-task acceptance/publication.
+- Link: [refreshed task](../tasks/p1-05-mcp-e2e-smoke-mac/task.md), original task, original report. One kickoff ambiguity event/two P1 findings, clarification 1 and next round 2; no implementation rejection. Fresh independent CLEAR precedes Coding; later exact-commit technical PASS and actual CTY demo reply precede whole-task acceptance/publication.
 
 ### 2026-11-24 · Keep configured worker identity distinct from probe observations
 - Decision: adopt the [configured-worker contract](#configured-worker-health-and-identity) for p1-04. Extend the existing read-only worker-status response additively; keep its existing flags/nested worker response. Expose configured URL/expected identity independently of nullable current observations and the validated resolved endpoint. Preserve one configured entry after probe failure; report an unavailable/unknown Backend read through the common error envelope.
 - Why: the current status route has no URL and drops identity metadata on failed probes. Guessing identity or returning no workers would misstate configuration. Current `last_error` needs no persistent history or heartbeat store.
 - Supersedes: the unspecified configured-versus-observed field meaning and endpoint-extension disposition in p1-04 kickoff round 1, not the read-only/single-worker scope.
 - Provenance: Producer adopts [QA's K4-1 recommendation](/AID/issues/AID-165#comment-ba500f6f-fe78-44e1-87d4-dc81558560b9) under the [delegated routine-choice instruction](../requests/2026-11-24-proceed-within-project-boundaries.md), after reading the actual report, route evidence and current worker client/settings. This is a technical choice inside Phase 1, not a new owner-boundary decision or implementation acceptance.
-- Link: [clarification 1](../tasks/p1-04-mcp-health-and-workers/kickoff-clarification-1.md). Fresh independent fixed-source kickoff must CLEAR the clarified task before Coding.
+- Link: clarification 1. Fresh independent fixed-source kickoff must CLEAR the clarified task before Coding.
 
 ### 2026-11-24 · Keep prompt composition read-only; save through the write intent
 - Decision: `prompt_compose` accepts composition inputs only and rejects the legacy MCP `save_as` argument with the common validation-error envelope and a hint to use `prompt_write(action=save)`. Saving composed positive/negative fragment arrays, metadata and existing concurrency/provenance fields goes through that `mutate` intent. Backend APIs remain unchanged.
 - Why: the existing MCP compose wrapper forwards `save_as` to a persistent writer. Carrying that option into a tool labeled `read` would contradict the approved read/write intent map; silently ignoring it would conceal an unsaved request.
 - Supersedes: the unresolved optional-capability disposition in the original p1-02 map, not its approved risk labels. The single compose-and-save MCP convenience becomes an explicit compose then save sequence, with no cross-call atomicity guarantee.
 - Provenance: Producer adopts [QA's bounded recommendation](/AID/issues/AID-155#comment-7ef7f3c8-631a-4a9b-b532-fcb12ef6b8ec) under the [delegated routine-choice authority](../requests/2026-11-24-proceed-within-project-boundaries.md), after checking the wrapper, provider, schemas and existing API tests. No new phase, Backend behavior or owner-boundary decision is introduced.
-- Link: [contract](#prompt-composition-and-saving), [clarification 1](../tasks/p1-02-mcp-tool-consolidation/kickoff-clarification-1.md). Fresh independent kickoff must clear the clarified specification before Coding.
+- Link: [contract](#prompt-composition-and-saving), clarification 1. Fresh independent kickoff must clear the clarified specification before Coding.
 
 ### 2026-11-24 · Apply delegated choices and reconcile Phase 1 specifications
 - Decision: use the installed Illustrious/default pair for p1-00 and p1-05; preserve all LoRA names, including job status/cancel, as the existing exclusion says; regroup p1-02/p1-03 checks to at most five without dropping requirements; state training outputs and unknown timeout limits honestly.
@@ -123,7 +123,7 @@ proof.
 ## Wait results and media locators
 
 Target contract for [p1-03](../tasks/p1-03-mcp-wait-and-result/task.md), clarified
-by Producer under delegated technical authority after [K3-1](../tasks/p1-03-mcp-wait-and-result/kickoff-clarification-1.md).
+by Producer under delegated technical authority after K3-1.
 Fresh independent kickoff CLEAR remains required; this section does not claim
 that `wait_for_job` is delivered or deployed. It stays one `read` intent in the
 common envelope. Backend state, identity and provenance remain authoritative.

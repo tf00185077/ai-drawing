@@ -1,9 +1,9 @@
 # Legacy callers and migration boundary
 
-The [AST inventory](evidence/legacy-callers.json) records direct imports/symbols,
+The AST inventory records direct imports/symbols,
 line numbers and call sites from every Backend app Python file in this candidate.
 It is source evidence, not a live invocation/removal certificate. The accepted
-First check's [19-service inventory](../p2-00-civitai-first-check/evidence/service-inventory.json)
+First check's 19-service inventory
 records seven touched modules including a value type, and 12 without operational
 invocation. Those observations do not establish safe deletion.
 

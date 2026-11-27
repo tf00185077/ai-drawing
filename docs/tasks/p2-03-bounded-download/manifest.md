@@ -29,9 +29,9 @@ download-topic-correction-1.md and the current download decision were imported
 from the supplement. Main was not merged over rejected software. The prior
 manifest is preserved in its authorized immutable mirror. All original raw
 implementation/review/correction1/review2 bodies and reports remain exact.
-New evidence is solely [correction-2-evidence](correction-2-evidence/).
+New evidence is solely correction-2-evidence.
 
-[Preservation](correction-2-evidence/integrity-preservation.json) confirms all
+Preservation confirms all
 7,394 original task bodies/modes and all 7,835 fixed-base task paths remain exact
 at freeze; final reporting changes only the current Coding manifest and new
 correction2 evidence. Registry remains the same72, SHA-256
@@ -62,8 +62,8 @@ an applicable deadline. Model bodies still execute after admission release.
 The existing background operation lifecycle is unchanged. This is neither a
 cross-process reservation nor a durable download attempt/job architecture.
 
-See the [admission-site inventory](correction-2-evidence/admission-inventory.md)
-and [original caller inventory](implementation-evidence/caller-inventory.md).
+See the admission-site inventory
+and original caller inventory.
 Production changes are limited to resource_records.py and the two existing
 callers. The [download topic](../../civitai-downloads.md) documents the contract.
 No schema/table/queue/dependency/MCP/UI/worker/default/removal feature was added.
@@ -71,7 +71,7 @@ No schema/table/queue/dependency/MCP/UI/worker/default/removal feature was added
 Effective real Settings defaults remain positive integer bytes:
 `CIVITAI_DOWNLOAD_MAX_BYTES=8589934592` (8 GiB/file),
 `CIVITAI_DOWNLOAD_FREE_SPACE_FLOOR_BYTES=21474836480` (20 GiB observed floor).
-[Effective settings/root receipt](correction-2-evidence/final-settings-bootstrap.log)
+Effective settings/root receipt
 uses actual Python3.11.15 Settings/bootstrap and emits no credential value.
 Actual caller guards use configured synthetic credential files; no manual key
 or alternative download transport certifies them. HTTPX replaces external HTTP
@@ -102,9 +102,9 @@ D5/C5/E5 certification belongs to QA3, not this manifest.
 
 ## Current frozen qualification
 
-[Verification](correction-2-evidence/verification.json) retains every actual argv,
+Verification retains every actual argv,
 allowlisted environment, cwd/root, source hash/mode, child imports/SQLite identities,
-timing, exit and raw-log hash. [Qualification identity](correction-2-evidence/qualification-integrity.json)
+timing, exit and raw-log hash. Qualification identity
 confirms all current run inputs match freeze. Dependency sites are read-only;
 current-worktree Python3.11.15 imports and isolated test roots are pinned. All long
 suites use `--timeout=60` per test and600s outer bounds. Guard activation proves
@@ -122,11 +122,11 @@ six deliberate denials; current qualification has zero unexpected denials.
 | Independent configured-provider / fresh wait consumers | 19 /12 passed |
 | Registry/history/shared edits | Same72;7394 original task bodies/modes;14 memory entries exact |
 
-The [fault audit](correction-2-evidence/final-fault-audit.json) has failures by fault:
+The fault audit has failures by fault:
 current-publication3, current-reason3, active-admission2, byte1, space1, range5,
 no-overwrite1, size/hash2, selected-size2, post-commit deadline1, admission-wait2,
 admission-budget-reset2. All are assertion RED with exit1. Setup/collection/timeout
-termination never counts as sensitivity. [59 parsed observations](correction-2-evidence/outcome-traces.json)
+termination never counts as sensitivity. 59 parsed observations
 retain before-release thread stacks/timing and owner/adoption/current-outcome traces;
 raw logs remain authoritative.
 
@@ -160,11 +160,11 @@ A reporting-only Settings command initially omitted the mandatory test bootstrap
 the production import guard refuses before Settings evaluation. The corrected
 command calls real test_support.activate and successfully records effective defaults
 and isolated roots. Both raw attempts/argv remain; no production/test/helper changed
-and this setup failure is not qualification. See [attempt ledger](correction-2-evidence/attempt-ledger.json).
+and this setup failure is not qualification. See attempt ledger.
 
 ## Official delivery and limits
 
-[Replay](correction-2-evidence/replay.md) specifies the guarded commands and official
+Replay specifies the guarded commands and official
 restoration sequence. Ten uploaded/read-back prerequisite-only parts reconstruct
 78,887,056 bytes, SHA-256
 `f177e368dbe7732ab71c138b5e8169b1c2e027a4c28e7ac6098eb8b882395a61`, with declared

@@ -19,7 +19,7 @@ Verbatim recorded response:
 The fixed confirmation explicitly asked whether to accept this reviewed demo
 and allow Producer to record D4 and merge that exact candidate. This latest
 explicit owner response supplies that authorization; no routine confirmation
-is needed again. [Complete server-returned record](../tasks/p1-05-mcp-e2e-smoke-mac/acceptance-evidence/owner-confirmation.json)
+is needed again. Complete server-returned record
 preserves the original question, target, resolver policy, result and identity.
 
 The response source is the **native Board confirmation**, not a separately

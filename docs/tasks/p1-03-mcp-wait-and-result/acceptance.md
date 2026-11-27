@@ -20,8 +20,8 @@ the actual Coding manifest and independent same-candidate PASS report.
   `7e91e4392ccab45af01c16db6781a36345e711e0722b9c1260cdb3df6a76e065`.
   Kickoff round 2 CLEAR reviewed fixed `522c2f1`, report `3bbcb9c`.
   [Manifest](manifest.md), [independent PASS](review.md),
-  [original ambiguity](kickoff-review-round-1.md) and
-  [clarification 1](kickoff-clarification-1.md) retain their original bytes.
+  original ambiguity and
+  clarification 1 retain their original bytes.
   The author manifest's awaiting-QA text is an immutable delivery snapshot;
   this acceptance records the later independent PASS/publication gate.
 
@@ -49,7 +49,7 @@ These establish bounded control behavior with disclosed overhead, not a live
 
 QA ran fresh checks at the exact final candidate, with pinned import origins,
 isolated roots and pytest `--timeout=60`. Commands, UTC times, exits, full logs,
-fixtures and fault/restore hashes are in [QA evidence](qa-delivery-1-evidence/README.md).
+fixtures and fault/restore hashes are in QA evidence.
 
 | Check | Independent outcome |
 |---|---|
@@ -79,7 +79,7 @@ Producer verified all **ten** official Coding/QA uploads by size/hash, actual
 manifest/report against Git, both exact full-index binary patches and bundle
 heads/prerequisites. All **203 Coding** and **262 QA** indexed payloads match
 sizes, hashes, blob IDs and named immutable Git bytes (205/264 archive members).
-The [identity audit](acceptance-evidence/producer-identity-audit.json) records
+The identity audit records
 those checks. Producer checks document/integration/publication identity, without
 another software suite on unchanged reviewed product/test/dependency inputs.
 

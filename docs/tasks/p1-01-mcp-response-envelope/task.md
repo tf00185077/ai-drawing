@@ -13,7 +13,7 @@ An agent parses every tool result the same way: `{"ok": true, "data": ...}` or `
 Included: all tools registered in `mcp-server/mcp_server/server.py`; a shared envelope helper; a documented list of error codes with hints; the catalog's `response_category` replaced by the single envelope.
 Excluded: renaming or merging tools (p1-02); new tools (p1-03, p1-04); Backend API changes.
 Open questions: none.
-Read first: the [accepted baseline and complete friction mapping](kickoff-context.md), the original [p1-00 friction log](../p1-00-mcp-friction-run-mac/manifest.md#friction-log-and-phase-1-baseline-count), [p1-00a acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
+Read first: the accepted baseline and complete friction mapping, the original [p1-00 friction log](../p1-00-mcp-friction-run-mac/manifest.md#friction-log-and-phase-1-baseline-count), [p1-00a acceptance](../p1-00a-mac-runtime-and-retrieval/acceptance.md), [docs/mcp.md](../../mcp.md), [decisions/mcp.md](../../decisions/mcp.md), `mcp-server/mcp_server/tools/responses.py`, [memory](../../memory/MEMORY.md).
 
 ## Done when
 - [ ] Every registered tool returns the envelope on success and on failure, including Backend HTTP errors, validation errors and connection errors. Check: test — one parametrized test calls every catalog tool through the MCP call path with a mocked success and a mocked failure; separate cases cover MCP argument validation before the tool body, including a non-LoRA tool. Evidence: test names and output.

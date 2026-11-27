@@ -51,10 +51,10 @@ supply the reviewed source.
   discovery. The other 29 names/labels match the fixed accepted policy, including
   ComfyUI admin and wait=read. No expectation is derived from the candidate catalog.
 
-See [candidate integrity](qa-delivery-1-evidence/candidate-integrity.json),
-[official upload metadata](qa-delivery-1-evidence/official-coding-attachments.json),
-[Coding external record](qa-delivery-1-evidence/coding-external-integrity.json)
-and [source/docs audit](qa-delivery-1-evidence/source-docs-audit.json).
+See candidate integrity,
+official upload metadata,
+Coding external record
+and source/docs audit.
 
 ## Done when assessment
 
@@ -65,9 +65,9 @@ and [source/docs audit](qa-delivery-1-evidence/source-docs-audit.json).
 | D3 — 31 intents and GET-only discovery | P1 | PASS | Independent literal policy verifies catalog and actual SDK discovery, exactly one risk label per tool, ping absent and other 29 labels retained. Request assertions traverse real wrappers/client. QA's separate probe records **51 registered calls / 107 GETs** exclusively to configured Backend /health, /api/system/status and /api/workers/status. Direct-admin URL is deliberately different. No submission/control path is used. Retained bounded wait, envelopes, errors, identities and capabilities pass in the full MCP suite. |
 | D4 — documentation and recovery | P2 | PASS | Manual source/discovery comparison of docs/mcp.md table, current flow, health behavior, examples, configuration and recovery, plus matching worker/team/runtime-memory docs. The active table equals the independent 31-risk map; configured-unavailable and invalid_backend_status JSON examples equal actual registered responses. Configuration/expectation/current-null distinctions, unknown read recovery, one-worker limits and Backend-local versus direct admin are accurate. Accepted wait/result/error/locator guidance and unverified client-limit/50-second total fallback remain truthful. |
 
-The [recorded samples](qa-delivery-1-evidence/registered-samples.json) retain full
+The recorded samples retain full
 envelopes, discovery schemas and exact requests. The 19 retained
-[fresh exports](qa-delivery-1-evidence/fresh-export-index.json) come from QA's
+fresh exports come from QA's
 final restored Backend run, with explicit MCP input bindings. Existing
 test changes are the approved additive-response assertions, ping replacement,
 31-count/literal-map migrations and health's specified aggregate-on-read-error
@@ -83,7 +83,7 @@ TMPDIR, explicit worktree PYTHONPATH and MCP_TEST_PYTHON. Scratch-only
 pytest-timeout 2.4.0 supplies the timeout plugin. Corrected import receipts pin
 all Backend and MCP module origins to this exact worktree in their respective
 interpreters. Full argv/cwd/environment/UTC/elapsed/exit/output receipts are in
-[QA evidence](qa-delivery-1-evidence/README.md).
+QA evidence.
 
 | Check / interpreter arguments | Actual result |
 |---|---|
@@ -117,7 +117,7 @@ worktree, ran related tests myself, and restored exact immutable bytes in
 finally. Tests and tool callables were not replaced. All faults compile and
 reach assertion failures; none is a collection/setup failure. Exact patches,
 commands, full RED output and restoration hashes are in
-[fault-summary.json](qa-delivery-1-evidence/fault-summary.json).
+fault-summary.json.
 
 | Deliberate production fault | Observed RED |
 |---|---|
@@ -140,7 +140,7 @@ items**, with no supersession. D4 is manual with supporting catalog/doc checks.
 
 ## Setup corrections and notes
 
-Three QA setup corrections are recorded in [setup-notes.json](qa-delivery-1-evidence/setup-notes.json):
+Three QA setup corrections are recorded in setup-notes.json:
 the import helper initially tried both stacks in each component interpreter
 (missing mcp in Backend and FastAPI in MCP); the scratch bundle prerequisite
 initially existed only as an unreferenced fetched object; and the first full

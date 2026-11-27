@@ -56,8 +56,8 @@ rejection/R5-1; correction 1/review 2 PASS remain separate from earlier tasks.
 Producer's completed prior integrity audit verifies all 22 official uploads,
 1,897 Coding/680 QA indexed payloads (1,898/681 members), exact Git bodies/modes,
 split reconstruction, exact patches/trees and independently fetched bundles,
-291 frozen fingerprints and all 24 flow calls/six bytes/lineages. Integration rechecks all 291 fingerprints and all 2,070 reviewed files: 2,063 are identical by Git body/mode; seven changed reviewed paths are Producer status/topic documents. Five immutable contract/demo digests, the exact 18-row registry, 215 relative link targets, English additions, authored whitespace and credential-shape checks pass. Immutable evidence whitespace diagnostics are retained with the original bytes. [Integration check](acceptance-evidence/integration-verification.json) and [five guards](acceptance-evidence/documentation-guards.json) preserve actual results. Those durable
-[receipts](demo-evidence/integrity-verification.json) remain unchanged; uploads
+291 frozen fingerprints and all 24 flow calls/six bytes/lineages. Integration rechecks all 291 fingerprints and all 2,070 reviewed files: 2,063 are identical by Git body/mode; seven changed reviewed paths are Producer status/topic documents. Five immutable contract/demo digests, the exact 18-row registry, 215 relative link targets, English additions, authored whitespace and credential-shape checks pass. Immutable evidence whitespace diagnostics are retained with the original bytes. Integration check and five guards preserve actual results. Those durable
+receipts remain unchanged; uploads
 are not repeated. Only later Producer acceptance/status/topic documents differ
 from the QA tree; no new product code or test repair follows its PASS. The
 integration/publication ledger on [AID-146](/AID/issues/AID-146#document-publication)

@@ -24,7 +24,7 @@ This reading comes from the [published owner review](../../requests/2026-11-26-p
 and [active roadmap](../../roadmap/ROADMAP.md). Owner words, inherited rules and
 Hermes's application remain separately attributed in those sources. The earlier
 native Phase 1 proposal does not override the later direction.
-[The initial reading](kickoff-evidence/owner-reading.md) was written before
+The initial reading was written before
 opening the checked-out task; the assignment had already supplied the brief inline.
 
 Difference: none material. The [fixed task](task.md) expressly describes an
@@ -119,19 +119,19 @@ stage. They do not authorize a product repair or weaken the existing brief.
 
 The fixed review worktree is
 `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees/aid-177-kickoff-review`.
-[Source evidence](kickoff-evidence/source-boundary.json) records the exact Git
+Source evidence records the exact Git
 tree, matching task hash, 42 source/document fingerprints and ten resolved task
 link targets. The publication changes only four documentation/evidence files
 from the owner handoff; no product code changes are present.
 
-[Registry regeneration](kickoff-evidence/registry-check.json) has no warnings:
+Registry regeneration has no warnings:
 all 18 prior row bodies remain identical, with no new certification or
 supersession. The checked-in registry and historical reviews remain unchanged.
 
 Fresh suite commands and raw outputs are in
-[Backend](kickoff-evidence/backend.json), [MCP](kickoff-evidence/mcp.json),
-[frontend](kickoff-evidence/frontend.json) and [build](kickoff-evidence/build.json).
-The separately registered [independent PNG content guard](kickoff-evidence/registry.json)
+Backend, MCP,
+frontend and build.
+The separately registered independent PNG content guard
 also passes all six cases.
 Python suites use `pytest -c pytest.ini`, separate scratch roots, explicit
 `pytest_asyncio`/`pytest_timeout`, `--timeout=60`, and no result cache. Frontend

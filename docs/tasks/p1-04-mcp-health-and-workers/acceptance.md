@@ -18,7 +18,7 @@ the actual Coding manifest and independent same-candidate PASS report.
   `28077043ebe82e1371657219e6bab0685a8ec1918ec8130b122dad097dbc88e8`;
   full MCP decision hash remains
   `d477af0600efb30ec35eccd9173e82ec01732294b8cc9257905208d1f345c7e0`;
-  [clarification 1](kickoff-clarification-1.md) remains
+  clarification 1 remains
   `8fc12d877dc004dddf4dbf09177ffcc7b2d7c98ee3ce91bf84aa3ac06768670f`.
   Kickoff round-2 CLEAR reviewed fixed `5cf158b`, report `e75a94e`.
   Original task/report/evidence and author manifest remain immutable snapshots;
@@ -46,7 +46,7 @@ QA ran fresh checks at the exact final candidate in its isolated worktree, with
 canonical component interpreters, worktree-pinned imports, isolated roots below
 TMPDIR, fresh Backend exports and pytest **--timeout=60**. Full argv, UTC times,
 exits, output and restoration hashes are in
-[QA evidence](qa-delivery-1-evidence/README.md).
+QA evidence.
 
 | Check | Independent outcome |
 |---|---|
@@ -70,11 +70,11 @@ report bytes, exact binary/full-index patches and bundle heads/prerequisites.
 All **159 Coding / 296 QA indexed payloads** match hashes, sizes, blob IDs and
 named immutable Git bytes (**160 / 297 archive members**). Actual final suite
 receipts match raw outputs and exit zero; ten restoration hashes match the
-candidate. [Identity audit](acceptance-evidence/producer-identity-audit.json).
+candidate. Identity audit.
 Producer verifies document/integration/publication identity and reuses applicable
 independent results on the unchanged reviewed product/test/dependency inputs. Two existing
 catalog/documentation guards pass after acceptance-status topic edits; the
-[command/output receipt](acceptance-evidence/producer-doc-guards.json) records
+command/output receipt records
 that narrow check separately from QA's full suites.
 
 ## Limits, preservation and continuation

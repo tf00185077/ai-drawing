@@ -164,7 +164,7 @@ and a nullable `reason`. False reachability has a safe nonempty reason:
   failed dependency probe.
 
 Full recorded envelopes and GET requests are in the accepted delivery
-[offline samples](tasks/p1-04-mcp-health-and-workers/delivery-1-evidence/recorded-mcp-samples.output.txt).
+offline samples.
 
 The tool reads `/health` first. If that read fails or is invalid, Backend is
 unreachable with a read error and both dependencies remain not observed; no

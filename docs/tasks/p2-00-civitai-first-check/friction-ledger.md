@@ -6,13 +6,13 @@ to use the older Phase 1 baseline's granularity.
 
 ## Measured operations
 
-The chronological [operation ledger](evidence/operations.jsonl) retains **64
+The chronological operation ledger retains **64
 instrumented observations: 18 preparation, 32 flow, two recovery and 12 audit**.
 An observation is one explicitly recorded call, boundary transition or verification
 block. Enter/return observations can describe the same call; do not interpret
 64 as 64 HTTP requests. The ledger includes successful and unsuccessful attempts.
 
-The [service inventory](evidence/service-inventory.json) separately accounts for
+The service inventory separately accounts for
 **14 actual provider HTTP requests: ten 200, two 401, two 307**. This includes
 four metadata requests across the failed and corrected acquisition invocations.
 The selected download used one transport attempt, two HTTP hops, **228,518,900

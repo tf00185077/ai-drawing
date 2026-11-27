@@ -2,6 +2,8 @@
 
 ## Settled
 
+- Committed evidence size, source identity and review effort follow [verification scope](verification-scope.md) (2026-11-27): Git SHAs replace source inventories and fingerprint lists, and per-task evidence is capped. That supersedes the "complete declared source inventory" requirement in the 2026-11-26 log entry below.
+
 - Redact credential fields/actual secret values and sensitive query values while preserving nonsecret source-path keys and their hashes. A substring match for token must not erase tokenizer paths. Exclude private key content/digests entirely. Producer-adopted technical safeguard under the existing secrecy/preservation requirements.
 - A missing before-run fingerprint remains a limitation; matching current files to Git is supplemental evidence and never reconstructs a historical measurement.
 

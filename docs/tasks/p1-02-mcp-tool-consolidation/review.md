@@ -53,7 +53,7 @@ I changed only this production field in my pinned QA worktree:
 
 Exact delta, full failure assertion/output, command/exit receipts, discovery/
 request/result probe and restoration hashes are in
-[round-2 evidence](qa-round-2-evidence/README.md), especially mutation-risk-only.patch,
+round-2 evidence, especially mutation-risk-only.patch,
 mutation-risk-targeted.log, mutation-risk-full.log, mutation-risk-probe.log,
 risk-restoration.json and qa-mcp-restored.log.
 
@@ -117,7 +117,7 @@ risk RED/restore/GREEN were rerun at the pinned source. No product fix was made.
 
 ## History and limits
 
-[Round-1 FAIL](review-round-1.md) and p1-01's round-1 PASS are exact copies from
+Round-1 FAIL and p1-01's round-1 PASS are exact copies from
 QA `1001586788d89d2c346619a5c1b0ffe1390897f8`. All original shared QA evidence,
 including official archived logs, is retained unchanged. History remains one
 p1-02 delivery rejection / correction round 1 / delivery review round 2, now

@@ -26,7 +26,7 @@ This is independent software review, not deployment or Phase 2 acceptance.
 ## Findings
 
 No remaining demonstrated P0/P1 defect. **R1 is resolved at this exact candidate.**
-The original [round-1 FAIL](review-round-1.md), manifest-round-1.md, evidence/,
+The original round-1 FAIL, manifest-round-1.md, evidence/,
 review-evidence/ and all Coding correction-1-evidence/ bodies remain exact. The
 two historical adverse tests still pass against the rejected provider while
 reproducing the defect. They are never counted as current security guards.
@@ -47,7 +47,7 @@ Persistent worktree: `/Users/tf00185088/Desktop/tim-project/ai-drawing-worktrees
 branch `aid-184-exact-review`, created directly at the final candidate before
 substantive review and pinned on this card. Shared main was never the test target.
 
-The [runner](review-round-2-evidence/run_checks.py) records exact argv, cwd,
+The runner records exact argv, cwd,
 allowlisted environment, timestamps, raw/saved log hashes and inherited child
 audit receipts. Invocation: `python3 -B docs/tasks/p2-01-civitai-key-file/review-round-2-evidence/run_checks.py <label> <paths>`.
 Every pytest run has `--timeout=60`, no cache, unique scratch roots below
@@ -93,13 +93,13 @@ assertions for Cookie/Proxy-Authorization. Cookie jars remain empty after real
 Set-Cookie responses; replay stripping alone cannot satisfy that separate check.
 Successful fixture streams and actual registered status/bytes are verified.
 
-[Faults](review-round-2-evidence/faults.json) retain the exact rejected-provider
+Faults retain the exact rejected-provider
 reproduction and six independent sensitivity results. The old provider yields
 17 current failed guards. Current product code was never repaired by QA, and no
 test/skip was deleted or changed in the product. Historical adverse assertions
 were copied into a new QA area and converted to positive assertions there only.
 
-[Source audit](review-round-2-evidence/source-audit.json) verifies the frozen
+Source audit verifies the frozen
 inventory against Git, every blob/SHA-256/byte count, complete final inventory,
 task hash, original functions, catalog, fixed supplement mirrors, old evidence,
 p2-00 and memory. Backend/MCP product and tests are identical from freeze to
@@ -110,7 +110,7 @@ Coding's fresh D4 observer compares loaded resolver, deadline runner, **unwrappe
 request generator and rejecting policy code to compiled exact frozen source.
 I audited that data flow and independently repeated the bounded manual check
 using the actual configured-file resolver and request machinery on version
-**1843039/file 1743033**. [QA live record](review-round-2-evidence/live.json):
+**1843039/file 1743033**. QA live record:
 anonymous HEAD **401**, keyed HEAD **307 → 200** to b2. No transport/key injection,
 GET fallback or target change. The production download total stays 900 s; this
 probe shortens it to 20 s with finite phase limits. No body method was called,
@@ -125,7 +125,7 @@ input is not hashed by the probes/verifiers. This does not claim detection of
 arbitrary unknown derived encodings. Ordinary source/tokenizer hashes remain;
 the First check's five missing historical hashes remain a historical limitation.
 
-[Artifact audit](review-round-2-evidence/coding-artifact-audit.json) independently
+Artifact audit independently
 downloads all **11** official Coding uploads, verifies advertised hashes/sizes,
 and checks **237 ZIP members / 234 exact Git payloads**. Eight numbered bundle
 parts reconstruct the declared complete source package. A new empty bare store
@@ -148,7 +148,7 @@ agree with the reviewed Git objects. Pre-cutoff history is not claimed.
   the same sequential registry run gives 412 passed. No product/test workaround.
 - The first QA artifact audit stopped before bundle restoration with a Path
   subscript typo. Correcting path composition gives the recorded complete audit.
-  [Attempt record](review-round-2-evidence/attempts.json) retains these outcomes.
+  Attempt record retains these outcomes.
 - Coding's prior failed attempts remain in its unchanged correction evidence;
   its top-level unguarded results are not substituted for guarded verification.
   New QA raw logs remain in the persistent ignored venv; committed logs strip

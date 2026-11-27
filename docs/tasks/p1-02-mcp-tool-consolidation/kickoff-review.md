@@ -26,8 +26,8 @@ not acceptance merely because the prerequisite or first review completed.
 
 ## Finding K2-1 — resolved; P1, D1/D2 and associated D3
 
-The [historical finding](kickoff-review-round-1.md) remains intact. I independently
-checked [clarification 1](kickoff-clarification-1.md), the normative
+The historical finding remains intact. I independently
+checked clarification 1, the normative
 [composition/save contract](../../decisions/mcp.md#prompt-composition-and-saving)
 and the actual unchanged source:
 

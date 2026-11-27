@@ -71,85 +71,16 @@ parameters stay absent; sample-image prompts provide no defaults. Safe source
 metadata remains opaque evidence. License permissions and optional explicit model/
 file license evidence are stored without a commercial-use filter; missing and
 invalid permission fields are explicit. Provider credentials and URL queries are
-excluded. Every typed nested field passes shared safe normalization at provider
-snapshot construction, publication and public projection: license values and keys,
-missing-field strings, diagnostics, trigger words, recommendation values/source
-fields, raw labels and opaque evidence. HTTP locators lose userinfo, queries and
-fragments. A recognizable credential-bearing free-text string is redacted in
-full, including Basic/Proxy-Authorization schemes, later cookies, quoted multiword
-values, compound labels, whitespace and delimiters. Token-by-token removal cannot
-safely locate their ends. The same normalization covers retained descriptor
-license/usage fields and newly generated acquisition license snapshots. Credential
-keys are excluded before renaming so repeated normalization is idempotent.
+excluded.
 
-Keys and parsed assignment/header labels use one identifier policy. Labels may
-be unquoted or enclosed in matching single/double quotes; colon/equal delimiters
-and Unicode whitespace are accepted. Matching quoted labels are consumed as complete
-lexical units before recognition, including leading/trailing inner spaces, tabs
-and serialized escapes such as `\t` or `\u2003`. Escaped quotes/backslashes retain
-their lexical meaning. Ordinary quoted values do not hide inner assignments;
-each quote kind scans independently, including opposite-quote labels inside
-ordinary quoted values. Adjacent same-kind quotes form local candidate boundaries;
-every quote remains a possible opener even after ending the preceding candidate.
-Both literal and escape-aware boundary interpretations are checked, so preceding
-backslashes cannot hide an unchanged opener while escaped quotes inside a complete
-label retain their meaning.
-A delimiter after a quote therefore checks the immediately preceding boundary
-independently of unrelated prose pairing. Candidate spans and whitespace after
-quotes do not overlap within each interpretation, so extraction and common-policy work remain linear in the
-input length. Escapes consume their next character or end of input explicitly.
-No all-pairs scan, growing suffix retry, truncation or format/size restriction is
-needed; ordinary unmatched/odd quote contexts retain their useful original text.
-Recognition checks raw text and a fixed set of once-serialized/local-unit views
-before associating labels with delimiters. Adjacent double-quote boundaries also
-form JSON-unit candidates independently of prose pairing, with both literal and
-escape-aware interpretations. Their interiors are disjoint within a pass. A valid
-escaped JSON unit removes its own envelope quotes; a boundary shared with another
-valid unit is removed once. This preserves supported identifier fragments such as
-`HTTP_AUTH"\u004f"RIZATION` under harmless prefixes and suffixes.
-
-There are fixed lexical-before-unit and unit-before-lexical stages for once-serialized
-unit fragments and escaped neighboring label text. Unquoted Unicode/control escapes
-receive the same single label decoding as quoted labels. No stage repeats until
-stable, enumerates quote pairs or branches into all combinations. At most eight
-distinct assignment views and four local-unit traversals are considered; duplicate
-views are checked once. Each cursor, slice, substitution and JSON parse covers
-bounded total input length. Terminal escapes consume the next character or EOF.
-Only recognition sees these views; safe output keeps its original representation.
-Existing three-second description feature bounds remain unchanged.
-
-Acquisition normalizes every new note body through this same `safe_evidence`
-policy before admission persistence and background success/refusal/exception
-persistence. Base label, model/version names, license values and later diagnostic
-fields all share that boundary. Complete admission/reuse/synchronous responses,
-including package-skip warnings, and `_resource_summary` status projections use
-that policy too. Registered acquisition refusal diagnostics normalize their public
-projection with the same function. A typed snapshot alone does not certify these
-separate surfaces. Old notes remain immutable compatibility evidence; summary
-reads safely project them without repair writes or another metadata authority.
-
-Identifier components use whitespace,
-underscore, dot or hyphen separators, plus camelCase/acronym transitions. A
-component ending in `token`, `secret`, `authorization`, `password`, `credential`,
-`signature`, `cookie` or `api key` (including joined `apikey`) is sensitive,
-case-insensitively; prefixes need no word boundary. Thus `CIVITAI_API_KEY`,
-`HTTP_AUTHORIZATION`, `providerApiKey`, `provider.api.key` and Unicode-prefixed
-identifiers have the same meaning as keys and as assignment labels. Extra
-separator-delimited components do not undo recognition. The complete affected
-string is redacted regardless of its value, including opaque labelled Basic.
-Trailing letters are significant: `tokenizer`, `api_keyboard`, `secretariat` and
-`passwordless` remain useful keys/values. Unassigned prose such as “API_KEY
-documentation” is retained. This is recognizable labelled metadata treatment,
-not arbitrary unlabelled secret discovery or a list of app environment settings.
-Bare Basic text is recognized only with a decodable user:password value;
-ordinary text such as “basic painting” remains useful. Credential-resolution
-recovery guidance uses sentence syntax so the setting and file requirements stay
-actionable through the same metadata normalization. Bare Bearer treatment and
-URL exclusion keep their established behavior. Sensitive evidence keys are removed.
-Legitimate typed values and ordinary hashes are retained. Unsafe stored snapshots
-are normalized for reads without repair writes. Invalid typed snapshots remain
-readable as incomplete; supplied verification never establishes measured evidence.
-Original notes are never returned as diagnostics.
+**Public projection (being changed).** The code on `main` still applies a free-text
+credential recognizer (`safe_text` / `safe_evidence` in `resource_records.py`) to names,
+license values, trigger words, recommendations and opaque evidence. Task p2-02a replaces
+it with the typed allowlist in [verification scope](decisions/verification-scope.md#allowlist-for-the-resource-record):
+fixed-shape fields, closed value sets, no public `source_evidence`, and one bounded check
+that the actual key value and signed URLs never appear. Unsafe or invalid stored
+snapshots stay readable as incomplete without repair writes; supplied verification
+never establishes measured evidence. Original notes are never returned as diagnostics.
 
 Normal startup adds the nullable column only. Explicit backfill is a caller-owned
 maintenance operation, separate from startup/read routes:

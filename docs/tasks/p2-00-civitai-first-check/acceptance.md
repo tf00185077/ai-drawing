@@ -37,7 +37,7 @@ appended to the blue-cup still-life prompt. Submitted/persisted/history/PNG
 graphs agree, sampler/LoRA uncached and 20 real steps. The 18.49-second log
 value is total prompt execution, not isolated inference/performance acceptance.
 
-[Original 333,502-byte PNG](evidence/original.png) equals QA's independently
+Original 333,502-byte PNG equals QA's independently
 retrieved copy, SHA-256 `8268b9571b8b9535b9500994a021919de317f84b1fbb36d9b74468d969ca3673`.
 Producer views this byte-verified official copy: a blue cup on a wooden table,
 no people. CTY alone judges aesthetics. The full new-session MCP/Gallery/graph
@@ -81,8 +81,8 @@ all exact immutable bodies/metadata. Three bundles verify prerequisites and fetc
 in a new bare store; kickoff binary/full-index patch reconstructs its exact tree.
 One initial shallow-source fetch required --update-shallow; corrected verification
 passes, without source/evidence changes. Raw log whitespace stays untouched.
-[Integrity receipt](acceptance-evidence/integrity-verification.json) records the
-full checks and [147 source fingerprints](acceptance-evidence/source-comparison.json).
+Integrity receipt records the
+full checks and 147 source fingerprints.
 
 ## Next work from the measured gaps
 

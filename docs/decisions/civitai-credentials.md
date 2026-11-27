@@ -23,13 +23,13 @@
   cookies cannot test this negative boundary.
 - Provenance: Producer's bounded technical application of the already-cleared
   Authorization-only/canonical-origin contract, following the actual
-  [p2-01 adverse review](../tasks/p2-01-civitai-key-file/review-round-1.md).
+  p2-01 adverse review.
   It is not a new owner quotation or a changed Phase 2 boundary.
 - Applies: retained Civitai request factories, registered acquisition/background
   routes and inspect/install adapters. Observe actual outgoing headers in realistic
   cookie-setting fixtures and prove fault sensitivity. Keep old adverse evidence
   immutable; original selected live HEADs observed no cookies, so no actual
-  owner-key disclosure is inferred. [Correction 1](../tasks/p2-01-civitai-key-file/repair-round-1.md)
+  owner-key disclosure is inferred. Correction 1
   is accepted at exact 2e385030 after independent review 2 PASS 155e2209;
   [acceptance](../tasks/p2-01-civitai-key-file/acceptance.md) preserves fault and
   fresh source evidence. Source publication is not running-Backend deployment.
