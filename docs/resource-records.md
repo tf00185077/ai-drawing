@@ -60,27 +60,51 @@ snapshot refreshes; a supplied snapshot cannot replace it. Newly created rows ke
 the established generated notes/file-identity/error behavior. Legacy acquisition/status responses
 keep their established IDs and enums; no MCP tool name or risk changes.
 
-Snapshots keep ordered unique trimmed trainedWords, diagnose invalid entries,
-and retain only explicit typed finite sampler/scheduler/steps/CFG/width/height/
-LoRA-strength recommendations with source field names. Integers are required for
-steps and dimensions; sampler/scheduler are nonblank strings; CFG/strength are
-finite numbers. Conflicting recommendations are excluded. Current recognized
-sources are `version.meta` and `file.metadata`, with keys `sampler`, `scheduler`,
-`steps`, `cfgScale`/`cfg`, `width`, `height`, `strength`/`loraStrength`. Missing
-parameters stay absent; sample-image prompts provide no defaults. Safe source
-metadata remains opaque evidence. License permissions and optional explicit model/
-file license evidence are stored without a commercial-use filter; missing and
-invalid permission fields are explicit. Provider credentials and URL queries are
-excluded.
+Public metadata follows the [typed allowlist](decisions/verification-scope.md#allowlist-for-the-resource-record).
+Names (`resource_name`, `resource_type`, `provider`, `air`, `base_model`) retain public
+creator text with C0/C1 controls removed and a 200-character limit. Trigger words
+are trimmed, ordered, unique, control-free strings, limited to 32 entries of 200
+characters each. Credential-looking creator prose remains public text. The exact
+configured key and its URL-encoded form are replaced wherever the shared filter
+publishes or stores metadata.
 
-**Public projection (being changed).** The code on `main` still applies a free-text
-credential recognizer (`safe_text` / `safe_evidence` in `resource_records.py`) to names,
-license values, trigger words, recommendations and opaque evidence. Task p2-02a replaces
-it with the typed allowlist in [verification scope](decisions/verification-scope.md#allowlist-for-the-resource-record):
-fixed-shape fields, closed value sets, no public `source_evidence`, and one bounded check
-that the actual key value and signed URLs never appear. Unsafe or invalid stored
-snapshots stay readable as incomplete without repair writes; supplied verification
-never establishes measured evidence. Original notes are never returned as diagnostics.
+`source_url` is rebuilt from valid model/version IDs as
+`https://civitai.com/models/<model_id>?modelVersionId=<version_id>`; it is null when
+either ID is unavailable. Stored locators are never echoed. `source_evidence` is
+absent from the public `ResourceRecord` and its OpenAPI schema. Internal version-1
+snapshots retain this field, including acquisition state and resume evidence.
+There is no database rewrite: old snapshots are normalized in memory during reads.
+
+Only explicit recommendations from `version.meta` and `file.metadata` are used.
+Supported keys are `sampler`, `scheduler`, `steps`, `cfg`, `width`, `height`, and
+`clip_skip` (provider aliases `cfgScale` and `clipSkip` are supported). Steps are
+integers 1–150, CFG is a finite number 1–30, dimensions are integers 256–2048,
+and clip skip is an integer 1–24. These reuse generation/recipe input bounds;
+they do not provide defaults. Sampler/scheduler names match
+`^[A-Za-z0-9_+. -]+$` and have at most 64 characters. Conflicting or invalid
+recommendations are omitted. Provenance is one of the supported source fields;
+unknown legacy provenance becomes the recommendation's own key. LoRA-strength
+and arbitrary metadata keys are absent from the public recommendations.
+
+License values contain only `allowNoCredit`, `allowCommercialUse`,
+`allowDerivatives`, and `allowDifferentLicense`. Values are booleans, known Civitai
+permission strings (`None`, `Image`, `Rent`, `Sell`, `RentCivit`), or lists of those
+strings. Rejected or absent values appear in `missing_fields`. Model/file license
+blobs are omitted; there is no commercial-use restriction. Diagnostics have closed
+codes and fields drawn from the record's own fields, never raw notes or provider
+paths. Invalid version-1 snapshots remain readable as incomplete records without
+repair writes; supplied verification never establishes measured evidence.
+
+`safe_evidence(value)` retains its shared interface. HTTP(S) URLs lose userinfo,
+query and fragment; dictionaries drop case-insensitive exact transport keys
+`authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `token`, `api_key`,
+`apikey`, and `x-api-key`; held-key values and their URL-encoded form are replaced;
+non-finite floats become null. There is no credential-label, assignment, quote,
+escape, Bearer or Basic recognizer. New acquisition locator storage and HTTPX
+request logs use the same URL policy. Raw httpcore transport debug events are
+suppressed because their payloads include header tuples and cookies. Existing
+legacy rows/notes remain untouched. A missing or unreadable credential file does
+not make resource reads fail or cause a fallback credential to be loaded.
 
 Normal startup adds the nullable column only. Explicit backfill is a caller-owned
 maintenance operation, separate from startup/read routes:
@@ -111,10 +135,12 @@ remain separate tasks.
 
 The ledger's raw internal snapshot retains AIR and filesystem locators for exact
 filters, recipe matching, hashing and filename planning. `ledger_payload` applies
-the existing complete-value policy to the **whole** public entry and snapshot,
+the bounded shared filter to the **whole** public entry and snapshot,
 including outer AIR/path/hash/kind/status copies beside typed diagnostics. Safe
 AIRs, paths, IDs, hashes, state and counts retain their meaning; old storage is
-never repaired or hidden. Canonical status strings use the same normalization.
+never repaired or hidden. Canonical status strings use the same normalization. The embedded record diagnostic
+is filtered when the ledger is built so its canonical source URL does not create a
+later false unsafe-lock refusal; raw matching fields remain authoritative.
 
 Registered resolve/resolve-local project outgoing results only after raw matching
 and verification. Their internal report/lock transfer format stays raw. A ready report requiring

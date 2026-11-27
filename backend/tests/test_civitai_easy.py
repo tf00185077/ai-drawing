@@ -510,7 +510,7 @@ def acquire_env(tmp_path, monkeypatch):
     monkeypatch.setattr(cache_module, "_LOADED_PATH", None)
 
     engine = create_engine(f"sqlite:///{tmp_path / 'acquire.db'}", connect_args={"check_same_thread": False})
-    DownloadedResource.__table__.create(engine)
+    DownloadedResource.metadata.create_all(engine)
     factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     yield SimpleNamespace(session_factory=factory, tmp_path=tmp_path)
 

@@ -498,7 +498,7 @@ def start_acquisition(
                     resource_type=comp_type,
                     provider="civitai",
                     source_url=f"https://civitai.com/models/{model_id}?modelVersionId={version_id}" if model_id else str(locator),
-                    resolved_download_url=redact_secrets(chosen["download_url"]),
+                    resolved_download_url=safe_evidence(chosen["download_url"]),
                     local_path=str(target),
                     storage_root=comp_root,
                     file_size=chosen["size_bytes"],

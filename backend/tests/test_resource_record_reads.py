@@ -126,4 +126,4 @@ def test_registered_family_filter_matches_exact_projection_for_whitespace_and_ba
     result=client.get('/api/resources',params={'model_family':'sdxl','limit':100}).json()
     assert [v['resource_id'] for v in result['items'] if v['resource_id'] in added]==added[:4]
     raw=client.get('/api/resources',params={'base_model':'\t SDXL 1.0 \n'}).json()
-    assert raw['total']==1 and raw['items'][0]['base_model']=='\tSDXL 1.0\n'
+    assert raw['total']==1 and raw['items'][0]['base_model']=='SDXL 1.0'

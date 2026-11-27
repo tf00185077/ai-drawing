@@ -55,7 +55,9 @@ def test_startup_backfill_whole_old_schema_values_aliases_and_files_preserved(tm
         return original(self,*a,**kw)
     monkeypatch.setattr(Path,'open',guarded)
     database.init_db(); after_start=audit(engine)
-    assert set(before)==set(after_start)
+    assert set(after_start)-set(before)=={'download_jobs','download_claims','download_components'}
+    assert all(not after_start[t]['values'] for t in set(after_start)-set(before))
+    assert set(before)<=set(after_start)
     for table,old_value in before.items():
         now=after_start[table]
         assert now['columns'][:len(old_value['columns'])]==old_value['columns']

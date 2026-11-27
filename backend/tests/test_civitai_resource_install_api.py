@@ -253,7 +253,7 @@ class _Transport:
 
 def _session(tmp_path: Path):
     engine = create_engine(f"sqlite:///{tmp_path / 'install.db'}")
-    DownloadedResource.__table__.create(engine)
+    DownloadedResource.metadata.create_all(engine)
     return sessionmaker(bind=engine)
 
 

@@ -10,18 +10,14 @@ from app.db import database
 from app.db.models import DownloadedResource
 from app.services import resource_records, resource_record_backfill, civitai_provider
 from tests.test_resource_record_writers import boundary, acquire_http
-from tests.test_resource_record_serialized_assignments import representations
 
-SECRET = 'complete synthetic acquisition-note value; retained suffix'
-PLAIN = '" CIVITAI_API_KEY " = "' + SECRET + '"'
-TEXTS = representations(PLAIN) + ['ordinary "unfinished; ' + PLAIN,
-    'ordinary "unfinished; HTTP_AUTH"\\u004f"RIZATION = "' + SECRET + '"']
+SECRET = 'SIGNED_NOTES'
+TEXTS = ['https://user:password@example.test/proof?signature='+SECRET+'#fragment']
 AIR = 'urn:air:sdxl:lora:civitai:10@21'
 
 def assert_excluded(value):
     # Whole affected values, not merely the first token, must be absent.
     assert SECRET not in json.dumps(value, ensure_ascii=False)
-    assert 'retained suffix' not in json.dumps(value, ensure_ascii=False)
 
 
 def views(b, rid):
@@ -130,7 +126,8 @@ def test_old_notes_public_summary_readonly_exact_storage(boundary,monkeypatch,st
         for phase in phases: assert_excluded(phase)
         summary=phases[0]['value']['resources'][0]
         assert summary['acquisition_id']==rid and summary['sha256']==b.sha and summary['status']==state
-        if state=='downloading': assert summary['progress']=={'downloaded_bytes':5,'total_bytes':len(b.body),'percent':25.0}
+        if state=='downloading':
+            assert summary['progress'] is None and summary['job_tracking']=='legacy_untracked'
         if field!='license': assert summary['license']['allowCommercialUse']==['None']
     finally:
         event.remove(database.engine,'before_cursor_execute',readonly)
@@ -151,7 +148,17 @@ def test_retained_adverse_notes_acquisition_reuse_and_retry_exact(boundary,state
         row=db.get(DownloadedResource,rid);row.status=state;row.notes=raw;db.commit()
         before_hash=row.sha256;before_air=row.air
         before_verification=json.loads(row.metadata_json)['verification']
-    admitted=acquire_http(b);assert admitted.status_code==202,admitted.text
+    admitted=acquire_http(b)
+    if state=='downloading':
+        assert admitted.status_code==409,admitted.text
+        assert admitted.json()['detail']['code']=='download_legacy_untracked'
+        assert not b.pending
+        with database.SessionLocal() as db:
+            row=db.get(DownloadedResource,rid)
+            assert row.notes==raw and row.status==state and row.sha256==before_hash and row.air==before_air
+            assert json.loads(row.metadata_json)['verification']==before_verification
+        return
+    assert admitted.status_code==202,admitted.text
     assert admitted.json()['resource']['acquisition_id']==rid
     assert len(b.pending)==(1 if state=='failed' else 0)
     phases=[{'phase':'retained admission','value':admitted.json()}]
@@ -198,7 +205,7 @@ def test_long_new_notes_and_summary_keep_full_safe_content(boundary,quote,repres
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,rid)
         assert json.loads(row.notes)['base_model']==text
-        assert json.loads(row.metadata_json)['base_model']==text
+        assert json.loads(row.metadata_json)['base_model']==resource_records.public_name(text)
     assert b.client.get('/api/civitai/resources/status',params={'acquisition_id':rid}).json()['resources'][0]['base_model']==text
 
 @pytest.mark.parametrize('field',['model_type','scan_status','filename'])
