@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a accepted; revised p2-04 needs fresh independent kickoff** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a accepted; revised p2-04 independent kickoff running** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -37,7 +37,7 @@ Done 2026-11-24 (`531a68d`). Research data removed (`experiments/`, `research/`,
 
 1. **Read first: [verification scope](decisions/verification-scope.md)** (owner-directed 2026-11-27). Public resource metadata becomes a typed allowlist; committed evidence is capped at 2 MB per task; Git SHAs are the source identity; correction rounds are bounded.
 2. **[p2-02a: accepted](tasks/p2-02a-allowlist-projection/acceptance.md)** — exact corrected source integrated after [review 2 PASS](tasks/p2-02a-allowlist-projection/review.md). The [first rejection](tasks/p2-02a-allowlist-projection/review-round-1.md) and its count remain; no history reset.
-3. **[p2-04: durable download jobs](tasks/p2-04-durable-download-jobs/task.md)** (respecified 2026-11-27) is next: fresh independent kickoff against accepted main, followed by new Coding and exact-commit QA cards under [Producer AID-217](/AID/issues/AID-217). The [owner-requested partial implementation](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) is unfinished and unreviewed. The [handoff](tasks/p2-04-durable-download-jobs/source-handoff.md) names the two known deadline quarantines that this work must fix and re-enable.
+3. **[p2-04: durable download jobs](tasks/p2-04-durable-download-jobs/task.md)** (respecified 2026-11-27): independent [QA AID-223](/AID/issues/AID-223) kickoff runs against accepted main `6b82a91ea0974b8f069a7429530086c2997125ae`. [Producer AID-217](/AID/issues/AID-217) is blocked on that child; native completion wakes Producer to read the actual verdict, then create new Coding and exact-commit QA cards only on CLEAR. The [owner-requested partial implementation](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) is unfinished and unreviewed. The [handoff](tasks/p2-04-durable-download-jobs/source-handoff.md) names the two known deadline quarantines to fix and re-enable.
 4. **Then the agent-facing part of Phase 2:** Civitai search + inspect, record list/reuse through MCP, workflow selection, trigger words and recommended parameters, removals, and three real one-sentence runs.
 
 Settled 2026-11-27: 3 review rejections of one task pause it for a CTY decision ([thresholds](roadmap/ROADMAP.md#thresholds)). Still a proposal: the `reviewspec-review` skill change in the verification-scope decision.

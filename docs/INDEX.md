@@ -23,7 +23,7 @@
 | Phase 2 resource identity | [topic](resource-records.md), [decision](decisions/civitai-resource-record.md), [p2-02 acceptance](tasks/p2-02-resource-record/acceptance.md) | exact review10 PASS; Backend foundation accepted |
 | Phase 2 download limits | [topic](civitai-downloads.md), [decision](decisions/civitai-download-limits.md), [acceptance](tasks/p2-03-bounded-download/acceptance.md) | exact review3 PASS; bounded stock execution accepted |
 | Verification scope | [decision](decisions/verification-scope.md), [request](requests/2026-11-27-verification-reassessment.md) | owner-directed 2026-11-27; allowlist metadata, capped evidence |
-| Phase 2 download jobs | [decision](decisions/civitai-download-jobs.md), [task](tasks/p2-04-durable-download-jobs/task.md), [owner checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) | respecified 2026-11-27; fresh independent kickoff next |
+| Phase 2 download jobs | [decision](decisions/civitai-download-jobs.md), [task](tasks/p2-04-durable-download-jobs/task.md), [owner checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) | respecified 2026-11-27; fresh independent [QA AID-223](/AID/issues/AID-223) kickoff running |
 | Allowlist projection | [acceptance](tasks/p2-02a-allowlist-projection/acceptance.md), [review 2](tasks/p2-02a-allowlist-projection/review.md), [review 1](tasks/p2-02a-allowlist-projection/review-round-1.md) | accepted exact correction `3e70e04c`; 1 rejection retained |
 | MCP server | [mcp.md](mcp.md) | current |
 | Prompt dashboard | [prompt-dashboard.md](prompt-dashboard.md) | current |
