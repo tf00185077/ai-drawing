@@ -3,7 +3,7 @@ name: discord-bot-config-and-ledger
 description: "Discord bot start-up needs explicit config and an already provisioned delivery ledger; it does not read .env."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
@@ -20,5 +20,5 @@ Set the variables explicitly before starting. Provision a ledger only for a fres
 
 ## Evidence
 
-- `discord-bot/bot/config.py`
-- `discord-bot/bot/delivery.py`, `discord-bot/bot/attempt_store.py`
+- [Bot configuration](../../discord-bot/bot/config.py).
+- [Delivery ledger](../../discord-bot/bot/delivery.py) and [attempt store](../../discord-bot/bot/attempt_store.py).

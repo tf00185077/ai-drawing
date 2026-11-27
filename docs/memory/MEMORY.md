@@ -13,7 +13,7 @@
 - [Gallery seed precision](gallery-seed-precision.md) — when reading or showing seeds.
 - [Gallery routing](gallery-document-asset-routing.md) — before changing the Vite proxy.
 - [Frontend cache isolation](frontend-shared-cache-isolation.md) — when running frontend tests in parallel worktrees.
-- [Worker tests off Windows](windows-worker-offline-test-limits.md) — when worker tests fail on macOS or Linux.
+- [Worker tests off Windows](windows-worker-offline-test-limits.md) — before exercising worker process creation on macOS or Linux.
 - [Worker PowerShell control](worker-powershell-control.md) — before running, updating or redeploying the Windows worker.
 - [Discord bot config and ledger](discord-bot-config-and-ledger.md) — before starting or reconfiguring the Discord bot.
 - [Paperclip question cards](native-interaction-card-lineage.md) — before asking CTY several questions in Paperclip.

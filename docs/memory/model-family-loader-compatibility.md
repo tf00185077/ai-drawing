@@ -3,12 +3,12 @@ name: model-family-loader-compatibility
 description: "Which loader each model family needs; filenames do not prove compatibility or installation."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-27"
 ---
 
 ## Context
 
-A checkpoint loader is not compatible with every family: split Anima, Qwen and Wan models need their own diffusion-model, encoder and VAE loaders. Anima graphs use `LoraLoaderModelOnly`, which consumes model strength only, and a `CLIPLoader` of type `qwen_image`; `LoraLoader` patches model and CLIP. Pose, subject, mask, first/last frame and audio inputs are not interchangeable between graphs. Ordinary generation goes straight to ComfyUI `/prompt` with no preflight, so missing models, nodes and capacity errors come back from ComfyUI.
+A checkpoint loader is not compatible with every family: split Anima, Qwen and Wan models need their own diffusion-model, encoder and VAE loaders. Anima graphs use `LoraLoaderModelOnly`, which consumes model strength only, and a `CLIPLoader` of type `qwen_image`; `LoraLoader` patches model and CLIP. Pose, subject, mask, first/last frame and audio inputs are not interchangeable between graphs. Ordinary template generation compiles the graph before submitting it to ComfyUI `/prompt`, with no model/node preflight. ComfyUI reports missing models or nodes; an [oversized explicit LoRA list](explicit-lora-list-semantics.md) fails during queued compilation.
 
 ## Why
 
@@ -20,5 +20,6 @@ Read the loader inputs in the chosen graph and its `.meta.json` before matching 
 
 ## Evidence
 
-- `backend/workflows/` graphs and `.meta.json`
-- `backend/app/core/workflow_manifest.py`
+- [Workflow graphs and metadata](../../backend/workflows/).
+- [Workflow manifest loader](../../backend/app/core/workflow_manifest.py).
+- [Queued generation](../../backend/app/core/queue.py) — applies graph parameters before ComfyUI submission.

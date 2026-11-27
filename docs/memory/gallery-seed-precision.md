@@ -3,7 +3,7 @@ name: gallery-seed-precision
 description: "Gallery seeds exceed JavaScript's safe integer range; keep them as strings."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
@@ -20,5 +20,6 @@ Extract the raw seed token before JSON parsing and keep it as a decimal string t
 
 ## Evidence
 
-- `frontend/src/pages/Gallery.tsx`
-- `backend/app/schemas/gallery.py`
+- [Gallery response parser](../../frontend/src/api/gallery.ts) — preserves seed tokens before `JSON.parse`.
+- [Gallery page](../../frontend/src/pages/Gallery.tsx).
+- [Gallery schemas](../../backend/app/schemas/gallery.py).

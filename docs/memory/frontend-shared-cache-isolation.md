@@ -1,23 +1,24 @@
 ---
 name: frontend-shared-cache-isolation
-description: "Vitest caches into node_modules; a symlinked shared node_modules leaks results across worktrees."
+description: "Use a worktree-local AI_DRAWING_VITE_CACHE to isolate Vite and the locked Vitest 2.1.9 results cache when node_modules is shared."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
 
-Vite and Vitest use separate cache locations. When a worktree symlinks a shared `node_modules`, Vitest's results cache is written into the shared directory even if Vite's cache was redirected.
+With the locked Vitest 2.1.9 and no `test.cache.dir` override, the test results cache lives under Vite's `cacheDir` in `vitest/`. This project's `AI_DRAWING_VITE_CACHE` sets `cacheDir`; its default, `node_modules/.vite`, is shared when `node_modules` is symlinked across worktrees.
 
 ## Why
 
-Parallel worktrees then see each other's cached test results.
+Parallel runs can write the same results cache through shared `node_modules` unless the cache root is isolated.
 
 ## How to apply
 
-In parallel worktrees, set the Vite `cacheDir` and the Vitest cache directory separately to worktree-local paths.
+Set `AI_DRAWING_VITE_CACHE` to an absolute directory inside each worktree. The current Vitest configuration derives its results-cache location from that Vite directory.
 
 ## Evidence
 
-- `frontend/vite.config.js` (closest project file; the behavior is Vitest's)
+- [Vite configuration](../../frontend/vite.config.js) — cache environment override and no separate Vitest cache override.
+- [Dependency lock](../../frontend/package-lock.json) — pins Vitest 2.1.9; its installed `resolveConfig` derives the results-cache directory from Vite's `cacheDir` unless overridden.

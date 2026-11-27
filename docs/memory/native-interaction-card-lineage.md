@@ -1,14 +1,14 @@
 ---
 name: native-interaction-card-lineage
-description: "In Paperclip, a new question card expires the same agent's older pending card of the same kind on the same issue."
+description: "Ordinary Paperclip question and confirmation cards supersede the same agent's older pending cards of that kind."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-26"
 ---
 
 ## Context
 
-When an agent creates an `ask_user_questions` or `request_confirmation` card, Paperclip expires that agent's older pending card of the same kind on the same issue. The earlier question can no longer be answered.
+By default, an agent creating an `ask_user_questions` or ordinary `request_confirmation` card expires that agent's older pending card of the same kind on the same issue. Creating a confirmation for a tool action or secret proposal does not take this supersession path. The expired card can no longer be answered.
 
 ## Why
 
@@ -20,4 +20,4 @@ Put questions that must stay open into one card, or wait for the earlier answer 
 
 ## Evidence
 
-- [Team guide](../team/README.md) — closest project document; the behavior lives in the local Paperclip service
+- [Team guide](../team/README.md) — closest project document; the behavior lives in the local Paperclip service's `server/src/services/issue-thread-interactions.ts`, outside this repository.

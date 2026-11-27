@@ -3,7 +3,7 @@ name: video-frame-and-film-rules
 description: "Frame-count and duration rules of the existing image-to-video + FILM interpolation path, and which video graphs are hidden."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
@@ -20,6 +20,6 @@ Reuse these limits for the Phase 4 tool. Do not add metadata to the `discord_*_f
 
 ## Evidence
 
-- `backend/app/core/fixed_video_workflows.py`
-- `backend/app/schemas/generate.py`
-- `backend/app/services/film_postprocess.py`
+- [Fixed video workflows](../../backend/app/core/fixed_video_workflows.py).
+- [Generation schemas](../../backend/app/schemas/generate.py).
+- [FILM postprocessing](../../backend/app/services/film_postprocess.py).

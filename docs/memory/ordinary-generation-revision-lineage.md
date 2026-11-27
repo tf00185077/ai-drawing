@@ -1,24 +1,25 @@
 ---
 name: ordinary-generation-revision-lineage
-description: "Gallery rerun is not a revision; send a new generate request with revision context to record lineage."
+description: "Reruns preserve stored revision context; use a new generation to record a revision based on feedback."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-26"
 ---
 
 ## Context
 
-`gallery_rerun` replays recorded parameters and does not create a revision. A revision is a new `POST /api/generate/` request carrying a revision context (`request_ref`, `brief_revision`, optional `parent_artifact_id`, `feedback_ref`, `feedback_summary`). The Backend derives parent identity and stores it with the outputs; older images without context show as `legacy`.
+`gallery_rerun` replays recorded parameters and revision context without creating a new parent relationship. Images without stored context return `revision_context: null`. A parent artifact without stored context is marked `parent_context_status: "legacy"` in the child's context.
 
 ## Why
 
-The Phase 1 exit requires a traceable revision; a rerun leaves no parent link.
+A rerun may retain an earlier parent link; that link cannot establish a new revision from the rerun's source.
 
 ## How to apply
 
-When changing a result based on feedback, send a new generate request with `parent_artifact_id` set; do not rerun.
+Follow the [MCP revision flow](../mcp.md#common-flows): submit a new `generate(mode=template)` request with the canonical `parent_artifact_id`, the same `request_ref` and a new `brief_revision`; include feedback annotations when needed.
 
 ## Evidence
 
-- `backend/app/schemas/generate.py` (`RevisionContextRequest`, `RevisionContext`)
-- [p1-05](../tasks/p1-05-mcp-e2e-smoke-mac/task.md)
+- [Revision projection and parent resolution](../../backend/app/core/revision_context.py).
+- [Gallery replay](../../backend/app/api/gallery.py) — preserves recorded context.
+- [Revision schemas](../../backend/app/schemas/generate.py).

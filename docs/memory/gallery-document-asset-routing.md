@@ -3,7 +3,7 @@ name: gallery-document-asset-routing
 description: "The /gallery page and Backend /gallery/... files share a prefix; the Vite proxy must forward only subpaths."
 metadata:
   type: project
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
@@ -20,4 +20,4 @@ Proxy only non-empty subpaths to the Backend (main uses `^/gallery/(?![?]|$)`); 
 
 ## Evidence
 
-- `frontend/vite.config.js`
+- [Vite proxy configuration](../../frontend/vite.config.js).

@@ -4,7 +4,7 @@ description: "Inspect the whole database schema delta when relaunching current B
 metadata:
   type: project
   captured_on: "2026-11-24"
-  curated_on: "2026-11-24"
+  curated_on: "2026-11-25"
 ---
 
 ## Context
@@ -21,5 +21,5 @@ Preserve a private prelaunch snapshot, then compare the complete table/column sc
 
 ## Evidence
 
-- `backend/app/db/database.py`: `init_db`, `_ADDITIVE_COLUMNS` and `Base.metadata.create_all`.
-- [p1-00a review round 1](/AID/issues/AID-152#comment-c64c55d7-ac7c-4849-94cf-8447f62d3e2b): independent schema and old-value preservation audits.
+- [Database startup](../../backend/app/db/database.py): `init_db`, `_ADDITIVE_COLUMNS` and `Base.metadata.create_all`.
+- [p1-00a review round 1](../tasks/p1-00a-mac-runtime-and-retrieval/review-round-1.md#findings): independent schema and old-value preservation audits.
