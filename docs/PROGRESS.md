@@ -24,7 +24,7 @@ was removed on 2026-11-27 and remains in Git history.
 | [p2-01](tasks/p2-01-civitai-key-file/acceptance.md) | 11-26 | `24dad88` | 1 | Backend reads the private key file; credentials only on the final request |
 | [p2-02](tasks/p2-02-resource-record/acceptance.md) | 11-27 | `211208a` | 9 | Resource row with typed metadata, SDXL base-model mapping, backfill, bounded Backend reads |
 | [p2-03](tasks/p2-03-bounded-download/acceptance.md) | 11-27 | `0508ac4` | 2 | Bounded downloads: 8 GiB/file, 20 GiB free floor, safetensors, hash, resume, no overwrite |
-| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | — | [Kickoff CLEAR](tasks/p2-02a-allowlist-projection/kickoff-review.md) at report `cfbae7d4`, merged unchanged at `05da4bb9`; [Coding AID-219](/AID/issues/AID-219) dispatched, [QA AID-220](/AID/issues/AID-220) follows its actual candidate; no delivery or acceptance yet |
+| [p2-02a](tasks/p2-02a-allowlist-projection/task.md) | — | — | 1 | [Review 1 FAIL](tasks/p2-02a-allowlist-projection/review-round-1.md), candidate `8d5f2968` unmerged: received signed-URL query survives an apostrophe. [Correction 1 handoff](tasks/p2-02a-allowlist-projection/implementation-handoff.md); native Coding → QA continuation under [AID-217](/AID/issues/AID-217). No product acceptance |
 | [p2-04](tasks/p2-04-durable-download-jobs/task.md) | — | `6ec6e7a` (WIP) | — | Original kickoff/handoff withdrawn; owner-requested [partial checkpoint](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main; revised spec needs fresh kickoff after p2-02a acceptance |
 
 Review cost note: p2-02 and p2-03 used 12 delivery rounds between them, mostly on
@@ -34,13 +34,18 @@ allowlist (next task p2-02a) and capped evidence.
 
 The [fresh owner continuation](requests/2026-11-27-fresh-producer-continuation.md)
 preserves the three-rejection owner stop gate and delegates ordinary recommendations.
-[Producer AID-217](/AID/issues/AID-217) read the actual p2-02a kickoff CLEAR and
-integrated only its 70-line report, preserving its bytes with a changed-path diff
-(exit 0). Coding and independent exact-commit delivery QA have separate cards and
-a native prerequisite. The old p2-04 cards' operative descriptions/native plans
-remain withdrawn; their status retirement is a separate control-plane action.
-The kickoff is not product acceptance and adds no product test, deployment,
-generation or retrieval result.
+[Producer AID-217](/AID/issues/AID-217) read the actual first delivery FAIL and
+checked the reported URL-filter mechanism. The original task stays unchanged;
+correction 1 removes the complete received query and adds the real-caller guard.
+Only the known pre-existing immediate-install-deadline test parameter is quarantined
+with a p2-04 link under AGENTS; its product fix stays with p2-04. Other deadline
+guards remain. New cards carry the same one-rejection count.
+
+Independent results on the rejected candidate: Backend 2340 passed / 125 skipped,
+MCP 672 / 4, frontend 226 / 1 and build passed; the additional R1 reproduction
+failed. Standing guards were 877 passed / 1 baseline p2-04 failure / 2 skipped.
+These are branch results, not main qualification or acceptance. No running-service,
+real-generation or live model/Gallery artifact-retrieval result was added.
 
 ## Phase 0 — Clean foundation (done 2026-11-24)
 

@@ -1,6 +1,6 @@
 # Current
 
-2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a kickoff CLEAR, implementation assigned; revised p2-04 follows its acceptance** ([roadmap](roadmap/ROADMAP.md))
+2026-11-27 · `main` · Phase 0 and Phase 1 done · **Phase 2 active: p2-02a delivery 1 rejected, correction 1 is current work; revised p2-04 follows acceptance** ([roadmap](roadmap/ROADMAP.md))
 
 ## Goals at a glance
 
@@ -33,7 +33,7 @@ Done 2026-11-24 (`531a68d`). Research data removed (`experiments/`, `research/`,
 ## Next work
 
 1. **Read first: [verification scope](decisions/verification-scope.md)** (owner-directed 2026-11-27). Public resource metadata becomes a typed allowlist; committed evidence is capped at 2 MB per task; Git SHAs are the source identity; correction rounds are bounded.
-2. **[p2-02a: allowlist projection](tasks/p2-02a-allowlist-projection/task.md)** — [independent kickoff CLEAR](tasks/p2-02a-allowlist-projection/kickoff-review.md), report `cfbae7d4884b6df094a6b961b6965ec806b669aa`, integrated unchanged at `05da4bb981b4b8e44e991720093c9127509abc80`. Producer read the actual verdict and dispatched [Coding AID-219](/AID/issues/AID-219) from that main. [QA AID-220](/AID/issues/AID-220) has Coding as its native prerequisite and will pin the actual final candidate before independent delivery review. No product delivery or acceptance yet. Replaces the free-text credential recognizer in `resource_records.py` with a typed allowlist and a bounded secret check, and deletes its tests.
+2. **[p2-02a: allowlist projection](tasks/p2-02a-allowlist-projection/task.md)** — [kickoff CLEAR](tasks/p2-02a-allowlist-projection/kickoff-review.md), then [delivery review 1 FAIL](tasks/p2-02a-allowlist-projection/review-round-1.md) against `8d5f29686555119b1cbcc934cbb38af9d6edaafc`. R1 / D2 / P1: a valid apostrophe in a received download URL leaves its signature query in storage. One rejected delivery; candidate unmerged. Current work is [correction 1](tasks/p2-02a-allowlist-projection/implementation-handoff.md), followed by independent exact-commit QA. Follow recipient cards through [Producer AID-217](/AID/issues/AID-217). No product acceptance yet.
 3. **[p2-04: durable download jobs](tasks/p2-04-durable-download-jobs/task.md)** (respecified 2026-11-27, fresh kickoff after p2-02a). Continues from the [owner-requested partial implementation](tasks/p2-04-durable-download-jobs/owner-checkpoint-2026-11-27.md) on main, which is unfinished and unreviewed.
 4. **Then the agent-facing part of Phase 2:** Civitai search + inspect, record list/reuse through MCP, workflow selection, trigger words and recommended parameters, removals, and three real one-sentence runs.
 
