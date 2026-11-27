@@ -51,14 +51,14 @@ def test_snapshot_types_missing_evidence_and_safe_opaque_roundtrip():
             'cfg':{'value':5.5,'source_field':'version.meta.cfgScale'},
             'sampler':{'value':'Euler','source_field':'version.meta.sampler'},
             'scheduler':{'value':'normal','source_field':'version.meta.scheduler'},
-            'width':{'value':1024,'source_field':'version.meta.width'},
-            'lora_strength':{'value':0.7,'source_field':'version.meta.strength'}}
+            'width':{'value':1024,'source_field':'version.meta.width'}}
         assert item.declared_size_bytes==99 and item.measured_size_bytes is None and item.sha256_verified is None
         assert value['license']['missing_fields']==['allowCommercialUse','allowDerivatives','allowDifferentLicense']
         codes={d.code for d in item.diagnostics}; assert {'invalid_trigger_word','invalid_recommendation','license_incomplete'}<=codes
         assert item.metadata_origin=='civitai_provider' and item.metadata_version==1
         text=json.dumps(value); assert 'SYNTHETIC' not in text and 'signature' not in text and 'DROP' not in text
-        assert 'mystery' in text and 'format' in text and '999' not in text
+        assert 'source_evidence' not in value
+        assert 'mystery' in r.metadata_json and 'format' in r.metadata_json and '999' not in text
 
 
 def test_publication_identity_idempotence_and_measured_facts(tmp_path):

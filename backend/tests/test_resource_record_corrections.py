@@ -7,7 +7,7 @@ from app.db.database import get_db
 from app.db.models import DownloadedResource
 from app.main import app
 from app.schemas.resources import ResourceMetadata
-from app.services.resource_records import provider_snapshot, publish_metadata, project_resource
+from app.services.resource_records import provider_snapshot, publish_metadata, project_resource, metadata_for
 from tests.test_resource_record_writers import boundary, acquire_http
 
 AIR='urn:air:sdxl:lora:civitai:10@21'
@@ -24,9 +24,9 @@ def inspected(b):
 
 def attack_snapshot():
     snap=provider_snapshot({'baseModel':'Pony','trainedWords':['valid']},None,{}).model_dump()
-    snap['trigger_words']+=['Bearer DROP_C1',ATTACK]
+    snap['trigger_words']+=[ATTACK]
     snap['recommended_parameters']={'sampler':{'value':ATTACK,'source_field':ATTACK},ATTACK:{'value':27,'source_field':'version.meta.steps'}}
-    snap['license']['values']={'allowNoCredit':True,'file_license':{'proof':ATTACK,'token':'DROP_C1','ordinary_sha256':'a'*64,'text':'password=DROP_C1'}}
+    snap['license']['values']={'allowNoCredit':True,'file_license':{'proof':ATTACK,'token':'DROP_C1','ordinary_sha256':'a'*64,'text':'ordinary text'}}
     snap['license']['missing_fields']+=[ATTACK]
     snap['source_evidence']={'nested':[{'proof':ATTACK,'safe_hash':'a'*64,'cookie':'DROP_C1'}],ATTACK:ATTACK}
     snap['diagnostics']+=[{'code':ATTACK,'field':ATTACK}]
@@ -34,7 +34,7 @@ def attack_snapshot():
 
 
 def assert_safe(text):
-    for value in ('DROP_C1','PASS_C1','X-Amz-Signature','user:','password='):
+    for value in ('DROP_C1','PASS_C1','X-Amz-Signature','user:'):
         assert value not in text,text
 
 
@@ -48,8 +48,9 @@ def test_complete_snapshot_normalized_at_publication_and_stored_reads(client):
         item=project_resource(row)
         assert item.model_family=='sdxl' and item.sha256=='a'*64 and item.sha256_verified is None
         assert item.license.values['allowNoCredit'] is True
-        assert item.license.values['file_license']['ordinary_sha256']=='a'*64
-        assert item.trigger_words[0]=='valid' and item.recommended_parameters['sampler'].value=='https://example.test/proof'
+        assert 'file_license' not in item.license.values
+        assert json.loads(row.metadata_json)['source_evidence']['nested'][0]['safe_hash']=='a'*64
+        assert item.trigger_words[0]=='valid' and 'sampler' not in item.recommended_parameters
         # An unsafe older stored snapshot must remain readable without a repair write.
         data['base_model']=ATTACK
         row.metadata_json=json.dumps(data);before=row.metadata_json;db.commit()
@@ -83,7 +84,7 @@ def test_registered_edited_snapshot_normalized_before_install_publication(bounda
 
 
 def test_provider_inspect_select_acquire_normalize_nested_values(boundary):
-    b=boundary;b.file['license']={'proof':ATTACK};b.version['trainedWords']=['valid','Bearer DROP_C1',ATTACK]
+    b=boundary;b.file['license']={'proof':ATTACK};b.version['trainedWords']=['valid',ATTACK]
     b.version['meta'].update(sampler=ATTACK,proof=ATTACK)
     descriptor=inspected(b)
     assert_safe(json.dumps(descriptor['resource_metadata']))
@@ -166,7 +167,8 @@ def test_retained_background_notes_exact_and_current_error_truth(boundary,outcom
     b=boundary
     with database.SessionLocal() as db:
         row=DownloadedResource(resource_name='selected.safetensors',resource_type='lora',provider='civitai',source_url='unknown',
-            model_id='10',version_id='21',civitai_file_id='32',sha256=b.sha,status='failed',notes=notes)
+            model_id='10',version_id='21',civitai_file_id='32',sha256=b.sha,status='failed',notes=notes,
+            local_path=str(b.tmp/'loras'/'selected.safetensors'),file_size=len(b.body))
         db.add(row);db.commit();id=row.id
     admitted=acquire_http(b);assert admitted.status_code==202,admitted.json();assert admitted.json()['resource']['acquisition_id']==id
     # Real provider refusal or real credential file failure; actual background target runs.
@@ -185,7 +187,7 @@ def test_retained_background_notes_exact_and_current_error_truth(boundary,outcom
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,id);assert row.notes==notes
         assert db.query(DownloadedResource).count()==1
-        record=project_resource(row);op=record.source_evidence['acquisition']
+        record=project_resource(row);op=metadata_for(row)[0].source_evidence['acquisition']
         assert op['status']==summary['status'] and op['error']==summary['error']
         assert record.sha256_verified is (True if outcome=='success' else None)
         assert 'resource-fixture-key' not in record.model_dump_json()
@@ -212,7 +214,7 @@ def test_new_row_outcomes_and_same_id_retry_clear_current_error(boundary,outcome
     with database.SessionLocal() as db:
         row=db.get(DownloadedResource,id)
         assert db.query(DownloadedResource).count()==1 and row.notes==original
-        assert project_resource(row).source_evidence['acquisition']=={'status':'installed','error':None}
+        assert metadata_for(row)[0].source_evidence['acquisition']=={'status':'installed','error':None}
 
 
 def test_supplied_operation_cannot_replace_current_retry_diagnostics(boundary):

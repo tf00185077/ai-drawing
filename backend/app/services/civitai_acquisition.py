@@ -153,7 +153,7 @@ def _secrets_from_authorization(authorization: str | None) -> tuple[str, ...]:
     return tuple(dict.fromkeys(parts))
 
 
-def redact_secrets(value: Any, *, secrets: tuple[str, ...] = ()) -> Any:
+def redact_secrets(value: Any, *, secrets: tuple[str, ...] = (), redact_query: bool = True) -> Any:
     """Redact authorization-like keys and supplied secret substrings recursively."""
 
     if isinstance(value, Mapping):
@@ -162,18 +162,19 @@ def redact_secrets(value: Any, *, secrets: tuple[str, ...] = ()) -> Any:
             if str(key).lower().replace("-", "_") in _SENSITIVE_KEYS:
                 output[key] = "[REDACTED]"
             else:
-                output[key] = redact_secrets(item, secrets=secrets)
+                output[key] = redact_secrets(item, secrets=secrets, redact_query=redact_query)
         return output
     if isinstance(value, list):
-        return [redact_secrets(item, secrets=secrets) for item in value]
+        return [redact_secrets(item, secrets=secrets, redact_query=redact_query) for item in value]
     if isinstance(value, tuple):
-        return tuple(redact_secrets(item, secrets=secrets) for item in value)
+        return tuple(redact_secrets(item, secrets=secrets, redact_query=redact_query) for item in value)
     if isinstance(value, str):
         redacted = value
-        for secret in secrets:
+        from urllib.parse import quote
+        for secret in dict.fromkeys(variant for value in secrets for variant in (value,quote(value,safe=''))):
             if secret:
                 redacted = redacted.replace(secret, "[REDACTED]")
-        return _QUERY_VALUE.sub(_redact_query, redacted)
+        return _QUERY_VALUE.sub(_redact_query, redacted) if redact_query else redacted
     return value
 
 
